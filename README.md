@@ -132,3 +132,9 @@ tablosunu eski haline dondurur. Bolum kucultme, dosya sisteminin verisi sigmiyor
 
 Gerekceler: [`.claude/decisions/0014-fiziksel-disk-destegi.md`](.claude/decisions/0014-fiziksel-disk-destegi.md),
 [`.claude/decisions/0019-bolum-boyutlandirma.md`](.claude/decisions/0019-bolum-boyutlandirma.md)
+
+## Lisans
+
+[GNU General Public License v3.0](LICENSE) — bu yazilimi kullanabilir, degistirebilir
+ve dagitabilirsiniz; turetilen calismalar da ayni lisansla **acik kaynak** kalmak
+zorundadir.
