@@ -1,0 +1,6 @@
+# DiskUltimate calisma gereksinimleri
+PyQt5>=5.15
+# Cekirdek (bolum tablolari + FAT) yalnizca standart kutuphane kullanir.
+# Opsiyonel sistem araclari (varsa ek dosya sistemleri bicimlendirilebilir):
+#   dosfstools (fsck.vfat)  exfatprogs (mkfs.exfat)
+#   ntfs-3g (mkfs.ntfs)     e2fsprogs (mkfs.ext2/3/4)

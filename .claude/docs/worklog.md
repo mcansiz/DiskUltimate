@@ -1,0 +1,707 @@
+# Is Gunlugu
+
+Kural: her anlamli degisiklikten sonra bu dosyaya tarihli bir giris eklenir.
+Kayit yalnizca bu depo icindeki `.claude/` altinda tutulur.
+
+---
+
+## 2026-09-13 — Proje kurulumu ve v0.1.0
+
+### Yapilanlar
+
+**Altyapi**
+- `.claude/` yapisi kuruldu: `docs/`, `decisions/`, `specs/`, `logs/`.
+- Kok dizine `CLAUDE.md` yazildi (proje kurallari, kayit kurali, kod standartlari).
+- Paket iskeleti: `src/diskultimate/{core,ui,utils}`, `tests/`, `main.py`.
+
+**Cekirdek (saf Python, GUI'den bagimsiz)**
+- `core/image.py` — `BlockDevice` arayuzu, `DiskImage` (seyrek olusturma, okuma,
+  yazma, yeniden boyutlandirma), `PartitionView` (bolum penceresi, sinir denetimi).
+- `core/ptable.py` — `Partition` / `FreeRegion` modeli, MBR tip ve GPT GUID tablolari,
+  hizalama ve bos alan hesaplari, `human_size` / `parse_size`.
+- `core/mbr.py` — MBR okuma/yazma, CHS donusumu, 4 birincil bolum, genisletilmis
+  bolum ve EBR zinciri ile mantiksal bolumler.
+- `core/gpt.py` — GPT okuma/yazma, CRC32 dogrulama, koruyucu MBR, birincil + yedek
+  baslik ve giris dizisi, 128 bolum destegi.
+- `core/fat.py` — sifirdan FAT12/16/32 surucusu: bicimlendirme, FAT tablosu
+  yonetimi, kume zinciri, LFN cozumleme ve uretme, 8.3 kisa ad uretimi, dizin
+  ekleme/silme, dosya okuma/yazma, disa/ice aktarma, istatistik.
+- `core/fsdetect.py` — imza tabanli tespit: FAT12/16/32, exFAT, NTFS, ext2/3/4,
+  btrfs, XFS, F2FS, ISO9660, Linux takas; etiket ve kullanim hesabi.
+- `core/formatter.py` — bicimlendirme dagiticisi; FAT dahili, exFAT/NTFS/ext*
+  icin gecici seyrek birim uzerinde `mkfs.*` calistirip sonucu geri yazma.
+- `core/filesystem.py` — `FileSystemAccess` arayuzu, `FatAccess`, `UnsupportedAccess`.
+- `core/session.py` — `DiskSession`: GUI'nin gordugu tek cephe.
+
+**Arayuz (PyQt5)**
+- `ui/theme.py` — DiskGenius'a yakin acik tema, dosya sistemi renk paleti, stil sayfasi.
+- `ui/widgets/disk_map.py` — gorsel bolum haritasi: oransal bloklar, dosya sistemi
+  rengi, doluluk cubugu, secim/vurgu, ipucu, sag tik menusu.
+- `ui/widgets/partition_table.py` — bolum ve bos alan listesi (10 sutun).
+- `ui/widgets/file_browser.py` — klasor agaci + dosya listesi, disa/ice aktarma,
+  klasor olusturma, silme, yeniden adlandirma, onizleme.
+- `ui/widgets/hex_view.py` — sektor bazli onaltilik goruntuleyici.
+- `ui/dialogs/` — yeni goruntu sihirbazi, bolum olusturma, bicimlendirme,
+  ilerleme penceresi (QThread), dosya onizleme.
+- `ui/main_window.py` — menu/arac cubugu, disk agaci, dort sekmeli alt panel,
+  durum cubugu, tum is akislari, onay diyaloglari, `.claude/logs/app-*.log` gunlugu.
+
+### Duzeltilen hatalar
+1. **MBR yazma tampon boyutu** — onyukleme kodu 446 bayt olunca sektor 510 baytta
+   kaliyor, imza yazilamiyordu. Tampon sabit 512 bayta cekildi.
+2. **FAT32 `BPB_BkBootSec` ofseti** — 52 yerine dogru deger olan 50 kullanildi.
+   `fsck.vfat` "yedek onyukleme sektoru yok" uyarisi verdigi icin yakalandi.
+3. **Basarisiz bicimlendirmede hayalet bolum** — `create_partition` icinde
+   bicimlendirme hata verirse bolum tablodan geri alinacak sekilde duzeltildi;
+   `t08` testi bunu koruma altina aldi.
+4. **Arayuz cakismasi** — disk haritasinda boyut metni ile doluluk cubugu ust uste
+   biniyordu; blok yuksekligi ve metin konumlari yeniden ayarlandi.
+5. **Gezgin yol cubugu** — desteklenmeyen bir bolume gecildiginde onceki yol
+   ekranda kaliyordu; `set_filesystem` artik yolu sifirliyor.
+6. **exFAT birim etiketi** — kok dizindeki `0x83` girisinden okunacak sekilde eklendi.
+
+### Dogrulama
+- `python3 -m tests.run_all` → **8/8 basarili**.
+- Uretilen FAT12/FAT16/FAT32 birimleri `fsck.vfat -n` ile hatasiz dogrulandi.
+- Uretilen MBR (mantiksal bolumler dahil) ve GPT tablolari `fdisk -l` ile dogrulandi.
+- Arayuz `QT_QPA_PLATFORM=offscreen` altinda 4 bolumlu 4 GB ornek goruntu ile
+  calistirilip ekran goruntuleri alinarak gozle dogrulandi.
+
+### Sonraki adim
+`.claude/docs/project-overview.md` icindeki v0.2 listesi — oncelik ext4 okuyucu.
+
+### Kapanis notlari (ayni gun)
+- `src/diskultimate/utils/` bos kaldigi icin kaldirildi; ihtiyac dogunca yeniden acilir.
+- `.gitignore` icinde `.claude/logs/*.log` satiri kaldirildi: proje kurali geregi
+  islem kayitlari depo icinde kalmali, disarida tutulmamalidir.
+- Uygulama `main.py disk.img` ile calistirilip temiz acilis dogrulandi
+  (offscreen, hata ciktisi yok).
+- Boyut: 28 Python dosyasi, ~6000 satir kod; 13 markdown belge.
+
+---
+
+## 2026-09-13 (ikinci oturum) — Wayland cizim sorunu ve yol duzeni
+
+### Bildirilen sorun
+Kullanici `Yeni Disk Goruntusu` penceresinin **bos** acildigini bildirdi: pencere
+cerceve ve baslik ile geliyor ama icerigi hic cizilmiyordu.
+
+### Teshis
+Ayni diyalog `xcb` (XWayland) ve `offscreen` altinda eksiksiz cizildi → tema veya
+yerlesim hatasi degil, Qt 5.15 yerel Wayland eklentisinin modal pencerede ilk kareyi
+boyamamasi. Ek olarak `QIcon.themeName()` = `breeze-dark` bulundu: ikonlar eksik
+degil, acik renkli olduklari icin acik zeminde gorunmuyorlardi.
+
+Ayrinti ve kararlar: [ADR 0005](../decisions/0005-wayland-ikon-temasi-ve-platform.md)
+
+### Yapilan degisiklikler
+- `main.py` — `secilen_platform()`: Wayland oturumunda XWayland (`xcb`) secilir;
+  `DISKULTIMATE_QPA` / `QT_QPA_PLATFORM` ile gecersiz kilinabilir. Taban stil Fusion.
+  Secilen platform, stil ve ikon temasi islem gunlugune yazilir.
+- `ui/theme.py` — `ikon_temasini_ayarla()`: koyu ikon temasi acik varyantina cekilir
+  (`breeze-dark` → `breeze`), bulunamazsa Qt gomulu ikon setine dusulur.
+- `ui/dialogs/base.py` (yeni) — `exec_dialog()`: gosterim sonrasi yeniden cizim
+  tetikleyen guvenlik agi; tum diyaloglar bunu kullaniyor.
+- `ui/theme.py` — `QComboBox::drop-down` kurali kaldirildi (acilir liste oku geri
+  geldi); `QSpinBox`/`QDoubleSpinBox` kutu kurali kaldirildi (artir/azalt oklari
+  geri geldi).
+- Diyalog dugmeleri Turkcelestirildi: `Cancel` → "Iptal", `Close` → "Kapat".
+
+### Yol duzeni (kullanici istegi)
+Gecici dosyalar artik `/tmp` yerine proje icinde: [ADR 0006](../decisions/0006-gecici-dosyalar-proje-icinde.md)
+- `src/diskultimate/paths.py` (yeni) — tek yetkili yol kaynagi.
+- `tests/run_all.py` → `<proje>/.tmp/tests`
+- `core/formatter.py` → `<proje>/.tmp/format` (artik `tempfile` kullanmiyor)
+- `tests/ui_smoke.py` (yeni) — ornek goruntu uretip 8 ekran goruntusu kaydeder
+  (`<proje>/.tmp/screenshots`). Arayuz degisikliklerinden sonra calistirilir.
+- `.gitignore` icine `.tmp/` eklendi.
+
+### Dogrulama
+- `python3 -m tests.run_all` → **8/8 basarili** (yeni yollarla).
+- `DISKULTIMATE_QPA=xcb python3 -m tests.ui_smoke` → 8 ekran goruntusu; ana pencere,
+  dort sekme ve uc diyalog gozle denetlendi: ikonlar gorunur, acilir liste ve sayi
+  kutusu oklari yerinde, dugme metinleri Turkce.
+
+---
+
+## 2026-09-13 (ucuncu oturum) — v0.2.0: capraz platform + DiskGenius ozellikleri
+
+Istek: (1) Windows/Linux/macOS destegi, (2) GitHub ve populer disk araclarinin
+analizi, (3) DiskGenius ozelliklerinin mumkun oldugunca karsilanmasi.
+
+### Arastirma
+DiskGenius, GParted, KDE Partition Manager, TestDisk/PhotoRec ve Python
+kutuphaneleri (FATtools, dissect.ntfs, ext4, pytsk3, gpt-image, pygpt, hdisk,
+gptfdisk) incelendi. Bulgular ve cikan kararlar:
+[feature-analysis.md](feature-analysis.md) · Ozellik matrisi: [diskgenius-parity.md](diskgenius-parity.md)
+
+### Capraz platform (ADR 0008)
+- `core/platform.py` (yeni) — seyrek dosya isaretleme (Windows `FSCTL_SET_SPARSE`),
+  gercek dosya boyutu (`GetCompressedFileSizeW` / `st_blocks`), arac arama
+  (Linux `mkfs.*`, macOS `newfs_*`), surec calistirma (`CREATE_NO_WINDOW`),
+  Qt platform eklentisi secimi, varsayilan klasor.
+- `image.py`, `formatter.py`, `main.py`, `tests/` bu katmana baglandi;
+  `dd` cagrisi ve `st_blocks` kullanimi kaldirildi.
+- `tests/platform_check.py` (yeni) — statik uyumluluk denetimi: sabit POSIX yollari,
+  `tempfile`, dogrudan `subprocess`/`shutil.which`, endian isaretsiz `struct`,
+  `core/` icine PyQt sizintisi. **Denetleyici kasitli ihlal dosyasiyla dogrulandi**
+  (9 ihlalin 9'u yakalandi). Gercek kod: 0 bulgu.
+
+### exFAT saf Python (ADR 0007)
+`core/exfat.py` (yeni, ~1000 satir): bicimlendirme, okuma, yazma, klasor, silme,
+yeniden adlandirma, birim etiketi, bitmap tabanli tahsis.
+**Kritik bulgu:** upcase tablosu serbest degil — kendi uretilen tablo `fsck.exfat`
+tarafindan reddedildi. Standart sikistirilmis tablo (5836 bayt, saglama
+`0xE619D30D`) kaynaga gomuldu. Artik exFAT Windows/macOS'ta da calisiyor.
+
+### Yeni ozellikler
+| Modul | Yetenek |
+|---|---|
+| `convert.py` | MBR ↔ GPT donusumu (veri yerinde), uygunluk on denetimi, 4K hizalama raporu |
+| `clone.py` | `.dub` yedek bicimi (ADR 0009), yedekleme/geri yukleme, disk ve bolum klonlama |
+| `wipe.py` | Guvenli silme: sifir / rastgele / DoD 3 / DoD 7, dogrulama, bos alan silme |
+| `recovery.py` | Silinmis dosya tarama ve kurtarma (FAT + exFAT), kayip bolum tarama, 13 imzali dosya carving |
+| `vdisk.py` | VHD (sabit+dinamik), VDI, VMDK (duz+seyrek), QCOW2 okuma; VHD olusturma ve yazma |
+| `session.py` | Tum bu yetenekler tek cephede toplandi (22 yeni yontem) |
+
+### Arayuz
+- Yeni **Araclar** menusu: silinmis dosya tarama, kayip bolum tarama, imza tabanli
+  kurtarma, yedek bilgisi, sistem bilgisi.
+- Disk menusu: GPT/MBR donusumu, hizalama denetimi, disk yedekle/geri yukle/klonla/sil.
+- Bolum menusu ve baglam menusu: bolum yedekle/geri yukle/guvenli sil/silinmis tara.
+- Dosya menusu: **Yeni sanal disk (VHD)**; acma filtresi sanal diskleri kapsiyor.
+- Yeni diyaloglar (`ui/dialogs/tools.py`): guvenli silme, silinmis dosyalar,
+  kayip bolumler, imza secimi, bulunan dosyalar, bilgi penceresi.
+
+### Duzeltilen hatalar
+7. **FAT tahsis basarimi (ADR 0010).** `alloc_cluster` her cagrida on binlerce
+   elemanlik liste uretiyordu; 8 MB yazma >100 saniye suruyordu. Liste kaldirildi,
+   bos kume sayaci onbellege alindi → **0.04 s** (~250 MB/s). `t15` regresyonu korur.
+8. **Basarisiz bicimlendirmede tip esleme hatasi.** GPT→MBR donusumunde "Microsoft
+   Temel Veri" GUID'i hem FAT32 hem NTFS'i kapsadigindan tip bayti yanlis seciliyordu;
+   artik once dosya sistemi turune bakiliyor.
+9. **Silinmis LFN adlari eksik kurtariliyordu.** Silme sirasinda LFN sira bayti da
+   ezildigi icin sira numarasi guvenilmez; parcalar artik fiziksel siraya gore
+   toplanip ters cevriliyor. "Onemli Rapor" → "Onemli Rapor 2026.txt".
+
+10. **Kararsiz test (test altyapisi).** `t14` ikinci kosumda duserdi: VirtualBox,
+   onceki kosumda kaydettigi VHD'yi medya kayit defterinde tutuyor ve ayni yolda
+   yeni UUID gorunce `NS_ERROR_ABORT` veriyor. Dogrulama oncesi ve sonrasi
+   `VBoxManage closemedium disk` cagrilarak cozuldu. Uretilen VHD'nin kendisi
+   bastan beri gecerliydi.
+
+### Dogrulama
+- `python3 -m tests.run_all` → **15/15 basarili** (7 yeni test), **art arda iki kosumda kararli**
+- `python3 -m tests.platform_check` → **0 bulgu**
+- Bagimsiz araclarla capraz dogrulama: `fsck.vfat`, **`fsck.exfat` (clean)**,
+  `fdisk -l`, **`VBoxManage showhdinfo`** (uretilen VHD gecerli), VBoxManage ile
+  uretilen VDI/VMDK dosyalari okundu
+- `python3 -m tests.ui_smoke` → 14 ekran goruntusu, gozle denetlendi
+
+---
+
+## 2026-09-13 (dorduncu oturum) — Windows dogrulama hazirligi ve donma nedeni
+
+### Bildirilen olay
+Kullanici Windows 10 sanal makinesinde test paketini calistirinca **ana makine
+dondu ve resetlemek zorunda kaldi.**
+
+### Kok neden
+- VirtualBox paylasilan klasoru (`vboxsf`) **seyrek dosya desteklemez.**
+- Testlerin mantiksal toplami ~8 GB. Linux'ta seyreklik sayesinde 1.2 GB yer
+  kapliyordu; paylasilan klasorde **8 GB'in tamami gercekten yazilir.**
+- Paylasim hedefi `/run/media/pc/Data` diskindeydi: **%93 dolu, 13 GB bos.**
+- Ayrica testler urettikleri goruntuleri **silmiyordu**; hepsi birikiyordu.
+- Dolan disk + `vboxsf` uzerinden yogun sektor yazimi host'u I/O kilidine soktu.
+
+### Duzeltmeler (tekrarini onlemek icin)
+1. **Ortam on denetimi** — `tests/run_all.py::check_environment()`:
+   - hedef dizinde seyrek dosya desteginin **olculmesi** (64 MB deneme dosyasi)
+   - bos alan denetimi: seyrek destekleniyorsa 2 GB, desteklenmiyorsa **12 GB**
+   - yetersizse testler **baslamadan durur** (cikis kodu 2) ve nedeni yazar
+2. **Test sonrasi temizlik** — her test kendi goruntulerini siler
+   (`cleanup_test_files`). Pik disk kullanimi artik toplamin degil, en buyuk tek
+   testin boyutu kadar. Inceleme icin `DISKULTIMATE_KEEP_TEST_FILES=1`.
+3. **Belgelendirme** — `windows-setup/OKUBENI.md` icinde acik uyari: testler
+   paylasilan klasorde degil, VM'in kendi diskinde (`C:\du-test`) calistirilir.
+
+### Windows dogrulama altyapisi
+Kullanicinin istegi uzerine SSH tabanli dogrulama hazirlandi:
+- `VBoxManage modifyvm --natpf1 "ssh,tcp,127.0.0.1,2222,,22"` — NAT port
+  yonlendirmesi (yalnizca localhost'a acik).
+- Proje, VM'e `duproje` adiyla paylasilan klasor olarak baglandi
+  (`VBoxManage sharedfolder add --automount`).
+- `windows-setup/ssh-kur.ps1` — VM icinde OpenSSH Server kurulumu, sshd servisi,
+  guvenlik duvari kurali, Python denetimi/kurulumu, parolasiz hesap uyarisi.
+- `windows-setup/testleri-calistir.ps1` — kaynagi `C:\du-test` altina kopyalayip
+  testleri **yerel diskte** calistirir (SSH olmadan da kullanilabilir).
+
+### Windows uzerinde GERCEK KOSUM (ayni gun, tamamlandi)
+
+**Engeller:** VM'de OpenSSH kurulu degildi, `pc` hesabi yonetici degildi ve
+(baslangicta) internet yoktu — yani SSH veya paket kurulumu yapilamiyordu.
+
+**Uygulanan cozum:** Guest Additions zaten kuruluydu; `VBoxManage guestcontrol`
+ile VM icinde dogrudan komut calistirildi. Python'un **tasinabilir (embeddable)**
+paketi (3.12.8) ve PyQt5 5.15.11 tekerlekleri ana makinede indirilip `duproje`
+paylasimi uzerinden VM'e aktarildi, `C:\du-test` altina acildi. Yonetici yetkisi,
+internet ve kurulum gerekmedi.
+
+**Sonuclar (Windows 10 x64):**
+- `tests.platform_check` → **0 bulgu**
+- `tests.run_all` → **15/15 basarili**, 13.2 saniye
+- `tests.ui_smoke` → **14 ekran goruntusu**, gozle denetlendi
+
+**Yakalanan uc gercek hata:**
+11. **Seyrek dosya uzatma (ADR 0011).** `FSCTL_SET_SPARSE` basariliydi ama Python'un
+    `truncate()` cagrisi Windows'ta dosyayi **sifirlarla dolduruyordu**: 256 MB'lik
+    goruntu gercekten 256 MB tahsis ediyordu. `SetFilePointerEx` + `SetEndOfFile`
+    ile degistirildi → 0.00 s, 0 bayt. Tam kosum 18.2 s → **13.2 s**, gereken bos
+    alan 12 GB → **2 GB**.
+12. **Olcum uretim yolunu izlemiyordu.** Duzeltmeden sonra rapor hala
+    "DESTEKLENMIYOR" diyordu: `_sparse_supported()` kendi `fh.truncate()` cagrisini
+    kullaniyordu. Olcum uretim yoluna (`make_sparse` + `truncate_sparse`) hizalandi;
+    `t11`'deki seyreklik dogrulamasi da `IS_LINUX` kosulundan kurtarilip gercek
+    dosya sistemi destegine baglandi.
+13. **Qt bulgulari (ADR 0012).** (a) Qt'nin Windows'taki `offscreen` eklentisi hic
+    font yuklemiyor (font ailesi 0) — uretilen goruntulerde metin gorunmuyordu;
+    `ui_smoke` artik Windows'ta `windows` eklentisini secip font sayisini raporluyor.
+    (b) `QTabBar::tab:selected { font-weight: 600 }` sekme basliklarini kirpiyordu
+    ("Dosya Gezgini" → "osya Gezgin"); sekmelerde font-weight kaldirildi.
+
+**Ek duzeltme:** `tests/ui_smoke.py` artik platformda bulunmayan dosya sistemlerini
+(Windows'ta ext4/NTFS) ham bolum olarak olusturuyor; boylece duman testi her
+platformda calisiyor ve ekran duzeni karsilastirilabilir kaliyor.
+
+SSH altyapisi (port yonlendirme + `windows-setup/` betikleri) yerinde duruyor;
+ileride etkilesimli oturum gerekirse kullanilabilir.
+
+### Not
+Eski `myiso` paylasimi (`/run/media/pc/Data/myiso`) artik mevcut degil; VM'de
+baglanamaz. Gerekirse kaldirilabilir:
+`VBoxManage sharedfolder remove <vm> --name myiso --global`
+
+---
+
+## 2026-09-13 (besinci oturum) — Windows VM'de kalici Python ortami
+
+Istek: "win10'da python nereye kurulu, ortam PATH'e kaydet".
+
+### Yapilanlar
+- Python, test klasorunden (`C:\du-test\python`) kalici konuma tasindi:
+  **`C:\Python312`**. Boylece test klasoru silinse de yorumlayici kalir.
+- `python312._pth` icinde `import site` etkinlestirildi (pip icin gerekli) ve
+  `Lib\site-packages` eklendi.
+- **pip 26.2.1** kuruldu (`get-pip.py`, ana makineden aktarildi).
+- Kullanici duzeyi PATH'e eklendi (yonetici gerekmez):
+  `C:\Python312;C:\Python312\Scripts;C:\Users\pc\AppData\Local\Microsoft\WindowsApps`
+- `windows-setup/DiskUltimate-baslat.bat` eklendi; `windows-setup/OKUBENI.md`
+  basina "kurulu durum" ozeti yazildi.
+- Test klasorundeki 164 MB'lik Python kopyasi ve gecici tani betikleri silindi.
+
+### Iki tuzak (ikisi de yasandi ve duzeltildi)
+14. **PowerShell dizi tuzagi.** `$parcalar = $mevcut -split ";" | Where-Object {...}`
+    tek eleman dondurdugunde **dizi degil string** olur; sonraki `+=` dizi ekleme
+    degil **metin birlestirme** yapar. Sonuc bozuk PATH:
+    `...WindowsAppsC:\Python312C:\Python312\Scripts` (noktali virguller kayip).
+    Duzeltme: `@(...)` ile diziye zorlamak. Bozuk deger hemen duzeltildi.
+15. **Windows yurutme takma adi.** PATH duzeldikten sonra `python` hala calismiyor,
+    "Microsoft Store'dan kurun" diyordu: `WindowsApps\python.exe` stub'i PATH'te
+    once geliyordu. Cozum: `C:\Python312` PATH'in **basina** alindi — resmi Python
+    kurulumunun da yaptigi budur.
+
+### Dogrulama (yeni guestcontrol oturumunda, kayit defterinden miras PATH ile)
+- `python` → `C:\Python312\python.exe`, Python 3.12.8
+- `pip --version` → 26.2.1
+- `import PyQt5.QtCore` → Qt 5.15.2
+- `python tests\platform_check.py` → **0 bulgu**
+- `python tests\run_all.py` → **15/15 basarili**, seyrek dosya destekleniyor
+
+---
+
+## 2026-09-13 (altinci oturum) — Tema kaldirildi, fiziksel disk destegi eklendi
+
+Uc istek: (1) temayi kaldir, sistem gorunumune don; (2) yazilim yalnizca disk
+imaji uzerine calismasin; (3) ana ekranda sistemdeki diskler gorunsun, "aynen
+DiskGenius gibi".
+
+### 1. Tema kaldirildi (ADR 0013)
+- `app.setStyleSheet("")`, `Fusion` zorlamasi ve ikon temasi degistirme kaldirildi.
+- Tum sabit renkler (`TEXT_DIM`, `ACCENT`, `BORDER`, `FREE_COLOR`...) widget'lardan
+  temizlendi; renkler artik `theme.palette_color()` ile **sistemin paletinden**
+  geliyor. Soluk etiketler icin `setEnabled(False)` kullaniliyor.
+- Disk haritasinda blok uzerindeki metin rengi, blogun zeminine gore acik/koyu
+  seciliyor; dosya sistemi renkleri anlamsal oldugu icin sabit kaldi.
+- `theme.apply_theme()` + `THEMES` altyapisi ileride eklenecek "Tema" bolumu icin
+  hazir birakildi (`DISKULTIMATE_THEME=diskultimate` ile eski gorunum denenebilir).
+- Koyu sistem temasinda dogrulandi: tum paneller okunabilir.
+
+### 2-3. Fiziksel disk destegi (ADR 0014) — KAPSAM DEGISIKLIGI
+Proje artik gercek disklere de erisiyor. `core/physical.py` (yeni):
+- `list_disks()` — Linux `/sys/block`+`/proc/mounts`, Windows IOCTL
+  (`DISK_GET_LENGTH_INFO`, `STORAGE_QUERY_PROPERTY`, `VOLUME_GET_VOLUME_DISK_EXTENTS`),
+  macOS `diskutil -plist`. Model, seri, boyut, sektor, veriyolu, cikarilabilirlik,
+  bolumler, bagli noktalar, sistem diski tespiti.
+- `PhysicalDisk(BlockDevice)` — blok duzeyinde okuma/yazma. Windows'ta aygit G/C
+  sektor hizali olmak zorunda oldugu icin oku-degistir-yaz uygulanir.
+- `DiskSession.open_physical(...)`, `list_physical_disks()`, `has_disk_privileges()`.
+- Arayuz: sol agacta **"Fiziksel Diskler"** dali; sistem diski kirmizi uyari
+  ikonuyla `[SISTEM DISKI]` etiketli, bagli bolumu olanlar `[bagli bolum var]`,
+  yetki yoksa `[?]`. Cift tiklama salt okunur acar. Disk menusunde yenileme,
+  salt okunur acma, **yazma modunda acma** ve disk bilgisi.
+
+**Guvenlik katmanlari** (CLAUDE.md'ye kural olarak islendi): listeleme zararsiz,
+varsayilan salt okunur, sistem diskinde ad yazarak dogrulama, **bilgisi eksik
+diske yazma reddi**, bagli bolum uyarisi.
+
+### Yakalanan kusur
+16. **Eksik bilgi "risk yok" gibi gorunuyordu.** Windows'ta yetki olmadan disk
+    bilgileri okunamiyor; ilk surumde bu disk `is_system=False` olarak listeleniyor,
+    yani en riskli disk en guvenli gibi gorunuyordu. `DiskInfo.info_complete`
+    eklendi: bilgi eksikse risk seviyesi "bilinmiyor" olur ve **yazma reddedilir**.
+
+### Dogrulama
+- Linux listeleme: sistem diski (`nvme0n1`) dogru isaretlendi, bagli bolumler
+  (`/`, `/boot/efi`, veri bolumu) tespit edildi. **Ana makinede hicbir disk acilmadi.**
+- Guvenlik denetimleri sahte disk tanimlariyla dogrulandi (gercek aygita dokunmadan):
+  onaysiz yazma, sistem diski, bilinmeyen disk — ucu de engellendi.
+- Windows yetkisiz davranis: disk listede gorunuyor, "(yetki yok)" isaretli, acma
+  denemesi anlamli hata veriyor.
+- `tests.run_all` 15/15, `tests.platform_check` 0 bulgu (denetleyiciye
+  "platform katmani" kavrami eklendi: `platform.py` ve `physical.py` yalnizca
+  ilgili kurallardan muaf; tempfile/subprocess/endian kurallari onlarda da gecerli
+  ve denetleyici kasitli ihlalle yeniden dogrulandi).
+
+### Test araclari (yeni)
+- `tests/physical_probe.py` — **yalnizca okuma** sondasi: diskleri listeler, salt
+  okunur acar, bolum tablosunu cozumler. Yetkisiz calistirilabilir; neyin
+  okunamadigini raporlar.
+- `tests/physical_write_test.py` — yazma testi, **alti olcut** saglanmadikca
+  calismaz: (1) aygit acikca verilmis, (2) `--onayla` bayragi, (3) sistem diski
+  degil, (4) bagli bolum yok, (5) bilgiler eksiksiz, (6) boyut < 8 GB.
+  Dogrulandi: ana makinenin sistem diski hedef gosterildiginde uc ayri olcutle
+  reddedildi ve hicbir sey yazilmadi.
+- `windows-setup/disk-testi-yonetici.bat` — PowerShell `ExecutionPolicy Restricted`
+  kisitini asan sarmalayici (kullanici betigi dogrudan calistiramadi).
+
+### FIZIKSEL DISK DOGRULAMASI — Pop!_OS 24.04 misafiri (tamamlandi)
+
+Kullanici ikinci bir misafire Pop!_OS 24.04 kurdu (Guest Additions + SSH hazir).
+Her iki misafire de **2 GB'lik bos sanal disk** eklendi (ayri VDI dosyalari; ayni
+medya iki VM'e baglanamaz) ve SSH port yonlendirmesi yapildi
+(win10 → 2222, Pop!_OS → 2223). Sistem disklerine dokunulmadi.
+
+**Pop!_OS'ta yapilanlar (SSH + sudo ile tam otomatik):**
+
+| Adim | Sonuc |
+|---|---|
+| `tests.platform_check` | **0 bulgu** |
+| `tests.run_all` | **15/15 basarili** |
+| `tests.physical_probe` (root) | 2/2 disk okundu |
+| Guvenlik kilidi — `/dev/sda --onayla` | **REDDEDILDI** (3 olcut), cikis kodu 2 |
+| `tests.physical_write_test /dev/sdb --onayla` | **TUM ADIMLAR BASARILI** |
+
+**Sonda ciktisi:** `/dev/sda` sistem diski olarak isaretlendi, bagli bolum
+`sda1 → /` tespit edildi, MBR tablosu cozumlendi (ext4 21 GB + Linux Takas 4 GB).
+`/dev/sdb` bos, sistem degil, bagli bolum yok.
+
+**Yazma testi adimlari (gercek diske):** GPT tablosu → 512 MB FAT32 bolum →
+dosya yazma → **disk kapatilip yeniden acildi** → 19.500 bayt bayt-bayt dogrulandi
+→ exFAT ile yeniden bicimlendirme → dosya yazma ve geri okuma.
+
+**Bagimsiz dogrulama — en guclu kanit:** Isletim sisteminin kendi araclari
+yazdigimiz yapiyi kabul etti:
+```
+lsblk -f : sdb1  exfat  1.0  DUEXFAT  6ADF-1B3D
+blkid    : TYPE="exfat" LABEL="DUEXFAT" PARTLABEL="DiskUltimate Test"
+           PARTUUID="d6d70183-3665-4235-9078-a71f7696c97f"
+mount /dev/sdb1 /mnt/dutest -> BAGLANDI, exfat.txt okundu
+```
+Yani saf Python exFAT surucumuzun yazdigi birim **Linux cekirdegi tarafindan
+baglanip okundu**; GPT bolum adi ve GUID'i de dogru yazilmis.
+
+**Arayuz:** Pop!_OS'ta PyQt5 5.15.10 kurulup GUI calistirildi. Sol agacta
+"Fiziksel Diskler (2)": `sda` kirmizi uyari ikonuyla `[SISTEM DISKI]`, `sdb`
+normal. `sdb` acildiginda bolum haritasi, tablo ve dosya gezgini gercek diskten
+okunan `exfat.txt` dosyasini gosterdi; salt okunur acildigi icin yazma eylemleri
+devre disi kaldi. Ekran goruntuleri: `.tmp/linux-screenshots/`
+
+### FIZIKSEL DISK DOGRULAMASI — Windows 10 misafiri (tamamlandi)
+
+Kullanici yonetici komut isteminde calistirdi:
+
+| Adim | Sonuc |
+|---|---|
+| `tests\physical_probe.py` | **2/2 disk okundu** |
+| `tests\physical_write_test.py \\.\PhysicalDrive1 --onayla` | **TUM ADIMLAR BASARILI** |
+
+- `PhysicalDrive0` sistem diski olarak isaretlendi, `C:` bagli bolumu tespit
+  edildi, MBR tablosu cozumlendi (NTFS 50 MB + NTFS 49.45 GB + Windows Kurtarma
+  510 MB). Model ve seri numarasi `IOCTL_STORAGE_QUERY_PROPERTY` ile okundu.
+- `PhysicalDrive1` (2 GB test diski): GPT + FAT32 yazildi, dosya yazilip disk
+  kapatilip yeniden acildiktan sonra bayt-bayt dogrulandi, ardindan exFAT ile
+  yeniden bicimlendirildi.
+
+### Yakalanan kusur — yalnizca gercek donanimda gorunur
+17. **Isletim sistemine bildirim eksikti (ADR 0015).** Yazma testi basariliydi ve
+    kendi kodumuz diski yeniden acip okuyabiliyordu, ama Windows diski hala
+    **RAW** gosteriyor, `Get-Partition` hicbir bolum dondurmuyordu. Ham blok
+    yazma, isletim sisteminin bolum tablosu onbellegini guncellemez. Gercek
+    kullanimda kullanici bicimlendirir, "basarili" mesajini gorur, ama birim
+    Gezgin'de cikmaz.
+    `PhysicalDisk.rescan_partitions()` eklendi (Windows
+    `IOCTL_DISK_UPDATE_PROPERTIES`, Linux `BLKRRPART`, macOS `diskutil rescan`);
+    yazma modunda `close()` sirasinda kendiliginden cagriliyor.
+    **Pop!_OS'ta dogrulandi:** bildirimden once `sdb1` aygiti yokken, sonrasinda
+    cekirdek bolumu olusturdu, `blkid` exFAT'i tanidi ve `mount` ile dosya okundu.
+    Bu kusur goruntu dosyasi testleriyle **asla** yakalanamazdi.
+
+### Windows fiziksel disk — TAMAMLANDI (SSH ile otomatik)
+
+Kullanici Win10'a OpenSSH Server kurdu. Onemli bulgu: **Windows'ta SSH oturumu
+yukseltilmis yetkiyle geliyor** (`IsInRole(Administrator)` = True), yani UAC
+engeli olmadan yonetici testleri host'tan otomatik calistirilabiliyor.
+
+Iki gercek kusur daha yakalandi ve duzeltildi:
+
+18. **Rescan islem ortasinda cagriliyordu (ADR 0015 duzeltmesi).**
+    `DiskSession` bolum tablosu yazildiktan hemen sonra da `notify_os()`
+    cagiriyordu. Windows'ta `IOCTL_DISK_UPDATE_PROPERTIES` aygiti yeniden taratir
+    ve **o anda acik olan tutamaci gecersiz kilar**; sonraki yazma
+    `ERROR_NO_SUCH_DEVICE` (433) verdi. Kural: rescan yalnizca tum islemler
+    bittikten sonra, `close()` sirasinda. Linux'ta `BLKRRPART` bu yan etkiyi
+    yaratmadigi icin sorun **yalnizca Windows'ta** gorundu.
+
+19. **Bagli birime ham yazma reddi (ADR 0016).** Rescan basarili olunca Windows
+    yeni FAT32 bolumunu tanidi ve `E:` olarak bagladi; ardindan exFAT
+    bicimlendirmesi `ERROR_ACCESS_DENIED` aldi — Windows bagli birimin
+    sektorlerine dogrudan yazmayi engeller. Cozum: yazma modunda disk acilirken
+    o diskteki birimler `FSCTL_LOCK_VOLUME` + `FSCTL_DISMOUNT_VOLUME` ile
+    kilitlenip baglantisi kesiliyor, tutamac acik tutuluyor; `close()` sirasinda
+    once kilit birakiliyor sonra rescan yapiliyor.
+
+**Nihai Windows dogrulamasi:**
+```
+[7] rescan cagrisi: basarili
+    Number: 1   PartitionStyle: GPT          (onceden RAW idi)
+    PartitionNumber DriveLetter Size  -> 1  E  536870912
+    DriveLetter FileSystemLabel FileSystem -> E  DUEXFAT  exFAT
+```
+Windows diski GPT olarak tanidi, bolume surucu harfi atadi ve **saf Python exFAT
+surucumuzun yazdigi birimi bagladi**.
+
+### Onceki durum — bekleyen
+- Win10'da her iki disk de goruluyor (`Get-Disk`: Disk 0 sistem MBR, Disk 1 2 GB
+  RAW) ve sonda ikisini de `[?] BILINMIYOR / EKSIK (yetki yok)` olarak dogru
+  raporluyor — yani yetki eksikligi guvenli tarafa dusuyor.
+- ADR 0015 duzeltmesinin **Windows tarafinda** dogrulanmasi bekliyor (Linux'ta
+  dogrulandi): yonetici komut isteminde yazma testinin yeniden calistirilmasi ve
+  `Get-Disk` ciktisinin RAW yerine GPT gostermesi gerekiyor.
+- **Tasinabilir Python'da `python -m tests.x` calismaz** (calisma dizini modul
+  yoluna eklenmiyor); betikler dogrudan dosya olarak calistirilir
+  (`python tests\physical_probe.py`). Belgeler ve `.ps1` buna gore duzeltildi.
+
+---
+
+## 2026-09-13 (yedinci oturum) — Arayuz duzeni, coklu goruntu, takas etiketi
+
+Kullanici gercek bir Debian ARM goruntusu (`am335x-debian-13.6-...-4gb.img`)
+acarak Windows'ta denedi ve uc geri bildirim verdi.
+
+### 1. Takas bolumu etiketi bozuk karakter gosteriyordu (GERCEK HATA)
+Ekran goruntusunde Bolum 2'nin etiketi `z¹D¶f↓®&4U` gibi cop karakterlerdi.
+
+**Kok neden:** Linux takas basliginda etiket **1052.** bayttadir
+(`sws_volume`), ben **1040**'tan okuyordum — orasi `sws_uuid` alaninin ortasi.
+Yani UUID'nin ham baytlarini metin sanip gosteriyorduk.
+
+```
+1024 version | 1028 last_page | 1032 nr_badpages
+1036 sws_uuid (16)            | 1052 sws_volume (16)  <- ETIKET
+```
+
+`fsdetect._swap()` yazildi: etiket dogru ofsetten okunuyor, ASCII disi bayt
+iceriyorsa etiket **bos** sayiliyor, ayrica UUID cozumleniyor ve boyut
+`last_page * 4096` ile hesaplaniyor.
+**Dogrulama:** `mkswap -L TAKASETIKET` ile uretilen birimde etiket ve UUID
+`mkswap` ciktisiyla birebir eslesti.
+
+### 2. Arac cubugu baglamsal hale getirildi
+"Yeni goruntu" ve "Goruntu ac" arac cubugundan kaldirilip **Disk menusune**
+alindi (Dosya menusunde de duruyor). Arac cubugu artik yalnizca **secili disk
+veya bolum** uzerinde yapilabilecek islemleri tasiyor:
+
+`Yeni bolum · Bicimlendir · Bolumu sil | Bolumu yedekle · Bolume geri yukle |
+Silinmis dosyalari tara · Kayip bolumleri tara | Bolumu guvenli sil |
+Disk bilgisi · Yenile`
+
+### 3. Coklu goruntu destegi
+Onceden yeni bir goruntu acildiginda onceki kapaniyordu. Artik birden fazla
+goruntu/disk ayni anda acik kalir ve sol agacta **alt alta** listelenir.
+
+- `MainWindow.sessions: List[DiskSession]` — tum acik oturumlar,
+  `session` bunlardan **etkin** olani.
+- Her oturum agacta ayri kok: `ad — boyut — sema [salt okunur]`; etkin olan
+  **kalin** ve genisletilmis.
+- Agac ogeleri artik oturum kimligi tasiyor: `("part", (oturum_id, index))`.
+  Baska bir goruntunun bolumune tiklamak once o oturumu etkinlestirir.
+- Ayni dosya ikinci kez acilirsa yeni oturum acilmaz, mevcut olan one getirilir.
+- Sag tik > "Bu goruntuyu kapat" yalnizca o oturumu kapatir; digerleri kalir.
+- Pencere kapanisinda `close_all()` hepsini kapatir.
+
+**Dogrulama:** `tests/ui_smoke.py` icine senaryo eklendi — ikinci goruntu
+acildiktan sonra `len(sessions) == 2` ve agacta uc kok (fiziksel diskler +
+iki goruntu) bulunuyor; ekran goruntusu `15-coklu-goruntu.png`.
+
+### Durum
+`tests.run_all` 15/15 · `tests.platform_check` 0 bulgu · duman testi 15 goruntu.
+
+---
+
+## 2026-09-13 (sekizinci oturum) — Sekiz dosya sistemi saf Python
+
+Kullanici DiskGenius'un bicimlendirme ekranini gosterdi (8 bicim) ve bizdeki
+listenin Windows'ta 4'e dustugunu belirtti: *"3 platformda da calisacak"*.
+
+### Arastirma (kullanicinin onerisiyle)
+KDE Partition Manager ve GParted incelendi: **ikisi de kendi bicimlendiricisini
+yazmiyor**, harici `mkfs.*` cagiriyorlar. Yani saf Python yaklasimimiz bu
+araclarin otesinde. NTFS'in tek acik referansi `ntfsprogs/mkntfs.c`.
+
+### Yapilanlar
+1. **Arayuz:** bicimlendirme listesi artik tum bicimleri gosteriyor;
+   kullanilamayanlar gri ve yaninda nedeni yaziyor (`all_kinds`).
+2. **`core/ext.py`** (yeni): ext2/ext3/ext4 saf Python — uc hata bulunup
+   duzeltildi (resize_inode bayragi, dis gunluk isareti, gunluk yazim sirasi).
+   `fsck` temiz, Pop!_OS cekirdegi uctü de **bagladi**.
+3. **`core/ntfs.py`** (yeni): NTFS saf Python — bes hata bulunup duzeltildi
+   (dizin siralamasi, sira numaralari, oznitelik kimlikleri, rezerve kayitlarda
+   $FILE_NAME, $Bad kosusu). `ntfsinfo`/`ntfsfix` temiz; Windows `chkdsk`
+   Asama 1 temiz, Asama 2'de `$Extend` alt yapilari eksik.
+4. `_ntfs_data.py`: $AttrDef gomulu; $UpCase Python'dan uretilip 244 istisnayla
+   duzeltiliyor — sonuc `mkfs.ntfs` ile **birebir ayni**, kaynak 3,5 KB.
+
+Ayrinti: [ADR 0017](../decisions/0017-saf-python-ext-ve-ntfs.md)
+
+### NTFS tamamlandi — uc katmanli strateji (ADR 0018)
+Kullanicinin sorusu (*"ntfs-3g kullanmak yeterli olmuyor mu?"*) dogru yeri
+isaret etti. Olculdu:
+- Linux'ta `mkfs.ntfs` + `libntfs-3g.so` **zaten vardi** ve kullaniliyordu.
+- Windows'ta ntfs-3g **yok** (resmi derleme yok), ama `Format-Volume` **var**.
+
+Cozum: NTFS icin oncelik sirasi — (1) isletim sisteminin kendi araci,
+(2) harici `mkfs.*`, (3) saf Python. `session._try_native_format()` fiziksel
+disklerde Windows'un bicimlendiricisini cagirir; basarisizsa alt katmana duser.
+
+**Win10 dogrulamasi:**
+```
+Get-Volume E:  ->  FileSystem: NTFS, Label: DUNTFS, Healthy
+chkdsk E:      ->  "Windows has scanned the file system and found no problems."
+```
+
+### Durum
+`tests.run_all` **17/17** · `platform_check` 0 bulgu.
+Sekiz dosya sistemi de uc platformda olusturulabiliyor.
+
+## 2026-09-14 — Tema kaldirma, fiziksel diskler, salt-okunur teshisi
+
+### Tema kaldirildi
+Kullanici geri bildirimi: *"temayi simdilik kaldir bazi seyler belli olmuyor."*
+`ui/theme.py` icindeki `STYLESHEET` **uygulanmiyor**; sistem paleti kullaniliyor.
+Renk gereken yerlerde `theme.palette_color(widget, role)` cagriliyor, boylece
+koyu/acik temada da okunur kaliyor. Tema secimi ileride ayri bir bolum olacak.
+
+### Kapsam genislemesi — fiziksel diskler
+Uygulama artik yalnizca goruntu dosyasi degil, **sistemdeki tum diskleri** listeler
+(`core/physical.py`). Alti katmanli yazma guvenligi: listeleme serbest → varsayilan
+salt okunur → `confirm=True` → `allow_system=True` → bilgi eksikse **reddet**.
+Sistem diskinde sari unlem yerine isletim sistemi amblemi gosteriliyor
+(`theme.os_icon()`).
+
+### Cok oturumlu agac
+Birden fazla `.img` acildiginda sonuncusu digerlerini eziyordu. `MainWindow.sessions`
+listesi eklendi; her oturum agacta kendi kokunu alir. Ayni dosyanin iki kez acilmasini
+onlemek icin `_yol_anahtari()` → `realpath` + `normpath` + `normcase`.
+
+### Duzeltme: swap etiketi bozuk karakter
+Gercek bir Debian ARM goruntusunde "Bolum 2" etiketi bozuk cikiyordu. Neden:
+`fsdetect._swap()` etiketi **1040** ofsetinden okuyordu; orasi UUID'nin ortasi.
+Dogru ofset **1052** (`sws_volume`). Ayrica ASCII disi etiketler atiliyor.
+
+### Salt okunur acilma teshisi (kullanici bildirimi)
+*"Goruntu salt okunur acildi"* uyarisinin nedeni belirsizdi. Kullanici kaynagi buldu:
+**ayni sanal diski once DiskGenius ile acmis**, DiskGenius dosyayi kilitli tutuyor.
+
+Iki kusur duzeltildi:
+1. `image.py` icindeki kilit dali yalnizca `OSError.winerror in (32, 33)` bakiyordu,
+   ama Windows bu hatayi **`PermissionError` olarak** firlatir — dal hic calismiyordu.
+   Artik `except PermissionError` once yakalaniyor, neden `_readonly_nedeni()` ile
+   uc duruma ayriliyor: kilitli / salt okunur isaretli / erisim reddedildi.
+2. `session.readonly_reason` fiziksel disk, bicim kisiti (VDI, QCOW2, seyrek VMDK) ve
+   dosya duzeyi nedenleri ayirir. GUI tarafinda acilista neden gosterilir; kilit
+   durumunda **"Yeniden dene"** dugmesi sunulur (diger program kapatilip yeniden
+   denenebilsin diye). Durum cubugunda `🔒 SALT OKUNUR`, yazma islemleri menude pasif.
+
+Dogrulama (Linux): oznitelik → "salt okunur isaretli", normal → yazilabilir,
+`readonly=True` → "salt okunur acilmasi istendi".
+
+### Durum
+`tests.run_all` **17/17** · `platform_check` 0 bulgu · `ui_smoke` gecti.
+
+## 2026-09-14 (2) — Bolum boyutlandirma / tasima
+
+Kullanici DiskGenius'un "Bolumu Boyutlandir" penceresini ornek gostererek
+**fareyle surukleyerek** boyutlandirma istedi.
+
+### Cekirdek: `core/resize.py` (yeni)
+- `window_for()` — bolumun komsu bos alanlarla birlikte kapsayici alani.
+- `fs_resize_info()` — dosya sisteminin **asgari** (veri) ve **azami** (bicim)
+  sektor sinirlari. Sinir disi istek plan asamasinda **reddedilir**.
+- `fat_resize()` — FAT12/16/32. Buyutmede FAT tablosu buyudugu icin kok dizin +
+  veri bolgesi `num_fats × fark` sektor ileri kaydirilir; kume numaralari
+  degismedigi icin FAT icerigi oldugu gibi tasinir. Kucultmede yerlesim korunur,
+  veri kopyalanmaz.
+- `exfat_resize()` — ayni kaydirma FAT bolgesi icin; ayirma bitmap'i gerekirse
+  **en dusuk** bos ardisik alana tasinir (bkz. asagidaki hata).
+- `apply_resize()` — sira: kucultmede once FS, buyutmede once tablo; tasimada
+  cakisma yonune gore ileri/geri kopyalama.
+- `_patch_partition_offset()` — tasima sonrasi FAT/NTFS `BPB_HiddSec` (ofset 28),
+  exFAT `PartitionOffset` (ofset 64) + saglama, NTFS'in son sektordeki yedek
+  onyukleme kopyasi.
+
+`session.resize_window/resize_info/plan_resize/resize_partition` eklendi.
+`resize_partition` **`confirm=True` olmadan calismaz**. Fiziksel disklerde once
+`platform.windows_resize_partition` (`Resize-Partition`) denenir — NTFS/ext saf
+Python'da boyutlandirilamadigi icin (ADR 0018'deki uc katmanli strateji).
+
+### Arayuz
+- `ui/widgets/resize_bar.py` — suruklenebilir serit. Sol tutamak bolumu tasir,
+  sag tutamak boyutlandirir, govde suruklemesi kaydirir. Ok tuslari ince ayar
+  (Shift ile 16 kat). Her deger hizalama birimine yuvarlanir; surukleyerek
+  hizasiz bolum uretilemez.
+- `ui/dialogs/resize.py` — serit + "Yeni Kapasite / Baslangic-Bitis Kesimi /
+  Onundeki-Arkasindaki Bosluk" kutulari, cift yonlu bagli. Pencere hicbir sey
+  yazmaz, yalnizca istenen yerlesimi dondurur.
+- Bolum menusu, arac cubugu ve sag tik menusune "Bolumu boyutlandir..." eklendi.
+
+### Hatalar ve duzeltmeleri
+- **FAT32 FSInfo bos kume sayaci bayat kaldi** (`fsck.vfat`: "Free cluster
+  summary wrong"). Neden: `flush()` yalnizca FAT onbellegi kirliyse
+  `_update_fsinfo()` cagiriyor; buyutme yolunda onbellek hic yuklenmiyordu.
+  Duzeltme: her iki yolda da `_update_fsinfo()` acikca cagriliyor.
+- **exFAT bitmap'i birimi kilitledi.** Bitmap buyudugunde **en yuksek** bos
+  alana tasiniyordu; bu, "en yuksek kullanilan kume" degerini tavana cakti ve
+  birim bir daha kucultulemez oldu. Duzeltme: en dusuk bos ardisik alan.
+- **Diyalogda kutular ust uste bindi.** `QFormLayout` satirlarinin "en kucuk"
+  yuksekligi tercih edilenden dusuk; pencere kucultulunce kutular eziliyordu.
+  Duzeltme: `QLayout.SetMinimumSize` + dikey kucultmenin kapatilmasi.
+
+### Dogrulama
+- FAT32 200 MB → 80 MB → 450 MB → +100 MB tasima: `fsck.vfat` rc=0.
+- exFAT 200 MB → 100 MB → 800 MB → 300 MB → tasima: `fsck.exfat` rc=0.
+- GPT'de tasima+buyutme sonrasi bolum GUID'i korunuyor.
+- Guvenlik kapilari test ediliyor: asgari sinir, disk siniri, onaysiz cagri.
+
+### Durum
+`tests.run_all` **18/18** · `platform_check` 0 bulgu · `ui_smoke` gecti.
+Karar kaydi: `.claude/decisions/0019-bolum-boyutlandirma.md`.

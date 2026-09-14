@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Disk goruntuleri ve test ciktilari (depoya girmez)
+*.img
+*.raw
+*.dd
+*.dub
+*.vhd
+*.vdi
+*.vmdk
+*.qcow2
+.tmp/
+
+# Isletim sistemi artiklari
+System Volume Information/
+.DS_Store
+Thumbs.db
+desktop.ini
