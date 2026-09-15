@@ -55,9 +55,9 @@ Yazma su durumlarda **acikca reddedilir** — yanlis yazip birimi bozmamak icin:
 | `bigalloc`, `inline_data` | Farkli tahsis/yerlesim kurallari |
 | `64bit` **ve** birim > 4 milyar blok | Blok numarasi 32 biti asar |
 | Dolu bir **extent** dizinine yeni blok gerekmesi | Extent agaci buyutme yok |
-| Tek dosya > ~4 MB (4 KB blokta) | Cok katli dolayli blok yok |
 
 Desteklenen: `metadata_csum` (CRC-32C saglamalar), `64bit` (kucuk birimlerde),
+**tek / cift / uc kat dolayli blok** (4 KB blokta ~4 TB'lik tek dosya),
 extent'li dizinlere var olan bloklar icinde giris ekleme, extent'li dosyalari
 silme.
 

@@ -1935,3 +1935,51 @@ minor surumu fazlasiyla hak ediyor:
 ### Dogrulama
 `run_all` 18/18 · `platform_check` 0 bulgu · `ui_smoke` gecti ·
 belge ici baglantilar 0 kirik.
+
+---
+
+## 2026-09-15 (21) — ext: cok katli dolayli blok (4 MB -> 4 TB)
+
+### Neden oncelikliydi
+Yazici yalnizca 12 dogrudan + **tek kat** dolayli blok kuruyordu: 4 KB blokta
+~4 MB. Yani normal boyutta bir dosya (video, ISO, yedek) ext'e **yazilamiyordu**.
+Kullaniciya en cok dokunan sinir buydu.
+
+### Yapilanlar
+- `_store_data` artik **tek / cift / uc kat** dolayli blok kuruyor.
+  `i_block[12]`, `[13]`, `[14]` sirasiyla doldurulur; dolayli tablolar da
+  tahsis edilir ve `i_blocks` sayacina dahil edilir.
+- `_release_data` simetrik olarak **tablolari da** serbest birakiyor. Yalnizca
+  veri bloklarini birakmak tablolari sizdirip disk alanini kaybettirirdi.
+- **Toplu tahsis** (`alloc_blocks` / `free_blocks`): onceki `alloc_block()` her
+  cagrida bitmap'i okuyup yaziyordu; 60 MB'lik bir dosya icin bu 15 binden fazla
+  okuma-yazma demekti. Artik her grubun bitmap'i **bir kez** okunur, gereken
+  bitler toplu isaretlenir, **bir kez** yazilir. Kismi tahsis birakilmaz:
+  yetersizse alinanlar geri verilir.
+
+Okuyucu zaten cift/uc kati destekliyordu; degisiklik yalnizca yazma tarafinda.
+
+### Dogrulama
+`ext_write_check`e 8 MB'lik dosya adimi eklendi (cift kati zorlar) — **4/4**,
+tum kosum 6 saniye.
+
+Ayrica 60 MB'lik gercek dosya denemesi:
+```
+azami eslenebilir boyut: 4100.0 GB
+60 MB yazildi: 0.2 s
+e2fsck rc=0
+geri okundu sha256 783695af90d3cb759fe10594
+kaynak      sha256 783695af90d3cb759fe10594   AYNI
+cekirdek    sha256 783695af90d3cb759fe10594   (mount -o ro,loop)
+```
+
+Yani dosya hem bizim okuyucumuz hem **Linux cekirdegi** tarafindan birebir
+ayni okunuyor.
+
+### Kalan ext sinirlari
+- Extent agaci **buyutme** yok (dolu extent dizinine yeni blok).
+- `bigalloc`, `inline_data` reddedilir.
+
+### Dogrulama ozeti
+Windows: `run_all` 18/18 · `platform_check` 0 bulgu.
+Linux: `ext_write_check` 4/4 · 60 MB dosya e2fsck temiz + cekirdek dogrulamasi.

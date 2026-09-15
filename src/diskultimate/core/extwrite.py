@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import struct
 import time
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from .extcsum import (DIRENT_TAIL_FT, DIRENT_TAIL_SIZE, GD_CHECKSUM_OFFSET,
                       INODE_CSUM_HI, INODE_CSUM_LO, SB_CHECKSUM_OFFSET,
@@ -225,6 +225,71 @@ class ExtWriter:
         else:
             buf[index >> 3] &= ~(1 << (index & 7)) & 0xFF
 
+    def alloc_blocks(self, count: int) -> List[int]:
+        """`count` adet blok **tek taramada** tahsis eder.
+
+        `alloc_block()` her cagrida bitmap'i okuyup yaziyordu; 100 MB'lik bir
+        dosya icin bu 25 binden fazla okuma-yazma demekti ve kabul edilemez
+        yavasti. Burada her grubun bitmap'i **bir kez** okunur, gereken bitler
+        toplu isaretlenir ve **bir kez** yazilir.
+        """
+        if count <= 0:
+            return []
+        fs = self.fs
+        out: List[int] = []
+        for group in range(fs.group_count):
+            if len(out) >= count:
+                break
+            free_in_group = self._gd_get(group, 0x0C)
+            if free_in_group == 0 or not self._group_usable(group, inode_map=False):
+                continue
+            bmp_block = self._bitmap_block(group, inode_map=False)
+            bmp = self._read_block(bmp_block)
+            first = fs.first_data_block + group * fs.blocks_per_group
+            last = min(first + fs.blocks_per_group, fs.blocks_count)
+            taken = 0
+            for i in range(last - first):
+                if len(out) >= count:
+                    break
+                if not self._bit_get(bmp, i):
+                    self._bit_set(bmp, i, True)
+                    out.append(first + i)
+                    taken += 1
+            if taken:
+                self._write_block(bmp_block, bmp)
+                self._refresh_bitmap_csum(group, inode_map=False)
+                self._bump_free_blocks(group, -taken)
+        if len(out) < count:
+            # Kismi tahsis birakilmaz: alinanlar geri verilir.
+            self.free_blocks(out)
+            raise ExtError(f"Bos blok yetersiz: {count} istendi, "
+                           f"{len(out)} bulundu")
+        return out
+
+    def free_blocks(self, blocks: List[int]) -> None:
+        """Blok listesini **grup basina tek yazimla** serbest birakir."""
+        if not blocks:
+            return
+        fs = self.fs
+        by_group: Dict[int, List[int]] = {}
+        for b in blocks:
+            if b <= 0 or b >= fs.blocks_count:
+                continue
+            g = (b - fs.first_data_block) // fs.blocks_per_group
+            by_group.setdefault(g, []).append(b)
+        for group, items in by_group.items():
+            bmp_block = self._bitmap_block(group, inode_map=False)
+            bmp = self._read_block(bmp_block)
+            released = 0
+            for b in items:
+                index = (b - fs.first_data_block) % fs.blocks_per_group
+                if self._bit_get(bmp, index):
+                    self._bit_set(bmp, index, False)
+                    released += 1
+            if released:
+                self._write_block(bmp_block, bmp)
+                self._refresh_bitmap_csum(group, inode_map=False)
+                self._bump_free_blocks(group, +released)
     def alloc_block(self) -> int:
         """Bos bir veri blogu tahsis eder ve numarasini dondurur."""
         fs = self.fs
@@ -362,36 +427,78 @@ class ExtWriter:
     # ------------------------------------------------------------------
     # Veri yerlesimi (dogrudan + tek kat dolayli)
     # ------------------------------------------------------------------
+    def _per_table(self) -> int:
+        """Bir dolayli blogun tasidigi isaretci sayisi."""
+        return self.bs // 4
+
     def _max_bytes(self) -> int:
-        return (12 + self.bs // 4) * self.bs
+        """Dogrudan + tek/cift/uc kat dolayli ile eslenebilen azami boyut."""
+        n = self._per_table()
+        return (12 + n + n * n + n * n * n) * self.bs
 
     def _store_data(self, data: bytes) -> Tuple[List[int], int]:
-        """Veriyi bloklara yazar; (i_block girdileri, 512'lik sektor sayisi)."""
+        """Veriyi bloklara yazar; (i_block girdileri, 512'lik sektor sayisi).
+
+        ext2/3 yerlesimi: 12 dogrudan blok, sonra tek / cift / uc kat dolayli.
+        4 KB blokta tek kat ~4 MB'a, cift kat ~4 GB'a kadar gider. Dolayli
+        tablolar da yer kaplar ve `i_blocks` sayacina dahildir.
+        """
         bs = self.bs
         if len(data) > self._max_bytes():
             raise ExtError(
-                f"Bu surumde en fazla {self._max_bytes() // 1024} KB'lik dosya "
-                "yazilabilir (yalnizca dogrudan ve tek kat dolayli blok).")
+                f"Dosya cok buyuk: en fazla {self._max_bytes() >> 30} GB")
         needed = (len(data) + bs - 1) // bs
-        data_blocks = [self.alloc_block() for _ in range(needed)]
+        if needed == 0:
+            return [0] * 15, 0
+
+        # Tum veri bloklari tek seferde tahsis edilir: blok basina bitmap
+        # okuyup yazmak buyuk dosyalarda kabul edilemez yavaslikta.
+        data_blocks = self.alloc_blocks(needed)
         for i, blk in enumerate(data_blocks):
             chunk = data[i * bs:(i + 1) * bs]
             self._write_block(blk, chunk.ljust(bs, b"\x00"))
 
-        i_block = data_blocks[:12] + [0, 0, 0]
-        block_total = needed
-        if needed > 12:
-            ind = self.alloc_block()
-            block_total += 1
-            table = bytearray(bs)
-            for i, blk in enumerate(data_blocks[12:]):
-                struct.pack_into("<I", table, i * 4, blk)
-            self._write_block(ind, table)
-            i_block = data_blocks[:12] + [ind, 0, 0]
-        return i_block, block_total * (bs // 512)
+        i_block = [0] * 15
+        i_block[:min(12, needed)] = data_blocks[:12]
+        meta = 0
+        rest = data_blocks[12:]
+        n = self._per_table()
 
+        def write_table(pointers: List[int]) -> int:
+            """Isaretcileri bir dolayli bloga yazar, blok numarasini dondurur."""
+            nonlocal meta
+            blk = self.alloc_blocks(1)[0]
+            meta += 1
+            table = bytearray(bs)
+            for j, p in enumerate(pointers[:n]):
+                struct.pack_into("<I", table, j * 4, p)
+            self._write_block(blk, table)
+            return blk
+
+        if rest:                                    # tek kat dolayli
+            i_block[12] = write_table(rest[:n])
+            rest = rest[n:]
+        if rest:                                    # cift kat dolayli
+            inner = [write_table(rest[i:i + n])
+                     for i in range(0, min(len(rest), n * n), n)]
+            i_block[13] = write_table(inner)
+            rest = rest[n * n:]
+        if rest:                                    # uc kat dolayli
+            middle = []
+            for i in range(0, len(rest), n * n):
+                part = rest[i:i + n * n]
+                inner = [write_table(part[j:j + n])
+                         for j in range(0, len(part), n)]
+                middle.append(write_table(inner))
+            i_block[14] = write_table(middle)
+
+        return i_block, (needed + meta) * (bs // 512)
     def _release_data(self, node: ExtInode) -> None:
-        """Inode'un tuttugu tum bloklari serbest birakir."""
+        """Inode'un tuttugu tum bloklari serbest birakir.
+
+        Dolayli tablolar da serbest birakilir: yalnizca veri bloklarini
+        birakmak, tablolari sizdirip disk alanini kaybettirir.
+        """
         if node.uses_extents:
             # Extent'li bir inode silinebilir: agaci **okuyup** bloklarini
             # birakmak yeterlidir, agaci degistirmek gerekmez.
@@ -399,18 +506,38 @@ class ExtWriter:
                 for b in range(physical, physical + length):
                     self.free_block(b)
             return
-        direct = list(struct.unpack_from("<12I", node.raw_block, 0))
-        ind = struct.unpack_from("<I", node.raw_block, 48)[0]
-        for b in direct:
-            if b:
-                self.free_block(b)
+
+        n = self._per_table()
+        free = []
+
+        def read_table(block: int) -> List[int]:
+            table = self._read_block(block)
+            return [struct.unpack_from("<I", table, i * 4)[0] for i in range(n)]
+
+        free.extend(b for b in struct.unpack_from("<12I", node.raw_block, 0) if b)
+        ind, dind, tind = struct.unpack_from("<III", node.raw_block, 48)
+
         if ind:
-            table = self._read_block(ind)
-            for i in range(self.bs // 4):
-                b = struct.unpack_from("<I", table, i * 4)[0]
-                if b:
-                    self.free_block(b)
-            self.free_block(ind)
+            free.extend(b for b in read_table(ind) if b)
+            free.append(ind)
+        if dind:
+            for mid in read_table(dind):
+                if mid:
+                    free.extend(b for b in read_table(mid) if b)
+                    free.append(mid)
+            free.append(dind)
+        if tind:
+            for outer in read_table(tind):
+                if not outer:
+                    continue
+                for mid in read_table(outer):
+                    if mid:
+                        free.extend(b for b in read_table(mid) if b)
+                        free.append(mid)
+                free.append(outer)
+            free.append(tind)
+
+        self.free_blocks(free)
 
     # ------------------------------------------------------------------
     # Dizin girisleri

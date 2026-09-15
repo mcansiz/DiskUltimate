@@ -98,6 +98,13 @@ def kosum(version: str) -> None:
         w.flush()
         _fsck(path, "dolayli blok")
 
+        # 3b) cok katli dolayli blok: 4 KB blokta tek kat ~4 MB'da biter,
+        #     cift kat ~4 GB'a kadar gider. 8 MB'lik dosya cift kati zorlar.
+        very_large = bytes(range(256)) * (8 * 1024 * 4)      # 8 MB
+        w.write_file("/veri/cok_buyuk.bin", very_large)
+        w.flush()
+        _fsck(path, "cift kat dolayli (8 MB)")
+
         # 4) uzun adli dosya
         uzun = "Cok Uzun Bir Dosya Adi Ornegi 2026 - deneme.bin"
         w.write_file(f"/veri/{uzun}", b"x" * 5000)
@@ -116,6 +123,8 @@ def kosum(version: str) -> None:
             raise Basarisiz("kucuk dosya geri okumada farkli")
         if fs2.read_data(fs2.resolve("/veri/buyuk.bin")) != buyuk:
             raise Basarisiz("dolayli bloklu dosya geri okumada farkli")
+        if fs2.read_data(fs2.resolve("/veri/cok_buyuk.bin")) != very_large:
+            raise Basarisiz("cift kat dolayli dosya geri okumada farkli")
         adlar = {e.name for e in fs2.read_dir(fs2.resolve("/veri"))}
         if uzun not in adlar:
             raise Basarisiz("uzun ad listelenmedi")
@@ -132,6 +141,7 @@ def kosum(version: str) -> None:
             w.remove(f"/veri/dosya_{i:03d}.dat")
         w.remove(f"/veri/{uzun}")
         w.remove("/veri/buyuk.bin")
+        w.remove("/veri/cok_buyuk.bin")
         w.flush()
         _fsck(path, "dosya silme")
 

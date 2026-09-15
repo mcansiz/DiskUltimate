@@ -102,8 +102,8 @@ gecen ayri bir moddur.
 > yalnizca **Windows ve Linux** diyor.
 
 ### Bilinen sinirlar (yazma)
-- **ext:** extent agaci buyutme yok, cok katli dolayli blok yok (~4 MB ustu
-  tek dosya), `bigalloc`/`inline_data` reddedilir.
+- **ext:** extent agaci buyutme yok, `bigalloc`/`inline_data` reddedilir.
+  (Cok katli dolayli blok **eklendi**: dosya siniri ~4 MB'dan ~4 TB'a cikti.)
 - **NTFS:** B+ dugum bolme yok (dizin basina ~25-30 giris), sikistirilmis akis
   yok, `$ATTRIBUTE_LIST` yazimi yok.
 
