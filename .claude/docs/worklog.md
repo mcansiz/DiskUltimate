@@ -1648,3 +1648,82 @@ bayraktan **etkilenmez**.
 Linux: `run_all` **18/18** · `ext_write_check` 3/3 · `fs_matrix` 8/8 ·
 fiziksel ext4 e2fsck rc=0 + cekirdek baglama.
 Windows: `run_all` 18/18 · `platform_check` 0 bulgu.
+
+---
+
+## 2026-09-15 (16) — ext4 `metadata_csum` destegi
+
+### Once dogrulama, sonra yazma
+Yazmadan once hesaplarin dogrulugu kanitlandi. `core/crc32c.py` (saf Python
+CRC-32C, standart olcutlerle) ve `core/extcsum.py` yazildi; `verify_volume()`
+**hicbir sey yazmadan** var olan birimlerin saglamalarini bizim hesabimizla
+karsilastiriyor.
+
+Ilk kosumda ustblok, grup tanimlayici ve dizin bloklari tuttu; **inode ve
+bitmap tutmadi**. Ikisi de gercek hataydi:
+
+1. **Inode:** saglama zincirinde `i_extra_isize` alani (128..0x82) atlanmisti.
+   Cekirdek bu parcayi da karistiriyor. Eklendi.
+2. **Bitmap:** `BLOCK_UNINIT`/`INODE_UNINIT` gruplarda bitmap **diskte
+   tutulmaz**, cekirdek onu uretir; diskteki baytlarla karsilastirmak
+   anlamsizdi. Dogrulama bu gruplari atliyor, yazici da tahsis icin onlari
+   kullanmiyor.
+
+Duzeltmelerden sonra **iki gercek birimde de her saglama tuttu**:
+
+| Birim | ustblok | grup td. | bitmap | inode | dizin blogu |
+|---|---|---|---|---|---|
+| `sdcard.img` (csum_seed ozellikli) | 1/1 | 8/8 | 7/7 | 393/393 | 60/60 |
+| Mint kok `/dev/sda3` (UUID tohumlu) | 1/1 | 476/476 | 437/437 | 10/10 | 60/60 |
+
+Her iki tohum turevi de (ustblokta saklanan `s_checksum_seed` ve UUID'den
+hesaplanan) dogru calisiyor.
+
+### Yazma tarafi
+`ExtWriter` artik her degisiklikte ilgili saglamayi tazeliyor: ustblok, grup
+tanimlayici, iki bitmap, inode (`_patch_inode` tek alan degisse bile tum kaydi
+yeniden damgalar) ve **dizin blogu kuyrugu** (`ext4_dir_entry_tail`).
+
+Ek olarak:
+- `64bit` artik tek basina engel degil — yalnizca blok numarasi 32 biti asarsa
+  reddedilir. Bitmap blok numaralari yuksek yariyla okunuyor.
+- **Extent kullanan dizinler** okunabiliyor: var olan bloklara giris eklemek
+  agaci degistirmez. Dizine yeni blok gerekirse acikca reddediliyor.
+- **Extent kullanan dosyalar** silinebiliyor (bloklari birakiliyor).
+- `bg_itable_unused` tahsiste sifirlaniyor.
+
+### Yakalanan kusur
+Ilk denemede `e2fsck` "directory passes checks but fails checksum" dedi. Neden:
+`dir_add`/`dir_remove`/`mkdir` icindeki uc yazma yeri hala `_write_block`
+kullaniyordu (degisken adi `blk` oldugu icin toplu degistirme kacirmisti), yani
+kuyruk saglamasi hic guncellenmiyordu. Uc yer de `_write_dir_block`'a baglandi.
+Hata, blogu yazip saglamayi karsilastiran kucuk bir tani betigiyle bulundu.
+
+### Dogrulama
+`tests/ext_write_check.py` genisletildi — **4/4**:
+```
+ext2 ... TAMAM        ext4 ... TAMAM
+ext3 ... TAMAM        metadata_csum (mkfs.ext4) ... TAMAM
+```
+`mkfs.ext4` ciktisi `metadata_csum + 64bit + extent + flex_bg` tasir; gercek
+dunyada karsilasilan yerlesim budur.
+
+**Kullanicinin kartinin kopyasi uzerinde uctan uca:**
+```
+Bolum 2 (ext4) yazilabilir=True
+once kok: 19 giris -> sonra kok: 21 giris
+e2fsck: temiz (cikis 0)
+cekirdek ile baglandi: DISKULTIMATE.txt ve du_deneme/veri.bin okundu
+```
+
+Orijinal kart dosyasina **dokunulmadi**; islem kopya uzerinde yapildi.
+
+### Kalan
+- Extent agaci **buyutme** (dolu bir extent dizinine yeni blok eklemek).
+- Cok katli dolayli blok (4 MB ustu dosya).
+- `bigalloc`, `inline_data`.
+- NTFS okuma/yazma.
+
+### Dogrulama ozeti
+Linux: `ext_write_check` 4/4 · `run_all` 18/18 · `fs_matrix` 8/8.
+Windows: `run_all` 18/18 · `platform_check` 0 bulgu.

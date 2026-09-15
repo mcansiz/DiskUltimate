@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from diskultimate.core.ext import format_ext  # noqa: E402
 from diskultimate.core.extread import ExtFS  # noqa: E402
+from diskultimate.core.extcsum import verify_volume  # noqa: E402
 from diskultimate.core.extwrite import ExtWriter  # noqa: E402
 from diskultimate.core.image import DiskImage, PartitionView  # noqa: E402
 from diskultimate.paths import scratch  # noqa: E402
@@ -153,6 +154,111 @@ def kosum(version: str) -> None:
                 pass
 
 
+class _HamDosya:
+    """Ham goruntu dosyasi uzerinde `BlockDevice` benzeri erisim."""
+
+    sector_size = 512
+    readonly = False
+
+    def __init__(self, path):
+        self.fh = open(path, "r+b")
+        self.fh.seek(0, 2)
+        self._n = self.fh.tell()
+
+    @property
+    def size(self):
+        return self._n
+
+    @property
+    def sector_count(self):
+        return self._n // 512
+
+    def read(self, off, n):
+        self.fh.seek(off)
+        return self.fh.read(n)
+
+    def write(self, off, data):
+        self.fh.seek(off)
+        self.fh.write(data)
+
+    def flush(self):
+        self.fh.flush()
+
+    def close(self):
+        self.fh.close()
+
+
+def kosum_mkfs() -> None:
+    """`mkfs.ext4` ile uretilen birime yazar - **metadata_csum yolu**.
+
+    Kendi bicimlendiricimiz metadata_csum acmaz, bu yuzden o yol yalnizca
+    gercek `mkfs.ext4` ciktisinda sinanabilir. Uretilen birim ayrica `64bit`,
+    `extent` ve `flex_bg` tasir; gercek dunyada karsilasilan yerlesim budur
+    (kullanicinin SD kartinin ext4 bolumu de boyledir).
+    """
+    tool = shutil.which("mkfs.ext4")
+    if not tool:
+        raise Basarisiz("mkfs.ext4 bulunamadi - metadata_csum yolu sinanamaz")
+    path = os.path.join(TMP, "mkfs.img")
+    with open(path, "wb") as fh:
+        fh.truncate(PART_MB * MIB)
+    r = subprocess.run([tool, "-q", "-F", "-L", "CSUMTEST", path],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        raise Basarisiz("mkfs.ext4 basarisiz: " + r.stderr[:200])
+
+    def fsck_tam(adim):
+        e2 = shutil.which("e2fsck")
+        rr = subprocess.run([e2, "-nf", path], capture_output=True, text=True)
+        if rr.returncode != 0:
+            raise Basarisiz("[%s] e2fsck rc=%d\n%s"
+                            % (adim, rr.returncode,
+                               (rr.stdout + rr.stderr)[:700]))
+
+    dev = _HamDosya(path)
+    try:
+        fs = ExtFS(dev)
+        rapor = verify_volume(fs, max_inodes=64, max_dirs=10)
+        if not rapor.get("metadata_csum"):
+            raise Basarisiz("mkfs.ext4 metadata_csum acmadi; test anlamsiz")
+        for alan in ("ustblok", "grup_tanimlayici", "bitmap", "inode",
+                     "dizin_blogu"):
+            yanlis = rapor.get(alan, (0, 0))[1]
+            if yanlis:
+                raise Basarisiz("saglama hesabi yanlis: %s (%d hata)"
+                                % (alan, yanlis))
+
+        w = ExtWriter(fs)
+        ok, reason = w.write_support()
+        if not ok:
+            raise Basarisiz("metadata_csum birimde yazma reddedildi: " + reason)
+        fsck_tam("baslangic")
+        w.write_file("/okubeni.txt", b"metadata_csum ile yazma\n")
+        w.mkdir("/veri")
+        w.write_file("/veri/buyuk.bin", bytes(range(256)) * 512)
+        for i in range(40):
+            w.write_file("/veri/d_%02d.dat" % i, b"x" * (100 + i))
+        w.flush()
+        fsck_tam("yazma")
+        w.rename("/okubeni.txt", "okundu.txt")
+        w.flush()
+        fsck_tam("rename")
+        for i in range(40):
+            w.remove("/veri/d_%02d.dat" % i)
+        w.remove("/veri/buyuk.bin")
+        w.remove("/veri")
+        w.remove("/okundu.txt")
+        w.flush()
+        fsck_tam("silme")
+    finally:
+        dev.close()
+        if os.environ.get("DISKULTIMATE_KEEP_TEST_FILES") != "1":
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
+
+
 def main(argv) -> int:
     versions = [a for a in argv[1:]] or ["ext2", "ext3", "ext4"]
     print("=== ext yazma dogrulamasi (her adimda e2fsck -nf) ===\n")
@@ -170,7 +276,19 @@ def main(argv) -> int:
             print(" HATA")
             print(f"      {type(exc).__name__}: {exc}")
             hata += 1
-    print(f"\n{len(versions) - hata}/{len(versions)} surum dogrulandi")
+    if not argv[1:]:
+        # metadata_csum yolu yalnizca gercek mkfs.ext4 ciktisinda sinanabilir:
+        # kendi bicimlendiricimiz bu ozelligi acmaz.
+        print("  metadata_csum (mkfs.ext4) ...", end="", flush=True)
+        try:
+            kosum_mkfs()
+            print(" TAMAM")
+        except Basarisiz as exc:
+            print(" BASARISIZ")
+            print(f"      {exc}")
+            hata += 1
+        versions = versions + ["metadata_csum"]
+    print(f"\n{len(versions) - hata}/{len(versions)} kosum dogrulandi")
     return 1 if hata else 0
 
 

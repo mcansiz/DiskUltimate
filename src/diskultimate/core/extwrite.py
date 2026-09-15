@@ -10,12 +10,20 @@ bitmap'leri, grup tanimlayici sayaclari ve ustblok sayaclari **ayni anda**
 tutarli kalmalidir. Birim ayrica su ozellikleri tasiyorsa yazma daha da
 genisler ve bu surumde **reddedilir**:
 
-  * `metadata_csum` — her metaveri blogu CRC32c saglamasi tasir; yanlis saglama
-    `e2fsck` tarafindan bozukluk sayilir.
-  * `64bit` — 64 baytlik grup tanimlayicisi ve yuksek 32 bitlik alanlar.
   * `bigalloc`, `inline_data` — farkli tahsis/yerlesim kurallari.
-  * inode **extent** kullaniyorsa (ext4 varsayilani) — extent agaci degisikligi
-    ayri bir istir. Okuma extent'i destekler, yazma henuz desteklemez.
+  * `64bit` **yalnizca** birim 4 milyar bloktan buyukse (blok numarasi 32 biti
+    asarsa). Kucuk birimlerde 64bit sorun degildir.
+
+Desteklenenler:
+  * `metadata_csum` — ustblok, grup tanimlayici, inode, bitmap ve dizin blogu
+    saglamalari (CRC-32C) yazma sirasinda guncellenir (`extcsum.py`).
+  * **extent kullanan dizinler**: var olan bloklara giris eklenebilir/silinebilir
+    (agac degismez). Dizine yeni blok gerekirse acikca reddedilir.
+  * **extent kullanan dosyalar**: silinebilir (bloklari birakilir). Yeni
+    olusturulan dosyalar dolayli blok duzeni kullanir.
+
+Baslatilmamis (`BLOCK_UNINIT`/`INODE_UNINIT`) gruplar tahsis icin atlanir:
+bitmap'leri diskte tutulmaz, gerceklemek ayri bir istir.
 
 Reddetme sessiz degildir: `write_support()` nedeni metinle dondurur ve arayuz
 bunu kullaniciya gosterir. **Yanlis yazip bozmaktansa yazmamak yeglenir.**
@@ -29,6 +37,9 @@ import struct
 import time
 from typing import List, Optional, Tuple
 
+from .extcsum import (DIRENT_TAIL_FT, DIRENT_TAIL_SIZE, GD_CHECKSUM_OFFSET,
+                      INODE_CSUM_HI, INODE_CSUM_LO, SB_CHECKSUM_OFFSET,
+                      ExtChecksums)
 from .extread import (EXTENTS_FL, INO_ROOT, S_IFDIR, S_IFMT, S_IFREG,
                       ExtError, ExtFS, ExtInode, _normalize)
 
@@ -56,6 +67,7 @@ class ExtWriter:
         self.fs = fs
         self.dev = fs.dev
         self.bs = fs.block_size
+        self.csum = ExtChecksums(fs)
 
     # ------------------------------------------------------------------
     # Destek denetimi
@@ -66,14 +78,15 @@ class ExtWriter:
         if getattr(self.dev, "readonly", False):
             return False, "Kaynak salt okunur acildi."
         missing = []
-        if fs.ro_compat & RO_METADATA_CSUM:
-            missing.append("metadata_csum (CRC32c saglamalar)")
         if fs.ro_compat & RO_BIGALLOC:
             missing.append("bigalloc")
-        if fs.feature_incompat & INCOMPAT_64BIT:
-            missing.append("64bit")
         if fs.feature_incompat & INCOMPAT_INLINE_DATA:
             missing.append("inline_data")
+        if fs.feature_incompat & INCOMPAT_64BIT and fs.blocks_count > 0xFFFFFFFF:
+            # `64bit` ozelligi tek basina engel degil: sorun ancak blok numarasi
+            # 32 biti asarsa cikar. Saglamalar ve 64 baytlik grup tanimlayicisi
+            # desteklenir.
+            missing.append("64bit (4 milyar bloktan buyuk birim)")
         if missing:
             return False, (
                 "Bu birim su ozellikleri kullaniyor ve bu surumde yazma "
@@ -119,24 +132,87 @@ class ExtWriter:
     def _sb_set(self, field: int, value: int) -> None:
         self.dev.write(1024 + field, struct.pack("<I", value & 0xFFFFFFFF))
 
+    # --- saglamalar (metadata_csum) ------------------------------------
+    BG_FLAGS = 0x12
+    BG_BLOCK_UNINIT = 0x0002
+    BG_INODE_UNINIT = 0x0001
+
+    def _refresh_group_csum(self, group: int) -> None:
+        """Grup tanimlayicisinin saglamasini yeniden hesaplar."""
+        if not self.csum.enabled:
+            return
+        off = self._gd_offset(group)
+        desc = self.dev.read(off, self.fs.desc_size)
+        value = self.csum.group_desc(group, desc)
+        self.dev.write(off + GD_CHECKSUM_OFFSET, struct.pack("<H", value))
+
+    def _refresh_super_csum(self) -> None:
+        """Ustblok saglamasini yeniden hesaplar."""
+        if not self.csum.enabled:
+            return
+        sb = self.dev.read(1024, 1024)
+        value = self.csum.superblock(sb)
+        self.dev.write(1024 + SB_CHECKSUM_OFFSET, struct.pack("<I", value))
+
+    def _refresh_bitmap_csum(self, group: int, inode_map: bool) -> None:
+        """Bitmap saglamasini grup tanimlayicisina yazar."""
+        if not self.csum.enabled:
+            return
+        fs = self.fs
+        size = ((fs.inodes_per_group + 7) // 8) if inode_map             else (fs.blocks_per_group // 8)
+        block = self._bitmap_block(group, inode_map)
+        value = self.csum.bitmap(self.dev.read(block * self.bs, size))
+        off = self._gd_offset(group) + (0x1A if inode_map else 0x18)
+        self.dev.write(off, struct.pack("<H", value & 0xFFFF))
+        if fs.desc_size >= 64:
+            hi = self._gd_offset(group) + (0x3A if inode_map else 0x38)
+            self.dev.write(hi, struct.pack("<H", (value >> 16) & 0xFFFF))
+
+    def _group_usable(self, group: int, inode_map: bool) -> bool:
+        """Baslatilmamis gruplar tahsis icin kullanilmaz.
+
+        `BLOCK_UNINIT`/`INODE_UNINIT` gruplarda bitmap diskte tutulmaz; cekirdek
+        onu uretir. Boyle bir gruba yazmak icin once bitmap'i gerceklemek
+        gerekir. Bu surumde daha guvenli olan yol secildi: **baslatilmis
+        gruplar kullanilir**, digerleri atlanir.
+        """
+        if not self.csum.enabled:
+            return True
+        flags = struct.unpack("<H", self.dev.read(
+            self._gd_offset(group) + self.BG_FLAGS, 2))[0]
+        return not (flags & (self.BG_INODE_UNINIT if inode_map
+                             else self.BG_BLOCK_UNINIT))
+
     def _bump_free_blocks(self, group: int, delta: int) -> None:
         self._gd_set(group, 0x0C, self._gd_get(group, 0x0C) + delta)
         self._sb_set(0x0C, self._sb_get(0x0C) + delta)
         self.fs.free_blocks += delta
+        self._refresh_group_csum(group)
+        self._refresh_super_csum()
 
     def _bump_free_inodes(self, group: int, delta: int) -> None:
         self._gd_set(group, 0x0E, self._gd_get(group, 0x0E) + delta)
         self._sb_set(0x10, self._sb_get(0x10) + delta)
+        self._refresh_group_csum(group)
+        self._refresh_super_csum()
 
     def _bump_used_dirs(self, group: int, delta: int) -> None:
         self._gd_set(group, 0x10, self._gd_get(group, 0x10) + delta)
+        self._refresh_group_csum(group)
 
     # ------------------------------------------------------------------
     # Bitmap tahsisi
     # ------------------------------------------------------------------
     def _bitmap_block(self, group: int, inode_map: bool) -> int:
-        off = self._gd_offset(group) + (0x04 if inode_map else 0x00)
-        return struct.unpack("<I", self.dev.read(off, 4))[0]
+        """Bitmap blogunun numarasi (64bit birimlerde yuksek yari dahil)."""
+        base = self._gd_offset(group)
+        lo = struct.unpack("<I", self.dev.read(
+            base + (0x04 if inode_map else 0x00), 4))[0]
+        hi = 0
+        if self.fs.desc_size >= 64:
+            hi = struct.unpack("<I", self.dev.read(
+                base + (0x24 if inode_map else 0x20), 4))[0]
+        return (hi << 32) | lo
 
     @staticmethod
     def _bit_get(buf: bytearray, index: int) -> bool:
@@ -155,6 +231,8 @@ class ExtWriter:
         for group in range(fs.group_count):
             if self._gd_get(group, 0x0C) == 0:
                 continue
+            if not self._group_usable(group, inode_map=False):
+                continue
             bmp_block = self._bitmap_block(group, inode_map=False)
             bmp = self._read_block(bmp_block)
             first = fs.first_data_block + group * fs.blocks_per_group
@@ -163,6 +241,7 @@ class ExtWriter:
                 if not self._bit_get(bmp, i):
                     self._bit_set(bmp, i, True)
                     self._write_block(bmp_block, bmp)
+                    self._refresh_bitmap_csum(group, inode_map=False)
                     self._bump_free_blocks(group, -1)
                     return first + i
         raise ExtError("Bos blok kalmadi")
@@ -176,12 +255,15 @@ class ExtWriter:
         if self._bit_get(bmp, index):
             self._bit_set(bmp, index, False)
             self._write_block(bmp_block, bmp)
+            self._refresh_bitmap_csum(group, inode_map=False)
             self._bump_free_blocks(group, +1)
 
     def alloc_inode(self, is_dir: bool) -> int:
         fs = self.fs
         for group in range(fs.group_count):
             if self._gd_get(group, 0x0E) == 0:
+                continue
+            if not self._group_usable(group, inode_map=True):
                 continue
             bmp_block = self._bitmap_block(group, inode_map=True)
             bmp = self._read_block(bmp_block)
@@ -192,6 +274,13 @@ class ExtWriter:
                 if not self._bit_get(bmp, i):
                     self._bit_set(bmp, i, True)
                     self._write_block(bmp_block, bmp)
+                    self._refresh_bitmap_csum(group, inode_map=True)
+                    # bg_itable_unused: bu gruptaki "hic kullanilmamis kuyruk"
+                    # sayisidir. Kuyruga inode tahsis edince gecersizlesir;
+                    # guvenli olan 0 yazmaktir (e2fsck bunu kabul eder).
+                    if self.csum.enabled and self._gd_get(group, 0x1C):
+                        self._gd_set(group, 0x1C, 0)
+                        self._refresh_group_csum(group)
                     self._bump_free_inodes(group, -1)
                     if is_dir:
                         self._bump_used_dirs(group, +1)
@@ -206,6 +295,7 @@ class ExtWriter:
         if self._bit_get(bmp, index):
             self._bit_set(bmp, index, False)
             self._write_block(bmp_block, bmp)
+            self._refresh_bitmap_csum(group, inode_map=True)
             self._bump_free_inodes(group, +1)
             if was_dir:
                 self._bump_used_dirs(group, -1)
@@ -236,11 +326,37 @@ class ExtWriter:
             struct.pack_into("<I", raw, 0x6C, (size >> 32) & 0xFFFFFFFF)
         if self.fs.inode_size > 128:
             struct.pack_into("<H", raw, 0x80, 32)      # i_extra_isize
+        self._stamp_inode_csum(ino, raw)
         self.dev.write(self._inode_offset(ino), bytes(raw))
         self.fs._inode_cache.pop(ino, None)
 
+    def _stamp_inode_csum(self, ino: int, raw: bytearray) -> None:
+        """Inode kaydina saglamasini islemler (yerinde degistirir)."""
+        if not self.csum.enabled:
+            return
+        struct.pack_into("<H", raw, INODE_CSUM_LO, 0)
+        if len(raw) > INODE_CSUM_HI + 2:
+            struct.pack_into("<H", raw, INODE_CSUM_HI, 0)
+        lo, hi = self.csum.inode(ino, bytes(raw))
+        struct.pack_into("<H", raw, INODE_CSUM_LO, lo)
+        if hi >= 0:
+            struct.pack_into("<H", raw, INODE_CSUM_HI, hi)
+
     def _patch_inode(self, ino: int, field: int, fmt: str, value) -> None:
-        self.dev.write(self._inode_offset(ino) + field, struct.pack(fmt, value))
+        """Inode'un tek bir alanini degistirir ve saglamasini tazeler.
+
+        Tek alan degisse bile saglama tum kayit uzerinden hesaplandigi icin
+        yeniden damgalanmalidir; aksi halde `e2fsck` "inode checksum invalid"
+        der.
+        """
+        off = self._inode_offset(ino)
+        if not self.csum.enabled:
+            self.dev.write(off + field, struct.pack(fmt, value))
+        else:
+            raw = bytearray(self.dev.read(off, self.fs.inode_size))
+            struct.pack_into(fmt, raw, field, value)
+            self._stamp_inode_csum(ino, raw)
+            self.dev.write(off, bytes(raw))
         self.fs._inode_cache.pop(ino, None)
 
     # ------------------------------------------------------------------
@@ -277,7 +393,12 @@ class ExtWriter:
     def _release_data(self, node: ExtInode) -> None:
         """Inode'un tuttugu tum bloklari serbest birakir."""
         if node.uses_extents:
-            raise ExtError("Extent kullanan inode bu surumde silinemez")
+            # Extent'li bir inode silinebilir: agaci **okuyup** bloklarini
+            # birakmak yeterlidir, agaci degistirmek gerekmez.
+            for _logical, physical, length in self.fs._extent_blocks(node):
+                for b in range(physical, physical + length):
+                    self.free_block(b)
+            return
         direct = list(struct.unpack_from("<12I", node.raw_block, 0))
         ind = struct.unpack_from("<I", node.raw_block, 48)[0]
         for b in direct:
@@ -295,8 +416,18 @@ class ExtWriter:
     # Dizin girisleri
     # ------------------------------------------------------------------
     def _dir_blocks(self, node: ExtInode) -> List[int]:
+        """Dizinin veri bloklari.
+
+        Extent kullanan dizinler de **okunur**: var olan bloklara giris eklemek
+        extent agacini degistirmez, yalnizca blogun icerigi yeniden yazilir.
+        Dizine yeni blok eklemek ise agaci buyutur ve `_dir_append_block`
+        icinde acikca reddedilir.
+        """
         if node.uses_extents:
-            raise ExtError("Extent kullanan dizin bu surumde degistirilemez")
+            out: List[int] = []
+            for _logical, physical, length in self.fs._extent_blocks(node):
+                out.extend(range(physical, physical + length))
+            return out
         direct = [b for b in struct.unpack_from("<12I", node.raw_block, 0) if b]
         ind = struct.unpack_from("<I", node.raw_block, 48)[0]
         if ind:
@@ -306,6 +437,35 @@ class ExtWriter:
                 if b:
                     direct.append(b)
         return direct
+
+    def _inode_generation(self, ino: int) -> int:
+        raw = self.dev.read(self._inode_offset(ino), self.fs.inode_size)
+        return struct.unpack_from("<I", raw, 0x64)[0]
+
+    def _write_dir_block(self, dir_ino: int, block: int, buf: bytearray) -> None:
+        """Dizin blogunu yazar; saglama kuyrugu varsa gunceller.
+
+        `metadata_csum` acikken her dizin blogunun son 12 bayti sahte bir
+        kayittir (`ext4_dir_entry_tail`) ve blogun CRC'sini tasir.
+        """
+        if self.csum.enabled and ExtChecksums.is_tail(buf, self.bs):
+            gen = self._inode_generation(dir_ino)
+            value = self.csum.dir_block(dir_ino, gen, bytes(buf))
+            struct.pack_into("<I", buf, self.bs - 4, value)
+        self._write_block(block, buf)
+
+    def _dir_usable_size(self) -> int:
+        """Dizin blogunda girislere ayrilabilir bayt sayisi."""
+        return self.bs - (DIRENT_TAIL_SIZE if self.csum.enabled else 0)
+
+    def _new_dir_block(self) -> Tuple[int, bytearray]:
+        """Bos bir dizin blogu hazirlar (gerekiyorsa saglama kuyruguyla)."""
+        block = self.alloc_block()
+        buf = bytearray(self.bs)
+        if self.csum.enabled:
+            struct.pack_into("<IHBB", buf, self.bs - DIRENT_TAIL_SIZE,
+                             0, DIRENT_TAIL_SIZE, 0, DIRENT_TAIL_FT)
+        return block, buf
 
     def dir_add(self, parent: int, name: str, ino: int, ftype: int) -> None:
         """Dizine yeni bir giris ekler.
@@ -340,20 +500,24 @@ class ExtWriter:
                     struct.pack_into("<IHBB", buf, new_pos, ino, new_len,
                                      len(raw_name), ftype)
                     buf[new_pos + DIRENT_HEAD:new_pos + DIRENT_HEAD + len(raw_name)] = raw_name
-                    self._write_block(blk, buf)
+                    self._write_dir_block(parent, blk, buf)
                     return
                 pos += rec_len
 
         # Hicbir blokta yer yok: dizine yeni blok ekle
-        new_block = self.alloc_block()
-        buf = bytearray(self.bs)
-        struct.pack_into("<IHBB", buf, 0, ino, self.bs, len(raw_name), ftype)
+        new_block, buf = self._new_dir_block()
+        struct.pack_into("<IHBB", buf, 0, ino, self._dir_usable_size(),
+                         len(raw_name), ftype)
         buf[DIRENT_HEAD:DIRENT_HEAD + len(raw_name)] = raw_name
-        self._write_block(new_block, buf)
+        self._write_dir_block(parent, new_block, buf)
         self._dir_append_block(parent, node, new_block)
 
     def _dir_append_block(self, ino: int, node: ExtInode, block: int) -> None:
         """Dizin inode'una yeni bir veri blogu baglar."""
+        if node.uses_extents:
+            raise ExtError(
+                "Bu dizin extent kullaniyor ve dolu; yeni blok eklemek extent "
+                "agacini degistirmeyi gerektirir, bu surumde desteklenmiyor.")
         direct = list(struct.unpack_from("<12I", node.raw_block, 0))
         for i, b in enumerate(direct):
             if b == 0:
@@ -375,7 +539,8 @@ class ExtWriter:
         for blk in self._dir_blocks(node):
             buf = self._read_block(blk)
             pos, prev = 0, -1
-            while pos + DIRENT_HEAD <= self.bs:
+            limit = self._dir_usable_size()
+            while pos + DIRENT_HEAD <= limit:
                 e_ino, rec_len, name_len, _ft = struct.unpack_from("<IHBB", buf, pos)
                 if rec_len < DIRENT_HEAD:
                     break
@@ -385,7 +550,7 @@ class ExtWriter:
                         struct.pack_into("<H", buf, prev + 4, prev_len + rec_len)
                     else:
                         struct.pack_into("<I", buf, pos, 0)   # inode = 0
-                    self._write_block(blk, buf)
+                    self._write_dir_block(parent, blk, buf)
                     return
                 prev = pos
                 pos += rec_len
@@ -442,19 +607,19 @@ class ExtWriter:
             raise ExtError(f"Zaten var: {name}")
 
         ino = self.alloc_inode(is_dir=True)
-        blk = self.alloc_block()
-
-        buf = bytearray(self.bs)
+        blk, buf = self._new_dir_block()
         # "." kaydi
         struct.pack_into("<IHBB", buf, 0, ino, 12, 1, FT_DIR)
         buf[8:9] = b"."
-        # ".." kaydi blogun sonuna kadar uzanir
-        struct.pack_into("<IHBB", buf, 12, parent.number, self.bs - 12, 2, FT_DIR)
+        # ".." kaydi kullanilabilir alanin sonuna kadar uzanir (saglama
+        # kuyrugu varsa onun oncesine kadar)
+        struct.pack_into("<IHBB", buf, 12, parent.number,
+                         self._dir_usable_size() - 12, 2, FT_DIR)
         buf[20:22] = b".."
-        self._write_block(blk, buf)
-
+        # Inode ONCE yazilir: dizin blogu saglamasi i_generation'a baglidir.
         self.write_inode(ino, mode=S_IFDIR | 0o755, size=self.bs, links=2,
                          blocks=[blk] + [0] * 14, sectors=self.bs // 512)
+        self._write_dir_block(ino, blk, buf)
         self.dir_add(parent.number, name, ino, FT_DIR)
         # ust dizinin baglanti sayisi ".." yuzunden bir artar
         self._patch_inode(parent.number, 0x1A, "<H", parent.links + 1)

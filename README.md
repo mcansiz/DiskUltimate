@@ -32,11 +32,12 @@ exFAT, ext2/3/4 ve NTFS dahil. Uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2f
 - Tespit: FAT, exFAT, NTFS, ext2/3/4, btrfs, XFS, F2FS, ISO9660, Linux takas
 - **ext2/3/4 okuma ve yazma (saf Python)** — okuma: extent agaci, dolayli blok,
   sembolik bag izleme, 64 bit blok. Yazma: dosya/klasor olusturma, silme,
-  yeniden adlandirma; her adim `e2fsck` ile dogrulanir. Birim `metadata_csum`
-  kullaniyorsa veya inode extent'liyse yazma **reddedilir** (bozmamak icin)
+  yeniden adlandirma; **`metadata_csum` (CRC-32C saglamalar) dahil**. Her adim
+  `e2fsck` ile dogrulanir; `mkfs.ext4` ciktisi ve gercek SD kart yerlesimi
+  uzerinde sinanmistir
 - Dosya gezgini: listeleme, uzun ad (LFN/UTF-16), okuma, yazma, klasor, silme,
   yeniden adlandirma, disa/ice aktarma, onizleme
-  (yazma FAT ve exFAT'te; ext salt okunur)
+  (yazma FAT, exFAT ve ext2/3/4'te; NTFS icerigi henuz okunamiyor)
 
 **Yedekleme ve klonlama**
 - `.dub` yedek bicimi — sikistirmali, sifir bloklarini atlar

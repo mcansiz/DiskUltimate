@@ -18,6 +18,8 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     │   ├── ext.py            ext2/3/4 saf Python bicimlendirme (JBD2 gunlugu dahil)
     │   ├── extread.py        ext2/3/4 okuyucu (extent + dolayli blok, sembolik bag)
     │   ├── extwrite.py       ext2/3/4 yazici (bitmap tahsisi, dizin girisi, sayaclar)
+    │   ├── extcsum.py        ext4 metadata_csum saglamalari (hesap + dogrulama)
+    │   ├── crc32c.py         CRC-32C (Castagnoli) — saf Python
     │   ├── ntfs.py           NTFS saf Python bicimlendirme (MFT, $UpCase, $AttrDef)
     │   ├── _ntfs_data.py     NTFS icin gomulu sabit tablolar
     │   ├── resize.py         Bolum boyutlandirma / tasima (FAT + exFAT yerlesimi)
