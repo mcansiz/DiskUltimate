@@ -50,7 +50,7 @@ Guncelleme: 2026-09-15 (v0.3.0)
 | FAT12/16/32 okuma-yazma | ✅ | ✅ | Saf Python, `fsck.vfat` ile dogrulandi |
 | **exFAT okuma-yazma** | ✅ | ✅ | Saf Python, `fsck.exfat` ile dogrulandi |
 | NTFS okuma | ✅ | ✅ | Saf Python: MFT, fixup, veri kosullari, `$ATTRIBUTE_LIST`, B+ indeks; `ntfs-3g` ciktisiyla karsilastirildi |
-| NTFS yazma | ✅ | 📋 | `$MFT`/`$Bitmap` tahsisi + B+ agac indeks ekleme gerektirir |
+| NTFS yazma | ✅ | 🟡 | Dosya/klasor olusturma, silme, yeniden adlandirma; `ntfsfix` temiz ve `ntfs-3g` ile baglanip okundu. B+ dugum **bolme** yok |
 | ext2/3/4 okuma | ✅ | ✅ | Saf Python; extent + dolayli blok, sembolik bag izleme |
 | **ext2/3/4 yazma** | ✅ | 🟡 | Dosya/klasor olusturma, silme, yeniden adlandirma; `metadata_csum` dahil — her adim `e2fsck` ile dogrulandi. Extent agaci **buyutme** ve `bigalloc`/`inline_data` desteklenmez |
 | Dosya onizleme | ✅ | ✅ | Metin + onaltilik onizleme |

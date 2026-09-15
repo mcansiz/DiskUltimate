@@ -22,6 +22,7 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     │   ├── crc32c.py         CRC-32C (Castagnoli) — saf Python
     │   ├── ntfs.py           NTFS saf Python bicimlendirme (MFT, $UpCase, $AttrDef)
     │   ├── ntfsread.py       NTFS okuyucu (MFT, fixup, veri kosullari, B+ indeks)
+    │   ├── ntfswrite.py      NTFS yazici ($Bitmap/$MFT tahsisi, INDX giris ekleme)
     │   ├── _ntfs_data.py     NTFS icin gomulu sabit tablolar
     │   ├── resize.py         Bolum boyutlandirma / tasima (FAT + exFAT yerlesimi)
     │   ├── fsdetect.py       Imza tabanli dosya sistemi tespiti (FSInfo)

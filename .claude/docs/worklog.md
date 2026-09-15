@@ -1795,3 +1795,69 @@ etiket ve kume boyutu dogrulanir, `open_filesystem` `NtfsAccess` dondurmeli,
 ### Dogrulama
 Windows: `run_all` 18/18 · `platform_check` 0 bulgu.
 Linux: `fs_matrix` 8/8 (NTFS Oku TAMAM) · `run_all` 18/18.
+
+---
+
+## 2026-09-15 (18) — NTFS yazma: sekiz bicimde de B O Y
+
+### Hedef tamamlandi
+Kullanici NTFS icin uc platformda **B O Y** istemisti. `core/ntfswrite.py` ile
+sekiz dosya sisteminin tamami artik bicimlendirme + okuma + yazma destekliyor.
+
+### Uygulananlar
+- **`$Bitmap` kume tahsisi** ve **`$MFT` kayit tahsisi** (`$MFT`'nin kendi
+  `$BITMAP`'i uzerinden).
+- **`$MFT` kendiliginden buyutulur**: kayit kalmayinca kume tahsis edilir,
+  `$MFT`'nin `$DATA` veri kosullari yeniden kodlanir, boyut alanlari guncellenir
+  ve yeni alan sifirlanir. Bu olmadan taze bir `mkntfs` biriminde yalnizca
+  birkac dosya olusturulabiliyordu (27 kayitlik MFT, 19'u dolu).
+- **FILE kaydi yazimi**: fixup dizisi **kurulur** (okuma tarafinin tersi),
+  `$STANDARD_INFORMATION` + `$FILE_NAME` + `$DATA` (kucukse yerlesik, buyukse
+  veri kosullariyla). Ilk dort kayit `$MFTMirr` ile esitlenir.
+- **Dizin indeksi**: indeks `$INDEX_ROOT` icindeyse oraya, B+ agacina tasmissa
+  anahtarin ait oldugu **yaprak INDX blogu** icine eklenir. Giris sirasi
+  `$UpCase` siralamasina gore korunur.
+- `mkdir`, `remove` (bos klasor denetimi, kume/kayit serbest birakma, sequence
+  artisi), `rename`.
+
+### Yakalanan hata — fixup dizisinin uzerine yazma
+Ilk kosumda `ntfsfix`: *"File name overflow from index entry in inode 5"*.
+
+INDX blogunda `entries_offset` **40**'tir, 16 degil: INDEX_HEADER ile girisler
+arasinda **guncelleme dizisi (USA)** durur. Ofseti 0x10'a zorlamak o diziyi
+eziyor ve blok bozuluyordu. Girisleri dokup karsilastiran bir tani betigiyle
+bulundu; artik mevcut `entries_offset` korunuyor.
+
+### Dogrulama
+`mkntfs` ile uretilen birime yazildi, **her adimda `ntfsfix`**:
+
+```
+[baslangic] TEMIZ   [kucuk dosya] TEMIZ   [mkdir] TEMIZ   [buyuk dosya] TEMIZ
+[kokte 15 giris] TEMIZ   [alt klasorde 3 giris] TEMIZ   [rename] TEMIZ
+```
+
+Sonra **`ntfs-3g` ile baglandi**:
+```
+ntfs-3g BAGLANDI: 17 giris, okundu.txt='NTFS yazma denemesi',
+                  buyuk.bin=102400 bayt
+```
+
+`fs_matrix` artik **sekiz bicimde de dolu**:
+
+| Bicim | Bicimlendir | Oku | Yaz | Harici dogrulama |
+|---|---|---|---|---|
+| fat12/16/32 | ✅ | ✅ | ✅ | ✅ `fsck.vfat` |
+| exfat | ✅ | ✅ | ✅ | ✅ `fsck.exfat` |
+| **ntfs** | ✅ | **✅** | **✅** | ✅ `ntfsfix` |
+| ext2/3/4 | ✅ | ✅ | ✅ | ✅ `e2fsck` |
+
+### Sinirlar (acikca reddedilir)
+- Dizin indeks dugumu dolunca **bolunemez**; `$INDEX_ROOT` de
+  `$INDEX_ALLOCATION`'a tasinamaz. Pratikte 4 KB indeks blogunda ~25-30 giris.
+- Sikistirilmis/sifrelenmis akislar (okumada da yok).
+- Oznitelikler tek FILE kaydina sigmazsa `$ATTRIBUTE_LIST` yazilmaz
+  (okuma destekler).
+
+### Dogrulama ozeti
+Linux Mint: `run_all` **18/18** · `fs_matrix` **8/8, tum dogrulamalar TAMAM**.
+Windows: `run_all` 18/18 · `platform_check` 0 bulgu.

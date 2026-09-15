@@ -29,8 +29,10 @@ exFAT, ext2/3/4 ve NTFS dahil. Uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2f
   `$UpCase`/`$AttrDef` tablolari dahil. Oncelik sirasi: (1) isletim sisteminin kendi
   araci, (2) harici `mkfs.*`, (3) saf Python — boylece sekiz dosya sistemi de
   **uc platformda** olusturulabilir
-- **NTFS okuma (saf Python)** — MFT cozumleme, fixup dizileri, veri kosullari,
-  `$ATTRIBUTE_LIST`, B+ agac dizin indeksi; `ntfs-3g` ciktisiyla karsilastirildi
+- **NTFS okuma ve yazma (saf Python)** — MFT cozumleme, fixup dizileri, veri
+  kosullari, `$ATTRIBUTE_LIST`, B+ agac dizin indeksi. Yazma: dosya/klasor
+  olusturma, silme, yeniden adlandirma, `$MFT` kendiliginden buyutulur;
+  `ntfsfix` temiz ve `ntfs-3g` ile baglanip dogrulandi
 - Tespit: FAT, exFAT, NTFS, ext2/3/4, btrfs, XFS, F2FS, ISO9660, Linux takas
 - **ext2/3/4 okuma ve yazma (saf Python)** — okuma: extent agaci, dolayli blok,
   sembolik bag izleme, 64 bit blok. Yazma: dosya/klasor olusturma, silme,
@@ -39,7 +41,7 @@ exFAT, ext2/3/4 ve NTFS dahil. Uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2f
   uzerinde sinanmistir
 - Dosya gezgini: listeleme, uzun ad (LFN/UTF-16), okuma, yazma, klasor, silme,
   yeniden adlandirma, disa/ice aktarma, onizleme
-  (yazma FAT, exFAT ve ext2/3/4'te; NTFS icerigi henuz okunamiyor)
+  (sekiz dosya sisteminde de okuma ve yazma)
 
 **Yedekleme ve klonlama**
 - `.dub` yedek bicimi — sikistirmali, sifir bloklarini atlar

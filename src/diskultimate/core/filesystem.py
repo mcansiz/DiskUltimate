@@ -15,6 +15,7 @@ from .exfat import ExEntry, ExFatError, ExFatFS
 from .extread import ExtError, ExtFS
 from .extwrite import ExtWriter
 from .ntfsread import NtfsEntry, NtfsError, NtfsFS
+from .ntfswrite import NtfsWriter
 from .fat import ATTR_DIRECTORY, DirEntry, FatError, FatFS
 from .fsdetect import FSInfo, detect
 from .image import BlockDevice
@@ -341,13 +342,57 @@ class NtfsAccess(FileSystemAccess):
         self.fs_type = "NTFS"
         self.label = self.fs.label
         self.readable = True
-        self.writable = False
+        self.writer = NtfsWriter(self.fs)
+        self.writable, self._write_reason = self.writer.write_support()
 
     @property
     def write_reason(self) -> str:
-        return ("NTFS surucusu su an SALT OKUNURDUR: listeleme, okuma ve disa "
-                "aktarma calisir. Yazma icin $MFT/$Bitmap tahsisi ve dizin "
-                "B+ agacina ekleme gerekir; yol haritasindadir.")
+        return "" if self.writable else self._write_reason
+
+    # -- yazma (NtfsWriter; her adim ntfsfix ile dogrulanmistir) ------------
+    def write_file(self, path: str, data: bytes) -> FileNode:
+        self.writer.write_file(path, data)
+        name = path.replace("\\", "/").rstrip("/").split("/")[-1]
+        return FileNode(name=name, path=path, is_dir=False, size=len(data),
+                        mtime=datetime.datetime.now())
+
+    def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
+        with open(local_path, "rb") as fh:
+            data = fh.read()
+        name = os.path.basename(local_path)
+        target = (dest_dir.rstrip("/") + "/" + name) if dest_dir != "/"             else "/" + name
+        return self.write_file(target, data)
+
+    def import_tree(self, local_dir: str, dest_dir: str = "/") -> int:
+        count = 0
+        for root, _dirs, files in os.walk(local_dir):
+            rel = os.path.relpath(root, local_dir).replace(os.sep, "/")
+            base = dest_dir if rel == "." else f"{dest_dir.rstrip('/')}/{rel}"
+            if rel != ".":
+                try:
+                    self.mkdir(base)
+                except NtfsError:
+                    pass
+            for entry_name in files:
+                self.import_file(os.path.join(root, entry_name), base)
+                count += 1
+        return count
+
+    def mkdir(self, path: str) -> None:
+        self.writer.mkdir(path)
+
+    def remove(self, path: str, recursive: bool = True) -> None:
+        rec = self.fs.resolve(path)
+        if rec.is_dir and recursive:
+            for child in self.fs.listdir_record(rec):
+                self.remove(path.rstrip("/") + "/" + child.name, recursive=True)
+        self.writer.remove(path)
+
+    def rename(self, path: str, new_name: str) -> None:
+        self.writer.rename(path, new_name)
+
+    def flush(self) -> None:
+        self.writer.flush()
 
     @staticmethod
     def _node(entry: NtfsEntry, parent: str) -> FileNode:
@@ -362,7 +407,7 @@ class NtfsAccess(FileSystemAccess):
         return FileNode(name=entry.name, path=path, is_dir=entry.is_dir,
                         size=0 if entry.is_dir else entry.size,
                         mtime=entry.mtime, attr_text=" ".join(attrs),
-                        hidden=entry.is_hidden, readonly=True)
+                        hidden=entry.is_hidden, readonly=entry.is_readonly)
 
     def listdir(self, path: str = "/") -> List[FileNode]:
         out = [self._node(e, path) for e in self.fs.listdir(path)]

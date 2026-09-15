@@ -803,9 +803,24 @@ def t17_ntfs():
     assert all(not e.name.startswith("$") for e in kok), [e.name for e in kok]
     erisim = open_filesystem(view2, info)
     assert isinstance(erisim, NtfsAccess), type(erisim)
-    assert erisim.readable and not erisim.writable
-    assert erisim.write_reason, "yazma nedeni bos"
+    assert erisim.readable, "NTFS okunabilir olmali"
     assert erisim.stats()["cluster_size"] == bilgi["cluster_size"]
+
+    # --- yazma: kendi urettigimiz birimde indeks $INDEX_ROOT icinde durur ---
+    # Ayrintili dogrulama (her adimda ntfsfix + ntfs-3g baglama)
+    # tests/ntfs_write_check.py icindedir.
+    assert erisim.writable, f"NTFS yazilabilir olmali: {erisim.write_reason}"
+    erisim.write_file("/deneme.txt", b"NTFS yazma\n")
+    assert erisim.read("/deneme.txt") == b"NTFS yazma\n"
+    erisim.mkdir("/klasor")
+    adlar = {n.name for n in erisim.listdir("/")}
+    assert {"deneme.txt", "klasor"} <= adlar, adlar
+    erisim.rename("/deneme.txt", "okundu.txt")
+    assert "okundu.txt" in {n.name for n in erisim.listdir("/")}
+    erisim.remove("/okundu.txt")
+    erisim.remove("/klasor")
+    erisim.flush()
+    assert not erisim.listdir("/"), [n.name for n in erisim.listdir("/")]
     d.close()
 
     part = p + ".part"

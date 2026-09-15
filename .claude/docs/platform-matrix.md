@@ -24,9 +24,20 @@ Tarih: 2026-09-15 · Kaynak: koddan okunarak ve kosularak cikarildi
 | **ext2** | B O Y | B O Y | B O Y | saf Python (`ext` + `extread` + `extwrite`) | `e2fsck` |
 | **ext3** | B O Y | B O Y | B O Y | ayni | `e2fsck` |
 | **ext4** | B O Y | B O Y | B O Y | ayni + `extcsum` (metadata_csum) | `e2fsck` |
-| **NTFS** | B O — | B O — | B O — | `ntfs.py` (bicim) + `ntfsread.py` (okuma) — **yazici yok** | `ntfsfix`, `chkdsk` |
+| **NTFS** | B O Y | B O Y | B O Y | `ntfs.py` + `ntfsread.py` + `ntfswrite.py` | `ntfsfix`, `ntfs-3g`, `chkdsk` |
 
 **Yalnizca tespit** (icerik okunmaz): btrfs, XFS, F2FS, ISO9660, Linux takas.
+
+### NTFS yazmanin sinirlari (uc platformda ayni)
+
+| Durum | Neden |
+|---|---|
+| Dizin indeks dugumu dolu | B+ dugumu **bolunemez**; `$INDEX_ROOT` de `$INDEX_ALLOCATION`'a tasinamaz |
+| Sikistirilmis / sifrelenmis akis | Okumada da desteklenmez |
+| Oznitelikler tek FILE kaydina sigmiyorsa | `$ATTRIBUTE_LIST` yazimi yok (okuma destekler) |
+
+Pratikte bir dizine sigan giris sayisi indeks blogunun boyutuyla sinirlidir
+(4 KB blokta ~25-30 giris). `$MFT` dolunca **kendiliginden buyutulur**.
 
 ### ext yazmanin sinirlari (uc platformda ayni)
 
