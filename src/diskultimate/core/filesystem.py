@@ -14,6 +14,7 @@ from typing import Dict, List, Optional
 from .exfat import ExEntry, ExFatError, ExFatFS
 from .extread import ExtError, ExtFS
 from .extwrite import ExtWriter
+from .ntfsread import NtfsEntry, NtfsError, NtfsFS
 from .fat import ATTR_DIRECTORY, DirEntry, FatError, FatFS
 from .fsdetect import FSInfo, detect
 from .image import BlockDevice
@@ -328,6 +329,58 @@ class ExtAccess(FileSystemAccess):
         return self.fs.stats()
 
 
+class NtfsAccess(FileSystemAccess):
+    """NTFS icerigine **salt okunur** erisim.
+
+    Yazma henuz yoktur: NTFS'e yazmak `$Bitmap` ve `$MFT` tahsisi, B+ agaci
+    indeks ekleme ve `$MFTMirr` esitlemesi gerektirir (yol haritasinda).
+    """
+
+    def __init__(self, view: BlockDevice):
+        self.fs = NtfsFS(view)
+        self.fs_type = "NTFS"
+        self.label = self.fs.label
+        self.readable = True
+        self.writable = False
+
+    @property
+    def write_reason(self) -> str:
+        return ("NTFS surucusu su an SALT OKUNURDUR: listeleme, okuma ve disa "
+                "aktarma calisir. Yazma icin $MFT/$Bitmap tahsisi ve dizin "
+                "B+ agacina ekleme gerekir; yol haritasindadir.")
+
+    @staticmethod
+    def _node(entry: NtfsEntry, parent: str) -> FileNode:
+        path = (parent.rstrip("/") + "/" + entry.name) if parent not in ("", "/")             else "/" + entry.name
+        attrs = []
+        if entry.is_hidden:
+            attrs.append("G")
+        if entry.is_readonly:
+            attrs.append("S")
+        if entry.is_system:
+            attrs.append("Sis")
+        return FileNode(name=entry.name, path=path, is_dir=entry.is_dir,
+                        size=0 if entry.is_dir else entry.size,
+                        mtime=entry.mtime, attr_text=" ".join(attrs),
+                        hidden=entry.is_hidden, readonly=True)
+
+    def listdir(self, path: str = "/") -> List[FileNode]:
+        out = [self._node(e, path) for e in self.fs.listdir(path)]
+        out.sort(key=lambda n: (not n.is_dir, n.name.lower()))
+        return out
+
+    def read(self, path: str, max_bytes: int = -1) -> bytes:
+        return self.fs.read_file(path, max_bytes)
+
+    def extract(self, path: str, dest: str) -> str:
+        with open(dest, "wb") as fh:
+            fh.write(self.read(path))
+        return dest
+
+    def stats(self) -> Dict[str, int]:
+        return self.fs.stats()
+
+
 class UnsupportedAccess(FileSystemAccess):
     """Tanindi ama icerik okuma destegi henuz yok."""
 
@@ -369,6 +422,11 @@ def open_filesystem(view: BlockDevice,
         try:
             return ExFatAccess(view)
         except ExFatError:
+            return UnsupportedAccess(info)
+    if info.fs_type == "NTFS":
+        try:
+            return NtfsAccess(view)
+        except NtfsError:
             return UnsupportedAccess(info)
     if info.fs_type.startswith("ext"):
         try:

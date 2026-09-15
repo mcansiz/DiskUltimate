@@ -24,7 +24,7 @@ Tarih: 2026-09-15 · Kaynak: koddan okunarak ve kosularak cikarildi
 | **ext2** | B O Y | B O Y | B O Y | saf Python (`ext` + `extread` + `extwrite`) | `e2fsck` |
 | **ext3** | B O Y | B O Y | B O Y | ayni | `e2fsck` |
 | **ext4** | B O Y | B O Y | B O Y | ayni + `extcsum` (metadata_csum) | `e2fsck` |
-| **NTFS** | B — — | B — — | B — — | saf Python (`ntfs.py`) — **okuyucu yok** | `ntfsfix`, `chkdsk` |
+| **NTFS** | B O — | B O — | B O — | `ntfs.py` (bicim) + `ntfsread.py` (okuma) — **yazici yok** | `ntfsfix`, `chkdsk` |
 
 **Yalnizca tespit** (icerik okunmaz): btrfs, XFS, F2FS, ISO9660, Linux takas.
 

@@ -23,7 +23,8 @@ from diskultimate.core.exfat import (ExFatFS, UPCASE_STANDARD_CHECKSUM,  # noqa:
 from diskultimate.core.ext import format_ext  # noqa: E402
 from diskultimate.core.extread import ExtFS  # noqa: E402
 from diskultimate.core.filesystem import (ExtAccess,  # noqa: E402
-                                          open_filesystem)
+                                          NtfsAccess, open_filesystem)
+from diskultimate.core.ntfsread import NtfsFS  # noqa: E402
 from diskultimate.core.fat import FatFS  # noqa: E402
 from diskultimate.core.ntfs import (attrdef_table, format_ntfs,  # noqa: E402
                                     upcase_table)
@@ -791,6 +792,20 @@ def t17_ntfs():
     assert bilgi["cluster_size"] in (4096, 2048, 1024)
     info = detect(PartitionView(d, 2048, d.sector_count - 2048))
     assert info.fs_type == "NTFS", info
+
+    # --- okuyucu kendi urettigimiz birimi cozebilmeli ---
+    view2 = PartitionView(d, 2048, d.sector_count - 2048)
+    nfs = NtfsFS(view2)
+    assert nfs.label == "DUNTFS", nfs.label
+    assert nfs.cluster_size == bilgi["cluster_size"]
+    kok = nfs.listdir("/")
+    # Bicimlendirme sonrasi kok bos olmalidir (sistem dosyalari gizlenir)
+    assert all(not e.name.startswith("$") for e in kok), [e.name for e in kok]
+    erisim = open_filesystem(view2, info)
+    assert isinstance(erisim, NtfsAccess), type(erisim)
+    assert erisim.readable and not erisim.writable
+    assert erisim.write_reason, "yazma nedeni bos"
+    assert erisim.stats()["cluster_size"] == bilgi["cluster_size"]
     d.close()
 
     part = p + ".part"

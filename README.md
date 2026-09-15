@@ -29,6 +29,8 @@ exFAT, ext2/3/4 ve NTFS dahil. Uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2f
   `$UpCase`/`$AttrDef` tablolari dahil. Oncelik sirasi: (1) isletim sisteminin kendi
   araci, (2) harici `mkfs.*`, (3) saf Python — boylece sekiz dosya sistemi de
   **uc platformda** olusturulabilir
+- **NTFS okuma (saf Python)** — MFT cozumleme, fixup dizileri, veri kosullari,
+  `$ATTRIBUTE_LIST`, B+ agac dizin indeksi; `ntfs-3g` ciktisiyla karsilastirildi
 - Tespit: FAT, exFAT, NTFS, ext2/3/4, btrfs, XFS, F2FS, ISO9660, Linux takas
 - **ext2/3/4 okuma ve yazma (saf Python)** — okuma: extent agaci, dolayli blok,
   sembolik bag izleme, 64 bit blok. Yazma: dosya/klasor olusturma, silme,

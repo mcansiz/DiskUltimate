@@ -1727,3 +1727,71 @@ Orijinal kart dosyasina **dokunulmadi**; islem kopya uzerinde yapildi.
 ### Dogrulama ozeti
 Linux: `ext_write_check` 4/4 · `run_all` 18/18 · `fs_matrix` 8/8.
 Windows: `run_all` 18/18 · `platform_check` 0 bulgu.
+
+---
+
+## 2026-09-15 (17) — NTFS okuyucu
+
+### Hedef
+Kullanici istegi: **NTFS uc platformda B O Y**. Yazma okumayi gerektirdigi icin
+once okuyucu yazildi.
+
+### `core/ntfsread.py` (yeni)
+NTFS'te her sey `$MFT` icindeki **FILE kayitlari**dir; dosya adi da, veri de,
+dizin indeksi de birer **oznitelik**tir. Uygulanan zincir:
+
+```
+onyukleme sektoru -> $MFT yeri -> FILE kaydi -> fixup -> oznitelikler
+  -> $DATA (yerlesik veya veri kosullari) -> kume zinciri -> bayt
+```
+
+- **Fixup (Update Sequence Array):** her `FILE`/`INDX` blogunda her sektorun son
+  iki bayti kayit basindaki diziye tasinmistir. Geri konmazsa veri **sessizce
+  bozuk** okunur; imza tutmazsa hata verilir.
+- **Veri kosullari (runlist):** isaretli ve bir oncekine goreli ofsetler; 0
+  ofset seyrek alandir (`lcn = -1`, okunusta sifir doner).
+- **Yerlesik / yerlesik olmayan** oznitelikler ayri ele alinir.
+- **`$ATTRIBUTE_LIST`:** buyuk dosya/dizinlerde oznitelikler tek kayda sigmaz ve
+  baska kayitlara dagilir. Bu baglanti izlenmezse buyuk dizinler **bos gorunur**.
+- **Dizinler B+ agacidir:** kucuk dizin `$INDEX_ROOT` icinde yerlesiktir,
+  buyuyunce `$INDEX_ALLOCATION` icindeki INDX bloklarina tasar ve agac dolasilir.
+- 8.3 kisa adlar (`name_type == 2`), sistem dosyalari ve kokun `.` girisi
+  listelemede atlanir.
+
+### Dogrulama — `ntfs-3g` ile karsilastirma
+Mint'te `mkntfs` ile birim uretildi, `ntfs-3g` ile dolduruldu, sonra ayni birim
+bizim okuyucuyla okundu:
+
+| Olcum | ntfs-3g | DiskUltimate |
+|---|---|---|
+| kok girisleri | 3 | 3 (ayni adlar) |
+| `klasor` giris sayisi | 122 | **122** |
+| `buyuk.bin` boyut | 300000 | 300000 |
+| `buyuk.bin` sha256 | `6b85f636b5a92cd7…` | **`6b85f636b5a92cd7…`** |
+
+122 girisli dizin `$INDEX_ALLOCATION` yolunu, 300 KB'lik dosya veri kosullarini
+zorluyor; ikisi de dogru cikti. Ic ice dizin ve uzun ad da okundu.
+
+### Arayuz baglantisi
+`filesystem.NtfsAccess` eklendi (`readable=True`, `writable=False`).
+`write_reason` neden yazilamadigini soyluyor: `$MFT`/`$Bitmap` tahsisi ve
+dizin B+ agacina ekleme gerekiyor.
+
+`fs_matrix` artik NTFS satirinda **Oku: TAMAM** gosteriyor — ustelik bu,
+**kendi bicimlendiricimizin** urettigi birimi okuyor ve ayni birim `ntfsfix`
+ile de temiz cikiyor.
+
+### Regresyon korumasi
+`t17_ntfs` genisletildi: kendi urettigimiz NTFS birimi `NtfsFS` ile acilir,
+etiket ve kume boyutu dogrulanir, `open_filesystem` `NtfsAccess` dondurmeli,
+`readable and not writable` olmali.
+
+### Kalan (NTFS yazma)
+- `$Bitmap` kume tahsisi ve `$MFT`'nin `$BITMAP`'i ile kayit tahsisi
+- Dizin **B+ agacina giris ekleme/silme** (en zor kisim: dugum bolme)
+- `$MFTMirr` esitlemesi, fixup dizisi yazimi
+- Sikistirilmis akislar (okumada da desteklenmiyor)
+
+### Dogrulama
+Windows: `run_all` 18/18 · `platform_check` 0 bulgu.
+Linux: `fs_matrix` 8/8 (NTFS Oku TAMAM) · `run_all` 18/18.
