@@ -18,9 +18,13 @@ from __future__ import annotations
 import os
 import re
 import struct
+import threading
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
+from contextlib import contextmanager
+
+from . import diagnostics
 from .image import BlockDevice, DiskImageError
 from .platform import IS_LINUX, IS_MACOS, IS_WINDOWS, run_tool
 
@@ -37,6 +41,10 @@ class AccessDeniedError(PhysicalDiskError):
 
 class SystemDiskError(PhysicalDiskError):
     """Sistem diskine yazma girisimi acikca onaylanmadi."""
+
+
+class MediaNotReadyError(PhysicalDiskError):
+    """Aygit var ama icinde ortam yok (bos kart yuvasi, bos CD surucusu)."""
 
 
 # --------------------------------------------------------------------------
@@ -57,7 +65,8 @@ class DiskInfo:
     mounted: List[str] = field(default_factory=list)   # bagli bolum yollari
     partitions: List[str] = field(default_factory=list)
     info_complete: bool = True    # bilgiler eksiksiz okunabildi mi (yetki!)
-    os_hint: str = ""             # 'windows' | 'linux' | 'macos' | '' 
+    os_hint: str = ""             # 'windows' | 'linux' | 'macos' | ''
+    in_use: bool = False          # bu aygiti su an uygulamanin kendisi acik tutuyor
 
     @property
     def os_label(self) -> str:
@@ -152,6 +161,57 @@ def guess_os_from_partitions(partitions) -> str:
     return ""
 
 
+# --------------------------------------------------------------------------
+# Acik aygit kutugu — "kendi actigin diski yoklama" kurali
+# --------------------------------------------------------------------------
+# Neden: uygulama bir diski actiginda (ozellikle YAZMA modunda, birimleri
+# kilitleyip ayirarak) ayni aygita ikinci bir tutamac acip IOCTL sormak,
+# sorgunun surucu yiginin da **dakikalarca** asili kalmasina yol acabiliyor.
+# Daha kotusu, o sirada asil is parcaciginin okuma/yazmalari da ayni aygitin
+# kuyruguna takilir: uygulama tumden donar.
+#
+# Olculmus ornek (2026-09-15, Generic- SD/MMC/MS PRO kart okuyucu, yazma modu):
+#     win.query_drive(n=1)        64031 ms   <- arka plan yoklamasi
+#     disk.read(lba=2165024)      27859 ms   <- ana is parcacigi, ayni aygit
+#     disk.read(lba=8456192)      32250 ms
+# Ucu de ayni milisaniyede serbest kaldi. Rapor:
+#     .claude/logs/freeze/freeze-20260915-134507.md
+#
+# Cozum: acik aygitlar burada kutuklenir; `list_disks()` bunlara **dokunmaz**,
+# son bilinen bilgiyi dondurur.
+_open_lock = threading.RLock()
+_open_devices: Dict[str, DiskInfo] = {}
+
+
+def _register_open(info: DiskInfo) -> None:
+    with _open_lock:
+        _open_devices[info.path] = info
+    diagnostics.info(f"aygit acik kutugune eklendi: {info.path}")
+
+
+def _unregister_open(path: str) -> None:
+    with _open_lock:
+        _open_devices.pop(path, None)
+    diagnostics.info(f"aygit acik kutugunden cikti: {path}")
+
+
+def open_device_paths() -> Dict[str, DiskInfo]:
+    """Uygulamanin su an acik tuttugu aygitlar {yol: bilgi}."""
+    with _open_lock:
+        return dict(_open_devices)
+
+
+def busy_drive_letters() -> set:
+    """Acik disklere ait surucu harfleri (buyuk harf, iki nokta olmadan)."""
+    letters = set()
+    for info in open_device_paths().values():
+        for item in info.mounted:
+            head = item.strip().rstrip(":").rstrip("\\")
+            if len(head) == 1 and head.isalpha():
+                letters.add(head.upper())
+    return letters
+
+
 def list_disks(include_removable: bool = True) -> List[DiskInfo]:
     """Sistemdeki fiziksel diskleri listeler.
 
@@ -162,18 +222,22 @@ def list_disks(include_removable: bool = True) -> List[DiskInfo]:
     kapatilir; veri okunmaz. Guvenlik katmani 1'in ("listeleme zararsizdir")
     anlami budur.
     """
-    if IS_LINUX:
-        diskler = _list_linux()
-    elif IS_WINDOWS:
-        diskler = _list_windows()
-    elif IS_MACOS:
-        diskler = _list_macos()
-    else:
-        diskler = []
+    with diagnostics.span("physical.list_disks"):
+        if IS_LINUX:
+            diskler = _list_linux()
+        elif IS_WINDOWS:
+            diskler = _list_windows()
+        elif IS_MACOS:
+            diskler = _list_macos()
+        else:
+            diskler = []
     # Sistem diski, uzerinde su an calisan isletim sistemini barindirir
+    acik = open_device_paths()
     for d in diskler:
         if d.is_system and not d.os_hint:
             d.os_hint = running_os()
+        if d.path in acik:
+            d.in_use = True
     if not include_removable:
         diskler = [d for d in diskler if not d.removable]
     return sorted(diskler, key=lambda d: d.name)
@@ -272,6 +336,64 @@ INVALID_HANDLE = -1
 ERROR_ACCESS_DENIED = 5
 
 
+SEM_FAILCRITICALERRORS = 0x0001
+SEM_NOOPENFILEERRORBOX = 0x8000
+DRIVE_NO_ROOT_DIR = 1
+DRIVE_REMOTE = 4
+DRIVE_CDROM = 5
+ERROR_NOT_READY = 21
+
+
+@contextmanager
+def _win_quiet_errors():
+    """Aygit yoklarken Windows'un "diskte ortam yok" kutusunu bastirir.
+
+    Bos kart okuyucu yuvasi veya ortamsiz CD surucusu uzerinde `CreateFileW`
+    varsayilan olarak kullaniciya kutu gosterir ve **cagriyi saniyelerce
+    bloklar**; bu, arayuzun donmasinin baslica nedenidir. `SetThreadErrorMode`
+    ile cagri kutu acmadan `ERROR_NOT_READY` ile hemen doner.
+
+    Yalnizca **cagiran is parcacigini** etkiler (`SetErrorMode` degil), boylece
+    uygulamanin geri kalani etkilenmez.
+    """
+    if not IS_WINDOWS:
+        yield
+        return
+    import ctypes
+    import ctypes.wintypes as wt
+
+    k32 = ctypes.windll.kernel32
+    previous = wt.DWORD(0)
+    changed = False
+    try:
+        k32.SetThreadErrorMode.argtypes = [wt.DWORD, ctypes.POINTER(wt.DWORD)]
+        k32.SetThreadErrorMode.restype = wt.BOOL
+        changed = bool(k32.SetThreadErrorMode(
+            SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX,
+            ctypes.byref(previous)))
+    except (AttributeError, OSError):
+        changed = False
+    try:
+        yield
+    finally:
+        if changed:
+            try:
+                k32.SetThreadErrorMode(previous, None)
+            except OSError:
+                pass
+
+
+def _win_drive_type(letter: str) -> int:
+    """`GetDriveTypeW` — aygit acmadan surucu turunu soyler (bloklamaz)."""
+    import ctypes
+    import ctypes.wintypes as wt
+
+    k32 = ctypes.windll.kernel32
+    k32.GetDriveTypeW.argtypes = [wt.LPCWSTR]
+    k32.GetDriveTypeW.restype = wt.UINT
+    return int(k32.GetDriveTypeW(f"{letter}:\\"))
+
+
 def _win_handle(path: str, write: bool = False):
     """Windows aygit tutamaci acar. Hata durumunda istisna firlatir."""
     import ctypes
@@ -282,15 +404,19 @@ def _win_handle(path: str, write: bool = False):
                                 wt.DWORD, wt.DWORD, wt.HANDLE]
     k32.CreateFileW.restype = wt.HANDLE
     erisim = GENERIC_READ | (GENERIC_WRITE if write else 0)
-    handle = k32.CreateFileW(path, erisim,
-                              FILE_SHARE_READ | FILE_SHARE_WRITE,
-                              None, OPEN_EXISTING, 0, None)
+    # Ortamsiz yuvalarda kutu acilip cagri bloklanmasin diye sessiz kip.
+    with _win_quiet_errors():
+        handle = k32.CreateFileW(path, erisim,
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                  None, OPEN_EXISTING, 0, None)
     if handle in (INVALID_HANDLE, 0, None) or handle == ctypes.c_void_p(-1).value:
         error = ctypes.get_last_error() or k32.GetLastError()
         if error == ERROR_ACCESS_DENIED:
             raise AccessDeniedError(
                 f"{path} acilamadi: Yonetici yetkisi gerekiyor "
                 "(uygulamayi 'Yonetici olarak calistir' ile baslatin)")
+        if error == ERROR_NOT_READY:
+            raise MediaNotReadyError(f"{path}: aygitta ortam yok")
         raise PhysicalDiskError(f"{path} acilamadi (Windows hatasi {error})")
     return handle
 
@@ -376,17 +502,35 @@ def _win_close(handle) -> None:
 
 
 def _win_drive_letters() -> Dict[int, List[str]]:
-    """{disk numarasi: [surucu harfleri]} — bagli bolumleri gostermek icin."""
+    """{disk numarasi: [surucu harfleri]} — bagli bolumleri gostermek icin.
+
+    Her harf icin aygit tutamaci acilir. Ag surucusu ve CD/DVD **acilmadan**
+    elenir: ag surucusunde tutamac acmak sunucu yanit vermiyorsa saniyelerce
+    asili kalir, bos CD surucusu ise "ortam yok" diyalogunu tetiklerdi. Kalan
+    harfler `_win_quiet_errors()` altinda acilir, boylece bos kart yuvasi
+    bloklamak yerine hemen hata dondurur.
+    """
     import ctypes
 
     result: Dict[int, List[str]] = {}
+    busy = busy_drive_letters()
     maske = ctypes.windll.kernel32.GetLogicalDrives()
     for i in range(26):
         if not (maske >> i) & 1:
             continue
         harf = chr(ord("A") + i)
+        # Acik bir diske ait birim: tutamac acmak ya reddedilir (kilitli) ya da
+        # aygit kuyruguna takilir. Harf zaten bilindigi icin sorulmaz.
+        if harf in busy:
+            diagnostics.debug(f"surucu {harf}: uygulamada acik; yoklanmadi")
+            continue
+        kind = _win_drive_type(harf)
+        if kind in (DRIVE_NO_ROOT_DIR, DRIVE_REMOTE, DRIVE_CDROM):
+            diagnostics.debug(f"surucu {harf}: atlandi (tur {kind})")
+            continue
         try:
-            handle = _win_handle(f"\\\\.\\{harf}:", write=False)
+            with diagnostics.span("win.open_volume", warn_on_error=False, drive=harf):
+                handle = _win_handle(f"\\\\.\\{harf}:", write=False)
         except PhysicalDiskError:
             continue
         try:
@@ -405,6 +549,7 @@ def _win_drive_letters() -> Dict[int, List[str]]:
 
 def _list_windows() -> List[DiskInfo]:
     diskler: List[DiskInfo] = []
+    acik = open_device_paths()
     try:
         system_numbers = set(_win_system_disk_numbers())
         harfler = _win_drive_letters()
@@ -413,8 +558,19 @@ def _list_windows() -> List[DiskInfo]:
 
     for numara in range(32):
         path = f"\\\\.\\PhysicalDrive{numara}"
+        # Uygulamanin kendi acik tuttugu aygita DOKUNULMAZ: ikinci bir tutamac
+        # acip IOCTL sormak surucu yiginini dakikalarca bloklayabiliyor ve o
+        # sirada asil is parcaciginin okumalari da ayni kuyruga takiliyor
+        # (bkz. dosyanin basindaki "Acik aygit kutugu" aciklamasi).
+        if path in acik:
+            info = acik[path]
+            info.in_use = True
+            diskler.append(info)
+            diagnostics.debug(f"{path} uygulamada acik; yoklanmadi")
+            continue
         try:
-            handle = _win_handle(path, write=False)
+            with diagnostics.span("win.open_drive", warn_on_error=False, n=numara):
+                handle = _win_handle(path, write=False)
         except AccessDeniedError:
             # Disk var ama yetki yok: yine de listede goster
             diskler.append(DiskInfo(path=path, name=f"PhysicalDrive{numara}",
@@ -427,13 +583,14 @@ def _list_windows() -> List[DiskInfo]:
             continue
         try:
             info = DiskInfo(path=path, name=f"PhysicalDrive{numara}")
-            ham = _win_ioctl(handle, IOCTL_DISK_GET_LENGTH_INFO, b"", 8)
-            if ham and len(ham) >= 8:
-                info.size = struct.unpack("<q", ham[:8])[0]
-            geo = _win_ioctl(handle, IOCTL_DISK_GET_DRIVE_GEOMETRY, b"", 24)
-            if geo and len(geo) >= 24:
-                info.sector_size = struct.unpack_from("<I", geo, 20)[0] or SECTOR
-            ayrinti = _win_device_info(handle)
+            with diagnostics.span("win.query_drive", n=numara):
+                ham = _win_ioctl(handle, IOCTL_DISK_GET_LENGTH_INFO, b"", 8)
+                if ham and len(ham) >= 8:
+                    info.size = struct.unpack("<q", ham[:8])[0]
+                geo = _win_ioctl(handle, IOCTL_DISK_GET_DRIVE_GEOMETRY, b"", 24)
+                if geo and len(geo) >= 24:
+                    info.sector_size = struct.unpack_from("<I", geo, 20)[0] or SECTOR
+                ayrinti = _win_device_info(handle)
             info.model = ayrinti.get("model", "")
             info.serial = ayrinti.get("serial", "")
             info.bus = ayrinti.get("bus", "")
@@ -528,11 +685,23 @@ class PhysicalDisk(BlockDevice):
         self._fh = None
         self._win_handle = None
         self._volume_handles: List[object] = []
+        self._locked_letters: List[str] = []
+        self._unlocked_letters: List[str] = []
         self._open_device()
-        if IS_WINDOWS and not readonly:
-            self._win_lock_volumes()
+        # Aygit acildigi andan kapanana kadar kutukte durur; listeleme ona
+        # dokunmaz. Kayit acmadan SONRA yapilir: acma basarisiz olursa kutukte
+        # olmayan bir aygit kalmaz.
+        info.in_use = True
+        _register_open(info)
+        try:
+            if IS_WINDOWS and not readonly:
+                self._win_lock_volumes()
+        except Exception:
+            _unregister_open(self.path)
+            raise
 
     # -- acma/kapatma ------------------------------------------------------
+    @diagnostics.timed("disk.open_device")
     def _open_device(self) -> None:
         if IS_WINDOWS:
             self._win_handle = _win_handle(self.path, write=not self.readonly)
@@ -552,6 +721,7 @@ class PhysicalDisk(BlockDevice):
         if self._size <= 0:
             self._size = self._fh.seek(0, os.SEEK_END)
 
+    @diagnostics.timed("disk.lock_volumes")
     def _win_lock_volumes(self) -> None:
         """Diskteki birimleri kilitler ve baglantisini keser (Windows).
 
@@ -561,29 +731,54 @@ class PhysicalDisk(BlockDevice):
         (`FSCTL_DISMOUNT_VOLUME`). Kilit, tutamac acik kaldigi surece gecerlidir
         ve baska bir surecin birimi yeniden baglamasini engeller.
 
-        Basarisizlik olumcul degildir: kilitlenemeyen birim varsa yazma zaten
-        anlamli bir hata ile reddedilir.
+        Birim harfleri **listelemede zaten ogrenilmistir** (`info.mounted`);
+        burada yeniden sorulmaz. Sorulsaydi acik aygit kutugune takilirdi: aygit
+        bu noktada kutuge girmis olur, `_win_drive_letters()` de kutuktekilerin
+        harflerini atlar — sonuc olarak hicbir birim kilitlenmez ve **sonraki
+        her yazma** "Windows bagli birimlere yazmayi engeller" hatasi verir.
+        Yasandi (2026-09-15): dosya silme reddedildi, kullanici yonetici
+        oldugu halde "Yonetici olarak calistirin" mesajini gordu.
+
+        Basarisizlik olumcul degildir ama **sessiz de degildir**: hangi birimin
+        kilitlendigi gunluge yazilir, cunku kilitlenemeyen birim sonraki yazma
+        hatalarinin nedenidir.
         """
-        numaralar = "".join(ch for ch in self.info.name if ch.isdigit())
-        if not numaralar:
-            return
-        disk_no = int(numaralar)
-        try:
-            harfler = _win_drive_letters().get(disk_no, [])
-        except Exception:
-            harfler = []
-        for harf in harfler:
+        letters = [item for item in (self.info.mounted or []) if item]
+        if not letters:
+            # Bilgi yoksa (orn. dogrudan yol ile acilmissa) son care: sor.
+            numaralar = "".join(ch for ch in self.info.name if ch.isdigit())
+            if not numaralar:
+                return
             try:
-                handle = _win_handle(f"\\\\.\\{harf}", write=True)
-            except PhysicalDiskError:
+                letters = _win_drive_letters().get(int(numaralar), [])
+            except Exception:
+                letters = []
+        if not letters:
+            diagnostics.info(f"{self.path}: bagli birim yok, kilit gerekmiyor")
+            return
+        locked, failed = [], []
+        for harf in letters:
+            try:
+                handle = _win_handle(f"\\\\.\\{harf.rstrip(chr(92))}", write=True)
+            except PhysicalDiskError as exc:
+                failed.append(f"{harf} (acilamadi: {exc})")
                 continue
             kilitlendi = _win_ioctl(handle, FSCTL_LOCK_VOLUME, b"", 0) is not None
             _win_ioctl(handle, FSCTL_DISMOUNT_VOLUME, b"", 0)
             if kilitlendi:
                 self._volume_handles.append(handle)
+                locked.append(harf)
             else:
                 # kilitlenemedi: tutamaci birak, birim kullanimda olabilir
                 _win_close(handle)
+                failed.append(f"{harf} (kilitlenemedi — birim kullanimda)")
+        self._locked_letters = locked
+        self._unlocked_letters = failed
+        diagnostics.info(f"{self.path}: kilitlenen birim {locked or 'yok'}"
+                         + (f", kilitlenemeyen {failed}" if failed else ""))
+        if failed:
+            diagnostics.warn(f"{self.path}: kilitlenemeyen birim var {failed}; "
+                             "bu birimin sektorlerine yazma reddedilebilir")
 
     def _win_release_volumes(self) -> None:
         """Kilitli birim tutamaclarini birakir."""
@@ -613,6 +808,9 @@ class PhysicalDisk(BlockDevice):
         if self._win_handle is not None:
             _win_close(self._win_handle)
             self._win_handle = None
+        # Aygit serbest: listeleme artik yeniden yoklayabilir.
+        self.info.in_use = False
+        _unregister_open(self.path)
 
     def __enter__(self):
         return self
@@ -632,22 +830,29 @@ class PhysicalDisk(BlockDevice):
     def read(self, offset: int, length: int) -> bytes:
         if offset + length > self._size:
             raise PhysicalDiskError("Okuma disk sinirini asiyor")
-        if IS_WINDOWS:
-            return self._win_read(offset, length)
-        self._fh.seek(offset)
-        veri = self._fh.read(length)
-        return veri + b"\x00" * (length - len(veri))
+        # Aygit okumasi arayuzun takilabilecegi yerlerden biridir (yavas USB,
+        # uyuyan disk). `track=False`: her okuma gecmise yazilmaz, ama okuma
+        # suruyorken donma olursa raporda bu satir gorunur.
+        with diagnostics.span("disk.read", track=False,
+                              lba=offset // self.sector_size, size=length):
+            if IS_WINDOWS:
+                return self._win_read(offset, length)
+            self._fh.seek(offset)
+            veri = self._fh.read(length)
+            return veri + b"\x00" * (length - len(veri))
 
     def write(self, offset: int, data: bytes) -> None:
         if self.readonly:
             raise PhysicalDiskError("Disk salt okunur acildi")
         if offset + len(data) > self._size:
             raise PhysicalDiskError("Yazma disk sinirini asiyor")
-        if IS_WINDOWS:
-            self._win_write(offset, data)
-            return
-        self._fh.seek(offset)
-        self._fh.write(data)
+        with diagnostics.span("disk.write", track=False,
+                              lba=offset // self.sector_size, size=len(data)):
+            if IS_WINDOWS:
+                self._win_write(offset, data)
+                return
+            self._fh.seek(offset)
+            self._fh.write(data)
 
     def flush(self) -> None:
         if self._fh is not None and not self.readonly:
@@ -743,10 +948,32 @@ class PhysicalDisk(BlockDevice):
                              ctypes.byref(yazilan), None):
             error = k32.GetLastError()
             if error == ERROR_ACCESS_DENIED:
-                raise AccessDeniedError(
-                    "Yazma reddedildi: Windows bagli birimlere dogrudan yazmayi "
-                    "engeller. Birimi cikarin (eject) veya Yonetici olarak calistirin.")
+                raise AccessDeniedError(self._write_denied_text(bas))
             raise PhysicalDiskError(f"Yazma hatasi (Windows {error})")
+
+    def _write_denied_text(self, offset: int) -> str:
+        """ERROR_ACCESS_DENIED icin **gercek** nedeni soyleyen metin.
+
+        Eski metin her durumda "Yonetici olarak calistirin" diyordu. Kullanici
+        zaten yonetici oldugunda bu yanlis yonlendiriyordu: asil neden birimin
+        kilitlenememis olmasidir (2026-09-15, ADR 0022).
+        """
+        lba = offset // self.sector_size
+        base = (f"Yazma reddedildi (LBA {lba}): Windows **bagli** bir birimin "
+                "sektorlerine dogrudan yazmayi engeller.")
+        if self._unlocked_letters:
+            return (f"{base}\n\nSu birim(ler) kilitlenemedi: "
+                    f"{', '.join(self._unlocked_letters)}\n"
+                    "Birimi kullanan programlari (Gezgin penceresi, virus "
+                    "tarayici, yedekleme) kapatip diski yeniden acin; ya da "
+                    "birimi Windows'tan cikarin (eject).")
+        if not self._volume_handles:
+            return (f"{base}\n\nBu diskte hicbir birim kilitlenemedi. Diski "
+                    "kapatip yeniden yazma modunda acin; sorun surerse birimi "
+                    "Windows'tan cikarin (eject).")
+        return (f"{base}\n\nKilitli birimler: "
+                f"{', '.join(self._locked_letters)}. Yazilan alan bu birimlerin "
+                "disinda, baska bir bagli birime ait olabilir.")
 
     def __repr__(self) -> str:
         kip = "salt okunur" if self.readonly else "YAZILABILIR"

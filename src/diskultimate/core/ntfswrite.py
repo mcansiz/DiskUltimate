@@ -38,6 +38,11 @@ from .ntfsread import (AT_BITMAP, AT_DATA, AT_END, AT_FILE_NAME,
                        MFT_FLAG_DIRECTORY, MFT_FLAG_IN_USE, MFT_RECORD_ROOT,
                        Attribute, MftRecord, NtfsError, NtfsFS)
 
+# $Bitmap pencere boyutu: bir kerede okunup taranan bayt. 64 KB, 4 KB
+# kumede 512 bin kumeyi (~2 GB alan) kapsar; tahsis genellikle ilk
+# pencerede biter.
+BITMAP_WINDOW = 64 * 1024
+
 MFT_BITMAP_RECORD = 0          # $MFT kaydi; kendi $BITMAP'i kayit tahsisini tutar
 BITMAP_RECORD = 6              # $Bitmap: kume tahsisi
 MFTMIRR_RECORD = 1
@@ -107,25 +112,45 @@ class NtfsWriter:
             raise NtfsError("$Bitmap okunamadi")
         return attr
 
-    def _read_bitmap(self, attr: Attribute) -> bytearray:
-        return bytearray(self.fs.read_attribute(attr))
+    def _write_attr_range(self, attr: Attribute, data: bytes,
+                          offset: int) -> None:
+        """Yerlesik olmayan oznitelugun yalnizca bir araligini yazar.
 
-    def _write_attr_data(self, attr: Attribute, data: bytes) -> None:
-        """Yerlesik olmayan bir oznitelugun icerigini yerinde gunceller."""
+        Onceki surum oznitelugun **tamamini** yazardi. `$Bitmap` icin bu, tek
+        bir kumeyi tahsis etmek ugruna 1.9 MB yazmak demekti (58 GB bolum,
+        4 KB kume). SD kart gibi ortamlarda hem yavas hem yipraticidir —
+        olculdu ve ADR 0024'te kayit altina alindi.
+        """
         if attr.resident:
             raise NtfsError("Yerlesik oznitelik bu yoldan yazilamaz")
-        pos = 0
+        if not data:
+            return
+        end = offset + len(data)
+        pos = 0                     # oznitelik icinde su anki bayt konumu
         for lcn, count in attr.runs:
             span = count * self.cs
-            if lcn < 0:
+            if pos + span <= offset:
                 pos += span
                 continue
-            chunk = data[pos:pos + span]
-            if not chunk:
+            if pos >= end:
                 break
-            self.dev.write(lcn * self.cs, chunk.ljust(
-                min(span, len(data) - pos), b"\x00"))
+            inside = max(0, offset - pos)
+            take = min(span - inside, end - max(pos, offset))
+            if lcn >= 0:
+                source = max(pos, offset) - offset
+                self.dev.write(lcn * self.cs + inside,
+                               data[source:source + take])
             pos += span
+
+    def _align_range(self, low: int, high: int, limit: int) -> Tuple[int, int]:
+        """Bayt araligini sektor sinirlarina disa dogru genisletir.
+
+        Aygit yazmalari sektor tanelidir; hizasiz bir yazma alt katmanda
+        oku-degistir-yaz gerektirir. Hizalamayi burada yapmak, yazilan
+        bolgeyi ongorulebilir kilar.
+        """
+        ss = self.fs.sector_size
+        return max(0, (low // ss) * ss), min(limit, ((high + ss - 1) // ss) * ss)
 
     @staticmethod
     def _bit(buf: bytearray, index: int) -> bool:
@@ -138,41 +163,106 @@ class NtfsWriter:
         else:
             buf[index >> 3] &= ~(1 << (index & 7)) & 0xFF
 
+    def _bitmap_limits(self, attr: Attribute) -> Tuple[int, int]:
+        """($Bitmap bayt boyutu, gecerli kume sayisi)."""
+        size = self.fs.attribute_size(attr)
+        total_on_disk = self.fs.total_sectors * self.fs.sector_size // self.cs
+        return size, min(size * 8, total_on_disk)
+
     def alloc_clusters(self, count: int) -> List[Tuple[int, int]]:
-        """Ardisik kume arar; bulamazsa parcali tahsis eder."""
+        """Ardisik kume arar; bulamazsa parcali tahsis eder.
+
+        Bitmap **pencere pencere** okunur ve yalnizca degisen bolum geri
+        yazilir. Onceki surum her cagrida bitmap'in tamamini okuyup tamamini
+        yaziyordu: 58 GB'lik bir bolumde tek bir kume icin 1.9 MB okuma +
+        1.9 MB yazma (ADR 0024). Tahsis genellikle ilk pencerelerde biter,
+        bu yuzden kazanc buyuktur.
+        """
         attr = self._bitmap_attr()
-        bmp = self._read_bitmap(attr)
-        total_clusters_on_disk = self.fs.total_sectors * self.fs.sector_size // self.cs
-        limit = min(len(bmp) * 8, total_clusters_on_disk)
+        size, limit = self._bitmap_limits(attr)
+        byte_limit = (limit + 7) // 8
 
         runs: List[Tuple[int, int]] = []
         remaining = count
-        i = 0
-        while i < limit and remaining:
-            if self._bit(bmp, i):
-                i += 1
-                continue
-            start = i
-            while i < limit and remaining and not self._bit(bmp, i):
-                self._set_bit(bmp, i, True)
-                i += 1
-                remaining -= 1
-            runs.append((start, i - start))
+        base = 0                                    # pencerenin bayt ofseti
+        while base < byte_limit and remaining:
+            length = min(BITMAP_WINDOW, byte_limit - base)
+            window = bytearray(self.fs.read_attribute_range(attr, base, length))
+            if len(window) < length:                # kisa okuma: gerisi sifir
+                window += bytearray(length - len(window))
+            low = high = -1
+            first_bit = base * 8
+            last_bit = min(limit, (base + length) * 8)
+            i = first_bit
+            while i < last_bit and remaining:
+                local = i - first_bit
+                if self._bit(window, local):
+                    i += 1
+                    continue
+                start = i
+                while i < last_bit and remaining and \
+                        not self._bit(window, i - first_bit):
+                    self._set_bit(window, i - first_bit, True)
+                    i += 1
+                    remaining -= 1
+                byte_lo, byte_hi = (start - first_bit) >> 3, (i - 1 - first_bit) >> 3
+                low = byte_lo if low < 0 else min(low, byte_lo)
+                high = byte_hi if high < 0 else max(high, byte_hi)
+                # Pencere sinirini gecen bos alan iki parca gorunur; bitisikse
+                # birlestirilir, yoksa veri kosullari gereksiz yere uzardi.
+                if runs and runs[-1][0] + runs[-1][1] == start:
+                    runs[-1] = (runs[-1][0], runs[-1][1] + (i - start))
+                else:
+                    runs.append((start, i - start))
+            if low >= 0:
+                lo, hi = self._align_range(low, high + 1, length)
+                self._write_attr_range(attr, bytes(window[lo:hi]), base + lo)
+            base += length
         if remaining:
+            # Kismi tahsis birakilmaz: alinan kumeler geri verilir.
+            if runs:
+                self.free_clusters(runs)
             raise NtfsError("Diskte yeterli bos kume yok")
-        self._write_attr_data(attr, bytes(bmp))
         return runs
 
     def free_clusters(self, runs: List[Tuple[int, int]]) -> None:
+        """Verilen kumeleri serbest birakir.
+
+        Yalnizca **etkilenen bayt araliklari** okunur ve yazilir. Birbirine
+        yakin araliklar tek yazmada birlestirilir.
+        """
         attr = self._bitmap_attr()
-        bmp = self._read_bitmap(attr)
+        size, limit = self._bitmap_limits(attr)
+        spans: List[Tuple[int, int]] = []
         for lcn, count in runs:
-            if lcn < 0:
+            if lcn < 0 or count <= 0 or lcn >= limit:
                 continue
-            for k in range(count):
-                if lcn + k < len(bmp) * 8:
-                    self._set_bit(bmp, lcn + k, False)
-        self._write_attr_data(attr, bytes(bmp))
+            last = min(lcn + count - 1, limit - 1)
+            spans.append(self._align_range(lcn >> 3, (last >> 3) + 1, size))
+        if not spans:
+            return
+        spans.sort()
+        merged: List[Tuple[int, int]] = [spans[0]]
+        for lo, hi in spans[1:]:
+            # Bitisik veya cakisan araliklar tek yazmaya toplanir
+            if lo <= merged[-1][1]:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], hi))
+            else:
+                merged.append((lo, hi))
+        for lo, hi in merged:
+            block = bytearray(self.fs.read_attribute_range(attr, lo, hi - lo))
+            if len(block) < hi - lo:
+                block += bytearray((hi - lo) - len(block))
+            for lcn, count in runs:
+                if lcn < 0:
+                    continue
+                for k in range(count):
+                    bit = lcn + k
+                    if bit >= limit:
+                        break
+                    if lo <= (bit >> 3) < hi:
+                        self._set_bit(block, bit - lo * 8, False)
+            self._write_attr_range(attr, bytes(block), lo)
 
     def _mft_bitmap(self) -> Attribute:
         attr = self.fs.record(MFT_BITMAP_RECORD).find(AT_BITMAP)
@@ -189,10 +279,7 @@ class NtfsWriter:
             for i in range(FIRST_USER_RECORD, limit):
                 if not self._bit(bmp, i):
                     self._set_bit(bmp, i, True)
-                    if attr.resident:
-                        self._patch_resident(MFT_BITMAP_RECORD, attr, bytes(bmp))
-                    else:
-                        self._write_attr_data(attr, bytes(bmp))
+                    self._flush_mft_bitmap(attr, bmp, i)
                     return i
             if attempt == 0:
                 self._extend_mft()
@@ -255,10 +342,22 @@ class NtfsWriter:
         bmp = bytearray(self.fs.read_attribute(attr))
         if number < len(bmp) * 8:
             self._set_bit(bmp, number, False)
-            if attr.resident:
-                self._patch_resident(MFT_BITMAP_RECORD, attr, bytes(bmp))
-            else:
-                self._write_attr_data(attr, bytes(bmp))
+            self._flush_mft_bitmap(attr, bmp, number)
+
+    def _flush_mft_bitmap(self, attr: Attribute, bmp: bytearray,
+                          changed_bit: int) -> None:
+        """`$MFT` bitmap'inin **degisen bolumunu** diske yazar.
+
+        Yerlesik oznitelik kaydin icindedir, tamami yazilir (zaten kucuktur).
+        Yerlesik degilse yalnizca degisen bitin sektoru yazilir; onceki surum
+        her dosya olusturmada bitmap'in tamamini yaziyordu.
+        """
+        if attr.resident:
+            self._patch_resident(MFT_BITMAP_RECORD, attr, bytes(bmp))
+            return
+        lo, hi = self._align_range(changed_bit >> 3, (changed_bit >> 3) + 1,
+                                   len(bmp))
+        self._write_attr_range(attr, bytes(bmp[lo:hi]), lo)
 
     # ------------------------------------------------------------------
     # FILE kaydi yazimi

@@ -25,6 +25,11 @@ DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
 - Harici bağımlılık yok (çekirdek saf Python). `mkfs.*` araçları varsa opsiyonel kullanılır.
 - **Görüntü dosyalarında root/sudo gerekmez.** Fiziksel disk erişimi yönetici/root
   yetkisi ister; yetki yoksa diskler listelenir ama açılamaz (anlamlı hata verilir).
+  Uygulama yetkiyi **kendisi isteyebilir** (Windows UAC / Linux pkexec) ama
+  **koşulsuz değil**: yalnızca bilgisi okunamayan gerçek bir disk varsa, disk
+  açılırken yetki reddedilince veya kullanıcı menüden isteyince
+  (ADR 0023). En az yetki ilkesi: görüntü dosyasıyla çalışan kullanıcıdan
+  yetki istenmez.
 - **Çapraz platform kuralı:** işletim sistemi farkları **yalnızca** `core/platform.py`
   içinde durur. `core/` içinde doğrudan `subprocess`, `shutil.which`, `tempfile` veya
   sabit yol kullanılmaz. Tüm `struct` biçimleri açık endian işareti taşır.
@@ -79,6 +84,32 @@ yapılmaz.**
 - `.gitignore` → ham `.jsonl` dökümleri ve `settings.local.json` depoya girmez;
   `.claude/sessions/INDEX.md` girer.
 
+## Arayuz Donmasi ve Tanilama (ZORUNLU)
+Arayuz is parcaciginda **suresi ongorulemeyen is yapilmaz**: isletim sistemi
+aygit cagrilari (disk sayimi, birim acma, IOCTL), gercek disk G/C ve tum diski
+tarayan isler `dialogs/task.run_task` veya bir `QThread` icinde calisir
+(gerekce: `.claude/decisions/0020-tanilama-ve-donma-yakalayici.md`).
+
+Tanilama her calistirmada aciktir:
+- `.claude/logs/runtime/session-<zaman>.log` — olculen her islem; 200 ms ustu `YAVAS`
+- `.claude/logs/freeze/freeze-<zaman>.md` — arayuz 1.5 sn yanit vermezse **kendiliginden**
+  yazilan yigin raporu
+- Arayuzden: **Araclar > Tanilama**
+- Kapatma/ayar: `DISKULTIMATE_DIAG=0`, `DISKULTIMATE_DIAG_VERBOSE=1`,
+  `DISKULTIMATE_DIAG_STALL_MS=<ms>`
+
+Iki kural daha (gerekce: `.claude/decisions/0021-acik-aygiti-yoklamama-ve-kopyalama-ilerlemesi.md`):
+- **Ayni aygita iki yerden dokunulmaz.** Uygulamanin acik tuttugu diske ikinci
+  bir tutamac acip IOCTL sormak surucu yiginini dakikalarca asili birakabilir.
+  Acik aygitlar `core/physical.py` kutugunde durur; `list_disks()` onlara
+  dokunmaz.
+- **Uzun is sessiz kalmaz.** Kullanicinin baslattigi her uzun islem ilerleme
+  penceresi gosterir (`dialogs/task.run_task`). Yuzde hesaplanamiyorsa
+  `report(mesaj, -1)` ile belirsiz cubuk kullanilir.
+
+Yeni bir uzun islem eklenirken `diagnostics.span(...)` ile olculur.
+Denetim: `python3 -m tests.diag_check` (beklenen: 13/13).
+
 ## Kod Kuralları
 - Kaynak kod `src/diskultimate/` altında paket olarak durur.
 - Katmanlar birbirine sızmaz:
@@ -95,6 +126,7 @@ yapılmaz.**
 
 ## Çalıştırma
 ```bash
-python3 main.py            # GUI
-python3 -m tests.run_all   # çekirdek testleri
+python3 main.py              # GUI
+python3 -m tests.run_all     # çekirdek testleri
+python3 -m tests.diag_check  # tanılama / donma yakalayıcı
 ```

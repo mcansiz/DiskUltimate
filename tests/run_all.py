@@ -24,7 +24,7 @@ from diskultimate.core.ext import format_ext  # noqa: E402
 from diskultimate.core.extread import ExtFS  # noqa: E402
 from diskultimate.core.filesystem import (ExtAccess,  # noqa: E402
                                           NtfsAccess, open_filesystem)
-from diskultimate.core.ntfsread import NtfsFS  # noqa: E402
+from diskultimate.core.ntfsread import NtfsError, NtfsFS  # noqa: E402
 from diskultimate.core.fat import FatFS  # noqa: E402
 from diskultimate.core.ntfs import (attrdef_table, format_ntfs,  # noqa: E402
                                     upcase_table)
@@ -974,6 +974,459 @@ def t18_bolum_boyutlandirma():
     icerik_dogrula(s, "gpt tasima+buyutme")
     s.close()
 
+
+
+# --------------------------------------------------------------------------
+@test
+def t19_klasor_kopyalama():
+    """Klasor kopyalama: tek uygulama, ilerleme bildirimi, ayni yerlesim
+
+    Daha once her dosya sistemi `import_tree`i ayri yazmisti ve ikisi hedefte
+    **ust klasoru olusturmuyordu**: ayni dugme FAT'te `/hedef/klasor/a.txt`,
+    ext ve NTFS'te `/hedef/a.txt` uretiyordu. Artik tek uygulama var.
+
+    Ilerleme bildirimi de burada dogrulanir: buyuk bir kopyanin sessizce
+    surmesi kullaniciya donma gibi gorunuyordu (ADR 0021).
+    """
+    kaynak = os.path.join(TMP, "t19_kaynak")
+    shutil.rmtree(kaynak, ignore_errors=True)
+    os.makedirs(os.path.join(kaynak, "alt", "daha_alt"))
+    with open(os.path.join(kaynak, "kok.txt"), "wb") as fh:
+        fh.write(b"A" * 1000)
+    with open(os.path.join(kaynak, "alt", "orta.bin"), "wb") as fh:
+        fh.write(b"B" * 5000)
+    with open(os.path.join(kaynak, "alt", "daha_alt", "derin.dat"), "wb") as fh:
+        fh.write(b"C" * 3000)
+    toplam_bayt = 1000 + 5000 + 3000
+
+    mevcut = {k.key for k in available_kinds()}
+    denenen = []
+    for fs_key in ("fat32", "exfat", "ntfs", "ext4"):
+        if fs_key not in mevcut:
+            continue
+        yol = img_path(f"t19_{fs_key}.img")
+        s = DiskSession.create(yol, 256 * MIB, scheme="gpt", overwrite=True)
+        r = s.free_regions()[0]
+        p = s.create_partition(r.start_lba, 200 * MIB // 512, fs_key=fs_key,
+                               label="KOPYA")
+        fs = s.filesystem(p.index)
+        if fs is None or not fs.writable:
+            s.close()
+            continue
+
+        adimlar = []
+        sayi = fs.import_tree(kaynak, "/",
+                              progress=lambda d, t, ad: adimlar.append((d, t, ad)))
+        fs.flush()
+
+        assert sayi == 3, f"{fs_key}: {sayi} dosya kopyalandi, 3 bekleniyordu"
+        # Ust klasor olusmali: her dosya sisteminde ayni yerlesim
+        adlar = {n.name for n in fs.listdir("/")}
+        assert "t19_kaynak" in adlar, f"{fs_key}: ust klasor olusmadi — {adlar}"
+        kok = {n.name for n in fs.listdir("/t19_kaynak")}
+        assert {"kok.txt", "alt"} <= kok, f"{fs_key}: {kok}"
+        derin = fs.read("/t19_kaynak/alt/daha_alt/derin.dat")
+        assert derin == b"C" * 3000, f"{fs_key}: derin dosya icerigi bozuk"
+
+        # Ilerleme: her dosyadan once bir kez + sonda kapanis
+        assert len(adimlar) == 4, f"{fs_key}: {len(adimlar)} ilerleme bildirimi"
+        assert adimlar[0][0] == 0, "ilk bildirim 0 bayttan baslamali"
+        assert adimlar[-1][0] == toplam_bayt, "son bildirim toplami vermeli"
+        assert all(t == toplam_bayt for _d, t, _a in adimlar), "toplam degisti"
+        s.close()
+        denenen.append(fs_key)
+
+    assert len(denenen) >= 2, f"yalnizca {denenen} uzerinde denendi"
+    shutil.rmtree(kaynak, ignore_errors=True)
+
+
+# --------------------------------------------------------------------------
+@test
+def t20_acik_aygit_kutugu():
+    """Acik tutulan aygit listelemede yeniden yoklanmaz (donma korumasi)
+
+    Uygulama bir diski acikken ayni aygita ikinci bir tutamac acip IOCTL
+    sormak, surucu yiginini dakikalarca bloklayabiliyor; o sirada asil is
+    parcaciginin okumalari da ayni kuyruga takiliyor ve uygulama doniyor.
+    Olculmus ornek: `.claude/logs/freeze/freeze-20260915-134507.md`.
+
+    Gercek diske DOKUNULMAZ: aygit acma islevi sahte bir surumle degistirilir,
+    hangi yollarin acilmaya calisildigi kaydedilir.
+    """
+    from diskultimate.core import physical
+
+    assert not physical.open_device_paths(), "kutuk bos baslamali"
+    sahte = physical.DiskInfo(path="/sahte/aygit0", name="SahteAygit0",
+                              size=64 * MIB, mounted=["Z:"])
+    physical._register_open(sahte)
+    try:
+        acik = physical.open_device_paths()
+        assert sahte.path in acik, "acik aygit kutuge girmedi"
+        assert physical.busy_drive_letters() == {"Z"}, \
+            physical.busy_drive_letters()
+    finally:
+        physical._unregister_open(sahte.path)
+    assert sahte.path not in physical.open_device_paths(), "kutuk temizlenmedi"
+
+    if not physical.IS_WINDOWS:
+        raise Atlandi("aygit yoklamasi yalnizca Windows dalinda")
+
+    # Windows dali: acik aygit icin CreateFileW HIC cagrilmamali.
+    acilan = []
+    gercek_handle = physical._win_handle
+    gercek_letters = physical._win_drive_letters
+    gercek_system = physical._win_system_disk_numbers
+
+    def sahte_handle(path, write=False):
+        acilan.append(path)
+        raise physical.PhysicalDiskError(f"test: {path} acilmiyor")
+
+    hedef = "\\\\.\\PhysicalDrive9"
+    kayitli = physical.DiskInfo(path=hedef, name="PhysicalDrive9",
+                                size=32 * MIB, model="Sahte Kart")
+    physical._win_handle = sahte_handle
+    physical._win_drive_letters = lambda: {}
+    physical._win_system_disk_numbers = lambda: []
+    physical._register_open(kayitli)
+    try:
+        diskler = physical._list_windows()
+    finally:
+        physical._unregister_open(hedef)
+        physical._win_handle = gercek_handle
+        physical._win_drive_letters = gercek_letters
+        physical._win_system_disk_numbers = gercek_system
+
+    assert hedef not in acilan, \
+        f"acik aygit yine de acilmaya calisildi: {hedef}"
+    assert any(p.endswith("PhysicalDrive0") for p in acilan), \
+        "diger aygitlar yoklanmali"
+    bulunan = [d for d in diskler if d.path == hedef]
+    assert bulunan, "acik aygit listeden dustu"
+    assert bulunan[0].in_use, "acik aygit in_use isareti tasimali"
+    assert bulunan[0].model == "Sahte Kart", "bilinen bilgi korunmali"
+
+
+# --------------------------------------------------------------------------
+@test
+def t21_birim_kilidi_kutukten_etkilenmez():
+    """Birim kilitleme, acik aygit kutugune takilmamali (Windows)
+
+    Gercek hata (2026-09-15): aygit acilir acilmaz kutuge girdigi icin
+    `_win_drive_letters()` o diskin harflerini atliyordu; `_win_lock_volumes`
+    de harfleri oradan sordugu icin **hicbir birim kilitlenmiyordu**. Sonuc:
+    sonraki her yazma "Windows bagli birimlere yazmayi engeller" ile
+    reddedildi — kullanici yonetici oldugu halde.
+
+    Kilit artik harfleri `info.mounted` icinden alir. Gercek diske
+    DOKUNULMAZ: aygit acma ve IOCTL islevleri sahte surumlerle degistirilir.
+    """
+    from diskultimate.core import physical
+
+    if not physical.IS_WINDOWS:
+        raise Atlandi("birim kilidi yalnizca Windows dalinda")
+
+    info = physical.DiskInfo(path="\\\\.\\PhysicalDrive9", name="PhysicalDrive9",
+                             size=64 * MIB, mounted=["Q:", "R:"])
+    acilan = []
+    ioctl_kodlari = []
+
+    def sahte_handle(path, write=False):
+        acilan.append(path)
+        return 1234                      # sahte tutamac
+
+    def sahte_ioctl(handle, code, data=b"", out_size=256):
+        ioctl_kodlari.append(code)
+        return b""                       # basarili sayilir
+
+    gercek = (physical._win_handle, physical._win_ioctl, physical._win_close,
+              physical._win_drive_letters)
+    physical._win_handle = sahte_handle
+    physical._win_ioctl = sahte_ioctl
+    physical._win_close = lambda handle: None
+    # Kutuk yuzunden bos donen surum: kilit buna GUVENMEMELI
+    physical._win_drive_letters = lambda: {}
+
+    disk = physical.PhysicalDisk.__new__(physical.PhysicalDisk)
+    disk.info = info
+    disk.path = info.path
+    disk.sector_size = 512
+    disk.readonly = False
+    disk._volume_handles = []
+    disk._locked_letters = []
+    disk._unlocked_letters = []
+    try:
+        physical._register_open(info)        # gercek akista da boyle olur
+        try:
+            disk._win_lock_volumes()
+        finally:
+            physical._unregister_open(info.path)
+    finally:
+        (physical._win_handle, physical._win_ioctl, physical._win_close,
+         physical._win_drive_letters) = gercek
+
+    assert disk._locked_letters == ["Q:", "R:"], disk._locked_letters
+    assert not disk._unlocked_letters, disk._unlocked_letters
+    assert acilan == ["\\\\.\\Q:", "\\\\.\\R:"], acilan
+    assert len(disk._volume_handles) == 2, "kilitli tutamaclar tutulmali"
+    assert physical.FSCTL_LOCK_VOLUME in ioctl_kodlari, "birim kilitlenmedi"
+    assert physical.FSCTL_DISMOUNT_VOLUME in ioctl_kodlari, "birim ayrilmadi"
+
+
+# --------------------------------------------------------------------------
+@test
+def t22_yetki_yukseltme():
+    """Yonetici/root yukseltmesi: durum, uygunluk ve yeniden baslatma komutu
+
+    Gercek bir UAC/polkit penceresi ACILMAZ: yalnizca karar mantigi ve
+    uretilen komut satiri denetlenir.
+    """
+    from diskultimate.core import platform as pf
+
+    # -- durum sorgusu calisiyor ve mantikli --
+    elevated = pf.is_elevated()
+    assert isinstance(elevated, bool)
+    assert pf.ELEVATION_NAME in ("Yonetici", "root")
+    assert pf.summary()["Yetki"], "ozet yetki satiri tasimali"
+
+    # -- yeniden baslatma komutu: yorumlayici + betik --
+    komut = pf._relaunch_target()
+    assert komut, "betikten calistirilirken komut uretilmeli"
+    assert komut[0] == sys.executable, komut
+    assert os.path.isfile(komut[1]), f"betik yolu gecerli degil: {komut}"
+
+    # Betik yolu yoksa (python -c) UAC penceresi ACILMAMALI
+    eski_argv = sys.argv
+    sys.argv = ["-c"]
+    try:
+        assert pf._relaunch_target() == [], "betiksiz durumda komut uretilmemeli"
+        if not elevated:
+            uygun, neden = pf.elevation_available()
+            assert not uygun and neden, "betiksiz durumda yukseltme sunulmamali"
+    finally:
+        sys.argv = eski_argv
+
+    # -- uygunluk yetkiliyken kapali, nedeni acik --
+    uygun, neden = pf.elevation_available()
+    if elevated:
+        assert not uygun, "zaten yetkiliyken yukseltme sunulmamali"
+        assert "zaten" in neden.lower(), neden
+        # Zaten yetkiliyken cagrilsa bile hicbir sey baslatilmamali
+        baslatildi, hata = pf.relaunch_elevated()
+        assert not baslatildi and hata == neden, (baslatildi, hata)
+    else:
+        assert uygun or neden, "ya yukseltilebilmeli ya da nedeni olmali"
+
+
+# --------------------------------------------------------------------------
+@test
+def t23_ntfs_bitmap_aralikli_yazma():
+    """$Bitmap yalnizca degisen bolumu yazmali, sonuc tam yazmayla ayni olmali
+
+    Onceki surum her tahsiste ve her serbest birakmada bitmap'in **tamamini**
+    okuyup yaziyordu: 58 GB'lik bir bolumde tek bir kume icin 1.9 MB okuma +
+    1.9 MB yazma (ADR 0024, gercek olcum).
+
+    Buradaki olcut nettir: **aralikli yazmadan sonraki bitmap, tam yazmanin
+    uretecegi bitmap ile birebir ayni olmalidir.** Yanlis ofset, atlanan
+    pencere veya hizalama hatasi bu karsilastirmada yakalanir.
+
+    Pencere siniri de zorlanir: `BITMAP_WINDOW` gecici olarak kucultulur,
+    boylece kucuk bir test biriminde bile tahsis birden fazla pencereye yayilir.
+    """
+    from diskultimate.core import ntfswrite
+    from diskultimate.core.ntfswrite import NtfsWriter
+
+    p = img_path("t23.img")
+    d = DiskImage.create(p, 96 * MIB, overwrite=True)
+    view = PartitionView(d, 2048, d.sector_count - 2048)
+    format_ntfs(view, label="BITMAP")
+
+    fs = NtfsFS(PartitionView(d, 2048, d.sector_count - 2048))
+    writer = NtfsWriter(fs)
+
+    def tam_bitmap() -> bytearray:
+        """$Bitmap'in tamami — karsilastirma olcutu."""
+        return bytearray(fs.read_attribute(writer._bitmap_attr()))
+
+    def bit_oku(buf, index) -> bool:
+        return bool(buf[index >> 3] & (1 << (index & 7)))
+
+    eski_pencere = ntfswrite.BITMAP_WINDOW
+    ntfswrite.BITMAP_WINDOW = 64        # 64 bayt = 512 kume: sinir zorlanir
+    try:
+        # --- tahsis: sonuc tam yazmayla ayni mi? ---
+        onceki = tam_bitmap()
+        kumeler = writer.alloc_clusters(1500)      # birkac pencereye yayilir
+        toplam = sum(c for _l, c in kumeler)
+        assert toplam == 1500, f"{toplam} kume tahsis edildi"
+
+        beklenen = bytearray(onceki)
+        for lcn, count in kumeler:
+            for k in range(count):
+                beklenen[(lcn + k) >> 3] |= 1 << ((lcn + k) & 7)
+        sonra = tam_bitmap()
+        assert sonra == beklenen, "tahsis sonrasi bitmap tam yazmadan farkli"
+
+        # 1500 kume, 64 baytlik pencerede ~3 pencereye yayilir. Yeni
+        # bicimlendirilmis birimde bu alan bitisiktir: sonuc TEK parca olmali.
+        # Bu tek olcut iki hatayi birden yakalar — pencere sinirinda parcalarin
+        # birlestirilmemesi ve bir pencerenin atlanmasi (arada bosluk kalir).
+        assert len(kumeler) == 1, \
+            f"bitisik alan tek parca donmeli, donen: {kumeler}"
+
+        # --- serbest birakma: yalnizca hedef bitler sifirlanmali ---
+        onceki = tam_bitmap()
+        birak = kumeler[:1] if len(kumeler) == 1 else kumeler
+        writer.free_clusters(birak)
+        beklenen = bytearray(onceki)
+        for lcn, count in birak:
+            for k in range(count):
+                beklenen[(lcn + k) >> 3] &= ~(1 << ((lcn + k) & 7)) & 0xFF
+        sonra = tam_bitmap()
+        assert sonra == beklenen, "serbest birakma sonrasi bitmap farkli"
+
+        # --- dagitik serbest birakma: komsu bitler bozulmamali ---
+        yeni = writer.alloc_clusters(64)
+        hepsi = [(lcn + k) for lcn, count in yeni for k in range(count)]
+        assert len(hepsi) == 64
+        # Aradan bir bit birak; komsulari 1 kalmali
+        hedef = hepsi[len(hepsi) // 2]
+        onceki = tam_bitmap()
+        writer.free_clusters([(hedef, 1)])
+        sonra = tam_bitmap()
+        assert not bit_oku(sonra, hedef), "hedef bit serbest birakilmadi"
+        assert bit_oku(sonra, hedef - 1) and bit_oku(sonra, hedef + 1), \
+            "komsu bitler bozuldu"
+        beklenen = bytearray(onceki)
+        beklenen[hedef >> 3] &= ~(1 << (hedef & 7)) & 0xFF
+        assert sonra == beklenen, "tek bit serbest birakma tam yazmadan farkli"
+        writer.free_clusters(yeni)
+
+        # --- yetersiz alan: kismi tahsis birakilmamali ---
+        onceki = tam_bitmap()
+        try:
+            writer.alloc_clusters(10 ** 9)
+            assert False, "yetersiz alanda tahsis basarili olmamaliydi"
+        except NtfsError:
+            pass
+        assert tam_bitmap() == onceki, \
+            "basarisiz tahsis bitmap'te iz birakti (kismi tahsis)"
+    finally:
+        ntfswrite.BITMAP_WINDOW = eski_pencere
+
+    # --- gercek dosya islemleri hala dogru (varsayilan pencere ile) ---
+    erisim = open_filesystem(PartitionView(d, 2048, d.sector_count - 2048),
+                             detect(PartitionView(d, 2048, d.sector_count - 2048)))
+    icerik = {f"/dosya{i}.bin": bytes([i % 251]) * (40000 + i * 1000)
+              for i in range(6)}
+    for yol, veri in icerik.items():
+        erisim.write_file(yol, veri)
+    erisim.flush()
+    for yol, veri in icerik.items():
+        assert erisim.read(yol) == veri, f"{yol} icerigi bozuk"
+    for yol in list(icerik)[:3]:
+        erisim.remove(yol)
+    erisim.flush()
+    kalan = {n.name for n in erisim.listdir("/")}
+    assert kalan == {"dosya3.bin", "dosya4.bin", "dosya5.bin"}, kalan
+    for yol in list(icerik)[3:]:
+        assert erisim.read(yol) == icerik[yol], f"{yol} silme sonrasi bozuldu"
+
+
+# --------------------------------------------------------------------------
+@test
+def t24_yedek_onizleme():
+    """Yedegin icerigi GERI YUKLENMEDEN okunabilmeli (bolumler + kok klasor)
+
+    `backup_info` yalnizca basligi okur. Kullanici "bu yedekte ne var?"
+    sorusunu ancak yedegi acarak ya da bir diske yazarak yanitlayabiliyordu.
+    `backup_preview` yedegi `DubImage` uzerinden acar, bolum tablosunu cozer,
+    dosya sistemlerini tespit eder ve kok klasoru listeler — hicbir yere
+    yazmadan.
+    """
+    kaynak = img_path("t24.img")
+    s = DiskSession.create(kaynak, 512 * MIB, scheme="gpt", overwrite=True)
+    mevcut = {k.key for k in available_kinds()}
+    beklenen_fs = []
+    for key, mb, etiket in (("fat32", 200, "SISTEM"),
+                            ("ntfs", 160, "VERI"),
+                            ("exfat", 100, "TASINABILIR")):
+        if key not in mevcut:
+            continue
+        r = s.free_regions()[0]
+        p = s.create_partition(r.start_lba, mb * MIB // 512, fs_key=key,
+                               label=etiket)
+        fs = s.filesystem(p.index)
+        fs.mkdir("/Belgeler")
+        fs.write_file("/okubeni.txt", b"yedek onizleme\n")
+        fs.flush()
+        beklenen_fs.append(key)
+    assert len(beklenen_fs) >= 2, f"yeterli dosya sistemi yok: {beklenen_fs}"
+    bolum_sayisi = len(s.partitions)
+    s.close()
+
+    # --- tum diskin yedegi ---
+    disk_dub = img_path("t24_disk.dub")
+    s = DiskSession.open(kaynak, readonly=True)
+    backup(s.image, disk_dub, compress=True)
+    ilk_bolum = s.table.get(1)
+    bolum_dub = img_path("t24_bolum.dub")
+    backup(s.view(ilk_bolum), bolum_dub, compress=True,
+           fs_type=ilk_bolum.fs_type, label=ilk_bolum.fs_label)
+    s.close()
+
+    kaynak_once = os.path.getsize(kaynak)
+    onizleme = DiskSession.backup_preview(disk_dub)
+    assert onizleme.is_whole_disk, "disk yedegi tum disk olarak gorulmeli"
+    assert len(onizleme.partitions) == bolum_sayisi, \
+        f"{len(onizleme.partitions)} bolum gorundu, {bolum_sayisi} bekleniyordu"
+    for part in onizleme.partitions:
+        assert part.fs_type, f"Bolum {part.index} dosya sistemi tespit edilmedi"
+        girisler = onizleme.root_entries.get(part.index)
+        assert girisler is not None,             f"Bolum {part.index} ({part.fs_type}) icerigi okunamadi"
+        assert "okubeni.txt" in girisler, f"Bolum {part.index}: {girisler}"
+        assert "Belgeler/" in girisler, f"Bolum {part.index}: {girisler}"
+    assert onizleme.info.total_bytes == 512 * MIB, onizleme.info.total_bytes
+
+    # --- tek bolumun yedegi ---
+    # FAT onyukleme sektoru de 0xAA55 ile biter; bu yuzden "bolum tablosu var
+    # mi" olcutu yaniltir. Olcut bolum BULUNUP bulunmadigidir.
+    tek = DiskSession.backup_preview(bolum_dub)
+    assert not tek.is_whole_disk, "tek bolum yedegi disk sanildi"
+    assert not tek.partitions, tek.partitions
+    assert tek.filesystem is not None and tek.filesystem.fs_type, \
+        "tek bolum yedeginde dosya sistemi tespit edilmedi"
+    assert "okubeni.txt" in tek.root_entries.get(-1, []), tek.root_entries
+
+    # --- onizleme HICBIR SEY yazmamali ---
+    assert os.path.getsize(kaynak) == kaynak_once, "kaynak goruntu degisti"
+    for yol in (disk_dub, bolum_dub):
+        with open(yol, "rb") as fh:
+            assert fh.read(8) == b"DUBACKUP", "yedek dosyasi bozuldu"
+
+    # --- "bos" ile "okunamadi" ayri seylerdir ---
+    # Ikisi de bos liste gosterilse, bos bir NTFS bolumu "desteklenmiyor"
+    # sanilirdi. Bos bir bolum ekleyip ayrimin korundugu dogrulanir.
+    bos_kaynak = img_path("t24_bos.img")
+    s = DiskSession.create(bos_kaynak, 128 * MIB, scheme="gpt", overwrite=True)
+    r = s.free_regions()[0]
+    s.create_partition(r.start_lba, 64 * MIB // 512, fs_key="fat32",
+                       label="BOS")
+    s.close()
+    bos_dub = img_path("t24_bos.dub")
+    s = DiskSession.open(bos_kaynak, readonly=True)
+    backup(s.image, bos_dub, compress=True)
+    s.close()
+    bos_onizleme = DiskSession.backup_preview(bos_dub)
+    bos_girisler = bos_onizleme.root_entries.get(1)
+    assert bos_girisler == [],         f"bos bolum [] dondurmeli, donen: {bos_girisler!r}"
+
+    # --- yedek olmayan dosya reddedilmeli ---
+    try:
+        DiskSession.backup_preview(kaynak)
+        assert False, "ham goruntu yedek sayilmamaliydi"
+    except Exception as exc:
+        assert "yedegi degil" in str(exc) or "yedek" in str(exc).lower(), exc
 
 # --------------------------------------------------------------------------
 def main() -> int:

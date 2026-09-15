@@ -1983,3 +1983,409 @@ ayni okunuyor.
 ### Dogrulama ozeti
 Windows: `run_all` 18/18 · `platform_check` 0 bulgu.
 Linux: `ext_write_check` 4/4 · 60 MB dosya e2fsck temiz + cekirdek dogrulamasi.
+
+---
+
+## 2026-09-15 — Tanilama altyapisi ve arayuz donmasi
+
+### Bildirilen sorun
+Windows, SD kart takili (`PhysicalDrive1` — Generic- SD/MMC/MS PRO, 59.48 GB).
+Bolum listesinde **Bos alan** satirina tiklaninca pencere ~30 sn "Yanit
+Vermiyor" oldu, sonra kendiliginden duzeldi. Kendiliginden duzelmesi kilitlenme
+degil, arayuz is parcaciginda calisan uzun bir isletim sistemi cagrisi demektir.
+
+Kanit yoktu: sureler olculmuyordu, donma anindaki yigin hicbir yere
+dokulmuyordu. Once tani altyapisi kuruldu.
+
+### Yapilanlar
+- **`core/diagnostics.py`** (yeni, saf Python): oturum gunlugu, `span()` sure
+  olcumu (200 ms ustu YAVAS), `Watchdog` donma yakalayici, `faulthandler` ile
+  cokme dokumu, `dump_now()` elle yigin dokumu.
+- **`ui/diag.py`** (yeni): 200 ms nabiz zamanlayicisi, Qt uyarilari ve
+  yakalanmamis istisnalar gunluge, donma bitince arayuze bildirim.
+- **`ui/disk_scan.py`** (yeni): disk sayimi artik `QThread` icinde.
+- **Araclar > Tanilama** menusu: durum, son donma raporu, elle yigin dokumu,
+  gunluk klasorunu ac.
+- `core/physical.py`: `_win_quiet_errors()` (SetThreadErrorMode) ile "ortam yok"
+  kutusu bastirildi; `GetDriveTypeW` ile ag surucusu ve CD/DVD acilmadan elendi;
+  listeleme ve aygit G/C olculuyor.
+- `core/platform.py`: `open_folder()`.
+- `_add_physical_disks` artik tarama yapmiyor, onbellek kullaniyor.
+
+### Olculen (bu makine, ayni kart okuyucu takili)
+```
+tur 1: 947 ms — 3 disk
+  947 ms  physical.list_disks
+  899 ms  win.open_volume(drive=F)    <- SD kartin FAT16 bolumu, soguk cagri
+tur 2:  56 ms
+tur 3:  55 ms
+```
+Tek `CreateFileW` cagrisi soguk durumda ~0.9 sn. Bu sure ust sinirsizdir; aygit
+uykudaysa veya yuva bossa Windows yeniden dener. Bu tarama 3 saniyede bir
+arayuz is parcaciginda calisiyordu.
+
+Duzeltmeden sonra, pencere acikken 14 saniye boyunca:
+```
+Olay dongusundeki en uzun duraklama: 47 ms
+Yakalanan donma: 0
+en yavas olcum: 78 ms  [Dummy-3]  physical.list_disks   <- arka planda
+```
+
+### Altyapinin ilk bulgusu
+Yeni `sys.excepthook` kancasi, kendi degisikligimdeki hatayi yakaladi:
+`deleteLater` ile silinen `DiskScanner` isaretcisi birakilmisti, sonraki tur
+`RuntimeError: wrapped C/C++ object ... has been deleted` ile duşuyordu.
+`_scan_running()` / `_scan_finished()` ile giderildi.
+
+### Dogrulama
+- `tests.diag_check` (yeni): **13/13**
+- `tests.run_all`: **18/18**
+- `tests.platform_check`: **0 bulgu**
+- `tests.ui_smoke`: tamam (aygit takma/cikarma dali asenkron taramaya uyarlandi)
+
+### Durust kalan nokta
+30 saniyelik donma birebir tekrarlanamadi; o ana ait bir rapor elimizde yok.
+Yapilan sey, arayuz is parcaciginda **olculmus** tek engelleyici isin oradan
+kaldirilmasi. Tekrarlarsa artik `.claude/logs/freeze/` altinda kendiliginden
+rapor olusur ve takilan satiri gosterir.
+
+Ayrinti: `.claude/decisions/0020-tanilama-ve-donma-yakalayici.md`
+
+---
+
+## 2026-09-15 (2) — Donmanin gercek kok nedeni + kopyalama ilerlemesi
+
+### Bildirilen sorun
+SD kart (`PhysicalDrive1`) yazma modunda acik, 3. bolum NTFS. Dosya
+gezgininden `sdcard.img.dub` eklendi: hicbir ilerleme gostergesi cikmadi,
+pencere dondu, kendine gelince dosya yuklenmisti.
+
+### Bu kez tahmin gerekmedi
+Bir onceki oturumda kurulan donma yakalayici olayi kendiliginden kaydetti:
+`.claude/logs/freeze/freeze-20260915-134507.md` — **63.0 sn**, 29 yigin ornegi.
+
+```
+13:44:46  Fiziksel disk acildi: \.\PhysicalDrive1 (YAZMA)
+13:45:01  [Dummy-8]    win.query_drive(n=1)  basladi       <- arka plan yoklamasi
+13:45:05  [MainThread] disk.read(lba=2165024) basladi
+13:46:05.718 YAVAS disk.read(lba=8456192, size=1024) — 32250 ms
+13:46:05.719 YAVAS win.query_drive(n=1)               — 64031 ms
+```
+Uc islem de **ayni milisaniyede** serbest kaldi.
+
+**Kok neden:** uygulama kendi acik tuttugu diski 3 saniyede bir yokluyordu.
+Yazma modunda birimler kilitli/ayrik oldugu icin ayni aygita ikinci bir tutamac
+acip IOCTL sormak kart okuyucunun surucu yiginini 64 sn asili biraktI; ana is
+parcaciginin okuma/yazmalari da ayni aygit kuyruguna takildi.
+
+Bir onceki oturumda yoklamayi arka plana almak dogru adimdi ama yetmedi:
+cakisma **aygit duzeyinde**, is parcacigi duzeyinde degil.
+
+### Yapilanlar
+- **Acik aygit kutugu** (`core/physical.py`): acilan aygit kutuklenir;
+  `list_disks()` kutuktekine dokunmaz, son bilinen bilgiyi `in_use` isaretiyle
+  dondurur. Acik diskin surucu harfleri de atlanir. Acma anindaki yaris icin
+  arayuz suren taramayi bekler (`_wait_for_scan`).
+- **Kopyalama ilerleme penceresi**: `import_files`, `import_folder` ve
+  `export_selected` artik `run_task` uzerinden, ilerleme penceresiyle calisiyor.
+  `TaskDialog` **belirsiz kip** kazandi (`report(mesaj, -1)`): tek dosyalik
+  yazmada cubuk 0'da takili kalmiyor, hareket ediyor.
+- **`import_tree` tek yere toplandi** (`FileSystemAccess`). Dort ayri kopya
+  vardi ve **ikisi ust klasoru olusturmuyordu**: ayni dugme FAT'te
+  `/hedef/klasor/a.txt`, ext ve NTFS'te `/hedef/a.txt` uretiyordu.
+  *Davranis degisikligi:* ext ve NTFS artik FAT/exFAT ile ayni.
+- **Gunluk gurultusu**: var olmayan aygiti acma denemesi her turda 30+ uyari
+  satiri uretiyordu; `span(..., warn_on_error=False)` ile ayrinti seviyesine
+  indi. Islem yavassa uyari yine verilir.
+
+### Dogrulama
+- `tests.run_all`: **20/20** (yeni: `t19_klasor_kopyalama`,
+  `t20_acik_aygit_kutugu`)
+- `tests.diag_check`: 13/13 · `tests.platform_check`: 0 bulgu
+- `tests.ui_smoke`: ilerleme penceresi ciziliyor —
+  `17-kopyalama-ilerleme.png`; yuzde ve belirsiz kip denetlendi
+
+### Kalan sinir
+Tek bir dosyanin yazilmasi bolunemiyor: `write_file(path, data)` veriyi tek
+seferde alir. Bu yuzden bir dosyanin **icindeki** ilerleme gosterilemiyor
+(belirsiz cubuk) ve dosya once tumuyle bellege okunuyor. Cok buyuk dosyalar
+icin parcali yazma ayri bir is.
+
+Ayrinti: `.claude/decisions/0021-acik-aygiti-yoklamama-ve-kopyalama-ilerlemesi.md`
+
+---
+
+## 2026-09-15 (3) — Silme reddediliyor: birim kilidi kutuge takilmis
+
+### Bildirilen sorun
+Uygulama **yonetici olarak** (Thonny uzerinden) calisiyor. SD kartin NTFS
+bolumunden `sdcard.img.dub` silinmek istendi:
+
+> Yazma reddedildi: Windows bagli birimlere dogrudan yazmayi engeller.
+> Birimi cikarin (eject) veya **Yonetici olarak calistirin**.
+
+Kullanici zaten yoneticiydi. Linux'ta ayni islem sorunsuzdu.
+
+### Bulgu — kendi soktugum hata
+Oturum gunlugu (`session-20260915-135924-13908.log`):
+```
+13:59:32.068  aygit acik kutugune eklendi: \.\PhysicalDrive1
+13:59:32.100  arayuz: Fiziksel disk acildi: \.\PhysicalDrive1 (YAZMA)
+13:59:41.651  disk.write(lba=8452440, size=1915168) — 78 ms
+              HATA AccessDeniedError: Yazma reddedildi...
+```
+Acma ile yazma arasinda **tek bir `win.open_volume` satiri yok** — hicbir birim
+kilitlenmemis.
+
+Neden: bir onceki oturumda donmayi cozen **acik aygit kutugu** (ADR 0021).
+Acilista aygit once kutuge giriyor, sonra `_win_lock_volumes()` birim
+harflerini `_win_drive_letters()`e soruyor; o islev de artik kutuktekilerin
+harflerini atliyor. Harf listesi bos -> kilit yok -> Windows sonraki her
+yazmayi reddediyor.
+
+Linux'ta cikmamasinin nedeni: orada birim kilidi adimi hic yok.
+
+### Yapilanlar
+- `_win_lock_volumes()` harfleri **`info.mounted`** icinden aliyor; listelemeye
+  (dolayisiyla kutuge) bagimli degil. Kural: **acilis sirasindaki hicbir adim
+  aygitin kutukteki durumuna bagli olmamali.**
+- Kilit artik sessiz degil: kilitlenen/kilitlenemeyen birimler gunluge yaziliyor,
+  kilitlenemeyen varsa uyari veriliyor.
+- `ERROR_ACCESS_DENIED` metni duruma gore konusuyor. "Yonetici olarak
+  calistirin" tavsiyesi yalnizca gercekten anlamliysa verilir; yanlis
+  yonlendiren tavsiye, tavsiye vermemekten kotu.
+- `delete_selected` basarisiz silmeyi "silindi" diye raporlamiyor:
+  `"2/3 oge silindi — 1 oge silinemedi"`.
+
+### Dogrulama
+- Yeni `t21_birim_kilidi_kutukten_etkilenmez`: aygit **kutukteyken** kilitleme
+  calistirilir; `_win_drive_letters()` bos donse bile iki birimin de
+  kilitlendigi dogrulanir. Gercek diske dokunulmaz.
+- `tests.run_all` **21/21** · `diag_check` 13/13 · `platform_check` 0 bulgu ·
+  `ui_smoke` tamam.
+
+### Ayri bir bulgu (verimlilik)
+Reddedilen yazma `size=1915168` idi: bolumun **tum `$Bitmap` alani**
+(58.45 GB / 4 KB kume / 8 bit). NTFS yazicisi her tahsiste ve her serbest
+birakmada bitmap'in tamamini yeniden yaziyor — fiziksel diskte her islemde
+~1.9 MB gereksiz yazma. Dogruluk sorunu degil; ayri is olarak not edildi.
+
+Ayrinti: `.claude/decisions/0022-birim-kilidi-ve-durust-hata-metni.md`
+
+---
+
+## 2026-09-15 (4) — Yonetici / root yetkisinin istenmesi
+
+### Istek
+"Uygulama acilirken yonetici hakki istemesi gibi bir sey yapabilir miyiz?"
+
+### Karar: evet, ama kosulsuz degil
+CLAUDE.md kurali acik: goruntu dosyalari icin yetki **gerekmez**. Her acilista
+yetki istemek, bir disk aracini gereksiz yere tam yetkiyle calistirmak,
+yetkisiz kullanicinin uygulamayi hic kullanamamasi ve kullaniciyi UAC
+penceresini dusunmeden onaylamaya alistirmak demekti. En az yetki ilkesi.
+
+Yetki uc noktada istenir:
+1. **Acilista, yalnizca gercekten engellenmisse** — ilk tarama sonrasi
+   `info_complete=False` disk varsa (yani eksiklik *olculmusse*) bir kez sorulur.
+2. **Fiziksel disk acilirken yetki reddedilince** — hata kutusu artik cozumu de
+   sunar.
+3. **Kullanici isteyince** — Disk menusu > "Yonetici olarak yeniden baslat...".
+
+### Yapilanlar
+- `core/platform.py`: `is_elevated()`, `elevation_available()`,
+  `relaunch_elevated()`, `ELEVATION_NAME`. Windows `ShellExecuteW runas`,
+  Linux `pkexec env DISPLAY=... XAUTHORITY=...`, macOS `osascript`.
+  `summary()` artik **Yetki** satiri tasiyor.
+- `ui/main_window.py`: `act_elevate` eylemi, `_offer_elevation()`,
+  `restart_elevated()`, `_access_denied()`; durum cubugunda surekli yetki
+  gostergesi (`🔑 Yonetici` / `Normal kullanici`).
+- Yukseltmeden once acik oturumlar kapatilir ve suren tarama beklenir: iki
+  kopya ayni aygita dokunmamali (ADR 0021).
+- `DISKULTIMATE_NO_ELEVATION_PROMPT=1` acilis teklifini bastirir; duman testi
+  bunu ayarliyor (modal pencere kosumu kilitlerdi).
+
+### Guvenlik siniri
+Yukseltme, `physical.py` icindeki alti koruma katmanini **degistirmez**.
+Yonetici olmak yalnizca aygiti *acabilmeyi* saglar; yazma icin hala
+`readonly=False` + `confirm=True`, sistem diski icin `allow_system=True` ve
+arayuzde disk adinin yazilmasi gerekir.
+
+### Dogrulama
+- Yeni `t22_yetki_yukseltme`: durum sorgusu, komut satirinin yorumlayici+betik
+  olmasi, betik yolu yokken (`python -c`) yukseltmenin **sunulmamasi**, zaten
+  yetkiliyken cagrinin hicbir sey baslatmamasi. Gercek UAC penceresi acilmaz.
+- Arayuz iki durumda da ekran goruntusuyle denetlendi.
+- `tests.run_all` **22/22** · `diag_check` 13/13 · `platform_check` 0 bulgu ·
+  `ui_smoke` tamam.
+
+Ayrinti: `.claude/decisions/0023-yetki-yukseltme.md`
+
+---
+
+## 2026-09-15 (5) — NTFS $Bitmap: tamami degil, degisen bolum yaziliyor
+
+### Nereden cikti
+ADR 0022'deki hatayi incelerken reddedilen yazmanin **boyutu** dikkat cekti:
+`size=1915168`. Bu rastgele degil, 58.45 GB bolumun **butun kume bitmap'i**
+(58.45 GB / 4 KB kume / 8 bit). Koda bakinca daha kotusu gorundu:
+`alloc_clusters` ve `free_clusters` her cagrida bitmap'in tamamini **okuyup**
+tamamini **yaziyordu** — islem basina 3.8 MB G/C.
+
+Dogruluk sorunu degildi; sonuc her zaman dogruydu. Ama SD kart/USB bellekte
+32 KB'lik bir dosya icin 1.9 MB yazmak hem yavas hem yipraticidir. Ayni hata
+ext tarafinda bir kez giderilmisti (ADR 0010); NTFS'te kalmis.
+
+### Yapilanlar
+- `ntfsread`: `attribute_size()`, `read_attribute_range()`.
+- `ntfswrite`: `_write_attr_range()` (kume zinciri uzerinden aralikli yazma),
+  `_align_range()` (sektor sinirina hizalama).
+- `alloc_clusters` bitmap'i **64 KB pencerelerle** tarar; yalnizca degisen
+  bolumu yazar. Pencere sinirini gecen bitisik alan **birlestirilir** (yoksa
+  veri kosullari gereksiz uzar). Yetersiz alanda alinanlar geri verilir.
+- `free_clusters` yalnizca etkilenen bayt araliklarini okur/yazar; bitisik
+  araliklar tek yazmaya toplanir.
+- `$MFT` bitmap'i de aralikli (`_flush_mft_bitmap`).
+- Tam oznitelik yazan `_write_attr_data` ve `_read_bitmap` **silindi**: iki yol
+  birakmak, birinin yanlislikla kullanilmaya devam etmesi demekti.
+
+### Olcum (kullanicinin kartiyla ayni geometri, sayacli aygit sarmalayicisi)
+`58.45 GB bolum, 4 KB kume, $Bitmap = 1 915 290 bayt`
+
+| Islem | Okuma | Yazma |
+|---|---|---|
+| `alloc_clusters(8)` onceki | 1 915 290 B | 1 915 290 B |
+| `alloc_clusters(8)` simdi | **65 536 B** | **512 B** |
+| `free_clusters` onceki | 1 915 290 B | 1 915 290 B |
+| `free_clusters` simdi | **512 B** | **512 B** |
+
+Toplam **7 661 160 B -> 67 072 B (114 kat az G/C)**.
+Yalnizca yazma: **3 830 580 B -> 1 024 B (3741 kat az yazma)** — karti
+yipratan sey budur.
+
+### Dogrulama
+Yeni `t23_ntfs_bitmap_aralikli_yazma`. Olcut: *aralikli yazmadan sonraki
+bitmap, tam yazmanin uretecegi bitmap ile birebir ayni olmali.* Pencere siniri
+`BITMAP_WINDOW = 64` bayta dusurulerek zorlanir.
+
+Testin gercekten hata yakaladigi iki kasitli bozma ile denetlendi:
+- yazma ofsetine +512 -> "tahsis sonrasi bitmap tam yazmadan farkli"
+- pencere adimi `length + 1` -> "bitisik alan tek parca donmeli, donen: [(584, 448), (1040, 512), ...]"
+
+`tests.run_all` **23/23** · `platform_check` 0 bulgu · `diag_check` 13/13 ·
+`ui_smoke` tamam.
+
+### Kalan
+- Tahsis hala bitmap'i bastan tarar; "son bos kume" ipucu tutulsa dolu
+  birimlerde tarama da kisalirdi. Yapilmadi: ipucu yanlis olursa sessiz
+  bozulma degil yavaslama uretir ama dogrulanmasi ayri bir is.
+- `ntfsfix` / `ntfs-3g` ile tam dogrulama Windows'ta calistirilamiyor (arac
+  yok): `python3 -m tests.ntfs_write_check` **Linux tarafinda** kosulmali.
+
+Ayrinti: `.claude/decisions/0024-ntfs-bitmap-aralikli-yazma.md`
+
+---
+
+## 2026-09-15 (6) — Linux dogrulamasi (SSH ile misafir makinede)
+
+ADR 0024'teki NTFS `$Bitmap` degisikligi Windows'ta `ntfsfix`/`ntfs-3g`
+olmadigi icin tam dogrulanamamisti. Kullanici Linux misafir makineye erisim
+verdi (paylasilan dizin: `/mnt/hgfs/DiskUltimate/DiskUltimate`).
+
+### Sonuclar (Ubuntu 24.04, Python 3.12.3, PyQt5)
+
+| Kosum | Sonuc |
+|---|---|
+| `ntfs_write_check` (root, ntfs-3g bagli) | **2/2** — "ntfs-3g dogruladi (2 giris)" |
+| `run_all` | **21/23 · 2 atlandi** (t20, t21 Windows dalina ozgu) |
+| `ext_write_check` | **4/4** (her adimda `e2fsck -nf`) |
+| `platform_check` | 0 bulgu |
+| `diag_check` | 13/13 |
+| `ui_smoke` | tamam (offscreen, fusion) |
+
+**Onemli olan:** `ntfs_write_check` bu kez yalnizca `ntfsfix` ile degil,
+**ntfs-3g ile gercekten baglanarak** dogrulandi. Yani aralikli `$Bitmap`
+yazmasindan sonra birimi Linux'un NTFS surucusu sorunsuz baglayip okuyor —
+hem kendi bicimlendiricimizin urettigi hem de `mkntfs` ile uretilen birimde.
+
+Yetki yukseltmesi de yerinde denetlendi:
+```
+is_elevated (normal kullanici): False
+pkexec: /usr/bin/pkexec
+elevation_available: (True, '')
+relaunch komutu: ['/usr/bin/python3', '/tmp/probe.py']
+```
+`python3 -c` ile calistirildiginda ise dogru sekilde reddedildi:
+`(False, 'Uygulamanin yeniden baslatilacagi betik yolu belirlenemedi.')`
+
+### Yol acilan bir sorun: duman testi Linux'ta yarida kaliyordu
+`ui_smoke`, tema dalindaki sekme genisligi denetiminde **cokuyordu**:
+```
+RuntimeError: no access to protected functions or signals
+              for objects not created from Python
+```
+`tabSizeHint` korumali bir islevdir; PyQt5'in bu surumu Python'da
+olusturulmamis nesnede izin vermiyor. Sorun benim degisikliklerimde degildi
+ama **sonraki tum adimlari** (aygit takma/cikarma dali, ilerleme penceresi
+denetimi) Linux'ta hic calistirmiyordu.
+
+Artik yalnizca o tek denetim atlaniyor, test devam ediyor. Windows'ta denetim
+gercekten kosmaya devam ediyor ("4 sekme kirpilmadi"), Linux'ta atlandigi
+acikca yaziliyor.
+
+### Temizlik
+Misafir makinede uretilen gecici dosyalar (`/var/tmp/du`, `/var/tmp/du-ui`,
+`/tmp/probe.py`, `/tmp/ui.log`) silindi.
+
+---
+
+## 2026-09-15 (7) — Yedek dosyasi bilgisi: icerik listesi + "gez" dugmesi
+
+### Istek
+"Araclar > Yedek dosyasi bilgisi arayuzune, ayni goruntu ac gibi gez ozelligini
+de koy."
+
+### Durum
+`.dub` yedegi zaten **gezilebiliyordu** (`clone.DubImage`, salt okunur blok
+aygiti): Dosya > Ac ile acildiginda bolumler ve dosyalar goruluyordu. Eksik
+olan, bilgi penceresinden bu yola gecebilmekti. Ayrica pencere yalnizca
+**baslik** bilgisini gosteriyordu (boyut, tarih, sikistirma); "bu yedekte ne
+var?" sorusu yanitsizdi.
+
+### Yapilanlar
+- `core/session.py`: `BackupPreview` + `DiskSession.backup_preview(path)`.
+  Yedegi `DubImage` uzerinden acar, bolum tablosunu cozer, her bolumun dosya
+  sistemini tespit eder ve kok klasoru listeler — **hicbir yere yazmadan**.
+- `ui/dialogs/tools.py`: `BackupInfoDialog` — baslik bilgisi + icerik agaci +
+  **"Icerigini gez"** dugmesi. Dugme yedegi ana pencerede acar; oradan normal
+  dosya gezgini calisir.
+- `show_backup_info` artik `run_task` ile calisiyor: buyuk/sikistirilmis bir
+  yedegin icerigini okumak birkac saniye surebilir, sessiz beklemek donma gibi
+  gorunurdu (ADR 0021'in kurali).
+
+### Yol acilan iki bulgu
+1. **`is_whole_disk` yanlis olcut kullaniyordu.** Ilk surum "bolum tablosu var
+   mi" diye bakiyordu; FAT onyukleme sektoru de `0xAA55` ile bittigi icin tek
+   bir FAT bolumunun yedegi `scheme='mbr'` (0 bolum) gorunuyordu. Olcut
+   **bolum bulunup bulunmadigi** olarak duzeltildi.
+2. **"Bos" ile "okunamadi" ayni gosteriliyordu.** `_root_names` her iki
+   durumda da bos liste donuyordu; bos bir NTFS bolumu "bu surumde
+   listelenemiyor" gibi gorunurdu. Artik okunamayan icerik `None`, gercekten
+   bos bolum `[]` doner; pencere ikisini ayri yazar.
+
+### Dogrulama
+- Yeni `t24_yedek_onizleme`: cok bolumlu disk yedeginde bolum sayisi, dosya
+  sistemi tespiti ve kok girisleri; tek bolum yedeginde `is_whole_disk=False`;
+  bos bolumun `[]` donmesi; onizlemenin **hicbir sey yazmadigi** (kaynak boyutu
+  ve yedek imzasi degismiyor); yedek olmayan dosyanin reddedilmesi.
+- `ui_smoke`: `18-yedek-bilgisi.png` uretiliyor, agactaki bolum sayisi ve gez
+  dugmesi denetleniyor.
+- Windows: `run_all` **24/24** · `platform_check` 0 bulgu · `diag_check` 13/13 ·
+  `ui_smoke` tamam.
+- Linux (SSH): `run_all` **22/24 · 2 atlandi** (Windows dali) ·
+  `platform_check` 0 bulgu · `ui_smoke` tamam.
+
+### Not
+Yeniden adlandirma sirasinda duzenli ifade, kullaniciya gorunen Turkce metni de
+degistirmisti (`"(bos)"` -> `"(empty)"`). Ekran goruntusunden fark edildi ve
+geri alindi — CLAUDE.md kurali: **Turkce arayuz metni, Ingilizce kod adi.**

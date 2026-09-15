@@ -56,7 +56,19 @@ class TaskDialog(QDialog):
         self.worker.failed.connect(self._on_fail)
 
     def _on_progress(self, msg: str, pct: int) -> None:
+        """Ilerleme bildirimi. `pct < 0` = **belirsiz** (hareketli cubuk).
+
+        Bazi islemler tek bir buyuk adimdir (ornegin bir dosyanin bolume
+        yazilmasi): yuzde hesaplanamaz. Cubugu 0'da birakmak kullaniciya
+        "takildi" izlenimi verir; belirsiz kipte Qt cubugu hareket ettirir.
+        """
         self.label.setText(msg)
+        if pct < 0:
+            if self.bar.maximum() != 0:
+                self.bar.setRange(0, 0)
+            return
+        if self.bar.maximum() == 0:
+            self.bar.setRange(0, 100)
         self.bar.setValue(max(0, min(100, pct)))
 
     def _on_done(self, value) -> None:

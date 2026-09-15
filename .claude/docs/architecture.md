@@ -31,9 +31,12 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     │   ├── clone.py          .dub yedek bicimi, geri yukleme, klonlama
     │   ├── wipe.py           Guvenli silme (sifir/rastgele/DoD), bos alan silme
     │   ├── recovery.py       Silinmis dosya, kayip bolum, imza tabanli kurtarma
+    │   ├── diagnostics.py    Gunluk, sure olcumu (span), donma yakalayici, cokme dokumu
     │   └── session.py        DiskSession — GUI'nin gordugu tek cephe
     └── ui/                   YALNIZCA SUNUM — disk bicimi bilgisi icermez
         ├── theme.py          Dosya sistemi renkleri, palet yardimcilari, isletim sistemi ikonlari
+        ├── diag.py           Tanilamanin Qt tarafi: nabiz, Qt uyarilari, istisna kancasi
+        ├── disk_scan.py      Fiziksel disk listesini arka planda toplayan QThread
         ├── main_window.py    Menu, arac cubugu, agac, yerlesim, is akislari
         ├── widgets/
         │   ├── disk_map.py        Gorsel bolum haritasi (QPainter)
@@ -46,7 +49,7 @@ main.py                       Giris noktasi (QApplication + MainWindow)
             ├── new_image.py       Yeni goruntu / sanal disk sihirbazi
             ├── partition.py       Bolum olusturma + bicimlendirme
             ├── resize.py          Bolum boyutlandirma / tasima penceresi
-            ├── tools.py           Silme, kurtarma, imza tarama, bilgi pencereleri
+            ├── tools.py           Silme, kurtarma, imza tarama, yedek icerigi, bilgi pencereleri
             ├── task.py            QThread + ilerleme penceresi
             └── preview.py         Dosya onizleme (metin / onaltilik)
 ```
@@ -70,6 +73,57 @@ Kullanici -> MainWindow -> DiskSession -> PartitionTable (MBR/GPT) -> BlockDevic
 konusmaz; her sey `DiskSession` uzerinden gecer. Boylece yeni bir sema veya dosya
 sistemi eklendiginde arayuz kodu degismez.
 
+## Arayuz is parcacigi kurali (ZORUNLU)
+
+Arayuz is parcaciginda **suresi ongorulemeyen is yapilmaz.** Bir is su uclerden
+birine dokunuyorsa suresi ongorulemez sayilir:
+
+- isletim sisteminin aygit arayuzleri (disk sayimi, birim acma, IOCTL),
+- gercek disk G/C (uyuyan disk, yavas USB, cikarilmakta olan kart),
+- tum bolumu / tum diski tarayan isler (kurtarma, silme, klonlama).
+
+Bu isler ya `dialogs/task.run_task` (ilerlemeli, iptal edilebilir) ya da bir
+`QThread` icinde calisir; sonuc sinyal ile arayuze doner. Kural bir kez
+cignenmisti: fiziksel disk sayimi 3 saniyede bir arayuz is parcaciginda
+calisiyordu ve tek bir `CreateFileW` cagrisi pencereyi kilitliyordu
+(ADR 0020).
+
+**Ikinci kural — ayni aygita iki yerden dokunulmaz.** Isi arka plana almak tek
+basina yetmez: cakisma **aygit duzeyindedir**. Uygulamanin acik tuttugu bir
+diske ikinci bir tutamac acip IOCTL sormak surucu yiginini dakikalarca asili
+birakabilir ve o sirada asil is parcaciginin okumalari da ayni kuyruga takilir.
+Bu yuzden acik aygitlar `core/physical.py` icinde kutuklenir ve `list_disks()`
+onlara dokunmaz (ADR 0021).
+
+Kutugun sinirini bilmek gerekir: **acilis sirasindaki hicbir adim aygitin
+kutukteki durumuna bagli olmamalidir.** Kutuk *disaridan* gelen yoklamalari
+durdurmak icindir. Bu bir kez cignendi: Windows birim kilidi birim harflerini
+listelemeye soruyordu, listeleme de kutuktekileri atliyordu; sonuc olarak hicbir
+birim kilitlenmedi ve **her yazma** reddedildi (ADR 0022).
+
+**Ucuncu kural — uzun is sessiz kalmaz.** Kullanicinin baslattigi her uzun
+islem ilerleme penceresi gosterir. Yuzde hesaplanamiyorsa `report(mesaj, -1)`
+ile belirsiz (hareketli) cubuk kullanilir; 0'da duran cubuk "takildi"
+izlenimi verir.
+
+## Tanilama akisi
+
+```
+arayuz is parcacigi                arka plan
+------------------                 ---------
+QTimer (200 ms) --> beat() ----->  Watchdog
+                                      |  nabiz 1.5 sn gelmezse
+                                      v
+                          .claude/logs/freeze/freeze-<zaman>.md
+                          (acik islem + butun yiginlar + son islemler)
+
+span("disk.read", ...) ---------> .claude/logs/runtime/session-<zaman>.log
+                                  (200 ms ustu YAVAS olarak isaretlenir)
+```
+
+`core/diagnostics.py` Qt bilmez; nabiz, Qt uyarilari ve istisna kancasi
+`ui/diag.py` icindedir. Arayuzden erisim: **Araclar > Tanilama**.
+
 ## Adresleme sozlesmesi
 - Tum bolum sinirlari **LBA (sektor)** cinsindendir.
 - Bayta cevirme yalnizca `BlockDevice` uygulamalarinda yapilir.
@@ -92,3 +146,5 @@ sistemi eklendiginde arayuz kodu degismez.
 | Yeni fiziksel disk platformu | `physical.py` icinde listeleme/acma dali + `platform.py` |
 | Yeni arayuz paneli | `ui/widgets/` + `main_window.tabs` |
 | Isletim sistemi farki | **yalnizca** `core/platform.py` |
+| Yeni uzun surecek islem | `dialogs/task.run_task` veya `QThread` — arayuz is parcaciginda **degil** |
+| Yeni olcum noktasi | `diagnostics.span(...)` / `@diagnostics.timed(...)` |

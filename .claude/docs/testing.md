@@ -39,6 +39,12 @@ Temizlik: `rm -rf .tmp`
 | `t16_ext_ailesi` | ext2/ext3/ext4 saf Python bicimlendirme, JBD2 gunlugu, **`e2fsck` dogrulamasi** (ADR 0017) |
 | `t17_ntfs` | NTFS saf Python bicimlendirme, MFT/`$UpCase`/`$AttrDef`, **`ntfsfix`/`ntfsinfo` dogrulamasi** (ADR 0018) |
 | `t18_bolum_boyutlandirma` | Bolum kucultme / buyutme / tasima; FAT ve exFAT veri korumasi, guvenlik kapilari, **`fsck` dogrulamasi** (ADR 0019) |
+| `t19_klasor_kopyalama` | Klasor kopyalamanin dort dosya sisteminde **ayni yerlesimi** uretmesi ve ilerleme bildirimi (ADR 0021) |
+| `t20_acik_aygit_kutugu` | Uygulamanin acik tuttugu aygitin listelemede yeniden yoklanmamasi — donma korumasi (ADR 0021) |
+| `t21_birim_kilidi_kutukten_etkilenmez` | Windows birim kilidinin acik aygit kutugune takilmamasi — kilit olmazsa her yazma reddedilir (ADR 0022) |
+| `t22_yetki_yukseltme` | Yonetici/root yukseltmesi: durum sorgusu, yeniden baslatma komutu, betiksiz durumda **sunulmamasi** (ADR 0023) |
+| `t23_ntfs_bitmap_aralikli_yazma` | NTFS `$Bitmap`: aralikli yazmanin sonucu tam yazmayla **birebir ayni** olmali; pencere siniri, bitisik parca birlestirme, kismi tahsis birakmama (ADR 0024) |
+| `t24_yedek_onizleme` | `.dub` yedeginin icerigi **geri yuklenmeden** okunuyor: bolumler, dosya sistemleri, kok klasor; disk/bolum yedegi ayrimi; bos ile okunamayan ayrimi |
 
 ## Ortam guvenligi (onemli)
 
@@ -53,6 +59,41 @@ Temizlik: `rm -rf .tmp`
 
 > Bu denetim, paylasilan klasorde calistirilan testlerin ana makinenin diskini
 > doldurup sistemi kilitlemesi yasandigi icin eklendi (bkz. worklog, 4. oturum).
+
+## Tanilama denetimi
+
+```bash
+python3 -m tests.diag_check
+```
+
+Donma yakalayicinin **gercekten yakaladigini** dogrular (13 denetim):
+
+| Denetim | Dogruladigi |
+|---|---|
+| oturum gunlugu | `.claude/logs/runtime/session-*.log` olusuyor |
+| `span` gecmisi | olculen islem gecmis tamponuna giriyor |
+| YAVAS isareti | 200 ms ustu islem gunluge `YAVAS` olarak giriyor |
+| `track=False` | sik tekrarlanan islemler gecmis tamponunu doldurmuyor |
+| donma yakalama | nabiz kesilince rapor uretiliyor |
+| rapor icerigi | raporda **o an acik islem** ve arayuz yigini var |
+| rapor kapanisi | arayuz toparlaninca sure raporun sonuna yaziliyor |
+| geri cagirma | arayuz bilgilendiriliyor (islem gunlugune satir) |
+| elle dokum | `dump_now()` dosya yaziyor |
+
+Testin ciktilari `<proje>/.tmp/diag` altina yazilir; proje gunluk dizini
+kirlenmez.
+
+### Donma suphesi olan bir durumu elle incelemek
+
+```bash
+DISKULTIMATE_DIAG_VERBOSE=1 python3 main.py     # her olcum gunluge
+DISKULTIMATE_DIAG_STALL_MS=500 python3 main.py  # daha hassas esik
+DISKULTIMATE_DIAG=0 python3 main.py             # tanilamayi kapat
+```
+
+Uygulama takiliyken **Araclar > Tanilama > Simdi yigin dokumu al** ile elle de
+kanit alinabilir. Donma bittikten sonra rapor **Araclar > Tanilama > Son donma
+raporunu goster** altindadir.
 
 ## Capraz platform denetimi
 
@@ -162,8 +203,18 @@ python3 -m tests.ui_smoke                      # offscreen, ekrana pencere acmaz
 DISKULTIMATE_QPA=xcb python3 -m tests.ui_smoke # gercek cizim yolu
 ```
 
+> Duman testi `DISKULTIMATE_NO_ELEVATION_PROMPT=1` ayarlar: yetki yukseltme
+> teklifi modal bir penceredir ve otomatik kosumu kilitlerdi (ADR 0023). Ayni
+> degisken elle kosumda da teklifi kapatir.
+
+> Tema dalindaki **sekme genisligi** denetimi (ADR 0012) PyQt5'in bazi
+> surumlerinde calismaz: `tabSizeHint` korumali bir isleve dokunur ve
+> `RuntimeError: no access to protected functions...` atar (Ubuntu 24.04).
+> O durumda yalnizca bu denetim atlanir, test devam eder — eskiden butun duman
+> testi burada duruyor ve sonraki adimlar Linux'ta hic kosmuyordu.
+
 Ornek bir 4 GB / dort bolumlu goruntu uretir ve `<proje>/.tmp/screenshots` altina
-**on sekiz PNG** kaydeder: ana pencere, sekmeler, coklu goruntu ve diyaloglar
+**yirmi PNG** kaydeder: ana pencere, sekmeler, coklu goruntu ve diyaloglar
 (bolum boyutlandirma penceresi ve suruklemesi dahil). Arayuzde degisiklik
 yapildiginda bu goruntuler gozle denetlenir — ozellikle:
 - disk haritasinda metin ile doluluk cubugunun cakismamasi
@@ -171,6 +222,12 @@ yapildiginda bu goruntuler gozle denetlenir — ozellikle:
 - acilir liste / sayi kutusu oklarinin cizilmesi (stil sayfasi tuzagi)
 - dugme metinlerinin Turkce olmasi
 - **sekme basliklarinin kirpilmamasi** (stil sayfasi font-weight tuzagi, ADR 0012)
+- **kopyalama ilerleme penceresinin** cizilmesi (`17-kopyalama-ilerleme.png`):
+  buyuk bir dosya yazilirken hicbir sey gosterilmemesi kullaniciya donma gibi
+  gorunmustu (ADR 0021)
+- **yedek icerik listesinin** dolu olmasi (`18-yedek-bilgisi.png`): bolum
+  satirlari, dosya sistemi/etiket sutunlari ve kok klasor girisleri; bos bolum
+  `(bos)`, okunamayan icerik ise nedeniyle yazilir
 
 > Windows'ta platform eklentisi otomatik olarak `windows` secilir: Qt'nin
 > `offscreen` eklentisi orada hic font yuklemez ve goruntulerde metin gorunmez.

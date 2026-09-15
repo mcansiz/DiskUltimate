@@ -66,8 +66,64 @@ class FileSystemAccess:
     def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
         raise NotImplementedError
 
-    def import_tree(self, local_dir: str, dest_dir: str = "/") -> int:
-        raise NotImplementedError
+    def import_tree(self, local_dir: str, dest_dir: str = "/", progress=None) -> int:
+        """Yerel klasoru birime kopyalar; kopyalanan dosya sayisini dondurur.
+
+        Tek uygulama burada durur; her dosya sistemi kendi `mkdir` ve
+        `import_file` islevleriyle kullanilir. Daha once dort ayri kopya vardi
+        ve ikisi hedefte **ust klasoru olusturmuyordu** — ayni dugme dosya
+        sistemine gore farkli sonuc veriyordu.
+
+        `progress(yapilan_bayt, toplam_bayt, ad)`: verilirse her dosyadan once
+        cagrilir. Arayuz ilerleme penceresini bununla besler; buyuk bir kopyanin
+        sessizce surmesi kullaniciya donma gibi gorunuyordu.
+        """
+        files: List[tuple] = []
+        total = 0
+        base = os.path.basename(os.path.normpath(local_dir))
+        root_target = dest_dir.rstrip("/") + "/" + base
+        for root, _dirs, names in os.walk(local_dir):
+            rel = os.path.relpath(root, local_dir).replace(os.sep, "/")
+            target = root_target if rel == "." else f"{root_target}/{rel}"
+            for name in sorted(names):
+                source = os.path.join(root, name)
+                try:
+                    size = os.path.getsize(source)
+                except OSError:
+                    continue
+                files.append((source, target, size))
+                total += size
+
+        made = {""}
+        done = 0
+        count = 0
+        for source, target, size in files:
+            # Hedef klasor zinciri dosyadan once olusturulur; var olani
+            # olusturmaya calismak dosya sistemine gore hata firlatir.
+            if target not in made:
+                self._ensure_dir(target)
+                made.add(target)
+            if progress is not None:
+                progress(done, total, os.path.basename(source))
+            self.import_file(source, target)
+            done += size
+            count += 1
+        if not files:
+            self._ensure_dir(root_target)
+        if progress is not None:
+            progress(done, total, "")
+        return count
+
+    def _ensure_dir(self, path: str) -> None:
+        """Klasor zincirini olusturur; var olanlari atlar."""
+        parts = [p for p in path.replace("\\", "/").split("/") if p]
+        current = ""
+        for part in parts:
+            current += "/" + part
+            try:
+                self.mkdir(current)
+            except Exception:
+                pass            # zaten var ya da olusturulamaz; import_file soyler
 
     def mkdir(self, path: str) -> None:
         raise NotImplementedError
@@ -124,9 +180,6 @@ class FatAccess(FileSystemAccess):
     def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
         entry = self.fs.import_file(local_path, dest_dir)
         return self._node(entry, dest_dir)
-
-    def import_tree(self, local_dir: str, dest_dir: str = "/") -> int:
-        return self.fs.import_tree(local_dir, dest_dir)
 
     def mkdir(self, path: str) -> None:
         self.fs.mkdir(path)
@@ -189,9 +242,6 @@ class ExFatAccess(FileSystemAccess):
 
     def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
         return self._node(self.fs.import_file(local_path, dest_dir), dest_dir)
-
-    def import_tree(self, local_dir: str, dest_dir: str = "/") -> int:
-        return self.fs.import_tree(local_dir, dest_dir)
 
     def mkdir(self, path: str) -> None:
         self.fs.mkdir(path)
@@ -293,21 +343,6 @@ class ExtAccess(FileSystemAccess):
         target = (dest_dir.rstrip("/") + "/" + name) if dest_dir != "/" else "/" + name
         return self.write_file(target, data)
 
-    def import_tree(self, local_dir: str, dest_dir: str = "/") -> int:
-        count = 0
-        for root, dirs, files in os.walk(local_dir):
-            rel = os.path.relpath(root, local_dir).replace(os.sep, "/")
-            base = dest_dir if rel == "." else f"{dest_dir.rstrip('/')}/{rel}"
-            if rel != ".":
-                try:
-                    self.mkdir(base)
-                except ExtError:
-                    pass
-            for entry_name in files:
-                self.import_file(os.path.join(root, entry_name), base)
-                count += 1
-        return count
-
     def mkdir(self, path: str) -> None:
         self.writer.mkdir(path)
 
@@ -362,21 +397,6 @@ class NtfsAccess(FileSystemAccess):
         name = os.path.basename(local_path)
         target = (dest_dir.rstrip("/") + "/" + name) if dest_dir != "/"             else "/" + name
         return self.write_file(target, data)
-
-    def import_tree(self, local_dir: str, dest_dir: str = "/") -> int:
-        count = 0
-        for root, _dirs, files in os.walk(local_dir):
-            rel = os.path.relpath(root, local_dir).replace(os.sep, "/")
-            base = dest_dir if rel == "." else f"{dest_dir.rstrip('/')}/{rel}"
-            if rel != ".":
-                try:
-                    self.mkdir(base)
-                except NtfsError:
-                    pass
-            for entry_name in files:
-                self.import_file(os.path.join(root, entry_name), base)
-                count += 1
-        return count
 
     def mkdir(self, path: str) -> None:
         self.writer.mkdir(path)

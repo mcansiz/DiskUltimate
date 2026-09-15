@@ -349,6 +349,34 @@ class NtfsFS:
                 break
         return bytes(out[:length])
 
+    def attribute_size(self, attr: Attribute) -> int:
+        """Oznitelugun icerik boyutu (yerlesik olsun olmasin)."""
+        return len(attr.value) if attr.resident else attr.data_size
+
+    def read_attribute_range(self, attr: Attribute, offset: int,
+                             length: int) -> bytes:
+        """Oznitelugun yalnizca [offset, offset+length) araligini okur.
+
+        `$Bitmap` gibi cok buyuk ozniteliklerde tek bir bit degistirmek icin
+        **tamamini** okumak gerekmez: 58 GB'lik bir bolumde kume bitmap'i
+        1.9 MB'dir ve her tahsiste bastan sona okunuyordu (ADR 0024).
+        """
+        if length <= 0:
+            return b""
+        if attr.resident:
+            return bytes(attr.value[offset:offset + length])
+        if attr.flags & ATTR_COMPRESSED:
+            raise NtfsError("Sikistirilmis NTFS akisi bu surumde okunamaz")
+        end = min(offset + length, attr.data_size)
+        if end <= offset:
+            return b""
+        data = self._run_read(attr.runs, offset, end - offset)
+        # initialized_size sonrasi tanimsizdir, sifir okunur
+        if attr.initialized_size < end:
+            valid = max(0, attr.initialized_size - offset)
+            data = data[:valid].ljust(end - offset, b"\x00")
+        return data
+
     def read_attribute(self, attr: Attribute, max_bytes: int = -1) -> bytes:
         """Bir oznitelugun icerigini dondurur."""
         if attr.resident:

@@ -5,16 +5,20 @@ import os
 from typing import List, Optional
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
                              QDialogButtonBox, QFormLayout, QGroupBox,
                              QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-                             QListWidget, QListWidgetItem, QPushButton,
+                             QListWidget, QListWidgetItem, QPlainTextEdit,
+                             QPushButton,
                              QRadioButton, QTreeWidget, QTreeWidgetItem,
                              QVBoxLayout, QWidget)
 
 from ...core.ptable import human_size
 from ...core.recovery import SIGNATURES
 from ...core.wipe import WIPE_METHODS
+from ..theme import fs_color
+from ..widgets.partition_table import color_chip
 
 
 class WipeDialog(QDialog):
@@ -328,3 +332,137 @@ class InfoDialog(QDialog):
         butonlar.button(QDialogButtonBox.Close).setText("Kapat")
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
+
+
+class TextViewDialog(QDialog):
+    """Uzun duz metni (donma raporu, gunluk) sabit genislikli gosterir."""
+
+    def __init__(self, title: str, text: str, parent=None, note: str = ""):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.resize(900, 620)
+        duzen = QVBoxLayout(self)
+        if note:
+            n = QLabel(note)
+            n.setWordWrap(True)
+            n.setEnabled(False)
+            duzen.addWidget(n)
+        view = QPlainTextEdit(text)
+        view.setReadOnly(True)
+        mono = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        mono.setPointSize(9)
+        view.setFont(mono)
+        view.setLineWrapMode(QPlainTextEdit.NoWrap)
+        duzen.addWidget(view, 1)
+        butonlar = QDialogButtonBox(QDialogButtonBox.Close)
+        butonlar.button(QDialogButtonBox.Close).setText("Kapat")
+        butonlar.rejected.connect(self.reject)
+        duzen.addWidget(butonlar)
+
+
+class BackupInfoDialog(QDialog):
+    """`.dub` yedeginin bilgisi + **icerigi** + gezmeye gecis.
+
+    Once yalnizca baslik bilgileri gosteriliyordu (boyut, tarih, sikistirma).
+    Kullanici "bu yedekte ne var?" sorusunu ancak yedegi acarak ya da bir diske
+    yazarak yanitlayabiliyordu. Artik bolum tablosu ve her bolumun node klasoru
+    burada gorunur; "Icerigini gez" dugmesi ise yedegi **goruntu acar gibi**
+    ana pencerede acar (salt okunur — bkz. `clone.DubImage`).
+    """
+
+    def __init__(self, preview, parent=None):
+        super().__init__(parent)
+        self.preview = preview
+        self.browse = False          # kullanici gezmeyi sectiyse True
+        info = preview.info
+        self.setWindowTitle(f"Yedek Dosyasi — {os.path.basename(info.path)}")
+        self.resize(720, 560)
+        duzen = QVBoxLayout(self)
+
+        grup = QGroupBox("Yedek bilgisi")
+        form = QFormLayout(grup)
+        for key, value in info.summary().items():
+            etiket = QLabel(str(value))
+            etiket.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            form.addRow(f"{key}:", etiket)
+        duzen.addWidget(grup)
+
+        contents = QGroupBox("Icerik (geri yuklenmeden okundu)")
+        contents_layout = QVBoxLayout(contents)
+        self.tree = QTreeWidget()
+        self.tree.setHeaderLabels(["Ad", "Dosya Sistemi", "Etiket", "Boyut"])
+        self.tree.setRootIsDecorated(True)
+        self.tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
+        for col, width in ((1, 110), (2, 130), (3, 90)):
+            self.tree.setColumnWidth(col, width)
+        self._fill(preview)
+        contents_layout.addWidget(self.tree)
+        duzen.addWidget(contents, 1)
+
+        self.note = QLabel(
+            "Yedek <b>salt okunur</b> acilir: bolumleri ve dosyalari gezebilir, "
+            "dosyalari disa aktarabilirsiniz. Degistirmek icin bir diske veya "
+            "goruntuye yazmaniz gerekir.")
+        self.note.setWordWrap(True)
+        self.note.setEnabled(False)
+        duzen.addWidget(self.note)
+
+        butonlar = QDialogButtonBox(QDialogButtonBox.Close)
+        butonlar.button(QDialogButtonBox.Close).setText("Kapat")
+        self.btn_browse = butonlar.addButton("Icerigini gez",
+                                             QDialogButtonBox.AcceptRole)
+        self.btn_browse.setToolTip(
+            "Yedegi ana pencerede acar; bolum ve dosya gezgini calisir")
+        butonlar.accepted.connect(self._browse)
+        butonlar.rejected.connect(self.reject)
+        duzen.addWidget(butonlar)
+
+    def _browse(self) -> None:
+        self.browse = True
+        self.accept()
+
+    def _fill(self, preview) -> None:
+        """Bolumleri ve kok klasor girislerini agaca doldurur."""
+        if preview.partitions:
+            for part in preview.partitions:
+                node = QTreeWidgetItem(self.tree, [
+                    f"Bolum {part.index}",
+                    part.fs_type or "-",
+                    part.name or part.fs_label or "-",
+                    human_size(part.size)])
+                node.setIcon(0, color_chip(fs_color(part.fs_type), 12))
+                self._add_entries(node, preview.root_entries.get(part.index),
+                                  part.fs_type)
+                node.setExpanded(True)
+            return
+
+        # Bolum tablosu yok: tek bir bolumun yedegi
+        fs = preview.filesystem
+        fs_type = getattr(fs, "fs_type", "") or preview.info.fs_type
+        node = QTreeWidgetItem(self.tree, [
+            "Tek bolum yedegi", fs_type or "-",
+            (getattr(fs, "label", "") or preview.info.label or "-"),
+            human_size(preview.info.total_bytes)])
+        node.setIcon(0, color_chip(fs_color(fs_type), 12))
+        self._add_entries(node, preview.root_entries.get(-1), fs_type)
+        node.setExpanded(True)
+
+    def _add_entries(self, parent: QTreeWidgetItem, names, fs_type: str) -> None:
+        """Kok klasor girislerini ekler.
+
+        `names is None` ile `names == []` ayri seylerdir ve ayri gosterilir:
+        biri "icerigi okuyamadik", oteki "bolum gercekten bos". Ikisini ayni
+        gostermek bos bir NTFS bolumunu "desteklenmiyor" gibi gosterirdi.
+        """
+        if names:
+            for name in names:
+                QTreeWidgetItem(parent, [name, "", "", ""])
+            return
+        if names == []:
+            metin = "(bos)"
+        elif not fs_type:
+            metin = "(bicimlendirilmemis)"
+        else:
+            metin = f"({fs_type} icerigi bu surumde listelenemiyor)"
+        empty = QTreeWidgetItem(parent, [metin, "", "", ""])
+        empty.setDisabled(True)

@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QFileDialog,
 
 from ...core.filesystem import FileNode, FileSystemAccess
 from ...core.ptable import human_size
+from ..dialogs.task import run_task
 from ..theme import palette_color, standard_icon
 
 
@@ -232,46 +233,107 @@ class FileBrowser(QWidget):
         target = QFileDialog.getExistingDirectory(self, "Disa aktarma klasoru")
         if not target:
             return
-        sayac = 0
-        for node in nodes:
-            try:
-                self.fs.extract(node.path, target)
-                sayac += 1
-            except Exception as exc:
-                QMessageBox.warning(self, "Disa aktarma hatasi",
-                                    f"{node.name}: {exc}")
-        self.statusMessage.emit(f"{sayac} oge disa aktarildi -> {target}")
+        total = sum(max(0, n.size) for n in nodes) or 1
+
+        def work(report):
+            done = 0
+            copied = 0
+            problems = []
+            for node in nodes:
+                report(f"{node.name} disa aktariliyor...",
+                       int(100 * done / total))
+                try:
+                    self.fs.extract(node.path, target)
+                    copied += 1
+                except Exception as exc:
+                    problems.append(f"{node.name}: {exc}")
+                done += max(0, node.size)
+            return copied, problems
+
+        ok, result = run_task(self, "Disa aktariliyor", work)
+        if not ok:
+            QMessageBox.warning(self, "Disa aktarma hatasi", str(result))
+            return
+        copied, problems = result
+        if problems:
+            QMessageBox.warning(self, "Disa aktarma hatasi",
+                                "\n".join(problems[:10]))
+        self.statusMessage.emit(f"{copied} oge disa aktarildi -> {target}")
 
     def import_files(self) -> None:
+        """Secilen dosyalari bolume kopyalar (ilerleme penceresi ile).
+
+        Kopyalama arayuz is parcaciginda yapilmaz: fiziksel bir diske buyuk bir
+        dosya yazmak dakikalarca surebilir ve kullaniciya donma gibi gorunur
+        (bkz. ADR 0021).
+        """
         if not self._require_writable():
             return
         files, _ = QFileDialog.getOpenFileNames(self, "Eklenecek dosyalar")
         if not files:
             return
+        sizes = []
         for path in files:
             try:
-                self.fs.import_file(path, self.current_path)
-            except Exception as exc:
-                QMessageBox.warning(self, "Ekleme hatasi",
-                                    f"{os.path.basename(path)}: {exc}")
+                sizes.append(os.path.getsize(path))
+            except OSError:
+                sizes.append(0)
+        total = sum(sizes) or 1
+        dest = self.current_path
+
+        def work(report):
+            done = 0
+            copied = 0
+            problems = []
+            for path, size in zip(files, sizes):
+                # Tek dosya, tek adimdir: yuzde hesaplanamaz, belirsiz cubuk
+                # gosterilir. Cok dosyada bayta gore ilerleme anlamlidir.
+                pct = -1 if len(files) == 1 else int(100 * done / total)
+                report(f"{os.path.basename(path)} yaziliyor "
+                       f"({human_size(size)})...", pct)
+                try:
+                    self.fs.import_file(path, dest)
+                    copied += 1
+                except Exception as exc:
+                    problems.append(f"{os.path.basename(path)}: {exc}")
+                done += size
+            report("Tamamlaniyor...", 100)
+            return copied, problems
+
+        ok, result = run_task(self, f"Kopyalaniyor — {human_size(total)}", work)
+        if not ok:
+            QMessageBox.warning(self, "Ekleme hatasi", str(result))
+            result = (0, [])
+        copied, problems = result
+        if problems:
+            QMessageBox.warning(self, "Ekleme hatasi",
+                                "\n".join(problems[:10]))
         self.refresh()
         self.contentChanged.emit()
-        self.statusMessage.emit(f"{len(files)} dosya eklendi")
+        self.statusMessage.emit(f"{copied} dosya eklendi ({human_size(total)})")
 
     def import_folder(self) -> None:
         if not self._require_writable():
             return
-        dir_count = QFileDialog.getExistingDirectory(self, "Eklenecek klasor")
-        if not dir_count:
+        folder = QFileDialog.getExistingDirectory(self, "Eklenecek klasor")
+        if not folder:
             return
-        try:
-            count = self.fs.import_tree(dir_count, self.current_path)
-        except Exception as exc:
-            QMessageBox.warning(self, "Ekleme hatasi", str(exc))
+        dest = self.current_path
+
+        def work(report):
+            def on_file(done: int, total: int, name: str) -> None:
+                pct = int(100 * done / total) if total else 100
+                report(f"{name or 'Tamamlaniyor'} ({human_size(done)} / "
+                       f"{human_size(total)})", pct)
+            return self.fs.import_tree(folder, dest, progress=on_file)
+
+        ok, result = run_task(self, "Klasor kopyalaniyor", work)
+        if not ok:
+            QMessageBox.warning(self, "Ekleme hatasi", str(result))
             return
         self.refresh()
         self.contentChanged.emit()
-        self.statusMessage.emit(f"Klasor eklendi ({count} dosya)")
+        self.statusMessage.emit(f"Klasor eklendi ({result} dosya)")
 
     def make_dir(self) -> None:
         if not self._require_writable():
@@ -320,14 +382,24 @@ class FileBrowser(QWidget):
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if cevap != QMessageBox.Yes:
             return
+        # Basarisiz silmeler sayilir: eskiden hata kutusu gosterilse bile islem
+        # gunlugune "N oge silindi" yaziliyordu ve kullanici hangi ogenin
+        # gercekten silindigini gunlukten anlayamiyordu (2026-09-15).
+        removed = 0
         for node in nodes:
             try:
                 self.fs.remove(node.path, recursive=True)
+                removed += 1
             except Exception as exc:
                 QMessageBox.warning(self, "Silme hatasi", f"{node.name}: {exc}")
         self.refresh()
         self.contentChanged.emit()
-        self.statusMessage.emit(f"{len(nodes)} oge silindi")
+        if removed == len(nodes):
+            self.statusMessage.emit(f"{removed} oge silindi")
+        else:
+            self.statusMessage.emit(
+                f"{removed}/{len(nodes)} oge silindi — {len(nodes) - removed} "
+                "oge silinemedi")
 
     def preview_file(self, node: FileNode) -> None:
         try:

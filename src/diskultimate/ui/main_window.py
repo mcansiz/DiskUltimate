@@ -14,9 +14,12 @@ from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QFileDialog,
                              QTabWidget, QToolBar, QTreeWidget, QTreeWidgetItem,
                              QVBoxLayout, QWidget)
 
+from ..core import diagnostics
 from ..core.formatter import FS_BY_KEY
 from ..core.physical import AccessDeniedError, PhysicalDiskError, SystemDiskError
-from ..core.platform import IMAGE_EXTENSIONS, PLATFORM_NAME
+from ..core.platform import (ELEVATION_NAME, IMAGE_EXTENSIONS,  # noqa: E501
+                             PLATFORM_NAME, elevation_available, is_elevated,
+                             open_folder, relaunch_elevated)
 from ..core.platform import summary as platform_summary
 from ..core.vdisk import VhdImage
 from ..paths import LOG_DIR
@@ -26,13 +29,15 @@ from ..core.ptable import (GPT_TYPES, MBR_TYPES, FreeRegion, Partition,
                            human_size, parse_size)
 from ..core.session import DiskSession, SessionError
 from .dialogs.base import exec_dialog
+from .diag import install as install_diagnostics
+from .disk_scan import DiskScanner
 from .dialogs.new_image import NewImageDialog
 from .dialogs.partition import CreatePartitionDialog, FormatDialog
 from .dialogs.resize import ResizePartitionDialog
 from .dialogs.task import run_task
-from .dialogs.tools import (CarveOptionsDialog, CarvedFilesDialog,
-                            DeletedFilesDialog, InfoDialog,
-                            LostPartitionsDialog, WipeDialog)
+from .dialogs.tools import (BackupInfoDialog, CarveOptionsDialog,
+                            CarvedFilesDialog, DeletedFilesDialog, InfoDialog,
+                            LostPartitionsDialog, TextViewDialog, WipeDialog)
 from .theme import fs_color, os_icon, palette_color, standard_icon
 from .widgets.disk_map import DiskMapWidget
 from .widgets.file_browser import FileBrowser
@@ -78,15 +83,26 @@ class MainWindow(QMainWindow):
         self._build_tree([])        # acik goruntu olmadan da diskler listelenir
         self.info_view.setPlainText(self._physical_summary_text())
         self._update_actions()
-        self.log(f"{APP_NAME} {APP_VERSION} baslatildi")
 
-        # Takilan/cikarilan aygitlar kendiliginden yakalansin.
-        self._last_disk_signature = self._disk_signature(
-            self._physical_cache.values())
+        # Tanilama: donma yakalayici ve oturum gunlugu. Arayuz kurulduktan
+        # hemen sonra baslar, boylece acilistaki takilmalar da kayda girer.
+        self.diagnostics = install_diagnostics(self)
+        self.diagnostics.freezeDetected.connect(self._on_freeze)
+        self.log(f"{APP_NAME} {APP_VERSION} baslatildi")
+        if diagnostics.session_log():
+            self.log(f"Tanilama gunlugu: {diagnostics.session_log()}")
+
+        # Disk listesi **arka planda** toplanir; bkz. ui/disk_scan.py.
+        # Takilan/cikarilan aygitlar da bu yoklama ile yakalanir.
+        self._last_disk_signature: tuple = ()
+        self._disk_scan_done = False
+        self._elevation_asked = False
+        self._scanner: Optional[DiskScanner] = None
         self._disk_timer = QTimer(self)
         self._disk_timer.setInterval(DISK_POLL_MS)
-        self._disk_timer.timeout.connect(self._poll_disks)
+        self._disk_timer.timeout.connect(lambda: self.start_disk_scan(quiet=True))
         self._disk_timer.start()
+        self.start_disk_scan(quiet=True)
 
     # ==================================================================
     # Arayuz kurulumu
@@ -170,9 +186,21 @@ class MainWindow(QMainWindow):
         self.status_file = QLabel("Disk goruntusu acik degil")
         self.status_scheme = QLabel("")
         self.status_sel = QLabel("")
+        # Yetki durumu surekli gorunur: fiziksel disk islemlerinin cogu buna
+        # bagli ve kullanici neden yapamadigini burada gorur.
+        self.status_rights = QLabel(
+            f"🔑 {ELEVATION_NAME}" if is_elevated() else "Normal kullanici")
+        self.status_rights.setToolTip(
+            f"Uygulama {ELEVATION_NAME} yetkisiyle calisiyor; fiziksel disklere "
+            "erisebilir." if is_elevated() else
+            f"Fiziksel disk erisimi icin {ELEVATION_NAME} gerekir. "
+            f"Disk menusu > '{ELEVATION_NAME} olarak yeniden baslat'")
         for lbl in (self.status_scheme, self.status_sel):
             lbl.setEnabled(False)      # paletten soluk renk; sabit renk yazilmaz
+        if not is_elevated():
+            self.status_rights.setEnabled(False)
         self.statusBar().addWidget(self.status_file, 1)
+        self.statusBar().addPermanentWidget(self.status_rights)
         self.statusBar().addPermanentWidget(self.status_scheme)
         self.statusBar().addPermanentWidget(self.status_sel)
         # `showMessage()` gecici mesaji durum cubugunun **sol** bolgesine cizer —
@@ -276,6 +304,13 @@ class MainWindow(QMainWindow):
         # --- Fiziksel diskler ---
         self.act_refresh_disks = QAction("Fiziksel diskleri yenile", self)
         self.act_refresh_disks.triggered.connect(self.refresh_disks)
+        self.act_elevate = QAction(
+            self._icon(QStyle.SP_MessageBoxWarning),
+            f"{ELEVATION_NAME} olarak yeniden baslat...", self)
+        self.act_elevate.setToolTip(
+            "Fiziksel disklere erisim icin uygulamayi yetkili olarak yeniden "
+            "baslatir. Goruntu dosyalari icin gerekmez.")
+        self.act_elevate.triggered.connect(self.restart_elevated)
         self.act_open_disk_ro = QAction("Secili diski ac (salt okunur)", self)
         self.act_open_disk_ro.triggered.connect(lambda: self.open_physical(False))
         self.act_open_disk_rw = QAction("Secili diski YAZMA modunda ac...", self)
@@ -297,6 +332,20 @@ class MainWindow(QMainWindow):
         self.act_sysinfo = QAction("Sistem bilgisi", self)
         self.act_sysinfo.triggered.connect(self.show_system_info)
 
+        # --- Tanilama ---
+        self.act_diag_status = QAction("Tanilama durumu...", self)
+        self.act_diag_status.setToolTip(
+            "Gunluk yolu, donma sayisi ve o an calisan islemler")
+        self.act_diag_status.triggered.connect(self.show_diagnostics)
+        self.act_diag_folder = QAction("Gunluk klasorunu ac", self)
+        self.act_diag_folder.triggered.connect(self.open_log_folder)
+        self.act_diag_report = QAction("Son donma raporunu goster...", self)
+        self.act_diag_report.triggered.connect(self.show_freeze_report)
+        self.act_diag_dump = QAction("Simdi yigin dokumu al", self)
+        self.act_diag_dump.setToolTip(
+            "Butun is parcaciklarinin o anki yiginini dosyaya yazar")
+        self.act_diag_dump.triggered.connect(self.dump_stacks)
+
         # --- Yardim ---
         self.act_about = QAction("Hakkinda", self)
         self.act_about.triggered.connect(self.about)
@@ -317,6 +366,7 @@ class MainWindow(QMainWindow):
         m_disk.addAction(self.act_close)
         m_disk.addSeparator()
         m_disk.addAction(self.act_refresh_disks)
+        m_disk.addAction(self.act_elevate)
         m_disk.addAction(self.act_open_disk_ro)
         m_disk.addAction(self.act_open_disk_rw)
         m_disk.addAction(self.act_disk_info)
@@ -361,7 +411,16 @@ class MainWindow(QMainWindow):
         m_arac.addAction(self.act_backup_info)
         m_arac.addAction(self.act_sysinfo)
 
+        m_tani = m_arac.addMenu("Tanilama")
+        m_tani.addAction(self.act_diag_status)
+        m_tani.addAction(self.act_diag_report)
+        m_tani.addAction(self.act_diag_dump)
+        m_tani.addSeparator()
+        m_tani.addAction(self.act_diag_folder)
+
         m_yardim = menu.addMenu("&Yardim")
+        m_yardim.addAction(self.act_diag_status)
+        m_yardim.addSeparator()
         m_yardim.addAction(self.act_about)
 
         # Arac cubugu yalnizca SECILI disk/bolum uzerinde yapilabilecek islemleri
@@ -395,6 +454,9 @@ class MainWindow(QMainWindow):
         zaman = datetime.datetime.now().strftime("%H:%M:%S")
         self.log_view.appendPlainText(f"[{zaman}] {message}")
         self.statusBar().showMessage(message, 6000)
+        # Arayuzde gorunen her satir tanilama gunluguna da girer; boylece islem
+        # gunlugu ile sure olcumleri **tek dosyada** yan yana okunur.
+        diagnostics.info(f"arayuz: {message}")
         try:
             os.makedirs(LOG_DIR, exist_ok=True)
             gun = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -403,8 +465,19 @@ class MainWindow(QMainWindow):
         except OSError:
             pass
 
+    def _on_freeze(self, report: str, seconds: float) -> None:
+        """Donma yakalayici arayuzun takildigini bildirdiginde calisir.
+
+        Donma **bittikten sonra** cagrilir (bloke arayuze sinyal ulasamaz), bu
+        yuzden kullanici dondugu ani sonradan ogrenir ve raporu nerede
+        bulacagini bilir.
+        """
+        self.log(f"DIKKAT: arayuz {seconds:.1f} sn yanit vermedi — "
+                 f"rapor: {os.path.basename(report)}")
+
     def error(self, title: str, message: str) -> None:
         QMessageBox.critical(self, title, message)
+        diagnostics.warn(f"hata diyalogu: {title} — {message}")
         self.log(f"HATA — {title}: {message}")
 
     # ==================================================================
@@ -1453,16 +1526,34 @@ class MainWindow(QMainWindow):
         self.refresh()
 
     def show_backup_info(self) -> None:
+        """Yedek dosyasinin bilgisini **ve icerigini** gosterir.
+
+        Icerik okuma yedegi acmayi gerektirir (bolum tablosu + dosya sistemi);
+        buyuk ve sikistirilmis bir yedekte bu birkac saniye surebilir, bu yuzden
+        ilerleme penceresiyle calisir.
+        """
         path, _ = QFileDialog.getOpenFileName(
             self, "Yedek dosyasi", "", "DiskUltimate yedegi (*.dub);;Tum dosyalar (*)")
         if not path:
             return
-        try:
-            info = DiskSession.backup_info(path)
-        except Exception as exc:
-            self.error("Yedek okunamadi", str(exc))
+        ok, preview = run_task(
+            self, "Yedek okunuyor",
+            lambda report: self._read_backup(path, report))
+        if not ok:
+            self.error("Yedek okunamadi", str(preview))
             return
-        InfoDialog("Yedek Dosyasi Bilgisi", info.summary(), self).exec_()
+        dlg = BackupInfoDialog(preview, self)
+        dlg.exec_()
+        if dlg.browse:
+            self.log(f"Yedek gezilmek uzere aciliyor: {os.path.basename(path)}")
+            self.open_path(path)
+
+    @staticmethod
+    def _read_backup(path: str, report):
+        report("Yedek basligi okunuyor...", 10)
+        preview = DiskSession.backup_preview(path)
+        report("Tamamlandi", 100)
+        return preview
 
     def show_system_info(self) -> None:
         satirlar = dict(platform_summary())
@@ -1474,6 +1565,154 @@ class MainWindow(QMainWindow):
                    note=("FAT12/16/32 ve exFAT saf Python ile desteklenir ve her "
                          "platformda calisir. NTFS ve ext2/3/4 bicimlendirmesi "
                          "sistemdeki mkfs araclarini gerektirir.")).exec_()
+
+    # ==================================================================
+    # Yonetici / root yetkisi
+    # ==================================================================
+    def _offer_elevation(self, blocked) -> None:
+        """Acilista, yetki **gercekten eksikse** yeniden baslatmayi onerir.
+
+        Kosulsuz sormak yanlis olurdu: goruntu dosyalari icin yetki gerekmez
+        (CLAUDE.md) ve bir disk aracini gereksiz yere tam yetkiyle calistirmak
+        riski buyutur. Bu yuzden soru yalnizca **bilgisi okunamayan gercek bir
+        disk varken** sorulur ve oturumda bir kez sorulur.
+        """
+        if self._elevation_asked or is_elevated() or not blocked:
+            return
+        self._elevation_asked = True
+        # Otomatik kosumlarda (duman testi, ekran goruntusu uretimi) modal
+        # pencere kosumu kilitlerdi.
+        if os.environ.get("DISKULTIMATE_NO_ELEVATION_PROMPT") == "1":
+            diagnostics.info("yetki teklifi ortam degiskeniyle bastirildi")
+            return
+        ok, reason = elevation_available()
+        names = ", ".join(d.name for d in blocked[:4])
+        if not ok:
+            self.log(f"Yetki eksik ({names}) — yukseltme yapilamiyor: {reason}")
+            return
+        answer = QMessageBox.question(
+            self, f"{ELEVATION_NAME} yetkisi gerekiyor",
+            f"<b>{len(blocked)} fiziksel diskin</b> bilgisi okunamadi "
+            f"({names}).<br><br>"
+            f"Fiziksel disklere erismek icin {ELEVATION_NAME} yetkisi "
+            "gerekir. Uygulama simdi yetkili olarak yeniden baslatilsin mi?"
+            "<br><br><i>Disk goruntusu dosyalari (.img, VHD, VDI...) icin "
+            "yetki gerekmez; yalnizca goruntu dosyalariyla calisacaksaniz "
+            "<b>Hayir</b> diyebilirsiniz.</i>",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        if answer == QMessageBox.Yes:
+            self.restart_elevated(ask=False)
+        else:
+            self.log(f"{ELEVATION_NAME} olarak yeniden baslatma reddedildi; "
+                     "fiziksel diskler acilamaz")
+
+    def _access_denied(self, info, message: str) -> None:
+        """Disk yetki yuzunden acilamadi: cozumu de sun.
+
+        Yalnizca hatayi gostermek kullaniciyi tikanik birakir — cozum zaten
+        uygulamanin elinde.
+        """
+        self.log(f"Disk acilamadi (yetki): {info.path}")
+        ok, reason = elevation_available()
+        if not ok:
+            self.error("Yetki yetersiz", f"{message}\n\n{reason}")
+            return
+        answer = QMessageBox.question(
+            self, "Yetki yetersiz",
+            f"{message}<br><br>Uygulama <b>{ELEVATION_NAME} yetkisiyle</b> "
+            "yeniden baslatilsin mi?",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        if answer == QMessageBox.Yes:
+            self.restart_elevated(ask=False)
+
+    def restart_elevated(self, ask: bool = True) -> None:
+        """Uygulamayi yonetici/root olarak yeniden baslatir ve bunu kapatir."""
+        ok, reason = elevation_available()
+        if not ok:
+            QMessageBox.information(self, f"{ELEVATION_NAME} yetkisi", reason)
+            return
+        if ask:
+            metin = (f"Uygulama kapatilip <b>{ELEVATION_NAME} yetkisiyle</b> "
+                     "yeniden baslatilacak.<br><br>Devam edilsin mi?")
+            if self.sessions:
+                metin = ("<b>Acik disk/goruntu kapatilacak.</b><br><br>" + metin)
+            if QMessageBox.question(
+                    self, f"{ELEVATION_NAME} olarak yeniden baslat", metin,
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No) != QMessageBox.Yes:
+                return
+        # Aygit tutamaclari once birakilir: yeni surec ayni diski acacak ve
+        # iki kopya ayni aygita dokunmamalidir (ADR 0021).
+        self._disk_timer.stop()
+        self._wait_for_scan()
+        self.close_all()
+        diagnostics.info(f"{ELEVATION_NAME} olarak yeniden baslatiliyor")
+        started, error = relaunch_elevated()
+        if not started:
+            self._disk_timer.start()
+            self.log(f"Yeniden baslatilamadi: {error}")
+            QMessageBox.warning(self, "Yeniden baslatilamadi", error)
+            return
+        # Yeni surec basladi; bu kopya cekilir.
+        QApplication.instance().quit()
+
+    # ==================================================================
+    # Tanilama
+    # ==================================================================
+    def show_diagnostics(self) -> None:
+        """Tanilama durumunu gosterir: gunluk yolu, donmalar, acik islemler."""
+        state = diagnostics.status()
+        if not state["enabled"]:
+            QMessageBox.information(
+                self, "Tanilama kapali",
+                "Tanilama DISKULTIMATE_DIAG=0 ile kapatilmis.")
+            return
+        worst = state["worst_stall_ms"] / 1000.0
+        acik = state["open_spans"]
+        satirlar = {
+            "Oturum gunlugu": state["log"],
+            "Cokme gunlugu": state["crash_log"] or "-",
+            "Donma esigi": f"{state['stall_threshold_ms'] / 1000.0:.1f} sn",
+            "Yakalanan donma": str(state["stalls"]),
+            "En uzun donma": f"{worst:.1f} sn" if worst else "-",
+            "Son rapor": state["report"] or "(yok)",
+            "Calisma suresi": f"{state['uptime_s'] / 60.0:.1f} dk",
+            "Su an calisan": acik[0] if acik else "(bos)",
+        }
+        InfoDialog("Tanilama", satirlar, self,
+                   note=("Arayuz bir saniyeden uzun yanit vermezse butun is "
+                         "parcaciklarinin yigini kendiliginden rapor dosyasina "
+                         "yazilir. Raporlar gunluk klasorundeki freeze/ "
+                         "altindadir.")).exec_()
+
+    def open_log_folder(self) -> None:
+        """Gunluk klasorunu isletim sisteminin dosya yoneticisinde acar."""
+        folder = diagnostics.log_dir() or LOG_DIR
+        if not open_folder(folder):
+            QMessageBox.information(self, "Gunluk klasoru", folder)
+
+    def show_freeze_report(self) -> None:
+        """En son donma raporunu metin olarak gosterir."""
+        path = diagnostics.last_report()
+        if not path or not os.path.isfile(path):
+            QMessageBox.information(
+                self, "Donma raporu yok",
+                "Bu makinede kayitli donma raporu bulunamadi.\n\n"
+                "Arayuz bir saniyeden uzun takilirsa rapor kendiliginden "
+                "olusur.")
+            return
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+        TextViewDialog(
+            f"Donma raporu — {os.path.basename(path)}", text, self,
+            note=("Arayuzun takildigi andaki yigin. En ustteki 'O an acik "
+                  "islem' satiri hangi islemin bekledigini soyler.")).exec_()
+
+    def dump_stacks(self) -> None:
+        """Anlik yigin dokumu alir (uygulama takiliyken elle kanit toplamak icin)."""
+        path = diagnostics.dump_now("kullanici istegi")
+        self.log(f"Yigin dokumu yazildi: {path}")
+        QMessageBox.information(self, "Yigin dokumu", path)
 
     # ==================================================================
     # Oturum yonetimi (coklu goruntu)
@@ -1527,10 +1766,10 @@ class MainWindow(QMainWindow):
     # Fiziksel diskler
     # ==================================================================
     def refresh_disks(self) -> None:
-        """Disk listesini yeniden tarar."""
-        self._build_tree(self.session.partitions if self.session else [])
-        count = len(getattr(self, "_physical_cache", {}))
-        self.log(f"Fiziksel disk listesi yenilendi: {count} disk")
+        """Disk listesini yeniden tarar (arka planda)."""
+        self.log("Fiziksel disk listesi taraniyor...")
+        self._last_disk_signature = ()      # sonuc ayni olsa da agac tazelensin
+        self.start_disk_scan()
 
     def _selected_disk_path(self) -> Optional[str]:
         item = self.tree.currentItem()
@@ -1644,6 +1883,10 @@ class MainWindow(QMainWindow):
             self.session = mevcut
             self.session.close()
             self.sessions.remove(mevcut)
+        # Acma anindaki yaris: o sirada suren bir yoklama ayni aygita tutamac
+        # acmis olabilir. Kutuk bundan sonraki turlari zaten durdurur; bu
+        # bekleme, ACMA aninda cakismayi kapatir.
+        self._wait_for_scan()
         try:
             self._add_session(DiskSession.open_physical(
                 info, readonly=not write, confirm=write, allow_system=allow_system))
@@ -1651,7 +1894,7 @@ class MainWindow(QMainWindow):
             self.error("Sistem diski korumasi", str(exc))
             return
         except AccessDeniedError as exc:
-            self.error("Yetki yetersiz", str(exc))
+            self._access_denied(info, str(exc))
             return
         except PhysicalDiskError as exc:
             self.error("Disk acilamadi", str(exc))
@@ -1667,6 +1910,7 @@ class MainWindow(QMainWindow):
     # ==================================================================
     # Secim ve tazeleme
     # ==================================================================
+    @diagnostics.timed("ui.select_partition")
     def select_partition(self, index: int) -> None:
         if not self.session or not self.session.table:
             return
@@ -1692,6 +1936,7 @@ class MainWindow(QMainWindow):
                                  f"Bolum {index} — {part.display_name}")
         self._update_actions()
 
+    @diagnostics.timed("ui.select_free")
     def select_free(self, start_lba: int, sector_count: int) -> None:
         self.selected_partition = None
         self.selected_free = (start_lba, sector_count)
@@ -1712,6 +1957,7 @@ class MainWindow(QMainWindow):
             self.hex_view.set_device(self.session.image, "Tum goruntu")
         self._update_actions()
 
+    @diagnostics.timed("ui.refresh")
     def refresh(self) -> None:
         if not self.session:
             self._update_actions()
@@ -1779,6 +2025,7 @@ class MainWindow(QMainWindow):
     # ==================================================================
     # Agac
     # ==================================================================
+    @diagnostics.timed("ui.build_tree")
     def _build_tree(self, partitions=None, disks=None) -> None:
         """Agaci kurar: once fiziksel diskler, sonra ACIK TUM goruntuler."""
         self.tree.clear()
@@ -1801,20 +2048,58 @@ class MainWindow(QMainWindow):
         return tuple(sorted((d.path, d.size, d.model, tuple(d.mounted))
                             for d in disks))
 
-    def _poll_disks(self) -> None:
-        """Disk listesini yoklar; degistiyse agaci tazeler.
+    def start_disk_scan(self, quiet: bool = False) -> None:
+        """Disk listesini **arka planda** tarar.
 
-        USB bellek veya SD kart uygulama **acikken** takilabilir. Liste yalnizca
-        acilista ve elle yenilemede kuruldugu icin yeni aygit gorunmuyordu.
-        Yoklama ucuzdur (tipik olarak ~20 ms) ve yalnizca gercek bir degisiklik
-        oldugunda arayuze dokunur.
+        Tarama arayuz is parcaciginda yapilmaz: suresi isletim sistemine
+        baglidir ve Windows'ta bos kart yuvasi gibi durumlarda onlarca saniye
+        surebilir. O sure boyunca pencere donardi.
+
+        Ayni anda yalnizca bir tarama calisir; bitmeyen bir tarama varken
+        yoklama turu atlanir.
         """
+        if self._scan_running():
+            diagnostics.debug("disk taramasi hala suruyor; bu tur atlandi")
+            return
+        scanner = DiskScanner(self)
+        scanner.ready.connect(self._disks_scanned)
+        if not quiet:
+            scanner.failed.connect(
+                lambda message: self.log(f"Disk listesi alinamadi: {message}"))
+        # Biten tarayici hem silinir hem de **isaretci birakilmaz**: yalnizca
+        # `deleteLater` cagrilsaydi `self._scanner` yok edilmis bir C++ nesnesini
+        # gosterirdi ve sonraki tur `RuntimeError` ile duserdi.
+        scanner.finished.connect(lambda: self._scan_finished(scanner))
+        self._scanner = scanner
+        scanner.start()
+
+    def _scan_running(self) -> bool:
+        """Calisan bir tarama var mi? (yok edilmis nesneye dayanikli)"""
+        if self._scanner is None:
+            return False
         try:
-            disks = DiskSession.list_physical_disks()
-        except Exception:
-            return          # gecici hata arayuzu bozmasin; sonraki tur dener
+            return self._scanner.isRunning()
+        except RuntimeError:        # C++ tarafi silinmis
+            self._scanner = None
+            return False
+
+    def _scan_finished(self, scanner) -> None:
+        if self._scanner is scanner:
+            self._scanner = None
+        scanner.deleteLater()
+
+    def _wait_for_scan(self, timeout_ms: int = 10000) -> None:
+        """Suren disk taramasinin bitmesini bekler."""
+        if self._scan_running():
+            diagnostics.info("acma oncesi suren disk taramasi bekleniyor")
+            self._scanner.wait(timeout_ms)
+
+    def _disks_scanned(self, disks) -> None:
+        """Arka plan taramasinin sonucu — arayuz is parcaciginda calisir."""
         signature = self._disk_signature(disks)
-        if signature == self._last_disk_signature:
+        first = not self._disk_scan_done
+        self._disk_scan_done = True
+        if signature == self._last_disk_signature and not first:
             return
         before = {s[0] for s in self._last_disk_signature}
         now = {s[0] for s in signature}
@@ -1823,15 +2108,28 @@ class MainWindow(QMainWindow):
         old_names = {d.path: d.name for d in self._physical_cache.values()}
         self._last_disk_signature = signature
         by_path = {d.path: d for d in disks}
-        for path in sorted(now - before):
-            d = by_path[path]
-            self.log(f"Aygit takildi: {d.name} — {d.model or 'bilinmeyen'} "
-                     f"({human_size(d.size)})")
-        for path in sorted(before - now):
-            self.log(f"Aygit cikarildi: {old_names.get(path, path)}")
+        # Ilk taramada her disk "yeni" gorunur; takma/cikarma yalnizca sonraki
+        # turlarda bildirilir.
+        if not first:
+            for path in sorted(now - before):
+                d = by_path[path]
+                self.log(f"Aygit takildi: {d.name} — {d.model or 'bilinmeyen'} "
+                         f"({human_size(d.size)})")
+            for path in sorted(before - now):
+                self.log(f"Aygit cikarildi: {old_names.get(path, path)}")
         self._build_tree(self.session.partitions if self.session else [],
                          disks=disks)
+        if first and self.session is None:
+            self.info_view.setPlainText(self._physical_summary_text())
+            self.log(f"Fiziksel disk listesi hazir: {len(disks)} disk")
+            if not is_elevated():
+                self.log(f"Yetki: normal kullanici — fiziksel disk icin "
+                         f"{ELEVATION_NAME} gerekir")
         self._update_actions()
+        # Yetki teklifi ilk taramadan SONRA yapilir: ancak o zaman hangi
+        # diskin bilgisinin okunamadigi bilinir.
+        if first:
+            self._offer_elevation([d for d in disks if not d.info_complete])
 
     def _add_session_node(self, session: DiskSession) -> None:
         """Bir acik goruntu/disk icin agac dali olusturur."""
@@ -1871,15 +2169,13 @@ class MainWindow(QMainWindow):
     def _add_physical_disks(self, disks=None) -> None:
         """Agacin ustune sistemdeki fiziksel diskleri ekler (veri okumadan).
 
-        `disks` verilirse yeniden taranmaz; yoklama dongusu zaten elde ettigi
-        listeyi buraya gecirir ve ikinci bir tarama yapilmaz.
+        Burada **tarama yapilmaz**: liste ya cagiran tarafindan verilir (arka
+        plan taramasinin sonucu) ya da son taramanin onbellekinden gelir. Agac
+        her yeniden kuruldugunda isletim sistemine gidilseydi, aygit
+        yoklamasinin maliyeti arayuz is parcaciginda tekrar dogardi.
         """
         if disks is None:
-            try:
-                disks = DiskSession.list_physical_disks()
-            except Exception as exc:
-                self.log(f"Disk listesi alinamadi: {exc}")
-                return
+            disks = list(self._physical_cache.values())
         diskler = disks
         self._physical_cache = {d.path: d for d in diskler}
         root = QTreeWidgetItem(self.tree, [f"Fiziksel Diskler ({len(diskler)})"])
@@ -2274,6 +2570,11 @@ class MainWindow(QMainWindow):
         # fiziksel diskler
         disk_selected = self._selected_disk_path() is not None
         self.act_refresh_disks.setEnabled(True)
+        # Zaten yetkiliyken dugme pasiftir; nedeni ipucunda yazar.
+        can_elevate, why_not = elevation_available()
+        self.act_elevate.setEnabled(can_elevate)
+        if why_not:
+            self.act_elevate.setToolTip(why_not)
         self.act_open_disk_ro.setEnabled(disk_selected)
         self.act_open_disk_rw.setEnabled(disk_selected)
         self.act_disk_info.setEnabled(disk_selected)
@@ -2304,5 +2605,17 @@ class MainWindow(QMainWindow):
         timer = getattr(self, "_disk_timer", None)
         if timer is not None:
             timer.stop()
+        # Arka plandaki disk taramasi bitmeden pencere yikilmamali: sinyali
+        # yok olmus bir nesneye ulasirdi.
+        if self._scan_running():
+            try:
+                self._scanner.ready.disconnect()
+            except TypeError:       # zaten bagli degil
+                pass
+            self._scanner.wait(5000)
+        diag = getattr(self, "diagnostics", None)
+        if diag is not None:
+            diag.stop()
+        diagnostics.info("uygulama kapaniyor")
         self.close_all()
         super().closeEvent(event)

@@ -5,9 +5,11 @@ GUI katmani yalnizca bu sinifi kullanir; alt seviye modullere dokunmaz.
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
 from . import clone as clone_mod
+from . import diagnostics
 from . import convert as convert_mod
 from . import recovery as recovery_mod
 from . import wipe as wipe_mod
@@ -31,6 +33,34 @@ from .vdisk import detect_format, format_label, open_disk
 
 class SessionError(Exception):
     pass
+
+
+@dataclass
+class BackupPreview:
+    """Bir `.dub` yedeginin geri yuklenmeden okunan icerigi.
+
+    `partitions` bos ve `filesystem` doluysa yedek **tek bir bolumun**
+    yedegidir (disk degil). `root_entries` anahtari bolum numarasidir; bolum
+    tablosu olmayan yedekte `-1` kullanilir.
+    """
+
+    info: object                                 # clone.BackupInfo
+    scheme: str                                  # 'mbr' | 'gpt' | ''
+    partitions: List[Partition]
+    filesystem: Optional[FSInfo]
+    # Deger None ise icerik okunamadi, [] ise bolum gercekten bos
+    root_entries: Dict[int, Optional[List[str]]]
+
+    @property
+    def is_whole_disk(self) -> bool:
+        """Yedek bir **diskin** mi yoksa tek bir **bolumun** mu yedegi?
+
+        Olcut bolum tablosunun varligi DEGILDIR: FAT onyukleme sektoru de
+        0xAA55 ile biter, bu yuzden tek bir FAT bolumunun yedegi "bos MBR" gibi
+        gorunur (olculdu: `bolum.dub` -> scheme='mbr', 0 bolum). Ayirt edici
+        olan gercekten bolum bulunup bulunmadigidir.
+        """
+        return bool(self.partitions)
 
 
 class DiskSession:
@@ -174,6 +204,7 @@ class DiskSession:
                 return False
         return False
 
+    @diagnostics.timed("session.reload")
     def reload(self) -> None:
         """Bolum tablosunu ve dosya sistemi bilgilerini diskten yeniden okur."""
         self.close_filesystems()
@@ -372,7 +403,8 @@ class DiskSession:
         if part.index in self._fs_info:
             return self._fs_info[part.index]
         try:
-            info = detect(self.view(part))
+            with diagnostics.span("session.detect_fs", part=part.index):
+                info = detect(self.view(part))
         except Exception:
             info = FSInfo()
         self._fs_info[part.index] = info
@@ -384,7 +416,8 @@ class DiskSession:
         if index in self._fs_cache:
             return self._fs_cache[index]
         part = self.table.get(index)
-        fs = open_filesystem(self.view(part), self.detect_fs(part))
+        with diagnostics.span("session.open_filesystem", part=index):
+            fs = open_filesystem(self.view(part), self.detect_fs(part))
         if fs is not None:
             self._fs_cache[index] = fs
         return fs
@@ -592,6 +625,65 @@ class DiskSession:
     @staticmethod
     def backup_info(path: str):
         return clone_mod.read_backup_info(path)
+
+    @staticmethod
+    def backup_preview(path: str) -> "BackupPreview":
+        """Yedegin **icerigini** geri yuklemeden ozetler.
+
+        `backup_info` yalnizca baslgi okur: boyut, tarih, sikistirma. Bu islev
+        bir adim ileri gider ve yedegi `DubImage` uzerinden **gercekten acar**:
+        bolum tablosu cozulur, her bolumun dosya sistemi tespit edilir ve kok
+        klasordeki ilk girisler listelenir. Hicbir sey diske yazilmaz.
+
+        Boylece kullanici "bu yedekte ne var?" sorusunu, yedegi acmadan veya
+        bir diske yazmadan yanitlayabilir.
+        """
+        session = DiskSession.open(path)
+        try:
+            if not session.is_backup:
+                raise SessionError("Bu dosya bir DiskUltimate yedegi degil")
+            partitions = list(session.partitions)
+            entries: Dict[int, Optional[List[str]]] = {}
+            for part in partitions:
+                entries[part.index] = DiskSession._root_names(
+                    session.filesystem(part.index))
+            fs_info = None
+            if not partitions:
+                # Bolum tablosu yok: yedek tek bir BOLUMUN yedegidir, dosya
+                # sistemi dogrudan goruntunun basindadir.
+                fs_info = detect(session.image)
+                entries[-1] = DiskSession._root_names(
+                    open_filesystem(session.image, fs_info))
+            return BackupPreview(info=session.image.info,
+                                 scheme=session.scheme,
+                                 partitions=partitions,
+                                 filesystem=fs_info,
+                                 root_entries=entries)
+        finally:
+            session.close()
+
+    @staticmethod
+    def _root_names(fs, limit: int = 200) -> Optional[List[str]]:
+        """Kok klasordeki girisler; okunamiyorsa **None**.
+
+        `None` ile `[]` ayrimi onemlidir: biri "icerigi okuyamiyoruz", oteki
+        "bolum gercekten bos". Ikisini ayni gostermek kullaniciyi yaniltir —
+        bos bir NTFS bolumu "desteklenmiyor" sanilirdi.
+
+        Onizleme bilgidir, garanti degildir: desteklenmeyen veya bozuk bir dosya
+        sistemi yuzunden **butun pencere** kaybolmamalidir, bu yuzden hata
+        yutulur ve `None` donulur.
+        """
+        if fs is None or not getattr(fs, "readable", False):
+            return None
+        try:
+            nodes = fs.listdir("/")
+        except Exception:
+            return None
+        out = []
+        for node in nodes[:limit]:
+            out.append(f"{node.name}/" if node.is_dir else node.name)
+        return out
 
     @staticmethod
     def is_backup_file(path: str) -> bool:

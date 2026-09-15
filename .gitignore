@@ -29,3 +29,8 @@ desktop.ini
 # Uygulamanin calisma zamani gunlugu (main_window.log -> paths.LOG_DIR).
 # Belge dokumleri (.claude/logs/*.md) depoda kalir, gunluk dosyalari kalmaz.
 .claude/logs/*.log
+
+# Tanilama ciktilari: oturum gunlukleri ve donma raporlari makineye ozeldir.
+# Bir donma raporunu saklamak gerekirse .claude/logs/ altina tasinir.
+.claude/logs/runtime/
+.claude/logs/freeze/

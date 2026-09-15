@@ -8,7 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 IS_WINDOWS = sys.platform.startswith("win")
 IS_MACOS = sys.platform == "darwin"
@@ -183,6 +183,130 @@ def run_tool(cmd: List[str], timeout: int = 900) -> subprocess.CompletedProcess:
 
 
 # --------------------------------------------------------------------------
+# Yonetici / root yetkisi
+# --------------------------------------------------------------------------
+# Goruntu dosyalari icin yetki GEREKMEZ (CLAUDE.md). Yukseltme yalnizca
+# **fiziksel disk** erisimi icin, kullanicinin acik istegiyle yapilir; uygulama
+# kendiliginden ve her acilista yetki istemez.
+ELEVATION_NAME = "Yonetici" if IS_WINDOWS else "root"
+
+
+def is_elevated() -> bool:
+    """Uygulama yonetici/root yetkisiyle mi calisiyor?"""
+    if IS_WINDOWS:
+        try:
+            import ctypes
+            return bool(ctypes.windll.shell32.IsUserAnAdmin())
+        except Exception:
+            return False
+    try:
+        return os.geteuid() == 0
+    except AttributeError:          # bu platformda kavram yok
+        return False
+
+
+def _relaunch_target() -> List[str]:
+    """Uygulamayi yeniden baslatacak komut satiri.
+
+    Donmus (PyInstaller vb.) pakette calistirilabilir dosyanin kendisi,
+    kaynaktan calistirildiginda yorumlayici + betik kullanilir.
+    """
+    if getattr(sys, "frozen", False):
+        return [sys.executable] + list(sys.argv[1:])
+    script = os.path.abspath(sys.argv[0]) if sys.argv and sys.argv[0] else ""
+    if not os.path.isfile(script):
+        # `python -c ...` gibi durumlarda betik yolu yoktur; ciplak yorumlayiciyi
+        # yonetici olarak baslatmak anlamsiz olurdu.
+        return []
+    return [sys.executable, script] + list(sys.argv[1:])
+
+
+def elevation_available() -> Tuple[bool, str]:
+    """(Yukseltme yapilabilir mi, yapilamiyorsa neden).
+
+    Arayuz bunu menuyu etkin/pasif yapmak ve nedeni gostermek icin sorar;
+    calismayacak bir dugmeyi etkin gostermek kullaniciyi yaniltir.
+    """
+    if is_elevated():
+        return False, f"Uygulama zaten {ELEVATION_NAME} yetkisiyle calisiyor."
+    if not _relaunch_target():
+        return False, ("Uygulamanin yeniden baslatilacagi betik yolu "
+                       "belirlenemedi.")
+    if IS_WINDOWS:
+        return True, ""
+    if IS_LINUX:
+        if shutil.which("pkexec"):
+            return True, ""
+        return False, ("Grafik yetki penceresi icin `pkexec` gerekiyor "
+                       "(polkit paketi). Uygulamayi `sudo python3 main.py` ile "
+                       "baslatabilirsiniz.")
+    if IS_MACOS:
+        return bool(shutil.which("osascript")), (
+            "" if shutil.which("osascript") else "`osascript` bulunamadi.")
+    return False, "Bu platformda yetki yukseltme desteklenmiyor."
+
+
+def relaunch_elevated() -> Tuple[bool, str]:
+    """Uygulamayi yonetici/root olarak yeniden baslatir.
+
+    Basarili donerse **cagiran surec kendini kapatmalidir**: iki kopya ayni
+    diske dokunmamalidir (bkz. `physical.py` acik aygit kutugu).
+
+    Doner: (baslatildi_mi, hata_metni)
+    """
+    ok, reason = elevation_available()
+    if not ok:
+        return False, reason
+    command = _relaunch_target()
+    try:
+        if IS_WINDOWS:
+            return _win_relaunch(command)
+        if IS_MACOS:
+            script = ("do shell script "
+                      + _osascript_quote(subprocess.list2cmdline(command))
+                      + " with administrator privileges")
+            subprocess.Popen(["osascript", "-e", script])
+            return True, ""
+        # Linux: pkexec ortami temizler; grafik oturum degiskenleri elle verilir
+        env_args = [f"{k}={os.environ.get(k, '')}"
+                    for k in ("DISPLAY", "XAUTHORITY", "QT_QPA_PLATFORM",
+                              "DISKULTIMATE_QPA", "XDG_RUNTIME_DIR")
+                    if os.environ.get(k)]
+        subprocess.Popen(["pkexec", "env"] + env_args + command)
+        return True, ""
+    except Exception as exc:
+        return False, str(exc)
+
+
+def _osascript_quote(text: str) -> str:
+    """AppleScript dizesi olarak alintilar."""
+    return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _win_relaunch(command: List[str]) -> Tuple[bool, str]:
+    """ShellExecuteW "runas" — Windows'un UAC penceresini acar."""
+    import ctypes
+    import ctypes.wintypes as wt
+
+    shell32 = ctypes.windll.shell32
+    shell32.ShellExecuteW.argtypes = [wt.HWND, wt.LPCWSTR, wt.LPCWSTR,
+                                      wt.LPCWSTR, wt.LPCWSTR, ctypes.c_int]
+    shell32.ShellExecuteW.restype = ctypes.c_void_p
+    SW_SHOWNORMAL = 1
+    result = shell32.ShellExecuteW(
+        None, "runas", command[0],
+        subprocess.list2cmdline(command[1:]), os.getcwd(), SW_SHOWNORMAL)
+    code = int(result or 0)
+    if code > 32:
+        return True, ""
+    # 32'nin altindaki degerler hata kodudur; en sik goruleni kullanicinin
+    # UAC penceresinde "Hayir" demesidir.
+    if code in (5, 1223):
+        return False, "Yetki verilmedi (UAC penceresinde iptal edildi)."
+    return False, f"Yeniden baslatilamadi (ShellExecute hatasi {code})."
+
+
+# --------------------------------------------------------------------------
 # Arayuz
 # --------------------------------------------------------------------------
 def preferred_qt_platform() -> str:
@@ -201,6 +325,29 @@ def preferred_qt_platform() -> str:
     return ""
 
 
+def open_folder(path: str) -> bool:
+    """Verilen klasoru isletim sisteminin dosya yoneticisinde acar.
+
+    Tanilama gunlugune ulasmayi kolaylastirmak icindir; basarisiz olursa
+    arayuz yolu metin olarak gosterir. Platform farki burada durur.
+    """
+    if not path or not os.path.isdir(path):
+        return False
+    if IS_WINDOWS:
+        cmd = ["explorer", os.path.normpath(path)]
+    elif IS_MACOS:
+        cmd = ["open", path]
+    else:
+        cmd = ["xdg-open", path]
+    try:
+        run_tool(cmd, timeout=15)
+    except Exception:
+        return False
+    # explorer.exe basarili durumda bile 1 dondurebilir; cagrinin yapilmis
+    # olmasi yeterlidir.
+    return True
+
+
 def default_image_dir() -> str:
     """Yeni goruntuler icin varsayilan klasor."""
     for name in ("Documents", "Belgeler"):
@@ -216,6 +363,9 @@ def summary() -> dict:
         "Platform": PLATFORM_NAME,
         "Python": sys.version.split()[0],
         "Mimari": "64 bit" if sys.maxsize > 2 ** 32 else "32 bit",
+        "Yetki": (f"{ELEVATION_NAME} (tam erisim)" if is_elevated()
+                  else f"Normal kullanici — fiziksel disk icin {ELEVATION_NAME} "
+                       "gerekir"),
         "Harici araclar": ", ".join(
             f"{k}:{'var' if find_tool(k) else 'yok'}" for k in EXTERNAL_TOOLS),
     }

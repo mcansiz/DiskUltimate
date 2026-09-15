@@ -28,6 +28,8 @@ def _qt_platformu() -> str:
 
 
 os.environ["QT_QPA_PLATFORM"] = _qt_platformu()
+# Yetki yukseltme teklifi modal bir penceredir; otomatik kosumu kilitler.
+os.environ["DISKULTIMATE_NO_ELEVATION_PROMPT"] = "1"
 
 from PyQt5.QtWidgets import QApplication  # noqa: E402
 
@@ -188,6 +190,50 @@ def main() -> int:
     kaydet(d8, "13-bulunan-dosyalar.png")
     d8.close()
 
+    # --- kopyalama ilerleme penceresi ---
+    # Buyuk bir dosya bolume yazilirken hicbir sey gosterilmiyordu; kullanici
+    # bunu donma sanmisti (ADR 0021). Pencere gercekten cizilsin diye burada
+    # goruntusu alinir.
+    from diskultimate.ui.dialogs.task import TaskDialog
+
+    def sahte_kopya(report):
+        report("sdcard.img.dub yaziliyor (1.09 GB)...", 42)
+        return 1
+
+    d9 = TaskDialog(pencere, "Kopyalaniyor — 1.09 GB", sahte_kopya)
+    d9.show()
+    d9._on_progress("sdcard.img.dub yaziliyor (1.09 GB)...", 42)
+    kaydet(d9, "17-kopyalama-ilerleme.png")
+    assert d9.bar.value() == 42, d9.bar.value()
+    # Belirsiz kip: tek adimlik islemde cubuk hareket eder, 0'da takili kalmaz
+    d9._on_progress("sdcard.img.dub yaziliyor (1.09 GB)...", -1)
+    assert d9.bar.maximum() == 0, "belirsiz kipe gecilmedi"
+    d9._on_progress("Tamamlaniyor...", 100)
+    assert d9.bar.maximum() == 100 and d9.bar.value() == 100, "yuzdeye donulmedi"
+    d9.close()
+    print("  (ilerleme penceresi: yuzde ve belirsiz kip denetlendi)")
+
+    # --- yedek dosyasi bilgisi: icerik listesi + "gez" dugmesi ---
+    from diskultimate.core.clone import backup
+    from diskultimate.ui.dialogs.tools import BackupInfoDialog
+
+    dub_yolu = os.path.join(scratch("ui"), "ornek.dub")
+    kaynak_oturum = DiskSession.open(goruntu, readonly=True)
+    backup(kaynak_oturum.image, dub_yolu, compress=True)
+    kaynak_oturum.close()
+    onizleme = DiskSession.backup_preview(dub_yolu)
+    d10 = BackupInfoDialog(onizleme, pencere)
+    d10.show()
+    kaydet(d10, "18-yedek-bilgisi.png")
+    assert d10.tree.topLevelItemCount() == len(onizleme.partitions), \
+        "yedek icerigi agaca yansimadi"
+    assert not d10.browse, "gez dugmesine basilmadan istek olusmamali"
+    d10._browse()
+    assert d10.browse, "gez dugmesi istegi kaydetmedi"
+    d10.close()
+    print(f"  (yedek bilgisi: {d10.tree.topLevelItemCount()} bolum listelendi, "
+          "gez dugmesi calisiyor)")
+
     # --- coklu goruntu: ikinci bir imaj acilinca ilki listede kalmali ---
     ikinci = os.path.join(scratch("ui"), "ikinci.img")
     s2 = DiskSession.create(ikinci, 200 * MIB, scheme="mbr", overwrite=True)
@@ -229,17 +275,27 @@ def main() -> int:
         tema_penceresi.open_path(goruntu)
         app.processEvents()
         # ADR 0012: stil sayfasindaki font-weight sekme basliklarini kirpmisti.
+        #
+        # `tabSizeHint` korumali (protected) bir islevdir. PyQt5'in bazi
+        # surumleri Python'da olusturulmamis bir nesnede buna izin vermez ve
+        # `RuntimeError` atar (Ubuntu 24.04 / PyQt5 5.15 boyle). O zaman bu tek
+        # denetim atlanir; testin geri kalani kosmaya devam eder — eskiden tum
+        # duman testi burada duruyordu ve sonraki adimlar hic calismiyordu.
         cubuk = tema_penceresi.tabs.tabBar()
-        for i in range(cubuk.count()):
-            gereken = cubuk.tabSizeHint(i).width()
-            gercek = cubuk.tabRect(i).width()
-            assert gercek + 1 >= gereken, (
-                f"sekme {i} ({cubuk.tabText(i)!r}) kirpildi: "
-                f"{gercek}px < gereken {gereken}px")
+        try:
+            for i in range(cubuk.count()):
+                gereken = cubuk.tabSizeHint(i).width()
+                gercek = cubuk.tabRect(i).width()
+                assert gercek + 1 >= gereken, (
+                    f"sekme {i} ({cubuk.tabText(i)!r}) kirpildi: "
+                    f"{gercek}px < gereken {gereken}px")
+            sonuc = f"{cubuk.count()} sekme kirpilmadi"
+        except RuntimeError as exc:
+            sonuc = f"sekme genisligi olculemedi, atlandi ({exc})"
         kaydet(tema_penceresi, "16-tema-diskultimate.png")
         tema_penceresi.close_all()
         tema_penceresi.close()
-        print(f"  (tema dali denetlendi: {cubuk.count()} sekme kirpilmadi)")
+        print(f"  (tema dali denetlendi: {sonuc})")
     finally:
         apply_theme(app, "system")
         app.setStyleSheet(onceki)
@@ -260,18 +316,32 @@ def main() -> int:
     durum = {"liste": [_sahte_disk(0, "Dahili", 512 * 1024 ** 3)]}
     DiskSession.list_physical_disks = staticmethod(
         lambda *a, **k: list(durum["liste"]))
+    def tarama_bekle(window) -> None:
+        """Arka plandaki disk taramasinin bitmesini ve sonucun islenmesini bekler.
+
+        Tarama artik arayuz is parcaciginda yapilmiyor (donma onlemi), bu
+        yuzden test de sonucu beklemek zorunda: once is parcacigi biter,
+        sonra kuyruga alinmis sinyal `processEvents` ile islenir.
+        """
+        window.start_disk_scan()
+        if window._scanner is not None:
+            window._scanner.wait(5000)
+        for _ in range(10):
+            app.processEvents()
+
     try:
         hp = MainWindow()
+        tarama_bekle(hp)
         kok = lambda: hp.tree.topLevelItem(0).text(0)  # noqa: E731
         assert "(1)" in kok(), kok()
         durum["liste"].append(_sahte_disk(1, "SD/MMC kart", 59 * 1024 ** 3))
-        hp._poll_disks()
+        tarama_bekle(hp)
         assert "(2)" in kok(), f"takilan aygit agaca eklenmedi: {kok()}"
         imza = hp._last_disk_signature
-        hp._poll_disks()
+        tarama_bekle(hp)
         assert hp._last_disk_signature == imza, "degisiklik yokken agac yenilendi"
         durum["liste"].pop()
-        hp._poll_disks()
+        tarama_bekle(hp)
         assert "(1)" in kok(), f"cikarilan aygit agactan silinmedi: {kok()}"
         gunluk = hp.log_view.toPlainText()
         assert "Aygit takildi" in gunluk and "Aygit cikarildi" in gunluk
