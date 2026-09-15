@@ -3,11 +3,16 @@
 DiskGenius benzeri gorsel disk yonetim araci: disk goruntuleri, sanal diskler ve
 **sistemdeki gercek diskler** uzerinde calisir. Python 3 + PyQt5, harici bagimlilik yok.
 
-![surum](https://img.shields.io/badge/surum-0.3.0-blue) ![python](https://img.shields.io/badge/python-3.8%2B-green) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey) ![test](https://img.shields.io/badge/test-18%2F18-brightgreen)
+**Desteklenen platformlar: Windows ve Linux** — ikisinde de testler kosulmustur.
+Cekirdek saf Python ve macOS kod yollari (`diskutil`) yazilmis durumda, ancak
+**macOS'ta hicbir test calistirilmamistir**; bu yuzden destegi ilan edilmiyor.
 
-Bolum tablolari ve dosya sistemleri **sifirdan, saf Python ile** yazilir — FAT12/16/32,
-exFAT, ext2/3/4 ve NTFS dahil. Uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2fsck`,
-`ntfsfix` ve Windows `chkdsk` ile capraz dogrulanir.
+![surum](https://img.shields.io/badge/surum-0.4.0-blue) ![python](https://img.shields.io/badge/python-3.8%2B-green) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen) ![test](https://img.shields.io/badge/test-18%2F18-brightgreen)
+
+Bolum tablolari ve dosya sistemleri **sifirdan, saf Python ile** yazilir. Sekiz
+dosya sisteminin (FAT12/16/32, exFAT, NTFS, ext2/3/4) tamaminda **bicimlendirme,
+okuma ve yazma** calisir; uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2fsck`,
+`ntfsfix`/`ntfs-3g` ve Windows `chkdsk` ile capraz dogrulanir.
 
 ## Yetenekler
 

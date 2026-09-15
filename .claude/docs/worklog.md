@@ -1898,3 +1898,40 @@ macOS dogrulamasi v0.5 listesine acik bir madde olarak kondu.
 ### Dogrulama
 `platform_check` 0 bulgu · belge ici baglantilar 0 kirik ·
 `ntfs_write_check` 2/2 (Mint, root ile).
+
+---
+
+## 2026-09-15 (20) — macOS destegi ilan edilmiyor; surum v0.4.0
+
+### Karar: macOS kapsam disi
+Kullanici bildirdi: macOS makinesi yok, dogrulanamaz. Olculmemis bir platformun
+destegini ilan etmek, bu oturumun basinda duzelttigim hatanin aynisi olurdu
+(belgenin gerceklige uymamasi). Bu yuzden **iddia geri cekildi**:
+
+- README rozeti: `Windows | Linux` (macOS cikarildi), ustune acik bir not.
+- `platform-matrix.md`: dosya sistemi tablosundan **macOS sutunu kaldirildi**;
+  fiziksel disk tablosundaki macOS sutunu "yazildi, **olculmedi**" olarak
+  isaretlendi.
+- `cross-platform.md` basligi `Windows / Linux`; macOS satirlari "tasarim notu,
+  dogrulama degil" uyarisiyla birakildi.
+- `project-overview.md`: v0.5 listesinden cikarildi, gerekcesi yazildi.
+
+**Kod silinmedi.** `diskutil`/`newfs_*` yollari yerinde ve `platform_check`ten
+geciyor; birisi kosana kadar durum "bilinmiyor"dur.
+
+### Surum v0.4.0
+`project-overview.md` v0.4.0 diyordu ama `APP_VERSION` hala 0.3.0'di — kendi
+koydugum "tek kaynak" kuralinin ihlali. v0.3.0'dan bu yana eklenenler bir
+minor surumu fazlasiyla hak ediyor:
+
+- ext2/3/4 okuyucu + yazici (`metadata_csum` dahil)
+- NTFS okuyucu + yazici
+- Sekiz dosya sisteminde de B O Y
+- `.dub` yedegin dogrudan gezilmesi ve fiziksel diske yazilmasi
+- Takilan USB/SD aygitlarin kendiliginden gorunmesi
+
+`APP_VERSION`, README rozeti ve "Durum" satiri birlikte 0.4.0'a cekildi.
+
+### Dogrulama
+`run_all` 18/18 · `platform_check` 0 bulgu · `ui_smoke` gecti ·
+belge ici baglantilar 0 kirik.

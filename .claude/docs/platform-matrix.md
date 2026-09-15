@@ -3,10 +3,17 @@
 Tarih: 2026-09-15 · Kaynak: koddan okunarak ve kosularak cikarildi
 (`tests/fs_matrix.py`, `tests/ext_write_check.py`, `tests/run_all.py`).
 
-> **Ana bulgu:** cekirdek saf Python oldugu icin **yetenekler uc platformda da
-> aynidir**. Platform farki yalnizca (a) fiziksel diske erisim yonteminde ve
+> **Ana bulgu:** cekirdek saf Python oldugu icin **yetenekler platformdan
+> bagimsizdir**. Platform farki yalnizca (a) fiziksel diske erisim yonteminde ve
 > (b) opsiyonel harici araclarda ortaya cikar. Harici arac artik hicbir bicim
 > icin **zorunlu degildir**.
+>
+> **macOS sutunu kaldirildi.** Kod yollari (`diskutil`, `newfs_*`) yerinde ve
+> `platform_check`ten geciyor, ama o platformda **tek bir test bile
+> calistirilmadi** ve calistirilacak bir makine yok. Olculmemis bir sutunu
+> tabloda tutmak, "destekleniyor" izlenimi verdigi icin yaniltici olurdu.
+> Destek **ilan edilmiyor**; kod silinmedi, birisi kosana kadar bilinmiyor
+> sayiliyor.
 
 ---
 
@@ -15,16 +22,16 @@ Tarih: 2026-09-15 · Kaynak: koddan okunarak ve kosularak cikarildi
 `B` = bicimlendirme · `O` = icerik okuma · `Y` = icerik yazma
 (dosya/klasor olusturma, silme, yeniden adlandirma)
 
-| Dosya sistemi | Windows | Linux | macOS | Uygulama | Dogrulayan arac |
-|---|---|---|---|---|---|
-| **FAT12** | B O Y | B O Y | B O Y | saf Python (`fat.py`) | `fsck.vfat` |
-| **FAT16** | B O Y | B O Y | B O Y | saf Python (`fat.py`) | `fsck.vfat` |
-| **FAT32** | B O Y | B O Y | B O Y | saf Python (`fat.py`) | `fsck.vfat` |
-| **exFAT** | B O Y | B O Y | B O Y | saf Python (`exfat.py`) | `fsck.exfat` |
-| **ext2** | B O Y | B O Y | B O Y | saf Python (`ext` + `extread` + `extwrite`) | `e2fsck` |
-| **ext3** | B O Y | B O Y | B O Y | ayni | `e2fsck` |
-| **ext4** | B O Y | B O Y | B O Y | ayni + `extcsum` (metadata_csum) | `e2fsck` |
-| **NTFS** | B O Y | B O Y | B O Y | `ntfs.py` + `ntfsread.py` + `ntfswrite.py` | `ntfsfix`, `ntfs-3g`, `chkdsk` |
+| Dosya sistemi | Windows | Linux | Uygulama | Dogrulayan arac |
+|---|---|---|---|---|
+| **FAT12** | B O Y | B O Y | saf Python (`fat.py`) | `fsck.vfat` |
+| **FAT16** | B O Y | B O Y | saf Python (`fat.py`) | `fsck.vfat` |
+| **FAT32** | B O Y | B O Y | saf Python (`fat.py`) | `fsck.vfat` |
+| **exFAT** | B O Y | B O Y | saf Python (`exfat.py`) | `fsck.exfat` |
+| **ext2** | B O Y | B O Y | saf Python (`ext` + `extread` + `extwrite`) | `e2fsck` |
+| **ext3** | B O Y | B O Y | ayni | `e2fsck` |
+| **ext4** | B O Y | B O Y | ayni + `extcsum` (metadata_csum) | `e2fsck` |
+| **NTFS** | B O Y | B O Y | `ntfs.py` + `ntfsread.py` + `ntfswrite.py` | `ntfsfix`, `ntfs-3g`, `chkdsk` |
 
 **Yalnizca tespit** (icerik okunmaz): btrfs, XFS, F2FS, ISO9660, Linux takas.
 
@@ -87,7 +94,7 @@ Uc platformda da ayni (`mbr.py`, `gpt.py`, `convert.py` — saf Python).
 
 Tek fark burada: her isletim sistemi kendi arayuzunu dayatir.
 
-| Islev | Windows | Linux | macOS |
+| Islev | Windows | Linux | macOS (yazildi, **olculmedi**) |
 |---|---|---|---|
 | Disk listeleme | `IOCTL` (`ctypes`) | `/sys/block` + `/proc/mounts` | `diskutil list -plist` |
 | Salt okunur acma | `CreateFileW` | `open()` | `open()` |
@@ -153,13 +160,13 @@ yuzden sekiz bicim de uc platformda olusturulabilir.
 | Platform | Kosum | Durum |
 |---|---|---|
 | **Windows 10** (ana makine) | `run_all` 18/18, `platform_check` 0 bulgu, `ui_smoke` | ✅ Kosuldu |
-| **Linux Mint 22.3** (VMware) | `run_all` 18/18, `fs_matrix` 8/8 (tum `fsck`'ler), `ext_write_check` 4/4, fiziksel disk okuma+yazma | ✅ Kosuldu |
-| **macOS** | — | ⚠️ **Hic kosulmadi** |
+| **Linux Mint 22.3** (VMware) | `run_all` 18/18, `fs_matrix` 8/8 (tum `fsck`'ler), `ext_write_check` 4/4, `ntfs_write_check` 2/2, fiziksel disk okuma+yazma | ✅ Kosuldu |
+| **macOS** | — | ⛔ **Destek ilan edilmiyor** |
 
-> **macOS durustce:** kod yollari soyutlanmis ve `platform_check`ten gecmis
-> durumdadir, ancak macOS'ta **hicbir test calistirilmamistir**. Tablodaki
-> macOS sutunu "saf Python oldugu icin calismasi beklenir" anlamindadir,
-> "olculdu" anlaminda degil.
+> **macOS:** kod yollari (`diskutil`, `newfs_*`) yerinde ve `platform_check`ten
+> geciyor, ama o platformda **hicbir test calistirilmadi** ve calistirilacak
+> makine yok. Bu yuzden destek **ilan edilmiyor**. Kod silinmedi; birisi
+> kosana kadar durumu "bilinmiyor"dur.
 
 Ek olarak Linux'ta gercek donanimda dogrulananlar:
 - ext4 okuyucu, **Linux cekirdek surucusuyle** karsilastirildi (ayni dizin

@@ -42,7 +42,7 @@ from .widgets.partition_table import PartitionTableWidget, color_chip
 APP_NAME = "DiskUltimate"
 # Surumun tek kaynagi burasidir. Degistirildiginde README.md'deki surum rozeti
 # ve .claude/docs/project-overview.md "Durum" satiri da guncellenir.
-APP_VERSION = "0.3.0"
+APP_VERSION = "0.4.0"
 
 # Sekme sirasi tek yerden tanimlanir; `tabs.setCurrentIndex` cagrilari ciplak
 # sayi kullanmaz, boylece sekme sirasi degisince sessizce yanlis sekme acilmaz.

@@ -4,8 +4,8 @@
 diskler** uzerinde, DiskGenius benzeri gorsel bir arayuzle bolumleme,
 bicimlendirme, yedekleme, kurtarma ve dosya erisimi saglamak.
 
-**Durum:** v0.3.0 — capraz platform (Windows/Linux/macOS), **18/18** cekirdek
-testi basarili. DiskGenius ozellik karsilastirmasi: [diskgenius-parity.md](diskgenius-parity.md)
+**Durum:** v0.4.0 — **Windows ve Linux** (ikisinde de kosuldu), **18/18** cekirdek
+testi basarili; sekiz dosya sisteminde de okuma/yazma. DiskGenius ozellik karsilastirmasi: [diskgenius-parity.md](diskgenius-parity.md)
 
 > Surumun tek kaynagi koddaki `ui/main_window.py::APP_VERSION`. Bu satir
 > degistiginde buradaki "Durum" ve README rozeti de guncellenir.
@@ -96,7 +96,10 @@ gecen ayri bir moddur.
 - [ ] Dosya sistemi tutarlilik denetimi (chkdsk/fsck esdegeri)
 - [ ] Birincil ↔ mantiksal bolum donusumu, bolum gizleme
 - [ ] Bozuk sektor (okuma hatasi) taramasi — fiziksel disk destegi geldi
-- [ ] **macOS uzerinde dogrulama** — kod hazir, hic kosulmadi
+
+> **macOS kapsam disi birakildi.** Kod yollari yerinde ama dogrulanacak makine
+> yok; olculmemis bir platformun destegini ilan etmemek icin README ve matris
+> yalnizca **Windows ve Linux** diyor.
 
 ### Bilinen sinirlar (yazma)
 - **ext:** extent agaci buyutme yok, cok katli dolayli blok yok (~4 MB ustu

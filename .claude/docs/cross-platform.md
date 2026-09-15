@@ -1,4 +1,8 @@
-# Capraz Platform Notlari (Windows / Linux / macOS)
+# Capraz Platform Notlari (Windows / Linux)
+
+> **macOS destegi ilan edilmiyor.** Kod yollari yazilmis ve statik denetimden
+> geciyor, ancak o platformda hicbir test calistirilmadi ve calistirilacak bir
+> makine yok. Asagidaki macOS satirlari **tasarim notu**dur, dogrulama degil.
 
 DiskUltimate uc masaustu platformunda ayni kod tabaniyla calisir. Platforma bagli
 her sey tek modulde toplanmistir: [`core/platform.py`](../../src/diskultimate/core/platform.py).
