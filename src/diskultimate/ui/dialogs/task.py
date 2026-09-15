@@ -18,8 +18,8 @@ class _Worker(QThread):
 
     def run(self):
         try:
-            sonuc = self.func(lambda msg, pct: self.progress.emit(msg, pct))
-            self.finished_ok.emit(sonuc)
+            result = self.func(lambda msg, pct: self.progress.emit(msg, pct))
+            self.finished_ok.emit(result)
         except Exception as exc:  # kullanici hatayi gormeli
             self.failed.emit(str(exc))
 
@@ -70,9 +70,9 @@ class TaskDialog(QDialog):
     def exec_(self) -> int:
         QTimer.singleShot(0, self.update)
         self.worker.start()
-        sonuc = super().exec_()
+        result = super().exec_()
         self.worker.wait()
-        return sonuc
+        return result
 
 
 def run_task(parent, title: str, func: Callable):

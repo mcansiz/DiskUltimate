@@ -1,21 +1,35 @@
 # DiskUltimate — Proje Genel Bakis
 
-**Amac:** `.img` ham disk goruntu dosyalari uzerinde, DiskGenius benzeri gorsel bir
-arayuzle disk olusturma, bolumleme, bicimlendirme ve dosya erisimi saglamak.
+**Amac:** Disk goruntuleri (`.img`, VHD/VDI/VMDK/QCOW2) ve **sistemdeki gercek
+diskler** uzerinde, DiskGenius benzeri gorsel bir arayuzle bolumleme,
+bicimlendirme, yedekleme, kurtarma ve dosya erisimi saglamak.
 
-**Durum:** v0.2.0 — capraz platform (Windows/Linux/macOS), 15/15 cekirdek testi basarili.
-DiskGenius ozellik karsilastirmasi: [diskgenius-parity.md](diskgenius-parity.md)
+**Durum:** v0.3.0 — capraz platform (Windows/Linux/macOS), **18/18** cekirdek
+testi basarili. DiskGenius ozellik karsilastirmasi: [diskgenius-parity.md](diskgenius-parity.md)
+
+> Surumun tek kaynagi koddaki `ui/main_window.py::APP_VERSION`. Bu satir
+> degistiginde buradaki "Durum" ve README rozeti de guncellenir.
 
 ## Neden bu proje
-Gercek diske dokunmadan, root yetkisi olmadan, tam kontrollu bir disk yapisi
-kurabilmek: onyuklenebilir USB imajlari hazirlamak, gomulu sistem kartlari icin
-goruntu uretmek, bolum/dosya sistemi yapilarini ogrenmek ve incelemek.
+Disk yapisi uzerinde tam kontrol: onyuklenebilir USB imajlari hazirlamak, gomulu
+sistem kartlari icin goruntu uretmek, bolum ve dosya sistemi yapilarini ogrenmek,
+silinmis veriyi kurtarmak. Goruntu dosyalariyla calisirken hicbir yetki
+gerekmez; gercek disklere erisim ise acikca istenmesi gereken, katmanli onaydan
+gecen ayri bir moddur.
 
 ## Temel ilkeler
-1. **Yalnizca goruntu dosyasi.** Hicbir kod `/dev/sd*` benzeri blok aygita yazmaz.
-2. **root gerekmez.** Loop aygiti, `mount`, `sudo` kullanilmaz.
-3. **Cekirdek saf Python.** Bolum tablolari ve FAT surucusu disaridan bagimsiz;
-   `mkfs.*` araclari yalnizca ek dosya sistemleri icin, varsa kullanilir.
+
+1. **Goruntu dosyasi varsayilandir, fiziksel disk istege baglidir.**
+   Uygulama goruntu dosyalariyla yonetici/root yetkisi olmadan tam islevlidir.
+   Fiziksel disk erisimi v0.3 ile eklendi ([ADR 0014](../decisions/0014-fiziksel-disk-destegi.md))
+   ve alti katmanli bir kapidan gecer: listeleme zararsizdir → varsayilan salt
+   okunur → yazma icin `confirm=True` → sistem diski icin `allow_system=True` →
+   bilgisi eksik diskte yazma **reddedilir** → bagli bolumde ayrica uyarilir.
+2. **Yikici hicbir islem sessizce olmaz.** Bicimlendirme, silme, boyutlandirma ve
+   tablo yazma onay ister; basarisiz bicimlendirme tabloyu geri alir.
+3. **Cekirdek saf Python.** Bolum tablolari ve sekiz dosya sisteminin
+   bicimlendirmesi disaridan bagimsizdir; harici `mkfs.*` araclari yalnizca
+   varsa ve oncelikliyse kullanilir.
 4. **Katman ayrimi.** `core/` GUI bilmez, `ui/` disk bicimini bilmez.
 
 ## Surum kapsamlari
@@ -47,25 +61,49 @@ goruntu uretmek, bolum/dosya sistemi yapilarini ogrenmek ve incelemek.
 - [x] **4K hizalama denetimi**
 - [x] FAT yazma basarimi duzeltmesi (>100 s → 0.04 s)
 
-### v0.3 — planlanan
-- [ ] Bolum boyutlandirma ve tasima (FAT/exFAT icin veri koruyarak)
-- [ ] Bolum bolme / birlestirme
+### v0.3.0 — tamamlandi
+- [x] **Fiziksel disk destegi** — sistemdeki diskleri listeleme, salt okunur acma,
+      katmanli onayla yazma ([ADR 0014](../decisions/0014-fiziksel-disk-destegi.md)).
+      Windows ve Linux'ta uctan uca dogrulandi; isletim sistemine bildirim
+      ([ADR 0015](../decisions/0015-isletim-sistemine-bildirim.md)) ve Windows
+      birim kilitleme ([ADR 0016](../decisions/0016-windows-birim-kilitleme.md)) dahil
+- [x] **ext2/3/4 ve NTFS saf Python bicimlendirme** — boylece **sekiz dosya sistemi
+      de uc platformda** olusturulabilir ([ADR 0017](../decisions/0017-saf-python-ext-ve-ntfs.md),
+      [ADR 0018](../decisions/0018-ntfs-platform-stratejisi.md))
+- [x] **Bolum boyutlandirma ve tasima** — suruklenebilir serit; FAT/exFAT veri
+      korunarak, NTFS/ext Windows'ta yerel araca devredilir
+      ([ADR 0019](../decisions/0019-bolum-boyutlandirma.md))
+- [x] **Coklu oturum** — birden fazla goruntu/disk ayni anda acik
+- [x] **Ozel tema kaldirildi**, sistemin Qt gorunumu kullaniliyor ([ADR 0013](../decisions/0013-tema-kaldirildi.md))
+- [x] **Salt okunur acilma teshisi** — neden gosterilir, kilit durumunda yeniden denenir
+
+### v0.4 — planlanan
+- [ ] Bolum bolme / birlestirme (boyutlandirma altyapisi hazir; bolme = kucult + yeni bolum)
 - [ ] ext2/3/4 **okuyucu** (icerik listeleme ve disa aktarma)
-- [ ] Onaltilik duzenleyici (yazma destegi)
+- [ ] NTFS **okuyucu** (MFT cozumleme)
+- [ ] Onaltilik duzenleyici (yazma destegi — su an goruntuleyici salt okunur)
 - [ ] Dosya sistemi tutarlilik denetimi (chkdsk/fsck esdegeri)
 - [ ] Birincil ↔ mantiksal bolum donusumu, bolum gizleme
 
-### v0.4 ve sonrasi — fikirler
-- [ ] NTFS okuyucu (MFT cozumleme)
+### v0.5 ve sonrasi — fikirler
 - [ ] Sanal disk bicimleri arasinda dogrudan donusturucu
 - [ ] Onyukleme sektoru sablonlari (syslinux / GRUB yerlestirme)
 - [ ] Bicimlendirilmis bolumde dizin yapisini yeniden kurma
+- [ ] Goruntuyu fiziksel aygita yazma (Rufus/Etcher tarzi)
+
+## Kapsam disi
+
+Bu maddeler bilincli olarak disarida birakilmistir; gerekceleri
+[diskgenius-parity.md](diskgenius-parity.md) icindedir:
+S.M.A.R.T. izleme, bozuk sektor onarimi, RAID kurtarma, dinamik disk (LDM),
+surucu harfi atama, UEFI onyukleme girisi yonetimi, WinPE kurtarma ortami.
 
 ## Ilgili belgeler
 - Ozellik matrisi (DiskGenius): [diskgenius-parity.md](diskgenius-parity.md)
 - Pazar/kaynak analizi: [feature-analysis.md](feature-analysis.md)
 - Capraz platform: [cross-platform.md](cross-platform.md)
 - Mimari: [architecture.md](architecture.md)
+- Tutarlilik denetimi ve iyilestirme plani: [consistency-audit.md](consistency-audit.md)
 - Is gunlugu: [worklog.md](worklog.md)
 - Test: [testing.md](testing.md)
 - Kararlar: [../decisions/](../decisions/)

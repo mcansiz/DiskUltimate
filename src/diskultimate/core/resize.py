@@ -71,31 +71,31 @@ def window_for(table: PartitionTable, part: Partition) -> ResizeWindow:
         kapsayici = _extended_of(table)
         if kapsayici is None:
             raise ResizeError("Mantiksal bolumun genisletilmis bolumu bulunamadi")
-        alt = kapsayici.start_lba + table.align_sectors
-        ust = kapsayici.end_lba
+        lower = kapsayici.start_lba + table.align_sectors
+        upper = kapsayici.end_lba
         komsular = [p for p in table.partitions if p.logical and p is not part]
     else:
-        alt = table.first_usable_lba()
-        ust = table.last_usable_lba()
+        lower = table.first_usable_lba()
+        upper = table.last_usable_lba()
         komsular = [p for p in table.partitions
                     if not p.logical and p is not part]
 
-    bas = alt
-    son = ust
+    bas = lower
+    last = upper
     for p in sorted(komsular, key=lambda x: x.start_lba):
         if p.end_lba < part.start_lba:
             bas = max(bas, p.end_lba + 1)
         elif p.start_lba > part.end_lba:
-            son = min(son, p.start_lba - 1)
+            last = min(last, p.start_lba - 1)
         else:
             raise ResizeError(f"{p.index} numarali bolum ile cakisma var")
     if part.logical:
         # her mantiksal bolumun onunde kendi EBR'si icin bir hizalama birimi durur
-        bas = max(bas, alt)
+        bas = max(bas, lower)
     bas = table.align_up(bas)
     if bas > part.start_lba:
         bas = part.start_lba          # mevcut yerlesim hizasiz olabilir
-    return ResizeWindow(bas, son, table.sector_size)
+    return ResizeWindow(bas, last, table.sector_size)
 
 
 def _extended_of(table: PartitionTable) -> Optional[Partition]:
@@ -134,18 +134,18 @@ class FsResizeInfo:
 def fs_resize_info(view: BlockDevice, fs_type: str,
                    native_ok: bool = False) -> FsResizeInfo:
     """Bolumdeki dosya sistemini inceleyip boyut sinirlarini cikarir."""
-    tur = (fs_type or "").lower()
+    kind = (fs_type or "").lower()
     try:
-        if tur.startswith("fat"):
+        if kind.startswith("fat"):
             return _fat_info(view)
-        if tur == "exfat":
+        if kind == "exfat":
             return _exfat_info(view)
     except (FatError, ExFatError, Exception) as exc:   # noqa: BLE001
         return FsResizeInfo(
             kind="unsupported", fs_type=fs_type, movable=False,
             note=f"Dosya sistemi okunamadi ({exc}); boyutlandirma guvenli degil")
 
-    if tur in ("", "raw", "bos", "unknown"):
+    if kind in ("", "raw", "bos", "unknown"):
         return FsResizeInfo(kind="raw", fs_type=fs_type or "Ham",
                             note="Dosya sistemi yok; alan serbestce degistirilebilir")
 
@@ -196,24 +196,24 @@ def _fat_layout_for(total: int, fs: FatFS) -> Tuple[int, int]:
 
 def _fat_max_total(fs: FatFS) -> int:
     """Tip degismeden ulasabilecegi en buyuk toplam sektor sayisi."""
-    _, ust_kume = _fat_type_bounds(fs.fat_type)
-    alt, ust = fs.total_sectors, fs.total_sectors
-    adim = max(1, fs.total_sectors)
+    _, upper_cluster = _fat_type_bounds(fs.fat_type)
+    lower, upper = fs.total_sectors, fs.total_sectors
+    step = max(1, fs.total_sectors)
     while True:                       # once ust siniri kabaca bul
-        _, kume = _fat_layout_for(ust + adim, fs)
-        if kume > ust_kume or (ust + adim) > (1 << 32) - 1:
+        _, cluster = _fat_layout_for(upper + step, fs)
+        if cluster > upper_cluster or (upper + step) > (1 << 32) - 1:
             break
-        ust += adim
-        adim *= 2
-    alt, yuksek = ust, ust + adim
-    while alt < yuksek:               # sonra ikili arama ile daralt
-        orta = (alt + yuksek + 1) // 2
-        _, kume = _fat_layout_for(orta, fs)
-        if kume <= ust_kume and orta <= (1 << 32) - 1:
-            alt = orta
+        upper += step
+        step *= 2
+    lower, yuksek = upper, upper + step
+    while lower < yuksek:               # sonra ikili arama ile daralt
+        orta = (lower + yuksek + 1) // 2
+        _, cluster = _fat_layout_for(orta, fs)
+        if cluster <= upper_cluster and orta <= (1 << 32) - 1:
+            lower = orta
         else:
             yuksek = orta - 1
-    return alt
+    return lower
 
 
 def _fat_bounds(fs: FatFS) -> Tuple[int, int]:
@@ -231,11 +231,11 @@ def _fat_highest_used(fs: FatFS) -> int:
 
 def _fat_info(view: BlockDevice) -> FsResizeInfo:
     fs = FatFS(view)
-    alt_kume, _ = _fat_type_bounds(fs.fat_type)
+    lower_cluster, _ = _fat_type_bounds(fs.fat_type)
     tepe = _fat_highest_used(fs)
-    gerekli_kume = max(tepe - 1, alt_kume)
+    needed_clusters = max(tepe - 1, lower_cluster)
     # kucultmede FAT tablosunun yeri degismez: asgari boyut mevcut yerlesimden
-    asgari = fs.first_data_sector + gerekli_kume * fs.sectors_per_cluster
+    asgari = fs.first_data_sector + needed_clusters * fs.sectors_per_cluster
     azami = _fat_max_total(fs)
     not_ = ""
     if azami <= fs.total_sectors:
@@ -257,27 +257,27 @@ def fat_resize(view: BlockDevice, new_sector_count: int) -> None:
     fs = FatFS(view)
     bps = fs.bytes_per_sector
     spc = fs.sectors_per_cluster
-    alt_kume, ust_kume = _fat_type_bounds(fs.fat_type)
+    lower_cluster, upper_cluster = _fat_type_bounds(fs.fat_type)
     tepe = _fat_highest_used(fs)
 
     if new_sector_count <= fs.total_sectors:
         # --- kucultme / ayni boyut: yerlesim korunur -------------------------
-        veri_sektor = new_sector_count - fs.first_data_sector
-        if veri_sektor <= 0:
+        data_sectors = new_sector_count - fs.first_data_sector
+        if data_sectors <= 0:
             raise ResizeError("Yeni boyut FAT ust verisinden kucuk")
-        yeni_kume = min(veri_sektor // spc, ust_kume)
-        if yeni_kume < alt_kume:
+        new_clusters = min(data_sectors // spc, upper_cluster)
+        if new_clusters < lower_cluster:
             raise ResizeError(
                 f"Yeni boyut FAT{fs.fat_type} icin cok kucuk "
-                f"(en az {alt_kume} kume gerekir)")
-        if yeni_kume < tepe - 1:
+                f"(en az {lower_cluster} kume gerekir)")
+        if new_clusters < tepe - 1:
             raise ResizeError(
                 "Kucultme veri kaybina yol acar: dosyalar yeni sinirin "
                 "otesinde. Once dosyalari tasiyin.")
-        toplam = fs.first_data_sector + yeni_kume * spc
-        _fat_write_bpb(view, fs, toplam, fs.fat_size)
+        total = fs.first_data_sector + new_clusters * spc
+        _fat_write_bpb(view, fs, total, fs.fat_size)
         taze = FatFS(view)
-        for c in range(yeni_kume + 2, fs.cluster_count + 2):
+        for c in range(new_clusters + 2, fs.cluster_count + 2):
             taze.set_fat(c, 0)
         taze._free_count = None
         taze.flush()
@@ -285,25 +285,25 @@ def fat_resize(view: BlockDevice, new_sector_count: int) -> None:
         return
 
     # --- buyutme --------------------------------------------------------------
-    yeni_fat, yeni_kume = _fat_layout_for(new_sector_count, fs)
-    if yeni_kume > ust_kume:
+    new_fat, new_clusters = _fat_layout_for(new_sector_count, fs)
+    if new_clusters > upper_cluster:
         # tip sinirini asmamak icin kume sayisi kirpilir
-        yeni_kume = ust_kume
-        yeni_fat, _ = _fat_layout_for(new_sector_count, fs)
-    if yeni_kume < alt_kume:
+        new_clusters = upper_cluster
+        new_fat, _ = _fat_layout_for(new_sector_count, fs)
+    if new_clusters < lower_cluster:
         raise ResizeError(f"FAT{fs.fat_type} icin gecersiz kume sayisi")
-    if yeni_fat < fs.fat_size:
-        yeni_fat = fs.fat_size            # tablo asla kucultulmez
+    if new_fat < fs.fat_size:
+        new_fat = fs.fat_size            # tablo asla kucultulmez
         veri = new_sector_count - (fs.reserved_sectors
-                                   + fs.num_fats * yeni_fat
+                                   + fs.num_fats * new_fat
                                    + fs.root_dir_sectors)
-        yeni_kume = min(veri // spc, ust_kume)
+        new_clusters = min(veri // spc, upper_cluster)
 
-    kaydirma = fs.num_fats * (yeni_fat - fs.fat_size)
-    yeni_ilk_veri = (fs.reserved_sectors + fs.num_fats * yeni_fat
+    kaydirma = fs.num_fats * (new_fat - fs.fat_size)
+    new_first_data = (fs.reserved_sectors + fs.num_fats * new_fat
                      + fs.root_dir_sectors)
-    toplam = yeni_ilk_veri + yeni_kume * spc
-    if toplam > new_sector_count:
+    total = new_first_data + new_clusters * spc
+    if total > new_sector_count:
         raise ResizeError("Hesaplanan yerlesim bolume sigmiyor")
 
     if kaydirma:
@@ -313,13 +313,13 @@ def fat_resize(view: BlockDevice, new_sector_count: int) -> None:
         _shift_forward(view, bolge_bas, kaydirma, kullanilan, bps)
 
     # FAT kopyalari yeni boyutta yeniden yazilir (kume numaralari degismez)
-    eski_fat = view.read(fs.reserved_sectors * bps, fs.fat_size * bps)
-    tampon = bytearray(yeni_fat * bps)
-    tampon[:len(eski_fat)] = eski_fat
+    old_fat = view.read(fs.reserved_sectors * bps, fs.fat_size * bps)
+    tampon = bytearray(new_fat * bps)
+    tampon[:len(old_fat)] = old_fat
     for i in range(fs.num_fats):
-        view.write((fs.reserved_sectors + i * yeni_fat) * bps, bytes(tampon))
+        view.write((fs.reserved_sectors + i * new_fat) * bps, bytes(tampon))
 
-    _fat_write_bpb(view, fs, toplam, yeni_fat)
+    _fat_write_bpb(view, fs, total, new_fat)
     taze = FatFS(view)
     taze._free_count = None
     taze._update_fsinfo()          # FSInfo'daki bos kume sayaci tazelenir
@@ -331,26 +331,26 @@ def fat_resize(view: BlockDevice, new_sector_count: int) -> None:
 def _shift_forward(view: BlockDevice, start_lba: int, shift: int,
                    sector_count: int, bps: int) -> None:
     """Sektor blogunu `shift` sektor ileri kaydirir (sondan basa kopyalar)."""
-    adim = max(1, COPY_CHUNK // bps)
+    step = max(1, COPY_CHUNK // bps)
     kalan = sector_count
     while kalan > 0:
-        n = min(adim, kalan)
+        n = min(step, kalan)
         kalan -= n
         veri = view.read((start_lba + kalan) * bps, n * bps)
         view.write((start_lba + kalan + shift) * bps, veri)
 
 
-def _fat_write_bpb(view: BlockDevice, fs: FatFS, toplam: int,
+def _fat_write_bpb(view: BlockDevice, fs: FatFS, total: int,
                    fat_size: int) -> None:
     """BPB'deki toplam sektor ve FAT boyutu alanlarini gunceller."""
     bps = fs.bytes_per_sector
     boot = bytearray(view.read(0, bps))
-    if toplam < 0x10000 and fs.fat_type != 32:
-        struct.pack_into("<H", boot, 19, toplam)
+    if total < 0x10000 and fs.fat_type != 32:
+        struct.pack_into("<H", boot, 19, total)
         struct.pack_into("<I", boot, 32, 0)
     else:
         struct.pack_into("<H", boot, 19, 0)
-        struct.pack_into("<I", boot, 32, toplam)
+        struct.pack_into("<I", boot, 32, total)
     if fs.fat_type == 32:
         struct.pack_into("<H", boot, 22, 0)
         struct.pack_into("<I", boot, 36, fat_size)
@@ -377,7 +377,7 @@ def _exfat_highest_used(fs: ExFatFS) -> int:
     return 1
 
 
-def _exfat_layout_for(toplam: int, fs: ExFatFS) -> Tuple[int, int, int]:
+def _exfat_layout_for(total: int, fs: ExFatFS) -> Tuple[int, int, int]:
     """Verilen toplam sektor icin (FAT uzunlugu, heap ofseti, kume sayisi).
 
     `ExFatFS.format` ile ayni yinelemeli hesap; fat_offset ve kume boyutu
@@ -386,25 +386,25 @@ def _exfat_layout_for(toplam: int, fs: ExFatFS) -> Tuple[int, int, int]:
     bps, spc = fs.bytes_per_sector, fs.sectors_per_cluster
     fat_offset = fs.fat_offset
     fat_length = fs.fat_length
-    kume = fs.cluster_count
+    cluster = fs.cluster_count
     for _ in range(64):
         heap = fat_offset + fat_length
         artik = heap % spc
         if artik:
             heap += spc - artik
-        kalan = toplam - heap
+        kalan = total - heap
         if kalan <= 0:
             raise ResizeError("Yeni boyut exFAT yerlesimi icin cok kucuk")
-        yeni_kume = kalan // spc
-        yeni_fat = ((yeni_kume + 2) * 4 + bps - 1) // bps
-        if yeni_fat == fat_length and yeni_kume == kume:
+        new_clusters = kalan // spc
+        new_fat = ((new_clusters + 2) * 4 + bps - 1) // bps
+        if new_fat == fat_length and new_clusters == cluster:
             break
-        fat_length, kume = yeni_fat, yeni_kume
+        fat_length, cluster = new_fat, new_clusters
     heap = fat_offset + fat_length
     artik = heap % spc
     if artik:
         heap += spc - artik
-    return fat_length, heap, (toplam - heap) // spc
+    return fat_length, heap, (total - heap) // spc
 
 
 def _exfat_info(view: BlockDevice) -> FsResizeInfo:
@@ -435,82 +435,82 @@ def exfat_resize(view: BlockDevice, new_sector_count: int,
         kullanilabilir = new_sector_count - fs.cluster_heap_offset
         if kullanilabilir <= 0:
             raise ResizeError("Yeni boyut exFAT ust verisinden kucuk")
-        yeni_kume = min(kullanilabilir // spc,
+        new_clusters = min(kullanilabilir // spc,
                         (fs.fat_length * fs.bytes_per_sector) // 4 - 2)
-        if yeni_kume < 1:
+        if new_clusters < 1:
             raise ResizeError("Yeni boyut exFAT icin cok kucuk")
-        if yeni_kume < tepe - 1:
+        if new_clusters < tepe - 1:
             raise ResizeError(
                 "Kucultme veri kaybina yol acar: kumeler yeni sinirin otesinde")
-        _exfat_set_bitmap_length(fs, (yeni_kume + 7) // 8, fs.cluster_count,
-                                 yeni_kume)
-        _exfat_write_boot(view, fs, new_sector_count, yeni_kume,
+        _exfat_set_bitmap_length(fs, (new_clusters + 7) // 8, fs.cluster_count,
+                                 new_clusters)
+        _exfat_write_boot(view, fs, new_sector_count, new_clusters,
                           fs.fat_length, fs.cluster_heap_offset,
                           partition_offset)
         return
 
     # --- buyutme ------------------------------------------------------------
     bps = fs.bytes_per_sector
-    yeni_fat, yeni_heap, yeni_kume = _exfat_layout_for(new_sector_count, fs)
-    if yeni_fat < fs.fat_length:            # FAT bolgesi asla kucultulmez
-        yeni_fat, yeni_heap = fs.fat_length, fs.cluster_heap_offset
-        yeni_kume = (new_sector_count - yeni_heap) // spc
-    kaydirma = yeni_heap - fs.cluster_heap_offset
+    new_fat, new_heap, new_clusters = _exfat_layout_for(new_sector_count, fs)
+    if new_fat < fs.fat_length:            # FAT bolgesi asla kucultulmez
+        new_fat, new_heap = fs.fat_length, fs.cluster_heap_offset
+        new_clusters = (new_sector_count - new_heap) // spc
+    kaydirma = new_heap - fs.cluster_heap_offset
 
     if kaydirma:
         _shift_forward(view, fs.cluster_heap_offset, kaydirma,
                        max(0, tepe - 1) * spc, bps)
 
-    eski_fat = view.read(fs.fat_offset * bps, fs.fat_length * bps)
-    tampon = bytearray(yeni_fat * bps)
-    tampon[:len(eski_fat)] = eski_fat
+    old_fat = view.read(fs.fat_offset * bps, fs.fat_length * bps)
+    tampon = bytearray(new_fat * bps)
+    tampon[:len(old_fat)] = old_fat
     view.write(fs.fat_offset * bps, bytes(tampon))
 
-    _exfat_write_boot(view, fs, new_sector_count, yeni_kume, yeni_fat,
-                      yeni_heap, partition_offset)
+    _exfat_write_boot(view, fs, new_sector_count, new_clusters, new_fat,
+                      new_heap, partition_offset)
     _exfat_extend_bitmap(view, fs.cluster_count)
 
 
-def _exfat_set_bitmap_length(fs: ExFatFS, yeni_uzunluk: int,
-                             eski_kume: int, yeni_kume: int) -> None:
+def _exfat_set_bitmap_length(fs: ExFatFS, new_length: int,
+                             old_clusters: int, new_clusters: int) -> None:
     """Bitmap'in gecerli uzunlugunu ve sinir disi bitlerini duzeltir."""
     bm = fs._load_bitmap()
-    if yeni_uzunluk > len(bm):
-        bm.extend(b"\x00" * (yeni_uzunluk - len(bm)))
-    fs._bitmap = bm[:yeni_uzunluk]
-    artik = yeni_kume % 8
+    if new_length > len(bm):
+        bm.extend(b"\x00" * (new_length - len(bm)))
+    fs._bitmap = bm[:new_length]
+    artik = new_clusters % 8
     if artik and fs._bitmap:
         fs._bitmap[-1] &= (1 << artik) - 1
     fs._bitmap_dirty = True
-    _exfat_patch_bitmap_entry(fs, fs.bitmap_cluster, yeni_uzunluk)
-    fs.bitmap_length = yeni_uzunluk
-    fs.cluster_count = yeni_kume
+    _exfat_patch_bitmap_entry(fs, fs.bitmap_cluster, new_length)
+    fs.bitmap_length = new_length
+    fs.cluster_count = new_clusters
     fs.flush()
 
 
-def _exfat_patch_bitmap_entry(fs: ExFatFS, ilk_kume: int,
-                              uzunluk: int) -> None:
+def _exfat_patch_bitmap_entry(fs: ExFatFS, first_cluster: int,
+                              length: int) -> None:
     """Kok dizindeki E_BITMAP girisinin konum ve uzunluk alanlarini yazar."""
     veri = fs._read_chain_data(fs.root_cluster)
     for off in range(0, len(veri) - 31, 32):
         if veri[off] == 0x00:
             break
         if veri[off] == 0x81:                          # E_BITMAP
-            struct.pack_into("<I", veri, off + 20, ilk_kume)
-            struct.pack_into("<Q", veri, off + 24, uzunluk)
+            struct.pack_into("<I", veri, off + 20, first_cluster)
+            struct.pack_into("<Q", veri, off + 24, length)
             fs._write_dir(fs.root_cluster, veri)
             return
 
 
-def _exfat_free_run(icerik: bytearray, kume_sayisi: int,
+def _exfat_free_run(data: bytearray, cluster_count: int,
                     adet: int) -> Optional[int]:
     """Bitmap icerigine gore `adet` ardisik bos kumenin ilkini bulur."""
     seri = 0
-    for c in range(2, kume_sayisi + 2):
+    for c in range(2, cluster_count + 2):
         i = c - 2
-        bayt = i >> 3
-        dolu = bool(icerik[bayt] & (1 << (i & 7))) if bayt < len(icerik) else False
-        if dolu:
+        nbytes = i >> 3
+        used = bool(data[nbytes] & (1 << (i & 7))) if nbytes < len(data) else False
+        if used:
             seri = 0
             continue
         seri += 1
@@ -519,7 +519,7 @@ def _exfat_free_run(icerik: bytearray, kume_sayisi: int,
     return None
 
 
-def _exfat_extend_bitmap(view: BlockDevice, eski_kume: int) -> None:
+def _exfat_extend_bitmap(view: BlockDevice, old_clusters: int) -> None:
     """Buyutme sonrasi ayirma bitmap'ini yeni kume sayisina uyarlar.
 
     Bitmap mevcut kumelerine sigmiyorsa **en dusuk** bos ardisik alana tasinir.
@@ -529,48 +529,48 @@ def _exfat_extend_bitmap(view: BlockDevice, eski_kume: int) -> None:
     fs = ExFatFS(view)                     # yeni yerlesimle yeniden baglanir
     kb = fs.cluster_bytes
     gereken = (fs.cluster_count + 7) // 8
-    eski_uzunluk = fs.bitmap_length
-    eski_kumeler = fs.chain(fs.bitmap_cluster,
-                            max(1, (eski_uzunluk + kb - 1) // kb))
+    old_length = fs.bitmap_length
+    old_clusters = fs.chain(fs.bitmap_cluster,
+                            max(1, (old_length + kb - 1) // kb))
 
-    icerik = bytearray()
-    for c in eski_kumeler:
-        icerik += view.read(fs.cluster_offset(c), kb)
-    icerik = icerik[:eski_uzunluk]
-    if len(icerik) < gereken:
-        icerik.extend(b"\x00" * (gereken - len(icerik)))
+    data = bytearray()
+    for c in old_clusters:
+        data += view.read(fs.cluster_offset(c), kb)
+    data = data[:old_length]
+    if len(data) < gereken:
+        data.extend(b"\x00" * (gereken - len(data)))
 
-    kapasite = len(eski_kumeler) * kb
-    if gereken <= kapasite:
-        hedef = eski_kumeler
-        ilk = fs.bitmap_cluster
+    capacity = len(old_clusters) * kb
+    if gereken <= capacity:
+        target = old_clusters
+        first = fs.bitmap_cluster
     else:
         adet = (gereken + kb - 1) // kb
-        for c in eski_kumeler:             # eski kumeler once serbest sayilir
+        for c in old_clusters:             # eski kumeler once serbest sayilir
             i = c - 2
-            icerik[i >> 3] &= ~(1 << (i & 7)) & 0xFF
-        ilk = _exfat_free_run(icerik, fs.cluster_count, adet)
-        if ilk is None:
+            data[i >> 3] &= ~(1 << (i & 7)) & 0xFF
+        first = _exfat_free_run(data, fs.cluster_count, adet)
+        if first is None:
             raise ResizeError(
                 "Ayirma bitmap'i icin yeterli ardisik bos alan bulunamadi")
-        hedef = list(range(ilk, ilk + adet))
-        for c in hedef:
+        target = list(range(first, first + adet))
+        for c in target:
             i = c - 2
-            icerik[i >> 3] |= (1 << (i & 7))
+            data[i >> 3] |= (1 << (i & 7))
 
-    dolgu = bytes(icerik).ljust(len(hedef) * kb, b"\x00")
-    for i, c in enumerate(hedef):
+    dolgu = bytes(data).ljust(len(target) * kb, b"\x00")
+    for i, c in enumerate(target):
         view.write(fs.cluster_offset(c), dolgu[i * kb:(i + 1) * kb])
 
-    if ilk != fs.bitmap_cluster:
-        eskiler = set(eski_kumeler)
-        for i, c in enumerate(hedef):      # yeni zincir
-            fs.set_fat(c, EXFAT_EOC if i == len(hedef) - 1 else c + 1)
+    if first != fs.bitmap_cluster:
+        eskiler = set(old_clusters)
+        for i, c in enumerate(target):      # yeni zincir
+            fs.set_fat(c, EXFAT_EOC if i == len(target) - 1 else c + 1)
             eskiler.discard(c)
         for c in eskiler:                  # artik kullanilmayan eski zincir
             fs.set_fat(c, 0)
-    _exfat_patch_bitmap_entry(fs, ilk, gereken)
-    fs.bitmap_cluster = ilk
+    _exfat_patch_bitmap_entry(fs, first, gereken)
+    fs.bitmap_cluster = first
     fs.bitmap_length = gereken
     fs._bitmap = None
     fs._update_percent()
@@ -579,8 +579,8 @@ def _exfat_extend_bitmap(view: BlockDevice, eski_kume: int) -> None:
         f()
 
 
-def _exfat_write_boot(view: BlockDevice, fs: ExFatFS, toplam_sektor: int,
-                      kume_sayisi: int, fat_length: int, heap_offset: int,
+def _exfat_write_boot(view: BlockDevice, fs: ExFatFS, total_sectors: int,
+                      cluster_count: int, fat_length: int, heap_offset: int,
                       partition_offset: Optional[int]) -> None:
     """Onyukleme bolgesini yeni boyutlarla yeniden yazar (ana + yedek)."""
     bps = fs.bytes_per_sector
@@ -589,10 +589,10 @@ def _exfat_write_boot(view: BlockDevice, fs: ExFatFS, toplam_sektor: int,
         raise ResizeError("exFAT onyukleme bolgesi taninmadi")
     if partition_offset is not None:
         struct.pack_into("<Q", bolge, 64, partition_offset)
-    struct.pack_into("<Q", bolge, 72, toplam_sektor)
+    struct.pack_into("<Q", bolge, 72, total_sectors)
     struct.pack_into("<I", bolge, 84, fat_length)
     struct.pack_into("<I", bolge, 88, heap_offset)
-    struct.pack_into("<I", bolge, 92, kume_sayisi)
+    struct.pack_into("<I", bolge, 92, cluster_count)
     saglama = boot_checksum(bytes(bolge[:11 * bps]), bps)
     bolge[11 * bps:12 * bps] = struct.pack("<I", saglama) * (bps // 4)
     for taban in (0, 12):
@@ -655,43 +655,43 @@ def plan_resize(session, index: int, new_start_lba: int,
     if session.table is None:
         raise ResizeError("Bolum tablosu yok")
     part = session.table.get(index)
-    pencere = window_for(session.table, part)
+    window = window_for(session.table, part)
     sector_size = session.table.sector_size
 
     if new_sector_count <= 0:
         raise ResizeError("Bolum boyutu sifir olamaz")
-    if new_start_lba < pencere.start_lba:
+    if new_start_lba < window.start_lba:
         raise ResizeError(
-            f"Baslangic kapsayici alanin disinda (en erken LBA {pencere.start_lba})")
-    if new_start_lba + new_sector_count - 1 > pencere.end_lba:
+            f"Baslangic kapsayici alanin disinda (en erken LBA {window.start_lba})")
+    if new_start_lba + new_sector_count - 1 > window.end_lba:
         raise ResizeError(
-            f"Bolum kapsayici alani asiyor (en gec LBA {pencere.end_lba})")
+            f"Bolum kapsayici alani asiyor (en gec LBA {window.end_lba})")
 
-    bilgi = fs_resize_info_for(session, part)
+    info = fs_resize_info_for(session, part)
     uyarilar: List[str] = []
 
     if new_sector_count < part.sector_count:
-        if not bilgi.resizable:
+        if not info.resizable:
             raise ResizeError(
-                f"Kucultme yapilamaz — {bilgi.note}")
-        if bilgi.min_sectors > new_sector_count:
+                f"Kucultme yapilamaz — {info.note}")
+        if info.min_sectors > new_sector_count:
             raise ResizeError(
-                f"Bu dosya sistemi {human_size(bilgi.min_sectors * sector_size)} "
+                f"Bu dosya sistemi {human_size(info.min_sectors * sector_size)} "
                 f"altina inemez (veri kaybi olurdu)")
     if new_sector_count > part.sector_count:
-        if bilgi.max_sectors and new_sector_count > bilgi.max_sectors:
+        if info.max_sectors and new_sector_count > info.max_sectors:
             uyarilar.append(
                 f"Dosya sistemi en fazla "
-                f"{human_size(bilgi.max_sectors * sector_size)} olabilir; "
+                f"{human_size(info.max_sectors * sector_size)} olabilir; "
                 f"kalan alan bolum icinde **kullanilmadan** kalir")
-        elif bilgi.kind == "unsupported":
+        elif info.kind == "unsupported":
             uyarilar.append(
                 "Bolum buyutuluyor ama dosya sistemi buyutulemiyor; "
                 "eklenen alan kullanilamaz")
     if new_start_lba != part.start_lba:
-        if not bilgi.movable:
+        if not info.movable:
             raise ResizeError(
-                f"Bu dosya sistemi tasinamaz — {bilgi.note}")
+                f"Bu dosya sistemi tasinamaz — {info.note}")
         uyarilar.append(
             f"{human_size(min(part.sector_count, new_sector_count) * sector_size)} "
             f"veri kopyalanacak; islem yarida kesilirse bolum bozulur")
@@ -701,18 +701,18 @@ def plan_resize(session, index: int, new_start_lba: int,
     return ResizePlan(index=index, old_start=part.start_lba,
                       old_count=part.sector_count, new_start=new_start_lba,
                       new_count=new_sector_count, sector_size=sector_size,
-                      fs=bilgi, window=pencere, warnings=uyarilar)
+                      fs=info, window=window, warnings=uyarilar)
 
 
 def fs_resize_info_for(session, part: Partition) -> FsResizeInfo:
-    bilgi_fs = session.detect_fs(part)
-    tur = getattr(bilgi_fs, "fs_type", "") or ""
+    fs_info = session.detect_fs(part)
+    kind = getattr(fs_info, "fs_type", "") or ""
     yerel = False
     try:
         yerel = bool(session.is_physical) and _native_resize_available(session)
     except Exception:
         yerel = False
-    return fs_resize_info(session.view(part), tur, native_ok=yerel)
+    return fs_resize_info(session.view(part), kind, native_ok=yerel)
 
 
 def _native_resize_available(session) -> bool:
@@ -726,9 +726,9 @@ def _native_resize_available(session) -> bool:
 def apply_resize(session, plan: ResizePlan,
                  progress: Optional[Callable[[str, int], None]] = None) -> Partition:
     """Plani uygular. Sira: kucultmede once FS, buyutmede once tablo."""
-    def bildir(mesaj: str, yuzde: int) -> None:
+    def report(message: str, percent: int) -> None:
         if progress:
-            progress(mesaj, max(0, min(100, yuzde)))
+            progress(message, max(0, min(100, percent)))
 
     if session.table is None:
         raise ResizeError("Bolum tablosu yok")
@@ -744,19 +744,19 @@ def apply_resize(session, plan: ResizePlan,
 
     # 1) kucultme: once dosya sistemi (eski yerinde)
     if plan.shrinks and plan.fs.kind in ("fat", "exfat"):
-        bildir("Dosya sistemi kucultuluyor...", 5)
+        report("Dosya sistemi kucultuluyor...", 5)
         _fs_resize(image, plan.old_start, plan.new_count, plan.fs.kind,
                    plan.new_start)
 
     # 2) tasima
     if plan.moves:
-        bildir("Veri tasiniyor...", 10)
+        report("Veri tasiniyor...", 10)
         _move_data(image, plan.old_start, plan.new_start,
-                   min(plan.old_count, plan.new_count), bildir)
+                   min(plan.old_count, plan.new_count), report)
 
     # 3) tablo guncellenir
-    bildir("Bolum tablosu yaziliyor...", 85)
-    eski = (part.start_lba, part.sector_count)
+    report("Bolum tablosu yaziliyor...", 85)
+    old = (part.start_lba, part.sector_count)
     part.start_lba = plan.new_start
     part.sector_count = plan.new_count
     if part.logical:
@@ -766,12 +766,12 @@ def apply_resize(session, plan: ResizePlan,
                                   ignore_index=plan.index)
         session.table.write()
     except (PartitionTableError, Exception) as exc:   # noqa: BLE001
-        part.start_lba, part.sector_count = eski
+        part.start_lba, part.sector_count = old
         raise ResizeError(f"Bolum tablosu yazilamadi: {exc}") from exc
 
     # 4) buyutme: dosya sistemi yeni yerinde buyutulur
     if plan.grows and plan.fs.kind in ("fat", "exfat"):
-        bildir("Dosya sistemi buyutuluyor...", 90)
+        report("Dosya sistemi buyutuluyor...", 90)
         try:
             _fs_resize(image, plan.new_start, plan.new_count, plan.fs.kind,
                        plan.new_start)
@@ -781,12 +781,12 @@ def apply_resize(session, plan: ResizePlan,
             raise ResizeError(f"Dosya sistemi buyutulemedi: {exc}") from exc
     elif plan.moves:
         # boyut degismediyse bile tasima sonrasi "gizli sektor" alani duzeltilir
-        bildir("Onyukleme sektoru guncelleniyor...", 92)
+        report("Onyukleme sektoru guncelleniyor...", 92)
         _patch_partition_offset(image, plan.new_start, plan.new_count)
 
-    bildir("Yenileniyor...", 96)
+    report("Yenileniyor...", 96)
     session.reload()
-    bildir("Tamamlandi", 100)
+    report("Tamamlandi", 100)
     return session.table.get(plan.index)
 
 
@@ -845,33 +845,33 @@ def _patch_partition_offset(image: BlockDevice, start_lba: int,
 
 
 def _move_data(image: BlockDevice, src_lba: int, dst_lba: int,
-               sector_count: int, bildir) -> None:
+               sector_count: int, report) -> None:
     """Sektor blogunu tasir; cakisma yonune gore sirasi secilir."""
     if src_lba == dst_lba or sector_count <= 0:
         return
     ss = image.sector_size
-    adim = max(1, COPY_CHUNK // ss)
-    toplam = sector_count
+    step = max(1, COPY_CHUNK // ss)
+    total = sector_count
     ileri = dst_lba < src_lba        # hedef solda ise bastan kopyalamak guvenli
     tasinan = 0
     if ileri:
         pos = 0
-        while pos < toplam:
-            n = min(adim, toplam - pos)
+        while pos < total:
+            n = min(step, total - pos)
             image.write_sectors(dst_lba + pos, image.read_sectors(src_lba + pos, n))
             pos += n
             tasinan += n
-            bildir(f"Veri tasiniyor... {human_size(tasinan * ss)}",
-                   10 + int(70 * tasinan / toplam))
+            report(f"Veri tasiniyor... {human_size(tasinan * ss)}",
+                   10 + int(70 * tasinan / total))
     else:
-        pos = toplam
+        pos = total
         while pos > 0:
-            n = min(adim, pos)
+            n = min(step, pos)
             pos -= n
             image.write_sectors(dst_lba + pos, image.read_sectors(src_lba + pos, n))
             tasinan += n
-            bildir(f"Veri tasiniyor... {human_size(tasinan * ss)}",
-                   10 + int(70 * tasinan / toplam))
+            report(f"Veri tasiniyor... {human_size(tasinan * ss)}",
+                   10 + int(70 * tasinan / total))
     f = getattr(image, "flush", None)
     if f:
         f()

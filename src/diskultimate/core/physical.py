@@ -64,8 +64,8 @@ class DiskInfo:
 
     @property
     def display_name(self) -> str:
-        ad = self.model.strip() or self.name
-        return f"{ad} ({self.name})"
+        name = self.model.strip() or self.name
+        return f"{name} ({self.name})"
 
     @property
     def risk_level(self) -> str:
@@ -173,74 +173,74 @@ def list_disks(include_removable: bool = True) -> List[DiskInfo]:
 _LINUX_ATLA = ("loop", "ram", "zram", "dm-", "md", "sr", "fd")
 
 
-def _oku(yol: str, varsayilan: str = "") -> str:
+def _read_text(path: str, default: str = "") -> str:
     try:
-        with open(yol, "r", encoding="utf-8", errors="replace") as fh:
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
             return fh.read().strip()
     except OSError:
-        return varsayilan
+        return default
 
 
 def _linux_mounts() -> Dict[str, str]:
     """{aygit yolu: baglama noktasi}"""
-    sonuc: Dict[str, str] = {}
-    for satir in _oku("/proc/mounts").splitlines():
+    result: Dict[str, str] = {}
+    for satir in _read_text("/proc/mounts").splitlines():
         parcalar = satir.split()
         if len(parcalar) >= 2 and parcalar[0].startswith("/dev/"):
-            sonuc[parcalar[0]] = parcalar[1].replace("\\040", " ")
-    return sonuc
+            result[parcalar[0]] = parcalar[1].replace("\\040", " ")
+    return result
 
 
 def _list_linux() -> List[DiskInfo]:
-    kok = "/sys/block"
-    if not os.path.isdir(kok):
+    root = "/sys/block"
+    if not os.path.isdir(root):
         return []
     baglantilar = _linux_mounts()
-    sistem_aygiti = ""
+    system_device = ""
     for aygit, nokta in baglantilar.items():
         if nokta == "/":
-            sistem_aygiti = aygit
+            system_device = aygit
             break
 
     diskler: List[DiskInfo] = []
-    for ad in sorted(os.listdir(kok)):
-        if ad.startswith(_LINUX_ATLA):
+    for name in sorted(os.listdir(root)):
+        if name.startswith(_LINUX_ATLA):
             continue
-        taban = os.path.join(kok, ad)
-        sektor_sayisi = int(_oku(os.path.join(taban, "size"), "0") or 0)
-        if sektor_sayisi <= 0:
+        taban = os.path.join(root, name)
+        sector_count = int(_read_text(os.path.join(taban, "size"), "0") or 0)
+        if sector_count <= 0:
             continue
-        mantiksal = int(_oku(os.path.join(taban, "queue/logical_block_size"), "512") or 512)
-        bilgi = DiskInfo(
-            path=f"/dev/{ad}",
-            name=ad,
-            size=sektor_sayisi * 512,      # /sys/block/*/size her zaman 512 birimlidir
+        mantiksal = int(_read_text(os.path.join(taban, "queue/logical_block_size"), "512") or 512)
+        info = DiskInfo(
+            path=f"/dev/{name}",
+            name=name,
+            size=sector_count * 512,      # /sys/block/*/size her zaman 512 birimlidir
             sector_size=mantiksal,
-            model=_oku(os.path.join(taban, "device/model")) or _oku(
+            model=_read_text(os.path.join(taban, "device/model")) or _read_text(
                 os.path.join(taban, "device/name")),
-            serial=_oku(os.path.join(taban, "device/serial")),
-            removable=_oku(os.path.join(taban, "removable"), "0") == "1",
-            readonly=_oku(os.path.join(taban, "ro"), "0") == "1",
+            serial=_read_text(os.path.join(taban, "device/serial")),
+            removable=_read_text(os.path.join(taban, "removable"), "0") == "1",
+            readonly=_read_text(os.path.join(taban, "ro"), "0") == "1",
         )
-        if ad.startswith("nvme"):
-            bilgi.bus = "NVMe"
+        if name.startswith("nvme"):
+            info.bus = "NVMe"
         elif os.path.exists(os.path.join(taban, "device/vendor")):
-            bilgi.bus = _oku(os.path.join(taban, "device/vendor")) or "SCSI/SATA"
+            info.bus = _read_text(os.path.join(taban, "device/vendor")) or "SCSI/SATA"
         if "usb" in os.path.realpath(taban):
-            bilgi.bus = "USB"
+            info.bus = "USB"
 
         # bolumler ve baglama durumu
-        for giris in sorted(os.listdir(taban)):
-            if giris.startswith(ad) and os.path.isdir(os.path.join(taban, giris)):
-                bolum = f"/dev/{giris}"
-                bilgi.partitions.append(bolum)
-                if bolum in baglantilar:
-                    bilgi.mounted.append(f"{giris} → {baglantilar[bolum]}")
-                if sistem_aygiti and bolum == sistem_aygiti:
-                    bilgi.is_system = True
-        if sistem_aygiti and sistem_aygiti.startswith(f"/dev/{ad}"):
-            bilgi.is_system = True
-        diskler.append(bilgi)
+        for data in sorted(os.listdir(taban)):
+            if data.startswith(name) and os.path.isdir(os.path.join(taban, data)):
+                part = f"/dev/{data}"
+                info.partitions.append(part)
+                if part in baglantilar:
+                    info.mounted.append(f"{data} → {baglantilar[part]}")
+                if system_device and part == system_device:
+                    info.is_system = True
+        if system_device and system_device.startswith(f"/dev/{name}"):
+            info.is_system = True
+        diskler.append(info)
     return diskler
 
 
@@ -272,20 +272,20 @@ def _win_handle(path: str, write: bool = False):
                                 wt.DWORD, wt.DWORD, wt.HANDLE]
     k32.CreateFileW.restype = wt.HANDLE
     erisim = GENERIC_READ | (GENERIC_WRITE if write else 0)
-    tutamac = k32.CreateFileW(path, erisim,
+    handle = k32.CreateFileW(path, erisim,
                               FILE_SHARE_READ | FILE_SHARE_WRITE,
                               None, OPEN_EXISTING, 0, None)
-    if tutamac in (INVALID_HANDLE, 0, None) or tutamac == ctypes.c_void_p(-1).value:
-        hata = ctypes.get_last_error() or k32.GetLastError()
-        if hata == ERROR_ACCESS_DENIED:
+    if handle in (INVALID_HANDLE, 0, None) or handle == ctypes.c_void_p(-1).value:
+        error = ctypes.get_last_error() or k32.GetLastError()
+        if error == ERROR_ACCESS_DENIED:
             raise AccessDeniedError(
                 f"{path} acilamadi: Yonetici yetkisi gerekiyor "
                 "(uygulamayi 'Yonetici olarak calistir' ile baslatin)")
-        raise PhysicalDiskError(f"{path} acilamadi (Windows hatasi {hata})")
-    return tutamac
+        raise PhysicalDiskError(f"{path} acilamadi (Windows hatasi {error})")
+    return handle
 
 
-def _win_ioctl(tutamac, kod: int, giris: bytes = b"", cikis_boyut: int = 256):
+def _win_ioctl(handle, code: int, data: bytes = b"", out_size: int = 256):
     import ctypes
     import ctypes.wintypes as wt
 
@@ -294,33 +294,33 @@ def _win_ioctl(tutamac, kod: int, giris: bytes = b"", cikis_boyut: int = 256):
                                     wt.LPVOID, wt.DWORD,
                                     ctypes.POINTER(wt.DWORD), wt.LPVOID]
     k32.DeviceIoControl.restype = wt.BOOL
-    tampon = ctypes.create_string_buffer(cikis_boyut)
+    tampon = ctypes.create_string_buffer(out_size)
     donen = wt.DWORD(0)
-    giris_tampon = ctypes.create_string_buffer(giris) if giris else None
-    ok = k32.DeviceIoControl(wt.HANDLE(tutamac), kod,
-                             giris_tampon, len(giris),
-                             tampon, cikis_boyut, ctypes.byref(donen), None)
+    entry_buffer = ctypes.create_string_buffer(data) if data else None
+    ok = k32.DeviceIoControl(wt.HANDLE(handle), code,
+                             entry_buffer, len(data),
+                             tampon, out_size, ctypes.byref(donen), None)
     if not ok:
         return None
     return tampon.raw[:donen.value]
 
 
-def _win_device_info(tutamac) -> Dict[str, str]:
+def _win_device_info(handle) -> Dict[str, str]:
     """IOCTL_STORAGE_QUERY_PROPERTY ile model/seri/veriyolu okur."""
     # STORAGE_PROPERTY_QUERY: PropertyId=StorageDeviceProperty(0), QueryType=Standard(0)
     sorgu = struct.pack("<II", 0, 0) + b"\x00" * 8
-    ham = _win_ioctl(tutamac, IOCTL_STORAGE_QUERY_PROPERTY, sorgu, 1024)
+    ham = _win_ioctl(handle, IOCTL_STORAGE_QUERY_PROPERTY, sorgu, 1024)
     if not ham or len(ham) < 40:
         return {}
-    (_ver, _boyut, _aygit_turu, _degistirici, cikarilabilir, _komut_kuyrugu,
+    (_ver, _size, _device_kind, _degistirici, cikarilabilir, _komut_kuyrugu,
      saticiid_ofset, urunid_ofset, urun_surum_ofset, seri_ofset,
-     veriyolu_turu) = struct.unpack_from("<IIBBBBIIIII", ham, 0)
+     bus_kind) = struct.unpack_from("<IIBBBBIIIII", ham, 0)
 
     def metin(ofset: int) -> str:
         if not ofset or ofset >= len(ham):
             return ""
-        son = ham.find(b"\x00", ofset)
-        return ham[ofset:son if son > 0 else len(ham)].decode("latin-1", "ignore").strip()
+        last = ham.find(b"\x00", ofset)
+        return ham[ofset:last if last > 0 else len(ham)].decode("latin-1", "ignore").strip()
 
     veriyollari = {1: "SCSI", 2: "ATAPI", 3: "ATA", 4: "1394", 5: "SSA", 6: "Fibre",
                    7: "USB", 8: "RAID", 9: "iSCSI", 10: "SAS", 11: "SATA",
@@ -328,7 +328,7 @@ def _win_device_info(tutamac) -> Dict[str, str]:
     return {
         "model": (metin(saticiid_ofset) + " " + metin(urunid_ofset)).strip(),
         "serial": metin(seri_ofset),
-        "bus": veriyollari.get(veriyolu_turu, ""),
+        "bus": veriyollari.get(bus_kind, ""),
         "removable": "1" if cikarilabilir else "0",
     }
 
@@ -339,11 +339,11 @@ def _win_system_disk_numbers() -> List[int]:
 
     windir = os.environ.get("SystemDrive", "C:")
     try:
-        tutamac = _win_handle(f"\\\\.\\{windir.rstrip(chr(92))}", write=False)
+        handle = _win_handle(f"\\\\.\\{windir.rstrip(chr(92))}", write=False)
     except PhysicalDiskError:
         return []
     try:
-        ham = _win_ioctl(tutamac, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, b"", 1024)
+        ham = _win_ioctl(handle, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, b"", 1024)
         if not ham or len(ham) < 8:
             return []
         adet = struct.unpack_from("<I", ham, 0)[0]
@@ -354,13 +354,13 @@ def _win_system_disk_numbers() -> List[int]:
                 numaralar.append(struct.unpack_from("<I", ham, ofset)[0])
         return numaralar
     finally:
-        _win_close(tutamac)
+        _win_close(handle)
 
 
-def _win_close(tutamac) -> None:
+def _win_close(handle) -> None:
     try:
         import ctypes
-        ctypes.windll.kernel32.CloseHandle(ctypes.wintypes.HANDLE(tutamac))
+        ctypes.windll.kernel32.CloseHandle(ctypes.wintypes.HANDLE(handle))
     except Exception:
         pass
 
@@ -369,71 +369,71 @@ def _win_drive_letters() -> Dict[int, List[str]]:
     """{disk numarasi: [surucu harfleri]} — bagli bolumleri gostermek icin."""
     import ctypes
 
-    sonuc: Dict[int, List[str]] = {}
+    result: Dict[int, List[str]] = {}
     maske = ctypes.windll.kernel32.GetLogicalDrives()
     for i in range(26):
         if not (maske >> i) & 1:
             continue
         harf = chr(ord("A") + i)
         try:
-            tutamac = _win_handle(f"\\\\.\\{harf}:", write=False)
+            handle = _win_handle(f"\\\\.\\{harf}:", write=False)
         except PhysicalDiskError:
             continue
         try:
-            ham = _win_ioctl(tutamac, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, b"", 1024)
+            ham = _win_ioctl(handle, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, b"", 1024)
             if ham and len(ham) >= 12:
                 adet = struct.unpack_from("<I", ham, 0)[0]
                 for n in range(min(adet, 16)):
                     ofset = 8 + n * 24
                     if ofset + 4 <= len(ham):
                         disk_no = struct.unpack_from("<I", ham, ofset)[0]
-                        sonuc.setdefault(disk_no, []).append(f"{harf}:")
+                        result.setdefault(disk_no, []).append(f"{harf}:")
         finally:
-            _win_close(tutamac)
-    return sonuc
+            _win_close(handle)
+    return result
 
 
 def _list_windows() -> List[DiskInfo]:
     diskler: List[DiskInfo] = []
     try:
-        sistem_numaralari = set(_win_system_disk_numbers())
+        system_numbers = set(_win_system_disk_numbers())
         harfler = _win_drive_letters()
     except Exception:
-        sistem_numaralari, harfler = set(), {}
+        system_numbers, harfler = set(), {}
 
     for numara in range(32):
-        yol = f"\\\\.\\PhysicalDrive{numara}"
+        path = f"\\\\.\\PhysicalDrive{numara}"
         try:
-            tutamac = _win_handle(yol, write=False)
+            handle = _win_handle(path, write=False)
         except AccessDeniedError:
             # Disk var ama yetki yok: yine de listede goster
-            diskler.append(DiskInfo(path=yol, name=f"PhysicalDrive{numara}",
+            diskler.append(DiskInfo(path=path, name=f"PhysicalDrive{numara}",
                                     model="(yetki yok — Yonetici gerekli)",
-                                    is_system=numara in sistem_numaralari,
+                                    is_system=numara in system_numbers,
                                     mounted=harfler.get(numara, []),
                                     info_complete=False))
             continue
         except PhysicalDiskError:
             continue
         try:
-            bilgi = DiskInfo(path=yol, name=f"PhysicalDrive{numara}")
-            ham = _win_ioctl(tutamac, IOCTL_DISK_GET_LENGTH_INFO, b"", 8)
+            info = DiskInfo(path=path, name=f"PhysicalDrive{numara}")
+            ham = _win_ioctl(handle, IOCTL_DISK_GET_LENGTH_INFO, b"", 8)
             if ham and len(ham) >= 8:
-                bilgi.size = struct.unpack("<q", ham[:8])[0]
-            geo = _win_ioctl(tutamac, IOCTL_DISK_GET_DRIVE_GEOMETRY, b"", 24)
+                info.size = struct.unpack("<q", ham[:8])[0]
+            geo = _win_ioctl(handle, IOCTL_DISK_GET_DRIVE_GEOMETRY, b"", 24)
             if geo and len(geo) >= 24:
-                bilgi.sector_size = struct.unpack_from("<I", geo, 20)[0] or SECTOR
-            ayrinti = _win_device_info(tutamac)
-            bilgi.model = ayrinti.get("model", "")
-            bilgi.serial = ayrinti.get("serial", "")
-            bilgi.bus = ayrinti.get("bus", "")
-            bilgi.removable = ayrinti.get("removable") == "1"
-            bilgi.is_system = numara in sistem_numaralari
-            bilgi.mounted = harfler.get(numara, [])
-            if bilgi.size > 0:
-                diskler.append(bilgi)
+                info.sector_size = struct.unpack_from("<I", geo, 20)[0] or SECTOR
+            ayrinti = _win_device_info(handle)
+            info.model = ayrinti.get("model", "")
+            info.serial = ayrinti.get("serial", "")
+            info.bus = ayrinti.get("bus", "")
+            info.removable = ayrinti.get("removable") == "1"
+            info.is_system = numara in system_numbers
+            info.mounted = harfler.get(numara, [])
+            if info.size > 0:
+                diskler.append(info)
         finally:
-            _win_close(tutamac)
+            _win_close(handle)
     return diskler
 
 
@@ -448,25 +448,25 @@ def _list_macos() -> List[DiskInfo]:
         veri = plistlib.loads(cikti.stdout.encode("utf-8", "replace"))
     except Exception:
         return []
-    for ad in veri.get("WholeDisks", []):
-        bilgi = DiskInfo(path=f"/dev/{ad}", name=ad)
+    for name in veri.get("WholeDisks", []):
+        info = DiskInfo(path=f"/dev/{name}", name=name)
         try:
-            ayrinti = run_tool(["diskutil", "info", "-plist", ad], timeout=20)
+            ayrinti = run_tool(["diskutil", "info", "-plist", name], timeout=20)
             import plistlib
             d = plistlib.loads(ayrinti.stdout.encode("utf-8", "replace"))
-            bilgi.size = int(d.get("TotalSize", 0))
-            bilgi.sector_size = int(d.get("DeviceBlockSize", SECTOR))
-            bilgi.model = str(d.get("MediaName", ""))
-            bilgi.removable = bool(d.get("Removable", False))
-            bilgi.readonly = not bool(d.get("WritableMedia", True))
-            bilgi.is_system = bool(d.get("SystemImage", False)) or ad == "disk0"
+            info.size = int(d.get("TotalSize", 0))
+            info.sector_size = int(d.get("DeviceBlockSize", SECTOR))
+            info.model = str(d.get("MediaName", ""))
+            info.removable = bool(d.get("Removable", False))
+            info.readonly = not bool(d.get("WritableMedia", True))
+            info.is_system = bool(d.get("SystemImage", False)) or name == "disk0"
             nokta = d.get("MountPoint")
             if nokta:
-                bilgi.mounted.append(str(nokta))
+                info.mounted.append(str(nokta))
         except Exception:
             pass
-        if bilgi.size > 0:
-            diskler.append(bilgi)
+        if info.size > 0:
+            diskler.append(info)
     return diskler
 
 
@@ -489,41 +489,41 @@ class PhysicalDisk(BlockDevice):
 
     def __init__(self, info_or_path, readonly: bool = True,
                  confirm: bool = False, allow_system: bool = False):
-        bilgi = info_or_path if isinstance(info_or_path, DiskInfo) else find_disk(info_or_path)
-        if bilgi is None:
-            yol = info_or_path if isinstance(info_or_path, str) else ""
-            raise PhysicalDiskError(f"Disk bulunamadi: {yol}")
-        self.info = bilgi
-        self.path = bilgi.path
-        self.sector_size = bilgi.sector_size or SECTOR
+        info = info_or_path if isinstance(info_or_path, DiskInfo) else find_disk(info_or_path)
+        if info is None:
+            path = info_or_path if isinstance(info_or_path, str) else ""
+            raise PhysicalDiskError(f"Disk bulunamadi: {path}")
+        self.info = info
+        self.path = info.path
+        self.sector_size = info.sector_size or SECTOR
 
         if not readonly:
             if not confirm:
                 raise PhysicalDiskError(
                     "Yazma modu acikca onaylanmalidir (confirm=True)")
-            if bilgi.readonly:
+            if info.readonly:
                 raise PhysicalDiskError("Aygit donanimsal olarak yazma korumali")
-            if not bilgi.info_complete and not allow_system:
+            if not info.info_complete and not allow_system:
                 raise SystemDiskError(
-                    f"{bilgi.path} bilgileri okunamadi (yetki yok); sistem diski "
+                    f"{info.path} bilgileri okunamadi (yetki yok); sistem diski "
                     "olup olmadigi bilinmiyor. Bilinmeyen bir diske yazma "
                     "reddedildi.")
-            if bilgi.is_system and not allow_system:
+            if info.is_system and not allow_system:
                 raise SystemDiskError(
-                    f"{bilgi.path} isletim sistemi diskidir. Yazma islemi "
+                    f"{info.path} isletim sistemi diskidir. Yazma islemi "
                     "makineyi acilamaz hale getirebilir; bu diske yazmak icin "
                     "ayrica onay gerekir.")
         self.readonly = readonly
-        self._size = bilgi.size
+        self._size = info.size
         self._fh = None
         self._win_handle = None
         self._volume_handles: List[object] = []
-        self._ac()
+        self._open_device()
         if IS_WINDOWS and not readonly:
             self._win_lock_volumes()
 
     # -- acma/kapatma ------------------------------------------------------
-    def _ac(self) -> None:
+    def _open_device(self) -> None:
         if IS_WINDOWS:
             self._win_handle = _win_handle(self.path, write=not self.readonly)
             return
@@ -564,25 +564,25 @@ class PhysicalDisk(BlockDevice):
             harfler = []
         for harf in harfler:
             try:
-                tutamac = _win_handle(f"\\\\.\\{harf}", write=True)
+                handle = _win_handle(f"\\\\.\\{harf}", write=True)
             except PhysicalDiskError:
                 continue
-            kilitlendi = _win_ioctl(tutamac, FSCTL_LOCK_VOLUME, b"", 0) is not None
-            _win_ioctl(tutamac, FSCTL_DISMOUNT_VOLUME, b"", 0)
+            kilitlendi = _win_ioctl(handle, FSCTL_LOCK_VOLUME, b"", 0) is not None
+            _win_ioctl(handle, FSCTL_DISMOUNT_VOLUME, b"", 0)
             if kilitlendi:
-                self._volume_handles.append(tutamac)
+                self._volume_handles.append(handle)
             else:
                 # kilitlenemedi: tutamaci birak, birim kullanimda olabilir
-                _win_close(tutamac)
+                _win_close(handle)
 
     def _win_release_volumes(self) -> None:
         """Kilitli birim tutamaclarini birakir."""
-        for tutamac in self._volume_handles:
+        for handle in self._volume_handles:
             try:
-                _win_ioctl(tutamac, FSCTL_UNLOCK_VOLUME, b"", 0)
+                _win_ioctl(handle, FSCTL_UNLOCK_VOLUME, b"", 0)
             except Exception:
                 pass
-            _win_close(tutamac)
+            _win_close(handle)
         self._volume_handles = []
 
     def close(self) -> None:
@@ -660,9 +660,9 @@ class PhysicalDisk(BlockDevice):
         if IS_WINDOWS:
             if self._win_handle is None:
                 return False
-            sonuc = _win_ioctl(self._win_handle, IOCTL_DISK_UPDATE_PROPERTIES,
+            result = _win_ioctl(self._win_handle, IOCTL_DISK_UPDATE_PROPERTIES,
                                b"", 0)
-            return sonuc is not None
+            return result is not None
         if IS_LINUX:
             try:
                 import fcntl
@@ -673,8 +673,8 @@ class PhysicalDisk(BlockDevice):
                 return False
         if IS_MACOS:
             try:
-                sonuc = run_tool(["diskutil", "rescan", self.path], timeout=30)
-                return sonuc.returncode == 0
+                result = run_tool(["diskutil", "rescan", self.path], timeout=30)
+                return result.returncode == 0
             except Exception:
                 return False
         return False
@@ -686,7 +686,7 @@ class PhysicalDisk(BlockDevice):
 
         ss = self.sector_size
         bas = (offset // ss) * ss
-        son = ((offset + length + ss - 1) // ss) * ss
+        last = ((offset + length + ss - 1) // ss) * ss
         k32 = ctypes.windll.kernel32
         k32.SetFilePointerEx.argtypes = [wt.HANDLE, ctypes.c_longlong,
                                          ctypes.POINTER(ctypes.c_longlong), wt.DWORD]
@@ -697,9 +697,9 @@ class PhysicalDisk(BlockDevice):
         if not k32.SetFilePointerEx(wt.HANDLE(self._win_handle),
                                     ctypes.c_longlong(bas), None, 0):
             raise PhysicalDiskError("Disk konumlandirilamadi")
-        tampon = ctypes.create_string_buffer(son - bas)
+        tampon = ctypes.create_string_buffer(last - bas)
         okunan = wt.DWORD(0)
-        if not k32.ReadFile(wt.HANDLE(self._win_handle), tampon, son - bas,
+        if not k32.ReadFile(wt.HANDLE(self._win_handle), tampon, last - bas,
                             ctypes.byref(okunan), None):
             raise PhysicalDiskError(f"Okuma hatasi (Windows {k32.GetLastError()})")
         ham = tampon.raw[:okunan.value]
@@ -712,9 +712,9 @@ class PhysicalDisk(BlockDevice):
 
         ss = self.sector_size
         bas = (offset // ss) * ss
-        son = ((offset + len(data) + ss - 1) // ss) * ss
+        last = ((offset + len(data) + ss - 1) // ss) * ss
         # hizalama disinda kalan kenarlari korumak icin once oku-degistir-yaz
-        mevcut = bytearray(self._win_read(bas, son - bas))
+        mevcut = bytearray(self._win_read(bas, last - bas))
         ic = offset - bas
         mevcut[ic:ic + len(data)] = data
         k32 = ctypes.windll.kernel32
@@ -731,12 +731,12 @@ class PhysicalDisk(BlockDevice):
         yazilan = wt.DWORD(0)
         if not k32.WriteFile(wt.HANDLE(self._win_handle), tampon, len(mevcut),
                              ctypes.byref(yazilan), None):
-            hata = k32.GetLastError()
-            if hata == ERROR_ACCESS_DENIED:
+            error = k32.GetLastError()
+            if error == ERROR_ACCESS_DENIED:
                 raise AccessDeniedError(
                     "Yazma reddedildi: Windows bagli birimlere dogrudan yazmayi "
                     "engeller. Birimi cikarin (eject) veya Yonetici olarak calistirin.")
-            raise PhysicalDiskError(f"Yazma hatasi (Windows {hata})")
+            raise PhysicalDiskError(f"Yazma hatasi (Windows {error})")
 
     def __repr__(self) -> str:
         kip = "salt okunur" if self.readonly else "YAZILABILIR"

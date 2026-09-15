@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QFileDialog,
 
 from ...core.filesystem import FileNode, FileSystemAccess
 from ...core.ptable import human_size
-from ..theme import palette_color
+from ..theme import palette_color, standard_icon
 
 
 class FileBrowser(QWidget):
@@ -32,7 +32,7 @@ class FileBrowser(QWidget):
 
     # -- arayuz --------------------------------------------------------------
     def _icon(self, standard) -> QIcon:
-        return self.style().standardIcon(standard)
+        return standard_icon(self, standard)
 
     def _build(self) -> None:
         layout = QVBoxLayout(self)
@@ -62,17 +62,17 @@ class FileBrowser(QWidget):
             self._icon(QStyle.SP_TrashIcon), "Sil", self.delete_selected)
         layout.addWidget(self.toolbar)
 
-        yol = QWidget()
-        yol_layout = QHBoxLayout(yol)
-        yol_layout.setContentsMargins(6, 4, 6, 4)
-        yol_layout.addWidget(QLabel("Yol:"))
+        path = QWidget()
+        path_layout = QHBoxLayout(path)
+        path_layout.setContentsMargins(6, 4, 6, 4)
+        path_layout.addWidget(QLabel("Yol:"))
         self.path_edit = QLineEdit("/")
         self.path_edit.returnPressed.connect(self._path_entered)
-        yol_layout.addWidget(self.path_edit, 1)
+        path_layout.addWidget(self.path_edit, 1)
         self.info_label = QLabel("")
         self.info_label.setEnabled(False)   # paletten soluk ton
-        yol_layout.addWidget(self.info_label)
-        layout.addWidget(yol)
+        path_layout.addWidget(self.info_label)
+        layout.addWidget(path)
 
         splitter = QSplitter(Qt.Horizontal)
         self.tree = QTreeWidget()
@@ -116,21 +116,21 @@ class FileBrowser(QWidget):
             self.info_label.setText(f"{fs.fs_type}: icerik goruntuleme desteklenmiyor")
             self._update_actions()
             return
-        kok = QTreeWidgetItem(self.tree, [title or "/"])
-        kok.setIcon(0, self._icon(QStyle.SP_DriveHDIcon))
-        kok.setData(0, Qt.UserRole, "/")
-        kok.setExpanded(True)
-        self.tree.setCurrentItem(kok)
-        self._populate_tree(kok, "/")
+        root = QTreeWidgetItem(self.tree, [title or "/"])
+        root.setIcon(0, self._icon(QStyle.SP_DriveHDIcon))
+        root.setData(0, Qt.UserRole, "/")
+        root.setExpanded(True)
+        self.tree.setCurrentItem(root)
+        self._populate_tree(root, "/")
         self.navigate("/")
 
     def _populate_tree(self, item: QTreeWidgetItem, path: str) -> None:
         item.takeChildren()
         try:
-            girisler = [n for n in self.fs.listdir(path) if n.is_dir]
+            entries = [n for n in self.fs.listdir(path) if n.is_dir]
         except Exception:
             return
-        for node in girisler:
+        for node in entries:
             child = QTreeWidgetItem(item, [node.name])
             child.setIcon(0, self._icon(QStyle.SP_DirIcon))
             child.setData(0, Qt.UserRole, node.path)
@@ -151,7 +151,7 @@ class FileBrowser(QWidget):
         if not self.fs or not self.fs.readable:
             return
         try:
-            girisler = self.fs.listdir(path)
+            entries = self.fs.listdir(path)
         except Exception as exc:
             QMessageBox.warning(self, "Klasor acilamadi", str(exc))
             return
@@ -159,22 +159,22 @@ class FileBrowser(QWidget):
         self.path_edit.setText(self.current_path)
         self.list.setSortingEnabled(False)
         self.list.clear()
-        klasor = dosya = 0
-        toplam = 0
-        for node in girisler:
+        dir_count = file_count = 0
+        total = 0
+        for node in entries:
             item = QTreeWidgetItem(self.list)
             item.setText(0, node.name)
             if node.is_dir:
                 item.setIcon(0, self._icon(QStyle.SP_DirIcon))
                 item.setText(1, "")
                 item.setText(2, "Klasor")
-                klasor += 1
+                dir_count += 1
             else:
                 item.setIcon(0, self._icon(QStyle.SP_FileIcon))
                 item.setText(1, human_size(node.size))
                 item.setText(2, self._file_kind(node.name))
-                dosya += 1
-                toplam += node.size
+                file_count += 1
+                total += node.size
             item.setText(3, node.mtime.strftime("%Y-%m-%d %H:%M") if node.mtime else "")
             item.setText(4, node.attr_text)
             item.setTextAlignment(1, Qt.AlignRight | Qt.AlignVCenter)
@@ -183,7 +183,7 @@ class FileBrowser(QWidget):
                 item.setForeground(0, palette_color(self.list, "dim"))
         self.list.setSortingEnabled(True)
         self.info_label.setText(
-            f"{klasor} klasor, {dosya} dosya — {human_size(toplam)}")
+            f"{dir_count} klasor, {file_count} dosya — {human_size(total)}")
         self._update_actions()
 
     @staticmethod
@@ -205,9 +205,9 @@ class FileBrowser(QWidget):
 
     def refresh(self) -> None:
         if self.fs and self.fs.readable:
-            kok = self.tree.topLevelItem(0)
-            if kok:
-                self._populate_tree(kok, "/")
+            root = self.tree.topLevelItem(0)
+            if root:
+                self._populate_tree(root, "/")
             self.navigate(self.current_path)
 
     def _path_entered(self) -> None:
@@ -229,58 +229,58 @@ class FileBrowser(QWidget):
         nodes = self.selected_nodes()
         if not self.fs or not nodes:
             return
-        hedef = QFileDialog.getExistingDirectory(self, "Disa aktarma klasoru")
-        if not hedef:
+        target = QFileDialog.getExistingDirectory(self, "Disa aktarma klasoru")
+        if not target:
             return
         sayac = 0
         for node in nodes:
             try:
-                self.fs.extract(node.path, hedef)
+                self.fs.extract(node.path, target)
                 sayac += 1
             except Exception as exc:
                 QMessageBox.warning(self, "Disa aktarma hatasi",
                                     f"{node.name}: {exc}")
-        self.statusMessage.emit(f"{sayac} oge disa aktarildi -> {hedef}")
+        self.statusMessage.emit(f"{sayac} oge disa aktarildi -> {target}")
 
     def import_files(self) -> None:
         if not self._require_writable():
             return
-        dosyalar, _ = QFileDialog.getOpenFileNames(self, "Eklenecek dosyalar")
-        if not dosyalar:
+        files, _ = QFileDialog.getOpenFileNames(self, "Eklenecek dosyalar")
+        if not files:
             return
-        for yol in dosyalar:
+        for path in files:
             try:
-                self.fs.import_file(yol, self.current_path)
+                self.fs.import_file(path, self.current_path)
             except Exception as exc:
                 QMessageBox.warning(self, "Ekleme hatasi",
-                                    f"{os.path.basename(yol)}: {exc}")
+                                    f"{os.path.basename(path)}: {exc}")
         self.refresh()
         self.contentChanged.emit()
-        self.statusMessage.emit(f"{len(dosyalar)} dosya eklendi")
+        self.statusMessage.emit(f"{len(files)} dosya eklendi")
 
     def import_folder(self) -> None:
         if not self._require_writable():
             return
-        klasor = QFileDialog.getExistingDirectory(self, "Eklenecek klasor")
-        if not klasor:
+        dir_count = QFileDialog.getExistingDirectory(self, "Eklenecek klasor")
+        if not dir_count:
             return
         try:
-            sayi = self.fs.import_tree(klasor, self.current_path)
+            count = self.fs.import_tree(dir_count, self.current_path)
         except Exception as exc:
             QMessageBox.warning(self, "Ekleme hatasi", str(exc))
             return
         self.refresh()
         self.contentChanged.emit()
-        self.statusMessage.emit(f"Klasor eklendi ({sayi} dosya)")
+        self.statusMessage.emit(f"Klasor eklendi ({count} dosya)")
 
     def make_dir(self) -> None:
         if not self._require_writable():
             return
-        ad, tamam = QInputDialog.getText(self, "Yeni klasor", "Klasor adi:")
-        if not tamam or not ad.strip():
+        name, ok = QInputDialog.getText(self, "Yeni klasor", "Klasor adi:")
+        if not ok or not name.strip():
             return
         try:
-            self.fs.mkdir(self.current_path.rstrip("/") + "/" + ad.strip())
+            self.fs.mkdir(self.current_path.rstrip("/") + "/" + name.strip())
         except Exception as exc:
             QMessageBox.warning(self, "Klasor olusturulamadi", str(exc))
             return
@@ -293,12 +293,12 @@ class FileBrowser(QWidget):
         nodes = self.selected_nodes()
         if len(nodes) != 1:
             return
-        ad, tamam = QInputDialog.getText(self, "Yeniden adlandir", "Yeni ad:",
+        name, ok = QInputDialog.getText(self, "Yeniden adlandir", "Yeni ad:",
                                          text=nodes[0].name)
-        if not tamam or not ad.strip() or ad == nodes[0].name:
+        if not ok or not name.strip() or name == nodes[0].name:
             return
         try:
-            self.fs.rename(nodes[0].path, ad.strip())
+            self.fs.rename(nodes[0].path, name.strip())
         except Exception as exc:
             QMessageBox.warning(self, "Yeniden adlandirilamadi", str(exc))
             return
@@ -358,15 +358,15 @@ class FileBrowser(QWidget):
     def _update_actions(self) -> None:
         var = self.fs is not None and self.fs.readable
         yazilabilir = var and self.fs.writable
-        secim = bool(self.list.selectedItems())
+        choice = bool(self.list.selectedItems())
         self.act_up.setEnabled(var and self.current_path != "/")
         self.act_refresh.setEnabled(var)
-        self.act_export.setEnabled(var and secim)
+        self.act_export.setEnabled(var and choice)
         self.act_import.setEnabled(yazilabilir)
         self.act_import_dir.setEnabled(yazilabilir)
         self.act_mkdir.setEnabled(yazilabilir)
         self.act_rename.setEnabled(yazilabilir and len(self.list.selectedItems()) == 1)
-        self.act_delete.setEnabled(yazilabilir and secim)
+        self.act_delete.setEnabled(yazilabilir and choice)
 
     def _context_menu(self, pos) -> None:
         if not self.fs or not self.fs.readable:

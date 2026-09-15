@@ -108,7 +108,7 @@ class GPTTable(PartitionTable):
                 raise PartitionTableError("Gecerli GPT basligi bulunamadi")
             table.header_backup_ok = False
 
-        (_sig, _rev, hdr_size, hdr_crc, _res, _my_lba, _alt_lba,
+        (_sig, _rev, hdr_size, hdr_crc, _res, _my_lba, _other_lba,
          first_usable, last_usable, disk_guid, entries_lba,
          num_entries, entry_size, entries_crc) = struct.unpack_from(
             "<8sIIII QQ QQ 16s Q III", header, 0)
@@ -183,13 +183,13 @@ class GPTTable(PartitionTable):
             buf[off + 56:off + 56 + len(name)] = name
         return bytes(buf)
 
-    def _build_header(self, my_lba: int, alt_lba: int, entries_lba: int,
+    def _build_header(self, my_lba: int, other_lba: int, entries_lba: int,
                       entries_crc: int) -> bytes:
         hdr = bytearray(self.sector_size)
         struct.pack_into("<8sIIII", hdr, 0, GPT_SIGNATURE, GPT_REVISION,
                          HEADER_SIZE, 0, 0)
         struct.pack_into("<QQQQ16sQIII", hdr, 24,
-                         my_lba, alt_lba,
+                         my_lba, other_lba,
                          self.first_usable_lba(), self.last_usable_lba(),
                          guid_to_bytes(self.disk_guid), entries_lba,
                          self.entry_count, self.entry_size, entries_crc)

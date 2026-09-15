@@ -81,38 +81,38 @@ class ExEntry:
 # --------------------------------------------------------------------------
 def boot_checksum(data: bytes, bytes_per_sector: int) -> int:
     """Onyukleme bolgesi saglamasi: 0..10. sektorler, 3 alan haric."""
-    toplam = 0
+    total = 0
     for i in range(11 * bytes_per_sector):
         if i in (106, 107, 112):      # VolumeFlags ve PercentInUse haric
             continue
-        toplam = (((toplam << 31) | (toplam >> 1)) + data[i]) & 0xFFFFFFFF
-    return toplam
+        total = (((total << 31) | (total >> 1)) + data[i]) & 0xFFFFFFFF
+    return total
 
 
 def table_checksum(data: bytes) -> int:
     """Upcase tablosu saglamasi (32 bit)."""
-    toplam = 0
+    total = 0
     for b in data:
-        toplam = (((toplam << 31) | (toplam >> 1)) + b) & 0xFFFFFFFF
-    return toplam
+        total = (((total << 31) | (total >> 1)) + b) & 0xFFFFFFFF
+    return total
 
 
 def entry_set_checksum(entries: bytes) -> int:
     """Dizin giris kumesi saglamasi (16 bit); SetChecksum alani atlanir."""
-    toplam = 0
+    total = 0
     for i, b in enumerate(entries):
         if i in (2, 3):
             continue
-        toplam = (((toplam << 15) | (toplam >> 1)) + b) & 0xFFFF
-    return toplam
+        total = (((total << 15) | (total >> 1)) + b) & 0xFFFF
+    return total
 
 
 def name_hash(upcased_name: str) -> int:
     """Dosya adi karmasi (16 bit), buyuk harfe cevrilmis ad uzerinden."""
-    toplam = 0
+    total = 0
     for b in upcased_name.encode("utf-16-le"):
-        toplam = (((toplam << 15) | (toplam >> 1)) + b) & 0xFFFF
-    return toplam
+        total = (((total << 15) | (total >> 1)) + b) & 0xFFFF
+    return total
 
 
 # exFAT spec'inde tanimli **onerilen** buyuk harf tablosunun sikistirilmis hali
@@ -200,22 +200,22 @@ def expand_upcase(table: bytes) -> Dict[int, int]:
     esleme: Dict[int, int] = {}
     if len(table) >= 65536 * 2:
         for i in range(65536):
-            deger = struct.unpack_from("<H", table, i * 2)[0]
-            if deger != i:
-                esleme[i] = deger
+            value = struct.unpack_from("<H", table, i * 2)[0]
+            if value != i:
+                esleme[i] = value
         return esleme
     indeks = 0
-    konum = 0
-    while konum + 1 < len(table):
-        deger = struct.unpack_from("<H", table, konum)[0]
-        konum += 2
-        if deger == 0xFFFF and konum + 1 < len(table):
-            adet = struct.unpack_from("<H", table, konum)[0]
-            konum += 2
+    pos = 0
+    while pos + 1 < len(table):
+        value = struct.unpack_from("<H", table, pos)[0]
+        pos += 2
+        if value == 0xFFFF and pos + 1 < len(table):
+            adet = struct.unpack_from("<H", table, pos)[0]
+            pos += 2
             indeks += adet          # bu araliktaki karakterler degismez
             continue
-        if deger != indeks:
-            esleme[indeks] = deger
+        if value != indeks:
+            esleme[indeks] = value
         indeks += 1
     return esleme
 
@@ -293,16 +293,16 @@ class ExFatFS:
         """Kok dizindeki bitmap, upcase ve etiket girislerini okur."""
         veri = self._read_chain_data(self.root_cluster)
         for off in range(0, len(veri) - 31, ENTRY_SIZE):
-            tur = veri[off]
-            if tur == 0x00:
+            kind = veri[off]
+            if kind == 0x00:
                 break
-            if tur == E_BITMAP:
+            if kind == E_BITMAP:
                 self.bitmap_cluster = struct.unpack_from("<I", veri, off + 20)[0]
                 self.bitmap_length = struct.unpack_from("<Q", veri, off + 24)[0]
-            elif tur == E_UPCASE:
+            elif kind == E_UPCASE:
                 self.upcase_cluster = struct.unpack_from("<I", veri, off + 20)[0]
                 self.upcase_length = struct.unpack_from("<Q", veri, off + 24)[0]
-            elif tur == E_LABEL:
+            elif kind == E_LABEL:
                 n = veri[off + 1]
                 self.label = veri[off + 2:off + 2 + n * 2].decode("utf-16-le", "ignore")
 
@@ -353,9 +353,9 @@ class ExFatFS:
     # ---- ayirma bitmap'i --------------------------------------------------
     def _load_bitmap(self) -> bytearray:
         if self._bitmap is None:
-            kumeler = (self.bitmap_length + self.cluster_bytes - 1) // self.cluster_bytes
+            clusters = (self.bitmap_length + self.cluster_bytes - 1) // self.cluster_bytes
             veri = bytearray()
-            for c in self.chain(self.bitmap_cluster, kumeler):
+            for c in self.chain(self.bitmap_cluster, clusters):
                 veri += self.dev.read(self.cluster_offset(c), self.cluster_bytes)
             self._bitmap = veri[:self.bitmap_length]
         return self._bitmap
@@ -427,11 +427,11 @@ class ExFatFS:
     def flush(self) -> None:
         """Bitmap ve doluluk yuzdesini diske yazar."""
         if self._bitmap_dirty and self._bitmap is not None:
-            kumeler = self.chain(
+            clusters = self.chain(
                 self.bitmap_cluster,
                 (self.bitmap_length + self.cluster_bytes - 1) // self.cluster_bytes)
-            dolgu = bytes(self._bitmap).ljust(len(kumeler) * self.cluster_bytes, b"\x00")
-            for i, c in enumerate(kumeler):
+            dolgu = bytes(self._bitmap).ljust(len(clusters) * self.cluster_bytes, b"\x00")
+            for i, c in enumerate(clusters):
                 self.dev.write(self.cluster_offset(c),
                                dolgu[i * self.cluster_bytes:(i + 1) * self.cluster_bytes])
             self._bitmap_dirty = False
@@ -442,15 +442,15 @@ class ExFatFS:
 
     def _update_percent(self) -> None:
         try:
-            bos = self.free_cluster_count()
-            yuzde = int(100 * (self.cluster_count - bos) / max(1, self.cluster_count))
+            free = self.free_cluster_count()
+            percent = int(100 * (self.cluster_count - free) / max(1, self.cluster_count))
             for taban in (0, 12 * self.bytes_per_sector):
-                sektor = bytearray(self.dev.read(taban, self.bytes_per_sector))
-                if sektor[3:11] != b"EXFAT   ":
+                sector = bytearray(self.dev.read(taban, self.bytes_per_sector))
+                if sector[3:11] != b"EXFAT   ":
                     continue
-                sektor[112] = min(100, max(0, yuzde))
-                self.dev.write(taban, bytes(sektor))
-            self.percent_in_use = yuzde
+                sector[112] = min(100, max(0, percent))
+                self.dev.write(taban, bytes(sector))
+            self.percent_in_use = percent
         except Exception:
             pass
 
@@ -463,15 +463,15 @@ class ExFatFS:
         return veri
 
     def _write_dir(self, cluster: int, veri: bytearray) -> None:
-        kumeler = self.chain(cluster)
+        clusters = self.chain(cluster)
         gereken = max(1, (len(veri) + self.cluster_bytes - 1) // self.cluster_bytes)
-        while len(kumeler) < gereken:
-            yeni, _ = self.alloc_clusters(1)
-            self.set_fat(kumeler[-1], yeni)
-            self.set_fat(yeni, EOC)
-            kumeler.append(yeni)
+        while len(clusters) < gereken:
+            new, _ = self.alloc_clusters(1)
+            self.set_fat(clusters[-1], new)
+            self.set_fat(new, EOC)
+            clusters.append(new)
         dolgu = bytes(veri).ljust(gereken * self.cluster_bytes, b"\x00")
-        for i, c in enumerate(kumeler[:gereken]):
+        for i, c in enumerate(clusters[:gereken]):
             self.dev.write(self.cluster_offset(c),
                            dolgu[i * self.cluster_bytes:(i + 1) * self.cluster_bytes])
 
@@ -480,52 +480,52 @@ class ExFatFS:
         out: List[ExEntry] = []
         i = 0
         while i + ENTRY_SIZE <= len(veri):
-            tur = veri[i]
-            if tur == 0x00:
+            kind = veri[i]
+            if kind == 0x00:
                 break
-            if tur != E_FILE:
+            if kind != E_FILE:
                 i += ENTRY_SIZE
                 continue
             ikincil = veri[i + 1]
-            toplam = (ikincil + 1) * ENTRY_SIZE
-            if i + toplam > len(veri):
+            total = (ikincil + 1) * ENTRY_SIZE
+            if i + total > len(veri):
                 break
-            kume_verisi = veri[i:i + toplam]
-            attr = struct.unpack_from("<H", kume_verisi, 4)[0]
-            olusturma = _from_exfat_time(struct.unpack_from("<I", kume_verisi, 8)[0])
-            degistirme = _from_exfat_time(struct.unpack_from("<I", kume_verisi, 12)[0])
-            stream = kume_verisi[ENTRY_SIZE:2 * ENTRY_SIZE]
+            cluster_data = veri[i:i + total]
+            attr = struct.unpack_from("<H", cluster_data, 4)[0]
+            olusturma = _from_exfat_time(struct.unpack_from("<I", cluster_data, 8)[0])
+            degistirme = _from_exfat_time(struct.unpack_from("<I", cluster_data, 12)[0])
+            stream = cluster_data[ENTRY_SIZE:2 * ENTRY_SIZE]
             if len(stream) < ENTRY_SIZE or stream[0] != E_STREAM:
-                i += toplam
+                i += total
                 continue
             bayraklar = stream[1]
-            ad_uzunlugu = stream[3]
-            ilk_kume = struct.unpack_from("<I", stream, 20)[0]
-            boyut = struct.unpack_from("<Q", stream, 24)[0]
-            ad = ""
+            name_length = stream[3]
+            first_cluster = struct.unpack_from("<I", stream, 20)[0]
+            size = struct.unpack_from("<Q", stream, 24)[0]
+            name = ""
             for n in range(2, ikincil + 1):
-                giris = kume_verisi[n * ENTRY_SIZE:(n + 1) * ENTRY_SIZE]
-                if giris[0] != E_NAME:
+                entry = cluster_data[n * ENTRY_SIZE:(n + 1) * ENTRY_SIZE]
+                if entry[0] != E_NAME:
                     continue
-                ad += giris[2:32].decode("utf-16-le", "ignore")
-            ad = ad[:ad_uzunlugu]
+                name += entry[2:32].decode("utf-16-le", "ignore")
+            name = name[:name_length]
             out.append(ExEntry(
-                name=ad, attr=attr, cluster=ilk_kume, size=boyut,
+                name=name, attr=attr, cluster=first_cluster, size=size,
                 mtime=degistirme, ctime=olusturma,
                 contiguous=bool(bayraklar & 0x02),
                 slot_offset=i, slot_count=ikincil + 1,
-                path=base_path.rstrip("/") + "/" + ad))
-            i += toplam
+                path=base_path.rstrip("/") + "/" + name))
+            i += total
         return out
 
     # ---- gezinme ----------------------------------------------------------
     def _dir_cluster(self, path: str) -> int:
         cluster = self.root_cluster
         cur = "/"
-        for parca in _norm(path):
+        for chunk in _norm(path):
             eslesen = None
             for e in self._parse_dir(self._read_chain_data(cluster), cur):
-                if e.name.lower() == parca.lower():
+                if e.name.lower() == chunk.lower():
                     eslesen = e
                     break
             if eslesen is None:
@@ -533,7 +533,7 @@ class ExFatFS:
             if not eslesen.is_dir:
                 raise ExFatError(f"Dizin degil: {path}")
             cluster = eslesen.cluster
-            cur = cur.rstrip("/") + "/" + parca
+            cur = cur.rstrip("/") + "/" + chunk
         return cluster
 
     def listdir(self, path: str = "/") -> List[ExEntry]:
@@ -548,8 +548,8 @@ class ExFatFS:
         if not parcalar:
             return ExEntry(name="/", attr=ATTR_DIRECTORY, cluster=self.root_cluster,
                            path="/")
-        ust = "/" + "/".join(parcalar[:-1])
-        for e in self._parse_dir(self._read_chain_data(self._dir_cluster(ust)), ust):
+        upper = "/" + "/".join(parcalar[:-1])
+        for e in self._parse_dir(self._read_chain_data(self._dir_cluster(upper)), upper):
             if e.name.lower() == parcalar[-1].lower():
                 return e
         raise ExFatError(f"Bulunamadi: {path}")
@@ -563,78 +563,78 @@ class ExFatFS:
 
     # ---- okuma ------------------------------------------------------------
     def read_file(self, path: str, max_bytes: int = -1) -> bytes:
-        giris = self.find(path)
-        if giris.is_dir:
+        entry = self.find(path)
+        if entry.is_dir:
             raise ExFatError("Dizin dosya olarak okunamaz")
-        return self.read_entry(giris, max_bytes)
+        return self.read_entry(entry, max_bytes)
 
-    def read_entry(self, giris: ExEntry, max_bytes: int = -1) -> bytes:
-        if not giris.cluster or not giris.size:
+    def read_entry(self, entry: ExEntry, max_bytes: int = -1) -> bytes:
+        if not entry.cluster or not entry.size:
             return b""
-        sinir = giris.size if max_bytes < 0 else min(giris.size, max_bytes)
-        kume_sayisi = (giris.size + self.cluster_bytes - 1) // self.cluster_bytes
+        sinir = entry.size if max_bytes < 0 else min(entry.size, max_bytes)
+        cluster_count = (entry.size + self.cluster_bytes - 1) // self.cluster_bytes
         out = bytearray()
-        for c in self.chain(giris.cluster, kume_sayisi, giris.contiguous):
+        for c in self.chain(entry.cluster, cluster_count, entry.contiguous):
             out += self.dev.read(self.cluster_offset(c), self.cluster_bytes)
             if len(out) >= sinir:
                 break
         return bytes(out[:sinir])
 
     def extract(self, path: str, dest: str) -> str:
-        giris = self.find(path)
-        if giris.is_dir:
+        entry = self.find(path)
+        if entry.is_dir:
             return self.extract_tree(path, dest)
         if os.path.isdir(dest):
-            dest = os.path.join(dest, giris.name)
+            dest = os.path.join(dest, entry.name)
         os.makedirs(os.path.dirname(os.path.abspath(dest)), exist_ok=True)
-        kalan = giris.size
-        kume_sayisi = (giris.size + self.cluster_bytes - 1) // self.cluster_bytes
+        kalan = entry.size
+        cluster_count = (entry.size + self.cluster_bytes - 1) // self.cluster_bytes
         with open(dest, "wb") as fh:
-            for c in self.chain(giris.cluster, kume_sayisi, giris.contiguous):
+            for c in self.chain(entry.cluster, cluster_count, entry.contiguous):
                 if kalan <= 0:
                     break
-                blok = self.dev.read(self.cluster_offset(c), self.cluster_bytes)
-                fh.write(blok[:kalan])
-                kalan -= len(blok)
-        if giris.mtime:
-            ts = giris.mtime.timestamp()
+                block = self.dev.read(self.cluster_offset(c), self.cluster_bytes)
+                fh.write(block[:kalan])
+                kalan -= len(block)
+        if entry.mtime:
+            ts = entry.mtime.timestamp()
             os.utime(dest, (ts, ts))
         return dest
 
     def extract_tree(self, path: str, dest_dir: str) -> str:
         parcalar = _norm(path)
-        hedef = os.path.join(dest_dir, parcalar[-1]) if parcalar else dest_dir
-        os.makedirs(hedef, exist_ok=True)
+        target = os.path.join(dest_dir, parcalar[-1]) if parcalar else dest_dir
+        os.makedirs(target, exist_ok=True)
         for cocuk in self.listdir(path):
-            alt = path.rstrip("/") + "/" + cocuk.name
+            lower = path.rstrip("/") + "/" + cocuk.name
             if cocuk.is_dir:
-                self.extract_tree(alt, hedef)
+                self.extract_tree(lower, target)
             else:
-                self.extract(alt, os.path.join(hedef, cocuk.name))
-        return hedef
+                self.extract(lower, os.path.join(target, cocuk.name))
+        return target
 
     # ---- yazma ------------------------------------------------------------
     def _upcase_name(self, name: str) -> str:
         if self._upcase is None:
-            kume_sayisi = (self.upcase_length + self.cluster_bytes - 1) // self.cluster_bytes
-            tablo = bytes(self._read_chain_data(self.upcase_cluster, kume_sayisi))
-            self._upcase = _upcase_map(tablo[:self.upcase_length])
+            cluster_count = (self.upcase_length + self.cluster_bytes - 1) // self.cluster_bytes
+            table = bytes(self._read_chain_data(self.upcase_cluster, cluster_count))
+            self._upcase = _upcase_map(table[:self.upcase_length])
         return "".join(chr(self._upcase.get(ord(ch), ord(ch))) for ch in name)
 
     def _build_entry_set(self, name: str, attr: int, cluster: int, size: int,
                          contiguous: bool, when: Optional[datetime.datetime] = None) -> bytes:
         when = when or datetime.datetime.now()
         zaman, _on_ms = _to_exfat_time(when)
-        ad_girisleri = (len(name) + 14) // 15
-        ikincil = 1 + ad_girisleri
+        name_entries = (len(name) + 14) // 15
+        ikincil = 1 + name_entries
 
-        dosya = bytearray(ENTRY_SIZE)
-        dosya[0] = E_FILE
-        dosya[1] = ikincil
-        struct.pack_into("<H", dosya, 4, attr)
-        struct.pack_into("<I", dosya, 8, zaman)    # olusturma
-        struct.pack_into("<I", dosya, 12, zaman)   # degistirme
-        struct.pack_into("<I", dosya, 16, zaman)   # erisim
+        file_entry = bytearray(ENTRY_SIZE)
+        file_entry[0] = E_FILE
+        file_entry[1] = ikincil
+        struct.pack_into("<H", file_entry, 4, attr)
+        struct.pack_into("<I", file_entry, 8, zaman)    # olusturma
+        struct.pack_into("<I", file_entry, 12, zaman)   # degistirme
+        struct.pack_into("<I", file_entry, 16, zaman)   # erisim
 
         stream = bytearray(ENTRY_SIZE)
         stream[0] = E_STREAM
@@ -645,30 +645,30 @@ class ExFatFS:
         struct.pack_into("<I", stream, 20, cluster)
         struct.pack_into("<Q", stream, 24, size)    # DataLength
 
-        ad_bloklari = bytearray()
+        name_blocks = bytearray()
         kodlanmis = name.encode("utf-16-le")
-        for i in range(ad_girisleri):
-            giris = bytearray(ENTRY_SIZE)
-            giris[0] = E_NAME
-            parca = kodlanmis[i * 30:(i + 1) * 30]
-            giris[2:2 + len(parca)] = parca
-            ad_bloklari += giris
+        for i in range(name_entries):
+            entry = bytearray(ENTRY_SIZE)
+            entry[0] = E_NAME
+            chunk = kodlanmis[i * 30:(i + 1) * 30]
+            entry[2:2 + len(chunk)] = chunk
+            name_blocks += entry
 
-        kume = bytes(dosya) + bytes(stream) + bytes(ad_bloklari)
-        saglama = entry_set_checksum(kume)
-        kume = bytearray(kume)
-        struct.pack_into("<H", kume, 2, saglama)
-        return bytes(kume)
+        entry_set = bytes(file_entry) + bytes(stream) + bytes(name_blocks)
+        saglama = entry_set_checksum(entry_set)
+        entry_set = bytearray(entry_set)
+        struct.pack_into("<H", entry_set, 2, saglama)
+        return bytes(entry_set)
 
     def _insert_entry(self, dir_path: str, blob: bytes) -> None:
         cluster = self._dir_cluster(dir_path)
         veri = self._read_chain_data(cluster)
         gereken = len(blob) // ENTRY_SIZE
-        konum = self._find_free_slots(veri, gereken)
-        if konum < 0:
-            konum = len(veri)
+        pos = self._find_free_slots(veri, gereken)
+        if pos < 0:
+            pos = len(veri)
             veri += bytearray(self.cluster_bytes)
-        veri[konum:konum + len(blob)] = blob
+        veri[pos:pos + len(blob)] = blob
         self._write_dir(cluster, veri)
 
     @staticmethod
@@ -676,8 +676,8 @@ class ExFatFS:
         seri = 0
         bas = -1
         for off in range(0, len(veri) - ENTRY_SIZE + 1, ENTRY_SIZE):
-            tur = veri[off]
-            if tur == 0x00 or not (tur & 0x80):     # bos veya kullanim disi
+            kind = veri[off]
+            if kind == 0x00 or not (kind & 0x80):     # bos veya kullanim disi
                 if seri == 0:
                     bas = off
                 seri += 1
@@ -694,42 +694,42 @@ class ExFatFS:
         parcalar = _norm(path)
         if not parcalar:
             raise ExFatError("Gecersiz dosya yolu")
-        ad, ust = parcalar[-1], "/" + "/".join(parcalar[:-1])
+        name, upper = parcalar[-1], "/" + "/".join(parcalar[:-1])
         if self.exists(path):
             if not overwrite:
                 raise ExFatError(f"Dosya zaten var: {path}")
             self.remove(path)
-        ilk_kume, ardisik = 0, True
+        first_cluster, ardisik = 0, True
         if data:
             gereken = (len(data) + self.cluster_bytes - 1) // self.cluster_bytes
-            ilk_kume, ardisik = self.alloc_clusters(gereken)
-            for i, c in enumerate(self.chain(ilk_kume, gereken, ardisik)):
-                parca = data[i * self.cluster_bytes:(i + 1) * self.cluster_bytes]
+            first_cluster, ardisik = self.alloc_clusters(gereken)
+            for i, c in enumerate(self.chain(first_cluster, gereken, ardisik)):
+                chunk = data[i * self.cluster_bytes:(i + 1) * self.cluster_bytes]
                 self.dev.write(self.cluster_offset(c),
-                               parca.ljust(self.cluster_bytes, b"\x00"))
-        blob = self._build_entry_set(ad, ATTR_ARCHIVE, ilk_kume, len(data), ardisik)
-        self._insert_entry(ust, blob)
+                               chunk.ljust(self.cluster_bytes, b"\x00"))
+        blob = self._build_entry_set(name, ATTR_ARCHIVE, first_cluster, len(data), ardisik)
+        self._insert_entry(upper, blob)
         self.flush()
         return self.find(path)
 
     def import_file(self, local_path: str, dest_dir: str = "/",
                     name: Optional[str] = None) -> ExEntry:
-        ad = name or os.path.basename(local_path)
+        entry_name = name or os.path.basename(local_path)
         with open(local_path, "rb") as fh:
-            return self.write_file(dest_dir.rstrip("/") + "/" + ad, fh.read())
+            return self.write_file(dest_dir.rstrip("/") + "/" + entry_name, fh.read())
 
     def import_tree(self, local_dir: str, dest_dir: str = "/") -> int:
         sayac = 0
         taban = os.path.basename(os.path.normpath(local_dir))
-        hedef = dest_dir.rstrip("/") + "/" + taban
-        if not self.exists(hedef):
-            self.mkdir(hedef)
+        target = dest_dir.rstrip("/") + "/" + taban
+        if not self.exists(target):
+            self.mkdir(target)
         for oge in sorted(os.listdir(local_dir)):
             kaynak = os.path.join(local_dir, oge)
             if os.path.isdir(kaynak):
-                sayac += self.import_tree(kaynak, hedef)
+                sayac += self.import_tree(kaynak, target)
             elif os.path.isfile(kaynak):
-                self.import_file(kaynak, hedef)
+                self.import_file(kaynak, target)
                 sayac += 1
         return sayac
 
@@ -739,21 +739,21 @@ class ExFatFS:
         parcalar = _norm(path)
         if not parcalar:
             raise ExFatError("Gecersiz klasor yolu")
-        ad, ust = parcalar[-1], "/" + "/".join(parcalar[:-1])
+        name, upper = parcalar[-1], "/" + "/".join(parcalar[:-1])
         if self.exists(path):
             raise ExFatError(f"Zaten var: {path}")
-        kume, _ardisik = self.alloc_clusters(1)
-        self.set_fat(kume, EOC)
-        self.dev.write(self.cluster_offset(kume), b"\x00" * self.cluster_bytes)
-        blob = self._build_entry_set(ad, ATTR_DIRECTORY, kume, self.cluster_bytes, False)
-        self._insert_entry(ust, blob)
+        cluster, _ardisik = self.alloc_clusters(1)
+        self.set_fat(cluster, EOC)
+        self.dev.write(self.cluster_offset(cluster), b"\x00" * self.cluster_bytes)
+        blob = self._build_entry_set(name, ATTR_DIRECTORY, cluster, self.cluster_bytes, False)
+        self._insert_entry(upper, blob)
         self.flush()
         return self.find(path)
 
     def makedirs(self, path: str) -> None:
         cur = ""
-        for parca in _norm(path):
-            cur += "/" + parca
+        for chunk in _norm(path):
+            cur += "/" + chunk
             if not self.exists(cur):
                 self.mkdir(cur)
 
@@ -763,80 +763,80 @@ class ExFatFS:
         parcalar = _norm(path)
         if not parcalar:
             raise ExFatError("Kok dizin silinemez")
-        giris = self.find(path)
-        if giris.is_dir:
+        entry = self.find(path)
+        if entry.is_dir:
             cocuklar = self.listdir(path)
             if cocuklar and not recursive:
                 raise ExFatError("Klasor bos degil")
             for cocuk in cocuklar:
                 self.remove(path.rstrip("/") + "/" + cocuk.name, recursive=True)
-        ust = "/" + "/".join(parcalar[:-1])
-        cluster = self._dir_cluster(ust)
+        upper = "/" + "/".join(parcalar[:-1])
+        cluster = self._dir_cluster(upper)
         veri = self._read_chain_data(cluster)
-        for e in self._parse_dir(veri, ust):
+        for e in self._parse_dir(veri, upper):
             if e.name.lower() == parcalar[-1].lower():
-                giris = e
+                entry = e
                 break
-        for i in range(giris.slot_count):       # InUse bitini temizle
-            veri[giris.slot_offset + i * ENTRY_SIZE] &= 0x7F
+        for i in range(entry.slot_count):       # InUse bitini temizle
+            veri[entry.slot_offset + i * ENTRY_SIZE] &= 0x7F
         self._write_dir(cluster, veri)
-        if giris.cluster:
-            kume_sayisi = max(1, (giris.size + self.cluster_bytes - 1) // self.cluster_bytes)
-            self.free_chain(giris.cluster, kume_sayisi, giris.contiguous)
+        if entry.cluster:
+            cluster_count = max(1, (entry.size + self.cluster_bytes - 1) // self.cluster_bytes)
+            self.free_chain(entry.cluster, cluster_count, entry.contiguous)
         self.flush()
 
     def rename(self, path: str, new_name: str) -> ExEntry:
-        giris = self.find(path)
+        entry = self.find(path)
         parcalar = _norm(path)
-        ust = "/" + "/".join(parcalar[:-1])
-        cluster = self._dir_cluster(ust)
+        upper = "/" + "/".join(parcalar[:-1])
+        cluster = self._dir_cluster(upper)
         veri = self._read_chain_data(cluster)
-        for e in self._parse_dir(veri, ust):
+        for e in self._parse_dir(veri, upper):
             if e.name.lower() == parcalar[-1].lower():
-                giris = e
+                entry = e
                 break
-        for i in range(giris.slot_count):
-            veri[giris.slot_offset + i * ENTRY_SIZE] &= 0x7F
+        for i in range(entry.slot_count):
+            veri[entry.slot_offset + i * ENTRY_SIZE] &= 0x7F
         self._write_dir(cluster, veri)
-        blob = self._build_entry_set(new_name, giris.attr, giris.cluster, giris.size,
-                                     giris.contiguous, giris.mtime)
-        self._insert_entry(ust, blob)
+        blob = self._build_entry_set(new_name, entry.attr, entry.cluster, entry.size,
+                                     entry.contiguous, entry.mtime)
+        self._insert_entry(upper, blob)
         self.flush()
-        return self.find(ust.rstrip("/") + "/" + new_name)
+        return self.find(upper.rstrip("/") + "/" + new_name)
 
     def set_label(self, label: str) -> None:
         """Kok dizindeki birim etiketi girisini gunceller."""
         label = label[:11]
         cluster = self.root_cluster
         veri = self._read_chain_data(cluster)
-        giris = bytearray(ENTRY_SIZE)
-        giris[0] = E_LABEL
-        giris[1] = len(label)
+        entry = bytearray(ENTRY_SIZE)
+        entry[0] = E_LABEL
+        entry[1] = len(label)
         kodlanmis = label.encode("utf-16-le")
-        giris[2:2 + len(kodlanmis)] = kodlanmis
+        entry[2:2 + len(kodlanmis)] = kodlanmis
         for off in range(0, len(veri) - ENTRY_SIZE + 1, ENTRY_SIZE):
             if veri[off] in (E_LABEL, E_LABEL & 0x7F):
-                veri[off:off + ENTRY_SIZE] = giris
+                veri[off:off + ENTRY_SIZE] = entry
                 break
         else:
-            konum = self._find_free_slots(veri, 1)
-            if konum < 0:
-                konum = len(veri)
+            pos = self._find_free_slots(veri, 1)
+            if pos < 0:
+                pos = len(veri)
                 veri += bytearray(self.cluster_bytes)
-            veri[konum:konum + ENTRY_SIZE] = giris
+            veri[pos:pos + ENTRY_SIZE] = entry
         self._write_dir(cluster, veri)
         self.label = label
         self.flush()
 
     def stats(self) -> Dict[str, int]:
-        bos = self.free_cluster_count()
+        free = self.free_cluster_count()
         return {
             "total_bytes": self.cluster_count * self.cluster_bytes,
-            "free_bytes": bos * self.cluster_bytes,
-            "used_bytes": (self.cluster_count - bos) * self.cluster_bytes,
+            "free_bytes": free * self.cluster_bytes,
+            "used_bytes": (self.cluster_count - free) * self.cluster_bytes,
             "cluster_size": self.cluster_bytes,
             "total_clusters": self.cluster_count,
-            "free_clusters": bos,
+            "free_clusters": free,
         }
 
     # ======================================================================
@@ -844,87 +844,87 @@ class ExFatFS:
     # ======================================================================
     @staticmethod
     def default_cluster_sectors(total_sectors: int, bytes_per_sector: int = 512) -> int:
-        boyut = total_sectors * bytes_per_sector
-        if boyut <= 256 * 1024 * 1024:
-            kume = 4 * 1024
-        elif boyut <= 32 * 1024 ** 3:
-            kume = 32 * 1024
+        size = total_sectors * bytes_per_sector
+        if size <= 256 * 1024 * 1024:
+            cluster = 4 * 1024
+        elif size <= 32 * 1024 ** 3:
+            cluster = 32 * 1024
         else:
-            kume = 128 * 1024
-        return max(1, kume // bytes_per_sector)
+            cluster = 128 * 1024
+        return max(1, cluster // bytes_per_sector)
 
     @staticmethod
     def format(dev: BlockDevice, label: str = "", cluster_sectors: int = 0,
                partition_offset: int = 0, volume_serial: int = 0,
                progress=None) -> "ExFatFS":
         """Bolumu exFAT olarak bicimlendirir (harici arac gerekmez)."""
-        def bildir(mesaj: str, yuzde: int) -> None:
+        def report(message: str, percent: int) -> None:
             if progress:
-                progress(mesaj, yuzde)
+                progress(message, percent)
 
         bps = dev.sector_size
-        toplam = dev.sector_count
-        if toplam < 2048:
+        total = dev.sector_count
+        if total < 2048:
             raise ExFatError("Bolum exFAT icin cok kucuk (en az 1 MB)")
-        spc = cluster_sectors or ExFatFS.default_cluster_sectors(toplam, bps)
+        spc = cluster_sectors or ExFatFS.default_cluster_sectors(total, bps)
         bps_shift = bps.bit_length() - 1
         spc_shift = spc.bit_length() - 1
 
         # Yerlesim: FAT 24. sektorde baslar, veri bolgesi kume sinirina hizalanir
         fat_offset = 24
-        kume_sayisi = 0
+        cluster_count = 0
         fat_length = 1
         for _ in range(8):
             heap_offset = fat_offset + fat_length
             artik = heap_offset % spc
             if artik:
                 heap_offset += spc - artik
-            kalan = toplam - heap_offset
+            kalan = total - heap_offset
             if kalan <= 0:
                 raise ExFatError("Bolum exFAT icin cok kucuk")
-            yeni_kume = kalan // spc
-            yeni_fat = ((yeni_kume + 2) * 4 + bps - 1) // bps
-            if yeni_fat == fat_length and yeni_kume == kume_sayisi:
+            new_cluster = kalan // spc
+            new_fat = ((new_cluster + 2) * 4 + bps - 1) // bps
+            if new_fat == fat_length and new_cluster == cluster_count:
                 break
-            fat_length, kume_sayisi = yeni_fat, yeni_kume
+            fat_length, cluster_count = new_fat, new_cluster
         heap_offset = fat_offset + fat_length
         artik = heap_offset % spc
         if artik:
             heap_offset += spc - artik
-        kume_sayisi = (toplam - heap_offset) // spc
-        if kume_sayisi < 8:
+        cluster_count = (total - heap_offset) // spc
+        if cluster_count < 8:
             raise ExFatError("Bolum exFAT icin cok kucuk")
 
         if volume_serial == 0:
             simdi = datetime.datetime.now()
             volume_serial = (int(simdi.timestamp()) ^ (simdi.microsecond << 8)) & 0xFFFFFFFF
 
-        kume_bayt = spc * bps
-        bitmap_bayt = (kume_sayisi + 7) // 8
-        bitmap_kume = (bitmap_bayt + kume_bayt - 1) // kume_bayt
+        cluster_bytes = spc * bps
+        bitmap_bytes = (cluster_count + 7) // 8
+        bitmap_cluster = (bitmap_bytes + cluster_bytes - 1) // cluster_bytes
         upcase = standard_upcase_table()
-        upcase_kume = (len(upcase) + kume_bayt - 1) // kume_bayt
+        upcase_cluster = (len(upcase) + cluster_bytes - 1) // cluster_bytes
 
-        bitmap_ilk = 2
-        upcase_ilk = bitmap_ilk + bitmap_kume
-        kok_ilk = upcase_ilk + upcase_kume
-        kok_kume = 1
-        kullanilan = bitmap_kume + upcase_kume + kok_kume
-        if kullanilan + 1 >= kume_sayisi:
+        bitmap_first = 2
+        upcase_first = bitmap_first + bitmap_cluster
+        root_first = upcase_first + upcase_cluster
+        root_cluster = 1
+        kullanilan = bitmap_cluster + upcase_cluster + root_cluster
+        if kullanilan + 1 >= cluster_count:
             raise ExFatError("Bolum exFAT metaverisi icin yetersiz")
 
-        bildir("exFAT onyukleme bolgesi yaziliyor...", 10)
+        report("exFAT onyukleme bolgesi yaziliyor...", 10)
         # --- onyukleme sektoru ---
         boot = bytearray(bps)
         boot[0:3] = b"\xEB\x76\x90"
         boot[3:11] = b"EXFAT   "
         struct.pack_into("<Q", boot, 64, partition_offset)
-        struct.pack_into("<Q", boot, 72, toplam)
+        struct.pack_into("<Q", boot, 72, total)
         struct.pack_into("<I", boot, 80, fat_offset)
         struct.pack_into("<I", boot, 84, fat_length)
         struct.pack_into("<I", boot, 88, heap_offset)
-        struct.pack_into("<I", boot, 92, kume_sayisi)
-        struct.pack_into("<I", boot, 96, kok_ilk)
+        struct.pack_into("<I", boot, 92, cluster_count)
+        struct.pack_into("<I", boot, 96, root_first)
         struct.pack_into("<I", boot, 100, volume_serial)
         struct.pack_into("<H", boot, 104, 0x0100)      # surum 1.00
         struct.pack_into("<H", boot, 106, 0)           # VolumeFlags
@@ -932,7 +932,7 @@ class ExFatFS:
         boot[109] = spc_shift
         boot[110] = 1                                   # FAT sayisi
         boot[111] = 0x80                                # DriveSelect
-        boot[112] = int(100 * kullanilan / kume_sayisi)
+        boot[112] = int(100 * kullanilan / cluster_count)
         struct.pack_into("<H", boot, 510, 0xAA55)
 
         genisletilmis = bytearray(bps)
@@ -954,56 +954,56 @@ class ExFatFS:
             dev.write_sectors(taban, bytes(bolge))
             dev.write_sectors(taban + 11, saglama_sektoru)
 
-        bildir("FAT bolgesi hazirlaniyor...", 30)
+        report("FAT bolgesi hazirlaniyor...", 30)
         # --- FAT ---
         fat = bytearray(fat_length * bps)
         struct.pack_into("<I", fat, 0, 0xFFFFFFF8)
         struct.pack_into("<I", fat, 4, 0xFFFFFFFF)
-        for kume, adet in ((bitmap_ilk, bitmap_kume), (upcase_ilk, upcase_kume),
-                           (kok_ilk, kok_kume)):
+        for cluster, adet in ((bitmap_first, bitmap_cluster), (upcase_first, upcase_cluster),
+                           (root_first, root_cluster)):
             for i in range(adet):
-                c = kume + i
-                deger = EOC if i == adet - 1 else c + 1
-                struct.pack_into("<I", fat, c * 4, deger)
+                c = cluster + i
+                value = EOC if i == adet - 1 else c + 1
+                struct.pack_into("<I", fat, c * 4, value)
         dev.write_sectors(fat_offset, bytes(fat))
 
-        bildir("Ayirma bitmap'i yaziliyor...", 55)
+        report("Ayirma bitmap'i yaziliyor...", 55)
         # --- ayirma bitmap'i ---
-        bitmap = bytearray((kume_sayisi + 7) // 8)
+        bitmap = bytearray((cluster_count + 7) // 8)
         for c in range(2, 2 + kullanilan):
             i = c - 2
             bitmap[i >> 3] |= (1 << (i & 7))
         veri_ofseti = heap_offset * bps
-        dev.write(veri_ofseti + (bitmap_ilk - 2) * kume_bayt,
-                  bytes(bitmap).ljust(bitmap_kume * kume_bayt, b"\x00"))
+        dev.write(veri_ofseti + (bitmap_first - 2) * cluster_bytes,
+                  bytes(bitmap).ljust(bitmap_cluster * cluster_bytes, b"\x00"))
 
-        bildir("Buyuk harf tablosu yaziliyor...", 70)
-        dev.write(veri_ofseti + (upcase_ilk - 2) * kume_bayt,
-                  upcase.ljust(upcase_kume * kume_bayt, b"\x00"))
+        report("Buyuk harf tablosu yaziliyor...", 70)
+        dev.write(veri_ofseti + (upcase_first - 2) * cluster_bytes,
+                  upcase.ljust(upcase_cluster * cluster_bytes, b"\x00"))
 
-        bildir("Kok dizin olusturuluyor...", 85)
+        report("Kok dizin olusturuluyor...", 85)
         # --- kok dizin: etiket + bitmap + upcase girisleri ---
-        kok = bytearray(kok_kume * kume_bayt)
+        root = bytearray(root_cluster * cluster_bytes)
         off = 0
         if label:
             etiket = label[:11]
-            kok[off] = E_LABEL
-            kok[off + 1] = len(etiket)
+            root[off] = E_LABEL
+            root[off + 1] = len(etiket)
             kodlanmis = etiket.encode("utf-16-le")
-            kok[off + 2:off + 2 + len(kodlanmis)] = kodlanmis
+            root[off + 2:off + 2 + len(kodlanmis)] = kodlanmis
             off += ENTRY_SIZE
-        kok[off] = E_BITMAP
-        struct.pack_into("<I", kok, off + 20, bitmap_ilk)
-        struct.pack_into("<Q", kok, off + 24, bitmap_bayt)
+        root[off] = E_BITMAP
+        struct.pack_into("<I", root, off + 20, bitmap_first)
+        struct.pack_into("<Q", root, off + 24, bitmap_bytes)
         off += ENTRY_SIZE
-        kok[off] = E_UPCASE
-        struct.pack_into("<I", kok, off + 4, table_checksum(upcase))
-        struct.pack_into("<I", kok, off + 20, upcase_ilk)
-        struct.pack_into("<Q", kok, off + 24, len(upcase))
-        dev.write(veri_ofseti + (kok_ilk - 2) * kume_bayt, bytes(kok))
+        root[off] = E_UPCASE
+        struct.pack_into("<I", root, off + 4, table_checksum(upcase))
+        struct.pack_into("<I", root, off + 20, upcase_first)
+        struct.pack_into("<Q", root, off + 24, len(upcase))
+        dev.write(veri_ofseti + (root_first - 2) * cluster_bytes, bytes(root))
 
         f = getattr(dev, "flush", None)
         if f:
             f()
-        bildir("Tamamlandi", 100)
+        report("Tamamlandi", 100)
         return ExFatFS(dev)

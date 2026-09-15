@@ -1,6 +1,6 @@
 # ADR 0019 — Bolum yeniden boyutlandirma ve tasima
 
-**Durum:** Kabul edildi · 2026-09-14
+**Tarih:** 2026-09-14 · **Durum:** Uygulandi · **Dogrulama:** `fsck.vfat` / `fsck.exfat` rc=0, `t18_bolum_boyutlandirma`
 
 ## Baglam
 Kullanici DiskGenius'un "Bolumu Boyutlandir" penceresini ornek gosterdi: bolum

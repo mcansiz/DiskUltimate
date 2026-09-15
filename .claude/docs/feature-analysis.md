@@ -1,6 +1,6 @@
 # Pazar ve Kaynak Analizi — Disk Yonetim Araclari
 
-Tarih: 2026-09-13 · Amac: DiskUltimate'in ozellik kapsamini belirlemek icin ticari
+Tarih: 2026-09-13 (5. madde 2026-09-15'te guncellendi) · Amac: DiskUltimate'in ozellik kapsamini belirlemek icin ticari
 ve acik kaynak araclarin incelenmesi.
 
 ---
@@ -55,9 +55,15 @@ icindir. DiskUltimate her ikisini tek arayuzde birlestirmeyi hedefliyor.
    → [ADR 0009](../decisions/0009-dub-yedek-bicimi.md)
 4. **Sanal disk destegi beklenen bir ozellik.** VHD/VDI/VMDK/QCOW2 okuma eklendi;
    VHD olusturma da destekleniyor.
-5. **S.M.A.R.T. ve bozuk sektor denetimi kapsam disi.** Bu ozellikler gercek fiziksel
-   diske erisim gerektirir; proje ilkesi geregi yalnizca goruntu dosyalariyla
-   calisiyoruz. Goruntu icin anlamli karsiligi "okuma hatasi taramasi" olurdu.
+5. **S.M.A.R.T. kapsam disi, bozuk sektor taramasi planli.** Bu madde v0.3 ile
+   **degisti**: analiz yazildiginda proje yalnizca goruntu dosyalariyla
+   calisiyordu, artik fiziksel disk destegi var
+   ([ADR 0014](../decisions/0014-fiziksel-disk-destegi.md)). Yeni olcut
+   "fiziksel disk gerekiyor mu" degil, **"tasinabilir sekilde yazilabilir mi"**:
+   - S.M.A.R.T. her platformda ayri bir ayricalikli ATA/NVMe komut yolu ister —
+     kapsam disi kaldi.
+   - Bozuk sektor / okuma hatasi taramasi tasinabilir sekilde yapilabilir —
+     planli hale getirildi (bkz. [diskgenius-parity.md](diskgenius-parity.md)).
 
 ## Kaynaklar
 

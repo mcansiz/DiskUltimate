@@ -40,6 +40,115 @@ KURALLAR = [
 # Mutlaka acikca belirtilmesi gereken: struct bicimlerinde endian isareti
 STRUCT_DESENI = re.compile(r"struct\.(pack|unpack)(_into|_from)?\(\s*[\"']([^\"'])")
 
+# --------------------------------------------------------------------------
+# Tanimlayici dili denetimi
+#
+# CLAUDE.md kurali: "Turkce arayuz metni, Ingilizce kod/degisken adi."
+# Arayuzde gorunen METIN Turkcedir; fonksiyon ve parametre ADLARI Ingilizce
+# olmalidir. Bu denetim kuralin zamanla gevsemesini engeller — bir olcumde
+# kuralin en cok **en yeni** dosyalarda ihlal edildigi gorulmustu.
+#
+# `ISIM_MUAFIYETI` henuz cevrilmemis dosyalari tutar. Yeni ihlal eklenemez;
+# listedeki dosyalar cevrildikce buradan **silinir** ve liste bosalir.
+# --------------------------------------------------------------------------
+TR_SOZCUKLER = {
+    "ac", "acilis", "ad", "adi", "adim", "alan", "alt", "anahtar", "aralik",
+    "ayirici", "ayrilmis", "bagli", "baslangic", "baslik", "basari", "bayt",
+    "bayti", "bicim", "bildir", "bilgi", "birim", "bitis", "blok", "bolum",
+    "bolumler", "bos", "boyut", "boyutu", "ciz", "cikis", "deger", "dizin",
+    "dolu", "dosya", "dosyalar", "doldur", "durum", "eski", "gecici", "giris",
+    "gorev", "guncelle", "hata", "hedef", "hizala", "icerik", "ilerle", "ilk",
+    "isaretle", "isaretsiz", "kaydet", "kayit", "kayitlar", "kod", "konum",
+    "kok", "kume", "kumeler", "kumesi", "mesaj", "neden", "nedeni", "okunur",
+    "olustur", "onay", "onayla", "oturum", "oku", "ozellik", "oznitelik",
+    "ozet", "parca", "sayi", "sayisi", "sektor", "sektorler", "secili",
+    "serit", "sil", "sistem", "son", "sonuc", "surukle", "tablo", "tamam",
+    "tur", "turu", "tutamac", "tutamak", "toplam", "uygula", "uyari", "ust",
+    "uzunluk", "varsayilan", "yaz", "yeni", "yol", "yukle", "yuzde",
+    # ikinci tur: ilk taramada gozden kacan arayuz sozcukleri
+    "ayarla", "bosluk", "bul", "cevir", "cikar", "ekle", "gunluk",
+    "goruntu", "goruntusu", "ikon", "kapasite", "kapat", "kesim",
+    "pencere", "secenegi", "secim", "seritten", "tema", "temasi",
+    "temasini", "yenile",
+}
+
+# Henuz cevrilmemis dosyalar icin gecici muafiyet.
+#
+# **Liste 2026-09-15'te bosaltildi** — tum kaynak agaci cevrildi. Yeni bir
+# dosya gecici olarak eklenirse anahtar **goreli yoldur**, dosya adi degil:
+# `core/resize.py` ile `ui/dialogs/resize.py` ayni adi tasir.
+ISIM_MUAFIYETI = set()
+
+
+def modul_anahtari(yol: str) -> str:
+    """Muafiyet anahtari: `src/` altindaki goreli yol, egik cizgi ile."""
+    rel = os.path.relpath(yol, KAYNAK)
+    if rel.startswith(".."):
+        rel = os.path.relpath(yol, KOK)
+    return rel.replace(os.sep, "/")
+
+
+def turkce_ad_mi(isim: str) -> bool:
+    """Tanimlayici Turkce bir sozcuk parcasi tasiyor mu?"""
+    if isim.startswith("__") and isim.endswith("__"):
+        return False
+    return any(parca.lower() in TR_SOZCUKLER
+               for parca in isim.strip("_").split("_") if parca)
+
+
+def _atanan_adlar(dugum: ast.AST) -> list:
+    """Bir dugumun bagladigi degisken adlari (atama, dongu, with, except)."""
+    hedefler = []
+    if isinstance(dugum, ast.Assign):
+        hedefler = dugum.targets
+    elif isinstance(dugum, (ast.AugAssign, ast.AnnAssign, ast.For,
+                            ast.AsyncFor, ast.comprehension)):
+        hedefler = [dugum.target]
+    elif isinstance(dugum, (ast.With, ast.AsyncWith)):
+        hedefler = [i.optional_vars for i in dugum.items
+                    if i.optional_vars is not None]
+    out = []
+    for h in hedefler:
+        for x in ast.walk(h):
+            if isinstance(x, ast.Name):
+                out.append(x.id)
+    if isinstance(dugum, ast.ExceptHandler) and dugum.name:
+        out.append(dugum.name)
+    return out
+
+
+def isim_bulgulari(yol: str, agac: ast.AST) -> list:
+    """Turkce adli fonksiyon, parametre ve **yerel degiskenleri** dondurur.
+
+    Yerel degiskenler de denetlenir: kural "Ingilizce kod adi" der, yalnizca
+    "Ingilizce fonksiyon adi" degil. Fonksiyon govdesindeki adlar disarida
+    birakilsaydi kural yeniden gevserdi.
+    """
+    out = []
+    for dugum in ast.walk(agac):
+        if not isinstance(dugum, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        kotu = []
+        if turkce_ad_mi(dugum.name):
+            kotu.append(dugum.name)
+        args = dugum.args
+        for a in (args.posonlyargs + args.args + args.kwonlyargs
+                  + [args.vararg, args.kwarg]):
+            if a is not None and turkce_ad_mi(a.arg):
+                kotu.append(a.arg)
+        for ic in ast.walk(dugum):
+            for ad in _atanan_adlar(ic):
+                if turkce_ad_mi(ad):
+                    kotu.append(ad)
+        if kotu:
+            out.append((dugum.lineno, dugum.name, sorted(set(kotu))))
+    # modul duzeyi sabitler ve atamalar
+    for dugum in (agac.body if isinstance(agac, ast.Module) else []):
+        for ad in _atanan_adlar(dugum):
+            if turkce_ad_mi(ad):
+                out.append((dugum.lineno, "<modul>", [ad]))
+    return out
+
 
 def kaynak_dosyalar():
     for kok, _dizinler, dosyalar in os.walk(KAYNAK):
@@ -74,13 +183,24 @@ def main() -> int:
                     struct_bulgulari.append(
                         (os.path.relpath(yol, KOK), no, kod.strip()[:80]))
 
-    # AST ile: PyQt ceviriyi core'a sizdirmis mi?
+    # AST ile: PyQt ceviriyi core'a sizdirmis mi? + tanimlayici dili
     sizinti = []
+    isim_ihlalleri = []
+    muaf_kalan = set()
     for yol in kaynak_dosyalar():
-        if os.sep + "core" + os.sep not in yol:
-            continue
+        ad = os.path.basename(yol)
         with open(yol, encoding="utf-8") as fh:
             agac = ast.parse(fh.read(), filename=yol)
+        bulunan = isim_bulgulari(yol, agac)
+        anahtar = modul_anahtari(yol)
+        if anahtar in ISIM_MUAFIYETI:
+            if bulunan:
+                muaf_kalan.add(anahtar)
+        elif bulunan:
+            for no, fn, kotu in bulunan:
+                isim_ihlalleri.append((os.path.relpath(yol, KOK), no, fn, kotu))
+        if os.sep + "core" + os.sep not in yol:
+            continue
         for dugum in ast.walk(agac):
             if isinstance(dugum, (ast.Import, ast.ImportFrom)):
                 adlar = ([a.name for a in dugum.names]
@@ -116,7 +236,26 @@ def main() -> int:
     else:
         print("Katman ayrimi korunuyor: core/ icinde PyQt yok.")
 
-    hata = len(bulgular) + len(struct_bulgulari) + len(sizinti)
+    print()
+    if isim_ihlalleri:
+        print(f"ISIMLENDIRME: Turkce adli {len(isim_ihlalleri)} fonksiyon "
+              "(kural: Turkce arayuz metni, Ingilizce kod adi):")
+        for yol, no, fn, kotu in isim_ihlalleri:
+            print(f"  {yol}:{no}  {fn}  ->  {', '.join(kotu)}")
+    elif ISIM_MUAFIYETI:
+        print(f"Tanimlayici dili: cevrilmis dosyalar temiz. "
+              f"Bekleyen {len(ISIM_MUAFIYETI)} muaf dosya var.")
+    else:
+        print("Tanimlayici dili: tum fonksiyon ve parametre adlari Ingilizce.")
+
+    bayat = sorted(ISIM_MUAFIYETI - muaf_kalan)
+    if bayat:
+        print("\n  Not: su dosyalar artik temiz, ISIM_MUAFIYETI'nden silinebilir:")
+        for ad in bayat:
+            print(f"    {ad}")
+
+    hata = (len(bulgular) + len(struct_bulgulari) + len(sizinti)
+            + len(isim_ihlalleri))
     print(f"\nToplam bulgu: {hata}")
     return 1 if hata else 0
 

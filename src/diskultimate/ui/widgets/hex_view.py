@@ -16,10 +16,10 @@ BYTES_PER_ROW = 16
 def hexdump(data: bytes, base_offset: int = 0) -> str:
     satirlar = []
     for i in range(0, len(data), BYTES_PER_ROW):
-        parca = data[i:i + BYTES_PER_ROW]
-        hexler = " ".join(f"{b:02X}" for b in parca).ljust(BYTES_PER_ROW * 3 - 1)
+        chunk = data[i:i + BYTES_PER_ROW]
+        hexler = " ".join(f"{b:02X}" for b in chunk).ljust(BYTES_PER_ROW * 3 - 1)
         ortada = hexler[:BYTES_PER_ROW // 2 * 3] + " " + hexler[BYTES_PER_ROW // 2 * 3:]
-        metin = "".join(chr(b) if 32 <= b < 127 else "." for b in parca)
+        metin = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
         satirlar.append(f"{base_offset + i:010X}  {ortada}  |{metin}|")
     return "\n".join(satirlar)
 
@@ -37,24 +37,24 @@ class HexViewer(QWidget):
         layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(6)
 
-        ust = QHBoxLayout()
-        ust.addWidget(QLabel("Sektor (LBA):"))
+        upper = QHBoxLayout()
+        upper.addWidget(QLabel("Sektor (LBA):"))
         self.spin = QSpinBox()
         self.spin.setRange(0, 2 ** 31 - 1)
         self.spin.setFixedWidth(130)
         self.spin.valueChanged.connect(self.refresh)
-        ust.addWidget(self.spin)
+        upper.addWidget(self.spin)
         self.btn_prev = QPushButton("< Onceki")
         self.btn_prev.clicked.connect(lambda: self.spin.setValue(max(0, self.spin.value() - 1)))
         self.btn_next = QPushButton("Sonraki >")
         self.btn_next.clicked.connect(lambda: self.spin.setValue(self.spin.value() + 1))
-        ust.addWidget(self.btn_prev)
-        ust.addWidget(self.btn_next)
-        ust.addSpacing(12)
+        upper.addWidget(self.btn_prev)
+        upper.addWidget(self.btn_next)
+        upper.addSpacing(12)
         self.lbl_kaynak = QLabel("-")
         self.lbl_kaynak.setEnabled(False)   # paletten soluk ton
-        ust.addWidget(self.lbl_kaynak, 1)
-        layout.addLayout(ust)
+        upper.addWidget(self.lbl_kaynak, 1)
+        layout.addLayout(upper)
 
         self.view = QPlainTextEdit()
         self.view.setReadOnly(True)

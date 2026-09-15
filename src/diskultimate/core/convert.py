@@ -82,50 +82,50 @@ def check_mbr_to_gpt(device: BlockDevice, table: PartitionTable) -> Tuple[bool, 
     """Donusumun yapilabilirligini denetler. (uygun_mu, aciklama)"""
     if table.scheme != "mbr":
         return False, "Kaynak tablo MBR degil"
-    bolumler = _partitions_for_convert(table)
-    if len(bolumler) > 128:
+    parts = _partitions_for_convert(table)
+    if len(parts) > 128:
         return False, "GPT en fazla 128 bolum tasiyabilir"
 
-    ilk = min((p.start_lba for p in bolumler), default=device.sector_count)
-    if ilk < GPT_RESERVED_HEAD:
-        return False, (f"Ilk bolum LBA {ilk} konumunda basliyor; GPT giris dizisi icin "
+    first = min((p.start_lba for p in parts), default=device.sector_count)
+    if first < GPT_RESERVED_HEAD:
+        return False, (f"Ilk bolum LBA {first} konumunda basliyor; GPT giris dizisi icin "
                        f"disk basinda en az {GPT_RESERVED_HEAD} sektor bos olmalidir")
-    son = max((p.end_lba for p in bolumler), default=0)
-    if son >= device.sector_count - GPT_RESERVED_TAIL:
+    last = max((p.end_lba for p in parts), default=0)
+    if last >= device.sector_count - GPT_RESERVED_TAIL:
         gerekli = human_size(GPT_RESERVED_TAIL * device.sector_size)
         return False, (f"Disk sonunda yedek GPT icin {gerekli} bos alan gerekiyor; "
-                       f"son bolum LBA {son} konumunda bitiyor")
-    return True, f"{len(bolumler)} bolum GPT'ye tasinabilir"
+                       f"son bolum LBA {last} konumunda bitiyor")
+    return True, f"{len(parts)} bolum GPT'ye tasinabilir"
 
 
 def mbr_to_gpt(device: BlockDevice, table: PartitionTable,
                progress=None) -> GPTTable:
     """MBR tablosunu GPT'ye donusturur. Bolum verileri yerinde kalir."""
-    uygun, neden = check_mbr_to_gpt(device, table)
+    uygun, reason = check_mbr_to_gpt(device, table)
     if not uygun:
-        raise ConvertError(neden)
+        raise ConvertError(reason)
 
-    def bildir(mesaj: str, yuzde: int) -> None:
+    def report(message: str, percent: int) -> None:
         if progress:
-            progress(mesaj, yuzde)
+            progress(message, percent)
 
-    bildir("Mevcut bolumler okunuyor...", 10)
+    report("Mevcut bolumler okunuyor...", 10)
     kaynak = _partitions_for_convert(table)
     tanimlar = [(p.start_lba, p.sector_count,
                  MBR_TO_GPT.get(p.type_id) or FS_TO_GPT.get(p.fs_type) or MSBASIC,
                  p.fs_label or p.name or "", p.bootable)
                 for p in kaynak]
 
-    bildir("Eski tablo temizleniyor...", 30)
+    report("Eski tablo temizleniyor...", 30)
     ebr_sektorleri = [p.ebr_lba for p in table.partitions if p.logical and p.ebr_lba]
     device.zero_sectors(0, 1)
 
-    bildir("GPT olusturuluyor...", 50)
+    report("GPT olusturuluyor...", 50)
     gpt = GPTTable.create(device)
-    for i, (lba, adet, guid, ad, onyukleme) in enumerate(tanimlar):
+    for i, (lba, adet, guid, name, onyukleme) in enumerate(tanimlar):
         gpt.partitions.append(Partition(
             index=i + 1, start_lba=lba, sector_count=adet, scheme="gpt",
-            type_guid=guid, part_guid=GPT_UNUSED, name=ad[:36],
+            type_guid=guid, part_guid=GPT_UNUSED, name=name[:36],
             bootable=onyukleme, sector_size=device.sector_size))
     gpt._renumber()
     gpt.write()
@@ -138,7 +138,7 @@ def mbr_to_gpt(device: BlockDevice, table: PartitionTable,
                 device.zero_sectors(lba, 1)
             except Exception:
                 pass
-    bildir("Tamamlandi", 100)
+    report("Tamamlandi", 100)
     return gpt
 
 
@@ -148,29 +148,29 @@ def mbr_to_gpt(device: BlockDevice, table: PartitionTable,
 def check_gpt_to_mbr(device: BlockDevice, table: PartitionTable) -> Tuple[bool, str]:
     if table.scheme != "gpt":
         return False, "Kaynak tablo GPT degil"
-    bolumler = table.sorted_partitions()
-    if len(bolumler) > 4:
-        return False, (f"MBR en fazla 4 birincil bolum tasir; tabloda {len(bolumler)} "
+    parts = table.sorted_partitions()
+    if len(parts) > 4:
+        return False, (f"MBR en fazla 4 birincil bolum tasir; tabloda {len(parts)} "
                        "bolum var. Once bolum sayisini azaltin.")
-    for p in bolumler:
+    for p in parts:
         if p.end_lba > MAX_MBR_SECTORS:
             return False, (f"Bolum {p.index} 2 TiB sinirinin otesinde bitiyor; "
                            "MBR bu yerlesimi tasiyamaz")
-    return True, f"{len(bolumler)} bolum MBR'ye tasinabilir"
+    return True, f"{len(parts)} bolum MBR'ye tasinabilir"
 
 
 def gpt_to_mbr(device: BlockDevice, table: PartitionTable,
                progress=None) -> MBRTable:
     """GPT tablosunu MBR'ye donusturur. Bolum verileri yerinde kalir."""
-    uygun, neden = check_gpt_to_mbr(device, table)
+    uygun, reason = check_gpt_to_mbr(device, table)
     if not uygun:
-        raise ConvertError(neden)
+        raise ConvertError(reason)
 
-    def bildir(mesaj: str, yuzde: int) -> None:
+    def report(message: str, percent: int) -> None:
         if progress:
-            progress(mesaj, yuzde)
+            progress(message, percent)
 
-    bildir("Mevcut bolumler okunuyor...", 10)
+    report("Mevcut bolumler okunuyor...", 10)
     # Dosya sistemi biliniyorsa tip bayti ondan secilir: "Microsoft Temel Veri"
     # GUID'i FAT32'yi de NTFS'i de kapsadigi icin tek basina yeterince belirgin degil.
     tanimlar = [(p.start_lba, p.sector_count,
@@ -178,13 +178,13 @@ def gpt_to_mbr(device: BlockDevice, table: PartitionTable,
                  p.bootable)
                 for p in table.sorted_partitions()]
 
-    bildir("GPT yapilari siliniyor...", 35)
+    report("GPT yapilari siliniyor...", 35)
     device.zero_sectors(1, GPT_RESERVED_HEAD - 1)
     kuyruk = device.sector_count - GPT_RESERVED_TAIL
     if kuyruk > 0:
         device.zero_sectors(kuyruk, GPT_RESERVED_TAIL)
 
-    bildir("MBR olusturuluyor...", 60)
+    report("MBR olusturuluyor...", 60)
     mbr = MBRTable.create(device)
     for i, (lba, adet, tip, onyukleme) in enumerate(tanimlar):
         mbr.partitions.append(Partition(
@@ -192,7 +192,7 @@ def gpt_to_mbr(device: BlockDevice, table: PartitionTable,
             type_id=tip, bootable=onyukleme, sector_size=device.sector_size))
     mbr._renumber_mbr()
     mbr.write()
-    bildir("Tamamlandi", 100)
+    report("Tamamlandi", 100)
     return mbr
 
 

@@ -80,7 +80,7 @@ bu yuzden uygulama Wayland oturumlarinda otomatik olarak XWayland (`xcb`) uzerin
 acilir. Zorlamak isterseniz: `DISKULTIMATE_QPA=wayland python3 main.py`
 
 **Tipik akis:** `Dosya > Yeni goruntu...` ile boyut ve bolum tablosunu sec →
-haritada bos alana sag tikla > `Yeni bolum olustur...` → dosya sistemini sec →
+haritada bos alana sag tikla > `Yeni bolum...` → dosya sistemini sec →
 `Dosya Gezgini` sekmesinden icerige dosya ekle.
 
 ## Test
@@ -88,7 +88,7 @@ haritada bos alana sag tikla > `Yeni bolum olustur...` → dosya sistemini sec �
 ```bash
 python3 -m tests.run_all        # cekirdek: 18 test
 python3 -m tests.platform_check # capraz platform denetimi (beklenen: 0 bulgu)
-python3 -m tests.ui_smoke       # arayuz: ornek goruntu + ekran goruntuleri
+python3 -m tests.ui_smoke       # arayuz: ornek goruntu + 18 ekran goruntusu
 ```
 
 Uretilen birimler bagimsiz araclarla capraz dogrulanir: FAT icin `fsck.vfat`,

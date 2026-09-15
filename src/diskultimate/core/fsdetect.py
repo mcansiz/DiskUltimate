@@ -172,14 +172,14 @@ def _swap(dev: BlockDevice) -> FSInfo:
     """
     import uuid as _uuid
 
-    baslik = _safe_read(dev, 1024, 44)
+    header = _safe_read(dev, 1024, 44)
     etiket = ""
     kimlik = ""
-    sayfa_sayisi = 0
-    if len(baslik) >= 44:
-        sayfa_sayisi = struct.unpack_from("<I", baslik, 4)[0]
+    page_count = 0
+    if len(header) >= 44:
+        page_count = struct.unpack_from("<I", header, 4)[0]
         try:
-            ham_uuid = baslik[12:28]
+            ham_uuid = header[12:28]
             if ham_uuid.strip(b"\x00"):
                 kimlik = str(_uuid.UUID(bytes=ham_uuid))
         except (ValueError, TypeError):
@@ -188,9 +188,9 @@ def _swap(dev: BlockDevice) -> FSInfo:
     # sws_volume ASCII disi bayt iceriyorsa etiket yok sayilir
     if any(ord(ch) < 32 or ord(ch) > 126 for ch in etiket):
         etiket = ""
-    toplam = sayfa_sayisi * 4096 if sayfa_sayisi else dev.size
+    total = page_count * 4096 if page_count else dev.size
     return FSInfo(fs_type="Linux Takas", label=etiket, uuid=kimlik,
-                  total_bytes=min(toplam, dev.size) or dev.size,
+                  total_bytes=min(total, dev.size) or dev.size,
                   used_bytes=0)
 
 

@@ -3,9 +3,12 @@
 ## Calistirma
 
 ```bash
-cd /home/pc/diskUltimate
 python3 -m tests.run_all              # cekirdek testleri (harici kutuphane gerekmez)
 ```
+
+> Windows'ta `python3` yoksa `python` kullanin. PyQt5 birden fazla Python
+> surumu kuruluysa arayuz testleri icin dogru yorumlayiciyi secin
+> (ornegin `py -3.12 -m tests.ui_smoke`).
 
 Testler **proje dizini icinde** calisir: uretilen goruntuler `<proje>/.tmp/tests`
 altina yazilir (bkz. `src/diskultimate/paths.py`). `/tmp` kullanilmaz — cogu sistemde
@@ -33,6 +36,9 @@ Temizlik: `rm -rf .tmp`
 | `t13_kurtarma` | Silinmis dosya (uzun ad dahil) kurtarma, kayip bolum tarama, imza tabanli carving |
 | `t14_sanal_diskler` | VHD olusturma/yazma/okuma, **VBoxManage dogrulamasi**, VBoxManage ile uretilen VDI/VMDK okuma |
 | `t15_yazma_basarimi` | Buyuk dosya yazma/okuma hizi — tahsis dongusu regresyon korumasi (ADR 0010) |
+| `t16_ext_ailesi` | ext2/ext3/ext4 saf Python bicimlendirme, JBD2 gunlugu, **`e2fsck` dogrulamasi** (ADR 0017) |
+| `t17_ntfs` | NTFS saf Python bicimlendirme, MFT/`$UpCase`/`$AttrDef`, **`ntfsfix`/`ntfsinfo` dogrulamasi** (ADR 0018) |
+| `t18_bolum_boyutlandirma` | Bolum kucultme / buyutme / tasima; FAT ve exFAT veri korumasi, guvenlik kapilari, **`fsck` dogrulamasi** (ADR 0019) |
 
 ## Ortam guvenligi (onemli)
 
@@ -55,7 +61,18 @@ python3 -m tests.platform_check
 ```
 
 Kaynak agacini tarar: sabit POSIX yollari, `tempfile`, dogrudan `subprocess` /
-`shutil.which`, endian isaretsiz `struct` cagrilari ve `core/` icine PyQt sizintisi.
+`shutil.which`, endian isaretsiz `struct` cagrilari, `core/` icine PyQt sizintisi
+ve **tanimlayici dili**.
+
+Tanimlayici dili denetimi CLAUDE.md'deki *"Turkce arayuz metni, Ingilizce kod
+adi"* kuralini zorlar: fonksiyon adlari, parametreler, yerel degiskenler ve
+modul duzeyi sabitler Turkce sozcuk parcasi tasiyamaz. Arayuzde gorunen
+**metin** Turkce kalir — denetim yalnizca `ast.Name` dugumlerine bakar, dize ve
+yorumlara dokunmaz.
+
+> Kural bir kez gevsemisti: 2026-09-15 denetiminde 13 dosyada 74 fonksiyon ve
+> 656 yerel degisken Turkce adliydi; en cok sapan dosyalar **en yeni** dosyalardi.
+> Bu yuzden ceviriden once denetim yazildi.
 Denetleyicinin kendisi kasitli ihlal dosyasiyla dogrulanmistir; beklenen cikti
 **"Toplam bulgu: 0"**.
 
@@ -79,7 +96,8 @@ DISKULTIMATE_QPA=xcb python3 -m tests.ui_smoke # gercek cizim yolu
 ```
 
 Ornek bir 4 GB / dort bolumlu goruntu uretir ve `<proje>/.tmp/screenshots` altina
-on dort PNG kaydeder: ana pencere, dort sekme ve uc diyalog. Arayuzde degisiklik
+**on sekiz PNG** kaydeder: ana pencere, sekmeler, coklu goruntu ve diyaloglar
+(bolum boyutlandirma penceresi ve suruklemesi dahil). Arayuzde degisiklik
 yapildiginda bu goruntuler gozle denetlenir — ozellikle:
 - disk haritasinda metin ile doluluk cubugunun cakismamasi
 - arac cubugu ve dosya listesi **ikonlarinin gorunur** olmasi (koyu ikon temasi tuzagi)
@@ -97,10 +115,15 @@ python3 main.py disk.img                     # gercek ekranda, dosya acarak
 
 ## Bilinen sinirlar (test disi)
 - NTFS kullanim orani okunamiyor (MFT cozumlemesi yok) — tabloda `-` gosterilir.
-- ext2/3/4 ve NTFS icerikleri listelenemiyor; bicimlendirme ve tespit calisir.
-  (FAT ve exFAT icerigi tam desteklenir.)
-- Windows ve macOS uzerinde testler **calistirilmadi**; yalnizca statik denetimden
-  gecti (bkz. [cross-platform.md](cross-platform.md)).
+- `t05_harici_bicimlendirme` sistemde `mkfs.*` yoksa **atlanir**. Atlanan test
+  basarili sayilmaz: ozet `17/18 basarili · 1 atlandi` der ve hangi testin
+  neden atlandigini yazar. Cikis kodu yine 0'dir (kirmizi kosum degildir).
+  Harici arac yolunu dogrulamak icin Linux ortaminda kosulmalidir.
+- ext2/3/4 ve NTFS icerikleri listelenemiyor; **bicimlendirme** (saf Python) ve
+  tespit calisir. FAT ve exFAT icerigi tam desteklenir. Okuyucular v0.4 hedefi.
+- **macOS uzerinde testler hic calistirilmadi**; yalnizca statik denetimden gecti.
+  Windows uzerinde kosuldu — hangi surumun nerede kosuldugu icin
+  [cross-platform.md](cross-platform.md) test tablosuna bakin.
 - Silinmis dosya kurtarma, veriyi **ardisik** varsayar; parcalanmis dosyalarda
   sonuc eksik olabilir (arayuzde "kurtarilabilirlik" yuzdesi bunu belirtir).
 - 2 TiB uzeri MBR bolumleri desteklenmez (bicim sinirlamasi); GPT kullanilmalidir.

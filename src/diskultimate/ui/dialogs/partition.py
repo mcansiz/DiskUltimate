@@ -16,7 +16,7 @@ from ...core.ptable import FreeRegion, Partition, human_size
 MIB = 1024 * 1024
 
 
-def _doldur_fs_listesi(combo: QComboBox, size_bytes: int = 0) -> None:
+def _fill_fs_combo(combo: QComboBox, size_bytes: int = 0) -> None:
     """Combo'yu TUM dosya sistemleriyle doldurur.
 
     Kullanilamayanlar da listelenir ama secilemez; yaninda nedeni yazar
@@ -24,15 +24,15 @@ def _doldur_fs_listesi(combo: QComboBox, size_bytes: int = 0) -> None:
     eksigin **nedenini** gormesi.
     """
     model = combo.model()
-    for kind, neden in all_kinds(size_bytes):
-        metin = kind.label if not neden else f"{kind.label}  —  {neden}"
+    for kind, reason in all_kinds(size_bytes):
+        metin = kind.label if not reason else f"{kind.label}  —  {reason}"
         combo.addItem(metin, kind.key)
-        if neden:
+        if reason:
             satir = combo.count() - 1
             oge = model.item(satir) if hasattr(model, "item") else None
             if oge is not None:
                 oge.setEnabled(False)
-                combo.setItemData(satir, neden, Qt.ToolTipRole)
+                combo.setItemData(satir, reason, Qt.ToolTipRole)
 
 
 class CreatePartitionDialog(QDialog):
@@ -56,16 +56,16 @@ class CreatePartitionDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
 
-        bilgi = QLabel(
+        info = QLabel(
             f"Bos alan: <b>{human_size(self.region.size)}</b> "
             f"(LBA {self.region.start_lba} – {self.region.end_lba})")
-        layout.addWidget(bilgi)
+        layout.addWidget(info)
 
         grup = QGroupBox("Bolum ayarlari")
         form = QFormLayout(grup)
 
         # boyut
-        boyut_satiri = QHBoxLayout()
+        size_line = QHBoxLayout()
         self.size_spin = QDoubleSpinBox()
         self.size_spin.setDecimals(2)
         self.size_spin.setRange(1.0, max(1.0, self.region.size / MIB))
@@ -73,13 +73,13 @@ class CreatePartitionDialog(QDialog):
         self.size_spin.setSuffix(" MB")
         self.size_spin.setFixedWidth(140)
         self.size_spin.valueChanged.connect(self._size_changed)
-        boyut_satiri.addWidget(self.size_spin)
+        size_line.addWidget(self.size_spin)
         self.size_slider = QSlider(Qt.Horizontal)
         self.size_slider.setRange(1, max(1, int(self.region.size / MIB)))
         self.size_slider.setValue(self.size_slider.maximum())
         self.size_slider.valueChanged.connect(self._slider_changed)
-        boyut_satiri.addWidget(self.size_slider, 1)
-        form.addRow("Boyut:", boyut_satiri)
+        size_line.addWidget(self.size_slider, 1)
+        form.addRow("Boyut:", size_line)
 
         # tur (MBR)
         if self.scheme == "mbr":
@@ -103,7 +103,7 @@ class CreatePartitionDialog(QDialog):
         # dosya sistemi
         self.fs_combo = QComboBox()
         self.fs_combo.addItem("Bicimlendirme (ham bolum)", "")
-        _doldur_fs_listesi(self.fs_combo, self.region.size)
+        _fill_fs_combo(self.fs_combo, self.region.size)
         idx = self.fs_combo.findData("fat32")
         self.fs_combo.setCurrentIndex(idx if idx >= 0 else 0)
         self.fs_combo.currentIndexChanged.connect(self._fs_changed)
@@ -156,11 +156,11 @@ class CreatePartitionDialog(QDialog):
         self._update_summary()
 
     def _update_summary(self) -> None:
-        sektor = self.sector_count()
+        sector = self.sector_count()
         fs = self.fs_combo.currentData()
-        ad = FS_BY_KEY[fs].label if fs else "bicimlendirilmemis"
+        name = FS_BY_KEY[fs].label if fs else "bicimlendirilmemis"
         self.summary.setText(
-            f"{human_size(sektor * self.sector_size)} — {sektor:,} sektor — {ad}"
+            f"{human_size(sector * self.sector_size)} — {sector:,} sektor — {name}"
             .replace(",", "."))
 
     # -- degerler ------------------------------------------------------------
@@ -169,16 +169,16 @@ class CreatePartitionDialog(QDialog):
         return max(1, min(istenen, self.region.sector_count))
 
     def values(self) -> dict:
-        tur = self.kind_combo.currentData() if self.kind_combo else None
+        kind = self.kind_combo.currentData() if self.kind_combo else None
         return {
             "start_lba": self.region.start_lba,
             "sector_count": self.sector_count(),
-            "fs": self.fs_combo.currentData() if tur != "extended" else "",
+            "fs": self.fs_combo.currentData() if kind != "extended" else "",
             "label": self.label_edit.text().strip(),
             "name": getattr(self, "name_edit", None).text().strip()
                     if hasattr(self, "name_edit") else "",
             "bootable": self.boot_check.isChecked(),
-            "kind": tur,
+            "kind": kind,
         }
 
 
@@ -203,7 +203,7 @@ class FormatDialog(QDialog):
         grup = QGroupBox("Bicimlendirme secenekleri")
         form = QFormLayout(grup)
         self.fs_combo = QComboBox()
-        _doldur_fs_listesi(self.fs_combo, p.size)
+        _fill_fs_combo(self.fs_combo, p.size)
         idx = self.fs_combo.findData((p.fs_type or "fat32").lower())
         self.fs_combo.setCurrentIndex(idx if idx >= 0 else 0)
         self.fs_combo.currentIndexChanged.connect(self._fs_changed)
@@ -221,8 +221,8 @@ class FormatDialog(QDialog):
         form.addRow("", self.quick_check)
         layout.addWidget(grup)
 
-        uyari = QLabel("<span style='color:#b23c17'>Uyari: bolumdeki tum veriler silinir.</span>")
-        layout.addWidget(uyari)
+        warning = QLabel("<span style='color:#b23c17'>Uyari: bolumdeki tum veriler silinir.</span>")
+        layout.addWidget(warning)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         butonlar.button(QDialogButtonBox.Ok).setText("Bicimlendir")
@@ -239,13 +239,13 @@ class FormatDialog(QDialog):
         fs = self.fs_combo.currentData() or ""
         if fs.startswith("fat") or fs == "exfat" or fs == "ntfs":
             for kb in (0.5, 1, 2, 4, 8, 16, 32, 64):
-                bayt = int(kb * 1024)
-                if bayt <= self.partition.size // 8:
+                nbytes = int(kb * 1024)
+                if nbytes <= self.partition.size // 8:
                     self.cluster_combo.addItem(
-                        f"{bayt} bayt" if bayt < 1024 else f"{bayt // 1024} KB", bayt)
+                        f"{nbytes} bayt" if nbytes < 1024 else f"{nbytes // 1024} KB", nbytes)
         elif fs.startswith("ext"):
-            for bayt in (1024, 2048, 4096):
-                self.cluster_combo.addItem(f"{bayt // 1024} KB blok", bayt)
+            for nbytes in (1024, 2048, 4096):
+                self.cluster_combo.addItem(f"{nbytes // 1024} KB blok", nbytes)
 
     def values(self) -> dict:
         return {

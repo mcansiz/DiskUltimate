@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
 
-def secilen_platform() -> str:
+def selected_platform() -> str:
     """Kullanilacak Qt platform eklentisini belirler.
 
     Karar `core.platform.preferred_qt_platform()` icinde, isletim sistemine gore
@@ -16,18 +16,18 @@ def secilen_platform() -> str:
         DISKULTIMATE_QPA=wayland python3 main.py
         QT_QPA_PLATFORM=wayland  python3 main.py
     """
-    istek = os.environ.get("DISKULTIMATE_QPA", "").strip()
-    if istek:
-        return istek
+    requested = os.environ.get("DISKULTIMATE_QPA", "").strip()
+    if requested:
+        return requested
     if os.environ.get("QT_QPA_PLATFORM"):
         return os.environ["QT_QPA_PLATFORM"]
     from diskultimate.core.platform import preferred_qt_platform
     return preferred_qt_platform()
 
 
-_platform = secilen_platform()
-if _platform:
-    os.environ["QT_QPA_PLATFORM"] = _platform
+_qpa_platform = selected_platform()
+if _qpa_platform:
+    os.environ["QT_QPA_PLATFORM"] = _qpa_platform
 
 from PyQt5.QtCore import Qt  # noqa: E402
 from PyQt5.QtWidgets import QApplication  # noqa: E402
@@ -44,14 +44,14 @@ def main() -> int:
     app.setOrganizationName("DiskUltimate")
     # Gorunum: sistemin kendi Qt temasi. Ozel stil sayfasi uygulanmaz;
     # "Tema" bolumu eklendiginde buradan secilecek (bkz. theme.apply_theme).
-    tema = apply_theme(app, os.environ.get("DISKULTIMATE_THEME", "system"))
+    theme = apply_theme(app, os.environ.get("DISKULTIMATE_THEME", "system"))
 
-    pencere = MainWindow()
-    pencere.log(f"Qt platformu: {app.platformName()} | stil: "
-                f"{app.style().objectName()} | tema: {tema}")
-    pencere.show()
+    window = MainWindow()
+    window.log(f"Qt platformu: {app.platformName()} | stil: "
+                f"{app.style().objectName()} | tema: {theme}")
+    window.show()
     if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
-        pencere.open_path(sys.argv[1])
+        window.open_path(sys.argv[1])
     return app.exec_()
 
 

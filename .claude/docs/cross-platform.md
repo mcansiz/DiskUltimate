@@ -13,10 +13,15 @@ her sey tek modulde toplanmistir: [`core/platform.py`](../../src/diskultimate/co
 | FAT12/16/32, exFAT | **Saf Python** — harici arac gerekmez |
 | Yedekleme, klonlama, silme, kurtarma | Saf Python |
 | Sanal diskler (VHD/VDI/VMDK/QCOW2) | Saf Python |
-| NTFS, ext2/3/4 **bicimlendirme** | Yalnizca Linux (`mkfs.*` varsa) |
+| ext2/3/4, NTFS **bicimlendirme** | **Saf Python** — uc platformda (ADR 0017, 0018) |
 
-Yani **Windows ve macOS'ta FAT ve exFAT ile tam islevsellik** vardir; NTFS/ext
-bicimlendirmesi o platformlarda listede gorunmez (`formatter.available_kinds`).
+Yani **sekiz dosya sistemi de uc platformda olusturulabilir**. Bicimlendirme
+oncelik sirasi: (1) isletim sisteminin kendi araci, (2) harici `mkfs.*`,
+(3) saf Python. Arayuz kullanilamayan bir secenegi **gizlemez**, yanina nedenini
+yazar (`formatter.all_kinds` her bicim icin bir "neden" metni dondurur).
+
+**Icerik okuma** hala yalnizca FAT ve exFAT icindir; ext/NTFS okuyuculari v0.4
+hedefidir.
 
 ## Platforma bagli noktalar ve cozumleri
 
@@ -26,7 +31,7 @@ bicimlendirmesi o platformlarda listede gorunmez (`formatter.available_kinds`).
 | **Ham diske yazma** | Bagli birimler once `FSCTL_LOCK_VOLUME` + `DISMOUNT` ile kilitlenmeli | dogrudan yazilir | dogrudan yazilir |
 | **Tablo degisikligi bildirimi** | `IOCTL_DISK_UPDATE_PROPERTIES` (acik tutamaci gecersiz kilar — yalnizca kapanista) | `ioctl BLKRRPART` | `diskutil rescan` |
 | **Gercek dosya boyutu** | `GetCompressedFileSizeW` | `st_blocks` | `st_blocks` |
-| **Harici arac arama** | arac yok, liste bos | `newfs_exfat` vb. aranir | `mkfs.*`, `sbin` dizinleri dahil |
+| **Harici arac arama** | `format.com` (NTFS icin yerel arac) | `newfs_exfat` vb. aranir | `mkfs.*`, `sbin` dizinleri dahil |
 | **Surec calistirma** | `CREATE_NO_WINDOW` ile konsol penceresi acilmaz | standart | standart |
 | **Qt platform eklentisi** | Qt karar verir | Qt karar verir | Wayland'da XWayland secilir (ADR 0005) |
 | **Varsayilan klasor** | `~/Documents` | `~/Documents` | `~/Documents` veya `~` |
@@ -53,17 +58,24 @@ ihlal dosyasiyla dogrulanmistir.
 
 ## Test durumu
 
+Test sayisi surumle birlikte artti (v0.2.0'da 15, v0.3.0'da 18). Asagidaki
+tablo **hangi surumun** hangi platformda kosuldugunu ayirir; eski bir kosum yeni
+test sayisiyla anilmaz.
+
 | Platform | Cekirdek testleri | Arayuz | Not |
 |---|---|---|---|
-| Linux (x86_64) | ✅ 15/15 | ✅ | Gelistirme ortami; `fsck.vfat`/`fsck.exfat`/`fdisk`/`VBoxManage` ile capraz dogrulama |
-| Windows 10 (x64) | ✅ **15/15** | ✅ **dogrulandi** | VirtualBox misafiri, tasinabilir Python 3.12.8 + PyQt5 5.15.11; 13.2 s (2026-09-13) |
-| Pop!_OS 24.04 (x64) | ✅ **15/15** | ✅ **dogrulandi** | VirtualBox misafiri, Python 3.12.3 + PyQt5 5.15.10; **fiziksel disk okuma/yazma dogrulandi** |
-| macOS | ⚠️ calistirilmadi | ⚠️ | Ayni |
+| Linux (x86_64) | ✅ **18/18** (v0.3.0) | ✅ | Gelistirme ortami; `fsck.vfat`/`fsck.exfat`/`e2fsck`/`ntfsfix`/`fdisk`/`VBoxManage` ile capraz dogrulama |
+| Windows 10 (x64, ana makine) | ✅ **17/18 · 1 atlandi** (v0.3.0, 2026-09-15) | ✅ | `t05` harici `mkfs` bulunmadigi icin atlandi — saf Python yollarinin tamami kosuldu. PyQt5 yalnizca Python 3.12'de kurulu; arayuz testi `py -3.12` ile kosuldu |
+| Windows 10 (x64, VirtualBox misafiri) | ✅ 15/15 (v0.2.0, 2026-09-13) | ✅ **dogrulandi** | Tasinabilir Python 3.12.8 + PyQt5 5.15.11; 13.2 s. **Fiziksel disk yazma burada dogrulandi.** v0.3.0 testleri bu misafirde **yeniden kosulmadi** |
+| Pop!_OS 24.04 (x64) | ✅ 15/15 (v0.2.0, 2026-09-13) | ✅ **dogrulandi** | Python 3.12.3 + PyQt5 5.15.10; **fiziksel disk okuma/yazma dogrulandi**. v0.3.0 testleri burada da **yeniden kosulmadi** |
+| macOS | ⚠️ hic calistirilmadi | ⚠️ | Yalnizca statik denetimden gecti |
 
 **Durust degerlendirme:**
 - **Windows 10: cekirdek ve arayuz dogrulandi.** VirtualBox misafirinde tasinabilir
-  Python 3.12.8 + PyQt5 5.15.11 ile 15/15 test gecti, `platform_check` 0 bulgu,
-  arayuz duman testi 14 ekran goruntusu uretti ve gozle denetlendi. Bu kosumlarda
+  Python 3.12.8 + PyQt5 5.15.11 ile **o gunku 15 testin tamami** gecti,
+  `platform_check` 0 bulgu, arayuz duman testi ekran goruntuleri uretti ve gozle
+  denetlendi. v0.3.0'in uc yeni testi (ext, NTFS, boyutlandirma) bu misafirde
+  **henuz kosulmadi** — ana makinedeki Windows 10 kosumu 18/18 verdi. Bu kosumlarda
   **uc gercek hata yakalanip duzeltildi**:
   [ADR 0011](../decisions/0011-windows-seyrek-dosya.md) (seyrek dosya uzatma),
   [ADR 0012](../decisions/0012-qt-windows-bulgulari.md) (offscreen font, sekme kirpilmasi).

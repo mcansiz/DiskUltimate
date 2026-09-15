@@ -5,6 +5,323 @@ Kayit yalnizca bu depo icindeki `.claude/` altinda tutulur.
 
 ---
 
+## 2026-09-15 (2) — Tam tutarlilik denetimi (yalnizca analiz, kod degismedi)
+
+Kullanici istegi: projeyi bastan sona analiz et, tutarsizliklari bul, GUI
+tarafinda ayni isimlendirme kullanilip kullanilmadigini arastir, tum `.md`
+dosyalarini incele ve yapilacaklar icin plan olustur.
+
+### Yontem
+Kod degistirilmedi. Once olcum tabani kuruldu, sonra bulgular ona gore yazildi:
+
+| Kosum | Sonuc |
+|---|---|
+| `python -m tests.run_all` | 18/18 basarili (t05 harici `mkfs` yok, atlandi) |
+| `python -m tests.platform_check` | 0 bulgu |
+
+Tanimlayici dili denetimi icin `ast` tabanli tek seferlik bir tarayici yazildi
+(fonksiyon adlari + parametreler), gecici alanda calistirildi.
+
+### Bulgular (ozet)
+- **Belge kaymasi:** README.md tek guncel belge. `project-overview.md`,
+  `cross-platform.md`, `testing.md`, `diskgenius-parity.md`, `feature-analysis.md`
+  ve `architecture.md` v0.2.0 doneminde donmus — surum, test sayisi (15 vs 18),
+  saf Python NTFS/ext durumu ve fiziksel disk kapsami yanlis anlatiliyor.
+  `project-overview.md` "root gerekmez / blok aygita yazilmaz" ilkesi CLAUDE.md ve
+  ADR 0014 ile dogrudan celisiyor. `architecture.md` modul agacinda 7 modul eksik.
+- **Kodda yanlis bilgi:** `APP_VERSION = "0.1.0"` (README 0.3.0) ve "Hakkinda"
+  penceresi hala "mkfs araclariyla bicimlendirme" + "yonetici yetkisi gerektirmez"
+  diyor.
+- **GUI etiket ikiligi:** bes eylem menude ve sag tik menusunde farkli adla
+  gorunuyor ("Yeni bolum..." / "Yeni bolum olustur..." vb.). Kok neden: sag tik
+  menuleri mevcut `QAction` yerine etiketi yeniden yaziyor.
+- **Sag tik menusu yetki denetimini atliyor:** `rename_partition`, `change_type`,
+  `toggle_bootable` salt okunur kaynakta pasiflesmiyor. **Veri riski yok** —
+  `session._require_writable()` reddediyor — ama kullanici dostane diyalog yerine
+  ham hata metni goruyor.
+- **Isimlendirme kurali:** "Turkce arayuz metni, Ingilizce kod adi" kurali 13
+  dosyada 74 fonksiyonda ihlal edilmis. En yeni dosyalar en cok sapanlar
+  (`resize_bar.py` bastan asagi Turkce). `_salt_okunur_acilis_uyarisi()` ile
+  `_read_only_uyarisi()` yan yana duruyor.
+- **Depo hijyeni:** `.claude/logs/app-*.log` calisma zamani gunlukleri git ile
+  izleniyor ve gitignore disinda; uygulamayi her calistirmak agaci kirletiyor.
+  `sessions/INDEX.md` ayni oturum icin mukerrer satir aliyor.
+
+### Cikti
+`.claude/docs/consistency-audit.md` — bulgular (A/B/C) ve alti asamali
+iyilestirme plani.
+
+---
+
+## 2026-09-15 (3) — Iyilestirme plani: Asama 1, 2 ve 6 uygulandi
+
+`consistency-audit.md` planinin ilk turu. Sira onerildigi gibi: once yanlis bilgi
+veren kod, sonra GUI birligi, sonra depo hijyeni.
+
+### Asama 1 — yanlis bilgi veren kod
+- `APP_VERSION` `"0.1.0"` → `"0.3.0"`. Yanina, degistirildiginde README rozetinin
+  ve `project-overview.md` durum satirinin da guncellenmesi gerektigi yazildi.
+- "Hakkinda" penceresi yeniden yazildi. Eski metin iki yanlis soyluyordu:
+  exFAT/NTFS/ext'in `mkfs` araclariyla bicimlendirildigi (artik sekizi de saf
+  Python) ve uygulamanin "yalnizca secilen goruntu dosyasi uzerinde calistigi"
+  (ADR 0014'ten beri fiziksel disk destegi var). Yeni metin fiziksel disk
+  erisiminin varsayilan salt okunur oldugunu da soyluyor.
+
+### Asama 2 — GUI etiket ve yetki birligi
+Kok neden, sag tik menulerinin etiketi mevcut `QAction` yerine **yeniden
+yazmasiydi**. `_partition_menu`, `_free_menu`, `_map_context` ve `_tree_context`
+artik eylem nesnelerini dogrudan ekliyor. Boylece:
+
+- Bes etiket ikiligi kapandi ("Yeni bolum olustur..." → "Yeni bolum...",
+  "Guvenli sil..." → "Bolumu guvenli sil...", vb.).
+- `_update_actions()` yetki denetimi sag tik menusune de islemeye basladi;
+  salt okunur kaynakta "Bolum turunu degistir", "Bolum adini degistir" ve
+  onyukleme bayragi artik pasif gorunuyor (onceden etkin gorunup is yapmiyordu).
+- Salt okunur aciklama girisi tek metne indi (`_readonly_hint`).
+- Onyukleme bayragi tek eylem, metni simetrik cift olarak `_update_actions()`
+  icinde degisiyor: `BOOT_SET_TEXT` / `BOOT_CLEAR_TEXT`.
+- Sekme indisleri `TAB_FILES` / `TAB_INFO` / `TAB_HEX` / `TAB_LOG` sabitlerine bagli.
+- `_read_only_uyarisi` → `_readonly_warning`,
+  `_salt_okunur_acilis_uyarisi` → `_readonly_open_warning` (Asama 3'ten one alindi;
+  yeni `_readonly_hint` ile ayni adlandirmayi paylasmalari gerekiyordu).
+
+**Tuzak:** onyukleme etiketini guncellemek icin ilk denemede `_current_partition()`
+kullanildi — ama o islev kullaniciya diyalog acar ve `_update_actions()` her
+yenilemede cagrilir. Sessiz bir `_selected_partition_quiet()` eklendi.
+
+**Plan degisikligi:** 2.4 maddesi (`_require_session()` ekle) **gereksiz cikti**.
+Dort islev de `_current_partition()` uzerinden zaten koruniyordu; denetim
+belgesindeki aksi yondeki iddia duzeltildi. Kusur yalnizca gorseldi.
+
+### Asama 6 — depo hijyeni
+- `.gitignore` icine `.claude/logs/*.log`; izlenen iki gunluk dosyasi
+  `git rm --cached` ile cikarildi. Uygulamayi calistirmak artik calisma agacini
+  kirletmiyor. Konum degistirilmedi: `.claude/logs/` bilerek tasarlanmis bir
+  ozellik (parity: "Islem gunlugu: arayuzde sekme + dosya"); ignore kurali
+  `*.md` belge dokumleriyle `*.log` calisma ciktisini ayiriyor.
+- `archive-session.py`: `append_index` → `upsert_index`. Bir oturum birden cok
+  `SessionEnd` uretebiliyor (once `other`, sonra `exit`); eski kod her seferinde
+  satir ekliyordu. Artik anahtar dokum dosyasinin adi ve satir yerinde guncelleniyor.
+- `INDEX.md` basligindaki "`Ham dokumler .gitignore disidir`" cumlesi gercegin
+  tersini soyluyordu; duzeltildi. Mevcut mukerrer satir temizlendi.
+
+### Dogrulama
+- `tests.run_all` → **18/18** · `tests.platform_check` → **0 bulgu**
+- `tests.ui_smoke` → 17 ekran goruntusu, ana pencere gozle denetlendi
+- Baglam menusu icin tek seferlik bir olcum betigi yazildi: salt okunur ve
+  yazilabilir iki durumda menu etiketleri + etkinlik durumu arac cubugununkiyle
+  **birebir** ayni cikti.
+- Kanca, ayni oturum id'si iki kez bitirilerek denendi: tek satir, guncel `reason`.
+
+> **Not:** PyQt5 bu makinede yalnizca Python **3.12**'de kurulu (varsayilan
+> yorumlayici 3.14). Arayuz testleri `py -3.12 -m tests.ui_smoke` ile calistirildi.
+
+### Yan gozlem (plan disi, ileriye not)
+`01-ana-pencere.png` durum cubugunda `status_file` etiketi ile
+`statusBar().showMessage()` gecici mesaji ust uste biniyor. Bu degisikliklerle
+ilgisi yok, onceden de vardi; Asama 4 temizligine aday.
+
+### Kalan
+Asama 5 (belgeleri gercege esitle), Asama 3 (isimlendirme + denetim), Asama 4 (temizlik).
+
+---
+
+## 2026-09-15 (4) — Iyilestirme plani tamamlandi: Asama 5, 3 ve 4
+
+### Asama 5 — belgeler gercege esitlendi
+Kod degistirilmedi; on belge guncellendi.
+
+- `project-overview.md` bastan yazildi: durum v0.3.0 / 18 test, "Temel ilkeler"
+  maddesi 1 artik fiziksel disk gercegini anlatiyor (eski hali *"hicbir kod blok
+  aygita yazmaz"* diyordu ve ADR 0014 ile dogrudan celisiyordu). v0.3 bolumu
+  "planlanan"dan "tamamlandi"ya alindi, v0.4/v0.5 ayrildi, "Kapsam disi" bolumu
+  eklendi.
+- `architecture.md`: eksik **7 modul** agaca eklendi (`ext`, `ntfs`,
+  `_ntfs_data`, `resize`, `physical`, `resize_bar`, `dialogs/resize`), veri
+  akisina fiziksel disk ve boyutlandirma kollari cizildi, "Genisletme
+  noktalari"na iki satir eklendi.
+- `cross-platform.md`: NTFS/ext artik "yalnizca Linux" degil, uc platformda saf
+  Python. Test durumu tablosu **surum ayrimi** yapacak sekilde yeniden yazildi.
+- `testing.md`: `cd /home/pc/diskUltimate` kaldirildi, t16/t17/t18 satirlari
+  eklendi, ekran goruntusu sayisi duzeltildi.
+- `diskgenius-parity.md`: ozet tablosu belgeden **otomatik sayilarak** yeniden
+  uretildi (eski sayimlar boyutlandirma tamamlanmadan onceydi). "Kapsam disi"
+  olcutu yeniden tanimlandi.
+- `feature-analysis.md` §4.5 ve ADR 0002 / 0017 / 0019 basliklari duzeltildi.
+- Belge ici baglantilarin tamami betikle dogrulandi: **0 kirik baglanti**.
+
+> **Dikkat edilen nokta:** ilk denemede Windows/Pop!_OS test satirlari toplu
+> arama-degistirme ile "15/15 → 18/18" yapilmisti. Bu **yanlis bir iddia**
+> olurdu: o kosumlar v0.2.0 doneminde, 15 testle yapildi. Geri alinip tablo
+> hangi surumun nerede kosuldugunu ayiracak sekilde yazildi.
+
+### Asama 3 — isimlendirme kurali geri getirildi
+Once **denetim**, sonra ceviri (plandaki 3.1 sarti).
+
+- `tests/platform_check.py` icine AST tabanli **tanimlayici dili denetimi**
+  eklendi: fonksiyon adlari + parametreler Turkce sozcuk parcasi tasiyamaz.
+  Gecici `ISIM_MUAFIYETI` listesiyle baslandi (17 dosya), dosyalar cevrildikce
+  bosaltildi. Liste **bos**; denetim artik tum agaci koruyor.
+  Muafiyet anahtari dosya adi degil **goreli yol** — `core/resize.py` ile
+  `ui/dialogs/resize.py` ayni adi tasiyor ve ilk surumde ikincisi yanlislikla
+  muaf kalmisti.
+- Cevrilen: 17 dosya, ~92 fonksiyon. `ui/` (main_window, theme, resize_bar,
+  dialogs) ve `core/` (ntfs, resize, physical, ext, exfat, clone, convert, gpt,
+  image, recovery, vdisk).
+- `_read_only_uyarisi`/`_salt_okunur_acilis_uyarisi` ikiligi zaten (3) oturumunda
+  kapanmisti; `readonly` yazimi tek bicime indi.
+
+> **Tuzak ve duzeltmesi.** Ilk ceviri duz duzenli ifadeyle yapildi ve
+> **Turkce arayuz metinlerini bozdu**: `"Tum bolumler 4K..."` → `"Tum partitions
+> 4K..."`, `"Kayip bolumler taraniyor"` → `"Kayip partitions taraniyor"`.
+> Dosya yedekten geri alinip `tokenize` tabanli bir arac yazildi: yalnizca
+> `NAME` belirtecleri degisir, dize ve yorum belirtecleri ellenmez.
+> Sonrasinda tum degisen dosyalarin dize sabitleri HEAD ile karsilastirildi —
+> kaybolan 22 dizenin tamami Asama 2'de bilerek birlestirilen menu etiketleri
+> cikti, kaza yok. Tek gercek bozulma (`resize_bar` docstring'inde
+> "tek adim" → "tek step") elle geri alindi.
+
+### Asama 4 — kucuk temizlik
+- `_icon()` kopyasi kaldirildi → `theme.standard_icon(widget, std)`.
+- Widget API alan adiyla hizalandi: `set_data`→`set_partitions`,
+  `set_values`→`set_range`, `ResizeBar.changed`→`rangeChanged`.
+  `plan.changed` (farkli bir alan) **kasten** degistirilmedi.
+- `ui_smoke` ekran goruntusu numaralari siralandi (14/15 yer degistirmisti);
+  sekme indisleri `TAB_*` sabitlerine baglandi.
+- `run_all` artik atlanan testi gizlemiyor: `Atlandi` istisnasi eklendi, ozet
+  `17/18 basarili · 1 atlandi` diyor ve nedenini yaziyor. Cikis kodu 0 kalir.
+  Eskiden atlanan test "TAMAM" sayilip ozet "18/18" diyordu.
+- **`theme.STYLESHEET` silinmedi.** Denetim belgesindeki "belgesiz duruyor"
+  iddiasi yanlisti: ADR 0013 bu kodu "ileriye donuk" basligi altinda bilerek
+  birakmis ve `DISKULTIMATE_THEME=diskultimate` kacisini belgelemis. Gercek
+  eksik, dalin **hic test edilmemesiydi**; `ui_smoke` icine temayi acip
+  ADR 0012'deki sekme kirpilmasini olcen bir adim eklendi (16. goruntu).
+
+### Dogrulama
+- `tests.run_all` → **17/18 · 1 atlandi** (t05, harici `mkfs` yok)
+- `tests.platform_check` → **0 bulgu**, muafiyet listesi bos
+- `tests.ui_smoke` → **18 ekran goruntusu**, tema dali dahil
+- Denetimin kendisi **olumsuz testten** gecti: gecici olarak eklenen
+  `_yeni_bolum_ekle(sektor)` yakalandi, silinince tekrar 0 bulgu.
+- Baglam menusu olcumu yinelendi: etiketler arac cubuguyla ayni, salt okunurda
+  yazma eylemlerinin tamami pasif.
+
+### Kalan (plan disi, ileriye)
+- Yerel degisken adlari (fonksiyon govdesi ici) hala yer yer Turkce; denetim
+  fonksiyon adi + parametre duzeyinde. Genisletilebilir.
+- Durum cubugunda `status_file` ile gecici mesajin ust uste binmesi (bkz. 3.
+  oturum notu) duzeltilmedi.
+
+---
+
+## 2026-09-15 (5) — Kalan iki madde: durum cubugu ve yerel degisken adlari
+
+### 1. Durum cubugu cakismasi (gercek arayuz hatasi)
+`01-ana-pencere.png` icinde sol altta iki metin ust uste biniyordu. Olculdu:
+`showMessage()` gecici mesaji durum cubugunun **sol** bolgesine cizer — yani
+`status_file` etiketiyle ayni yere. Qt'nin bu durumda normal widget'lari
+gizlemesi beklenir; **PyQt5 5.15'te gizlemiyor**. Cikplak Qt ile kurulan en kucuk
+ornekte de ayni davranis gorulduğu icin sorunun bizim kodumuzda olmadigi
+dogrulandi, cozum kendi tarafimizda uygulandi:
+
+```python
+self.statusBar().messageChanged.connect(
+    lambda metin: self.status_file.setVisible(not metin))
+```
+
+Dogrulama: mesaj etkinken `visible=False`, mesaj suresi dolunca `visible=True`
+ve etiket metni korunuyor.
+
+### 2. Yerel degisken adlari
+Olcum: **656 Turkce yerel atama, 168 farkli ad, 20 dosya.**
+
+Bu is icin kapsam farkindali bir cevirici yazildi (`local_rename.py`): yalnizca
+`ast.Name` dugumlerini konumlarina gore degistirir. Boylece dizeler, yorumlar,
+oznitelikler (`x.ad`), anahtar argumanlar (`f(ad=...)`) ve iceri aktarma adlari
+**dokunulmadan** kalir. Her fonksiyon kapsami ayri degerlendirilir; ic ice
+fonksiyon ayni adi yeniden baglarsa o ad atlanir, hedef ad kapsamda zaten
+varsa cakisma bildirilip atlanir (3 yerde oldu).
+
+Sonuc: 1871 degisiklik, ardindan kalan 12 ad (modul sabitleri + cakisma nedeniyle
+atlananlar) elle cevrildi. **Kalan Turkce yerel: 0.**
+
+Baglama gore anlam ayrimi yapildi: `baslik` cekirdekte **`header`** (ikili
+baslik tamponu), arayuzde **`title`** (pencere basligi). Tek karsilik ikisinde de
+yanlis olurdu.
+
+> **Iki tuzak yasandi.**
+> 1. Ilk kosumda `ast`'in `col_offset` degerinin **UTF-8 bayt ofseti** oldugu
+>    (karakter ofseti degil) atlanmisti. Turkce karakter iceren satirlarda
+>    hizalama kayiyordu. Betikteki hizalama denetimi bunu yakalayip yazmayi
+>    **durdurdu**; degisen dosyalar yedekten geri alindi, duzenleme satirin
+>    bayt gosterimi uzerine tasindi.
+> 2. `rm -rf src` ile geri alma reddedildi (hakliydi); yalnizca degisen dosyalar
+>    yedekten kopyalandi.
+
+### 3. Denetim yerellere genisletildi
+`platform_check` artik fonksiyon adi + parametre **ve** yerel degiskenler ile
+modul duzeyi atamalari denetliyor. Kural "Ingilizce kod adi" diyor, yalnizca
+"Ingilizce fonksiyon adi" degil; govde disarida kalsaydi kural yeniden gevserdi.
+
+Genisletilmis denetim `main.py`'yi de yakaladi (`pencere`, `tema`) — ilk turda
+gozden kacmisti, cevrildi.
+
+### Dogrulama
+- `tests.run_all` → **17/18 · 1 atlandi** (t05, harici `mkfs` yok)
+- `tests.platform_check` → **0 bulgu**
+- `tests.ui_smoke` → 18 ekran goruntusu, tema dali dahil
+- **Dize butunlugu:** 41 dosyanin tum dize sabitleri ceviri oncesiyle
+  karsilastirildi → **0 dosyada degisiklik**. Turkce arayuz metinleri saglam.
+- Olumsuz test: gecici eklenen `_deneme()` icindeki `toplam_boyut` yerel
+  degiskeni yakalandi, silininde tekrar 0 bulgu.
+
+> **Not:** Bu oturumda ana makinenin fiziksel diskleri uzerinde **hicbir islem
+> yapilmadi.** `physical_probe.py` / `physical_write_test.py` calistirilmadi;
+> tum testler `.tmp/` altindaki imaj **dosyalari** uzerinde kosuldu. Arayuz
+> agacinda gorunen fiziksel diskler yalnizca listelemedir (`list_disks()`
+> hicbir aygiti acmaz). Fiziksel disk testleri CLAUDE.md geregi sanal makinede
+> yapilacak.
+
+### Durum
+Iyilestirme planinin alti asamasi ve plan disi kalan iki madde tamamlandi.
+
+## 2026-09-15 — Oturum kayitlarinin proje icine tasinmasi
+
+### Yapilanlar
+- `.claude/hooks/archive-session.py` — `SessionEnd` kancasi. stdin'den gelen
+  kanca JSON'undan `transcript_path` okunur, dokum
+  `.claude/sessions/<YYYY-MM-DD>-<session_id>.jsonl` olarak kopyalanir ve
+  `.claude/sessions/INDEX.md` tablosuna bir satir eklenir. Saf Python, harici
+  bagimlilik yok (makinede `jq` bulunmuyor). Hata durumunda sessizce 0 doner,
+  oturumu bosa dusurmez.
+- `.claude/settings.json` (depoya girer) — `SessionEnd` kancasi tanimlandi.
+  `python3` yoksa `python`'a duser.
+- `.claude/settings.local.json` (depoya girmez) — `autoMemoryDirectory` ile
+  Claude hafizasi `.claude/memory/` icine yonlendirildi. Bu anahtar guvenlik
+  geregi depoya giren `settings.json` icinden okunmaz, bu yuzden local dosyada
+  ve mutlak yolla durur.
+- `.claude/memory/MEMORY.md` — hafiza dizini tohumlandi.
+- `.gitignore` — ham `.jsonl` dokumleri ve `settings.local.json` haric tutuldu;
+  `.claude/sessions/INDEX.md` depoda kalir.
+- `CLAUDE.md` — kayit kurali tablosuna `sessions/`, `memory/`, `hooks/` satirlari
+  ve kuralin nasil zorlandigini anlatan bolum eklendi.
+
+### Dogrulama
+- Kanca betigi gercek kanca JSON'u ile stdin'den beslendi: cikis 0, dokum
+  `.claude/sessions/` altina kopyalandi, `INDEX.md` olustu.
+- Iki ayar dosyasi da `json.load` ile ayristirildi; kanca komutu JSON icinden
+  geri okundu.
+- `git check-ignore` ile `.jsonl` ve `settings.local.json` haric tutmalari
+  dogrulandi.
+
+### Not
+`autoMemoryDirectory` mutlak yol tasir; depo baska bir dizine klonlanirsa
+`.claude/settings.local.json` yeniden yazilmalidir. Kancanin devreye girmesi
+icin Claude Code'un ayarlari yeniden okumasi gerekir (`/hooks` menusu veya
+yeniden baslatma).
+
+---
+
 ## 2026-09-13 — Proje kurulumu ve v0.1.0
 
 ### Yapilanlar

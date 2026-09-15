@@ -114,17 +114,17 @@ def upcase_table() -> bytes:
     `mkfs.ntfs` ciktisiyla birebir ayni olur.
     """
     _load_constants()
-    tablo = bytearray(65536 * 2)
+    table = bytearray(65536 * 2)
     for i in range(65536):
-        ust = chr(i).upper()
-        deger = ord(ust) if len(ust) == 1 and ord(ust) < 65536 else i
-        struct.pack_into("<H", tablo, i * 2, deger)
-    for parca in _UPCASE_ISTISNA.split(","):
-        if not parca:
+        upper = chr(i).upper()
+        value = ord(upper) if len(upper) == 1 and ord(upper) < 65536 else i
+        struct.pack_into("<H", table, i * 2, value)
+    for chunk in _UPCASE_ISTISNA.split(","):
+        if not chunk:
             continue
-        kod, deger = parca.split(":")
-        struct.pack_into("<H", tablo, int(kod, 16) * 2, int(deger, 16))
-    return bytes(tablo)
+        code, value = chunk.split(":")
+        struct.pack_into("<H", table, int(code, 16) * 2, int(value, 16))
+    return bytes(table)
 
 
 # --------------------------------------------------------------------------
@@ -167,12 +167,12 @@ class NtfsFormatter:
         self._cluster_used: Dict[int, bool] = {}
 
     def _default_cluster(self) -> int:
-        boyut = self.dev.size
-        if boyut <= 512 * 1024 * 1024:
+        size = self.dev.size
+        if size <= 512 * 1024 * 1024:
             return 4096
-        if boyut <= 1024 ** 3:
+        if size <= 1024 ** 3:
             return 4096
-        if boyut <= 2 * 1024 ** 3:
+        if size <= 2 * 1024 ** 3:
             return 4096
         return 4096          # NTFS varsayilani modern boyutlarda 4 KiB
 
@@ -181,55 +181,55 @@ class NtfsFormatter:
         ss = self.sector_size
         cs = self.cluster_size
         spc = cs // ss
-        toplam_sektor = self.dev.size // ss
+        total_sectors = self.dev.size // ss
         # son sektor yedek onyukleme sektoru icin ayrilir
-        kullanilabilir_sektor = toplam_sektor - 1
-        toplam_kume = kullanilabilir_sektor // spc
-        if toplam_kume < 64:
+        usable_sectors = total_sectors - 1
+        total_clusters = usable_sectors // spc
+        if total_clusters < 64:
             raise NtfsError("Bolum NTFS icin cok kucuk")
 
-        def kume(bayt: int) -> int:
-            return max(1, (bayt + cs - 1) // cs)
+        def clusters(nbytes: int) -> int:
+            return max(1, (nbytes + cs - 1) // cs)
 
-        mft_kayit_sayisi = 32                       # 16 sistem + yedek alan
-        mft_kume = kume(mft_kayit_sayisi * MFT_RECORD_SIZE)
-        logfile_bayt = max(2 * 1024 * 1024, min(64 * 1024 * 1024,
+        mft_record_count = 32                       # 16 sistem + yedek alan
+        mft_cluster = clusters(mft_record_count * MFT_RECORD_SIZE)
+        logfile_bytes = max(2 * 1024 * 1024, min(64 * 1024 * 1024,
                                                 self.dev.size // 100))
-        logfile_kume = kume(logfile_bayt)
-        upcase_kume = kume(128 * 1024)
-        attrdef_kume = kume(2560)
-        bitmap_bayt = (toplam_kume + 7) // 8
-        bitmap_kume = kume(bitmap_bayt)
+        logfile_cluster = clusters(logfile_bytes)
+        upcase_cluster = clusters(128 * 1024)
+        attrdef_cluster = clusters(2560)
+        bitmap_bytes = (total_clusters + 7) // 8
+        bitmap_cluster = clusters(bitmap_bytes)
 
         imlec = 4                                    # $Boot 0-1, 2-3 bos birakilir
         mft_lcn = imlec
-        imlec += mft_kume
+        imlec += mft_cluster
         logfile_lcn = imlec
-        imlec += logfile_kume
+        imlec += logfile_cluster
         upcase_lcn = imlec
-        imlec += upcase_kume
+        imlec += upcase_cluster
         attrdef_lcn = imlec
-        imlec += attrdef_kume
+        imlec += attrdef_cluster
         bitmap_lcn = imlec
-        imlec += bitmap_kume
+        imlec += bitmap_cluster
         root_index_lcn = imlec
-        imlec += kume(INDEX_RECORD_SIZE)
+        imlec += clusters(INDEX_RECORD_SIZE)
         secure_lcn = imlec
         imlec += 1
-        if imlec >= toplam_kume - 2:
+        if imlec >= total_clusters - 2:
             raise NtfsError("Bolum NTFS metaverisi icin yetersiz")
         # $MFTMirr ilk dort MFT kaydini tutar; kayit boyutuna gore yer ayrilir
-        mftmirr_kume = kume(4 * MFT_RECORD_SIZE)
-        mftmirr_lcn = toplam_kume - mftmirr_kume
+        mftmirr_cluster = clusters(4 * MFT_RECORD_SIZE)
+        mftmirr_lcn = total_clusters - mftmirr_cluster
 
         return NtfsLayout(
-            cluster_size=cs, sector_size=ss, total_sectors=kullanilabilir_sektor,
-            total_clusters=toplam_kume, mft_lcn=mft_lcn, mft_clusters=mft_kume,
-            mftmirr_lcn=mftmirr_lcn, mftmirr_clusters=mftmirr_kume,
+            cluster_size=cs, sector_size=ss, total_sectors=usable_sectors,
+            total_clusters=total_clusters, mft_lcn=mft_lcn, mft_clusters=mft_cluster,
+            mftmirr_lcn=mftmirr_lcn, mftmirr_clusters=mftmirr_cluster,
             logfile_lcn=logfile_lcn,
-            logfile_clusters=logfile_kume, upcase_lcn=upcase_lcn,
-            upcase_clusters=upcase_kume, attrdef_lcn=attrdef_lcn,
-            bitmap_lcn=bitmap_lcn, bitmap_clusters=bitmap_kume,
+            logfile_clusters=logfile_cluster, upcase_lcn=upcase_lcn,
+            upcase_clusters=upcase_cluster, attrdef_lcn=attrdef_lcn,
+            bitmap_lcn=bitmap_lcn, bitmap_clusters=bitmap_cluster,
             root_index_lcn=root_index_lcn, secure_lcn=secure_lcn)
 
     # ---- dusuk seviye yardimcilar ----------------------------------------
@@ -238,206 +238,206 @@ class NtfsFormatter:
 
     def _zero_clusters(self, lcn: int, adet: int) -> None:
         cs = self.cluster_size
-        parca = max(1, (4 * 1024 * 1024) // cs)
-        bos = b"\x00" * (parca * cs)
+        chunk = max(1, (4 * 1024 * 1024) // cs)
+        free = b"\x00" * (chunk * cs)
         kalan, cur = adet, lcn
         while kalan > 0:
-            n = min(parca, kalan)
-            self.dev.write(cur * cs, bos[: n * cs])
+            n = min(chunk, kalan)
+            self.dev.write(cur * cs, free[: n * cs])
             cur += n
             kalan -= n
 
     @staticmethod
-    def _apply_fixup(kayit: bytearray, usa_offset: int, usa_count: int,
-                     usn: int, sektor_boyutu: int) -> None:
+    def _apply_fixup(record: bytearray, usa_offset: int, usa_count: int,
+                     usn: int, sector_size: int) -> None:
         """Duzeltme dizisini (Update Sequence Array) uygular.
 
         Her sektorun son iki bayti diziye tasinir, yerine USN yazilir. NTFS
         surucusu kaydin tam olarak yazildigini boyle dogrular; bu adim
         atlanirsa kayit gecersiz sayilir.
         """
-        struct.pack_into("<H", kayit, usa_offset, usn)
+        struct.pack_into("<H", record, usa_offset, usn)
         for i in range(usa_count - 1):
-            son = (i + 1) * sektor_boyutu - 2
-            if son + 2 > len(kayit):
+            last = (i + 1) * sector_size - 2
+            if last + 2 > len(record):
                 break
-            struct.pack_into("<H", kayit, usa_offset + 2 + i * 2,
-                             struct.unpack_from("<H", kayit, son)[0])
-            struct.pack_into("<H", kayit, son, usn)
+            struct.pack_into("<H", record, usa_offset + 2 + i * 2,
+                             struct.unpack_from("<H", record, last)[0])
+            struct.pack_into("<H", record, last, usn)
 
     @staticmethod
     def _data_runs(runs: List[Tuple[int, int]]) -> bytes:
         """Veri kosularini (LCN, uzunluk) esleme ciftlerine cevirir."""
         cikti = bytearray()
         onceki_lcn = 0
-        for lcn, uzunluk in runs:
+        for lcn, length in runs:
             fark = lcn - onceki_lcn
-            uzunluk_baytlari = _signed_bytes(uzunluk, isaretsiz=True)
+            length_bytes = _signed_bytes(length, unsigned=True)
             ofset_baytlari = _signed_bytes(fark)
-            cikti.append((len(ofset_baytlari) << 4) | len(uzunluk_baytlari))
-            cikti += uzunluk_baytlari
+            cikti.append((len(ofset_baytlari) << 4) | len(length_bytes))
+            cikti += length_bytes
             cikti += ofset_baytlari
             onceki_lcn = lcn
         cikti.append(0)
         return bytes(cikti)
 
     # ---- oznitelik olusturucular -----------------------------------------
-    def _attr_resident(self, tur: int, deger: bytes, ad: str = "",
+    def _attr_resident(self, kind: int, value: bytes, name: str = "",
                        indexed: int = 0, attr_id: int = 0) -> bytes:
-        ad_baytlari = ad.encode("utf-16-le")
-        ad_ofseti = 0x18
-        deger_ofseti = ad_ofseti + len(ad_baytlari)
-        deger_ofseti = (deger_ofseti + 7) & ~7
-        toplam = deger_ofseti + len(deger)
-        toplam = (toplam + 7) & ~7
-        attr = bytearray(toplam)
-        struct.pack_into("<IIBBHHH", attr, 0, tur, toplam, 0,
-                         len(ad), ad_ofseti if ad else 0, 0, attr_id)
-        struct.pack_into("<IHBB", attr, 0x10, len(deger), deger_ofseti,
+        name_bytes = name.encode("utf-16-le")
+        name_offset = 0x18
+        value_offset = name_offset + len(name_bytes)
+        value_offset = (value_offset + 7) & ~7
+        total = value_offset + len(value)
+        total = (total + 7) & ~7
+        attr = bytearray(total)
+        struct.pack_into("<IIBBHHH", attr, 0, kind, total, 0,
+                         len(name), name_offset if name else 0, 0, attr_id)
+        struct.pack_into("<IHBB", attr, 0x10, len(value), value_offset,
                          indexed, 0)
-        if ad_baytlari:
-            attr[ad_ofseti:ad_ofseti + len(ad_baytlari)] = ad_baytlari
-        attr[deger_ofseti:deger_ofseti + len(deger)] = deger
+        if name_bytes:
+            attr[name_offset:name_offset + len(name_bytes)] = name_bytes
+        attr[value_offset:value_offset + len(value)] = value
         return bytes(attr)
 
-    def _attr_nonresident(self, tur: int, runs: List[Tuple[int, int]],
-                          veri_boyutu: int, ad: str = "", attr_id: int = 0,
+    def _attr_nonresident(self, kind: int, runs: List[Tuple[int, int]],
+                          data_size: int, name: str = "", attr_id: int = 0,
                           sparse: bool = False,
-                          ayrilmis_boyut: Optional[int] = None) -> bytes:
-        ad_baytlari = ad.encode("utf-16-le")
-        ad_ofseti = 0x40
+                          alloc_size: Optional[int] = None) -> bytes:
+        name_bytes = name.encode("utf-16-le")
+        name_offset = 0x40
         kosular = self._data_runs(runs) if runs else b"\x00"
-        esleme_ofseti = ad_ofseti + len(ad_baytlari)
+        esleme_ofseti = name_offset + len(name_bytes)
         esleme_ofseti = (esleme_ofseti + 7) & ~7
-        toplam = esleme_ofseti + len(kosular)
-        toplam = (toplam + 7) & ~7
-        son_vcn = (sum(u for _l, u in runs) - 1) if runs else 0
-        ayrilmis = (ayrilmis_boyut if ayrilmis_boyut is not None
+        total = esleme_ofseti + len(kosular)
+        total = (total + 7) & ~7
+        last_vcn = (sum(u for _l, u in runs) - 1) if runs else 0
+        allocated = (alloc_size if alloc_size is not None
                     else sum(u for _l, u in runs) * self.cluster_size)
-        attr = bytearray(toplam)
-        struct.pack_into("<IIBBHHH", attr, 0, tur, toplam, 1,
-                         len(ad), ad_ofseti if ad else 0,
+        attr = bytearray(total)
+        struct.pack_into("<IIBBHHH", attr, 0, kind, total, 1,
+                         len(name), name_offset if name else 0,
                          0x8000 if sparse else 0, attr_id)
-        struct.pack_into("<QQHHI", attr, 0x10, 0, son_vcn, esleme_ofseti, 0, 0)
-        struct.pack_into("<QQQ", attr, 0x28, ayrilmis, veri_boyutu, veri_boyutu)
-        if ad_baytlari:
-            attr[ad_ofseti:ad_ofseti + len(ad_baytlari)] = ad_baytlari
+        struct.pack_into("<QQHHI", attr, 0x10, 0, last_vcn, esleme_ofseti, 0, 0)
+        struct.pack_into("<QQQ", attr, 0x28, allocated, data_size, data_size)
+        if name_bytes:
+            attr[name_offset:name_offset + len(name_bytes)] = name_bytes
         attr[esleme_ofseti:esleme_ofseti + len(kosular)] = kosular
         return bytes(attr)
 
-    def _std_info(self, dosya_ozniteligi: int = FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM) -> bytes:
-        deger = bytearray(72)
-        struct.pack_into("<QQQQ", deger, 0, self.now, self.now, self.now, self.now)
-        struct.pack_into("<I", deger, 32, dosya_ozniteligi)
-        struct.pack_into("<I", deger, 64, 0)            # security id
-        return bytes(deger)
+    def _std_info(self, file_attr: int = FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM) -> bytes:
+        value = bytearray(72)
+        struct.pack_into("<QQQQ", value, 0, self.now, self.now, self.now, self.now)
+        struct.pack_into("<I", value, 32, file_attr)
+        struct.pack_into("<I", value, 64, 0)            # security id
+        return bytes(value)
 
-    def _file_name(self, ust_kayit: int, ad: str, dosya_ozniteligi: int,
-                   ayrilmis: int = 0, boyut: int = 0,
-                   ad_turu: int = FNAME_WIN32_DOS) -> bytes:
-        ad_baytlari = ad.encode("utf-16-le")
-        deger = bytearray(0x42 + len(ad_baytlari))
-        struct.pack_into("<Q", deger, 0, self._mref(ust_kayit))
-        struct.pack_into("<QQQQ", deger, 8, self.now, self.now, self.now, self.now)
-        struct.pack_into("<QQ", deger, 0x28, ayrilmis, boyut)
-        struct.pack_into("<I", deger, 0x38, dosya_ozniteligi)
-        deger[0x40] = len(ad)
-        deger[0x41] = ad_turu
-        deger[0x42:] = ad_baytlari
-        return bytes(deger)
+    def _file_name(self, parent_ref: int, name: str, file_attr: int,
+                   allocated: int = 0, size: int = 0,
+                   name_type: int = FNAME_WIN32_DOS) -> bytes:
+        name_bytes = name.encode("utf-16-le")
+        value = bytearray(0x42 + len(name_bytes))
+        struct.pack_into("<Q", value, 0, self._mref(parent_ref))
+        struct.pack_into("<QQQQ", value, 8, self.now, self.now, self.now, self.now)
+        struct.pack_into("<QQ", value, 0x28, allocated, size)
+        struct.pack_into("<I", value, 0x38, file_attr)
+        value[0x40] = len(name)
+        value[0x41] = name_type
+        value[0x42:] = name_bytes
+        return bytes(value)
 
     @staticmethod
-    def _sequence(kayit_no: int) -> int:
+    def _sequence(rec_no: int) -> int:
         """Sistem kayitlarinda sira numarasi kayit numarasina esittir (0 -> 1).
 
         MFT basvurulari (mref) sira numarasini ust 16 bitte tasir; yanlis sira
         numarasi `ntfs_inode_open` tarafindan "dosya yok" olarak reddedilir.
         """
-        return kayit_no if kayit_no else 1
+        return rec_no if rec_no else 1
 
-    def _mref(self, kayit_no: int) -> int:
-        return (kayit_no & 0xFFFFFFFFFFFF) | (self._sequence(kayit_no) << 48)
+    def _mref(self, rec_no: int) -> int:
+        return (rec_no & 0xFFFFFFFFFFFF) | (self._sequence(rec_no) << 48)
 
-    def _make_record(self, kayit_no: int, bayraklar: int, oznitelikler: List[bytes],
+    def _make_record(self, rec_no: int, bayraklar: int, oznitelikler: List[bytes],
                      baglanti: int = 1) -> bytes:
-        kayit = bytearray(MFT_RECORD_SIZE)
+        record = bytearray(MFT_RECORD_SIZE)
         usa_offset = 0x30
         usa_count = MFT_RECORD_SIZE // self.sector_size + 1
         attrs_offset = (usa_offset + usa_count * 2 + 7) & ~7
-        kayit[0:4] = FILE_MAGIC
-        struct.pack_into("<HH", kayit, 4, usa_offset, usa_count)
-        struct.pack_into("<Q", kayit, 8, 0)                 # $LogFile LSN
-        struct.pack_into("<HHHH", kayit, 0x10, self._sequence(kayit_no),
+        record[0:4] = FILE_MAGIC
+        struct.pack_into("<HH", record, 4, usa_offset, usa_count)
+        struct.pack_into("<Q", record, 8, 0)                 # $LogFile LSN
+        struct.pack_into("<HHHH", record, 0x10, self._sequence(rec_no),
                          baglanti, attrs_offset, bayraklar)
         imlec = attrs_offset
         for i, attr in enumerate(oznitelikler):
             if imlec + len(attr) + 8 > MFT_RECORD_SIZE:
-                raise NtfsError(f"MFT kaydi {kayit_no} tasti")
+                raise NtfsError(f"MFT kaydi {rec_no} tasti")
             # Oznitelik kimligi kayit icinde BENZERSIZ olmalidir; elle verilen
             # degerler cakisabildigi icin burada sirayla yeniden atanir
             # (cakisma `chkdsk` tarafindan "attribute record is corrupt" olarak
             # bildirilir).
             duzeltilmis = bytearray(attr)
             struct.pack_into("<H", duzeltilmis, 0x0E, i)
-            kayit[imlec:imlec + len(attr)] = bytes(duzeltilmis)
+            record[imlec:imlec + len(attr)] = bytes(duzeltilmis)
             imlec += len(attr)
-        struct.pack_into("<I", kayit, imlec, AT_END)
-        struct.pack_into("<I", kayit, imlec + 4, 0)
+        struct.pack_into("<I", record, imlec, AT_END)
+        struct.pack_into("<I", record, imlec + 4, 0)
         kullanilan = imlec + 8
-        struct.pack_into("<II", kayit, 0x18, kullanilan, MFT_RECORD_SIZE)
-        struct.pack_into("<Q", kayit, 0x20, 0)              # taban kayit
-        struct.pack_into("<H", kayit, 0x28, len(oznitelikler) + 1)
-        struct.pack_into("<I", kayit, 0x2C, kayit_no)
-        self._apply_fixup(kayit, usa_offset, usa_count, 1, self.sector_size)
-        return bytes(kayit)
+        struct.pack_into("<II", record, 0x18, kullanilan, MFT_RECORD_SIZE)
+        struct.pack_into("<Q", record, 0x20, 0)              # taban kayit
+        struct.pack_into("<H", record, 0x28, len(oznitelikler) + 1)
+        struct.pack_into("<I", record, 0x2C, rec_no)
+        self._apply_fixup(record, usa_offset, usa_count, 1, self.sector_size)
+        return bytes(record)
 
 
-def _signed_bytes(deger: int, isaretsiz: bool = False) -> bytes:
+def _signed_bytes(value: int, unsigned: bool = False) -> bytes:
     """Sayiyi en az sayida bayta sigdirir (veri kosulari icin)."""
-    if deger == 0:
+    if value == 0:
         return b"\x00"
-    if isaretsiz:
-        uzunluk = (deger.bit_length() + 8) // 8
-        return deger.to_bytes(uzunluk, "little")
-    uzunluk = (deger.bit_length() + 8) // 8
+    if unsigned:
+        length = (value.bit_length() + 8) // 8
+        return value.to_bytes(length, "little")
+    length = (value.bit_length() + 8) // 8
     while True:
         try:
-            return deger.to_bytes(uzunluk, "little", signed=True)
+            return value.to_bytes(length, "little", signed=True)
         except OverflowError:
-            uzunluk += 1
+            length += 1
 
 
 # ==========================================================================
 # Bicimlendirme akisi
 # ==========================================================================
-def _index_entry(mft_ref: int, anahtar: bytes, alt_dugum: bool = False,
+def _index_entry(mft_ref: int, key: bytes, child_node: bool = False,
                  sira: int = 1) -> bytes:
     """Dizin girisi: MFT basvurusu + $FILE_NAME anahtari."""
-    uzunluk = 0x10 + len(anahtar)
-    uzunluk = (uzunluk + 7) & ~7
-    giris = bytearray(uzunluk)
-    struct.pack_into("<QHHH", giris, 0,
+    length = 0x10 + len(key)
+    length = (length + 7) & ~7
+    entry = bytearray(length)
+    struct.pack_into("<QHHH", entry, 0,
                      (mft_ref & 0xFFFFFFFFFFFF) | (sira << 48),
-                     uzunluk, len(anahtar), 0x01 if alt_dugum else 0x00)
-    giris[0x10:0x10 + len(anahtar)] = anahtar
-    return bytes(giris)
+                     length, len(key), 0x01 if child_node else 0x00)
+    entry[0x10:0x10 + len(key)] = key
+    return bytes(entry)
 
 
-def _index_end_entry(alt_dugum_vcn: Optional[int] = None) -> bytes:
+def _index_end_entry(child_vcn: Optional[int] = None) -> bytes:
     """Dizin sonu isaretcisi; alt dugum varsa VCN eklenir."""
-    uzunluk = 0x18 if alt_dugum_vcn is not None else 0x10
-    giris = bytearray(uzunluk)
-    bayraklar = 0x02 | (0x01 if alt_dugum_vcn is not None else 0x00)
-    struct.pack_into("<QHHH", giris, 0, 0, uzunluk, 0, bayraklar)
-    if alt_dugum_vcn is not None:
-        struct.pack_into("<Q", giris, uzunluk - 8, alt_dugum_vcn)
-    return bytes(giris)
+    length = 0x18 if child_vcn is not None else 0x10
+    entry = bytearray(length)
+    bayraklar = 0x02 | (0x01 if child_vcn is not None else 0x00)
+    struct.pack_into("<QHHH", entry, 0, 0, length, 0, bayraklar)
+    if child_vcn is not None:
+        struct.pack_into("<Q", entry, length - 8, child_vcn)
+    return bytes(entry)
 
 
 class _NtfsBuilder(NtfsFormatter):
     """NtfsFormatter'a bicimlendirme akisini ekler."""
 
-    SISTEM_DOSYALARI = [
+    SYSTEM_FILES = [
         (MFT_MFT, "$MFT"), (MFT_MFTMIRR, "$MFTMirr"), (MFT_LOGFILE, "$LogFile"),
         (MFT_VOLUME, "$Volume"), (MFT_ATTRDEF, "$AttrDef"), (MFT_ROOT, "."),
         (MFT_BITMAP, "$Bitmap"), (MFT_BOOT, "$Boot"), (MFT_BADCLUS, "$BadClus"),
@@ -447,38 +447,38 @@ class _NtfsBuilder(NtfsFormatter):
     def format(self, progress: Optional[Callable[[str, int], None]] = None) -> Dict:
         L = self.layout
 
-        def bildir(mesaj: str, yuzde: int) -> None:
+        def report(message: str, percent: int) -> None:
             if progress:
-                progress(mesaj, yuzde)
+                progress(message, percent)
 
-        bildir("NTFS yerlesimi hazirlaniyor...", 5)
-        bildir("Sabit tablolar yaziliyor ($UpCase, $AttrDef)...", 15)
+        report("NTFS yerlesimi hazirlaniyor...", 5)
+        report("Sabit tablolar yaziliyor ($UpCase, $AttrDef)...", 15)
         self._write_clusters(L.upcase_lcn, upcase_table())
         self._write_clusters(L.attrdef_lcn, attrdef_table())
 
-        bildir("Islem gunlugu ($LogFile) hazirlaniyor...", 30)
+        report("Islem gunlugu ($LogFile) hazirlaniyor...", 30)
         self._write_logfile()
 
-        bildir("Kok dizin olusturuluyor...", 45)
+        report("Kok dizin olusturuluyor...", 45)
         self._write_root_index()
 
-        bildir("Kume bitmap'i yaziliyor...", 60)
+        report("Kume bitmap'i yaziliyor...", 60)
         self._write_bitmap()
 
-        bildir("MFT kayitlari olusturuluyor...", 70)
-        kayitlar = self._build_mft_records()
-        self._write_mft(kayitlar)
+        report("MFT kayitlari olusturuluyor...", 70)
+        records = self._build_mft_records()
+        self._write_mft(records)
 
-        bildir("MFT yedegi yaziliyor...", 85)
-        self._write_mftmirr(kayitlar)
+        report("MFT yedegi yaziliyor...", 85)
+        self._write_mftmirr(records)
 
-        bildir("Onyukleme sektoru yaziliyor...", 95)
+        report("Onyukleme sektoru yaziliyor...", 95)
         self._write_boot()
 
         f = getattr(self.dev, "flush", None)
         if f:
             f()
-        bildir("Tamamlandi", 100)
+        report("Tamamlandi", 100)
         return {
             "cluster_size": L.cluster_size, "clusters": L.total_clusters,
             "mft_lcn": L.mft_lcn, "mft_clusters": L.mft_clusters,
@@ -491,37 +491,37 @@ class _NtfsBuilder(NtfsFormatter):
         """$LogFile alanini 0xFF ile doldurur (bos gunluk)."""
         L = self.layout
         cs = L.cluster_size
-        parca = max(1, (4 * 1024 * 1024) // cs)
-        dolgu = b"\xFF" * (parca * cs)
+        chunk = max(1, (4 * 1024 * 1024) // cs)
+        dolgu = b"\xFF" * (chunk * cs)
         kalan, cur = L.logfile_clusters, L.logfile_lcn
         while kalan > 0:
-            n = min(parca, kalan)
+            n = min(chunk, kalan)
             self.dev.write(cur * cs, dolgu[: n * cs])
             cur += n
             kalan -= n
 
-    def _collation_key(self, ad: str) -> List[int]:
+    def _collation_key(self, name: str) -> List[int]:
         """$FILE_NAME siralama anahtari: $UpCase ile buyuk harfe cevrilmis kodlar.
 
         NTFS dizin girisleri bu sıraya gore **sirali** olmak zorundadir; sirasiz
         bir dizinde B-agaci aramasi dosyayi bulamaz ve `ntfs_pathname_to_inode`
         "dosya yok" doner.
         """
-        tablo = upcase_table()
-        return [struct.unpack_from("<H", tablo, ord(ch) * 2)[0] for ch in ad]
+        table = upcase_table()
+        return [struct.unpack_from("<H", table, ord(ch) * 2)[0] for ch in name]
 
     def _root_index_entries(self) -> bytes:
         """Kok dizindeki sistem dosyasi girisleri (siralama kuralina uygun)."""
         girisler = bytearray()
-        sirali = sorted((k for k in self.SISTEM_DOSYALARI if k[0] != MFT_ROOT),
+        sirali = sorted((k for k in self.SYSTEM_FILES if k[0] != MFT_ROOT),
                         key=lambda oge: self._collation_key(oge[1]))
-        for kayit_no, ad in sirali:
-            ozellik = FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM
-            if kayit_no == MFT_EXTEND:
-                ozellik |= FILE_ATTR_DIRECTORY
-            anahtar = self._file_name(MFT_ROOT, ad, ozellik)
-            girisler += _index_entry(kayit_no, anahtar,
-                                     sira=self._sequence(kayit_no))
+        for rec_no, name in sirali:
+            feature = FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM
+            if rec_no == MFT_EXTEND:
+                feature |= FILE_ATTR_DIRECTORY
+            key = self._file_name(MFT_ROOT, name, feature)
+            girisler += _index_entry(rec_no, key,
+                                     sira=self._sequence(rec_no))
         girisler += _index_end_entry()
         return bytes(girisler)
 
@@ -529,24 +529,24 @@ class _NtfsBuilder(NtfsFormatter):
         """Kok dizin icin INDX kaydi yazar (buyuk dizin)."""
         L = self.layout
         girisler = self._root_index_entries()
-        kayit = bytearray(INDEX_RECORD_SIZE)
+        record = bytearray(INDEX_RECORD_SIZE)
         usa_offset = 0x28
         usa_count = INDEX_RECORD_SIZE // L.sector_size + 1
         girisler_ofseti = (usa_offset + usa_count * 2 + 7) & ~7
 
-        kayit[0:4] = INDX_MAGIC
-        struct.pack_into("<HH", kayit, 4, usa_offset, usa_count)
-        struct.pack_into("<Q", kayit, 8, 0)                    # LSN
-        struct.pack_into("<Q", kayit, 0x10, 0)                 # VCN
+        record[0:4] = INDX_MAGIC
+        struct.pack_into("<HH", record, 4, usa_offset, usa_count)
+        struct.pack_into("<Q", record, 8, 0)                    # LSN
+        struct.pack_into("<Q", record, 0x10, 0)                 # VCN
         # INDEX_HEADER 0x18'de baslar; ofsetler bu noktaya GOREdir
-        struct.pack_into("<III", kayit, 0x18,
+        struct.pack_into("<III", record, 0x18,
                          girisler_ofseti - 0x18,
                          girisler_ofseti - 0x18 + len(girisler),
                          INDEX_RECORD_SIZE - 0x18)
-        kayit[0x24] = 0                                        # yaprak dugum
-        kayit[girisler_ofseti:girisler_ofseti + len(girisler)] = girisler
-        self._apply_fixup(kayit, usa_offset, usa_count, 1, L.sector_size)
-        self._write_clusters(L.root_index_lcn, bytes(kayit))
+        record[0x24] = 0                                        # yaprak dugum
+        record[girisler_ofseti:girisler_ofseti + len(girisler)] = girisler
+        self._apply_fixup(record, usa_offset, usa_count, 1, L.sector_size)
+        self._write_clusters(L.root_index_lcn, bytes(record))
 
     def _used_clusters(self) -> List[Tuple[int, int]]:
         """Metaverinin kapladigi (lcn, adet) araliklari."""
@@ -579,153 +579,153 @@ class _NtfsBuilder(NtfsFormatter):
     def _build_mft_records(self) -> List[bytes]:
         L = self.layout
         cs = L.cluster_size
-        kayitlar: List[bytes] = []
+        records: List[bytes] = []
 
-        def sistem_ad(kayit_no: int, ad: str, boyut: int = 0,
-                      ayrilmis: int = 0, dizin: bool = False) -> bytes:
-            ozellik = FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM
-            if dizin:
-                ozellik |= FILE_ATTR_DIRECTORY
+        def system_file(rec_no: int, name: str, size: int = 0,
+                      allocated: int = 0, is_dir: bool = False) -> bytes:
+            feature = FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM
+            if is_dir:
+                feature |= FILE_ATTR_DIRECTORY
             return self._attr_resident(
                 AT_FILE_NAME,
-                self._file_name(MFT_ROOT, ad, ozellik, ayrilmis, boyut),
+                self._file_name(MFT_ROOT, name, feature, allocated, size),
                 indexed=1)
 
         # 0: $MFT
-        mft_boyut = L.mft_clusters * cs
+        mft_size = L.mft_clusters * cs
         mft_bitmap = bytearray(max(8, (32 + 7) // 8))
         for i in range(MFT_RESERVED_COUNT):
             mft_bitmap[i >> 3] |= 1 << (i & 7)
-        kayitlar.append(self._make_record(MFT_MFT, MFT_FLAG_IN_USE, [
+        records.append(self._make_record(MFT_MFT, MFT_FLAG_IN_USE, [
             self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
-            sistem_ad(MFT_MFT, "$MFT", mft_boyut, mft_boyut),
+            system_file(MFT_MFT, "$MFT", mft_size, mft_size),
             self._attr_nonresident(AT_DATA, [(L.mft_lcn, L.mft_clusters)],
-                                   mft_boyut, attr_id=1),
+                                   mft_size, attr_id=1),
             self._attr_resident(AT_BITMAP, bytes(mft_bitmap), attr_id=2),
         ]))
 
         # 1: $MFTMirr
-        mirr_boyut = 4 * MFT_RECORD_SIZE
-        kayitlar.append(self._make_record(MFT_MFTMIRR, MFT_FLAG_IN_USE, [
+        mirr_size = 4 * MFT_RECORD_SIZE
+        records.append(self._make_record(MFT_MFTMIRR, MFT_FLAG_IN_USE, [
             self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
-            sistem_ad(MFT_MFTMIRR, "$MFTMirr", mirr_boyut,
+            system_file(MFT_MFTMIRR, "$MFTMirr", mirr_size,
                       L.mftmirr_clusters * cs),
             self._attr_nonresident(AT_DATA,
                                    [(L.mftmirr_lcn, L.mftmirr_clusters)],
-                                   mirr_boyut, attr_id=1),
+                                   mirr_size, attr_id=1),
         ]))
 
         # 2: $LogFile
-        log_boyut = L.logfile_clusters * cs
-        kayitlar.append(self._make_record(MFT_LOGFILE, MFT_FLAG_IN_USE, [
+        log_size = L.logfile_clusters * cs
+        records.append(self._make_record(MFT_LOGFILE, MFT_FLAG_IN_USE, [
             self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
-            sistem_ad(MFT_LOGFILE, "$LogFile", log_boyut, log_boyut),
+            system_file(MFT_LOGFILE, "$LogFile", log_size, log_size),
             self._attr_nonresident(AT_DATA, [(L.logfile_lcn, L.logfile_clusters)],
-                                   log_boyut, attr_id=1),
+                                   log_size, attr_id=1),
         ]))
 
         # 3: $Volume
-        birim_bilgisi = struct.pack("<QBBH", 0, 3, 1, 0)   # NTFS 3.1, bayrak yok
+        volume_info = struct.pack("<QBBH", 0, 3, 1, 0)   # NTFS 3.1, bayrak yok
         volume_attrs = [
             self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
-            sistem_ad(MFT_VOLUME, "$Volume"),
+            system_file(MFT_VOLUME, "$Volume"),
         ]
         if self.label:
             volume_attrs.append(self._attr_resident(
                 AT_VOLUME_NAME, self.label.encode("utf-16-le"), attr_id=1))
         volume_attrs.append(self._attr_resident(AT_VOLUME_INFORMATION,
-                                                birim_bilgisi, attr_id=2))
+                                                volume_info, attr_id=2))
         volume_attrs.append(self._attr_resident(AT_DATA, b"", attr_id=3))
-        kayitlar.append(self._make_record(MFT_VOLUME, MFT_FLAG_IN_USE, volume_attrs))
+        records.append(self._make_record(MFT_VOLUME, MFT_FLAG_IN_USE, volume_attrs))
 
         # 4: $AttrDef
         attrdef = attrdef_table()
-        kayitlar.append(self._make_record(MFT_ATTRDEF, MFT_FLAG_IN_USE, [
+        records.append(self._make_record(MFT_ATTRDEF, MFT_FLAG_IN_USE, [
             self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
-            sistem_ad(MFT_ATTRDEF, "$AttrDef", len(attrdef), cs),
+            system_file(MFT_ATTRDEF, "$AttrDef", len(attrdef), cs),
             self._attr_nonresident(AT_DATA, [(L.attrdef_lcn, 1)], len(attrdef),
                                    attr_id=1),
         ]))
 
         # 5: kok dizin
-        kayitlar.append(self._make_record(MFT_ROOT,
+        records.append(self._make_record(MFT_ROOT,
                                           MFT_FLAG_IN_USE | MFT_FLAG_DIRECTORY,
                                           self._root_attrs()))
 
         # 6: $Bitmap
-        bitmap_boyut = (L.total_clusters + 7) // 8
-        kayitlar.append(self._make_record(MFT_BITMAP, MFT_FLAG_IN_USE, [
+        bitmap_size = (L.total_clusters + 7) // 8
+        records.append(self._make_record(MFT_BITMAP, MFT_FLAG_IN_USE, [
             self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
-            sistem_ad(MFT_BITMAP, "$Bitmap", bitmap_boyut,
+            system_file(MFT_BITMAP, "$Bitmap", bitmap_size,
                       L.bitmap_clusters * cs),
             self._attr_nonresident(AT_DATA, [(L.bitmap_lcn, L.bitmap_clusters)],
-                                   bitmap_boyut, attr_id=1),
+                                   bitmap_size, attr_id=1),
         ]))
 
         # 7: $Boot
-        kayitlar.append(self._make_record(MFT_BOOT, MFT_FLAG_IN_USE, [
+        records.append(self._make_record(MFT_BOOT, MFT_FLAG_IN_USE, [
             self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
-            sistem_ad(MFT_BOOT, "$Boot", 8192, 4 * cs),
+            system_file(MFT_BOOT, "$Boot", 8192, 4 * cs),
             self._attr_nonresident(AT_DATA, [(0, max(1, 8192 // cs))], 8192,
                                    attr_id=1),
         ]))
 
         # 8: $BadClus — seyrek, birim boyutunda
-        birim_boyutu = L.total_clusters * cs
-        kayitlar.append(self._make_record(MFT_BADCLUS, MFT_FLAG_IN_USE, [
+        volume_size = L.total_clusters * cs
+        records.append(self._make_record(MFT_BADCLUS, MFT_FLAG_IN_USE, [
             self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
-            sistem_ad(MFT_BADCLUS, "$BadClus"),
+            system_file(MFT_BADCLUS, "$BadClus"),
             self._attr_resident(AT_DATA, b"", attr_id=1),
-            self._bad_stream(birim_boyutu),
+            self._bad_stream(volume_size),
         ]))
 
         # 9: $Secure — $SDS akisi ve iki dizin ($SDH karma, $SII kimlik).
         # ntfs-3g bu iki dizini arar; yoksa birimi acamaz.
         # 0x08: kayit bir "gorunum indeksi" tasir ($SDH/$SII)
-        kayitlar.append(self._make_record(MFT_SECURE, MFT_FLAG_IN_USE | 0x08, [
+        records.append(self._make_record(MFT_SECURE, MFT_FLAG_IN_USE | 0x08, [
             self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
-            sistem_ad(MFT_SECURE, "$Secure"),
-            self._attr_nonresident(AT_DATA, [(L.secure_lcn, 1)], 0, ad="$SDS",
+            system_file(MFT_SECURE, "$Secure"),
+            self._attr_nonresident(AT_DATA, [(L.secure_lcn, 1)], 0, name="$SDS",
                                    attr_id=1),
             self._attr_resident(AT_INDEX_ROOT,
                                 self._small_index_root(0, 0x12),
-                                ad="$SDH", attr_id=2),
+                                name="$SDH", attr_id=2),
             self._attr_resident(AT_INDEX_ROOT,
                                 self._small_index_root(0, 0x10),
-                                ad="$SII", attr_id=3),
+                                name="$SII", attr_id=3),
         ]))
 
         # 10: $UpCase
-        upcase_boyut = 128 * 1024
-        kayitlar.append(self._make_record(MFT_UPCASE, MFT_FLAG_IN_USE, [
+        upcase_size = 128 * 1024
+        records.append(self._make_record(MFT_UPCASE, MFT_FLAG_IN_USE, [
             self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
-            sistem_ad(MFT_UPCASE, "$UpCase", upcase_boyut,
+            system_file(MFT_UPCASE, "$UpCase", upcase_size,
                       L.upcase_clusters * cs),
             self._attr_nonresident(AT_DATA, [(L.upcase_lcn, L.upcase_clusters)],
-                                   upcase_boyut, attr_id=1),
+                                   upcase_size, attr_id=1),
         ]))
 
         # 11: $Extend (bos dizin)
-        bos_index = self._small_index_root()
-        kayitlar.append(self._make_record(MFT_EXTEND,
+        free_index = self._small_index_root()
+        records.append(self._make_record(MFT_EXTEND,
                                           MFT_FLAG_IN_USE | MFT_FLAG_DIRECTORY, [
             self._attr_resident(AT_STANDARD_INFORMATION,
                                 self._std_info(FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM)),
-            sistem_ad(MFT_EXTEND, "$Extend", dizin=True),
-            self._attr_resident(AT_INDEX_ROOT, bos_index, ad="$I30", attr_id=1),
+            system_file(MFT_EXTEND, "$Extend", is_dir=True),
+            self._attr_resident(AT_INDEX_ROOT, free_index, name="$I30", attr_id=1),
         ]))
 
         # 12..15: ayrilmis kayitlar.
         # Bunlarda $FILE_NAME BULUNMAZ — kok dizinde listelenmezler. Ad eklemek
         # `chkdsk` tarafindan "Attribute record (30) is corrupt" olarak bildirilir.
         for no in range(12, MFT_RESERVED_COUNT):
-            kayitlar.append(self._make_record(no, MFT_FLAG_IN_USE, [
+            records.append(self._make_record(no, MFT_FLAG_IN_USE, [
                 self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
                 self._attr_resident(AT_DATA, b"", attr_id=1),
             ]))
-        return kayitlar
+        return records
 
-    def _bad_stream(self, birim_boyutu: int) -> bytes:
+    def _bad_stream(self, volume_size: int) -> bytes:
         """$BadClus:$Bad — birim boyutunda, hic kume ayrilmamis akis.
 
         Referans bicimde bu akis **seyrek bayragi kullanmaz**; bunun yerine
@@ -738,23 +738,23 @@ class _NtfsBuilder(NtfsFormatter):
         alani beklenir ve ad/esleme ofsetleri kayar; `chkdsk` bunu bozuk sayar.
         """
         L = self.layout
-        son_vcn = L.total_clusters - 1
-        ad = "$Bad".encode("utf-16-le")
-        ad_ofseti = 0x40
-        esleme_ofseti = (ad_ofseti + len(ad) + 7) & ~7
-        uzunluk_baytlari = _signed_bytes(L.total_clusters, isaretsiz=True)
-        kosular = bytes([len(uzunluk_baytlari)]) + uzunluk_baytlari + b"\x00"
-        toplam = (esleme_ofseti + len(kosular) + 7) & ~7
-        attr = bytearray(toplam)
-        struct.pack_into("<IIBBHHH", attr, 0, AT_DATA, toplam, 1,
-                         4, ad_ofseti, 0, 0)
-        struct.pack_into("<QQHHI", attr, 0x10, 0, son_vcn, esleme_ofseti, 0, 0)
-        struct.pack_into("<QQQ", attr, 0x28, birim_boyutu, birim_boyutu, 0)
-        attr[ad_ofseti:ad_ofseti + len(ad)] = ad
+        last_vcn = L.total_clusters - 1
+        name = "$Bad".encode("utf-16-le")
+        name_offset = 0x40
+        esleme_ofseti = (name_offset + len(name) + 7) & ~7
+        length_bytes = _signed_bytes(L.total_clusters, unsigned=True)
+        kosular = bytes([len(length_bytes)]) + length_bytes + b"\x00"
+        total = (esleme_ofseti + len(kosular) + 7) & ~7
+        attr = bytearray(total)
+        struct.pack_into("<IIBBHHH", attr, 0, AT_DATA, total, 1,
+                         4, name_offset, 0, 0)
+        struct.pack_into("<QQHHI", attr, 0x10, 0, last_vcn, esleme_ofseti, 0, 0)
+        struct.pack_into("<QQQ", attr, 0x28, volume_size, volume_size, 0)
+        attr[name_offset:name_offset + len(name)] = name
         attr[esleme_ofseti:esleme_ofseti + len(kosular)] = kosular
         return bytes(attr)
 
-    def _small_index_root(self, tur: int = AT_FILE_NAME,
+    def _small_index_root(self, kind: int = AT_FILE_NAME,
                           siralama: int = 1) -> bytes:
         """Bos $INDEX_ROOT (alt dugum yok).
 
@@ -763,14 +763,14 @@ class _NtfsBuilder(NtfsFormatter):
         """
         L = self.layout
         girisler = _index_end_entry()
-        deger = bytearray(0x20 + len(girisler))
-        struct.pack_into("<IIIBBBB", deger, 0, tur, siralama,
+        value = bytearray(0x20 + len(girisler))
+        struct.pack_into("<IIIBBBB", value, 0, kind, siralama,
                          INDEX_RECORD_SIZE,
                          max(1, INDEX_RECORD_SIZE // L.cluster_size), 0, 0, 0)
-        struct.pack_into("<IIII", deger, 0x10, 0x10, 0x10 + len(girisler),
+        struct.pack_into("<IIII", value, 0x10, 0x10, 0x10 + len(girisler),
                          0x10 + len(girisler), 0)
-        deger[0x20:] = girisler
-        return bytes(deger)
+        value[0x20:] = girisler
+        return bytes(value)
 
     def _root_attrs(self) -> List[bytes]:
         """Kok dizinin oznitelikleri.
@@ -781,13 +781,13 @@ class _NtfsBuilder(NtfsFormatter):
         """
         L = self.layout
         girisler = self._root_index_entries()
-        kok_deger = bytearray(0x20 + len(girisler))
-        struct.pack_into("<IIIBBBB", kok_deger, 0, AT_FILE_NAME, 1,
+        root_value = bytearray(0x20 + len(girisler))
+        struct.pack_into("<IIIBBBB", root_value, 0, AT_FILE_NAME, 1,
                          INDEX_RECORD_SIZE,
                          max(1, INDEX_RECORD_SIZE // L.cluster_size), 0, 0, 0)
-        struct.pack_into("<IIII", kok_deger, 0x10, 0x10, 0x10 + len(girisler),
+        struct.pack_into("<IIII", root_value, 0x10, 0x10, 0x10 + len(girisler),
                          0x10 + len(girisler), 0)     # bayrak 0 = kucuk dizin
-        kok_deger[0x20:] = girisler
+        root_value[0x20:] = girisler
 
         return [
             self._attr_resident(AT_STANDARD_INFORMATION,
@@ -798,26 +798,26 @@ class _NtfsBuilder(NtfsFormatter):
                                 FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM
                                 | FILE_ATTR_DIRECTORY),
                 indexed=1),
-            self._attr_resident(AT_INDEX_ROOT, bytes(kok_deger), ad="$I30",
+            self._attr_resident(AT_INDEX_ROOT, bytes(root_value), name="$I30",
                                 attr_id=1),
         ]
 
-    def _write_mft(self, kayitlar: List[bytes]) -> None:
+    def _write_mft(self, records: List[bytes]) -> None:
         L = self.layout
         veri = bytearray(L.mft_clusters * L.cluster_size)
-        for i, kayit in enumerate(kayitlar):
+        for i, record in enumerate(records):
             ofset = i * MFT_RECORD_SIZE
             if ofset + MFT_RECORD_SIZE > len(veri):
                 raise NtfsError("MFT alani yetersiz")
-            veri[ofset:ofset + MFT_RECORD_SIZE] = kayit
+            veri[ofset:ofset + MFT_RECORD_SIZE] = record
         self._write_clusters(L.mft_lcn, bytes(veri))
 
-    def _write_mftmirr(self, kayitlar: List[bytes]) -> None:
+    def _write_mftmirr(self, records: List[bytes]) -> None:
         """Ilk dort MFT kaydinin yedegi."""
         L = self.layout
         veri = bytearray(L.mftmirr_clusters * L.cluster_size)
-        for i, kayit in enumerate(kayitlar[:4]):
-            veri[i * MFT_RECORD_SIZE:(i + 1) * MFT_RECORD_SIZE] = kayit
+        for i, record in enumerate(records[:4]):
+            veri[i * MFT_RECORD_SIZE:(i + 1) * MFT_RECORD_SIZE] = record
         self._write_clusters(L.mftmirr_lcn, bytes(veri))
 
     # ---- onyukleme sektoru ------------------------------------------------
@@ -850,9 +850,9 @@ class _NtfsBuilder(NtfsFormatter):
         L = self.layout
         boot = self._boot_sector()
         # $Boot alani 8 KiB'dir; ilk sektor onyukleme sektorudur
-        alan = bytearray(max(8192, L.cluster_size))
-        alan[0:len(boot)] = boot
-        self._write_clusters(0, bytes(alan))
+        region = bytearray(max(8192, L.cluster_size))
+        region[0:len(boot)] = boot
+        self._write_clusters(0, bytes(region))
         # yedek: birimin son sektoru (toplam_sektor konumunda)
         self.dev.write(L.total_sectors * L.sector_size, boot)
 

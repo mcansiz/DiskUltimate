@@ -78,12 +78,12 @@ class DiskImage(BlockDevice):
             # Dosya yine de salt okunur acilir, ama neden acikca saptanir.
             self._fh = open(self.path, "rb")
             self.readonly = True
-            self.readonly_reason = self._readonly_nedeni(exc)
+            self.readonly_reason = self._readonly_reason_for(exc)
         except OSError as exc:
             if getattr(exc, "winerror", None) in (32, 33):
                 self._fh = open(self.path, "rb")
                 self.readonly = True
-                self.readonly_reason = self._readonly_nedeni(exc)
+                self.readonly_reason = self._readonly_reason_for(exc)
             else:
                 raise
         self._size = os.path.getsize(self.path)
@@ -91,7 +91,7 @@ class DiskImage(BlockDevice):
             # sektor sinirina tam oturmayan dosyalar da acilir, artik bayt yok sayilir
             self._size -= self._size % self.sector_size
 
-    def _readonly_nedeni(self, exc: OSError) -> str:
+    def _readonly_reason_for(self, exc: OSError) -> str:
         """Yazma icin acilamama nedenini insan diliyle acikla."""
         import stat as _stat
 

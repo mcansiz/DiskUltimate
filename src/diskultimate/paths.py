@@ -19,13 +19,13 @@ LOG_DIR = os.path.join(CLAUDE_DIR, "logs")
 
 def scratch_root() -> str:
     """Gecici calisma alaninin kokunu dondurur (gerekirse olusturur)."""
-    yol = os.environ.get("DISKULTIMATE_SCRATCH") or os.path.join(PROJECT_ROOT, ".tmp")
-    os.makedirs(yol, exist_ok=True)
-    return yol
+    path = os.environ.get("DISKULTIMATE_SCRATCH") or os.path.join(PROJECT_ROOT, ".tmp")
+    os.makedirs(path, exist_ok=True)
+    return path
 
 
 def scratch(*parts: str) -> str:
     """Gecici alan altinda bir alt yol dondurur ve dizinini olusturur."""
-    yol = os.path.join(scratch_root(), *parts)
-    os.makedirs(yol, exist_ok=True)
-    return yol
+    path = os.path.join(scratch_root(), *parts)
+    os.makedirs(path, exist_ok=True)
+    return path

@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import QSizePolicy, QWidget
 from ...core.ptable import human_size
 from ..theme import FREE_COLOR, darken, fs_color, lighten, palette_color
 
-TUTAMAK = 7           # tutamagin piksel genisligi
+HANDLE_W = 7           # tutamagin piksel genisligi
 KENAR = 12            # seridin sol/sag bosluğu
 YUKSEKLIK = 74
 
@@ -29,7 +29,7 @@ YUKSEKLIK = 74
 class ResizeBar(QWidget):
     """Suruklenebilir bolum boyutlandirma seridi."""
 
-    changed = pyqtSignal(int, int)        # (yeni_start_lba, yeni_sector_count)
+    rangeChanged = pyqtSignal(int, int)        # (yeni_start_lba, yeni_sector_count)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -52,11 +52,11 @@ class ResizeBar(QWidget):
         self.used_bytes = -1
         self.can_move = True
 
-        self._surukleme: Optional[str] = None      # 'sol' | 'sag' | 'govde'
-        self._basla_x = 0
-        self._basla_start = 0
-        self._basla_count = 0
-        self._uzerinde: Optional[str] = None
+        self._dragging: Optional[str] = None      # 'sol' | 'sag' | 'govde'
+        self._drag_x = 0
+        self._drag_start = 0
+        self._drag_count = 0
+        self._hover: Optional[str] = None
 
     # -- veri ---------------------------------------------------------------
     def setup(self, window_start: int, window_count: int, start: int,
@@ -77,26 +77,26 @@ class ResizeBar(QWidget):
         self.can_move = can_move
         self.update()
 
-    def set_values(self, start: int, count: int) -> None:
+    def set_range(self, start: int, count: int) -> None:
         """Disaridan (sayi kutularindan) gelen degeri uygular."""
         self.start, self.count = start, count
         self.update()
 
     # -- olcek --------------------------------------------------------------
-    def _serit(self) -> QRect:
+    def _track(self) -> QRect:
         return QRect(KENAR, 4, max(1, self.width() - 2 * KENAR), YUKSEKLIK)
 
     def _x(self, lba: int) -> int:
-        s = self._serit()
+        s = self._track()
         oran = (lba - self.window_start) / self.window_count
         return s.left() + int(round(oran * s.width()))
 
     def _lba(self, x: int) -> int:
-        s = self._serit()
+        s = self._track()
         oran = (x - s.left()) / max(1, s.width())
         return self.window_start + int(round(oran * self.window_count))
 
-    def _hizala(self, lba: int) -> int:
+    def _align(self, lba: int) -> int:
         return (lba // self.align) * self.align
 
     @property
@@ -107,7 +107,7 @@ class ResizeBar(QWidget):
     def paintEvent(self, event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, False)
-        s = self._serit()
+        s = self._track()
         metin = palette_color(self, "text")
         sonuk = palette_color(self, "dim")
 
@@ -118,45 +118,45 @@ class ResizeBar(QWidget):
 
         sol = max(s.left(), self._x(self.start))
         sag = min(s.right() + 1, self._x(self.start + self.count))
-        blok = QRect(sol, s.top(), max(2, sag - sol), s.height())
+        block = QRect(sol, s.top(), max(2, sag - sol), s.height())
 
         renk = fs_color(self.fs_type)
-        gecis = QLinearGradient(blok.topLeft(), blok.bottomLeft())
+        gecis = QLinearGradient(block.topLeft(), block.bottomLeft())
         gecis.setColorAt(0.0, lighten(renk, 135))
         gecis.setColorAt(1.0, darken(renk, 112))
-        p.fillRect(blok, QBrush(gecis))
+        p.fillRect(block, QBrush(gecis))
         p.setPen(QPen(darken(renk, 150), 1))
-        p.drawRect(blok.adjusted(0, 0, -1, -1))
+        p.drawRect(block.adjusted(0, 0, -1, -1))
 
         # kullanilan alan cubugu (dosya sistemi doluluk orani)
         if self.used_bytes >= 0 and self.count > 0:
-            toplam = self.count * self.sector_size
-            oran = min(1.0, self.used_bytes / max(1, toplam))
-            dolu = QRect(blok.left() + 4, blok.bottom() - 13,
-                         max(0, int((blok.width() - 8) * oran)), 7)
-            p.fillRect(QRect(blok.left() + 4, blok.bottom() - 13,
-                             blok.width() - 8, 7),
+            total = self.count * self.sector_size
+            oran = min(1.0, self.used_bytes / max(1, total))
+            used = QRect(block.left() + 4, block.bottom() - 13,
+                         max(0, int((block.width() - 8) * oran)), 7)
+            p.fillRect(QRect(block.left() + 4, block.bottom() - 13,
+                             block.width() - 8, 7),
                        QColor(255, 255, 255, 90))
-            if dolu.width() > 0:
-                p.fillRect(dolu, darken(renk, 165))
+            if used.width() > 0:
+                p.fillRect(used, darken(renk, 165))
 
         # blok yazisi
-        if blok.width() > 56:
+        if block.width() > 56:
             p.setPen(QColor("#ffffff") if renk.value() < 190 else QColor("#20262e"))
             yazi = QFont(self.font())
             yazi.setPointSizeF(max(7.5, yazi.pointSizeF()))
             p.setFont(yazi)
-            baslik = self.label or (self.fs_type or "Bolum")
-            p.drawText(blok.adjusted(6, 5, -6, 0), Qt.AlignLeft | Qt.AlignTop,
-                       baslik)
-            p.drawText(blok.adjusted(6, 21, -6, 0), Qt.AlignLeft | Qt.AlignTop,
+            title = self.label or (self.fs_type or "Bolum")
+            p.drawText(block.adjusted(6, 5, -6, 0), Qt.AlignLeft | Qt.AlignTop,
+                       title)
+            p.drawText(block.adjusted(6, 21, -6, 0), Qt.AlignLeft | Qt.AlignTop,
                        human_size(self.count * self.sector_size))
 
         # tutamaklar
-        for ad, x in (("sol", sol), ("sag", sag)):
-            if ad == "sol" and not self.can_move:
+        for name, x in (("sol", sol), ("sag", sag)):
+            if name == "sol" and not self.can_move:
                 continue
-            self._tutamak_ciz(p, x, s, ad == self._uzerinde or ad == self._surukleme)
+            self._draw_handle(p, x, s, name == self._hover or name == self._dragging)
 
         # bos alan etiketleri
         p.setFont(self.font())
@@ -175,11 +175,11 @@ class ResizeBar(QWidget):
             p.drawText(taban, Qt.AlignHCenter | Qt.AlignVCenter,
                        "bolum kapsayici alanin tamamini kapliyor")
 
-    def _tutamak_ciz(self, p: QPainter, x: int, s: QRect, vurgulu: bool) -> None:
+    def _draw_handle(self, p: QPainter, x: int, s: QRect, highlight: bool) -> None:
         renk = palette_color(self, "highlight")
-        if not vurgulu:
+        if not highlight:
             renk = darken(renk, 110)
-        kutu = QRect(x - TUTAMAK // 2, s.top() - 3, TUTAMAK, s.height() + 6)
+        kutu = QRect(x - HANDLE_W // 2, s.top() - 3, HANDLE_W, s.height() + 6)
         p.fillRect(kutu, renk)
         p.setPen(QPen(darken(renk, 150), 1))
         p.drawRect(kutu.adjusted(0, 0, -1, -1))
@@ -189,67 +189,67 @@ class ResizeBar(QWidget):
             p.drawLine(kutu.left() + 2, orta + dy, kutu.right() - 2, orta + dy)
 
     # -- fare ---------------------------------------------------------------
-    def _tutamak_bul(self, x: int) -> Optional[str]:
+    def _handle_at(self, x: int) -> Optional[str]:
         sol = self._x(self.start)
         sag = self._x(self.start + self.count)
-        if self.can_move and abs(x - sol) <= TUTAMAK:
+        if self.can_move and abs(x - sol) <= HANDLE_W:
             return "sol"
-        if abs(x - sag) <= TUTAMAK:
+        if abs(x - sag) <= HANDLE_W:
             return "sag"
         if self.can_move and sol < x < sag:
             return "govde"
         return None
 
     def mouseMoveEvent(self, event) -> None:
-        if self._surukleme is None:
-            self._uzerinde = self._tutamak_bul(event.x())
+        if self._dragging is None:
+            self._hover = self._handle_at(event.x())
             imlec = {"sol": Qt.SizeHorCursor, "sag": Qt.SizeHorCursor,
-                     "govde": Qt.OpenHandCursor}.get(self._uzerinde, Qt.ArrowCursor)
+                     "govde": Qt.OpenHandCursor}.get(self._hover, Qt.ArrowCursor)
             self.setCursor(imlec)
             self.update()
             return
-        self._surukle(event.x())
+        self._drag(event.x())
 
     def mousePressEvent(self, event) -> None:
         if event.button() != Qt.LeftButton:
             return
-        self._surukleme = self._tutamak_bul(event.x())
-        self._basla_x = event.x()
-        self._basla_start = self.start
-        self._basla_count = self.count
-        if self._surukleme == "govde":
+        self._dragging = self._handle_at(event.x())
+        self._drag_x = event.x()
+        self._drag_start = self.start
+        self._drag_count = self.count
+        if self._dragging == "govde":
             self.setCursor(Qt.ClosedHandCursor)
 
     def mouseReleaseEvent(self, event) -> None:
-        self._surukleme = None
+        self._dragging = None
         self.setCursor(Qt.ArrowCursor)
         self.update()
 
-    def _surukle(self, x: int) -> None:
-        fark = self._lba(x) - self._lba(self._basla_x)
-        if self._surukleme == "sag":
-            yeni_count = self._hizala(self._basla_count + fark)
-            yeni_start = self.start
-        elif self._surukleme == "sol":
-            yeni_start = self._hizala(self._basla_start + fark)
-            yeni_count = self._basla_start + self._basla_count - yeni_start
-        elif self._surukleme == "govde":
-            yeni_start = self._hizala(self._basla_start + fark)
-            yeni_count = self._basla_count
+    def _drag(self, x: int) -> None:
+        delta = self._lba(x) - self._lba(self._drag_x)
+        if self._dragging == "sag":
+            new_count = self._align(self._drag_count + delta)
+            new_start = self.start
+        elif self._dragging == "sol":
+            new_start = self._align(self._drag_start + delta)
+            new_count = self._drag_start + self._drag_count - new_start
+        elif self._dragging == "govde":
+            new_start = self._align(self._drag_start + delta)
+            new_count = self._drag_count
         else:
             return
-        self._uygula(yeni_start, yeni_count)
+        self._apply(new_start, new_count)
 
-    def _uygula(self, start: int, count: int) -> None:
+    def _apply(self, start: int, count: int) -> None:
         """Sinirlara kirparak degerleri uygular ve sinyal yayar."""
         count = max(self.min_count, min(self.max_count, count))
         start = max(self.window_start, start)
         if start + count > self.window_end:
-            if self._surukleme == "sag":
+            if self._dragging == "sag":
                 count = self.window_end - start
             else:
                 start = self.window_end - count
-        start = max(self.window_start, self._hizala(start))
+        start = max(self.window_start, self._align(start))
         count = max(self.min_count, min(self.max_count, count))
         if start + count > self.window_end:
             count = self.window_end - start
@@ -257,28 +257,28 @@ class ResizeBar(QWidget):
             return
         self.start, self.count = start, count
         self.update()
-        self.changed.emit(start, count)
+        self.rangeChanged.emit(start, count)
 
     # -- klavye -------------------------------------------------------------
     def keyPressEvent(self, event) -> None:
         """Ok tuslariyla ince ayar: tek adim = bir hizalama birimi."""
-        adim = self.align * (16 if event.modifiers() & Qt.ShiftModifier else 1)
+        step = self.align * (16 if event.modifiers() & Qt.ShiftModifier else 1)
         if event.key() == Qt.Key_Left:
-            self._surukleme = "sag"
-            self._uygula(self.start, self.count - adim)
+            self._dragging = "sag"
+            self._apply(self.start, self.count - step)
         elif event.key() == Qt.Key_Right:
-            self._surukleme = "sag"
-            self._uygula(self.start, self.count + adim)
+            self._dragging = "sag"
+            self._apply(self.start, self.count + step)
         elif event.key() == Qt.Key_Home and self.can_move:
-            self._surukleme = "govde"
-            self._uygula(self.start - adim, self.count)
+            self._dragging = "govde"
+            self._apply(self.start - step, self.count)
         elif event.key() == Qt.Key_End and self.can_move:
-            self._surukleme = "govde"
-            self._uygula(self.start + adim, self.count)
+            self._dragging = "govde"
+            self._apply(self.start + step, self.count)
         else:
             super().keyPressEvent(event)
             return
-        self._surukleme = None
+        self._dragging = None
 
     def sizeHint(self) -> QSize:
         return QSize(520, YUKSEKLIK + 26)

@@ -45,7 +45,8 @@ from diskultimate.ui.dialogs.tools import (CarveOptionsDialog,  # noqa: E402
                                            LostPartitionsDialog, WipeDialog)
 from diskultimate.core.platform import summary as platform_summary  # noqa: E402
 from diskultimate.core.recovery import CarvedFile, DeletedFile, LostPartition  # noqa: E402
-from diskultimate.ui.main_window import MainWindow  # noqa: E402
+from diskultimate.ui.main_window import (MainWindow, TAB_HEX,  # noqa: E402
+                                         TAB_INFO)
 from diskultimate.ui.theme import apply_theme  # noqa: E402
 
 MIB = 1024 * 1024
@@ -103,9 +104,9 @@ def main() -> int:
     pencere.select_partition(1)
     pencere.browser.navigate("/Belgeler")
     kaydet(pencere, "02-dosya-gezgini.png")
-    pencere.tabs.setCurrentIndex(1)
+    pencere.tabs.setCurrentIndex(TAB_INFO)
     kaydet(pencere, "03-bolum-bilgisi.png")
-    pencere.tabs.setCurrentIndex(2)
+    pencere.tabs.setCurrentIndex(TAB_HEX)
     kaydet(pencere, "04-onaltilik.png")
     pencere.select_partition(2)
     kaydet(pencere, "05-desteklenmeyen-fs.png")
@@ -134,8 +135,8 @@ def main() -> int:
     kaydet(d3b, "08b-bolum-boyutlandir.png")
     # suruklemeyi taklit et: sag tutamagi yarisina cek, sonra eski haline don
     bar = d3b.bar
-    bar._surukleme = "sag"
-    bar._uygula(bar.start, max(bar.min_count, bar.count // 2))
+    bar._dragging = "sag"
+    bar._apply(bar.start, max(bar.min_count, bar.count // 2))
     assert d3b.kapasite.value() > 0
     kaydet(d3b, "08c-bolum-boyutlandir-surukleme.png")
     d3b.close()
@@ -200,7 +201,7 @@ def main() -> int:
     print(f"  (coklu goruntu: {len(pencere.sessions)} oturum, "
           f"{kok_sayisi} agac koku)")
     assert len(pencere.sessions) == 2, "ikinci goruntu acilinca ilki kapanmis"
-    kaydet(pencere, "15-coklu-goruntu.png")
+    kaydet(pencere, "14-coklu-goruntu.png")
 
     bilgi = dict(platform_summary())
     bilgi["Qt platformu"] = app.platformName()
@@ -208,8 +209,41 @@ def main() -> int:
     d9 = InfoDialog("Sistem Bilgisi", bilgi, pencere,
                     note="FAT12/16/32 ve exFAT saf Python ile her platformda calisir.")
     d9.show()
-    kaydet(d9, "14-sistem-bilgisi.png")
+    kaydet(d9, "15-sistem-bilgisi.png")
     d9.close()
+
+    # ADR 0013 ozel temayi kaldirdi ama `theme.STYLESHEET` ileride "Tema"
+    # bolumu icin bilerek birakildi ve `DISKULTIMATE_THEME=diskultimate` ile
+    # halen acilabiliyor. Bu dal hicbir testten gecmiyordu; ADR 0012'deki
+    # sekme kirpilmasi tuzagi fark edilmeden geri gelebilirdi.
+    from diskultimate.ui.theme import THEMES
+    assert set(THEMES) == {"system", "diskultimate"}, THEMES
+    onceki = app.styleSheet()
+    try:
+        secilen = apply_theme(app, "diskultimate")
+        assert secilen == "diskultimate", secilen
+        assert app.styleSheet(), "diskultimate temasi stil sayfasi uygulamadi"
+        app.processEvents()
+        tema_penceresi = MainWindow()
+        tema_penceresi.resize(1400, 860)
+        tema_penceresi.open_path(goruntu)
+        app.processEvents()
+        # ADR 0012: stil sayfasindaki font-weight sekme basliklarini kirpmisti.
+        cubuk = tema_penceresi.tabs.tabBar()
+        for i in range(cubuk.count()):
+            gereken = cubuk.tabSizeHint(i).width()
+            gercek = cubuk.tabRect(i).width()
+            assert gercek + 1 >= gereken, (
+                f"sekme {i} ({cubuk.tabText(i)!r}) kirpildi: "
+                f"{gercek}px < gereken {gereken}px")
+        kaydet(tema_penceresi, "16-tema-diskultimate.png")
+        tema_penceresi.close_all()
+        tema_penceresi.close()
+        print(f"  (tema dali denetlendi: {cubuk.count()} sekme kirpilmadi)")
+    finally:
+        apply_theme(app, "system")
+        app.setStyleSheet(onceki)
+        app.processEvents()
 
     pencere.close_image()
     from PyQt5.QtGui import QFontDatabase

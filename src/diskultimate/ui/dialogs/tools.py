@@ -27,10 +27,10 @@ class WipeDialog(QDialog):
         self.setMinimumWidth(520)
         self._build(target_label, size, allow_free_space)
 
-    def _build(self, hedef: str, boyut: int, bos_alan_secenegi: bool) -> None:
+    def _build(self, target: str, size_bytes: int, allow_free_space: bool) -> None:
         duzen = QVBoxLayout(self)
         duzen.setSpacing(10)
-        duzen.addWidget(QLabel(f"<b>Hedef:</b> {hedef} — {human_size(boyut)}"))
+        duzen.addWidget(QLabel(f"<b>Hedef:</b> {target} — {human_size(size_bytes)}"))
 
         kapsam = QGroupBox("Kapsam")
         kapsam_duzen = QVBoxLayout(kapsam)
@@ -40,8 +40,8 @@ class WipeDialog(QDialog):
         self.radio_bos = QRadioButton(
             "Yalnizca bos alani sil (mevcut dosyalar korunur, silinmis dosyalarin "
             "artigi yok edilir)")
-        self.radio_bos.setEnabled(bos_alan_secenegi)
-        if not bos_alan_secenegi:
+        self.radio_bos.setEnabled(allow_free_space)
+        if not allow_free_space:
             self.radio_bos.setToolTip(
                 "Bu secenek yalnizca okunabilir bir dosya sistemi varsa kullanilabilir")
         kapsam_duzen.addWidget(self.radio_bos)
@@ -63,10 +63,10 @@ class WipeDialog(QDialog):
         duzen.addWidget(yontem_grup)
         self.radio_bos.toggled.connect(lambda v: yontem_grup.setEnabled(not v))
 
-        uyari = QLabel("<span style='color:#b23c17'><b>Uyari:</b> Bu islem geri "
+        warning = QLabel("<span style='color:#b23c17'><b>Uyari:</b> Bu islem geri "
                        "alinamaz. Silinen veriler kurtarilamaz.</span>")
-        uyari.setWordWrap(True)
-        duzen.addWidget(uyari)
+        warning.setWordWrap(True)
+        duzen.addWidget(warning)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         butonlar.button(QDialogButtonBox.Ok).setText("Sil")
@@ -78,9 +78,9 @@ class WipeDialog(QDialog):
         self._method_changed()
 
     def _method_changed(self) -> None:
-        anahtar = self.method_combo.currentData()
+        key = self.method_combo.currentData()
         for m in WIPE_METHODS:
-            if m.key == anahtar:
+            if m.key == key:
                 self.method_info.setText(f"{m.description} ({m.pass_count} gecis)")
                 self.verify_check.setEnabled(m.passes[-1] == "zero")
                 break
@@ -134,12 +134,12 @@ class DeletedFilesDialog(QDialog):
                 self.tree.setColumnWidth(i, w)
         duzen.addWidget(self.tree, 1)
 
-        alt = QHBoxLayout()
+        lower = QHBoxLayout()
         sec_tum = QPushButton("Tumunu sec")
         sec_tum.clicked.connect(self.tree.selectAll)
-        alt.addWidget(sec_tum)
-        alt.addStretch(1)
-        duzen.addLayout(alt)
+        lower.addWidget(sec_tum)
+        lower.addStretch(1)
+        duzen.addLayout(lower)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         butonlar.button(QDialogButtonBox.Ok).setText("Secilenleri kurtar...")
@@ -200,8 +200,8 @@ class LostPartitionsDialog(QDialog):
         duzen.addWidget(butonlar)
 
     def selected(self):
-        secili = self.tree.selectedItems()
-        return secili[0].data(0, Qt.UserRole) if secili else None
+        selected = self.tree.selectedItems()
+        return selected[0].data(0, Qt.UserRole) if selected else None
 
 
 class CarveOptionsDialog(QDialog):
@@ -230,15 +230,15 @@ class CarveOptionsDialog(QDialog):
             self.liste.addItem(item)
         duzen.addWidget(self.liste, 1)
 
-        alt = QHBoxLayout()
+        lower = QHBoxLayout()
         tumu = QPushButton("Tumunu sec")
         tumu.clicked.connect(lambda: self._set_all(Qt.Checked))
         hicbiri = QPushButton("Temizle")
         hicbiri.clicked.connect(lambda: self._set_all(Qt.Unchecked))
-        alt.addWidget(tumu)
-        alt.addWidget(hicbiri)
-        alt.addStretch(1)
-        duzen.addLayout(alt)
+        lower.addWidget(tumu)
+        lower.addWidget(hicbiri)
+        lower.addStretch(1)
+        duzen.addLayout(lower)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         butonlar.button(QDialogButtonBox.Ok).setText("Taramayi baslat")
@@ -248,9 +248,9 @@ class CarveOptionsDialog(QDialog):
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
 
-    def _set_all(self, durum) -> None:
+    def _set_all(self, state) -> None:
         for i in range(self.liste.count()):
-            self.liste.item(i).setCheckState(durum)
+            self.liste.item(i).setCheckState(state)
 
     def selected_keys(self) -> List[str]:
         return [self.liste.item(i).data(Qt.UserRole)
@@ -288,10 +288,10 @@ class CarvedFilesDialog(QDialog):
         duzen.addWidget(self.tree, 1)
         sec = QPushButton("Tumunu sec")
         sec.clicked.connect(self.tree.selectAll)
-        alt = QHBoxLayout()
-        alt.addWidget(sec)
-        alt.addStretch(1)
-        duzen.addLayout(alt)
+        lower = QHBoxLayout()
+        lower.addWidget(sec)
+        lower.addStretch(1)
+        duzen.addLayout(lower)
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         butonlar.button(QDialogButtonBox.Ok).setText("Secilenleri cikar...")
         butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
@@ -314,10 +314,10 @@ class InfoDialog(QDialog):
         duzen = QVBoxLayout(self)
         grup = QGroupBox(title)
         form = QFormLayout(grup)
-        for anahtar, deger in rows.items():
-            etiket = QLabel(str(deger))
+        for key, value in rows.items():
+            etiket = QLabel(str(value))
             etiket.setTextInteractionFlags(Qt.TextSelectableByMouse)
-            form.addRow(f"{anahtar}:", etiket)
+            form.addRow(f"{key}:", etiket)
         duzen.addWidget(grup)
         if note:
             n = QLabel(note)

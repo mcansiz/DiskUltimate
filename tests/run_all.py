@@ -262,13 +262,20 @@ def _fsck(image_path: str, skip_sectors: int) -> None:
     assert r.returncode == 0, f"fsck.vfat hata: {r.stdout}{r.stderr}"
 
 
+class Atlandi(Exception):
+    """Test bu ortamda calistirilamadi (eksik harici arac vb.).
+
+    Basarisizliktan ayrilir: kosum kirmizi olmaz ama ozette **gorunur**,
+    boylece "18/18" cikitisi atlanan testi gizlemez.
+    """
+
+
 @test
 def t05_harici_bicimlendirme():
     """exFAT / NTFS / ext4 bicimlendirme (sistemde varsa)"""
     keys = [k.key for k in available_kinds() if not k.internal]
     if not keys:
-        print("      (harici mkfs araci yok, atlandi)")
-        return
+        raise Atlandi("harici mkfs araci yok")
     p = img_path("t05.img")
     d = DiskImage.create(p, 700 * MIB, overwrite=True)
     off = 2048
@@ -860,7 +867,7 @@ def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():
         return 2
-    basarili, basarisiz = 0, []
+    basarili, basarisiz, atlanan = 0, [], []
     for fn in RESULTS:
         ad = fn.__name__
         aciklama = (fn.__doc__ or "").strip()
@@ -869,13 +876,23 @@ def main() -> int:
             fn()
             print("TAMAM")
             basarili += 1
+        except Atlandi as exc:
+            print(f"ATLANDI ({exc})")
+            atlanan.append((ad, str(exc)))
         except Exception as exc:
             print("BASARISIZ")
             traceback.print_exc()
             basarisiz.append((ad, str(exc)))
         finally:
             cleanup_test_files(ad.split("_")[0])   # t01, t02, ...
-    print(f"\nSonuc: {basarili}/{len(RESULTS)} basarili")
+    # Atlanan test "basarili" sayilmaz; ozette acikca gorunur ki "18/18"
+    # ciktisi o ortamda kosmamis bir testi gizlemesin.
+    ozet = f"\nSonuc: {basarili}/{len(RESULTS)} basarili"
+    if atlanan:
+        ozet += f" · {len(atlanan)} atlandi"
+    print(ozet)
+    for ad, neden in atlanan:
+        print(f"  - {ad} atlandi: {neden}")
     for ad, hata in basarisiz:
         print(f"  ! {ad}: {hata}")
     return 1 if basarisiz else 0

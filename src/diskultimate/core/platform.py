@@ -158,12 +158,12 @@ def _platform_key() -> str:
 def find_tool(fs_key: str) -> Optional[str]:
     """Verilen dosya sistemi icin kullanilabilir `mkfs` aracinin tam yolu."""
     adaylar = EXTERNAL_TOOLS.get(fs_key, {}).get(_platform_key(), [])
-    for ad in adaylar:
-        yol = shutil.which(ad)
-        if yol:
-            return yol
-        for dizin in _EK_ARAMA_YOLLARI:     # sbin cogu dagitimda PATH'te degil
-            tam = os.path.join(dizin, ad)
+    for name in adaylar:
+        path = shutil.which(name)
+        if path:
+            return path
+        for directory in _EK_ARAMA_YOLLARI:     # sbin cogu dagitimda PATH'te degil
+            tam = os.path.join(directory, name)
             if os.path.isfile(tam) and os.access(tam, os.X_OK):
                 return tam
     return None
@@ -203,10 +203,10 @@ def preferred_qt_platform() -> str:
 
 def default_image_dir() -> str:
     """Yeni goruntuler icin varsayilan klasor."""
-    for ad in ("Documents", "Belgeler"):
-        yol = os.path.join(os.path.expanduser("~"), ad)
-        if os.path.isdir(yol):
-            return yol
+    for name in ("Documents", "Belgeler"):
+        path = os.path.join(os.path.expanduser("~"), name)
+        if os.path.isdir(path):
+            return path
     return os.path.expanduser("~")
 
 
@@ -245,28 +245,28 @@ def windows_format_volume(disk_number: int, partition_number: int,
     """
     if not IS_WINDOWS:
         return False, "Yalnizca Windows"
-    fs_adi = {"ntfs": "NTFS", "exfat": "exFAT",
+    fs_name = {"ntfs": "NTFS", "exfat": "exFAT",
               "fat32": "FAT32", "fat16": "FAT"}.get(fs_key)
-    if not fs_adi:
+    if not fs_name:
         return False, f"{fs_key} Windows araciyla olusturulamaz"
     etiket = (label or "").replace('"', "")
     komut = (f"$ErrorActionPreference='Stop'; "
              f"$p = Get-Partition -DiskNumber {disk_number} "
              f"-PartitionNumber {partition_number}; "
-             f"$p | Format-Volume -FileSystem {fs_adi} "
+             f"$p | Format-Volume -FileSystem {fs_name} "
              f"-NewFileSystemLabel \"{etiket}\" -Confirm:$false -Force")
     if cluster_size:
         komut += f" -AllocationUnitSize {cluster_size}"
     komut += " | Out-Null; 'TAMAM'"
     try:
-        sonuc = run_tool(["powershell", "-NoProfile", "-NonInteractive",
+        result = run_tool(["powershell", "-NoProfile", "-NonInteractive",
                           "-Command", komut], timeout=600)
     except Exception as exc:
         return False, str(exc)
-    if sonuc.returncode == 0 and "TAMAM" in (sonuc.stdout or ""):
+    if result.returncode == 0 and "TAMAM" in (result.stdout or ""):
         return True, "Windows bicimlendiricisi kullanildi"
-    return False, ((sonuc.stderr or sonuc.stdout or "").strip()[:300]
-                   or f"cikis kodu {sonuc.returncode}")
+    return False, ((result.stderr or result.stdout or "").strip()[:300]
+                   or f"cikis kodu {result.returncode}")
 
 
 def native_resize_supported() -> bool:
@@ -288,15 +288,15 @@ def windows_partition_size_limits(disk_number: int, partition_number: int) -> tu
              f"-PartitionNumber {partition_number}; "
              f"\"$($s.SizeMin) $($s.SizeMax)\"")
     try:
-        sonuc = run_tool(["powershell", "-NoProfile", "-NonInteractive",
+        result = run_tool(["powershell", "-NoProfile", "-NonInteractive",
                           "-Command", komut], timeout=120)
     except Exception as exc:                       # noqa: BLE001
         return False, 0, 0, str(exc)
-    if sonuc.returncode != 0:
-        return False, 0, 0, (sonuc.stderr or sonuc.stdout or "").strip()[:300]
+    if result.returncode != 0:
+        return False, 0, 0, (result.stderr or result.stdout or "").strip()[:300]
     try:
-        alt, ust = (sonuc.stdout or "").strip().split()
-        return True, int(alt), int(ust), ""
+        lower, upper = (result.stdout or "").strip().split()
+        return True, int(lower), int(upper), ""
     except ValueError:
         return False, 0, 0, "Beklenmeyen cikti"
 
@@ -314,10 +314,10 @@ def windows_resize_partition(disk_number: int, partition_number: int,
              f"-PartitionNumber {partition_number} -Size {int(size_bytes)}; "
              f"'TAMAM'")
     try:
-        sonuc = run_tool(["powershell", "-NoProfile", "-NonInteractive",
+        result = run_tool(["powershell", "-NoProfile", "-NonInteractive",
                           "-Command", komut], timeout=1800)
     except Exception as exc:                       # noqa: BLE001
         return False, str(exc)
-    if sonuc.returncode == 0 and "TAMAM" in (sonuc.stdout or ""):
+    if result.returncode == 0 and "TAMAM" in (result.stdout or ""):
         return True, "Windows boyutlandiricisi kullanildi"
-    return False, (sonuc.stderr or sonuc.stdout or "").strip()[:300]
+    return False, (result.stderr or result.stdout or "").strip()[:300]

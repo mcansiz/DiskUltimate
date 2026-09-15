@@ -3,7 +3,7 @@
 Hedef: DiskGenius'un ozelliklerini mumkun oldugunca karsilamak.
 Durum isaretleri: ✅ tamam · 🟡 kismi · 📋 planlandi · ⛔ kapsam disi
 
-Guncelleme: 2026-09-13 (v0.2.0)
+Guncelleme: 2026-09-15 (v0.3.0)
 
 ---
 
@@ -33,9 +33,9 @@ Guncelleme: 2026-09-13 (v0.2.0)
 | **4K hizalama denetimi** | ✅ | ✅ | Araclar > Hizalama denetimi |
 | **Bolum boyutlandirma / tasima** | ✅ | ✅ | Suruklemeli serit; FAT12/16/32 + exFAT veri koruyarak, NTFS/ext Windows'ta yerel arac |
 | Bolum bolme / birlestirme | ✅ | 📋 | Boyutlandirma altyapisi hazir; bolme = kucult + yeni bolum |
-| Birincil ↔ mantiksal donusumu | ✅ | 📋 | v0.3 |
+| Birincil ↔ mantiksal donusumu | ✅ | 📋 | v0.4 |
 | Bolum gizleme | ✅ | 📋 | GPT gizli oznitelik biti hazir, arayuz baglanacak |
-| Surucu harfi atama | ✅ | ⛔ | Windows kayit defteri islemi; goruntu dosyasinda karsiligi yok |
+| Surucu harfi atama | ✅ | ⛔ | Windows'a ozgu kayit defteri/mountvol islemi; tasinabilirlik disi |
 | Dinamik disk → temel disk | ✅ | ⛔ | Windows LDM bicimine ozel |
 
 ## Dosya erisimi
@@ -49,7 +49,7 @@ Guncelleme: 2026-09-13 (v0.2.0)
 | FAT12/16/32 okuma-yazma | ✅ | ✅ | Saf Python, `fsck.vfat` ile dogrulandi |
 | **exFAT okuma-yazma** | ✅ | ✅ | Saf Python, `fsck.exfat` ile dogrulandi |
 | NTFS okuma | ✅ | 📋 | v0.4 — MFT cozumleyici |
-| ext2/3/4 okuma | ✅ | 📋 | v0.3 |
+| ext2/3/4 okuma | ✅ | 📋 | v0.4 |
 | Dosya onizleme | ✅ | ✅ | Metin + onaltilik onizleme |
 
 ## Veri kurtarma
@@ -74,7 +74,7 @@ Guncelleme: 2026-09-13 (v0.2.0)
 | Disk klonlama | ✅ | ✅ | Seyrekligi koruyarak |
 | Bolumden bolume klonlama | ✅ | ✅ | `clone_partition_to` |
 | Sektor sektor kopyalama | ✅ | ✅ | Klonlamanin varsayilani |
-| Windows'u SSD'ye tasima | ✅ | ⛔ | Fiziksel disk ve onyukleyici islemi gerektirir |
+| Windows'u SSD'ye tasima | ✅ | ⛔ | Klonlama var; onyukleyici/BCD onarimi Windows'a ozgu, kapsam disi |
 
 ## Bakim ve ileri araclar
 
@@ -82,27 +82,43 @@ Guncelleme: 2026-09-13 (v0.2.0)
 |---|---|---|---|
 | **Guvenli silme (wipe)** | ✅ | ✅ | Sifir / rastgele / DoD 3 gecis / DoD 7 gecis + dogrulama |
 | Bos alani silme | ✅ | ✅ | Mevcut dosyalara dokunmadan artik veriyi yok eder |
-| **Onaltilik sektor goruntuleyici** | ✅ | 🟡 | Goruntuleme var; **yazma** v0.3'te |
+| **Onaltilik sektor goruntuleyici** | ✅ | 🟡 | Goruntuleme var; **yazma** v0.4 hedefi |
 | **Sanal disk destegi** | ✅ | ✅ | VHD/VDI/VMDK/QCOW2 okuma; VHD olusturma ve yazma |
 | Sanal disk donusumu | ✅ | 🟡 | Klonlama ile ham→VHD mumkun; dogrudan donusturucu 📋 |
-| Bozuk sektor denetimi/onarimi | ✅ | ⛔ | Fiziksel diske ozgu |
-| S.M.A.R.T. saglik izleme | ✅ | ⛔ | Fiziksel diske ozgu |
+| Bozuk sektor denetimi/onarimi | ✅ | 📋 | Fiziksel disk destegi geldi; okuma hatasi taramasi artik mumkun — henuz yok |
+| S.M.A.R.T. saglik izleme | ✅ | ⛔ | Her platformda ayri ayricalikli ATA/NVMe komut yolu gerektirir; kapsam disi |
 | UEFI onyukleme girisi yonetimi | ✅ | ⛔ | Isletim sistemi NVRAM islemi |
 | Onyuklenebilir kurtarma ortami (WinPE) | ✅ | ⛔ | Windows lisans/arac zinciri gerektirir |
-| Dosya sistemi denetimi (chkdsk benzeri) | ✅ | 📋 | v0.3 — FAT/exFAT tutarlilik denetimi |
+| Dosya sistemi denetimi (chkdsk benzeri) | ✅ | 📋 | v0.4 — FAT/exFAT tutarlilik denetimi |
 | Islem gunlugu | 🟡 | ✅ | Arayuzde sekme + `.claude/logs/` dosyasi |
 
 ---
 
 ## Ozet
 
-| Kategori | Karsilanan | Planlanan | Kapsam disi |
-|---|---|---|---|
-| Bolum yonetimi | 8 | 5 | 2 |
-| Dosya erisimi | 7 | 2 | 0 |
-| Veri kurtarma | 5 | 0 | 1 (+1 kismi) |
-| Klonlama/yedekleme | 6 | 0 | 1 |
-| Bakim | 4 | 2 | 4 |
+Sayilar belgedeki tablolardan otomatik sayildi (2026-09-15).
 
-"Kapsam disi" maddelerin tamami **fiziksel diske erisim** gerektirdigi icin, proje
-ilkesi (yalnizca goruntu dosyasi, root yok) geregi disarida birakilmistir.
+| Kategori | Tam | Kismi | Planlanan | Kapsam disi |
+|---|---|---|---|---|
+| Disk erisimi | 7 | 0 | 0 | 0 |
+| Bolum yonetimi | 9 | 0 | 3 | 2 |
+| Dosya erisimi | 7 | 0 | 2 | 0 |
+| Veri kurtarma | 5 | 1 | 0 | 1 |
+| Klonlama/yedekleme | 6 | 0 | 0 | 1 |
+| Bakim ve ileri araclar | 4 | 2 | 2 | 3 |
+| **Toplam** | **38** | **3** | **7** | **7** |
+
+**"Kapsam disi" olcutu v0.3 ile degisti.** Onceki surumlerde bu maddeler
+"fiziksel diske erisim gerektiriyor" diye disarida birakiliyordu; fiziksel disk
+destegi ([ADR 0014](../decisions/0014-fiziksel-disk-destegi.md)) bu gerekceyi
+gecersiz kildi. Bugunku olcut sudur:
+
+- **Kapsam disi:** tek bir isletim sistemine kilitli, ayricalikli ve tasinabilir
+  olmayan islemler — S.M.A.R.T. (ATA/NVMe komut yolu), dinamik disk (Windows LDM),
+  UEFI NVRAM, WinPE, surucu harfi, BCD onarimi. Bunlar "harici bagimlilik yok" ve
+  "uc platformda ayni kod" ilkeleriyle bagdasmaz.
+- **Planlandi:** tasinabilir sekilde yapilabilir ama henuz yazilmamis olanlar —
+  bozuk sektor taramasi, ext/NTFS okuyucusu, onaltilik duzenleyici, FS denetimi.
+
+RAID kurtarma teknik olarak tasinabilir; kapsam disi birakilmasinin nedeni
+buyukluk ve dogrulama maliyetidir.

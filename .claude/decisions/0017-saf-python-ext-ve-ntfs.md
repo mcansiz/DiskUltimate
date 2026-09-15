@@ -1,6 +1,10 @@
 # ADR 0017 — ext2/3/4 ve NTFS saf Python'a tasindi
 
-**Tarih:** 2026-09-13 · **Durum:** ext ailesi tamam · NTFS kismi
+**Tarih:** 2026-09-13 · **Durum:** ✅ Tamamlandi — ext ailesi ve NTFS
+
+> Karar ilk yazildiginda NTFS kismiydi. NTFS uc katmanli strateji ile
+> tamamlandi ([ADR 0018](0018-ntfs-platform-stratejisi.md)); `t17_ntfs`
+> testi gecer ve uretilen birim Windows `chkdsk` ile temiz dogrulanir.
 
 ## Baglam
 Kullanici DiskGenius'un bicimlendirme listesini gosterdi: NTFS, FAT32, FAT16,

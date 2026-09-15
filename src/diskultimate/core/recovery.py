@@ -70,10 +70,10 @@ def _cluster_free_run(fs, start: int, needed: int) -> int:
         if c > fs.max_cluster if isinstance(fs, FatFS) else c > fs.cluster_count + 1:
             break
         try:
-            bos = (fs.get_fat(c) == 0) if isinstance(fs, FatFS) else (not fs.is_used(c))
+            free = (fs.get_fat(c) == 0) if isinstance(fs, FatFS) else (not fs.is_used(c))
         except Exception:
             break
-        if not bos:
+        if not free:
             break
         saglam += 1
     return saglam
@@ -96,11 +96,11 @@ def _scan_deleted_fat(fs: FatFS, progress: Progress = None,
     lfn_parcalari: List[str] = []
     for off in range(0, len(veri) - 31, 32):
         ham = veri[off:off + 32]
-        ilk = ham[0]
-        if ilk == 0x00:
+        first = ham[0]
+        if first == 0x00:
             break
         attr = ham[11]
-        if ilk == 0xE5:
+        if first == 0xE5:
             if attr == ATTR_LFN:
                 metin = (ham[1:11] + ham[14:26] + ham[28:32]).decode("utf-16-le", "ignore")
                 for kesici in ("￿", "\x00"):
@@ -113,22 +113,22 @@ def _scan_deleted_fat(fs: FatFS, progress: Progress = None,
                 lfn_parcalari = []
                 continue
             # 8.3 adin ilk karakteri silinirken ezildigi icin '_' ile temsil edilir
-            ad = fs._decode_short(b"_" + ham[1:11], ham[12])
+            name = fs._decode_short(b"_" + ham[1:11], ham[12])
             if lfn_parcalari:
                 birlesik = "".join(reversed(lfn_parcalari))
                 if birlesik:
-                    ad = birlesik
+                    name = birlesik
             lfn_parcalari = []
-            kume = (struct.unpack_from("<H", ham, 20)[0] << 16) | \
+            cluster_no = (struct.unpack_from("<H", ham, 20)[0] << 16) | \
                 struct.unpack_from("<H", ham, 26)[0]
-            boyut = struct.unpack_from("<I", ham, 28)[0]
+            size = struct.unpack_from("<I", ham, 28)[0]
             klasor_mu = bool(attr & ATTR_DIRECTORY)
-            gereken = max(1, (boyut + fs.cluster_bytes - 1) // fs.cluster_bytes)
-            saglam = _cluster_free_run(fs, kume, gereken)
+            gereken = max(1, (size + fs.cluster_bytes - 1) // fs.cluster_bytes)
+            saglam = _cluster_free_run(fs, cluster_no, gereken)
             bulunan.append(DeletedFile(
-                name=ad, path=path.rstrip("/") + "/" + ad, size=boyut, cluster=kume,
+                name=name, path=path.rstrip("/") + "/" + name, size=size, cluster=cluster_no,
                 is_dir=klasor_mu, contiguous=True,
-                recoverable_bytes=min(boyut, saglam * fs.cluster_bytes),
+                recoverable_bytes=min(size, saglam * fs.cluster_bytes),
                 condition=("iyi" if saglam >= gereken else
                            ("kismen uzerine yazilmis" if saglam else "kayip")),
                 fs_type=fs.fs_type_name))
@@ -137,10 +137,10 @@ def _scan_deleted_fat(fs: FatFS, progress: Progress = None,
 
     # alt dizinlere in
     try:
-        for giris in fs.listdir(path):
-            if giris.is_dir:
+        for entry in fs.listdir(path):
+            if entry.is_dir:
                 bulunan += _scan_deleted_fat(fs, progress,
-                                             path.rstrip("/") + "/" + giris.name,
+                                             path.rstrip("/") + "/" + entry.name,
                                              depth + 1)
     except FatError:
         pass
@@ -162,48 +162,48 @@ def _scan_deleted_exfat(fs: ExFatFS, progress: Progress = None,
 
     i = 0
     while i + 32 <= len(veri):
-        tur = veri[i]
-        if tur == 0x00:
+        kind = veri[i]
+        if kind == 0x00:
             break
         # InUse biti temizse giris silinmis demektir
-        if tur == (E_FILE & 0x7F):
+        if kind == (E_FILE & 0x7F):
             ikincil = veri[i + 1]
-            toplam = (ikincil + 1) * 32
-            if i + toplam > len(veri):
+            total = (ikincil + 1) * 32
+            if i + total > len(veri):
                 break
-            kume_verisi = veri[i:i + toplam]
-            attr = struct.unpack_from("<H", kume_verisi, 4)[0]
-            stream = kume_verisi[32:64]
+            cluster_data = veri[i:i + total]
+            attr = struct.unpack_from("<H", cluster_data, 4)[0]
+            stream = cluster_data[32:64]
             if len(stream) >= 32 and stream[0] in (E_STREAM, E_STREAM & 0x7F):
                 bayraklar = stream[1]
-                ad_uzunlugu = stream[3]
-                ilk_kume = struct.unpack_from("<I", stream, 20)[0]
-                boyut = struct.unpack_from("<Q", stream, 24)[0]
-                ad = ""
+                name_length = stream[3]
+                first_cluster = struct.unpack_from("<I", stream, 20)[0]
+                size = struct.unpack_from("<Q", stream, 24)[0]
+                name = ""
                 for n in range(2, ikincil + 1):
-                    giris = kume_verisi[n * 32:(n + 1) * 32]
-                    if giris and giris[0] in (E_NAME, E_NAME & 0x7F):
-                        ad += giris[2:32].decode("utf-16-le", "ignore")
-                ad = ad[:ad_uzunlugu] or f"(adsiz@{ilk_kume})"
-                gereken = max(1, (boyut + fs.cluster_bytes - 1) // fs.cluster_bytes)
-                saglam = _cluster_free_run(fs, ilk_kume, gereken)
+                    entry = cluster_data[n * 32:(n + 1) * 32]
+                    if entry and entry[0] in (E_NAME, E_NAME & 0x7F):
+                        name += entry[2:32].decode("utf-16-le", "ignore")
+                name = name[:name_length] or f"(adsiz@{first_cluster})"
+                gereken = max(1, (size + fs.cluster_bytes - 1) // fs.cluster_bytes)
+                saglam = _cluster_free_run(fs, first_cluster, gereken)
                 bulunan.append(DeletedFile(
-                    name=ad, path=path.rstrip("/") + "/" + ad, size=boyut,
-                    cluster=ilk_kume, is_dir=bool(attr & EX_DIR),
+                    name=name, path=path.rstrip("/") + "/" + name, size=size,
+                    cluster=first_cluster, is_dir=bool(attr & EX_DIR),
                     contiguous=bool(bayraklar & 0x02),
-                    recoverable_bytes=min(boyut, saglam * fs.cluster_bytes),
+                    recoverable_bytes=min(size, saglam * fs.cluster_bytes),
                     condition=("iyi" if saglam >= gereken else
                                ("kismen uzerine yazilmis" if saglam else "kayip")),
                     fs_type="exFAT"))
-            i += toplam
+            i += total
             continue
         i += 32
 
     try:
-        for giris in fs.listdir(path):
-            if giris.is_dir:
+        for entry in fs.listdir(path):
+            if entry.is_dir:
                 bulunan += _scan_deleted_exfat(fs, progress,
-                                               path.rstrip("/") + "/" + giris.name,
+                                               path.rstrip("/") + "/" + entry.name,
                                                depth + 1)
     except ExFatError:
         pass
@@ -223,20 +223,20 @@ def recover_deleted(fs, item: DeletedFile, dest_path: str) -> int:
     if os.path.isdir(dest_path):
         dest_path = os.path.join(dest_path, item.name)
     os.makedirs(os.path.dirname(os.path.abspath(dest_path)), exist_ok=True)
-    kume_bayt = fs.cluster_bytes
-    gereken = (item.size + kume_bayt - 1) // kume_bayt
+    cluster_bytes = fs.cluster_bytes
+    gereken = (item.size + cluster_bytes - 1) // cluster_bytes
     yazilan = 0
     with open(dest_path, "wb") as fh:
         for i in range(gereken):
             c = item.cluster + i
             try:
-                blok = fs.read_cluster(c) if isinstance(fs, FatFS) else \
-                    fs.dev.read(fs.cluster_offset(c), kume_bayt)
+                block = fs.read_cluster(c) if isinstance(fs, FatFS) else \
+                    fs.dev.read(fs.cluster_offset(c), cluster_bytes)
             except Exception:
                 break
             kalan = item.size - yazilan
-            fh.write(blok[:kalan])
-            yazilan += min(len(blok), kalan)
+            fh.write(block[:kalan])
+            yazilan += min(len(block), kalan)
     return yazilan
 
 
@@ -260,37 +260,37 @@ class LostPartition:
         return self.sector_count * self.sector_size
 
 
-def _probe_signature(blok: bytes, dev: BlockDevice, lba: int) -> Optional[LostPartition]:
+def _probe_signature(block: bytes, dev: BlockDevice, lba: int) -> Optional[LostPartition]:
     """Tek bir sektorde dosya sistemi imzasi arar ve boyutu basliktan okur."""
     ss = dev.sector_size
-    if len(blok) < 512:
+    if len(block) < 512:
         return None
     # exFAT
-    if blok[3:11] == b"EXFAT   ":
-        toplam = struct.unpack_from("<Q", blok, 72)[0]
-        if 0 < toplam <= dev.sector_count:
-            return LostPartition(lba, toplam, "exFAT", "", ss)
+    if block[3:11] == b"EXFAT   ":
+        total = struct.unpack_from("<Q", block, 72)[0]
+        if 0 < total <= dev.sector_count:
+            return LostPartition(lba, total, "exFAT", "", ss)
     # NTFS
-    if blok[3:11] == b"NTFS    ":
-        toplam = struct.unpack_from("<Q", blok, 40)[0] + 1
-        if 0 < toplam <= dev.sector_count:
-            return LostPartition(lba, toplam, "NTFS", "", ss)
+    if block[3:11] == b"NTFS    ":
+        total = struct.unpack_from("<Q", block, 40)[0] + 1
+        if 0 < total <= dev.sector_count:
+            return LostPartition(lba, total, "NTFS", "", ss)
     # FAT12/16/32
-    if blok[510:512] == b"\x55\xAA" and blok[0] in (0xEB, 0xE9, 0xE8):
-        bps = struct.unpack_from("<H", blok, 11)[0]
-        spc = blok[13]
-        rezerve = struct.unpack_from("<H", blok, 14)[0]
-        fat_sayisi = blok[16]
+    if block[510:512] == b"\x55\xAA" and block[0] in (0xEB, 0xE9, 0xE8):
+        bps = struct.unpack_from("<H", block, 11)[0]
+        spc = block[13]
+        rezerve = struct.unpack_from("<H", block, 14)[0]
+        fat_count = block[16]
         if (bps in (512, 1024, 2048, 4096) and spc in (1, 2, 4, 8, 16, 32, 64, 128)
-                and rezerve and fat_sayisi in (1, 2)):
-            toplam = (struct.unpack_from("<H", blok, 19)[0]
-                      or struct.unpack_from("<I", blok, 32)[0])
-            if 0 < toplam <= dev.sector_count:
-                kok = struct.unpack_from("<H", blok, 17)[0]
-                tur = "FAT32" if kok == 0 else "FAT16"
-                etiket_off = 0x47 if kok == 0 else 0x2B
-                etiket = blok[etiket_off:etiket_off + 11].decode("latin-1", "ignore").strip()
-                return LostPartition(lba, toplam, tur, etiket, ss)
+                and rezerve and fat_count in (1, 2)):
+            total = (struct.unpack_from("<H", block, 19)[0]
+                      or struct.unpack_from("<I", block, 32)[0])
+            if 0 < total <= dev.sector_count:
+                root = struct.unpack_from("<H", block, 17)[0]
+                kind = "FAT32" if root == 0 else "FAT16"
+                etiket_off = 0x47 if root == 0 else 0x2B
+                etiket = block[etiket_off:etiket_off + 11].decode("latin-1", "ignore").strip()
+                return LostPartition(lba, total, kind, etiket, ss)
     return None
 
 
@@ -307,13 +307,13 @@ def scan_lost_partitions(device: BlockDevice, step_sectors: int = 2048,
         step_sectors = max(1, 65536 // device.sector_size)
     step_sectors = max(1, step_sectors)
     bilinen = known_ranges or []
-    toplam_sektor = device.sector_count
+    total_sectors = device.sector_count
     bulunanlar: List[LostPartition] = []
     okuma_blogu = max(step_sectors, 2048)
 
     lba = 0
-    while lba < toplam_sektor:
-        adet = min(okuma_blogu, toplam_sektor - lba)
+    while lba < total_sectors:
+        adet = min(okuma_blogu, total_sectors - lba)
         try:
             veri = device.read_sectors(lba, adet)
         except Exception:
@@ -325,7 +325,7 @@ def scan_lost_partitions(device: BlockDevice, step_sectors: int = 2048,
                                     device, mevcut)
             if aday is None:
                 continue
-            if any(bas <= mevcut <= son for bas, son in bilinen):
+            if any(bas <= mevcut <= last for bas, last in bilinen):
                 continue          # zaten tabloda olan bolum
             if any(b.start_lba == mevcut for b in bulunanlar):
                 continue
@@ -334,7 +334,7 @@ def scan_lost_partitions(device: BlockDevice, step_sectors: int = 2048,
         if progress:
             progress(f"Taraniyor... {human_size(lba * device.sector_size)} / "
                      f"{human_size(device.size)} — {len(bulunanlar)} aday",
-                     int(99 * lba / max(1, toplam_sektor)))
+                     int(99 * lba / max(1, total_sectors)))
     if progress:
         progress(f"Tarama bitti: {len(bulunanlar)} aday bolum", 100)
     return bulunanlar
@@ -396,16 +396,16 @@ def carve_files(device: BlockDevice, keys: Optional[List[str]] = None,
     if not secilen:
         raise RecoveryError("Hicbir dosya turu secilmedi")
     en_uzun_imza = max(len(s.header) for s in secilen)
-    toplam = device.size
+    total = device.size
     bulunanlar: List[CarvedFile] = []
     onceki_kuyruk = b""
-    konum = 0
+    pos = 0
 
-    while konum < toplam and len(bulunanlar) < max_results:
-        uzunluk = min(block_size, toplam - konum)
-        blok = device.read(konum, uzunluk)
-        tampon = onceki_kuyruk + blok
-        taban = konum - len(onceki_kuyruk)
+    while pos < total and len(bulunanlar) < max_results:
+        length = min(block_size, total - pos)
+        block = device.read(pos, length)
+        tampon = onceki_kuyruk + block
+        taban = pos - len(onceki_kuyruk)
         for imza in secilen:
             ara = 0
             while True:
@@ -416,17 +416,17 @@ def carve_files(device: BlockDevice, keys: Optional[List[str]] = None,
                 ara = bulundu + 1
                 if any(c.offset == mutlak for c in bulunanlar):
                     continue
-                boyut = _carve_size(device, mutlak, imza, toplam)
-                if boyut > 0:
+                size = _carve_size(device, mutlak, imza, total)
+                if size > 0:
                     bulunanlar.append(CarvedFile(imza.key, imza.label, mutlak,
-                                                 boyut, imza.extension))
+                                                 size, imza.extension))
                     if len(bulunanlar) >= max_results:
                         break
         onceki_kuyruk = tampon[-(en_uzun_imza - 1):] if en_uzun_imza > 1 else b""
-        konum += uzunluk
+        pos += length
         if progress:
-            progress(f"Imza taraniyor... {human_size(konum)} / {human_size(toplam)} — "
-                     f"{len(bulunanlar)} dosya", int(99 * konum / max(1, toplam)))
+            progress(f"Imza taraniyor... {human_size(pos)} / {human_size(total)} — "
+                     f"{len(bulunanlar)} dosya", int(99 * pos / max(1, total)))
     if progress:
         progress(f"Tarama bitti: {len(bulunanlar)} dosya", 100)
     return bulunanlar
@@ -440,17 +440,17 @@ def _carve_size(device: BlockDevice, offset: int, sig: FileSignature,
         return 0
     if not sig.footer:
         return min(sinir, sig.max_size)
-    parca = 1024 * 1024
+    chunk = 1024 * 1024
     okunan = 0
     kuyruk = b""
     while okunan < sinir:
-        uzunluk = min(parca, sinir - okunan)
-        veri = kuyruk + device.read(offset + okunan, uzunluk)
+        length = min(chunk, sinir - okunan)
+        veri = kuyruk + device.read(offset + okunan, length)
         bulundu = veri.find(sig.footer)
         if bulundu >= 0:
             return okunan - len(kuyruk) + bulundu + len(sig.footer)
         kuyruk = veri[-(len(sig.footer) - 1):] if len(sig.footer) > 1 else b""
-        okunan += uzunluk
+        okunan += length
     return 0        # bitis imzasi bulunamadi: guvenilir degil, atlanir
 
 
@@ -458,13 +458,13 @@ def extract_carved(device: BlockDevice, item: CarvedFile, dest_dir: str,
                    name: Optional[str] = None) -> str:
     """Imzayla bulunan dosyayi yerel diske yazar."""
     os.makedirs(dest_dir, exist_ok=True)
-    hedef = os.path.join(dest_dir, name or item.suggested_name)
+    target = os.path.join(dest_dir, name or item.suggested_name)
     kalan = item.size
-    konum = item.offset
-    with open(hedef, "wb") as fh:
+    pos = item.offset
+    with open(target, "wb") as fh:
         while kalan > 0:
-            uzunluk = min(4 * 1024 * 1024, kalan)
-            fh.write(device.read(konum, uzunluk))
-            konum += uzunluk
-            kalan -= uzunluk
-    return hedef
+            length = min(4 * 1024 * 1024, kalan)
+            fh.write(device.read(pos, length))
+            pos += length
+            kalan -= length
+    return target

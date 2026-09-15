@@ -6,6 +6,7 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     ├── paths.py              Proje ici yollar (.tmp, .claude/logs)
     ├── core/                 SAF PYTHON — PyQt import etmez
     │   ├── platform.py       Isletim sistemi farklari (seyrek dosya, arac arama, Qt eklentisi)
+    │   ├── physical.py       Fiziksel diskler: listeleme, acma, katmanli yazma guvenligi
     │   ├── image.py          BlockDevice arayuzu, DiskImage, PartitionView
     │   ├── vdisk.py          Sanal diskler: VHD / VDI / VMDK / QCOW2
     │   ├── ptable.py         Partition/FreeRegion modeli, tip tablolari, boyut yardimcilari
@@ -14,25 +15,31 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     │   ├── convert.py        MBR ↔ GPT donusumu, 4K hizalama raporu
     │   ├── fat.py            FatFS: FAT12/16/32 bicimlendirme + tam dosya erisimi
     │   ├── exfat.py          ExFatFS: exFAT bicimlendirme + tam dosya erisimi
+    │   ├── ext.py            ext2/3/4 saf Python bicimlendirme (JBD2 gunlugu dahil)
+    │   ├── ntfs.py           NTFS saf Python bicimlendirme (MFT, $UpCase, $AttrDef)
+    │   ├── _ntfs_data.py     NTFS icin gomulu sabit tablolar
+    │   ├── resize.py         Bolum boyutlandirma / tasima (FAT + exFAT yerlesimi)
     │   ├── fsdetect.py       Imza tabanli dosya sistemi tespiti (FSInfo)
-    │   ├── formatter.py      Bicimlendirme dagiticisi (dahili FAT/exFAT + harici mkfs)
+    │   ├── formatter.py      Bicimlendirme dagiticisi (sekiz FS; yerel arac → mkfs → saf Python)
     │   ├── filesystem.py     FileSystemAccess arayuzu, FatAccess, ExFatAccess
     │   ├── clone.py          .dub yedek bicimi, geri yukleme, klonlama
     │   ├── wipe.py           Guvenli silme (sifir/rastgele/DoD), bos alan silme
     │   ├── recovery.py       Silinmis dosya, kayip bolum, imza tabanli kurtarma
     │   └── session.py        DiskSession — GUI'nin gordugu tek cephe
     └── ui/                   YALNIZCA SUNUM — disk bicimi bilgisi icermez
-        ├── theme.py          Renk paleti, dosya sistemi renkleri, ikon temasi, stil
+        ├── theme.py          Dosya sistemi renkleri, palet yardimcilari, isletim sistemi ikonlari
         ├── main_window.py    Menu, arac cubugu, agac, yerlesim, is akislari
         ├── widgets/
         │   ├── disk_map.py        Gorsel bolum haritasi (QPainter)
         │   ├── partition_table.py Bolum listesi tablosu
         │   ├── file_browser.py    Klasor agaci + dosya listesi + islemler
-        │   └── hex_view.py        Sektor onaltilik goruntuleyici
+        │   ├── resize_bar.py      Suruklenebilir boyutlandirma seridi
+        │   └── hex_view.py        Sektor onaltilik goruntuleyici (salt okunur)
         └── dialogs/
             ├── base.py            exec_dialog — guvenli diyalog gosterimi
             ├── new_image.py       Yeni goruntu / sanal disk sihirbazi
             ├── partition.py       Bolum olusturma + bicimlendirme
+            ├── resize.py          Bolum boyutlandirma / tasima penceresi
             ├── tools.py           Silme, kurtarma, imza tarama, bilgi pencereleri
             ├── task.py            QThread + ilerleme penceresi
             └── preview.py         Dosya onizleme (metin / onaltilik)
@@ -41,11 +48,16 @@ main.py                       Giris noktasi (QApplication + MainWindow)
 ## Veri akisi
 
 ```
-Kullanici -> MainWindow -> DiskSession -> PartitionTable (MBR/GPT) -> DiskImage -> .img
+Kullanici -> MainWindow -> DiskSession -> PartitionTable (MBR/GPT) -> BlockDevice
+                              |                                            |
+                              |                     DiskImage (.img) / VhdImage vb.
+                              |                     PhysicalDisk (\\.\PhysicalDriveN, /dev/sdX)
                               |
-                              +-------> PartitionView -> FatFS / mkfs -> bolum alani
+                              +-------> PartitionView -> FatFS / ExFatFS / ext / ntfs -> bolum alani
                               |
                               +-------> FileSystemAccess -> FileBrowser
+                              |
+                              +-------> resize.apply_resize -> bolum yerlesimi
 ```
 
 **Onemli kural:** GUI hicbir zaman `MBRTable`, `GPTTable`, `FatFS` ile dogrudan
@@ -70,5 +82,7 @@ sistemi eklendiginde arayuz kodu degismez.
 | Yeni kapsayici bicimi (sanal disk) | `vdisk.py` icinde `_BaseVirtualDisk` turevi + `detect_format` |
 | Yeni kurtarma dosya turu | `recovery.SIGNATURES` listesine bir giris |
 | Yeni silme yontemi | `wipe.WIPE_METHODS` listesine bir giris |
+| Yeni dosya sistemi boyutlandirma | `resize.fs_resize_info` + `resize.apply_resize` dagiticisi |
+| Yeni fiziksel disk platformu | `physical.py` icinde listeleme/acma dali + `platform.py` |
 | Yeni arayuz paneli | `ui/widgets/` + `main_window.tabs` |
 | Isletim sistemi farki | **yalnizca** `core/platform.py` |

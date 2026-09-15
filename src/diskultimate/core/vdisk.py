@@ -119,26 +119,26 @@ def _vhd_geometry(total_sectors: int) -> Tuple[int, int, int]:
     if ts >= 65535 * 16 * 63:
         return 65535, 16, 255
     if ts >= 65535 * 16 * 63:
-        sektor_iz, kafa = 255, 16
+        sectors_per_track, kafa = 255, 16
     else:
-        sektor_iz = 17
-        silindir_carpani = ts // sektor_iz
+        sectors_per_track = 17
+        silindir_carpani = ts // sectors_per_track
         kafa = max(4, (silindir_carpani + 1023) // 1024)
         if silindir_carpani >= (kafa * 1024) or kafa > 16:
-            sektor_iz, kafa = 31, 16
-            silindir_carpani = ts // sektor_iz
+            sectors_per_track, kafa = 31, 16
+            silindir_carpani = ts // sectors_per_track
         if silindir_carpani >= (kafa * 1024):
-            sektor_iz, kafa = 63, 16
-            silindir_carpani = ts // sektor_iz
-    silindir = (ts // sektor_iz) // kafa
-    return max(1, silindir), kafa, sektor_iz
+            sectors_per_track, kafa = 63, 16
+            silindir_carpani = ts // sectors_per_track
+    silindir = (ts // sectors_per_track) // kafa
+    return max(1, silindir), kafa, sectors_per_track
 
 
 def build_vhd_footer(size_bytes: int, disk_type: int = VHD_FIXED,
                      data_offset: int = 0xFFFFFFFFFFFFFFFF) -> bytes:
     import time
-    toplam_sektor = size_bytes // SECTOR
-    silindir, kafa, sektor_iz = _vhd_geometry(toplam_sektor)
+    total_sectors = size_bytes // SECTOR
+    silindir, kafa, sectors_per_track = _vhd_geometry(total_sectors)
     footer = bytearray(512)
     footer[0:8] = VHD_COOKIE
     struct.pack_into(">IIQ", footer, 8, 0x00000002, 0x00010000, data_offset)
@@ -148,7 +148,7 @@ def build_vhd_footer(size_bytes: int, disk_type: int = VHD_FIXED,
     struct.pack_into(">I", footer, 32, 0x00010000)
     footer[36:40] = b"Wi2k"
     struct.pack_into(">QQ", footer, 40, size_bytes, size_bytes)
-    struct.pack_into(">HBB", footer, 56, min(65535, silindir), kafa, sektor_iz)
+    struct.pack_into(">HBB", footer, 56, min(65535, silindir), kafa, sectors_per_track)
     struct.pack_into(">I", footer, 60, disk_type)
     footer[68:84] = uuid.uuid4().bytes
     struct.pack_into(">I", footer, 64, _vhd_checksum(bytes(footer)))
@@ -160,8 +160,8 @@ class VhdImage(_BaseVirtualDisk):
 
     def __init__(self, path: str, readonly: bool = True):
         super().__init__(path, readonly)
-        dosya_boyutu = os.path.getsize(self.path)
-        if dosya_boyutu < 512:
+        file_size = os.path.getsize(self.path)
+        if file_size < 512:
             raise VirtualDiskError("VHD dosyasi cok kucuk")
         self._fh.seek(-512, os.SEEK_END)
         footer = self._fh.read(512)
@@ -188,20 +188,20 @@ class VhdImage(_BaseVirtualDisk):
 
     def _read_dynamic_header(self) -> None:
         self._fh.seek(self.data_offset)
-        baslik = self._fh.read(1024)
-        if baslik[:8] != VHD_DYNAMIC_COOKIE:
+        header = self._fh.read(1024)
+        if header[:8] != VHD_DYNAMIC_COOKIE:
             raise VirtualDiskError("VHD dinamik basligi bulunamadi")
-        self.bat_offset = struct.unpack_from(">Q", baslik, 16)[0]
-        giris_sayisi = struct.unpack_from(">I", baslik, 28)[0]
-        self.block_size = struct.unpack_from(">I", baslik, 32)[0]
+        self.bat_offset = struct.unpack_from(">Q", header, 16)[0]
+        entry_count = struct.unpack_from(">I", header, 28)[0]
+        self.block_size = struct.unpack_from(">I", header, 32)[0]
         self._fh.seek(self.bat_offset)
-        ham = self._fh.read(giris_sayisi * 4)
-        self._bat = list(struct.unpack(f">{giris_sayisi}I", ham[:giris_sayisi * 4]))
+        ham = self._fh.read(entry_count * 4)
+        self._bat = list(struct.unpack(f">{entry_count}I", ham[:entry_count * 4]))
         self.bitmap_sectors = max(1, ((self.block_size // SECTOR) + 7) // 8 // SECTOR
                                   or 1)
         # bitmap her zaman sektor sinirina yuvarlanir
-        bitmap_bayt = ((self.block_size // SECTOR) + 7) // 8
-        self.bitmap_sectors = (bitmap_bayt + SECTOR - 1) // SECTOR
+        bitmap_bytes = ((self.block_size // SECTOR) + 7) // 8
+        self.bitmap_sectors = (bitmap_bytes + SECTOR - 1) // SECTOR
 
     def _read_raw(self, offset: int, length: int) -> bytes:
         if self.disk_type == VHD_FIXED:
@@ -210,20 +210,20 @@ class VhdImage(_BaseVirtualDisk):
             return veri + b"\x00" * (length - len(veri))
         out = bytearray()
         kalan = length
-        konum = offset
+        pos = offset
         while kalan > 0:
-            blok_no = konum // self.block_size
-            blok_ici = konum % self.block_size
-            parca = min(kalan, self.block_size - blok_ici)
-            if blok_no >= len(self._bat) or self._bat[blok_no] == 0xFFFFFFFF:
-                out += b"\x00" * parca            # tahsis edilmemis blok
+            block_no = pos // self.block_size
+            in_block = pos % self.block_size
+            chunk = min(kalan, self.block_size - in_block)
+            if block_no >= len(self._bat) or self._bat[block_no] == 0xFFFFFFFF:
+                out += b"\x00" * chunk            # tahsis edilmemis blok
             else:
-                taban = (self._bat[blok_no] + self.bitmap_sectors) * SECTOR
-                self._fh.seek(taban + blok_ici)
-                veri = self._fh.read(parca)
-                out += veri + b"\x00" * (parca - len(veri))
-            konum += parca
-            kalan -= parca
+                taban = (self._bat[block_no] + self.bitmap_sectors) * SECTOR
+                self._fh.seek(taban + in_block)
+                veri = self._fh.read(chunk)
+                out += veri + b"\x00" * (chunk - len(veri))
+            pos += chunk
+            kalan -= chunk
         return bytes(out)
 
     def write(self, offset: int, data: bytes) -> None:
@@ -235,20 +235,20 @@ class VhdImage(_BaseVirtualDisk):
             self._fh.seek(offset)
             self._fh.write(data)
             return
-        konum, kalan, kaynak = offset, len(data), 0
+        pos, kalan, kaynak = offset, len(data), 0
         while kalan > 0:
-            blok_no = konum // self.block_size
-            blok_ici = konum % self.block_size
-            parca = min(kalan, self.block_size - blok_ici)
-            if blok_no >= len(self._bat) or self._bat[blok_no] == 0xFFFFFFFF:
+            block_no = pos // self.block_size
+            in_block = pos % self.block_size
+            chunk = min(kalan, self.block_size - in_block)
+            if block_no >= len(self._bat) or self._bat[block_no] == 0xFFFFFFFF:
                 raise VirtualDiskError(
                     "Dinamik VHD'de yeni blok tahsisi bu surumde desteklenmiyor")
-            taban = (self._bat[blok_no] + self.bitmap_sectors) * SECTOR
-            self._fh.seek(taban + blok_ici)
-            self._fh.write(data[kaynak:kaynak + parca])
-            konum += parca
-            kaynak += parca
-            kalan -= parca
+            taban = (self._bat[block_no] + self.bitmap_sectors) * SECTOR
+            self._fh.seek(taban + in_block)
+            self._fh.write(data[kaynak:kaynak + chunk])
+            pos += chunk
+            kaynak += chunk
+            kalan -= chunk
 
     # -- olusturma ---------------------------------------------------------
     @staticmethod
@@ -283,42 +283,42 @@ class VdiImage(_BaseVirtualDisk):
     def __init__(self, path: str, readonly: bool = True):
         super().__init__(path, readonly=True)
         self._fh.seek(0)
-        baslik = self._fh.read(0x200)
-        if struct.unpack_from("<I", baslik, 0x40)[0] != VDI_MAGIC:
+        header = self._fh.read(0x200)
+        if struct.unpack_from("<I", header, 0x40)[0] != VDI_MAGIC:
             raise VirtualDiskError("VDI imzasi bulunamadi")
-        self.image_type = struct.unpack_from("<I", baslik, 0x4C)[0]
-        self.blocks_offset = struct.unpack_from("<I", baslik, 0x154)[0]
-        self.data_offset = struct.unpack_from("<I", baslik, 0x158)[0]
-        self.sector_size = struct.unpack_from("<I", baslik, 0x168)[0] or SECTOR
-        self._size = struct.unpack_from("<Q", baslik, 0x170)[0]
-        self.block_size = struct.unpack_from("<I", baslik, 0x178)[0]
-        self.block_extra = struct.unpack_from("<I", baslik, 0x17C)[0]
-        blok_sayisi = struct.unpack_from("<I", baslik, 0x180)[0]
+        self.image_type = struct.unpack_from("<I", header, 0x4C)[0]
+        self.blocks_offset = struct.unpack_from("<I", header, 0x154)[0]
+        self.data_offset = struct.unpack_from("<I", header, 0x158)[0]
+        self.sector_size = struct.unpack_from("<I", header, 0x168)[0] or SECTOR
+        self._size = struct.unpack_from("<Q", header, 0x170)[0]
+        self.block_size = struct.unpack_from("<I", header, 0x178)[0]
+        self.block_extra = struct.unpack_from("<I", header, 0x17C)[0]
+        block_count = struct.unpack_from("<I", header, 0x180)[0]
         if self.block_size == 0:
             raise VirtualDiskError("Gecersiz VDI blok boyutu")
         self._fh.seek(self.blocks_offset)
-        ham = self._fh.read(blok_sayisi * 4)
-        self._bat = list(struct.unpack(f"<{blok_sayisi}I", ham[:blok_sayisi * 4]))
+        ham = self._fh.read(block_count * 4)
+        self._bat = list(struct.unpack(f"<{block_count}I", ham[:block_count * 4]))
 
     def _read_raw(self, offset: int, length: int) -> bytes:
         out = bytearray()
-        konum, kalan = offset, length
+        pos, kalan = offset, length
         while kalan > 0:
-            blok_no = konum // self.block_size
-            blok_ici = konum % self.block_size
-            parca = min(kalan, self.block_size - blok_ici)
-            giris = self._bat[blok_no] if blok_no < len(self._bat) else 0xFFFFFFFF
-            if giris in (0xFFFFFFFF, 0xFFFFFFFE):
-                out += b"\x00" * parca
+            block_no = pos // self.block_size
+            in_block = pos % self.block_size
+            chunk = min(kalan, self.block_size - in_block)
+            entry = self._bat[block_no] if block_no < len(self._bat) else 0xFFFFFFFF
+            if entry in (0xFFFFFFFF, 0xFFFFFFFE):
+                out += b"\x00" * chunk
             else:
                 taban = (self.data_offset
-                         + giris * (self.block_size + self.block_extra)
+                         + entry * (self.block_size + self.block_extra)
                          + self.block_extra)
-                self._fh.seek(taban + blok_ici)
-                veri = self._fh.read(parca)
-                out += veri + b"\x00" * (parca - len(veri))
-            konum += parca
-            kalan -= parca
+                self._fh.seek(taban + in_block)
+                veri = self._fh.read(chunk)
+                out += veri + b"\x00" * (chunk - len(veri))
+            pos += chunk
+            kalan -= chunk
         return bytes(out)
 
 
@@ -343,17 +343,17 @@ class VmdkImage(_BaseVirtualDisk):
     def _init_sparse(self) -> None:
         self.readonly = True
         self._fh.seek(0)
-        baslik = self._fh.read(512)
-        (_sihir, _surum, _bayraklar, kapasite, grain, _tanim_ofset, _tanim_boyut,
-         gte_per_gt, _rgd, gd_ofset) = struct.unpack_from("<4sIIQQQQIQQ", baslik, 0)
-        self._size = kapasite * SECTOR
+        header = self._fh.read(512)
+        (_sihir, _surum, _bayraklar, capacity, grain, _tanim_ofset, _desc_size,
+         gte_per_gt, _rgd, gd_ofset) = struct.unpack_from("<4sIIQQQQIQQ", header, 0)
+        self._size = capacity * SECTOR
         self.grain_sectors = grain or 128
         self.gte_per_gt = gte_per_gt or 512
         self._fh.seek(gd_ofset * SECTOR)
-        gd_giris = (kapasite + self.grain_sectors * self.gte_per_gt - 1) // \
+        gd_entry = (capacity + self.grain_sectors * self.gte_per_gt - 1) // \
             (self.grain_sectors * self.gte_per_gt)
-        ham = self._fh.read(max(1, gd_giris) * 4)
-        self._gd = list(struct.unpack(f"<{max(1, gd_giris)}I", ham[:max(1, gd_giris) * 4]))
+        ham = self._fh.read(max(1, gd_entry) * 4)
+        self._gd = list(struct.unpack(f"<{max(1, gd_entry)}I", ham[:max(1, gd_entry) * 4]))
         self._gt_cache: dict = {}
         self.variant = "seyrek (sparse)"
 
@@ -364,16 +364,16 @@ class VmdkImage(_BaseVirtualDisk):
         if "createType" not in metin and "RW " not in metin:
             raise VirtualDiskError("VMDK tanimlayicisi cozumlenemedi")
         veri_dosyasi = None
-        toplam_sektor = 0
+        total_sectors = 0
         for satir in metin.splitlines():
             satir = satir.strip()
             if satir.startswith("RW ") and "FLAT" in satir.upper():
                 parcalar = satir.split()
-                toplam_sektor = int(parcalar[1])
+                total_sectors = int(parcalar[1])
                 tirnak = satir.find('"')
-                son = satir.find('"', tirnak + 1)
-                if tirnak >= 0 and son > tirnak:
-                    veri_dosyasi = satir[tirnak + 1:son]
+                last = satir.find('"', tirnak + 1)
+                if tirnak >= 0 and last > tirnak:
+                    veri_dosyasi = satir[tirnak + 1:last]
                 break
         if not veri_dosyasi:
             raise VirtualDiskError("VMDK duz veri dosyasi bulunamadi")
@@ -382,13 +382,13 @@ class VmdkImage(_BaseVirtualDisk):
             raise VirtualDiskError(f"VMDK veri dosyasi eksik: {veri_dosyasi}")
         self._fh.close()
         self._fh = open(tam, "rb" if self.readonly else "r+b")
-        self._size = toplam_sektor * SECTOR or os.path.getsize(tam)
+        self._size = total_sectors * SECTOR or os.path.getsize(tam)
         self._gd = None
         self.variant = "duz (flat)"
 
-    def _grain_offset(self, sektor: int) -> int:
+    def _grain_offset(self, sector: int) -> int:
         gt_basina = self.grain_sectors * self.gte_per_gt
-        gd_indeks = sektor // gt_basina
+        gd_indeks = sector // gt_basina
         if gd_indeks >= len(self._gd):
             return 0
         gt_ofset = self._gd[gd_indeks]
@@ -400,7 +400,7 @@ class VmdkImage(_BaseVirtualDisk):
             self._gt_cache[gt_ofset] = list(
                 struct.unpack(f"<{self.gte_per_gt}I", ham[:self.gte_per_gt * 4]))
         gt = self._gt_cache[gt_ofset]
-        gt_indeks = (sektor % gt_basina) // self.grain_sectors
+        gt_indeks = (sector % gt_basina) // self.grain_sectors
         return gt[gt_indeks] if gt_indeks < len(gt) else 0
 
     def _read_raw(self, offset: int, length: int) -> bytes:
@@ -409,21 +409,21 @@ class VmdkImage(_BaseVirtualDisk):
             veri = self._fh.read(length)
             return veri + b"\x00" * (length - len(veri))
         out = bytearray()
-        konum, kalan = offset, length
-        grain_bayt = self.grain_sectors * SECTOR
+        pos, kalan = offset, length
+        grain_bytes = self.grain_sectors * SECTOR
         while kalan > 0:
-            sektor = konum // SECTOR
-            grain_ici = konum % grain_bayt
-            parca = min(kalan, grain_bayt - grain_ici)
-            grain = self._grain_offset(sektor - (grain_ici // SECTOR))
+            sector = pos // SECTOR
+            grain_ici = pos % grain_bytes
+            chunk = min(kalan, grain_bytes - grain_ici)
+            grain = self._grain_offset(sector - (grain_ici // SECTOR))
             if grain == 0:
-                out += b"\x00" * parca
+                out += b"\x00" * chunk
             else:
                 self._fh.seek(grain * SECTOR + grain_ici)
-                veri = self._fh.read(parca)
-                out += veri + b"\x00" * (parca - len(veri))
-            konum += parca
-            kalan -= parca
+                veri = self._fh.read(chunk)
+                out += veri + b"\x00" * (chunk - len(veri))
+            pos += chunk
+            kalan -= chunk
         return bytes(out)
 
     def write(self, offset: int, data: bytes) -> None:
@@ -447,31 +447,31 @@ class Qcow2Image(_BaseVirtualDisk):
     def __init__(self, path: str, readonly: bool = True):
         super().__init__(path, readonly=True)
         self._fh.seek(0)
-        baslik = self._fh.read(104)
-        if baslik[:4] != QCOW_MAGIC:
+        header = self._fh.read(104)
+        if header[:4] != QCOW_MAGIC:
             raise VirtualDiskError("QCOW2 imzasi bulunamadi")
-        surum = struct.unpack_from(">I", baslik, 4)[0]
+        surum = struct.unpack_from(">I", header, 4)[0]
         if surum not in (2, 3):
             raise VirtualDiskError(f"QCOW surumu desteklenmiyor: {surum}")
-        arka_ofset = struct.unpack_from(">Q", baslik, 8)[0]
+        arka_ofset = struct.unpack_from(">Q", header, 8)[0]
         if arka_ofset:
             raise VirtualDiskError("Arka plan dosyali (backing) QCOW2 desteklenmiyor")
-        self.cluster_bits = struct.unpack_from(">I", baslik, 20)[0]
+        self.cluster_bits = struct.unpack_from(">I", header, 20)[0]
         self.cluster_size = 1 << self.cluster_bits
-        self._size = struct.unpack_from(">Q", baslik, 24)[0]
-        sifreleme = struct.unpack_from(">I", baslik, 32)[0]
+        self._size = struct.unpack_from(">Q", header, 24)[0]
+        sifreleme = struct.unpack_from(">I", header, 32)[0]
         if sifreleme:
             raise VirtualDiskError("Sifreli QCOW2 desteklenmiyor")
-        l1_boyut = struct.unpack_from(">I", baslik, 36)[0]
-        l1_ofset = struct.unpack_from(">Q", baslik, 40)[0]
+        l1_size = struct.unpack_from(">I", header, 36)[0]
+        l1_ofset = struct.unpack_from(">Q", header, 40)[0]
         self.l2_bits = self.cluster_bits - 3
         self._fh.seek(l1_ofset)
-        ham = self._fh.read(l1_boyut * 8)
-        self._l1 = list(struct.unpack(f">{l1_boyut}Q", ham[:l1_boyut * 8]))
+        ham = self._fh.read(l1_size * 8)
+        self._l1 = list(struct.unpack(f">{l1_size}Q", ham[:l1_size * 8]))
         self._l2_cache: dict = {}
 
     def _cluster_offset(self, sanal: int) -> int:
-        l2_giris_sayisi = 1 << self.l2_bits
+        l2_entry_count = 1 << self.l2_bits
         l1_indeks = sanal >> (self.l2_bits + self.cluster_bits)
         if l1_indeks >= len(self._l1):
             return 0
@@ -480,31 +480,31 @@ class Qcow2Image(_BaseVirtualDisk):
             return 0
         if l2_ofset not in self._l2_cache:
             self._fh.seek(l2_ofset)
-            ham = self._fh.read(l2_giris_sayisi * 8)
+            ham = self._fh.read(l2_entry_count * 8)
             self._l2_cache[l2_ofset] = list(
-                struct.unpack(f">{l2_giris_sayisi}Q", ham[:l2_giris_sayisi * 8]))
+                struct.unpack(f">{l2_entry_count}Q", ham[:l2_entry_count * 8]))
         l2 = self._l2_cache[l2_ofset]
-        l2_indeks = (sanal >> self.cluster_bits) & (l2_giris_sayisi - 1)
-        giris = l2[l2_indeks] if l2_indeks < len(l2) else 0
-        if giris & QCOW_FLAG_COMPRESSED:
+        l2_indeks = (sanal >> self.cluster_bits) & (l2_entry_count - 1)
+        entry = l2[l2_indeks] if l2_indeks < len(l2) else 0
+        if entry & QCOW_FLAG_COMPRESSED:
             raise VirtualDiskError("Sikistirilmis QCOW2 kumesi desteklenmiyor")
-        return giris & QCOW_OFFSET_MASK
+        return entry & QCOW_OFFSET_MASK
 
     def _read_raw(self, offset: int, length: int) -> bytes:
         out = bytearray()
-        konum, kalan = offset, length
+        pos, kalan = offset, length
         while kalan > 0:
-            kume_ici = konum % self.cluster_size
-            parca = min(kalan, self.cluster_size - kume_ici)
-            ofset = self._cluster_offset(konum - kume_ici)
+            in_cluster = pos % self.cluster_size
+            chunk = min(kalan, self.cluster_size - in_cluster)
+            ofset = self._cluster_offset(pos - in_cluster)
             if ofset == 0:
-                out += b"\x00" * parca
+                out += b"\x00" * chunk
             else:
-                self._fh.seek(ofset + kume_ici)
-                veri = self._fh.read(parca)
-                out += veri + b"\x00" * (parca - len(veri))
-            konum += parca
-            kalan -= parca
+                self._fh.seek(ofset + in_cluster)
+                veri = self._fh.read(chunk)
+                out += veri + b"\x00" * (chunk - len(veri))
+            pos += chunk
+            kalan -= chunk
         return bytes(out)
 
 
@@ -514,7 +514,7 @@ class Qcow2Image(_BaseVirtualDisk):
 def detect_format(path: str) -> str:
     """Dosya bicimini imzadan belirler: 'raw' | 'vhd' | 'vdi' | 'vmdk' | 'qcow2'."""
     try:
-        boyut = os.path.getsize(path)
+        size = os.path.getsize(path)
         with open(path, "rb") as fh:
             bas = fh.read(1024)
             if bas[:4] == QCOW_MAGIC:
@@ -528,7 +528,7 @@ def detect_format(path: str) -> str:
             metin = bas[:512].decode("latin-1", "ignore")
             if "createType" in metin or "# Disk DescriptorFile" in metin:
                 return "vmdk"
-            if boyut >= 512:
+            if size >= 512:
                 fh.seek(-512, os.SEEK_END)
                 if fh.read(8) == VHD_COOKIE:
                     return "vhd"
@@ -539,21 +539,21 @@ def detect_format(path: str) -> str:
 
 def open_disk(path: str, readonly: bool = False) -> BlockDevice:
     """Yola gore uygun aygit nesnesini acar (ham veya sanal disk)."""
-    bicim = detect_format(path)
-    if bicim == "raw":
+    fmt = detect_format(path)
+    if fmt == "raw":
         return DiskImage(path, readonly=readonly)
-    if bicim == "vhd":
+    if fmt == "vhd":
         return VhdImage(path, readonly=readonly)
-    if bicim == "vdi":
+    if fmt == "vdi":
         return VdiImage(path)
-    if bicim == "vmdk":
+    if fmt == "vmdk":
         return VmdkImage(path, readonly=readonly)
-    if bicim == "qcow2":
+    if fmt == "qcow2":
         return Qcow2Image(path)
-    raise VirtualDiskError(f"Bilinmeyen disk bicimi: {bicim}")
+    raise VirtualDiskError(f"Bilinmeyen disk bicimi: {fmt}")
 
 
-def format_label(bicim: str) -> str:
+def format_label(fmt: str) -> str:
     return {"raw": "Ham disk goruntusu (.img)", "vhd": "Microsoft VHD",
             "vdi": "VirtualBox VDI", "vmdk": "VMware VMDK",
-            "qcow2": "QEMU QCOW2"}.get(bicim, bicim)
+            "qcow2": "QEMU QCOW2"}.get(fmt, fmt)

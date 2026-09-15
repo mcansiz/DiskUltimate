@@ -18,9 +18,9 @@ class PreviewDialog(QDialog):
         self.setWindowTitle(f"Onizleme — {node.name}")
         self.resize(820, 560)
         layout = QVBoxLayout(self)
-        bilgi = QLabel(f"<b>{node.path}</b> — {human_size(node.size)} "
+        info = QLabel(f"<b>{node.path}</b> — {human_size(node.size)} "
                        f"(ilk {human_size(len(data))} gosteriliyor)")
-        layout.addWidget(bilgi)
+        layout.addWidget(info)
 
         sekmeler = QTabWidget()
         mono = QFontDatabase.systemFont(QFontDatabase.FixedFont)

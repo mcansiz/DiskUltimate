@@ -118,9 +118,9 @@ class DiskMapWidget(QWidget):
         fazla = sum(widths) - area_w
         if fazla > 0:
             esnek = [i for i, w in enumerate(widths) if w > MIN_BLOCK_WIDTH]
-            toplam_esnek = sum(widths[i] - MIN_BLOCK_WIDTH for i in esnek) or 1
+            total_flex = sum(widths[i] - MIN_BLOCK_WIDTH for i in esnek) or 1
             for i in esnek:
-                pay = int(fazla * (widths[i] - MIN_BLOCK_WIDTH) / toplam_esnek)
+                pay = int(fazla * (widths[i] - MIN_BLOCK_WIDTH) / total_flex)
                 widths[i] = max(MIN_BLOCK_WIDTH, widths[i] - pay)
         elif fazla < 0 and widths:
             widths[-1] += -fazla
@@ -161,18 +161,18 @@ class DiskMapWidget(QWidget):
 
     def _draw_block(self, painter: QPainter, block: Block) -> None:
         rect = block.rect
-        secili = self._is_selected(block)
+        selected = self._is_selected(block)
         if block.kind == "part":
             part: Partition = block.obj
             base = fs_color(part.fs_type)
-            baslik = part.display_name
-            alt = human_size(part.size)
+            title = part.display_name
+            lower = human_size(part.size)
             tip = part.fs_type or "Bicimlendirilmemis"
         else:
             free: FreeRegion = block.obj
             base = palette_color(self, "window")
-            baslik = "Bos alan"
-            alt = human_size(free.size)
+            title = "Bos alan"
+            lower = human_size(free.size)
             tip = "Bolumlenmemis"
 
         # govde
@@ -203,9 +203,9 @@ class DiskMapWidget(QWidget):
 
         # cerceve
         vurgu = palette_color(self, "highlight")
-        if self._hover is block and not secili:
+        if self._hover is block and not selected:
             painter.setPen(QPen(vurgu, 1))
-        elif secili:
+        elif selected:
             painter.setPen(QPen(vurgu, 2))
         else:
             painter.setPen(QPen(darken(palette_color(self, "window"), 130), 1))
@@ -222,7 +222,7 @@ class DiskMapWidget(QWidget):
         f = painter.font(); f.setPointSize(9); f.setBold(True); painter.setFont(f)
         metin_alani = QRect(rect.left() + 6, rect.top() + 10, rect.width() - 12, 16)
         painter.drawText(metin_alani, Qt.AlignLeft | Qt.AlignVCenter,
-                         self._elide(painter, baslik, metin_alani.width()))
+                         self._elide(painter, title, metin_alani.width()))
 
         f.setBold(False); f.setPointSize(8); painter.setFont(f)
         painter.setPen(metin_rengi)
@@ -230,7 +230,7 @@ class DiskMapWidget(QWidget):
                          Qt.AlignLeft | Qt.AlignVCenter,
                          self._elide(painter, tip, rect.width() - 12))
         painter.drawText(QRect(rect.left() + 6, rect.top() + 43, rect.width() - 12, 14),
-                         Qt.AlignLeft | Qt.AlignVCenter, alt)
+                         Qt.AlignLeft | Qt.AlignVCenter, lower)
 
         # doluluk cubugu
         if block.kind == "part":
@@ -241,10 +241,10 @@ class DiskMapWidget(QWidget):
                 painter.fillRect(cub, QColor(255, 255, 255, 190))
                 painter.setPen(QPen(darken(base, 140), 1))
                 painter.drawRect(cub)
-                dolu = QRect(cub.left() + 1, cub.top() + 1,
+                used = QRect(cub.left() + 1, cub.top() + 1,
                              int((cub.width() - 2) * oran), cub.height() - 1)
-                if dolu.width() > 0:
-                    painter.fillRect(dolu, darken(base, 135))
+                if used.width() > 0:
+                    painter.fillRect(used, darken(base, 135))
                 if rect.width() > 110:
                     painter.setPen(metin_rengi)
                     f2 = painter.font(); f2.setPointSize(7); painter.setFont(f2)

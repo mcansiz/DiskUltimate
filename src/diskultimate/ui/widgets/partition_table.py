@@ -64,7 +64,7 @@ class PartitionTableWidget(QTableWidget):
         self.itemDoubleClicked.connect(self._on_double)
 
     # -- doldurma ------------------------------------------------------------
-    def set_data(self, partitions: List[Partition],
+    def set_partitions(self, partitions: List[Partition],
                  free: List[FreeRegion]) -> None:
         self.blockSignals(True)
         self._rows = []
@@ -107,8 +107,8 @@ class PartitionTableWidget(QTableWidget):
         self._set(row, 3, human_size(p.size), align=Qt.AlignRight)
         self._set(row, 4, human_size(p.fs_used) if p.fs_used >= 0 else "-",
                   align=Qt.AlignRight)
-        bos = p.fs_total - p.fs_used if (p.fs_total >= 0 and p.fs_used >= 0) else -1
-        self._set(row, 5, human_size(bos) if bos >= 0 else "-", align=Qt.AlignRight)
+        free = p.fs_total - p.fs_used if (p.fs_total >= 0 and p.fs_used >= 0) else -1
+        self._set(row, 5, human_size(free) if free >= 0 else "-", align=Qt.AlignRight)
         self._set(row, 6, str(p.start_lba), align=Qt.AlignRight)
         self._set(row, 7, str(p.end_lba), align=Qt.AlignRight)
         self._set(row, 8, p.type_name)

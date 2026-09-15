@@ -1,6 +1,13 @@
 # ADR 0002 — exFAT/NTFS/ext4 icin gecici birim uzerinde `mkfs`
 
-**Tarih:** 2026-09-13 · **Durum:** Kabul edildi
+**Tarih:** 2026-09-13 · **Durum:** ❌ Gecersiz kilindi — [ADR 0007](0007-saf-python-exfat.md) (exFAT) ve [ADR 0017](0017-saf-python-ext-ve-ntfs.md) (ext, NTFS)
+
+> Bu karar v0.1.0 doneminde alindi: exFAT/NTFS/ext bicimlendirmesi harici
+> `mkfs.*` araclarina birakiliyordu. v0.2.0'da exFAT, v0.3.0'da ext ve NTFS
+> saf Python'a tasindi. Harici arac yolu **silinmedi** — `formatter.py`
+> icinde hala oncelik siralamasinin ikinci basamagidir (yerel arac →
+> `mkfs.*` → saf Python), ama artik tek secenek degildir. Asagidaki metin
+> tarihsel kayit olarak birakilmistir.
 
 ## Baglam
 FAT disindaki dosya sistemlerini sifirdan yazmak makul degil. Sistemdeki `mkfs.*`

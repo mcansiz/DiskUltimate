@@ -273,22 +273,22 @@ class FatFS:
         import array
         import sys as _sys
         fat = self._load_fat()
-        son = self.max_cluster
+        last = self.max_cluster
         if self.fat_type == 32:
             arr = array.array("I")
-            ham = bytes(fat[8:(son + 1) * 4])
+            ham = bytes(fat[8:(last + 1) * 4])
             arr.frombytes(ham[:len(ham) - len(ham) % 4])
             if _sys.byteorder != "little":
                 arr.byteswap()
             return sum(1 for v in arr if (v & 0x0FFFFFFF) == 0)
         if self.fat_type == 16:
             arr = array.array("H")
-            ham = bytes(fat[4:(son + 1) * 2])
+            ham = bytes(fat[4:(last + 1) * 2])
             arr.frombytes(ham[:len(ham) - len(ham) % 2])
             if _sys.byteorder != "little":
                 arr.byteswap()
             return arr.count(0)
-        return sum(1 for c in range(2, son + 1) if self.get_fat(c) == 0)
+        return sum(1 for c in range(2, last + 1) if self.get_fat(c) == 0)
 
     def alloc_cluster(self, prev: Optional[int] = None) -> int:
         """Bos bir kume ayirir.
@@ -297,9 +297,9 @@ class FatFS:
         tahsisler amortize O(1) olur (buyuk dosya yazmanin sicak yolu).
         """
         start = max(2, getattr(self, "_next_free", 2))
-        ust = self.max_cluster
-        for aralik in (range(start, ust + 1), range(2, min(start, ust + 1))):
-            for c in aralik:
+        upper = self.max_cluster
+        for span in (range(start, upper + 1), range(2, min(start, upper + 1))):
+            for c in span:
                 if self.get_fat(c) == 0:
                     self.set_fat(c, self.eoc | 0x7)
                     if prev:

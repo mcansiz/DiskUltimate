@@ -88,8 +88,8 @@ class DiskSession:
     @property
     def format_name(self) -> str:
         if self.is_physical:
-            bilgi = self.image.info
-            return f"Fiziksel disk — {bilgi.model or bilgi.name}"
+            info = self.image.info
+            return f"Fiziksel disk — {info.model or info.name}"
         return format_label(self.image_format)
 
     @classmethod
@@ -130,11 +130,11 @@ class DiskSession:
             return ("Fiziksel diskler guvenlik gerekcesiyle varsayilan olarak "
                     "SALT OKUNUR acilir. Degisiklik yapmak icin diski yazma "
                     "modunda acmaniz gerekir.")
-        bicim = self.image_format
-        if bicim in ("vdi", "qcow2"):
+        fmt = self.image_format
+        if fmt in ("vdi", "qcow2"):
             return (f"{self.format_name} bu surumde yalnizca okunabilir; "
                     "yazma destegi yol haritasinda.")
-        if bicim == "vmdk":
+        if fmt == "vmdk":
             return ("Seyrek (sparse) VMDK bu surumde salt okunur. Duz (flat) "
                     "VMDK ve VHD yazilabilir.")
         return (getattr(self.image, "readonly_reason", "")
@@ -289,12 +289,12 @@ class DiskSession:
             self.image.rescan_partitions()
         except Exception:
             pass
-        ok, mesaj = windows_format_volume(int(numaralar), index, fs_key, label,
+        ok, message = windows_format_volume(int(numaralar), index, fs_key, label,
                                           cluster_bytes)
         if not ok:
             return None
         if progress:
-            progress(mesaj, 100)
+            progress(message, 100)
         return {"ntfs": "NTFS", "exfat": "exFAT", "fat32": "FAT32",
                 "fat16": "FAT16"}.get(fs_key, fs_key.upper())
 
@@ -432,14 +432,14 @@ class DiskSession:
         """Bolumdeki dosya sisteminin boyutlandirma sinirlari."""
         self._require_table()
         part = self.table.get(index)
-        bilgi = fs_resize_info_for(self, part)
-        if bilgi.kind == "native":
-            tamam, alt, ust, _ = self._native_size_limits(index)
-            if tamam:
+        info = fs_resize_info_for(self, part)
+        if info.kind == "native":
+            ok, lower, upper, _ = self._native_size_limits(index)
+            if ok:
                 ss = self.table.sector_size
-                bilgi.min_sectors = max(1, alt // ss)
-                bilgi.max_sectors = ust // ss
-        return bilgi
+                info.min_sectors = max(1, lower // ss)
+                info.max_sectors = upper // ss
+        return info
 
     def plan_resize(self, index: int, new_start_lba: int,
                     new_sector_count: int) -> ResizePlan:
@@ -466,8 +466,8 @@ class DiskSession:
         if not plan.changed:
             return self.table.get(index)
         if plan.fs.kind == "native" and not plan.moves:
-            sonuc = self._try_native_resize(index, new_sector_count, progress)
-            if sonuc:
+            result = self._try_native_resize(index, new_sector_count, progress)
+            if result:
                 return self.table.get(index)
         return apply_resize(self, plan, progress=progress)
 
@@ -475,8 +475,8 @@ class DiskSession:
         """Windows'un bolum icin bildirdigi (tamam, en_kucuk, en_buyuk, mesaj)."""
         if not (self.is_physical and native_resize_supported()):
             return False, 0, 0, "Yerel boyutlandirici yok"
-        bilgi = self.disk_info
-        numara = getattr(bilgi, "disk_number", None)
+        info = self.disk_info
+        numara = getattr(info, "disk_number", None)
         if numara is None:
             return False, 0, 0, "Disk numarasi bilinmiyor"
         return windows_partition_size_limits(numara, index)
@@ -486,16 +486,16 @@ class DiskSession:
         """Windows `Resize-Partition` yolu; basarisizsa False doner."""
         if not (self.is_physical and native_resize_supported()):
             return False
-        bilgi = self.disk_info
-        numara = getattr(bilgi, "disk_number", None)
+        info = self.disk_info
+        numara = getattr(info, "disk_number", None)
         if numara is None:
             return False
         if progress:
             progress("Windows boyutlandiricisi calisiyor...", 20)
-        tamam, mesaj = windows_resize_partition(
+        ok, message = windows_resize_partition(
             numara, index, sector_count * self.table.sector_size)
-        if not tamam:
-            raise SessionError(f"Windows boyutlandiricisi basarisiz: {mesaj}")
+        if not ok:
+            raise SessionError(f"Windows boyutlandiricisi basarisiz: {message}")
         if progress:
             progress("Yenileniyor...", 90)
         self.reload()
@@ -561,16 +561,16 @@ class DiskSession:
         if part is None:
             raise SessionError("Bolum bulunamadi")
         self._fs_cache.pop(index, None)
-        sonuc = clone_mod.restore(src_path, self.view(part), progress=progress)
+        result = clone_mod.restore(src_path, self.view(part), progress=progress)
         self.reload()
-        return sonuc
+        return result
 
     def restore_disk(self, src_path: str, progress=None):
         self._require_writable()
         self.close_filesystems()
-        sonuc = clone_mod.restore(src_path, self.image, progress=progress)
+        result = clone_mod.restore(src_path, self.image, progress=progress)
         self.reload()
-        return sonuc
+        return result
 
     def clone_to(self, dest_path: str, size_bytes: int = 0, progress=None) -> str:
         """Tum goruntuyu yeni bir dosyaya klonlar."""
@@ -581,13 +581,13 @@ class DiskSession:
         """Bir bolumu ayni goruntudeki baska bir bolume kopyalar."""
         self._require_writable()
         kaynak = self.table.get(index)
-        hedef = self.table.get(target_index)
-        if kaynak.index == hedef.index:
+        target = self.table.get(target_index)
+        if kaynak.index == target.index:
             raise SessionError("Kaynak ve hedef ayni bolum")
         self._fs_cache.pop(target_index, None)
-        sonuc = clone_mod.clone(self.view(kaynak), self.view(hedef), progress=progress)
+        result = clone_mod.clone(self.view(kaynak), self.view(target), progress=progress)
         self.reload()
-        return sonuc
+        return result
 
     @staticmethod
     def backup_info(path: str):
@@ -602,24 +602,24 @@ class DiskSession:
         if part is None:
             raise SessionError("Bolum bulunamadi")
         self._fs_cache.pop(index, None)
-        sonuc = wipe_mod.wipe_device(self.view(part), method=method, progress=progress)
+        result = wipe_mod.wipe_device(self.view(part), method=method, progress=progress)
         self.reload()
-        return sonuc
+        return result
 
     def wipe_disk(self, method: str = "zero", progress=None):
         self._require_writable()
         self.close_filesystems()
-        sonuc = wipe_mod.wipe_device(self.image, method=method, progress=progress)
+        result = wipe_mod.wipe_device(self.image, method=method, progress=progress)
         self.reload()
-        return sonuc
+        return result
 
     def wipe_free_space(self, index: int, progress=None):
         fs = self.filesystem(index)
         if fs is None:
             raise SessionError("Bolumde okunabilir dosya sistemi yok")
-        sonuc = wipe_mod.wipe_free_space(fs, progress=progress)
+        result = wipe_mod.wipe_free_space(fs, progress=progress)
         self.reload()
-        return sonuc
+        return result
 
     # ======================================================================
     # Kurtarma
@@ -654,17 +654,17 @@ class DiskSession:
 
     def carve_files(self, index: int = -1, keys=None, progress=None):
         """Imza tabanli dosya kurtarma; index<0 ise tum goruntu taranir."""
-        hedef = self.image if index < 0 else self.view(self.table.get(index))
-        return recovery_mod.carve_files(hedef, keys=keys, progress=progress)
+        target = self.image if index < 0 else self.view(self.table.get(index))
+        return recovery_mod.carve_files(target, keys=keys, progress=progress)
 
     def extract_carved(self, item, dest_dir: str, index: int = -1) -> str:
-        hedef = self.image if index < 0 else self.view(self.table.get(index))
-        return recovery_mod.extract_carved(hedef, item, dest_dir)
+        target = self.image if index < 0 else self.view(self.table.get(index))
+        return recovery_mod.extract_carved(target, item, dest_dir)
 
     # -- ozet ----------------------------------------------------------------
     def summary(self) -> Dict[str, str]:
         used = sum(p.size for p in self.partitions if not p.logical)
-        ozet = {
+        summary = {
             "Dosya": self.path,
             "Bicim": self.format_name,
             "Boyut": human_size(self.image.size),
@@ -675,10 +675,10 @@ class DiskSession:
             "Erisim": "Salt okunur" if self.readonly else "Okuma/Yazma",
         }
         if self.is_physical:
-            bilgi = self.image.info
-            ozet["Aygit"] = bilgi.path
-            ozet["Durum"] = bilgi.risk_text
-        return ozet
+            info = self.image.info
+            summary["Aygit"] = info.path
+            summary["Durum"] = info.risk_text
+        return summary
 
     def close(self) -> None:
         self.close_filesystems()

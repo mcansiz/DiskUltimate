@@ -168,7 +168,7 @@ QToolTip {{
 """
 
 
-def ikon_temasini_ayarla() -> str:
+def apply_icon_theme() -> str:
     """Acik arayuz temasiyla uyumlu bir ikon seti secer.
 
     Masaustu koyu bir ikon temasi kullaniyorsa (orn. `breeze-dark`) ikonlar
@@ -208,7 +208,7 @@ def apply_theme(app, name: str = "system") -> str:
     """
     if name == "diskultimate":
         app.setStyleSheet(STYLESHEET)
-        ikon_temasini_ayarla()
+        apply_icon_theme()
         return "diskultimate"
     app.setStyleSheet("")
     return "system"
@@ -263,30 +263,30 @@ def os_icon(os_name: str, size: int = 16) -> QIcon:
     p.setRenderHint(QPainter.Antialiasing, True)
     try:
         if os_name == "windows":
-            _ciz_windows(p, size)
+            _draw_windows(p, size)
         elif os_name == "linux":
-            _ciz_linux(p, size)
+            _draw_linux(p, size)
         elif os_name == "macos":
-            _ciz_macos(p, size)
+            _draw_macos(p, size)
     finally:
         p.end()
     return QIcon(pix)
 
 
-def _ciz_windows(p: QPainter, size: int) -> None:
+def _draw_windows(p: QPainter, size: int) -> None:
     """Dort kareli pencere amblemi."""
     renk = QColor(OS_COLORS["windows"])
-    bosluk = max(1, size // 12)
-    kenar = (size - bosluk * 3) // 2
-    ust = bosluk
+    gap = max(1, size // 12)
+    kenar = (size - gap * 3) // 2
+    upper = gap
     for sutun in range(2):
         for satir in range(2):
-            x = bosluk + sutun * (kenar + bosluk)
-            y = ust + satir * (kenar + bosluk)
+            x = gap + sutun * (kenar + gap)
+            y = upper + satir * (kenar + gap)
             p.fillRect(x, y, kenar, kenar, renk)
 
 
-def _ciz_linux(p: QPainter, size: int) -> None:
+def _draw_linux(p: QPainter, size: int) -> None:
     """Stilize penguen: koyu govde, acik karin, sari gaga."""
     govde = QColor("#22252A")
     karin = QColor("#F2F2F2")
@@ -317,7 +317,7 @@ def _ciz_linux(p: QPainter, size: int) -> None:
     p.drawEllipse(QRectF(9.0 * kenar, 3.9 * kenar, 1.0 * kenar, 1.4 * kenar))
 
 
-def _ciz_macos(p: QPainter, size: int) -> None:
+def _draw_macos(p: QPainter, size: int) -> None:
     """Yuvarlak kose amblem (marka logosu kullanilmaz)."""
     renk = QColor(OS_COLORS["macos"])
     kenar = size / 16.0
@@ -329,3 +329,16 @@ def _ciz_macos(p: QPainter, size: int) -> None:
     p.drawEllipse(QRectF(6 * kenar, 5 * kenar, 4 * kenar, 4 * kenar))
     p.drawRoundedRect(QRectF(5 * kenar, 9.5 * kenar, 6 * kenar, 1.6 * kenar),
                       0.8 * kenar, 0.8 * kenar)
+
+
+# --------------------------------------------------------------------------
+# Ortak arayuz yardimcilari
+# --------------------------------------------------------------------------
+def standard_icon(widget, standard) -> QIcon:
+    """Widget'in kendi stilinden standart bir Qt ikonu dondurur.
+
+    Ayni iki satir hem `MainWindow` hem `FileBrowser` icinde tekrarlaniyordu;
+    ikon kaynagi tek yerde toplandi. Sistem temasinin ikonlari kullanilir
+    (ADR 0013: ozel ikon temasi zorlanmaz).
+    """
+    return widget.style().standardIcon(standard)
