@@ -1116,3 +1116,62 @@ veriyordu, bunun izi silinmedi.
 ### Dogrulama
 `platform_check` 0 bulgu · `run_all` 17/18 · 1 atlandi · belge ici baglantilar
 0 kirik. Fiziksel disklere dokunulmadi.
+
+---
+
+## 2026-09-15 (8) — `.dub` yedegi "bos disk" gibi aciliyordu (kullanici bildirimi)
+
+### Bildirilen sorun
+Kullanici 1.03 GB'lik `sdcard.img` dosyasini yedekledi (`sdcard.img.dub`, 34 MB),
+sonra yedegi **Goruntu ac** ile acti: 34 MB'lik **bos** bir disk gorundu, oysa
+iki bolum ve dosyalar olmaliydi.
+
+### Once: veri guvende mi?
+Panige yer olup olmadigi once olculdu. Yedek `.tmp/` icine geri yuklendi ve
+kaynakla karsilastirildi:
+
+```
+kaynak : 1,107,296,768 bayt   sha256 9999fa8677b8947e...
+geri   : 1,107,296,768 bayt   sha256 9999fa8677b8947e...
+SONUC: BIREBIR AYNI
+```
+
+Yedek **kusursuzdu**; geri yuklenen goruntu acildiginda iki bolum de yerindeydi
+(FAT16 onyukleme: `MLO`, `u-boot.img`, `zImage`, `extlinux` + ext4 `rootfs`).
+
+### Kok neden
+`.dub` basliginin **510. baytinda `0xAA55`** durur (specs/dub.md). Bu, basligi
+512 bayta tamamlamak icin konmus ama yan etkisi agir: yedek ham goruntu olarak
+acildiginda MBR cozumleyicisi imzayi **gecerli** bulur, 446-510 arasi sifir
+oldugu icin de "bolum yok" der. Sonuc: 34 MB'lik (dosyanin kendi boyutu) bos bir
+disk. Veri kaybi yok, ama kullanici "bolumlerim gitti" diye dusunuyor.
+
+Acma yolunda hicbir yerde yedek imzasi denetlenmiyordu.
+
+### Cozum
+- `clone.is_backup_file(path)` — yalnizca `DUBACKUP` imzasina bakar, ucuzdur.
+- `session.is_backup_file` / `session.restore_to_new_image` cepheye eklendi.
+  Ikincisi hedefi yedegin kaydettigi boyutta **yeni** dosya olarak yaratir;
+  mevcut hicbir disk veya goruntu uzerine yazmaz.
+- `main_window.open_path` artik once imzaya bakar. Yedek secilirse ham acilmaz;
+  boyut/dosya sistemi/etiket/tarih gosterilip uc secenek sunulur:
+  **Yeni goruntuye geri yukle...** · Yalnizca bilgi · Kapat.
+  Geri yukleme bitince olusan goruntu kendiliginden acilir — kullanicinin
+  "yedegi acmak" derken kastettigi sonuc budur.
+- `specs/dub.md` icine `0xAA55`'in bu yanilgiyi dogurdugu uyarisi yazildi.
+
+`0xAA55` **kaldirilmadi**: bicim degisikligi olurdu ve mevcut yedekler bu alani
+tasiyor. Uygulama icinde imza denetimi sorunu tamamen kapatiyor; baska araclarda
+ayni yanilgi olusabilecegi spec'te belirtildi.
+
+### Regresyon korumasi
+`t11_yedekleme_ve_klonlama` genisletildi: `.dub` yedek olarak taninmali, ham
+goruntu taninmamali, disk yedegi yeni bir goruntuye acilinca **bolum tablosu ve
+dosyalar geri gelmeli**. Ilk yazimda iddia bolum yedegi uzerine kuruldugu icin
+test hakli olarak patladi (bolum yedeginde tablo yoktur); disk yedegiyle
+degistirildi — kullanicinin yasadigi senaryo da zaten budur.
+
+### Dogrulama
+`run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti.
+Dogrulama sirasinda uretilen 2.06 GB gecici dosya silindi. Fiziksel disklere
+dokunulmadi; tum islemler dosyalar uzerinde yapildi.

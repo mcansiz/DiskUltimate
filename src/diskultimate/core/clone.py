@@ -138,6 +138,21 @@ def backup(device: BlockDevice, dest_path: str, compress: bool = True,
     return read_backup_info(dest_path)
 
 
+def is_backup_file(path: str) -> bool:
+    """Dosya bir `.dub` yedegi mi? Yalnizca imzaya bakar, hizlidir.
+
+    Bu denetim **acma yolunda** gereklidir: `.dub` basliginin 510. baytinda
+    `0xAA55` durur (bkz. specs/dub.md). Yedek ham goruntu gibi acilirsa bolum
+    tablosu cozumleyicisi bunu **gecerli ama bos bir MBR** sanar ve kullaniciya
+    "bos disk" gosterir — veri kaybi yoktur ama yaniltir.
+    """
+    try:
+        with open(path, "rb") as fh:
+            return fh.read(len(MAGIC)) == MAGIC
+    except OSError:
+        return False
+
+
 def read_backup_info(path: str) -> BackupInfo:
     """Yedek dosyasinin basligini okur."""
     with open(path, "rb") as fh:

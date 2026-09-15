@@ -593,6 +593,27 @@ class DiskSession:
     def backup_info(path: str):
         return clone_mod.read_backup_info(path)
 
+    @staticmethod
+    def is_backup_file(path: str) -> bool:
+        """Dosya bir `.dub` yedegi mi (imzaya bakar)."""
+        return clone_mod.is_backup_file(path)
+
+    @staticmethod
+    def restore_to_new_image(src_path: str, dest_path: str, progress=None) -> str:
+        """Yedegi **yeni** bir goruntu dosyasina acar ve yolunu dondurur.
+
+        Mevcut hicbir disk veya goruntu uzerine yazilmaz; hedef dosya yedegin
+        kaydettigi boyutta olusturulur. `restore_disk`ten farki, once hedefi
+        yaratmasidir — kullanici "yedegi acmak" istediginde beklenen islem budur.
+        """
+        info = clone_mod.read_backup_info(src_path)
+        image = DiskImage.create(dest_path, info.total_bytes, overwrite=True)
+        try:
+            clone_mod.restore(src_path, image, progress=progress)
+        finally:
+            image.close()
+        return dest_path
+
     # ======================================================================
     # Guvenli silme
     # ======================================================================

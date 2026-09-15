@@ -26,7 +26,14 @@ Blok tabanli, sifir bloklari atlayan, istege bagli zlib sikistirmali yedek bicim
 | 36 | 4 | Blok sayisi |
 | 40 | 32 | Dosya sistemi adi (UTF-8) |
 | 72 | 64 | Birim etiketi (UTF-8) |
-| 510 | 2 | `0xAA55` |
+| 510 | 2 | `0xAA55` — basligi 512 bayta tamamlar |
+
+> **Uyari.** 510. bayttaki `0xAA55`, `.dub` dosyasini ham goruntu olarak acan
+> her araca **gecerli ama bos bir MBR** gibi gosterir. DiskUltimate bu yuzden
+> acma yolunda once `DUBACKUP` imzasina bakar (`clone.is_backup_file`) ve
+> yedegi ham goruntu olarak acmaz; kullaniciya geri yukleme onerilir.
+> Baska araclarda ayni yanilgi olusabilir — yedek dosyasi bir disk goruntusu
+> **degildir**, once geri yuklenmelidir.
 
 ## Indeks girisi (16 bayt)
 

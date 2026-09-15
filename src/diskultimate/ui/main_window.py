@@ -20,6 +20,7 @@ from ..core.platform import IMAGE_EXTENSIONS, PLATFORM_NAME
 from ..core.platform import summary as platform_summary
 from ..core.vdisk import VhdImage
 from ..paths import LOG_DIR
+from ..core.clone import is_backup_file
 from ..core.image import DiskImage
 from ..core.ptable import (GPT_TYPES, MBR_TYPES, FreeRegion, Partition,
                            human_size, parse_size)
@@ -444,6 +445,9 @@ class MainWindow(QMainWindow):
         self.open_path(path)
 
     def open_path(self, path: str) -> None:
+        if is_backup_file(path):
+            self._backup_opened_warning(path)
+            return
         mevcut = self._find_open(path)
         if mevcut is not None:
             self.log(f"Zaten acik, one getirildi: {path}")
@@ -462,6 +466,75 @@ class MainWindow(QMainWindow):
         self.log(f"Goruntu acildi: {path} — {self.session.format_name}, "
                  f"{human_size(self.session.image.size)}, {self.session.scheme_name}")
         self.refresh()
+
+    def _backup_opened_warning(self, path: str) -> None:
+        """`.dub` yedegi "Goruntu ac" ile secildiginde ne yapilacagini sorar.
+
+        Yedek ham goruntu gibi acilamaz: basligindaki `0xAA55` yuzunden bolum
+        tablosu cozumleyicisi onu **gecerli ama bos bir MBR** sanar ve kullanici
+        "bolumlerim kayboldu" diye dusunur. Yedek aslinda saglamdir; yapilmasi
+        gereken onu bir hedefe **geri yuklemektir**.
+        """
+        try:
+            info = DiskSession.backup_info(path)
+        except Exception as exc:
+            self.error("Yedek okunamadi",
+                       f"{os.path.basename(path)} bir DiskUltimate yedegi gibi "
+                       f"gorunuyor ama basligi okunamadi:\n{exc}")
+            return
+        self.log(f"Yedek dosyasi secildi: {os.path.basename(path)} — "
+                 f"kaynak {human_size(info.total_bytes)}")
+        kutu = QMessageBox(QMessageBox.Information, "Bu bir yedek dosyasi",
+                           f"<b>{os.path.basename(path)}</b> bir DiskUltimate "
+                           "yedegidir (<code>.dub</code>), disk goruntusu degil. "
+                           "Icerigi sikistirilmis olarak saklanir, bu yuzden "
+                           "dogrudan acilip gezilemez.<br><br>"
+                           f"<b>Kaynak boyut:</b> {human_size(info.total_bytes)}<br>"
+                           f"<b>Dosya sistemi:</b> {info.fs_type or '-'}<br>"
+                           f"<b>Etiket:</b> {info.label or '-'}<br>"
+                           f"<b>Olusturma:</b> "
+                           f"{info.created.strftime('%Y-%m-%d %H:%M') if info.created else '-'}"
+                           "<br><br>Icerigi gormek icin once bir hedefe "
+                           "<b>geri yukleyin</b>.", QMessageBox.NoButton, self)
+        restore_btn = kutu.addButton("Yeni goruntuye geri yukle...",
+                                    QMessageBox.AcceptRole)
+        info_btn = kutu.addButton("Yalnizca bilgi", QMessageBox.ActionRole)
+        kutu.addButton("Kapat", QMessageBox.RejectRole)
+        kutu.exec_()
+        if kutu.clickedButton() is restore_btn:
+            self._restore_to_new_image(path, info)
+        elif kutu.clickedButton() is info_btn:
+            InfoDialog("Yedek Dosyasi Bilgisi", info.summary(), self).exec_()
+
+    def _restore_to_new_image(self, backup_path: str, info) -> None:
+        """Yedegi yeni bir goruntu dosyasina acar ve acilan goruntuyu gosterir.
+
+        Boylece "yedegi acmak" kullanicinin bekledigi sonucu verir: icerik
+        gezilebilir hale gelir, mevcut hicbir disk uzerine yazilmaz.
+        """
+        onerilen = os.path.splitext(backup_path)[0]
+        if not onerilen.lower().endswith((".img", ".raw", ".dd")):
+            onerilen += ".img"
+        target, _ = QFileDialog.getSaveFileName(
+            self, "Geri yuklenecek goruntu dosyasi", onerilen,
+            "Disk goruntusu (*.img *.raw *.dd);;Tum dosyalar (*)")
+        if not target:
+            return
+        if os.path.abspath(target) == os.path.abspath(backup_path):
+            self.error("Gecersiz hedef", "Hedef, yedek dosyasinin kendisi olamaz.")
+            return
+
+        def task(progress):
+            return DiskSession.restore_to_new_image(backup_path, target,
+                                                    progress=progress)
+
+        ok, result = run_task(self, "Yedek geri yukleniyor", task)
+        if not ok:
+            self.error("Geri yukleme basarisiz", str(result))
+            return
+        self.log(f"Yedek geri yuklendi: {os.path.basename(backup_path)} -> "
+                 f"{target} ({human_size(info.total_bytes)})")
+        self.open_path(target)
 
     def close_image(self) -> None:
         """Etkin oturumu kapatir; diger acik goruntuler listede kalir."""

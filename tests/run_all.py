@@ -36,6 +36,7 @@ from diskultimate.core.gpt import GPTTable  # noqa: E402
 from diskultimate.core.image import DiskImage, PartitionView  # noqa: E402
 from diskultimate.core.mbr import MBRTable  # noqa: E402
 from diskultimate.core.ptable import human_size, parse_size  # noqa: E402
+from diskultimate.core.clone import read_backup_info  # noqa: E402
 from diskultimate.core.session import DiskSession  # noqa: E402
 
 from diskultimate.paths import scratch  # noqa: E402
@@ -484,6 +485,28 @@ def t11_yedekleme_ve_klonlama():
     if _sparse_supported(TMP):
         assert actual_size(klon) < os.path.getsize(klon), "klon seyrekligi korumadi"
     s2.close()
+
+    # --- yedek dosyasi ham goruntu SANILMAMALI ---
+    # .dub basliginin 510. baytinda 0xAA55 durur; ham acilirsa bolum tablosu
+    # cozumleyicisi bunu "gecerli ama bos MBR" sanip kullaniciya bos disk
+    # gosteriyordu. Imza denetimi bu yolu kapatir.
+    assert DiskSession.is_backup_file(yedek), ".dub yedegi taninmadi"
+    assert not DiskSession.is_backup_file(klon), "ham goruntu yedek sanildi"
+
+    # --- DISK yedegi yeni bir goruntuye acilabilmeli, bolumler geri gelmeli ---
+    # Kullanicinin yasadigi durum budur: tum disk yedeklenir, sonra yedek
+    # "acilmak" istenir. Geri yukleme olmadan icerik gorunmez.
+    disk_yedek = os.path.join(TMP, "t11_disk.dub")
+    s.backup_disk(disk_yedek)
+    assert DiskSession.is_backup_file(disk_yedek)
+    acilan = DiskSession.restore_to_new_image(disk_yedek,
+                                              img_path("t11_acilan.img"))
+    s3 = DiskSession.open(acilan)
+    assert s3.image.size == read_backup_info(disk_yedek).total_bytes
+    assert s3.scheme == "gpt", f"bolum tablosu geri gelmedi: {s3.scheme}"
+    assert len(s3.partitions) == 1, f"bolumler geri gelmedi: {len(s3.partitions)}"
+    assert s3.filesystem(1).read("/veri/buyuk.bin") == icerik
+    s3.close()
     s.close()
 
 
