@@ -76,6 +76,48 @@ yorumlara dokunmaz.
 Denetleyicinin kendisi kasitli ihlal dosyasiyla dogrulanmistir; beklenen cikti
 **"Toplam bulgu: 0"**.
 
+## Linux dogrulama ortami (VMware misafiri)
+
+Harici dogrulayicilarin tamami yalnizca Linux'ta bulunur. Projenin dogrulama
+ortami bir **Linux Mint** misafiridir; ana makine (Windows) uzerinde `fsck`
+araclarindan hicbiri yoktur ve tablolar orada ATLANDI gosterir.
+
+```bash
+sudo apt install python3-pyqt5 e2fsprogs dosfstools exfatprogs ntfs-3g
+```
+
+**Testleri paylasilan klasorde calistirmayin.** `vmhgfs`/`vboxsf` seyrek dosya
+desteklemez; goruntuler tum boyutlariyla yazilir ve **ana makinenin** diski
+dolabilir. Kaynagi misafirin yerel diskine kopyalayin:
+
+```bash
+cp -r /mnt/hgfs/<paylasim>/{src,tests,main.py} ~/du-test/
+cd ~/du-test && python3 -m tests.run_all && python3 -m tests.fs_matrix
+```
+
+Fiziksel disk testleri icin misafire **bos** bir disk eklenir (orn. `/dev/sdb`);
+sistem diski (`/dev/sda`) asla hedef gosterilmez.
+
+## Dosya sistemi yetenek matrisi
+
+```bash
+python3 -m tests.fs_matrix            # sekiz bicim
+python3 -m tests.fs_matrix ext4 fat32 # secilenler
+```
+
+Her bicim icin ayni adimlar kosulur — **bicimlendir → tespit → oku → yaz →
+harici fsck** — ve sonuc tek tabloda toplanir. Harici arac yoksa adim
+**ATLANDI** yazilir, asla TAMAM sayilmaz.
+
+Linux Mint 22.3 uzerinde olculen durum (2026-09-15):
+
+| Bicim | Bicimlendir | Tespit | Oku | Yaz | Harici dogrulama |
+|---|---|---|---|---|---|
+| fat12/16/32 | ✅ | ✅ | ✅ | ✅ | ✅ `fsck.vfat` |
+| exfat | ✅ | ✅ | ✅ | ✅ | ✅ `fsck.exfat` |
+| ntfs | ✅ | ✅ | okuyucu yok | okuyucu yok | ✅ `ntfsfix` |
+| ext2/3/4 | ✅ | ✅ | ✅ | salt okunur | ✅ `e2fsck` |
+
 ## Harici dogrulama (elle)
 
 ```bash

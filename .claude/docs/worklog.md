@@ -1448,3 +1448,66 @@ ext yazma gelistirmesi bu ortamda, `e2fsck` her adimda kosularak yapilacak.
 ### Dogrulama
 `run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti ·
 `fs_matrix` 8/8 hatasiz (dogrulama adimlari atlandi).
+
+---
+
+## 2026-09-15 (13) — Linux Mint dogrulama ortami kuruldu; sekiz bicim fsck ile dogrulandi
+
+### Ortam
+Kullanici VMware Linux Mint misafirine SSH erisimi verdi (`192.168.42.131`),
+proje `/mnt/hgfs/...` ile paylasildi ve misafire **bos 10 GB `/dev/sdb`** eklendi.
+
+Kurulum: `python3-pyqt5` kuruldu. Dogrulayicilarin tamami zaten vardi —
+`fsck.vfat`, `fsck.exfat`, `e2fsck`, `ntfsfix`, `ntfsinfo`, `mkfs.*`.
+
+**Testler paylasilan klasorde kosulmadi.** `vmhgfs` seyrek dosya desteklemez;
+goruntuler tum boyutlariyla yazilip ana makinenin diskini doldurabilirdi (bu
+daha once yasanmis, bkz. 4. oturum). Kaynak `~/du-test` altina kopyalandi.
+
+### Ilk gercek capraz dogrulama
+`tests.run_all` → **17/18 · 1 atlandi**. Bu kez `t16`/`t17`/`t18` gercek
+`e2fsck` / `ntfsfix` / `fsck.vfat` ile kosuldu (Windows'ta bu adimlar
+atlaniyordu).
+
+`tests.fs_matrix` → **8/8 hatasiz, harici dogrulamalarin tamami TAMAM**:
+
+| Bicim | Bicimlendir | Oku | Yaz | fsck |
+|---|---|---|---|---|
+| fat12/16/32 | ✅ | ✅ | ✅ | ✅ `fsck.vfat` |
+| exfat | ✅ | ✅ | ✅ | ✅ `fsck.exfat` |
+| ntfs | ✅ | okuyucu yok | okuyucu yok | ✅ `ntfsfix` |
+| ext2/3/4 | ✅ | ✅ | salt okunur | ✅ `e2fsck` |
+
+### Matriste bir yanlis alarm — kusur bendeydi
+Ilk kosumda NTFS "alternate boot sector BAD" verdi. Cozumleme, birimin
+**saglam** oldugunu gosterdi: `total_sectors` 262143 = bolum sektoru − 1 ve
+yedek onyukleme sektoru tam o konumda.
+
+Kusur `fs_matrix._extract` icindeydi: bolumu ayiklarken dosyanin **sonuna
+kadar** kopyaliyordu, yani 128 MB'lik birim 129 MB'lik dosyaya donusuyordu.
+NTFS yedek onyukleme sektorunu aygitin **son** sektorunde arar; fazladan kuyruk
+yuzunden orada sifir buldu. FAT/exFAT/ext boyutu ustbloktan okudugu icin
+etkilenmedi. `_extract` artik tam bolum uzunlugu kadar kopyaliyor ve NTFS
+`ntfsfix` ile temiz cikiyor.
+
+> Ders: bir dogrulama koşumu hata bildirdiginde once **koşumun kendisi**
+> sorgulanmali. "NTFS bicimlendiricimiz bozuk" diye rapor etseydim yanlis olurdu.
+
+### ext4 okuyucu, Linux cekirdek surucusuyle karsilastirildi
+Kullanicinin gercek `sdcard.img` dosyasi `mount -o ro,loop,offset=...` ile
+baglandi ve **ayni birim** hem cekirdek hem bizim okuyucumuzla okundu:
+
+```
+kok dizin ayni mi : True   (19 giris)
+/etc giris sayisi : 23 = 23
+busybox sha256    : 50e486029e849c99...  (870,036 bayt, extent agaci)
+referansla AYNI mi: EVET
+```
+
+Okuyucu cikti duzeyinde cekirdekle **birebir** ayni. Referans baglanti
+kaldirildi; `/dev/sdb` bu oturumda **hic kullanilmadi** (durumu dogrulandi:
+bos, bagli degil).
+
+### Dogrulama
+Linux: `run_all` 17/18 · 1 atlandi · `fs_matrix` 8/8.
+Windows (ana makine): `run_all` 17/18 · `platform_check` 0 bulgu · `ui_smoke` gecti.

@@ -76,18 +76,27 @@ class Sonuc:
                              self.write, self.fsck))
 
 
-def _extract(image_path: str, dest: str) -> None:
-    """Bolumu ayri bir dosyaya kopyalar (harici arac bolum ofsetini bilmez)."""
+def _extract(image_path: str, dest: str, length: int) -> None:
+    """Bolumu ayri bir dosyaya kopyalar (harici arac bolum ofsetini bilmez).
+
+    **Tam `length` bayt** kopyalanir, dosyanin sonuna kadar degil. NTFS yedek
+    onyukleme sektorunu aygitin **son** sektorunde arar; bolumden sonrasi da
+    kopyalanirsa dosya birimden buyuk olur ve `ntfsfix` yedegi bulamayip
+    "alternate boot sector BAD" der. Ilk surumde bu hata yapilmisti ve saglam
+    bir NTFS birimi bozuk gibi raporlandi.
+    """
+    kalan = length
     with open(image_path, "rb") as src, open(dest, "wb") as out:
         src.seek(START_LBA * 512)
-        while True:
-            block = src.read(4 * MIB)
+        while kalan > 0:
+            block = src.read(min(4 * MIB, kalan))
             if not block:
                 break
             out.write(block)
+            kalan -= len(block)
 
 
-def _verify(key: str, image_path: str) -> str:
+def _verify(key: str, image_path: str, length: int) -> str:
     """Harici fsck varsa calistirir. Yoksa ATLANDI — asla TAMAM sayilmaz."""
     adaylar = DOGRULAYICI.get(key, [])
     arac = next(((t, a) for t, a in adaylar if shutil.which(t)), None)
@@ -96,7 +105,7 @@ def _verify(key: str, image_path: str) -> str:
         return f"{ATLANDI} ({isimler} yok)"
     tool, args = arac
     part = image_path + ".part"
-    _extract(image_path, part)
+    _extract(image_path, part, length)
     try:
         r = subprocess.run([tool] + args + [part], capture_output=True, text=True)
         if r.returncode != 0:
@@ -177,7 +186,7 @@ def olc(key: str) -> Sonuc:
     finally:
         disk.close()
 
-    s.fsck = _verify(key, path)
+    s.fsck = _verify(key, path, mb * MIB)
     if os.environ.get("DISKULTIMATE_KEEP_TEST_FILES") != "1":
         try:
             os.unlink(path)
