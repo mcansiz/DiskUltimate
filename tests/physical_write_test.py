@@ -8,7 +8,9 @@ tamamini** saglamadikca calismaz:
   3. Disk sistem diski OLMAMALI
   4. Diskte bagli (mounted) bolum OLMAMALI
   5. Disk bilgileri eksiksiz okunabilmis olmali (yetki var)
-  6. Disk boyutu ust sinirin altinda olmali (varsayilan 8 GB)
+  6. Disk boyutu ust sinirin altinda olmali (varsayilan 8 GB;
+     `--azami-gb=N` ile yukseltilebilir — bu olcut yalnizca bir sezgidir,
+     3, 4 ve 5. olcutler bu bayraktan **etkilenmez**)
 
 Kullanim:
     sudo python3 -m tests.physical_write_test /dev/sdb --onayla
@@ -181,6 +183,17 @@ def main() -> int:
     argv = [a for a in sys.argv[1:]]
     onay = "--onayla" in argv
     bagli_izin = "--bagli-birimlere-izin-ver" in argv
+    # Boyut siniri bir guvenlik sezgisidir: "bu kadar buyuk bir disk muhtemelen
+    # test diski degildir". 10-16 GB'lik ayrilmis test diskleri yaygin oldugu
+    # icin acikca yukseltilebilir; digerlerini gevsetmez.
+    azami = AZAMI_BOYUT
+    for a in argv:
+        if a.startswith("--azami-gb="):
+            try:
+                azami = max(1, int(a.split("=", 1)[1])) * 1024 * MIB
+            except ValueError:
+                print(f"Gecersiz --azami-gb degeri: {a}")
+                return 2
     yollar = [a for a in argv if not a.startswith("--")]
     if not yollar:
         print(__doc__)
@@ -193,7 +206,7 @@ def main() -> int:
     # Olcutler once denetlenir: kullanici yetki almadan once hedefin uygun olup
     # olmadigini gorebilsin (bu yol yalnizca listeleme bilgisine bakar; hicbir
     # sektor okunmaz, hicbir yazma yapilmaz).
-    bilgi = olcutleri_dogrula(yollar[0], bagli_izin=bagli_izin)
+    bilgi = olcutleri_dogrula(yollar[0], azami=azami, bagli_izin=bagli_izin)
     if bilgi is None:
         return 2
     if not can_access():

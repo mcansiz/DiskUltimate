@@ -1577,3 +1577,74 @@ Kapi calisiyor: gercek kart bozulmadi, dosya bayt bayt ayni kaldi.
 ### Dogrulama
 Linux: `ext_write_check` 3/3 · `run_all` 17/18 · `fs_matrix` 8/8.
 Windows: `run_all` 17/18 · `platform_check` 0 bulgu · `ui_smoke` gecti.
+
+---
+
+## 2026-09-15 (15) — Fiziksel diskte ext4 uctan uca; bicimlendirme imza hatasi
+
+### Gercek donanimda okuma
+SD kart VM'e aktarildi (`/dev/sdc`, 59.48 GB, iki bolumu de masaustu tarafindan
+**bagli**). `tests.physical_probe` dogru siniflandirdi: `sda` sistem diski
+(`[!]`), `sdb` temiz, `sdc` cikarilabilir + bagli bolumler listelendi.
+
+Salt okunur acilip okundu: MBR, FAT16 (7 giris) ve ext4 (20 giris) sorunsuz.
+Yazma dogru gerekcyle reddedildi ("Kaynak salt okunur acildi").
+
+### Bulunan hata: bicimlendirme eski imzayi birakiyordu
+Fiziksel diskte ext4 bolum olusturuldu ama acilirken **exFAT surucusu cagrildi
+ve cokti**. Neden:
+
+```
+sdb1 ofset 0    : eb76 9045 5846 4154  -> "EXFAT" (onceki testten kalma)
+sdb1 ofset 1080 : 53ef                 -> ext ustblok imzasi (dogru yazilmis)
+```
+
+Her dosya sistemi kendi alanini yazar ama otekinin imzasini **silmez**: exFAT
+onyukleme sektoru ofset 0'dadir, ext ilk 1024 bayti rezerve birakip ona
+dokunmaz. Sonuc: ext4 birim exFAT sanildi. (`blkid` dogru taniyordu, cunku o
+imza oncelik kurallarini biliyor; bizim tespitimiz ilk eslesmeyi aliyor.)
+
+`formatter.wipe_signatures()` eklendi — `mkfs` araclarinin `wipefs` davranisi:
+bicimlendirmeden once ilk 128 KB ve **son sektor** (NTFS yedek onyukleme)
+sifirlanir.
+
+**`t05` yeniden amaclandirildi.** Eski hali ("harici mkfs ile bicimlendirme")
+oluydu: tum bicimler saf Python oldugundan `available_kinds(internal=False)`
+hep bos donuyor, test her zaman atlaniyordu. Yerine yeniden bicimlendirme
+zinciri kondu: `fat32 → exfat → ntfs → ext4 → fat16 → ext2`, her adimda tespit
+dogrulanir. Bu sayede **`run_all` artik 18/18** (atlanan yok).
+
+### ext4 uctan uca fiziksel disk (`/dev/sdb`, bos test diski)
+```
+[1] yazma modunda acildi        [5] disk kapatildi
+[2] ext4 bolum olusturuldu      [6] yeniden acildi: 21 giris, buyuk.bin AYNI
+[3] yazilabilir=True            [7] e2fsck /dev/sdb1 -> rc=0
+[4] dosyalar yazildi
+```
+
+Ardindan **Linux cekirdegi** ile dogrulandi:
+```
+kok  : lost+found okubeni.txt veri
+veri : 21 giris
+okubeni.txt: DiskUltimate ext4 fiziksel disk denemesi
+buyuk.bin  : 131072 bayt (dolayli blok), cekirdek okudu
+```
+
+`physical_write_test` de gecti (GPT + FAT32 + exFAT). Boyut siniri icin
+`--azami-gb=N` eklendi: 8 GB varsayilani bir **sezgidir**, 10 GB'lik ayrilmis
+test diskleri yaygin. Sistem diski / bagli bolum / bilgi eksikligi olcutleri bu
+bayraktan **etkilenmez**.
+
+### Guvenlik
+- Hedef her adimda `/dev/sdb` ile sinirlandi; betikte sistem diski ve bagli
+  bolum icin sert `assert` var. Bir kosumda bu koruma **gercekten devreye
+  girdi**: onceki testin biraktigi bolum masaustunca baglanmisti, islem iptal
+  edildi; elle `umount` sonrasi devam edildi.
+- Test sonrasi `/dev/sdb` temizlendi.
+- **SD kart (`/dev/sdc`) yalnizca okundu**, hicbir yazma yapilmadi; durumu
+  bastaki gibi.
+
+### Dogrulama
+Linux: `run_all` **18/18** · `ext_write_check` 3/3 · `fs_matrix` 8/8 ·
+fiziksel ext4 e2fsck rc=0 + cekirdek baglama.
+Windows: `run_all` 18/18 · `platform_check` 0 bulgu.

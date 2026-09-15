@@ -275,20 +275,28 @@ class Atlandi(Exception):
 
 
 @test
-def t05_harici_bicimlendirme():
-    """exFAT / NTFS / ext4 bicimlendirme (sistemde varsa)"""
-    keys = [k.key for k in available_kinds() if not k.internal]
-    if not keys:
-        raise Atlandi("harici mkfs araci yok")
+def t05_yeniden_bicimlendirme():
+    """Yeniden bicimlendirme eski imzayi birakmamali (tespit dogru kalmali)
+
+    Her dosya sistemi kendi alanini yazar ama otekinin imzasini silmez: exFAT
+    onyukleme sektoru ofset 0'dadir, ext ilk 1024 bayti rezerve birakip ona
+    dokunmaz. Imzalar temizlenmezse exFAT'ten ext4'e cevrilen bir bolum exFAT
+    sanilir. Gercekte yasandi: fiziksel diskte ext4 bolum acilirken exFAT
+    surucusu cagrildi ve cokti. `formatter.wipe_signatures` bunu onler.
+    """
     p = img_path("t05.img")
-    d = DiskImage.create(p, 700 * MIB, overwrite=True)
-    off = 2048
-    for key in keys[:3]:
-        view = PartitionView(d, off, 200 * MIB // 512)
-        format_partition(view, key, label="DENEME")
-        info = detect(PartitionView(d, off, 200 * MIB // 512))
-        assert info.fs_type.lower().startswith(key[:3]), f"{key} -> {info.fs_type}"
-        off += 200 * MIB // 512
+    d = DiskImage.create(p, 200 * MIB, overwrite=True)
+    view = lambda: PartitionView(d, 2048, 180 * MIB // 512)   # noqa: E731
+    beklenen = {"fat32": "FAT32", "fat16": "FAT16", "exfat": "exFAT",
+                "ntfs": "NTFS", "ext4": "ext4", "ext2": "ext2"}
+    onceki = None
+    for key in ("fat32", "exfat", "ntfs", "ext4", "fat16", "ext2"):
+        format_partition(view(), key, label="DENEME")
+        bulunan = detect(view()).fs_type
+        assert bulunan == beklenen[key], (
+            f"{onceki} -> {key} sonrasi tespit {bulunan!r}, "
+            f"{beklenen[key]!r} bekleniyordu (eski imza kalmis olabilir)")
+        onceki = key
     d.close()
     if _sparse_supported(TMP):      # dosya sistemi destekliyorsa korunmali
         assert actual_size(p) < os.path.getsize(p), "seyreklik korunmadi"

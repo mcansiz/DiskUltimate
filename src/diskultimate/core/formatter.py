@@ -117,6 +117,34 @@ def available_kinds(size_bytes: int = 0) -> List[FsKind]:
     return out
 
 
+# exFAT ana + yedek onyukleme bolgesi 24 sektor tutar; ext ustblogu 1024.
+# Bu araligi sifirlamak, bilinen tum onyukleme/ustblok imzalarini kapsar.
+SIGNATURE_BYTES = 128 * 1024
+
+
+def wipe_signatures(view: BlockDevice) -> None:
+    """Bicimlendirmeden once **eski dosya sistemi imzalarini** siler.
+
+    Neden gerekli: her dosya sistemi kendi alanini yazar ama otekinin imzasini
+    silmez. Ornegin exFAT onyukleme sektoru ofset 0'dadir; ext ilk 1024 bayti
+    **rezerve birakir** ve ona dokunmaz. exFAT bir bolum ext4'e cevrilince eski
+    `EXFAT` imzasi yerinde kalir ve tespit birimi yanlis tanir (gercekte
+    yasandi: ext4 bolum exFAT sanildi ve exFAT surucusu cokerek acildi).
+
+    `mkfs` araclari da ayni seyi yapar (`wipefs` davranisi). Basi ve **son
+    sektoru** temizlenir: NTFS yedek onyukleme sektoru orada durur.
+    """
+    if getattr(view, "readonly", False):
+        raise FormatError("Goruntu salt okunur acildi")
+    ss = view.sector_size
+    head = min(SIGNATURE_BYTES, view.size)
+    zero = b"\x00" * ss
+    for offset in range(0, head, ss):
+        view.write(offset, zero)
+    if view.size >= 2 * ss:                      # son sektor (NTFS yedegi)
+        view.write(view.size - ss, zero)
+
+
 def format_partition(view: BlockDevice, fs_key: str, label: str = "",
                      cluster_bytes: int = 0, quick: bool = True,
                      progress: Optional[Callable[[str, int], None]] = None) -> str:
@@ -137,6 +165,8 @@ def format_partition(view: BlockDevice, fs_key: str, label: str = "",
     def report(msg: str, pct: int) -> None:
         if progress:
             progress(msg, pct)
+
+    wipe_signatures(view)
 
     if kind.internal:
         report(f"{kind.label} bicimlendiriliyor...", 10)
