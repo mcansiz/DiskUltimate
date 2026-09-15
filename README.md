@@ -116,6 +116,7 @@ Tum tasarim notlari, kararlar ve is gunlugu depo icindeki `.claude/` klasorunded
 
 - [`.claude/docs/diskgenius-parity.md`](.claude/docs/diskgenius-parity.md) — **DiskGenius ozellik karsilastirmasi**
 - [`.claude/docs/feature-analysis.md`](.claude/docs/feature-analysis.md) — pazar ve kaynak analizi
+- [`.claude/docs/platform-matrix.md`](.claude/docs/platform-matrix.md) — **platform / bicim yetenek matrisi** (okuma-yazma, kutuphaneler)
 - [`.claude/docs/cross-platform.md`](.claude/docs/cross-platform.md) — capraz platform notlari
 - [`.claude/docs/project-overview.md`](.claude/docs/project-overview.md) — kapsam ve yol haritasi
 - [`.claude/docs/architecture.md`](.claude/docs/architecture.md) — modul yapisi ve veri akisi
