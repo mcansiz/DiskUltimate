@@ -131,6 +131,18 @@ demesi tehlikelidir.
 
 Yalnizca goruntu dosyalari uzerinde calisir.
 
+## NTFS yazma dogrulamasi
+
+```bash
+python3 -m tests.ntfs_write_check       # ntfsfix
+sudo python3 -m tests.ntfs_write_check  # + ntfs-3g ile baglama
+```
+
+Iki yerlesim sinanir: **kendi bicimlendiricimiz** (indeks `$INDEX_ROOT` icinde)
+ve **`mkntfs`** (indeks B+ agacina tasmis). `ntfsfix` yoksa kosum basarisiz
+sayilir. `ntfs-3g` baglama adimi root gerektirir; yoksa atlanir ve bu acikca
+yazilir.
+
 ## Harici dogrulama (elle)
 
 ```bash

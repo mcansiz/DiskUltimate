@@ -1861,3 +1861,40 @@ ntfs-3g BAGLANDI: 17 giris, okundu.txt='NTFS yazma denemesi',
 ### Dogrulama ozeti
 Linux Mint: `run_all` **18/18** · `fs_matrix` **8/8, tum dogrulamalar TAMAM**.
 Windows: `run_all` 18/18 · `platform_check` 0 bulgu.
+
+---
+
+## 2026-09-15 (19) — Eksik test dosyasi yazildi, yol haritasi gerceklestirildi
+
+### Bulunan kayma — kendi yaptigim
+`core/ntfswrite.py` docstring'i ve `tests/run_all.py` yorumu
+**`tests/ntfs_write_check.py`**'ye atif yapiyordu ama **dosya yoktu**. Bu,
+oturumun basinda denetledigim turden bir belge-kod kaymasidir; bu kez kaynagi
+bendim.
+
+`tests/ntfs_write_check.py` yazildi (`ext_write_check.py` ile ayni mantik):
+her adimdan sonra `ntfsfix`, sonunda `ntfs-3g` ile baglama. **Iki yerlesim**
+sinanir:
+- **kendi bicimlendiricimiz** — indeks `$INDEX_ROOT` icinde
+- **`mkntfs`** — indeks B+ agacina tasmis (`$INDEX_ALLOCATION`)
+
+Sonuc (Mint):
+```
+normal kullanici: 2/2 (ntfs-3g baglama atlandi - root degil)
+root            : 2/2 (ntfs-3g dogruladi)
+```
+
+`ntfs-3g` baglama adimi root ister; yoksa **atlandigi acikca yazilir**, TAMAM
+sayilmaz.
+
+### Yol haritasi gerceklestirildi
+`project-overview.md` hala "NTFS okuyucu" ve "ext okuyucu"yu **planlanan**
+gosteriyordu. v0.4.0 tamamlananlar bolumu yazildi, kalanlar v0.5'e tasindi ve
+**bilinen yazma sinirlari** acikca listelendi (ext: extent buyutme, cok katli
+dolayli blok; NTFS: B+ dugum bolme, sikistirilmis akis, `$ATTRIBUTE_LIST`).
+
+macOS dogrulamasi v0.5 listesine acik bir madde olarak kondu.
+
+### Dogrulama
+`platform_check` 0 bulgu · belge ici baglantilar 0 kirik ·
+`ntfs_write_check` 2/2 (Mint, root ile).

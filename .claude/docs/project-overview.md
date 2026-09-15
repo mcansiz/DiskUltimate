@@ -77,14 +77,36 @@ gecen ayri bir moddur.
 - [x] **Ozel tema kaldirildi**, sistemin Qt gorunumu kullaniliyor ([ADR 0013](../decisions/0013-tema-kaldirildi.md))
 - [x] **Salt okunur acilma teshisi** — neden gosterilir, kilit durumunda yeniden denenir
 
-### v0.4 — planlanan
+### v0.4.0 — tamamlandi
+- [x] **ext2/3/4 okuyucu** — extent agaci, dolayli blok, sembolik bag izleme
+- [x] **ext2/3/4 yazici** — `metadata_csum` (CRC-32C) dahil; her adim `e2fsck` ile
+      dogrulanir (`tests/ext_write_check.py`)
+- [x] **NTFS okuyucu** — MFT, fixup, veri kosullari, `$ATTRIBUTE_LIST`, B+ indeks
+- [x] **NTFS yazici** — `$Bitmap`/`$MFT` tahsisi, `$MFT` kendiliginden buyume,
+      INDX giris ekleme; `ntfsfix` + `ntfs-3g` ile dogrulanir
+      (`tests/ntfs_write_check.py`)
+- [x] **Sekiz dosya sisteminde de B O Y** — `tests/fs_matrix.py` 8/8
+- [x] **`.dub` yedegi dogrudan gezilir** (geri yuklemeye gerek yok) ve fiziksel
+      diske yazilabilir
+- [x] Takilan USB/SD aygitlar listede **kendiliginden** belirir
+
+### v0.5 — planlanan
 - [ ] Bolum bolme / birlestirme (boyutlandirma altyapisi hazir; bolme = kucult + yeni bolum)
-- [ ] NTFS **okuyucu** (MFT cozumleme)
 - [ ] Onaltilik duzenleyici (yazma destegi — su an goruntuleyici salt okunur)
 - [ ] Dosya sistemi tutarlilik denetimi (chkdsk/fsck esdegeri)
 - [ ] Birincil ↔ mantiksal bolum donusumu, bolum gizleme
+- [ ] Bozuk sektor (okuma hatasi) taramasi — fiziksel disk destegi geldi
+- [ ] **macOS uzerinde dogrulama** — kod hazir, hic kosulmadi
 
-### v0.5 ve sonrasi — fikirler
+### Bilinen sinirlar (yazma)
+- **ext:** extent agaci buyutme yok, cok katli dolayli blok yok (~4 MB ustu
+  tek dosya), `bigalloc`/`inline_data` reddedilir.
+- **NTFS:** B+ dugum bolme yok (dizin basina ~25-30 giris), sikistirilmis akis
+  yok, `$ATTRIBUTE_LIST` yazimi yok.
+
+Bunlarin hicbiri sessizce basarisiz olmaz; nedeni metinle bildirilip reddedilir.
+
+### v0.6 ve sonrasi — fikirler
 - [ ] Sanal disk bicimleri arasinda dogrudan donusturucu
 - [ ] Onyukleme sektoru sablonlari (syslinux / GRUB yerlestirme)
 - [ ] Bicimlendirilmis bolumde dizin yapisini yeniden kurma
