@@ -598,6 +598,28 @@ class DiskSession:
         """Dosya bir `.dub` yedegi mi (imzaya bakar)."""
         return clone_mod.is_backup_file(path)
 
+    @property
+    def is_backup(self) -> bool:
+        """Acik oturum bir `.dub` yedegi mi? (salt okunur, gezilebilir)"""
+        return isinstance(self.image, clone_mod.DubImage)
+
+    @staticmethod
+    def restore_to_physical(src_path: str, disk, allow_system: bool = False,
+                            progress=None):
+        """Yedegi **fiziksel diske** yazar.
+
+        Fiziksel disk guvenlik kapilarinin tamamindan gecer: `confirm=True` ve
+        gerekiyorsa `allow_system=True` olmadan aygit yazma modunda acilmaz
+        (bkz. ADR 0014). Yazma bitince isletim sistemine bolum tablosu
+        degisikligi bildirilir.
+        """
+        device = PhysicalDisk(disk, readonly=False, confirm=True,
+                              allow_system=allow_system)
+        try:
+            return clone_mod.restore(src_path, device, progress=progress)
+        finally:
+            device.close()
+
     @staticmethod
     def restore_to_new_image(src_path: str, dest_path: str, progress=None) -> str:
         """Yedegi **yeni** bir goruntu dosyasina acar ve yolunu dondurur.

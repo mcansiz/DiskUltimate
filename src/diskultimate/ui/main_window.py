@@ -287,6 +287,11 @@ class MainWindow(QMainWindow):
         # --- Diger araclar ---
         self.act_new_vhd = QAction("Yeni sanal disk (VHD)...", self)
         self.act_new_vhd.triggered.connect(self.new_vhd)
+        self.act_write_backup = QAction("Yedegi diske yaz...", self)
+        self.act_write_backup.setToolTip(
+            "Acik .dub yedegini yeni bir goruntu dosyasina veya "
+            "fiziksel diske yazar")
+        self.act_write_backup.triggered.connect(self.write_backup_to_target)
         self.act_backup_info = QAction("Yedek dosyasi bilgisi...", self)
         self.act_backup_info.triggered.connect(self.show_backup_info)
         self.act_sysinfo = QAction("Sistem bilgisi", self)
@@ -326,6 +331,7 @@ class MainWindow(QMainWindow):
         m_disk.addSeparator()
         m_disk.addAction(self.act_backup_disk)
         m_disk.addAction(self.act_restore_disk)
+        m_disk.addAction(self.act_write_backup)
         m_disk.addAction(self.act_clone_disk)
         m_disk.addAction(self.act_wipe_disk)
         m_disk.addSeparator()
@@ -445,9 +451,6 @@ class MainWindow(QMainWindow):
         self.open_path(path)
 
     def open_path(self, path: str) -> None:
-        if is_backup_file(path):
-            self._backup_opened_warning(path)
-            return
         mevcut = self._find_open(path)
         if mevcut is not None:
             self.log(f"Zaten acik, one getirildi: {path}")
@@ -460,51 +463,149 @@ class MainWindow(QMainWindow):
             self.error("Goruntu acilamadi", str(exc))
             return
         # Salt okunur acildiysa kullanici bunu bicimlendirmeye calisirken degil,
-        # HEMEN ogrenmeli.
-        if self.session.readonly and not self.session.is_physical:
+        # HEMEN ogrenmeli. Yedek dosyasinin salt okunur olmasi ise bir kusur
+        # degil, dogasidir; onun icin ayri ve bilgilendirici bir not gosterilir.
+        if self.session.is_backup:
+            self._backup_opened_note()
+        elif self.session.readonly and not self.session.is_physical:
             self._readonly_open_warning(path)
         self.log(f"Goruntu acildi: {path} — {self.session.format_name}, "
                  f"{human_size(self.session.image.size)}, {self.session.scheme_name}")
         self.refresh()
 
-    def _backup_opened_warning(self, path: str) -> None:
-        """`.dub` yedegi "Goruntu ac" ile secildiginde ne yapilacagini sorar.
+    def _backup_opened_note(self) -> None:
+        """Yedek acildiginda bir kereye mahsus bilgilendirme.
 
-        Yedek ham goruntu gibi acilamaz: basligindaki `0xAA55` yuzunden bolum
-        tablosu cozumleyicisi onu **gecerli ama bos bir MBR** sanar ve kullanici
-        "bolumlerim kayboldu" diye dusunur. Yedek aslinda saglamdir; yapilmasi
-        gereken onu bir hedefe **geri yuklemektir**.
+        Yedek artik **gezilebilir** (bkz. `clone.DubImage`): bolum tablosu ve
+        dosyalar geri yukleme olmadan gorulur. Ancak salt okunurdur ve bu bir
+        kusur degil, dogasidir; kullanici nasil yazacagini burada ogrenir.
         """
-        try:
-            info = DiskSession.backup_info(path)
-        except Exception as exc:
-            self.error("Yedek okunamadi",
-                       f"{os.path.basename(path)} bir DiskUltimate yedegi gibi "
-                       f"gorunuyor ama basligi okunamadi:\n{exc}")
+        info = getattr(self.session.image, "info", None)
+        if info is None:
             return
-        self.log(f"Yedek dosyasi secildi: {os.path.basename(path)} — "
-                 f"kaynak {human_size(info.total_bytes)}")
-        kutu = QMessageBox(QMessageBox.Information, "Bu bir yedek dosyasi",
-                           f"<b>{os.path.basename(path)}</b> bir DiskUltimate "
-                           "yedegidir (<code>.dub</code>), disk goruntusu degil. "
-                           "Icerigi sikistirilmis olarak saklanir, bu yuzden "
-                           "dogrudan acilip gezilemez.<br><br>"
+        self.log(f"Yedek acildi (salt okunur): {os.path.basename(info.path)} — "
+                 f"kaynak {human_size(info.total_bytes)}, "
+                 f"yedek {human_size(info.file_size)}")
+        if getattr(self, "_backup_note_shown", False):
+            return
+        self._backup_note_shown = True
+        box = QMessageBox(QMessageBox.Information, "Yedek dosyasi acildi",
+                           f"<b>{os.path.basename(info.path)}</b> bir DiskUltimate "
+                           "yedegidir. Icerigi <b>salt okunur</b> olarak "
+                           "gezebilirsiniz: bolumler, klasorler ve dosyalar "
+                           "gorunur, dosyalari disa aktarabilirsiniz.<br><br>"
                            f"<b>Kaynak boyut:</b> {human_size(info.total_bytes)}<br>"
-                           f"<b>Dosya sistemi:</b> {info.fs_type or '-'}<br>"
-                           f"<b>Etiket:</b> {info.label or '-'}<br>"
+                           f"<b>Yedek boyut:</b> {human_size(info.file_size)}<br>"
                            f"<b>Olusturma:</b> "
                            f"{info.created.strftime('%Y-%m-%d %H:%M') if info.created else '-'}"
-                           "<br><br>Icerigi gormek icin once bir hedefe "
-                           "<b>geri yukleyin</b>.", QMessageBox.NoButton, self)
-        restore_btn = kutu.addButton("Yeni goruntuye geri yukle...",
-                                    QMessageBox.AcceptRole)
-        info_btn = kutu.addButton("Yalnizca bilgi", QMessageBox.ActionRole)
-        kutu.addButton("Kapat", QMessageBox.RejectRole)
-        kutu.exec_()
-        if kutu.clickedButton() is restore_btn:
-            self._restore_to_new_image(path, info)
-        elif kutu.clickedButton() is info_btn:
-            InfoDialog("Yedek Dosyasi Bilgisi", info.summary(), self).exec_()
+                           "<br><br>Yedegi bir <b>diske veya goruntuye yazmak</b> "
+                           "icin: <i>Disk &gt; Yedegi diske yaz...</i>",
+                           QMessageBox.NoButton, self)
+        write_btn = box.addButton("Diske yaz...", QMessageBox.AcceptRole)
+        box.addButton("Simdilik gez", QMessageBox.RejectRole)
+        box.exec_()
+        if box.clickedButton() is write_btn:
+            self.write_backup_to_target()
+
+    # ------------------------------------------------------------------
+    # Yedegi hedefe yazma (goruntu dosyasi veya fiziksel disk)
+    # ------------------------------------------------------------------
+    def write_backup_to_target(self) -> None:
+        """Acik yedegi bir hedefe yazar: yeni goruntu dosyasi veya fiziksel disk.
+
+        Hedef fiziksel diskse `open_physical`in tum guvenlik kapilari gecerlidir
+        (yazma onayi, sistem diskinde ad dogrulama, bagli bolum uyarisi).
+        """
+        if not (self.session and self.session.is_backup):
+            QMessageBox.information(self, "Yedek acik degil",
+                                    "Once bir .dub yedek dosyasi acin.")
+            return
+        info = self.session.image.info
+        box = QMessageBox(QMessageBox.Question, "Yedek nereye yazilsin?",
+                           f"<b>{os.path.basename(info.path)}</b> "
+                           f"({human_size(info.total_bytes)}) nereye yazilsin?"
+                           "<br><br>Hedefteki <b>tum veriler</b> uzerine yazilir.",
+                           QMessageBox.NoButton, self)
+        file_btn = box.addButton("Yeni goruntu dosyasi...", QMessageBox.AcceptRole)
+        disk_btn = box.addButton("Fiziksel disk...", QMessageBox.ActionRole)
+        box.addButton("Vazgec", QMessageBox.RejectRole)
+        box.exec_()
+        if box.clickedButton() is file_btn:
+            self._restore_to_new_image(info.path, info)
+        elif box.clickedButton() is disk_btn:
+            self._restore_to_physical(info)
+
+    def _restore_to_physical(self, info) -> None:
+        """Yedegi secili fiziksel diske yazar (katmanli onaydan gecerek)."""
+        path = self._selected_disk_path()
+        disk = getattr(self, "_physical_cache", {}).get(path or "")
+        if disk is None:
+            QMessageBox.information(
+                self, "Disk secili degil",
+                "Once sol agactan hedef fiziksel diski secin.\n\n"
+                "Disk gorunmuyorsa: Disk > Fiziksel diskleri yenile.")
+            return
+        if not disk.info_complete:
+            self.error("Disk bilgisi eksik",
+                       f"{disk.name} hakkinda yeterli bilgi alinamadi "
+                       "(yonetici yetkisi gerekebilir). Bilgisi eksik bir diske "
+                       "yazma reddedilir.")
+            return
+        if info.total_bytes > disk.size:
+            self.error("Disk cok kucuk",
+                       f"Yedek {human_size(info.total_bytes)}, hedef disk "
+                       f"{human_size(disk.size)}.")
+            return
+
+        metin = (f"<b>{disk.display_name}</b><br>{human_size(disk.size)}<br><br>"
+                 f"<b>Durum:</b> {disk.risk_text}<br><br>"
+                 f"Yedek: {os.path.basename(info.path)} "
+                 f"({human_size(info.total_bytes)})<br><br>"
+                 "Bu diskteki <b>tum veriler silinecek</b> ve yedek icerigi "
+                 "yazilacak. Islem <b>geri alinamaz</b>.<br><br>Devam edilsin mi?")
+        if QMessageBox.warning(self, "Fiziksel diske yazma onayi", metin,
+                               QMessageBox.Yes | QMessageBox.No,
+                               QMessageBox.No) != QMessageBox.Yes:
+            return
+        allow_system = False
+        if disk.is_system:
+            name, ok = QInputDialog.getText(
+                self, "Sistem diski onayi",
+                f"{disk.path} ISLETIM SISTEMI DISKIDIR.\n\n"
+                "Uzerine yazmak isletim sistemini acilamaz hale getirir.\n"
+                "Devam etmek icin disk adini yazin: " + disk.name)
+            if not ok or name.strip() != disk.name:
+                self.log("Sistem diski yazma onayi verilmedi, islem iptal edildi")
+                return
+            allow_system = True
+        elif disk.mounted:
+            if QMessageBox.warning(
+                    self, "Bagli bolum uyarisi",
+                    f"Bu diskte bagli bolumler var:\n{', '.join(disk.mounted)}\n\n"
+                    "Yazmadan once bolumleri cikarmaniz onerilir.\n\n"
+                    "Yine de devam edilsin mi?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No) != QMessageBox.Yes:
+                return
+
+        backup_path = info.path
+
+        def task(progress):
+            return DiskSession.restore_to_physical(
+                backup_path, disk, allow_system=allow_system, progress=progress)
+
+        ok, result = run_task(self, "Yedek diske yaziliyor", task)
+        if not ok:
+            self.error("Yazma basarisiz", str(result))
+            return
+        self.log(f"Yedek diske yazildi: {os.path.basename(backup_path)} -> "
+                 f"{disk.path} ({human_size(info.total_bytes)})")
+        QMessageBox.information(
+            self, "Yazma tamamlandi",
+            f"{os.path.basename(backup_path)} -> {disk.display_name}\n\n"
+            "Isletim sisteminin yeni bolum tablosunu gormesi icin diski "
+            "cikarip yeniden takmaniz gerekebilir.")
+        self.refresh_disks()
 
     def _restore_to_new_image(self, backup_path: str, info) -> None:
         """Yedegi yeni bir goruntu dosyasina acar ve acilan goruntuyu gosterir.
@@ -2100,12 +2201,12 @@ class MainWindow(QMainWindow):
             metin += ("<br><br>Dosyayi kullanan diger programi (baska bir disk "
                       "araci, yedekleme yazilimi vb.) kapatip <b>Yeniden dene</b>ye "
                       "basin.")
-            kutu = QMessageBox(QMessageBox.Warning, "Salt okunur acildi", metin,
+            box = QMessageBox(QMessageBox.Warning, "Salt okunur acildi", metin,
                                QMessageBox.NoButton, self)
-            yeniden = kutu.addButton("Yeniden dene", QMessageBox.AcceptRole)
-            kutu.addButton("Salt okunur devam et", QMessageBox.RejectRole)
-            kutu.exec_()
-            if kutu.clickedButton() is yeniden:
+            yeniden = box.addButton("Yeniden dene", QMessageBox.AcceptRole)
+            box.addButton("Salt okunur devam et", QMessageBox.RejectRole)
+            box.exec_()
+            if box.clickedButton() is yeniden:
                 self.close_image()
                 self.open_path(path)
             return
@@ -2163,6 +2264,8 @@ class MainWindow(QMainWindow):
         self.act_backup_disk.setEnabled(acik)
         self.act_clone_disk.setEnabled(acik)
         self.act_restore_disk.setEnabled(yazilabilir)
+        # Yedek yazma yalnizca acik oturum bir .dub yedegi iken anlamli.
+        self.act_write_backup.setEnabled(acik and self.session.is_backup)
         self.act_backup_part.setEnabled(acik and part_selected)
         self.act_restore_part.setEnabled(yazilabilir and part_selected)
         # silme

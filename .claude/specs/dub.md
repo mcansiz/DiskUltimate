@@ -33,7 +33,19 @@ Blok tabanli, sifir bloklari atlayan, istege bagli zlib sikistirmali yedek bicim
 > acma yolunda once `DUBACKUP` imzasina bakar (`clone.is_backup_file`) ve
 > yedegi ham goruntu olarak acmaz; kullaniciya geri yukleme onerilir.
 > Baska araclarda ayni yanilgi olusabilir — yedek dosyasi bir disk goruntusu
-> **degildir**, once geri yuklenmelidir.
+> **degildir**.
+
+## Salt okunur erisim (`clone.DubImage`)
+
+Indeks her blok icin (tur, uzunluk, ofset) tasidigi icin bicim **rastgele
+erisime uygundur**. `DubImage` bir `BlockDevice` uygular: istenen bayt
+araligini kapsayan bloklari bulur, `zlib` bloklarini acar, sifir bloklar icin
+sifir uretir. Kucuk bir LRU onbellegi ardisik okumalarda ayni blogun tekrar
+acilmasini onler.
+
+Boylece yedek **geri yuklenmeden** gezilebilir: bolum tablosu okunur, dosya
+sistemi surucusu calisir, dosyalar listelenip disa aktarilabilir. Yazma
+desteklenmez — yedek bir arsivdir.
 
 ## Indeks girisi (16 bayt)
 

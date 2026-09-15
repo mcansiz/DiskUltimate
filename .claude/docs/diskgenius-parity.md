@@ -71,7 +71,8 @@ Guncelleme: 2026-09-15 (v0.3.0)
 |---|---|---|---|
 | Bolum yedegi (goruntu dosyasina) | ✅ | ✅ | `.dub` bicimi — sikistirmali, sifir bloklari atlar |
 | Disk yedegi | ✅ | ✅ | |
-| Yedekten geri yukleme | ✅ | ✅ | Boyut denetimi + ozet onayi |
+| Yedekten geri yukleme | ✅ | ✅ | Hedef: acik oturum, yeni goruntu dosyasi veya **fiziksel disk** |
+| **Yedek icerigini geri yuklemeden gezme** | 🟡 | ✅ | `.dub` salt okunur disk gibi acilir; bolumler ve dosyalar gorunur |
 | Disk klonlama | ✅ | ✅ | Seyrekligi koruyarak |
 | Bolumden bolume klonlama | ✅ | ✅ | `clone_partition_to` |
 | Sektor sektor kopyalama | ✅ | ✅ | Klonlamanin varsayilani |

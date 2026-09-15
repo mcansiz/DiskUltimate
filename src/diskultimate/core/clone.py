@@ -14,7 +14,7 @@ import os
 import struct
 import zlib
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Dict, List, Optional
 
 from .image import BlockDevice, DiskImage
 from .ptable import human_size
@@ -179,6 +179,101 @@ def read_backup_info(path: str) -> BackupInfo:
 # --------------------------------------------------------------------------
 # Geri yukleme
 # --------------------------------------------------------------------------
+class DubImage(BlockDevice):
+    """`.dub` yedegini **salt okunur bir disk gibi** sunar.
+
+    Yedek blok tablolidir: her blok icin (tur, uzunluk, ofset) bilinir, yani
+    rastgele erisim mumkundur. Bu sinif istenen bayt araligini kapsayan bloklari
+    bulur, gerekiyorsa `zlib` ile acar ve birlestirir. Boylece bolum tablosu,
+    dosya sistemi surucusu ve dosya gezgini yedegin icerigini **geri yuklemeden**
+    gezebilir.
+
+    Sifir bloklar dosyada yer kaplamaz; okunduklarinda sifir uretilir.
+    Yazma islemi desteklenmez — yedek bir arsivdir, uzerine yazilmaz.
+    """
+
+    def __init__(self, path: str, cache_blocks: int = 4):
+        self.path = path
+        self.info = read_backup_info(path)
+        self.sector_size = self.info.sector_size or 512
+        self.readonly = True
+        self.readonly_reason = ("Yedek dosyasi (.dub) salt okunur acilir; "
+                                "degistirmek icin bir diske geri yukleyin")
+        self._block_size = self.info.block_size
+        self._count = self.info.block_count
+        self._fh = open(path, "rb")
+        index_bytes = self._count * INDEX_ENTRY
+        self._fh.seek(HEADER_SIZE)
+        self._index = self._fh.read(index_bytes)
+        if len(self._index) < index_bytes:
+            raise CloneError("Yedek dosyasi eksik: indeks okunamadi")
+        # Kucuk bir LRU: ardisik okumalarda ayni blok tekrar acilmasin.
+        self._cache: Dict[int, bytes] = {}
+        self._cache_order: List[int] = []
+        self._cache_limit = max(1, cache_blocks)
+
+    # -- BlockDevice arayuzu ------------------------------------------------
+    @property
+    def sector_count(self) -> int:
+        return self.info.total_bytes // self.sector_size
+
+    @property
+    def size(self) -> int:
+        return self.info.total_bytes
+
+    def read(self, offset: int, length: int) -> bytes:
+        if offset < 0 or length < 0:
+            raise CloneError("Gecersiz okuma araligi")
+        total = self.info.total_bytes
+        if offset >= total:
+            return b""
+        length = min(length, total - offset)
+        out = bytearray()
+        pos = offset
+        while len(out) < length:
+            no = pos // self._block_size
+            ic = pos - no * self._block_size
+            alinacak = min(self._block_size - ic, length - len(out))
+            out += self._block(no)[ic:ic + alinacak]
+            pos += alinacak
+        return bytes(out)
+
+    def write(self, offset: int, data: bytes) -> None:
+        raise CloneError(self.readonly_reason)
+
+    def close(self) -> None:
+        fh, self._fh = self._fh, None
+        if fh is not None:
+            fh.close()
+
+    # -- ic isleyis ---------------------------------------------------------
+    def _block(self, no: int) -> bytes:
+        """Bir blogun acilmis icerigini dondurur (son blok kisa olabilir)."""
+        hit = self._cache.get(no)
+        if hit is not None:
+            return hit
+        boy = min(self._block_size,
+                  self.info.total_bytes - no * self._block_size)
+        if no >= self._count:
+            return b"\x00" * max(0, boy)
+        kind, length, pos = struct.unpack_from("<BxxxIQ", self._index,
+                                               no * INDEX_ENTRY)
+        if kind == BLOCK_ZERO:
+            data = b"\x00" * boy
+        else:
+            self._fh.seek(pos)
+            data = self._fh.read(length)
+            if kind == BLOCK_ZLIB:
+                data = zlib.decompress(data)
+            # Son blok tam blok boyutunda olmayabilir; eksikse sifirla tamamla.
+            data = data[:boy].ljust(boy, b"\x00")
+        self._cache[no] = data
+        self._cache_order.append(no)
+        if len(self._cache_order) > self._cache_limit:
+            self._cache.pop(self._cache_order.pop(0), None)
+        return data
+
+
 def restore(src_path: str, device: BlockDevice, progress: Progress = None,
             allow_smaller_source: bool = True) -> BackupInfo:
     """`.dub` yedegini aygita geri yukler."""

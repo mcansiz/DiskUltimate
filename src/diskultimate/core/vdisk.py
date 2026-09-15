@@ -517,6 +517,10 @@ def detect_format(path: str) -> str:
         size = os.path.getsize(path)
         with open(path, "rb") as fh:
             bas = fh.read(1024)
+            if bas[:8] == b"DUBACKUP":
+                # Yedek dosyasi. Ham goruntu SANILMAMALI: basliginin 510.
+                # baytinda 0xAA55 durur ve bos bir MBR gibi gorunur.
+                return "dub"
             if bas[:4] == QCOW_MAGIC:
                 return "qcow2"
             if bas[:4] == VMDK_SPARSE_MAGIC:
@@ -550,10 +554,15 @@ def open_disk(path: str, readonly: bool = False) -> BlockDevice:
         return VmdkImage(path, readonly=readonly)
     if fmt == "qcow2":
         return Qcow2Image(path)
+    if fmt == "dub":
+        # Yedek her zaman salt okunur acilir; `readonly` yok sayilir.
+        from .clone import DubImage
+        return DubImage(path)
     raise VirtualDiskError(f"Bilinmeyen disk bicimi: {fmt}")
 
 
 def format_label(fmt: str) -> str:
     return {"raw": "Ham disk goruntusu (.img)", "vhd": "Microsoft VHD",
             "vdi": "VirtualBox VDI", "vmdk": "VMware VMDK",
-            "qcow2": "QEMU QCOW2"}.get(fmt, fmt)
+            "qcow2": "QEMU QCOW2",
+            "dub": "DiskUltimate yedegi (.dub)"}.get(fmt, fmt)

@@ -507,6 +507,24 @@ def t11_yedekleme_ve_klonlama():
     assert len(s3.partitions) == 1, f"bolumler geri gelmedi: {len(s3.partitions)}"
     assert s3.filesystem(1).read("/veri/buyuk.bin") == icerik
     s3.close()
+
+    # --- yedek GERI YUKLEMEDEN gezilebilmeli (DubImage) ---
+    # Kullanici istegi: ".dub acildiginda disk ve bolumler gorulmeli, dosyalara
+    # ulasilabilmeli." Yedek blok tablolidir, bu yuzden rastgele erisimle salt
+    # okunur bir disk gibi sunulabilir.
+    s4 = DiskSession.open(disk_yedek)
+    assert s4.is_backup, "yedek oturumu yedek olarak isaretlenmedi"
+    assert s4.readonly, "yedek yazilabilir acildi"
+    assert s4.image.size == read_backup_info(disk_yedek).total_bytes
+    assert s4.scheme == "gpt", f"yedekten bolum tablosu okunamadi: {s4.scheme}"
+    assert len(s4.partitions) == 1
+    assert s4.filesystem(1).read("/veri/buyuk.bin") == icerik,         "yedekten okunan dosya icerigi bozuk"
+    try:
+        s4.image.write(0, b"x" * 512)
+        raise AssertionError("yedege yazma engellenmedi")
+    except Exception:
+        pass
+    s4.close()
     s.close()
 
 

@@ -1175,3 +1175,79 @@ degistirildi — kullanicinin yasadigi senaryo da zaten budur.
 `run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti.
 Dogrulama sirasinda uretilen 2.06 GB gecici dosya silindi. Fiziksel disklere
 dokunulmadi; tum islemler dosyalar uzerinde yapildi.
+
+---
+
+## 2026-09-15 (9) — `.dub` gezilebilir oldu, hedef olarak fiziksel disk eklendi
+
+### Kullanici istegi
+*"DUB kayit dosyasi acildiginda icerigi, disk ve bolumler de gorulmeli,
+dosyalara ulasilabilmeli. Bu kayit fiziksel veya sanal diske yazilabilmeli;
+su an sadece sanal diske yazabiliyoruz."*
+
+Onceki oturumda yedek acilinca yonlendirme diyalogu gosteriliyordu — yani once
+geri yukle, sonra gez. Istenen bu degil: yedek **dogrudan** gezilebilmeli.
+
+### 1. Yedek artik salt okunur bir disk gibi aciliyor
+`.dub` bicimi blok tablolidir: indeks her blok icin (tur, uzunluk, ofset)
+tasir, yani **rastgele erisime uygundur**. Geri yukleme sirf bu yuzden
+gereksizdi.
+
+`clone.DubImage(BlockDevice)` eklendi:
+- Istenen bayt araligini kapsayan bloklari bulur, `zlib` olanlari acar,
+  sifir bloklar icin sifir uretir (dosyada yer kaplamazlar).
+- 4 bloklu kucuk bir LRU onbellegi: ardisik okumalarda ayni blok tekrar
+  acilmaz. Dosya sistemi surucusu cok sayida kucuk okuma yaptigi icin onemli.
+- Son blok kisa olabilir; eksik kisim sifirla tamamlanir.
+- `write()` reddeder — yedek bir arsivdir.
+
+Baglanti: `vdisk.detect_format` `DUBACKUP` imzasini taniyip `"dub"` doner,
+`open_disk` `DubImage` acar (her zaman salt okunur; `readonly` yok sayilir),
+`format_label` "DiskUltimate yedegi (.dub)" der.
+
+Gercek dosyayla dogrulama (kullanicinin `sdcard.img.dub` yedegi):
+
+```
+oturum      : DiskUltimate yedegi (.dub)
+sema        : MBR   salt okunur: True
+  Bolum 1: NO NAME  FAT16  33,554,432
+  Bolum 2: rootfs   ext4   1,073,741,824
+dosya gezgini (Bolum 1):
+   am335x-mmcu.dtb   70.14 KB  DTB dosyasi
+   extlinux                    Klasor
+   MLO              107.93 KB  Dosya
+   u-boot.img         1.49 MB  Disk goruntusu
+   uEnv.txt           1.15 KB  Metin belgesi
+   zImage             6.25 MB  Dosya
+```
+
+ext4 bolumu listelenemiyor — bu yedege ozgu degil, ext4 okuyucusu henuz yok
+(v0.4 hedefi). FAT/exFAT icerigi tam gezilebiliyor.
+
+### 2. Yedegi hedefe yazma
+`Disk > Yedegi diske yaz...` (yalnizca acik oturum bir yedekken etkin) iki
+hedef sunar:
+- **Yeni goruntu dosyasi** — `session.restore_to_new_image`, hedefi yedegin
+  kaydettigi boyutta yaratir, mevcut hicbir sey uzerine yazmaz.
+- **Fiziksel disk** — `session.restore_to_physical`. ADR 0014 kapilarinin
+  tamami gecerli: yazma onayi, **bilgisi eksik diskte ret**, sistem diskinde
+  disk adini yazarak dogrulama, bagli bolum uyarisi, boyut denetimi.
+  `PhysicalDisk(..., readonly=False, confirm=True)` ile acilir.
+
+Fiziksel hedef **bu makinede denenmedi** (CLAUDE.md: ana makinenin diskleri
+uzerinde deneme yapilmaz). Kod yolu ve guvenlik kapilari statik olarak
+dogrulandi; gercek yazma testi sanal makinede yapilacak.
+
+### 3. Acilista bilgilendirme
+Yedek acilinca bir kereye mahsus not gosterilir: salt okunur oldugu, icerigin
+gezilebildigi, yazmak icin nereye bakilacagi. Onceki yonlendirme diyalogu
+(`_backup_opened_warning`) kaldirildi — artik gezmeyi engellemiyor.
+
+### Regresyon korumasi
+`t11` genisletildi: yedek `is_backup` ve `readonly` olmali, bolum tablosu ve
+dosya icerigi yedekten **geri yuklemeden** okunabilmeli, yazma denemesi
+reddedilmeli.
+
+### Dogrulama
+`run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti.
+Fiziksel disklere yazilmadi.

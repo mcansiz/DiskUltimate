@@ -36,6 +36,10 @@ exFAT, ext2/3/4 ve NTFS dahil. Uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2f
 **Yedekleme ve klonlama**
 - `.dub` yedek bicimi — sikistirmali, sifir bloklarini atlar
   (400 MB'lik bos bolum → 34 KB yedek)
+- **Yedek dogrudan acilir** — geri yuklemeye gerek yok: bolumler, klasorler ve
+  dosyalar salt okunur olarak gezilir, dosyalar disa aktarilabilir
+- **Yedegi hedefe yazma** — yeni goruntu dosyasina veya **fiziksel diske**
+  (fiziksel hedefte alti katmanli onay gecerlidir)
 - Disk ve bolum klonlama, seyreklik korunarak
 
 **Veri kurtarma**
