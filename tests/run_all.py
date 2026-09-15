@@ -21,6 +21,9 @@ from diskultimate.core.convert import (alignment_report, gpt_to_mbr,  # noqa: E4
 from diskultimate.core.exfat import (ExFatFS, UPCASE_STANDARD_CHECKSUM,  # noqa: E402
                                      standard_upcase_table, table_checksum)
 from diskultimate.core.ext import format_ext  # noqa: E402
+from diskultimate.core.extread import ExtFS  # noqa: E402
+from diskultimate.core.filesystem import (ExtAccess,  # noqa: E402
+                                          open_filesystem)
 from diskultimate.core.fat import FatFS  # noqa: E402
 from diskultimate.core.ntfs import (attrdef_table, format_ntfs,  # noqa: E402
                                     upcase_table)
@@ -713,6 +716,25 @@ def t16_ext_ailesi():
         info = detect(PartitionView(d, 2048, d.sector_count - 2048))
         assert info.fs_type == surum, f"{surum} -> {info.fs_type}"
         assert info.label == f"DU{surum.upper()}", info.label
+
+        # --- salt okunur okuyucu ayni birimi cozebilmeli ---
+        # ext2/ext3 dolayli blok, ext4 extent agaci kullanir; ucu de burada
+        # ayni kod yolundan gecer.
+        view2 = PartitionView(d, 2048, d.sector_count - 2048)
+        fs = ExtFS(view2)
+        assert fs.label == f"DU{surum.upper()}", fs.label
+        assert fs.block_size in (1024, 2048, 4096), fs.block_size
+        kok = fs.read_inode(2)
+        assert kok.is_dir, "kok inode dizin degil"
+        adlar = {e.name for e in fs.read_dir(kok)}
+        assert {".", "..", "lost+found"} <= adlar, adlar
+        lf = fs.resolve("/lost+found")
+        assert lf.is_dir, "lost+found dizin degil"
+        erisim = open_filesystem(view2, info)
+        assert isinstance(erisim, ExtAccess), type(erisim)
+        assert erisim.readable and not erisim.writable
+        assert any(n.name == "lost+found" for n in erisim.listdir("/"))
+
         d.close()
         _fsck_ext(p, 2048, surum)
 

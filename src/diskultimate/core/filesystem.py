@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from .exfat import ExEntry, ExFatError, ExFatFS
+from .extread import ExtError, ExtFS
 from .fat import ATTR_DIRECTORY, DirEntry, FatError, FatFS
 from .fsdetect import FSInfo, detect
 from .image import BlockDevice
@@ -192,6 +193,63 @@ class ExFatAccess(FileSystemAccess):
         self.fs.flush()
 
 
+class ExtAccess(FileSystemAccess):
+    """ext2/3/4 icerigine **salt okunur** erisim.
+
+    Yazma yoktur: bir ext birimini degistirmek gunluk (journal) tutarliligi
+    gerektirir. Arayuz `writable=False` gordugu icin yazma eylemlerini
+    kendiliginden pasifler.
+    """
+
+    def __init__(self, view: BlockDevice):
+        self.fs = ExtFS(view)
+        self.fs_type = "ext"
+        self.label = self.fs.label
+        self.readable = True
+        self.writable = False
+
+    def listdir(self, path: str = "/") -> List[FileNode]:
+        node = self.fs.resolve(path or "/")
+        out: List[FileNode] = []
+        for entry in self.fs.read_dir(node):
+            if entry.name in (".", ".."):
+                continue
+            try:
+                child = self.fs.read_inode(entry.inode)
+            except ExtError:
+                continue
+            child_path = (path.rstrip("/") + "/" + entry.name) if path not in ("", "/") \
+                else "/" + entry.name
+            attrs = []
+            if child.is_symlink:
+                try:
+                    attrs.append("-> " + self.fs.symlink_target(child))
+                except ExtError:
+                    attrs.append("bag")
+            if entry.name.startswith("."):
+                attrs.append("gizli")
+            out.append(FileNode(
+                name=entry.name, path=child_path, is_dir=child.is_dir,
+                size=0 if child.is_dir else child.size,
+                mtime=ExtFS.timestamp(child.mtime),
+                attr_text=" ".join(attrs),
+                hidden=entry.name.startswith("."), readonly=True))
+        out.sort(key=lambda n: (not n.is_dir, n.name.lower()))
+        return out
+
+    def read(self, path: str, max_bytes: int = -1) -> bytes:
+        return self.fs.read_data(self.fs.resolve(path), max_bytes)
+
+    def extract(self, path: str, dest: str) -> str:
+        data = self.read(path)
+        with open(dest, "wb") as fh:
+            fh.write(data)
+        return dest
+
+    def stats(self) -> Dict[str, int]:
+        return self.fs.stats()
+
+
 class UnsupportedAccess(FileSystemAccess):
     """Tanindi ama icerik okuma destegi henuz yok."""
 
@@ -204,8 +262,9 @@ class UnsupportedAccess(FileSystemAccess):
 
     def listdir(self, path: str = "/") -> List[FileNode]:
         raise FatError(
-            f"{self.fs_type} icerigi bu surumde goruntulenemiyor "
-            f"(yol haritasinda: ext4/NTFS/exFAT okuyucu)")
+            f"{self.fs_type} icerigi bu surumde goruntulenemiyor. "
+            "Okunabilen dosya sistemleri: FAT12/16/32, exFAT, ext2/3/4. "
+            "NTFS okuyucusu yol haritasindadir.")
 
     def stats(self) -> Dict[str, int]:
         return {"total_bytes": self.info.total_bytes,
@@ -232,5 +291,12 @@ def open_filesystem(view: BlockDevice,
         try:
             return ExFatAccess(view)
         except ExFatError:
+            return UnsupportedAccess(info)
+    if info.fs_type.startswith("ext"):
+        try:
+            access = ExtAccess(view)
+            access.fs_type = info.fs_type      # ext2/ext3/ext4 ayrimi korunsun
+            return access
+        except ExtError:
             return UnsupportedAccess(info)
     return UnsupportedAccess(info)

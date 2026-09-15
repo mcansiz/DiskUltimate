@@ -79,7 +79,6 @@ gecen ayri bir moddur.
 
 ### v0.4 — planlanan
 - [ ] Bolum bolme / birlestirme (boyutlandirma altyapisi hazir; bolme = kucult + yeni bolum)
-- [ ] ext2/3/4 **okuyucu** (icerik listeleme ve disa aktarma)
 - [ ] NTFS **okuyucu** (MFT cozumleme)
 - [ ] Onaltilik duzenleyici (yazma destegi — su an goruntuleyici salt okunur)
 - [ ] Dosya sistemi tutarlilik denetimi (chkdsk/fsck esdegeri)

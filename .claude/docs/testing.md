@@ -119,8 +119,11 @@ python3 main.py disk.img                     # gercek ekranda, dosya acarak
   basarili sayilmaz: ozet `17/18 basarili · 1 atlandi` der ve hangi testin
   neden atlandigini yazar. Cikis kodu yine 0'dir (kirmizi kosum degildir).
   Harici arac yolunu dogrulamak icin Linux ortaminda kosulmalidir.
-- ext2/3/4 ve NTFS icerikleri listelenemiyor; **bicimlendirme** (saf Python) ve
-  tespit calisir. FAT ve exFAT icerigi tam desteklenir. Okuyucular v0.4 hedefi.
+- **NTFS** icerigi listelenemiyor; bicimlendirme (saf Python) ve tespit calisir.
+  NTFS okuyucusu v0.4 hedefi.
+- **ext2/3/4 salt okunurdur**: listeleme, okuma ve disa aktarma calisir; yazma,
+  silme ve yeniden adlandirma yoktur (gunluk tutarliligi gerektirir).
+  FAT ve exFAT tam okuma/yazma destekler.
 - **macOS uzerinde testler hic calistirilmadi**; yalnizca statik denetimden gecti.
   Windows uzerinde kosuldu — hangi surumun nerede kosuldugu icin
   [cross-platform.md](cross-platform.md) test tablosuna bakin.

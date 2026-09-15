@@ -1251,3 +1251,76 @@ reddedilmeli.
 ### Dogrulama
 `run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti.
 Fiziksel disklere yazilmadi.
+
+---
+
+## 2026-09-15 (10) — ext2/3/4 salt okunur okuyucu
+
+### Soru
+*"sdcard.img neden ext4 bolum dosyalarini goremiyorum?"*
+
+Cevap: `.dub` ile ilgisi yoktu. DiskUltimate ext ailesini **bicimlendirebiliyor**
+ama **okuyamiyordu**; gercek `.img` dosyasinda da ayni durum vardi. Okuyucu v0.4
+yol haritasindaydi — bu oturumda yazildi.
+
+### `core/extread.py` (yeni)
+- Ustblok: blok boyutu, grup/inode sayilari, inode boyutu, etiket, `incompat`
+  bayraklari. rev0 (ext2) icin sabit degerlere duser.
+- Grup tanimlayicilari: `INCOMPAT_64BIT` acikken 64 baytlik tanimlayici ve
+  yuksek 32 bitlik blok numaralari desteklenir.
+- Blok haritalama iki yol: **extent agaci** (ext4; yaprak + ic dugum, uninit
+  extent'lerde uzunluk maskesi) ve **dolayli blok** zinciri (ext2/ext3;
+  tek/cift/uc kat).
+- Dizin girisleri, sembolik bag hedefi (hizli bag `i_block` icinde), yol
+  cozumleme ve **sembolik bag izleme** (goreli hedefler, dongu icin derinlik
+  siniri).
+
+`filesystem.ExtAccess` bunu `FileSystemAccess` arayuzune baglar; `writable=False`
+oldugu icin arayuz yazma eylemlerini kendiliginden pasifler. `open_filesystem`
+artik `ext*` icin bu sinifi dondurur.
+
+### Iki hata yakalandi ve duzeltildi
+1. **Sembolik bag icerik sanildi.** `/etc/os-release` bir hizli bagdir: hedef
+   metni (`../usr/lib/...`) `i_block` icinde durur. `read_data` bunu blok
+   numarasi dizisi gibi yorumlayip cop adresler uretti ve "okuma bolum sinirini
+   asiyor" hatasi verdi. Artik `read_data` sembolik bagi acikca reddediyor,
+   `resolve(follow=True)` bagi izliyor.
+2. **Sinir disi blok numarasi coktururdu.** Bozuk ya da yanlis yorumlanmis bir
+   numara `BlockDevice` sinirini asiyordu. Tum blok okumalari `_read_block()`
+   uzerinden gecirildi: sinir disi numara sifir doner, okuyucu bozuk birimde de
+   cokmez.
+
+### Yanlis mesaj duzeltildi
+`UnsupportedAccess` "yol haritasinda: ext4/NTFS/**exFAT** okuyucu" diyordu —
+exFAT okuma zaten calisiyordu. Mesaj artik okunabilen dosya sistemlerini
+sayiyor ve yalnizca NTFS'i yol haritasinda gosteriyor.
+
+### Gercek veriyle dogrulama
+Kullanicinin `sdcard.img` dosyasindaki `rootfs` (ext4, 1 GB, extent'li):
+
+```
+kok dizin : bin dev etc lib lib32-> libexec linuxrc-> lost+found media mnt
+            opt proc root run sbin sys tmp usr var   (19 giris)
+/etc      : 23 giris
+/etc/fstab, /etc/hostname : metin dogru okundu
+/etc/os-release -> ../usr/lib/os-release izlendi, 101 bayt, "NAME..." ile basliyor
+/bin/busybox : 870,036 / 870,036 bayt, ELF imzasi dogru (extent agaci)
+/bin/sh, /sbin/init, /linuxrc -> hepsi busybox'a cozuldu
+```
+
+Ayni icerik **`.dub` yedeginden de** okunuyor (DubImage + ExtFS birlikte).
+
+### Regresyon korumasi
+`t16` genisletildi: ext2/ext3/ext4 bicimlendirildikten sonra ayni birim
+`ExtFS` ile acilir, etiket ve blok boyutu dogrulanir, kok dizinde
+`lost+found` aranir, `open_filesystem` `ExtAccess` dondurmeli ve
+`readable/not writable` olmali. Uc surum de ayni kod yolundan gecer
+(ext2/3 dolayli blok, ext4 extent).
+
+### Sinir
+Salt okunurdur. Yazma, silme ve yeniden adlandirma yoktur — bunlar gunluk
+(journal) tutarliligi gerektirir ve ayri bir istir.
+
+### Dogrulama
+`run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti.
+Arayuzde hem `.img` hem `.dub` icin ext4 bolumu geziliyor.

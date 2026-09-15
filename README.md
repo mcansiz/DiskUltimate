@@ -30,8 +30,11 @@ exFAT, ext2/3/4 ve NTFS dahil. Uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2f
   araci, (2) harici `mkfs.*`, (3) saf Python — boylece sekiz dosya sistemi de
   **uc platformda** olusturulabilir
 - Tespit: FAT, exFAT, NTFS, ext2/3/4, btrfs, XFS, F2FS, ISO9660, Linux takas
+- **ext2/3/4 okuyucu (saf Python)** — extent agaci ve dolayli blok, sembolik
+  bag izleme, 64 bit blok; salt okunur listeleme ve disa aktarma
 - Dosya gezgini: listeleme, uzun ad (LFN/UTF-16), okuma, yazma, klasor, silme,
   yeniden adlandirma, disa/ice aktarma, onizleme
+  (yazma FAT ve exFAT'te; ext salt okunur)
 
 **Yedekleme ve klonlama**
 - `.dub` yedek bicimi — sikistirmali, sifir bloklarini atlar

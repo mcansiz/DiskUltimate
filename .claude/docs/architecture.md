@@ -16,12 +16,13 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     │   ├── fat.py            FatFS: FAT12/16/32 bicimlendirme + tam dosya erisimi
     │   ├── exfat.py          ExFatFS: exFAT bicimlendirme + tam dosya erisimi
     │   ├── ext.py            ext2/3/4 saf Python bicimlendirme (JBD2 gunlugu dahil)
+    │   ├── extread.py        ext2/3/4 salt okunur okuyucu (extent + dolayli blok)
     │   ├── ntfs.py           NTFS saf Python bicimlendirme (MFT, $UpCase, $AttrDef)
     │   ├── _ntfs_data.py     NTFS icin gomulu sabit tablolar
     │   ├── resize.py         Bolum boyutlandirma / tasima (FAT + exFAT yerlesimi)
     │   ├── fsdetect.py       Imza tabanli dosya sistemi tespiti (FSInfo)
     │   ├── formatter.py      Bicimlendirme dagiticisi (sekiz FS; yerel arac → mkfs → saf Python)
-    │   ├── filesystem.py     FileSystemAccess arayuzu, FatAccess, ExFatAccess
+    │   ├── filesystem.py     FileSystemAccess arayuzu; FatAccess, ExFatAccess, ExtAccess
     │   ├── clone.py          .dub yedek bicimi, geri yukleme, klonlama
     │   ├── wipe.py           Guvenli silme (sifir/rastgele/DoD), bos alan silme
     │   ├── recovery.py       Silinmis dosya, kayip bolum, imza tabanli kurtarma
@@ -53,7 +54,7 @@ Kullanici -> MainWindow -> DiskSession -> PartitionTable (MBR/GPT) -> BlockDevic
                               |                     DiskImage (.img) / VhdImage vb.
                               |                     PhysicalDisk (\\.\PhysicalDriveN, /dev/sdX)
                               |
-                              +-------> PartitionView -> FatFS / ExFatFS / ext / ntfs -> bolum alani
+                              +-------> PartitionView -> FatFS / ExFatFS / ExtFS -> bolum alani
                               |
                               +-------> FileSystemAccess -> FileBrowser
                               |
