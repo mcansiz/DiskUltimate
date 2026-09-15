@@ -154,29 +154,49 @@ class ExtFormatter:
             raise ExtError("Bolum ext icin cok kucuk")
         first_data = 1 if bs == 1024 else 0
         blocks_per_group = bs * 8              # blok bitmap tek blok
-        kullanilabilir = total_blocks - first_data
-        group_count = max(1, (kullanilabilir + blocks_per_group - 1) // blocks_per_group)
-
         inode_size = 128 if self.version == "ext2" else 256
-        total_inodes = max(16, (self.dev.size // self.bytes_per_inode))
-        inode_grup_basina = (total_inodes + group_count - 1) // group_count
-        # inode tablosu blok sinirina hizalanmali ve 8'in kati olmali
-        inode_grup_basina = max(16, ((inode_grup_basina + 7) // 8) * 8)
-        azami = (bs * 8)                       # inode bitmap tek blok
-        inode_grup_basina = min(inode_grup_basina, azami)
-        total_inodes = inode_grup_basina * group_count
 
-        gdt_bytes = group_count * 32
-        gdt_block = (gdt_bytes + bs - 1) // bs
-        rezerve = int(total_blocks * self.reserved_percent / 100.0)
+        # Grup sayisi yukari yuvarlanir, bu yuzden kucuk bir artik bile tam bir
+        # grup dogurur. O son grup kendi metaverisini (yedek superblok + GDT +
+        # iki bitmap + inode tablosu) almayacak kadar kucuk kalabilir; yerlesim
+        # o zaman bolum sinirini asar. `mke2fs` bu durumda dosya sistemini grup
+        # sinirina **kirpar**; burada da ayni yapilir. Kirpma, inode tablosu
+        # boyutunu degistirdigi icin yeniden hesap gerekir — bu yuzden dongu.
+        for _ in range(8):
+            usable = total_blocks - first_data
+            group_count = max(
+                1, (usable + blocks_per_group - 1) // blocks_per_group)
+
+            total_inodes = max(16, (total_blocks * bs // self.bytes_per_inode))
+            inodes_per_group = (total_inodes + group_count - 1) // group_count
+            # inode tablosu blok sinirina hizalanmali ve 8'in kati olmali
+            inodes_per_group = max(16, ((inodes_per_group + 7) // 8) * 8)
+            inodes_per_group = min(inodes_per_group, bs * 8)  # inode bitmap tek blok
+
+            gdt_block = (group_count * 32 + bs - 1) // bs
+            table_blocks = (inodes_per_group * inode_size + bs - 1) // bs
+
+            last_group = group_count - 1
+            last_blocks = usable - last_group * blocks_per_group
+            overhead = (1 + gdt_block if _has_super(last_group) else 0) + 2 + table_blocks
+            if group_count == 1 or last_blocks > overhead:
+                break
+            # Son grup metaverisini alamiyor: onu tumuyle dusur.
+            trimmed = first_data + last_group * blocks_per_group
+            if trimmed <= 64:
+                raise ExtError("Bolum ext icin cok kucuk")
+            total_blocks = trimmed
+
+        total_inodes = inodes_per_group * group_count
+        reserved = int(total_blocks * self.reserved_percent / 100.0)
 
         return ExtLayout(block_size=bs, block_count=total_blocks,
                          inode_count=total_inodes,
                          blocks_per_group=blocks_per_group,
-                         inodes_per_group=inode_grup_basina,
+                         inodes_per_group=inodes_per_group,
                          inode_size=inode_size, group_count=group_count,
                          first_data_block=first_data, gdt_blocks=gdt_block,
-                         reserved_blocks=rezerve)
+                         reserved_blocks=reserved)
 
     # ---- ozellik bayraklari ----------------------------------------------
     def _features(self):
@@ -221,11 +241,11 @@ class ExtFormatter:
     def _group_overhead(self, grup: int) -> int:
         """Grubun basindaki metaveri blok sayisi."""
         L = self.layout
-        ek = 0
+        overhead = 0
         if _has_super(grup):
-            ek += 1 + L.gdt_blocks + self._reserved_gdt()
-        ek += 2 + L.inode_table_blocks      # blok bitmap + inode bitmap + tablo
-        return ek
+            overhead += 1 + L.gdt_blocks + self._reserved_gdt()
+        overhead += 2 + L.inode_table_blocks      # blok bitmap + inode bitmap + tablo
+        return overhead
 
     def _reserved_gdt(self) -> int:
         """Buyume icin ayrilan GDT bloklari.

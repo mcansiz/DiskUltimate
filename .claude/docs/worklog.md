@@ -1377,3 +1377,74 @@ Bu oturumda uygulanmadi; karar kullaniciya birakildi.
 `run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti.
 Kullanicinin fiziksel diskine **yazilmadi**; ozellik bayraklari yalnizca
 okunarak olculdu.
+
+---
+
+## 2026-09-15 (12) — Dosya sistemi matrisi; ext yerlesim hatasi bulundu
+
+### Istek
+*"Sanal makinede uretilmis test birimlerinde gelistirip `e2fsck` ile
+dogrularız — bunu yapalim, tum dosya bicimlerinde deneyebilir miyiz?"*
+
+### `tests/fs_matrix.py` (yeni)
+Sekiz bicim, ayni adimlar: **bicimlendir → tespit → oku → yaz → harici fsck**.
+Sonuc tek tabloda toplanir.
+
+Tasarim kurali: harici arac yoksa sonuc **ATLANDI** yazilir, asla TAMAM
+sayilmaz. Aracsiz bir makinede tablo yaniltmaz — `e2fsck` yoksa ext yazmasinin
+dogrulanmadigi acikca gorunur.
+
+Ayrica ext yazma gelistirmesinin kosum alanidir: yazici uygulandikca `yaz`
+sutunu kendiliginden dolar, `e2fsck` sutunu onu dogrular.
+
+Ana makinedeki (Windows) durum — **hicbir fsck araci yok**, WSL kurulu degil:
+
+```
+Bicim | Bicimlendir | Tespit | Oku     | Yaz                   | Harici dogrulama
+fat32 | TAMAM       | TAMAM  | TAMAM   | TAMAM                 | ATLANDI (fsck.vfat yok)
+exfat | TAMAM       | TAMAM  | TAMAM   | TAMAM                 | ATLANDI (fsck.exfat yok)
+ntfs  | TAMAM       | TAMAM  | ATLANDI | ATLANDI (okuyucu yok) | ATLANDI (ntfsfix yok)
+ext4  | TAMAM       | TAMAM  | TAMAM   | ATLANDI (salt okunur) | ATLANDI (e2fsck yok)
+```
+
+### Matrisin ilk bulgusu: gercek bir hata
+`ext3`/`ext4` **tam 129 MB** bolumde coktu (128 ve 130 MB sorunsuz):
+`Yazma bolum sinirini asiyor`.
+
+Kok neden: grup sayisi yukari yuvarlanir, bu yuzden kucuk bir artik tam bir
+grup dogurur. 129 MB / 4 KB = 33024 blok; grup basi 32768 → 2 grup, sonuncuda
+yalnizca 256 blok. Ama o grup da kendi metaverisini (yedek superblok + GDT +
+iki bitmap + ~258 bloklu inode tablosu) istiyor → 260 > 256, yerlesim bolum
+sinirini asiyor.
+
+`mke2fs` bu durumda dosya sistemini grup sinirina **kirpar**. `_compute_layout`
+artik ayni seyi yapiyor: son grup metaverisini alamiyorsa tumuyle dusurulur.
+Kirpma inode tablosu boyutunu degistirdigi icin hesap donguyle tekrarlanir.
+
+Dogrulama: ext2/ext3/ext4 × 60–140 MB (birer MB) + 150/200/256/300/512 MB →
+**255/255 kombinasyon** bicimlendi ve her biri `ExtFS` ile acilip kok dizininde
+`lost+found` dogrulandi.
+
+### Denetimde iki kusur (ikisi de kendi eklediklerimde)
+1. `last_blocks` degiskeni `st_blocks` kuralina takildi — kural alt dize
+   ariyordu. `\bst_blocks\b` yapildi; iki yonlu test edildi (gercek
+   `os.stat().st_blocks` yakalaniyor, `last_blocks` yakalanmiyor).
+2. O duzeltmeyi kabuk uzerinden yazarken `\b` **backspace karakterine** donustu
+   ve kural bir sure hicbir seyi yakalamadi. Olumsuz test bunu ortaya cikardi;
+   bayt duzeyinde onarildi. Ders: kacis dizisi iceren duzenli ifadeler kabuk
+   uzerinden yazilmamali.
+
+### ext yazma icin ortam
+Ana makinede dogrulama **mumkun degil**. Kullanici VMware'de **Linux Mint**
+oldugunu bildirdi — gerekli araclarin tamami orada:
+
+```bash
+sudo apt install e2fsprogs dosfstools exfatprogs ntfs-3g
+python3 -m tests.fs_matrix          # dort dogrulayici da calisir
+```
+
+ext yazma gelistirmesi bu ortamda, `e2fsck` her adimda kosularak yapilacak.
+
+### Dogrulama
+`run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti ·
+`fs_matrix` 8/8 hatasiz (dogrulama adimlari atlandi).

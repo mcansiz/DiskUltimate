@@ -25,7 +25,9 @@ KURALLAR = [
      "Sabit POSIX sistem yolu", PLATFORM_KATMANI),
     (r"\bos\.fork\b|\bos\.getuid\b|\bos\.geteuid\b|\bpwd\b|\bgrp\b",
      "POSIX'e ozgu islev", PLATFORM_KATMANI),
-    (r"st_blocks", "Windows'ta bulunmayan stat alani", {"platform.py"}),
+    # Kelime siniri sart: `last_blocks` gibi adlar `st_blocks` alt dizesini
+    # tasir ve sinir olmadan yanlis yere bulgu verir.
+    (r"\bst_blocks\b", "Windows'ta bulunmayan stat alani", {"platform.py"}),
     (r"subprocess\.(run|Popen|call)\(", "Dogrudan surec cagrisi "
      "(platform.run_tool kullanilmali)", {"platform.py"}),
     (r"shutil\.which\(", "Dogrudan arac arama (platform.find_tool kullanilmali)",
