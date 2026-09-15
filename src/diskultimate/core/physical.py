@@ -9,7 +9,9 @@ GUVENLIK TASARIMI — bu modul veri kaybina yol acabilecek tek yerdir:
 3. **Bagli bolum uyarisi.** Disk uzerinde bagli (mounted) bolum varsa bildirilir;
    arayuz bunu kullaniciya gosterir.
 4. **Listeleme zararsizdir.** `list_disks()` yalnizca isletim sisteminin bilgi
-   arayuzlerini okur; hicbir diski acmaz.
+   arayuzlerini okur; **hicbir sektor okunmaz, hicbir yazma yapilmaz.**
+   Windows'ta boyut/model icin salt okunur bir aygit tutamaci acilip hemen
+   kapatilir (ayrinti: `list_disks` govdesi).
 """
 from __future__ import annotations
 

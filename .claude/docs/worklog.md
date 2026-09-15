@@ -1082,3 +1082,37 @@ cikarma ve "degisiklik yokken agac yenilenmemeli" durumu olculur.
 ### Dogrulama
 `run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti.
 Ana makinenin diskleri uzerinde **hicbir yazma veya sektor okuma yapilmadi.**
+
+---
+
+## 2026-09-15 (7) — Guvenlik katmani 1'in ifadesi kesinlestirildi
+
+Onceki oturumda saptanan yanlis ifade, kullanicinin onayiyla tum belgelerde
+duzeltildi. **Davranis degismedi** — yalnizca verilen guvence dogru anlatiliyor.
+
+### Neden yanlisti
+Katman 1 "Listeleme zararsizdir — **hicbir diski acmaz**" diyordu. Linux ve
+macOS icin dogru (`/sys/block`, `/proc/mounts`, `diskutil` okunur), ama
+Windows'ta **degil**: boyut, model ve veriyolu yalnizca bir aygit tutamaci
+uzerinden sorgulanabilir (`IOCTL_DISK_GET_LENGTH_INFO`,
+`IOCTL_STORAGE_QUERY_PROPERTY`). Bu yuzden `_list_windows()` her aygit icin
+salt okunur (`GENERIC_READ`, `FILE_SHARE_READ|WRITE`, `OPEN_EXISTING`) bir
+tutamac acar ve hemen kapatir.
+
+Verilen gercek guvence "aygit acilmaz" degil, **"veri okunmaz ve yazilmaz"**.
+
+### Guncellenen yerler
+| Dosya | Ne degisti |
+|---|---|
+| `CLAUDE.md` | Katman 1 metni + Windows parantezi |
+| `README.md` | Guvenlik bolumu, ayni metin |
+| `decisions/0014-...md` | Katman 1 + tarihli **duzeltme notu** (neden yanlisti, davranisin degismedigi) |
+| `core/physical.py` | Modul basligindaki katman listesi ve `list_disks()` docstring'i |
+| `tests/physical_write_test.py` | Olcut denetimi yolundaki yorum |
+
+Karar kaydina duzeltme notu birakildi: ADR'nin ilk hali yanlis bir guvence
+veriyordu, bunun izi silinmedi.
+
+### Dogrulama
+`platform_check` 0 bulgu · `run_all` 17/18 · 1 atlandi · belge ici baglantilar
+0 kirik. Fiziksel disklere dokunulmadi.

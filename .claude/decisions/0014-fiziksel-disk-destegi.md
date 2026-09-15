@@ -15,7 +15,16 @@ yok edebilir. Ozellik eksiksiz uygulandi, ancak asagidaki katmanli korumalarla.
 
 1. **Listeleme zararsizdir.** `list_disks()` yalnizca isletim sisteminin bilgi
    arayuzlerini okur (Linux `/sys/block` + `/proc/mounts`, Windows IOCTL,
-   macOS `diskutil`). Hicbir diski acmaz.
+   macOS `diskutil`). **Hicbir sektor okunmaz, hicbir yazma yapilmaz.**
+
+   > **Duzeltme (2026-09-15).** Bu madde onceden "hicbir diski acmaz" diyordu;
+   > Windows icin **dogru degildi**. Orada boyut, model ve veriyolu yalnizca bir
+   > aygit tutamaci uzerinden (`IOCTL_DISK_GET_LENGTH_INFO`,
+   > `IOCTL_STORAGE_QUERY_PROPERTY`) sorgulanabilir, yani her aygit icin salt
+   > okunur (`GENERIC_READ`, `FILE_SHARE_READ|WRITE`) bir tutamac acilip hemen
+   > kapatilir. Linux ve macOS'ta tutamac acilmaz. Katmanin verdigi guvence
+   > "aygit acilmaz" degil, **"veri okunmaz ve yazilmaz"** olarak
+   > kesinlestirildi; davranis degismedi.
 2. **Varsayilan salt okunur.** `PhysicalDisk(...)` yazma iznini ancak
    `readonly=False` **ve** `confirm=True` birlikte verildiginde acar.
 3. **Sistem diski korumasi.** Isletim sisteminin bulundugu disk isaretlenir;

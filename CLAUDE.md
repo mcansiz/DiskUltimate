@@ -34,7 +34,9 @@ DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
 Gerçek disklere erişim `core/physical.py` içinde toplanır ve şu katmanlar **asla**
 gevşetilmez (gerekçe: `.claude/decisions/0014-fiziksel-disk-destegi.md`):
 
-1. **Listeleme zararsızdır** — hiçbir diski açmaz.
+1. **Listeleme zararsızdır** — hiçbir sektör okunmaz, hiçbir yazma yapılmaz.
+   (Windows'ta boyut/model yalnızca aygıt tutamacı üzerinden sorgulanabildiği
+   için salt okunur bir tutamaç açılıp hemen kapatılır; veri okunmaz.)
 2. **Varsayılan salt okunur** — yazma için `readonly=False` *ve* `confirm=True`.
 3. **Sistem diski** — yazmak için ayrıca `allow_system=True`; arayüzde kullanıcı
    disk adını yazarak doğrular.

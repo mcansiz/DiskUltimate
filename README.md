@@ -118,7 +118,9 @@ Tum tasarim notlari, kararlar ve is gunlugu depo icindeki `.claude/` klasorunded
 
 Fiziksel disk erisimi alti katmanli bir kapidan gecer ve bu katmanlar gevsetilmez:
 
-1. **Listeleme zararsizdir** — hicbir diski acmaz.
+1. **Listeleme zararsizdir** — hicbir sektor okunmaz, hicbir yazma yapilmaz.
+   (Windows'ta boyut/model yalnizca aygit tutamaci uzerinden sorgulanabildigi
+   icin salt okunur bir tutamac acilip hemen kapatilir; veri okunmaz.)
 2. **Varsayilan salt okunur** — yazma icin `readonly=False` *ve* `confirm=True`.
 3. **Sistem diski** — ayrica `allow_system=True`; arayuzde kullanici disk adini
    yazarak dogrular.

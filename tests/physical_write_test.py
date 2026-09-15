@@ -191,7 +191,8 @@ def main() -> int:
             print(f"  {isaret} {d.path:<24} {human_size(d.size):>10}  {d.model}")
         return 1
     # Olcutler once denetlenir: kullanici yetki almadan once hedefin uygun olup
-    # olmadigini gorebilsin (ve bu yol hicbir diski acmaz).
+    # olmadigini gorebilsin (bu yol yalnizca listeleme bilgisine bakar; hicbir
+    # sektor okunmaz, hicbir yazma yapilmaz).
     bilgi = olcutleri_dogrula(yollar[0], bagli_izin=bagli_izin)
     if bilgi is None:
         return 2
