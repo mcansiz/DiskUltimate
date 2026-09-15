@@ -50,7 +50,8 @@ Guncelleme: 2026-09-15 (v0.3.0)
 | FAT12/16/32 okuma-yazma | ✅ | ✅ | Saf Python, `fsck.vfat` ile dogrulandi |
 | **exFAT okuma-yazma** | ✅ | ✅ | Saf Python, `fsck.exfat` ile dogrulandi |
 | NTFS okuma | ✅ | 📋 | v0.4 — MFT cozumleyici |
-| ext2/3/4 okuma | ✅ | ✅ | Saf Python; extent + dolayli blok, sembolik bag izleme (salt okunur) |
+| ext2/3/4 okuma | ✅ | ✅ | Saf Python; extent + dolayli blok, sembolik bag izleme |
+| **ext2/3/4 yazma** | ✅ | 🟡 | Dosya/klasor olusturma, silme, yeniden adlandirma — `e2fsck` ile dogrulandi. `metadata_csum` veya extent'li inode'da **reddedilir** |
 | Dosya onizleme | ✅ | ✅ | Metin + onaltilik onizleme |
 
 ## Veri kurtarma

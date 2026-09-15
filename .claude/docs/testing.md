@@ -118,6 +118,19 @@ Linux Mint 22.3 uzerinde olculen durum (2026-09-15):
 | ntfs | ✅ | ✅ | okuyucu yok | okuyucu yok | ✅ `ntfsfix` |
 | ext2/3/4 | ✅ | ✅ | ✅ | salt okunur | ✅ `e2fsck` |
 
+## ext yazma dogrulamasi
+
+```bash
+python3 -m tests.ext_write_check          # ext2, ext3, ext4
+```
+
+Her adimdan sonra `e2fsck -nf` kosar: bicimlendirme, kucuk dosya, mkdir,
+dolayli bloklu 256 KB dosya, uzun ad, 60 giris, rename, silme. `e2fsck` yoksa
+kosum **basarisiz sayilir** (atlanmaz) — dogrulanmamis ext yazmasinin "gecti"
+demesi tehlikelidir.
+
+Yalnizca goruntu dosyalari uzerinde calisir.
+
 ## Harici dogrulama (elle)
 
 ```bash

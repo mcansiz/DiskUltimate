@@ -732,8 +732,20 @@ def t16_ext_ailesi():
         assert lf.is_dir, "lost+found dizin degil"
         erisim = open_filesystem(view2, info)
         assert isinstance(erisim, ExtAccess), type(erisim)
-        assert erisim.readable and not erisim.writable
+        assert erisim.readable, "ext okunabilir olmali"
         assert any(n.name == "lost+found" for n in erisim.listdir("/"))
+        # Kendi bicimlendiricimizin urettigi birimlerde metadata_csum/64bit
+        # yoktur, bu yuzden yazma desteklenmelidir. Ayrintili dogrulama
+        # (her adimda e2fsck) tests/ext_write_check.py icindedir.
+        assert erisim.writable, f"ext yazilabilir olmali: {erisim.write_reason}"
+        erisim.write_file("/deneme.txt", b"ext yazma\n")
+        assert erisim.read("/deneme.txt") == b"ext yazma\n"
+        erisim.mkdir("/klasor")
+        assert any(n.name == "klasor" and n.is_dir for n in erisim.listdir("/"))
+        erisim.remove("/deneme.txt")
+        erisim.remove("/klasor")
+        erisim.flush()
+        assert {n.name for n in erisim.listdir("/")} == {"lost+found"}
 
         d.close()
         _fsck_ext(p, 2048, surum)

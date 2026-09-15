@@ -1511,3 +1511,69 @@ bos, bagli degil).
 ### Dogrulama
 Linux: `run_all` 17/18 · 1 atlandi · `fs_matrix` 8/8.
 Windows (ana makine): `run_all` 17/18 · `platform_check` 0 bulgu · `ui_smoke` gecti.
+
+---
+
+## 2026-09-15 (14) — ext2/3/4 yazma destegi (1. asama), e2fsck ile dogrulandi
+
+### Kapsami belirleyen olcum
+Kendi bicimlendiricimizin urettigi ext birimleri **metadata_csum, 64bit ve
+extent kullanmiyor** (yalnizca `filetype`). Bu, ilk asamayi klasik dolayli blok
+yazimina indirdi — saglama ve extent agaci isin disinda kaldi.
+
+### `core/extwrite.py` (yeni)
+- Blok ve inode **bitmap tahsisi**; grup tanimlayici sayaclari
+  (`free_blocks`, `free_inodes`, `used_dirs`) ve ustblok sayaclari birlikte
+  guncellenir.
+- Inode yazimi (`i_blocks` 512'lik sektor cinsinden, dolayli bloklar dahil).
+- Veri yerlesimi: 12 dogrudan blok + tek kat dolayli (4 KB blokta ~4 MB).
+  Ustu acikca reddedilir.
+- Dizin girisi ekleme/silme: `rec_len` zinciri dogru bolunur ve birlestirilir;
+  yer kalmazsa dizine yeni blok eklenir.
+- `mkdir` ( `.` / `..` girisleri, ust dizinin `links_count` artisi), `remove`
+  (bos klasor denetimi, `dtime`, blok/inode serbest birakma), `rename`.
+
+### Guvenlik kapisi
+`write_support()` su durumlarda yazmayi **reddeder**: `metadata_csum`,
+`bigalloc`, `64bit`, `inline_data` ve extent kullanan inode. Neden metinle
+dondurulur, arayuz bunu gosterir. **Yanlis yazip bozmaktansa yazmamak yeglenir.**
+
+### Dogrulama — `tests/ext_write_check.py` (yeni)
+Her adimdan sonra `e2fsck -nf`: bicimlendirme → kucuk dosya → mkdir → dolayli
+bloklu 256 KB dosya → uzun ad → 60 giris → rename → dosya silme → klasor silme.
+`e2fsck` yoksa kosum **basarisiz sayilir**, atlanmaz.
+
+Linux Mint misafirinde: **ext2, ext3, ext4 → 3/3 dogrulandi.**
+
+`fs_matrix` artik ext satirlarinda da dolu:
+
+| Bicim | Bicimlendir | Oku | Yaz | fsck |
+|---|---|---|---|---|
+| fat12/16/32 | ✅ | ✅ | ✅ | ✅ `fsck.vfat` |
+| exfat | ✅ | ✅ | ✅ | ✅ `fsck.exfat` |
+| ntfs | ✅ | okuyucu yok | okuyucu yok | ✅ `ntfsfix` |
+| **ext2/3/4** | ✅ | ✅ | **✅** | **✅ `e2fsck`** |
+
+### Gercek kart uzerinde kapi denendi
+Kullanicinin `sdcard.img` kopyasi **yazilabilir** acildi ve ext4 bolume yazma
+denendi:
+
+```
+Bolum 1 (FAT16): yazilabilir=True
+Bolum 2 (ext4) : yazilabilir=False
+   RET NEDENI: ... metadata_csum (CRC32c saglamalar) ...
+Yazma denemesi REDDEDILDI (beklenen)
+Kopya degisti mi? DEGISMEDI (birebir ayni)
+```
+
+Kapi calisiyor: gercek kart bozulmadi, dosya bayt bayt ayni kaldi.
+
+### Kalan
+- `metadata_csum` destegi (kullanicinin kartinin ihtiyaci) — CRC32c saglamalar.
+- Extent agaci yazimi.
+- Cok katli dolayli blok (4 MB ustu dosya).
+- NTFS okuma/yazma.
+
+### Dogrulama
+Linux: `ext_write_check` 3/3 · `run_all` 17/18 · `fs_matrix` 8/8.
+Windows: `run_all` 17/18 · `platform_check` 0 bulgu · `ui_smoke` gecti.

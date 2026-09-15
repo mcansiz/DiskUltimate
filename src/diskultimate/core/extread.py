@@ -131,8 +131,11 @@ class ExtFS:
             self.inode_size = struct.unpack_from("<H", sb, 0x58)[0] or 128
             self.first_ino = struct.unpack_from("<I", sb, 0x54)[0] or 11
             self.feature_incompat = struct.unpack_from("<I", sb, 0x60)[0]
+            self.ro_compat = struct.unpack_from("<I", sb, 0x64)[0]
+            self.compat = struct.unpack_from("<I", sb, 0x5C)[0]
         else:                                   # ext2 rev0: sabit degerler
             self.inode_size, self.first_ino, self.feature_incompat = 128, 11, 0
+            self.ro_compat = self.compat = 0
 
         self.label = sb[0x78:0x88].rstrip(b"\x00").decode("utf-8", "ignore")
 

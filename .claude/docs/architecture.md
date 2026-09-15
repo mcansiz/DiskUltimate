@@ -16,7 +16,8 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     │   ├── fat.py            FatFS: FAT12/16/32 bicimlendirme + tam dosya erisimi
     │   ├── exfat.py          ExFatFS: exFAT bicimlendirme + tam dosya erisimi
     │   ├── ext.py            ext2/3/4 saf Python bicimlendirme (JBD2 gunlugu dahil)
-    │   ├── extread.py        ext2/3/4 salt okunur okuyucu (extent + dolayli blok)
+    │   ├── extread.py        ext2/3/4 okuyucu (extent + dolayli blok, sembolik bag)
+    │   ├── extwrite.py       ext2/3/4 yazici (bitmap tahsisi, dizin girisi, sayaclar)
     │   ├── ntfs.py           NTFS saf Python bicimlendirme (MFT, $UpCase, $AttrDef)
     │   ├── _ntfs_data.py     NTFS icin gomulu sabit tablolar
     │   ├── resize.py         Bolum boyutlandirma / tasima (FAT + exFAT yerlesimi)
