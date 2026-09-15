@@ -62,7 +62,7 @@ class DiskSession:
 
     @staticmethod
     def list_physical_disks(include_removable: bool = True):
-        """Sistemdeki diskleri listeler (hicbirini acmadan)."""
+        """Sistemdeki diskleri listeler (veri okumadan; bkz. physical.list_disks)."""
         return list_disks(include_removable=include_removable)
 
     @staticmethod

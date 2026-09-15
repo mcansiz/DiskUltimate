@@ -14,7 +14,8 @@ exFAT, ext2/3/4 ve NTFS dahil. Uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2f
 **Disk ve bolum**
 - Seyrek goruntu olusturma, acma, yeniden boyutlandirma
 - Sanal disk destegi: **VHD, VDI, VMDK, QCOW2** okuma; VHD olusturma ve yazma
-- **Fiziksel diskler** — takili her disk listelenir ve acilir (Windows / Linux / macOS)
+- **Fiziksel diskler** — takili her disk listelenir ve acilir (Windows / Linux / macOS);
+  USB bellek ve SD kart uygulama acikken takilsa da listede **kendiliginden** belirir
 - MBR (4 birincil + genisletilmis + mantiksal) ve GPT (128 bolum, CRC32, yedek baslik)
 - **MBR ↔ GPT donusumu** — bolum verileri yerinde kalir
 - **Bolumu boyutlandirma / tasima** — fareyle suruklenebilir serit; FAT ve exFAT

@@ -1022,3 +1022,63 @@ Python'da boyutlandirilamadigi icin (ADR 0018'deki uc katmanli strateji).
 ### Durum
 `tests.run_all` **18/18** · `platform_check` 0 bulgu · `ui_smoke` gecti.
 Karar kaydi: `.claude/decisions/0019-bolum-boyutlandirma.md`.
+
+---
+
+## 2026-09-15 (6) — Takilan aygit gorunmuyordu (kullanici bildirimi)
+
+### Bildirilen sorun
+*"Ana bilgisayar uzerinde takili olan SD kart gorunmuyor; USB, SD vb. tum
+diskleri gorebiliyor olmali."*
+
+### Teshis
+Once cekirdek olculdu (salt okunur, sektor okunmadan). `physical.list_disks()`
+SD karti **dogru sekilde donduruyordu**:
+
+```
+PhysicalDrive1   63,864,569,856  'Generic- SD/MMC/MS PRO'   bus=USB  cikarilabilir=True
+PhysicalDrive2   15,791,554,560  'SanDisk Cruzer Force'     bus=USB  cikarilabilir=True
+```
+
+Yani listeleme saglamdi. Kusur **arayuzdeydi**: agac yalnizca dort yerde
+kuruluyordu — acilis, `close_image`, `refresh` ve elle "Fiziksel diskleri
+yenile". Uygulama acikken takilan bir aygit, kullanici elle yenilemedikce
+listede hic gorunmuyordu.
+
+### Cozum
+`MainWindow._poll_disks()` + 3 saniyelik `QTimer` (`DISK_POLL_MS`).
+
+- Tarama ucuz: ana makinede olculen sure **~17 ms**.
+- Agac yalnizca liste **gercekten** degistiginde yeniden kurulur. Karsilastirma
+  `_disk_signature()` ile yapilir; imzaya boyut da girer, cunku kart
+  okuyucuda kart degistirildiginde aygit yolu ayni kalir ama boyut degisir.
+  Boylece yoklama kullanicinin secimini ve acik dallarini bosuna bozmaz.
+- Takma/cikarma gunluge yazilir ("Aygit takildi: ... (59.48 GB)").
+- Cikarilan aygitin **adi** yeniden kurulumdan once saklanir; yoksa gunlukte
+  ham aygit yolu goruluyordu.
+- `_add_physical_disks(disks=...)` hazir listeyi alir, ikinci tarama yapilmaz.
+- `closeEvent` zamanlayiciyi once durdurur (kapanista yikilmakta olan agaca
+  dokunmasin diye).
+
+Dogrulama: ana makinede agac artik uc diski de gosteriyor —
+dahili NVMe, SD kart (59.48 GB) ve SanDisk USB (14.71 GB).
+
+### Yan bulgu — yanlis guvenlik ifadesi duzeltildi
+`list_disks()` docstring'i *"Hicbir diski acmaz"* diyordu. Windows'ta bu
+**dogru degil**: boyut/model/veriyolu yalnizca aygit tutamaci uzerinden
+sorgulanabildigi icin her aygita salt okunur (`GENERIC_READ`, paylasimli) bir
+tutamac acilip hemen kapatiliyor. Veri okunmuyor, yazma yapilmiyor. Ifade
+kesinlestirildi: "hicbir sektor okunmaz, hicbir yazma yapilmaz".
+
+> CLAUDE.md, README ve ADR 0014'teki "Listeleme zararsizdir — hicbir diski
+> acmaz" cumlesi de ayni nedenle teknik olarak eksik. Davranis degismedi
+> (Windows'ta baska yolu yok); ifadenin guncellenmesi kullanicinin karari.
+
+### Regresyon korumasi
+`ui_smoke` icine takma/cikarma denetimi eklendi. Gercek diske dokunulmaz:
+`DiskSession.list_physical_disks` sahte bir listeyle degistirilip aygit takma,
+cikarma ve "degisiklik yokken agac yenilenmemeli" durumu olculur.
+
+### Dogrulama
+`run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti.
+Ana makinenin diskleri uzerinde **hicbir yazma veya sektor okuma yapilmadi.**

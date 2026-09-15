@@ -151,7 +151,15 @@ def guess_os_from_partitions(partitions) -> str:
 
 
 def list_disks(include_removable: bool = True) -> List[DiskInfo]:
-    """Sistemdeki fiziksel diskleri listeler. Hicbir diski acmaz."""
+    """Sistemdeki fiziksel diskleri listeler.
+
+    **Hicbir sektor okunmaz, hicbir yazma yapilmaz.** Linux ve macOS'ta yalnizca
+    isletim sisteminin sundugu meta veri okunur. Windows'ta boyut/model/veriyolu
+    yalnizca aygit tutamaci uzerinden sorgulanabildigi icin her aygit icin
+    **salt okunur** bir tutamac acilir (`GENERIC_READ`, paylasimli) ve hemen
+    kapatilir; veri okunmaz. Guvenlik katmani 1'in ("listeleme zararsizdir")
+    anlami budur.
+    """
     if IS_LINUX:
         diskler = _list_linux()
     elif IS_WINDOWS:

@@ -12,6 +12,7 @@ Guncelleme: 2026-09-15 (v0.3.0)
 | Ozellik | DiskGenius | DiskUltimate | Not |
 |---|---|---|---|
 | **Sistemdeki fiziksel diskleri listeleme** | ✅ | ✅ | Model, seri, boyut, veriyolu, bolumler, bagli noktalar |
+| **Takilan/cikarilan aygitin kendiliginden gorunmesi** | ✅ | ✅ | USB/SD uygulama acikken takilabilir; liste 3 sn'de bir yoklanir |
 | **Fiziksel diski acma (salt okunur)** | ✅ | ✅ | Linux'ta dogrulandi: gercek diskin MBR/GPT tablosu okundu |
 | **Fiziksel diske yazma** | ✅ | ✅ | Linux'ta dogrulandi: GPT+FAT32+exFAT yazildi, cekirdek bagladi. Katmanli onay: ADR 0014 |
 | Sistem diski / bagli bolum uyarisi | ✅ | ✅ | Sistem diskinde ad yazarak dogrulama |

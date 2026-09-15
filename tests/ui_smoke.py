@@ -245,6 +245,41 @@ def main() -> int:
         app.setStyleSheet(onceki)
         app.processEvents()
 
+    # --- takilan/cikarilan aygit agaca yansiyor mu? ---
+    # Gercek diske DOKUNULMAZ: listeleme islevi sahte bir listeyle degistirilip
+    # takma/cikarma taklit edilir. USB/SD uygulama acikken takilabildigi icin
+    # liste kendiliginden tazelenmeli (onceden yalnizca acilista kuruluyordu).
+    from diskultimate.core.physical import DiskInfo
+
+    def _sahte_disk(no: int, model: str, size: int) -> DiskInfo:
+        d = DiskInfo(path=f"/sahte/disk{no}", name=f"SahteDisk{no}")
+        d.size, d.model, d.removable, d.bus = size, model, True, "USB"
+        return d
+
+    gercek_listeleme = DiskSession.list_physical_disks
+    durum = {"liste": [_sahte_disk(0, "Dahili", 512 * 1024 ** 3)]}
+    DiskSession.list_physical_disks = staticmethod(
+        lambda *a, **k: list(durum["liste"]))
+    try:
+        hp = MainWindow()
+        kok = lambda: hp.tree.topLevelItem(0).text(0)  # noqa: E731
+        assert "(1)" in kok(), kok()
+        durum["liste"].append(_sahte_disk(1, "SD/MMC kart", 59 * 1024 ** 3))
+        hp._poll_disks()
+        assert "(2)" in kok(), f"takilan aygit agaca eklenmedi: {kok()}"
+        imza = hp._last_disk_signature
+        hp._poll_disks()
+        assert hp._last_disk_signature == imza, "degisiklik yokken agac yenilendi"
+        durum["liste"].pop()
+        hp._poll_disks()
+        assert "(1)" in kok(), f"cikarilan aygit agactan silinmedi: {kok()}"
+        gunluk = hp.log_view.toPlainText()
+        assert "Aygit takildi" in gunluk and "Aygit cikarildi" in gunluk
+        hp.close()
+        print("  (aygit takma/cikarma: agac kendiliginden tazelendi)")
+    finally:
+        DiskSession.list_physical_disks = gercek_listeleme
+
     pencere.close_image()
     from PyQt5.QtGui import QFontDatabase
     aile_sayisi = len(QFontDatabase().families())

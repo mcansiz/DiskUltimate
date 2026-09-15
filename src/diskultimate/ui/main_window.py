@@ -54,6 +54,11 @@ TAB_LOG = 3
 BOOT_SET_TEXT = "Onyukleme bayragini koy"
 BOOT_CLEAR_TEXT = "Onyukleme bayragini kaldir"
 
+# Fiziksel disk listesinin yoklanma araligi (ms). USB/SD aygitlar uygulama
+# acikken takilabildigi icin liste kendiliginden tazelenir. Tarama ucuzdur
+# (~20 ms) ve agac yalnizca liste GERCEKTEN degistiginde yeniden kurulur.
+DISK_POLL_MS = 3000
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -73,6 +78,14 @@ class MainWindow(QMainWindow):
         self.info_view.setPlainText(self._physical_summary_text())
         self._update_actions()
         self.log(f"{APP_NAME} {APP_VERSION} baslatildi")
+
+        # Takilan/cikarilan aygitlar kendiliginden yakalansin.
+        self._last_disk_signature = self._disk_signature(
+            self._physical_cache.values())
+        self._disk_timer = QTimer(self)
+        self._disk_timer.setInterval(DISK_POLL_MS)
+        self._disk_timer.timeout.connect(self._poll_disks)
+        self._disk_timer.start()
 
     # ==================================================================
     # Arayuz kurulumu
@@ -1592,12 +1605,59 @@ class MainWindow(QMainWindow):
     # ==================================================================
     # Agac
     # ==================================================================
-    def _build_tree(self, partitions=None) -> None:
+    def _build_tree(self, partitions=None, disks=None) -> None:
         """Agaci kurar: once fiziksel diskler, sonra ACIK TUM goruntuler."""
         self.tree.clear()
-        self._add_physical_disks()
+        self._add_physical_disks(disks)
         for session in self.sessions:
             self._add_session_node(session)
+
+    # ------------------------------------------------------------------
+    # Takilan / cikarilan aygitlarin kendiliginden yakalanmasi
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _disk_signature(disks) -> tuple:
+        """Disk listesinin karsilastirilabilir ozeti.
+
+        Yalnizca bu ozet degistiginde agac yeniden kurulur; boylece yoklama
+        kullanicinin secimini ve acik dallarini bosu bosuna bozmaz. Boyut da
+        ozete girer: kart okuyucuda kart degistirildiginde yol ayni kalir ama
+        boyut degisir.
+        """
+        return tuple(sorted((d.path, d.size, d.model, tuple(d.mounted))
+                            for d in disks))
+
+    def _poll_disks(self) -> None:
+        """Disk listesini yoklar; degistiyse agaci tazeler.
+
+        USB bellek veya SD kart uygulama **acikken** takilabilir. Liste yalnizca
+        acilista ve elle yenilemede kuruldugu icin yeni aygit gorunmuyordu.
+        Yoklama ucuzdur (tipik olarak ~20 ms) ve yalnizca gercek bir degisiklik
+        oldugunda arayuze dokunur.
+        """
+        try:
+            disks = DiskSession.list_physical_disks()
+        except Exception:
+            return          # gecici hata arayuzu bozmasin; sonraki tur dener
+        signature = self._disk_signature(disks)
+        if signature == self._last_disk_signature:
+            return
+        before = {s[0] for s in self._last_disk_signature}
+        now = {s[0] for s in signature}
+        # Cikarilan aygitin **adi** yalnizca eski listede var; agac yeniden
+        # kurulmadan once saklanir, yoksa gunlukte ham aygit yolu gorunur.
+        old_names = {d.path: d.name for d in self._physical_cache.values()}
+        self._last_disk_signature = signature
+        by_path = {d.path: d for d in disks}
+        for path in sorted(now - before):
+            d = by_path[path]
+            self.log(f"Aygit takildi: {d.name} — {d.model or 'bilinmeyen'} "
+                     f"({human_size(d.size)})")
+        for path in sorted(before - now):
+            self.log(f"Aygit cikarildi: {old_names.get(path, path)}")
+        self._build_tree(self.session.partitions if self.session else [],
+                         disks=disks)
+        self._update_actions()
 
     def _add_session_node(self, session: DiskSession) -> None:
         """Bir acik goruntu/disk icin agac dali olusturur."""
@@ -1634,13 +1694,19 @@ class MainWindow(QMainWindow):
                 return s
         return None
 
-    def _add_physical_disks(self) -> None:
-        """Agacin ustune sistemdeki fiziksel diskleri ekler (hicbirini acmadan)."""
-        try:
-            diskler = DiskSession.list_physical_disks()
-        except Exception as exc:
-            self.log(f"Disk listesi alinamadi: {exc}")
-            return
+    def _add_physical_disks(self, disks=None) -> None:
+        """Agacin ustune sistemdeki fiziksel diskleri ekler (veri okumadan).
+
+        `disks` verilirse yeniden taranmaz; yoklama dongusu zaten elde ettigi
+        listeyi buraya gecirir ve ikinci bir tarama yapilmaz.
+        """
+        if disks is None:
+            try:
+                disks = DiskSession.list_physical_disks()
+            except Exception as exc:
+                self.log(f"Disk listesi alinamadi: {exc}")
+                return
+        diskler = disks
         self._physical_cache = {d.path: d for d in diskler}
         root = QTreeWidgetItem(self.tree, [f"Fiziksel Diskler ({len(diskler)})"])
         root.setIcon(0, self._icon(QStyle.SP_ComputerIcon))
@@ -2057,5 +2123,10 @@ class MainWindow(QMainWindow):
             "okunurdur</b>; yazma ayrica onay ister.</p>")
 
     def closeEvent(self, event) -> None:
+        # Yoklama zamanlayicisi once durur: kapanis sirasinda tetiklenirse
+        # yikilmakta olan agaca dokunmaya calisirdi.
+        timer = getattr(self, "_disk_timer", None)
+        if timer is not None:
+            timer.stop()
         self.close_all()
         super().closeEvent(event)
