@@ -61,8 +61,21 @@ yapılmaz.**
 | `.claude/decisions/*.md` | Teknik kararlar (ADR): neden bu yol seçildi |
 | `.claude/specs/*.md` | Format/yapı spesifikasyonları (MBR, GPT, FAT vb.) |
 | `.claude/logs/*.md` | Uzun çıktı, hata ayıklama dökümleri |
+| `.claude/sessions/` | Claude oturum dökümleri (`.jsonl`) + `INDEX.md` — otomatik |
+| `.claude/memory/` | Claude kalıcı hafızası (`MEMORY.md` + tekil notlar) |
+| `.claude/hooks/` | Kayıt otomasyonu betikleri |
 
 **Her anlamlı değişiklikten sonra `worklog.md` güncellenir.**
+
+**Nasıl zorlanır:**
+- `.claude/settings.json` → `SessionEnd` kancası her oturum sonunda dökümü
+  `.claude/hooks/archive-session.py` ile `.claude/sessions/` altına kopyalar.
+- `.claude/settings.local.json` → `autoMemoryDirectory` hafızayı `.claude/memory/`
+  içine yönlendirir. (Bu anahtar güvenlik gereği depoya giren `settings.json`
+  içinden okunmaz; bu yüzden makineye özel `settings.local.json` içindedir ve
+  yolu mutlaktır — depo başka bir yola klonlanırsa bu dosya yeniden yazılmalıdır.)
+- `.gitignore` → ham `.jsonl` dökümleri ve `settings.local.json` depoya girmez;
+  `.claude/sessions/INDEX.md` girer.
 
 ## Kod Kuralları
 - Kaynak kod `src/diskultimate/` altında paket olarak durur.

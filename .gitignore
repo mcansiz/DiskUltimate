@@ -21,3 +21,11 @@ System Volume Information/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Claude oturum kayitlari (proje icinde durur, ham dokum depoya girmez)
+.claude/settings.local.json
+.claude/sessions/*.jsonl
+
+# Uygulamanin calisma zamani gunlugu (main_window.log -> paths.LOG_DIR).
+# Belge dokumleri (.claude/logs/*.md) depoda kalir, gunluk dosyalari kalmaz.
+.claude/logs/*.log

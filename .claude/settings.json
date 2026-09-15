@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/archive-session.py\" 2>/dev/null || python \"$CLAUDE_PROJECT_DIR/.claude/hooks/archive-session.py\" 2>/dev/null || true",
+            "timeout": 30,
+            "statusMessage": "Oturum dokumu .claude/sessions/ altina arsivleniyor"
+          }
+        ]
+      }
+    ]
+  }
+}
