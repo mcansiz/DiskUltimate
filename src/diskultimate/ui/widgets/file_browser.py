@@ -350,8 +350,10 @@ class FileBrowser(QWidget):
         if not self.fs or not self.fs.readable:
             return False
         if not self.fs.writable:
-            QMessageBox.information(self, "Salt okunur",
-                                    "Bu bolum salt okunur acildi.")
+            # Neden surucuden gelir: kaynagin salt okunur acilmasi ile
+            # surucunun yazma destegi olmamasi ayni sey degildir.
+            QMessageBox.information(self, "Yazma yapilamiyor",
+                                    self.fs.write_reason)
             return False
         return True
 
@@ -367,6 +369,12 @@ class FileBrowser(QWidget):
         self.act_mkdir.setEnabled(yazilabilir)
         self.act_rename.setEnabled(yazilabilir and len(self.list.selectedItems()) == 1)
         self.act_delete.setEnabled(yazilabilir and choice)
+        # Pasif bir dugme sessizce pasif kalmamali: nedeni ipucunda dursun,
+        # kullanici fareyi uzerine getirince ogrensin.
+        reason = "" if (yazilabilir or not var) else self.fs.write_reason
+        for act in (self.act_import, self.act_import_dir, self.act_mkdir,
+                    self.act_rename, self.act_delete):
+            act.setToolTip(reason or act.text())
 
     def _context_menu(self, pos) -> None:
         if not self.fs or not self.fs.readable:

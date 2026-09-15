@@ -38,6 +38,16 @@ class FileSystemAccess:
     writable: bool = False
     readable: bool = False
 
+    @property
+    def write_reason(self) -> str:
+        """Yazma neden kapali? Yazilabiliyorsa bos dize.
+
+        Iki ayri neden vardir ve kullaniciya ayni gorunmemelidir:
+        kaynagin salt okunur acilmasi (cozulebilir) ile surucunun yazma
+        destegi olmamasi (cozulemez). Her sinif kendi nedenini soyler.
+        """
+        return "" if self.writable else "Bu bolume yazilamiyor."
+
     def listdir(self, path: str = "/") -> List[FileNode]:
         raise NotImplementedError
 
@@ -128,6 +138,13 @@ class FatAccess(FileSystemAccess):
         self.fs.set_label(label)
         self.label = label
 
+    @property
+    def write_reason(self) -> str:
+        if self.writable:
+            return ""
+        return ("Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda "
+                "acarsaniz bu bolume yazabilirsiniz.")
+
     def stats(self) -> Dict[str, int]:
         return self.fs.stats()
 
@@ -185,6 +202,13 @@ class ExFatAccess(FileSystemAccess):
     def set_label(self, label: str) -> None:
         self.fs.set_label(label)
         self.label = label
+
+    @property
+    def write_reason(self) -> str:
+        if self.writable:
+            return ""
+        return ("Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda "
+                "acarsaniz bu bolume yazabilirsiniz.")
 
     def stats(self) -> Dict[str, int]:
         return self.fs.stats()
@@ -245,6 +269,13 @@ class ExtAccess(FileSystemAccess):
         with open(dest, "wb") as fh:
             fh.write(data)
         return dest
+
+    @property
+    def write_reason(self) -> str:
+        return ("ext2/3/4 surucusu SALT OKUNURDUR: listeleme, okuma ve disa "
+                "aktarma calisir; yazma, silme ve yeniden adlandirma yoktur. "
+                "Bunlar gunluk (journal) tutarliligi ve saglama guncellemesi "
+                "gerektirir. Diski yazma modunda acmis olmaniz bunu degistirmez.")
 
     def stats(self) -> Dict[str, int]:
         return self.fs.stats()

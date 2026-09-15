@@ -1324,3 +1324,56 @@ Salt okunurdur. Yazma, silme ve yeniden adlandirma yoktur — bunlar gunluk
 ### Dogrulama
 `run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti.
 Arayuzde hem `.img` hem `.dub` icin ext4 bolumu geziliyor.
+
+---
+
+## 2026-09-15 (11) — "ext4 bolume yazamiyorum" — yaniltici mesaj duzeltildi
+
+### Bildirilen durum
+Kullanici SD karti (`PhysicalDrive1`) **yazma modunda** acti, ext4 bolume
+yazamadi. Arayuz "Bu bolum salt okunur acildi." diyordu.
+
+### Sorun mesajdaydi
+Iki ayri neden ayni metni uretiyordu:
+1. **Kaynak** salt okunur acildi (cozulebilir: yazma modunda ac)
+2. **Surucu** yazma desteklemiyor (cozulemez: ext yazici yok)
+
+Kullanici (1)'i zaten yapmisti; mesaj onu yanlis yere yonlendiriyordu.
+
+### Cozum
+`FileSystemAccess.write_reason` eklendi; her surucu kendi nedenini soyler:
+- `FatAccess` / `ExFatAccess`: "Kaynak salt okunur acildi. Goruntuyu/diski
+  yazma modunda acarsaniz bu bolume yazabilirsiniz."
+- `ExtAccess`: "ext2/3/4 surucusu SALT OKUNURDUR... **Diski yazma modunda
+  acmis olmaniz bunu degistirmez.**"
+
+Arayuz bu metni diyalogda gosterir; ayrica pasif dugmelerin **ipucunda** durur,
+cunku pasif bir dugme tiklanamadigi icin diyalog hic acilmayabilir.
+
+### ext4 yazma neden buyuk bir is (olculdu)
+Kullanicinin `rootfs` birimi:
+
+```
+compat    has_journal, ext_attr, resize_inode, dir_index
+incompat  filetype, extents, flex_bg, csum_seed
+ro_compat sparse_super, large_file, huge_file, dir_nlink, extra_isize,
+          metadata_csum        <-- saglama ZORUNLU
+```
+
+`metadata_csum` acik: ustblok, grup tanimlayicilari, inode'lar, extent
+bloklari, dizin bloklari ve bitmap'lerin **her biri** CRC32c saglamasi tasir.
+Yazan taraf bunlarin tamamini dogru guncellemek zorundadir; biri yanlis olursa
+`e2fsck` birimi bozuk sayar. Ustune `has_journal` var: gunluk ya dogru
+islenmeli ya da birim tutarli birakilmali.
+
+Yani ext4 yazma "bir islev daha" degil, ayri bir calisma: blok/inode tahsisi,
+bitmap ve sayac guncellemesi, extent agaci degisikligi, dizin girisi ekleme
+(dir_index/htree dahil), CRC32c saglamalar ve gunluk. Ustelik ilk hedef
+**gercek, onyuklenebilir bir SD kart** oldugu icin hata maliyeti yuksek.
+
+Bu oturumda uygulanmadi; karar kullaniciya birakildi.
+
+### Dogrulama
+`run_all` 17/18 · 1 atlandi · `platform_check` 0 bulgu · `ui_smoke` gecti.
+Kullanicinin fiziksel diskine **yazilmadi**; ozellik bayraklari yalnizca
+okunarak olculdu.
