@@ -620,3 +620,108 @@ listede yalnizca **veri** kaldi: "64 bit", "Linux", harici arac adlari.
 2. Kayit defterli `retranslate` (12.3c).
 3. Yerel sayi/tarih bicimi (12.3d).
 4. Almanca icin anadil gozden gecirmesi (8.7).
+
+
+---
+
+## 14. `.po` gecisi (2026-09-17)
+
+Bolum 12.3(a)'da "en buyuk kacirilan firsat" denen adim atildi: sozluk bicimi
+duz JSON'dan gettext `.po`'ya tasindi. **Anahtar stratejisi degismedi** —
+kaynak metin hala anahtar — bu yuzden 1656 cagrinin hicbirine dokunulmadi.
+
+### 14.1 Ne eklendi
+
+| Parca | Isi |
+|---|---|
+| `i18n/po.py` (395 satir) | `.po` okuyucu/yazici + `merge()` (msgmerge esdegeri) |
+| `i18n.trn(tekil, cogul, n, ...)` | Cogul ekleri; kural `.po` basligindan, ifade `gettext.c2py()` ile |
+| `i18n.trc(baglam, metin, ...)` | Baglamli ceviri (`msgctxt`) |
+| `catalogs/en.po`, `de.po` | 1315 giris, kaynak konumlariyla (`#:`) |
+
+Desteklenen `.po` alt kumesi: `msgctxt`, `msgid`, `msgid_plural`, `msgstr`,
+`msgstr[n]`, `#, fuzzy`, `#.` / `#:` yorumlari, cok satirli dizeler ve `#~`
+bayat girisler.
+
+### 14.2 Bayat ceviri artik kaybolmuyor
+
+Raporun 8.5 maddesindeki sorun cozuldu. `po.merge()`:
+
+- Ayni `msgid` varsa ceviri korunur.
+- Kaynakta kalmayan giris **silinmez**, `#~` ile arsivlenir.
+- Yeni bir giris bayatlayan birine yeterince benziyorsa ceviri oraya tasinip
+  `#, fuzzy` isaretlenir.
+
+Esik (0.65) olculerek secildi:
+
+| Degisiklik | Benzerlik |
+|---|---|
+| "Bolumu sil" -> "Bölümü sil" (diakritik, kisa) | 0.70 |
+| "Goruntu ac..." -> "Görüntü aç..." | 0.69 |
+| "Bicimlendir" -> "Biçimlendir" | 0.91 |
+| "Bekleyen islemleri uygula" -> "Bekleyen işlemleri uygula" | 0.96 |
+| "Bolumu sil" <-> "Diski sil" (farkli metin) | **0.42** |
+| "Bolumu sil" <-> "Yepyeni bir metin" | **0.15** |
+
+Yani Turkce metne diakritik eklemek (bolum 8.5'te "1315 anahtarin hepsi
+duser" denen senaryo) artik cevirileri **dusurmuyor**; hepsi fuzzy olarak
+tasinir ve gozden gecirilir.
+
+`fuzzy` girisler calisma aninda **kullanilmaz** (gettext davranisi): dosyada
+durur, cevirmene onerilir, ama arayuzde kaynak metin gorunur. Bu yuzden
+`i18n_check` fuzzy'yi eksik ceviri sayar — sessiz bir "yarim ceviri" durumu
+olusmaz.
+
+### 14.3 Cogul ekleri kullanimda
+
+Dort gercek cagri `trn()`e cevrildi ve karsiliklari yazildi:
+
+| Kaynak | en (n=1 / n=3) | de (n=1 / n=3) |
+|---|---|---|
+| `{} adim uygulandi` | 1 step applied / 3 steps applied | 1 Schritt angewendet / 3 Schritte angewendet |
+| `{} oge silindi` | 1 item deleted / 3 items deleted | 1 Element gelöscht / 3 Elemente gelöscht |
+| `{} dosya eklendi ({})` | 1 file added / 3 files added | 1 Datei hinzugefügt / 3 Dateien hinzugefügt |
+| `{} bekleyen adim iptal edildi` | 1 pending step was discarded / 3 ... steps were | 1 ausstehender Schritt wurde verworfen / 3 ... |
+
+Turkce'de iki bicim ayni yazilir (dil oyle); ceviri dillerinde ayrisir.
+
+### 14.4 Bedeli — olculdu
+
+| | JSON | `.po` |
+|---|---|---|
+| Dosya (en) | 90 KB | 175 KB |
+| Okuma (ayni makine, ayni surec) | 0.7 ms | **7.6 ms** |
+
+11 kat yavas: JSON'u C cozuyor, `.po`'yu Python. Maliyet **dil basina bir
+kez** odenir (acilis ve dil degisimi). Ilk surum 13.6 ms'ydi; iki hizli yol
+eklendi (kacis karakteri icermeyen metinde donguye hic girilmiyor, tirnakla
+baslamayan satirda regex calistirilmiyor) ve 7.6 ms'ye indi. Karsilastirma
+icin: bir bolum tablosu okumasi ~600 ms (ADR 0026).
+
+### 14.5 Gecisin dogrulanmasi
+
+- **2630 metin** (2 dil x 1315) icin `tr()` ciktisi JSON donemiyle
+  **birebir ayni** cikti — bicim degisimi davranisi degistirmedi.
+- `i18n_check` yeniden yazildi: `.po` okuyor, fuzzy ve cogul bicim denetimi
+  ekledi, `--write` artik `msgmerge` gibi calisiyor.
+- Linux misafiri (Mint 22.3): `run_all` 32/34 (2 atlandi, Windows'a ozgu),
+  `i18n_check` BASARILI, `platform_check` 0 bulgu, `ui_smoke` cikis 0.
+
+### 14.6 Yan bulgu: yeni kod kurali kirmisti
+
+`po.py` ilk yazildiginda `platform_check` **7 bulgu** verdi:
+
+- 6 fonksiyonda Turkce yerel degisken/parametre (kural: kod adlari Ingilizce).
+  Duzeltildi — 204 tanimlayici `tokenize` ile cevrildi (duz metin degistirme
+  dize iceriklerini de bozmustu; belirtec duzeyinde yapilinca dizeler korundu).
+- Kacis tablosundaki iki ters bolu "sabit Windows yolu" sanildi. Burada yol
+  yok; tablo `chr(92)` ile kuruldu ve neden oyle yazildigi koda yazildi.
+
+Denetim ise yaradi: yeni kod kurali sessizce kirmisti.
+
+### 14.7 Siradaki (guncel)
+
+1. Kayit defterli `retranslate` (12.3c) — eylem metnini unutmayi imkansiz kilar.
+2. Yerel sayi/tarih bicimi (12.3d) — Almanca'da `1,00 GB`.
+3. Almanca icin anadil gozden gecirmesi (8.7).
+4. Turkce kaynak metne diakritik (artik fuzzy tasima ile **yapilabilir**).

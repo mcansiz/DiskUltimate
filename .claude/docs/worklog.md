@@ -3198,3 +3198,62 @@ arac adlari.
 > durumda (3950+ satir). `.po` gecisine baslamadan once bunun commit edilmesi
 > onerilir; yoksa iki buyuk degisiklik ic ice girer.
 
+## 2026-09-17 (7) — Sozluk bicimi JSON'dan gettext `.po`'ya tasindi
+
+Kullanici: *"comitle po ya gec"*. Once biriken calisma islendi (0d538c5),
+sonra bolum 12.3(a)'da "en buyuk kacirilan firsat" denen adim atildi.
+
+### Yapilan
+
+- `i18n/po.py` (395 satir): `.po` okuyucu/yazici + `merge()` (msgmerge
+  esdegeri: ceviri korunur, kaynakta kalmayan giris bayatlanir `#~`, benzeyen
+  yeni girise ceviri tasinip `#, fuzzy` isaretlenir).
+- `i18n.trn()` (cogul) ve `i18n.trc()` (baglam). Cogul kurali `.po`
+  basligindaki `Plural-Forms`'tan geliyor; ifadeyi stdlib'deki
+  `gettext.c2py()` derliyor — harici bagimlilik yok.
+- `catalogs/en.json` + `de.json` -> `en.po` + `de.po` (1315 giris, kaynak
+  konumlariyla). JSON dosyalari silindi.
+- `tests/i18n_check.py` yeniden yazildi: `.po` okuyor, **fuzzy** ve **cogul
+  bicim** denetimi eklendi, `--write` msgmerge gibi calisiyor.
+- Dort gercek cagri `trn()`e cevrildi (ornek: "1 step applied" / "3 steps
+  applied"; onceden hepsi "steps" diyordu).
+
+**Anahtar stratejisi degismedi** (kaynak metin hala anahtar), bu yuzden 1656
+`tr()`/`mark()` cagrisinin hicbirine dokunulmadi.
+
+### Neden JSON yetmiyordu
+
+`.po` ucunu birden getiriyor: cogul ekleri, baglam (`msgctxt`) ve **bayat
+ceviriyi koruyan fuzzy**. Sonuncusu raporun 8.5 maddesindeki sorunu cozuyor:
+kaynak metindeki bir yazim duzeltmesi artik cevirileri dusurmuyor. Benzerlik
+esigi (0.65) olcumle secildi: diakritik ekleme 0.69-0.96 uretiyor, gercekten
+farkli metinler 0.42 ve altinda kaliyor.
+
+Ayrica Poedit / Weblate / Crowdin `.po`'yu dogrudan aciyor — Almanca gozden
+gecirmesi icin artik JSON yerine standart bir dosya yollanabilir.
+
+### Bedeli
+
+| | JSON | `.po` |
+|---|---|---|
+| Dosya (en) | 90 KB | 175 KB |
+| Okuma (ayni makine) | 0.7 ms | **7.6 ms** |
+
+11 kat yavas (JSON'u C cozuyor); maliyet dil basina bir kez odeniyor. Ilk
+surum 13.6 ms'ydi, iki hizli yolla 7.6 ms'ye indi.
+
+### Dogrulama
+
+- **2630 metin** (2 dil x 1315) icin `tr()` ciktisi JSON donemiyle **birebir
+  ayni** — bicim degisimi davranisi degistirmedi.
+- Linux misafiri (Mint 22.3): `run_all` **32/34** (2 atlandi, Windows'a ozgu),
+  `i18n_check` **BASARILI**, `platform_check` **0 bulgu**, `ui_smoke` **cikis 0**
+  (dil degisimi + sozde-yerellestirme yesil).
+
+### Yan bulgu: yeni kod kurali kirdi, denetim yakaladi
+
+`po.py` ilk halinde `platform_check` 7 bulgu verdi: alti fonksiyonda Turkce
+yerel degisken (kod adlari Ingilizce olmali) ve kacis tablosundaki iki ters
+bolunun "sabit Windows yolu" sanilmasi. 204 tanimlayici `tokenize` ile
+cevrildi (duz metin degistirme dize iceriklerini de bozmustu), kacis tablosu
+`chr(92)` ile kuruldu ve gerekce koda yazildi.

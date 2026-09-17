@@ -42,7 +42,7 @@ from typing import Callable, Dict, List, Optional
 
 from . import diagnostics
 from .ptable import human_size
-from ..i18n import mark, tr
+from ..i18n import mark, tr, trn
 
 Progress = Optional[Callable[[str, int], None]]
 
@@ -284,7 +284,8 @@ class ApplyResult:
 
     def summary(self) -> str:
         if self.ok:
-            return tr("{} adim uygulandi", len(self.done))
+            return trn("{} adim uygulandi", "{} adim uygulandi",
+                       len(self.done), len(self.done))
         return (tr("{} adim uygulandi, '{}' adiminda durdu: {}",
                    len(self.done), self.failed.title, self.error)
                 + (tr(" ({} adim calistirilmadi)", len(self.pending))

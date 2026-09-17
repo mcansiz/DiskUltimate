@@ -11,14 +11,21 @@ gorunmez.
     tr("Bolum tablosunu sil")                 # -> "Delete partition table"
     tr("{} bolum bulundu", len(parts))        # -> "3 partitions found"
 
-Ceviriler `i18n/catalogs/<kod>.json` icinde `{"kaynak metin": "ceviri"}`
-seklinde durur. Yeni bir dil eklemek icin:
+Ceviriler `i18n/catalogs/<kod>.po` icinde, gettext'in standart `.po`
+biciminde durur. Yeni bir dil eklemek icin:
 
-1. `catalogs/<kod>.json` dosyasini olusturun (`python3 -m tests.i18n_check
-   --write <kod>` bos iskeleti uretir),
+1. `python3 -m tests.i18n_check --write <kod>` dosyayi uretir/tazeler,
 2. `LANGUAGE_NAMES` icine dilin kendi adini yazin.
 
 Koda dokunmak gerekmez; dosya bulunursa dil menusunde cikar.
+
+## Neden `.po` (ama gettext calisma zamani degil)
+
+Bicim gettext'in `.po` dosyasidir: cogul ekleri (`Plural-Forms`), baglam
+(`msgctxt`) ve bayat ceviriyi koruyan `fuzzy` isareti oradan gelir; Poedit,
+Weblate ve Crowdin dosyayi dogrudan okur. Ama `gettext` **modulu**
+kullanilmaz: o yalnizca derlenmis `.mo` okur ve derlemek icin `msgfmt`
+gerekir. `.po` burada dogrudan okunuyor (`i18n/po.py`), derleme adimi yok.
 
 ## Neden Qt Linguist (.ts/.qm) degil
 
@@ -35,10 +42,12 @@ yerden guvenlidir: sozluk yer degistirmeyle guncellenir, tek tek yazilmaz.
 """
 from __future__ import annotations
 
-import json
+import gettext
 import os
 import re
 from typing import Callable, Dict, List, Optional, Tuple
+
+from . import po
 
 # Kaynak dil: kodun icindeki metinlerin dili. Ceviri dosyasi yoktur.
 SOURCE_LANGUAGE = "tr"
@@ -80,9 +89,15 @@ _PROTECTED = re.compile(r"(\{\{|\}\}|\{[^{}]*\}|<[^>]+>|&[a-zA-Z]+;)")
 CATALOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalogs")
 
 _language = SOURCE_LANGUAGE
-_catalog: Dict[str, str] = {}
+_catalog: Dict[str, str] = {}                 # baglamsiz metinler (tr icin hizli yol)
+_contexts: Dict[Tuple[str, str], str] = {}    # (baglam, metin) -> ceviri
+_plurals: Dict[str, List[str]] = {}           # tekil metin -> [bicim0, bicim1, ...]
+_plural_rule: Callable[[int], int] = lambda n: 0 if n == 1 else 1
 _listeners: List[Callable[[str], None]] = []
 _ready = False
+
+# Kaynak dilin (Turkce) cogul kurali — CLDR: "one" (n == 1) ve "other".
+SOURCE_PLURAL_FORMS = "nplurals=2; plural=(n != 1);"
 
 
 # --------------------------------------------------------------------------
@@ -112,6 +127,54 @@ def tr(text: str, *args, **kwargs) -> str:
             return text.format(*args, **kwargs)
         except (IndexError, KeyError, ValueError):
             return text
+
+
+def trn(singular: str, plural: str, count: int, *args, **kwargs) -> str:
+    """Sayiya gore tekil/cogul bicimi secer ve cevirir.
+
+        trn("{} adim uygulandi", "{} adim uygulandi", n, n)
+        # en -> "1 step applied" / "3 steps applied"
+
+    Turkce'de iki bicim cogu zaman aynidir; yine de ikisi de yazilir, cunku
+    **ceviri** dillerinde ayrisirlar. Dilin kac bicimi oldugu ve hangisinin
+    secilecegi `.po` basligindaki `Plural-Forms` kuralindan gelir.
+    """
+    if _language == PSEUDO_LANGUAGE:
+        secilen = pseudo(singular if count == 1 else plural)
+    else:
+        bicimler = _plurals.get(singular)
+        if bicimler:
+            try:
+                secilen = bicimler[_plural_rule(count)] or singular
+            except (IndexError, TypeError):
+                secilen = bicimler[0] or singular
+        else:
+            secilen = singular if count == 1 else plural
+    if not (args or kwargs):
+        return secilen
+    try:
+        return secilen.format(*args, **kwargs)
+    except (IndexError, KeyError, ValueError):
+        return (singular if count == 1 else plural)
+
+
+def trc(context: str, text: str, *args, **kwargs) -> str:
+    """Baglamli ceviri: ayni kaynak metin iki yerde farkli cevrilebilir.
+
+        trc("bolum turu", "Tur")   ve   trc("dosya turu", "Tur")
+
+    Baglam yalnizca sozluk anahtarinin parcasidir; kullaniciya gosterilmez.
+    """
+    if _language == PSEUDO_LANGUAGE:
+        translated = pseudo(text)
+    else:
+        translated = _contexts.get((context, text), text)
+    if not (args or kwargs):
+        return translated
+    try:
+        return translated.format(*args, **kwargs)
+    except (IndexError, KeyError, ValueError):
+        return text
 
 
 def pseudo(text: str) -> str:
@@ -172,7 +235,7 @@ def catalog_languages() -> List[str]:
         names = os.listdir(CATALOG_DIR)
     except OSError:
         return []
-    return sorted(n[:-5] for n in names if n.endswith(".json"))
+    return sorted(n[:-3] for n in names if n.endswith(".po"))
 
 
 def available_languages() -> List[Tuple[str, str]]:
@@ -186,21 +249,46 @@ def available_languages() -> List[Tuple[str, str]]:
     return [(code, language_name(code)) for code in codes]
 
 
-def load_catalog(code: str) -> Dict[str, str]:
-    """Bir dilin ceviri sozlugunu okur. Dosya yoksa/bozuksa bos sozluk doner."""
+def catalog_path(code: str) -> str:
+    """Bir dilin `.po` dosyasinin yolu."""
+    return os.path.join(CATALOG_DIR, f"{code}.po")
+
+
+def load_po(code: str) -> po.Catalog:
+    """Dilin `.po` dosyasini okur; yoksa/bozuksa bos katalog doner."""
     if code in (SOURCE_LANGUAGE, PSEUDO_LANGUAGE):
-        return {}          # sozde dil sozluk kullanmaz, uretir
+        return po.Catalog()
     try:
-        with open(os.path.join(CATALOG_DIR, f"{code}.json"), "r",
-                  encoding="utf-8") as fh:
-            data = json.load(fh)
+        with open(catalog_path(code), "r", encoding="utf-8") as fh:
+            return po.parse(fh.read())
     except (OSError, ValueError):
-        return {}
-    if not isinstance(data, dict):
-        return {}
-    # Yalnizca dize->dize girisler; bozuk satirlar sessizce atlanir.
-    return {k: v for k, v in data.items()
-            if isinstance(k, str) and isinstance(v, str) and v}
+        return po.Catalog()
+
+
+def load_catalog(code: str) -> Dict[str, str]:
+    """Baglamsiz cevirileri `{kaynak: ceviri}` olarak dondurur.
+
+    `fuzzy` isaretli girisler **kullanilmaz** (gettext davranisi): ceviri
+    dosyada durur ve cevirmene onerilir, ama arayuzde gosterilmez.
+    """
+    return {e.msgid: e.msgstr for e in load_po(code).entries
+            if e.context is None and e.plural is None and e.translated}
+
+
+def _compile_plural(forms: str) -> Callable[[int], int]:
+    """`Plural-Forms` basligindaki ifadeyi calistirilabilir hale getirir.
+
+    Ifadeyi Python'un kendi `gettext.c2py()` islevi derler — standart
+    kutuphane; harici bagimlilik yok. Basligi okunamayan dilde Ingilizce
+    kurali (n != 1) kullanilir.
+    """
+    match = re.search(r"plural\s*=\s*([^;]+)", forms or "")
+    if match:
+        try:
+            return gettext.c2py(match.group(1).strip())
+        except Exception:
+            pass
+    return lambda n: 0 if n == 1 else 1
 
 
 def set_language(code: str, remember: bool = True) -> str:
@@ -209,13 +297,20 @@ def set_language(code: str, remember: bool = True) -> str:
     `remember=True` secimi ayar dosyasina yazar (bir sonraki acilista gecerli
     olur). Dil gercekten degistiyse dinleyiciler bilgilendirilir.
     """
-    global _language, _catalog, _ready
+    global _language, _catalog, _contexts, _plurals, _plural_rule, _ready
     code = (code or "").strip().lower() or SOURCE_LANGUAGE
     if code not in (SOURCE_LANGUAGE, PSEUDO_LANGUAGE) \
             and code not in catalog_languages():
         code = SOURCE_LANGUAGE
     changed = code != _language or not _ready
-    _catalog = load_catalog(code)
+    katalog = load_po(code)
+    _catalog = {e.msgid: e.msgstr for e in katalog.entries
+                if e.context is None and e.plural is None and e.translated}
+    _contexts = {(e.context, e.msgid): e.msgstr for e in katalog.entries
+                 if e.context is not None and e.translated}
+    _plurals = {e.msgid: e.plurals for e in katalog.entries
+                if e.plural is not None and e.translated}
+    _plural_rule = _compile_plural(katalog.plural_forms or SOURCE_PLURAL_FORMS)
     _language = code
     _ready = True
     if remember:

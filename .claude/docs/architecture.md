@@ -5,8 +5,9 @@ main.py                       Giris noktasi (QApplication + MainWindow)
 └── src/diskultimate/
     ├── paths.py              Proje ici yollar (.tmp, .claude/logs)
     ├── i18n/                 COK DILLI METINLER — saf Python, Qt'siz
-    │   ├── __init__.py       tr() / mark(), dil secimi, degisiklik bildirimi
-    │   └── catalogs/         <dil>.json sozlukleri (tr kaynak dildir, dosyasi yok)
+    │   ├── __init__.py       tr() / trn() / trc() / mark(), dil secimi, bildirim
+    │   ├── po.py             gettext `.po` okuyucu/yazici + msgmerge esdegeri
+    │   └── catalogs/         <dil>.po sozlukleri (tr kaynak dildir, dosyasi yok)
     ├── core/                 SAF PYTHON — PyQt import etmez
     │   ├── platform.py       Isletim sistemi farklari (seyrek dosya, arac arama, Qt eklentisi)
     │   ├── physical.py       Fiziksel diskler: listeleme, acma, katmanli yazma guvenligi

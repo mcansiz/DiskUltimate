@@ -189,3 +189,35 @@ dosyasina yazilmaz, yalnizca ortam degiskeniyle acilir.
 
 Ayrintili degerlendirme (sektor karsilastirmasi, `.po` secenegi, olcumler):
 `.claude/docs/i18n-raporu.md` bolum 12-13.
+
+## Ek 2 (2026-09-17): sozluk bicimi JSON -> gettext `.po`
+
+Ilk surumde sozluk duz JSON'du. Karar dogruydu ama **gerekcesi eksikti**:
+`.po` "msgfmt kurulu degil" diye elenmisti, oysa (a) msgfmt bir **gelistirici
+araci**dir, kullanici onu gormez, (b) `.po` icin msgfmt zaten **gerekmez** —
+`.mo` yalnizca hiz optimizasyonudur ve `.po` dogrudan okunabilir.
+
+Bicim degisti; **anahtar stratejisi degismedi** (kaynak metin hala anahtar),
+bu yuzden 1656 cagrinin hicbiri degismedi.
+
+Ne kazanildi:
+
+| | |
+|---|---|
+| Cogul ekleri | `trn(tekil, cogul, n, ...)`; kural `.po` basligindaki `Plural-Forms`'dan gelir, ifadeyi stdlib'deki `gettext.c2py()` derler |
+| Baglam | `trc(baglam, metin, ...)` — ayni Turkce metin iki yerde farkli cevrilebilir |
+| Bayat ceviri kaybolmaz | Kaynak metin degisince ceviri silinmez; benzer yeni girise tasinip `#, fuzzy` isaretlenir (`po.merge`) |
+| Arac ekosistemi | Poedit, Weblate, Crowdin `.po`'yu dogrudan acar; ceviri icin kod bilgisi gerekmez |
+| Kaynak konumu | Her giris `#:` satirlariyla nerede gectigini tasir |
+
+Bedeli **olculdu**: 1315 girisli dosya 7.6 ms'de okunuyor (ayni icerigin JSON
+hali 0.7 ms — JSON'u C cozuyor, bunu Python). Maliyet dil basina bir kez
+odenir. Iki hizli yol eklenerek 13.6 ms'den 7.6 ms'ye indirildi: kacis
+karakteri icermeyen metinde donguye hic girilmiyor.
+
+`fuzzy` girisler calisma aninda **kullanilmaz** (gettext davranisi): ceviri
+dosyada durur ve cevirmene onerilir, ama arayuzde Turkce gorunur. Bu yuzden
+`i18n_check` fuzzy'yi **eksik ceviri sayar**.
+
+Gecis dogrulamasi: 2630 metnin (2 dil x 1315) tamaminda `tr()` ciktisinin
+JSON donemiyle **birebir ayni** oldugu karsilastirildi.

@@ -17,7 +17,7 @@ from ...core.ptable import human_size
 from ..dialogs.task import run_task
 from ..icons import icon as app_icon
 from ..theme import palette_color
-from ...i18n import tr
+from ...i18n import tr, trn
 
 
 class FileBrowser(QWidget):
@@ -353,7 +353,9 @@ class FileBrowser(QWidget):
                                 "\n".join(problems[:10]))
         self.refresh()
         self.contentChanged.emit()
-        self.statusMessage.emit(tr("{} dosya eklendi ({})", copied, human_size(total)))
+        self.statusMessage.emit(
+            trn("{} dosya eklendi ({})", "{} dosya eklendi ({})", copied,
+                copied, human_size(total)))
 
     def import_folder(self) -> None:
         if not self._require_writable():
@@ -438,7 +440,8 @@ class FileBrowser(QWidget):
         self.refresh()
         self.contentChanged.emit()
         if removed == len(nodes):
-            self.statusMessage.emit(tr("{} oge silindi", removed))
+            self.statusMessage.emit(
+                trn("{} oge silindi", "{} oge silindi", removed, removed))
         else:
             self.statusMessage.emit(
                 tr("{}/{} oge silindi — {} oge silinemedi",

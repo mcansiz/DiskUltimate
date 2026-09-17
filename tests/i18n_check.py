@@ -1,32 +1,34 @@
-"""Ceviri denetimi ve sozluk uretimi.
+"""Ceviri denetimi ve `.po` sozluk uretimi.
 
-    python3 -m tests.i18n_check            # denetle (CI / her oturum)
-    python3 -m tests.i18n_check --write en # en.json'u kaynaktan tazele
+    python3 -m tests.i18n_check            # denetle (her oturum / CI)
+    python3 -m tests.i18n_check --write en # en.po'yu kaynaktan tazele
     python3 -m tests.i18n_check --list     # cevrilecek metinleri bas
 
 ## Ne dogrulanir
 
-1. **Eksik ceviri yok** — kaynaktaki her `tr(...)`/`mark(...)` metni her dil
-   dosyasinda bulunur.
-2. **Bayat giris yok** — dil dosyasinda kaynakta artik olmayan metin kalmaz;
-   yoksa dosya zamanla cope doner ve eksik cevirileri gizler.
-3. **Yer tutucular tutar** — `{}` sayisi ve `{ad}` adlari kaynakla cevirinin
+1. **Eksik ceviri yok** — kaynaktaki her `tr` / `mark` / `trn` / `trc` metni
+   her dil dosyasinda cevrilidir. `#, fuzzy` isaretli giris de eksik sayilir:
+   calisma aninda **kullanilmaz**, yani kullanici Turkce gorur.
+2. **Yer tutucular tutar** — `{}` sayisi ve `{ad}` adlari kaynakla cevirinin
    arasinda ayni; tutmazsa `str.format` calisma aninda patlardi.
-4. **HTML etiketleri korunur** — `<b>`, `<br>` gibi etiketler kaybolmamis.
+3. **HTML etiketleri korunur** — `<b>`, `<br>` gibi etiketler kaybolmamis.
+4. **Cogul bicimleri tam** — `Plural-Forms` kac bicim diyorsa o kadar
+   `msgstr[n]` dolu.
 5. **Eylem metinleri tek yerde** — `MainWindow` icindeki her `self.act_*`
-   nesnesinin `_retranslate_actions()` icinde bir satiri var. Olmayan bir
-   eylem dil degistiginde eski dilde kalirdi.
-6. **Dil degisimi metni gercekten degistirir** — sozluk yuklendiginde
-   `tr()` cevrilmis metni dondurur, kaynak dile donunce geri gelir.
+   nesnesinin `_retranslate_actions()` icinde bir satiri var.
+6. **Dil degisimi metni gercekten degistirir** — sozluk yuklendiginde `tr()`
+   cevrilmis metni dondurur, kaynak dile donunce geri gelir.
 
-Metin **cevrilmemis kalmissa** bu denetim onu yakalamaz (kaynakta olmayan bir
-seyi bilemez); onun icin `.claude/docs/testing.md` icindeki elle gozden gecirme
-yordami vardir.
+Bayatlamis (`#~`) girisler **hata degildir**: `.po` biciminde bunlar arsivdir,
+kaynak metin geri gelirse cevirisi yeniden bulunur.
+
+Metin **hic sarilmamissa** bu denetim onu goremez (kaynakta olmayan bir seyi
+bilemez); onun icin sozde-yerellestirme vardir
+(`DISKULTIMATE_LANG=qps`, `tests/ui_smoke.py -> sozde_denetimi`).
 """
 from __future__ import annotations
 
 import ast
-import json
 import os
 import re
 import sys
@@ -34,9 +36,24 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src", "diskultimate")
 CATALOGS = os.path.join(SRC, "i18n", "catalogs")
+sys.path.insert(0, os.path.join(ROOT, "src"))
+
+from diskultimate.i18n import po        # noqa: E402
 
 PLACEHOLDER = re.compile(r"\{([^{}]*)\}")
 HTML_TAG = re.compile(r"</?[a-zA-Z]+[^>]*>")
+
+VARSAYILAN_BASLIK = {
+    "Project-Id-Version": "DiskUltimate 0.4.0",
+    "Report-Msgid-Bugs-To": "",
+    "Language": "",
+    "MIME-Version": "1.0",
+    "Content-Type": "text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding": "8bit",
+    "Plural-Forms": "nplurals=2; plural=(n != 1);",
+    "X-Source-Language": "tr",
+    "X-Generator": "tests/i18n_check.py",
+}
 
 
 # --------------------------------------------------------------------------
@@ -64,9 +81,21 @@ def uses_i18n(tree) -> set:
     return names
 
 
-def collect_strings():
-    """{metin: [dosya:satir, ...]} — cevrilecek butun kaynak metinler."""
-    found = {}
+def _sabit(node):
+    """Dugum sabit bir dize ise degerini, degilse None dondurur."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    return None
+
+
+def collect_entries():
+    """Kaynaktaki butun cevrilecek metinler — `po.Entry` listesi.
+
+    `tr`/`mark` duz giris, `trn` cogul girisi, `trc` baglamli giris uretir.
+    Ayni metin birden cok yerde geciyorsa tek giriste toplanir ve butun
+    konumlar `#:` satirlarina yazilir.
+    """
+    girisler = {}
     for path in source_files():
         with open(path, "r", encoding="utf-8") as fh:
             source = fh.read()
@@ -78,59 +107,91 @@ def collect_strings():
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
                 continue
-            if node.func.id not in available or node.func.id not in ("tr", "mark"):
+            ad = node.func.id
+            if ad not in available or ad not in ("tr", "mark", "trn", "trc"):
                 continue
             if not node.args:
                 continue
-            first = node.args[0]
-            if isinstance(first, ast.Constant) and isinstance(first.value, str):
-                found.setdefault(first.value, []).append(f"{rel}:{node.lineno}")
-    return found
+            baglam = None
+            cogul = None
+            if ad == "trc":
+                baglam = _sabit(node.args[0])
+                metin = _sabit(node.args[1]) if len(node.args) > 1 else None
+            elif ad == "trn":
+                metin = _sabit(node.args[0])
+                cogul = _sabit(node.args[1]) if len(node.args) > 1 else None
+                if cogul is None:
+                    continue
+            else:
+                metin = _sabit(node.args[0])
+            if metin is None or (ad == "trc" and baglam is None):
+                continue
+            anahtar = (baglam, metin)
+            giris = girisler.get(anahtar)
+            if giris is None:
+                giris = po.Entry(metin, context=baglam, plural=cogul)
+                girisler[anahtar] = giris
+            elif cogul and giris.plural is None:
+                giris.plural = cogul
+            giris.references.append(f"{rel}:{node.lineno}")
+    for giris in girisler.values():
+        giris.references = sorted(set(giris.references))
+    return [girisler[k] for k in sorted(girisler, key=lambda k: (k[1], k[0] or ""))]
+
+
+def collect_strings():
+    """{metin: [dosya:satir, ...]} — geriye donuk uyum icin duz liste."""
+    return {e.msgid: e.references for e in collect_entries()}
 
 
 # --------------------------------------------------------------------------
 # Sozluk dosyalari
 # --------------------------------------------------------------------------
 def catalog_path(code: str) -> str:
-    return os.path.join(CATALOGS, f"{code}.json")
+    return os.path.join(CATALOGS, f"{code}.po")
 
 
 def languages():
     if not os.path.isdir(CATALOGS):
         return []
-    return sorted(n[:-5] for n in os.listdir(CATALOGS) if n.endswith(".json"))
+    return sorted(n[:-3] for n in os.listdir(CATALOGS) if n.endswith(".po"))
 
 
-def load(code: str) -> dict:
+def load(code: str) -> po.Catalog:
     try:
         with open(catalog_path(code), "r", encoding="utf-8") as fh:
-            return json.load(fh)
+            return po.parse(fh.read())
     except FileNotFoundError:
-        return {}
+        basliklar = dict(VARSAYILAN_BASLIK)
+        basliklar["Language"] = code
+        return po.Catalog(headers=basliklar)
 
 
-def write(code: str, data: dict) -> None:
+def save(code: str, catalog: po.Catalog) -> None:
     os.makedirs(CATALOGS, exist_ok=True)
     with open(catalog_path(code), "w", encoding="utf-8", newline="\n") as fh:
-        json.dump(data, fh, ensure_ascii=False, indent=2, sort_keys=True)
-        fh.write("\n")
+        fh.write(po.dump(catalog))
 
 
-def refresh(code: str) -> tuple:
-    """Sozlugu kaynaga gore tazeler: eksikleri bos ekler, bayatlari atar."""
-    strings = collect_strings()
-    current = load(code)
-    fresh = {}
-    added = removed = 0
-    for text in sorted(strings):
-        if text in current:
-            fresh[text] = current[text]
-        else:
-            fresh[text] = ""
-            added += 1
-    removed = len([k for k in current if k not in strings])
-    write(code, fresh)
-    return added, removed, len(fresh)
+def nplurals(catalog: po.Catalog) -> int:
+    match = re.search(r"nplurals\s*=\s*(\d+)", catalog.plural_forms or "")
+    return int(match.group(1)) if match else 2
+
+
+def refresh(code: str) -> dict:
+    """Sozlugu kaynaga gore tazeler (`msgmerge` esdegeri).
+
+    Ceviriler korunur; kaynakta kalmayan giris **silinmez**, bayatlatilir;
+    benzer yeni bir giris varsa cevirisi oraya tasinip `fuzzy` isaretlenir.
+    """
+    catalog = load(code)
+    if not catalog.headers:
+        catalog.headers = dict(VARSAYILAN_BASLIK, Language=code)
+    catalog.headers.setdefault("Language", code)
+    sayac = po.merge(catalog, collect_entries())
+    save(code, catalog)
+    sayac.update(catalog.counts())
+    return sayac
 
 
 # --------------------------------------------------------------------------
@@ -142,28 +203,44 @@ def placeholders(text: str) -> list:
     return sorted(PLACEHOLDER.findall(cleaned))
 
 
-def check_language(code: str, strings: dict) -> list:
+def check_language(code: str, kaynak) -> list:
     problems = []
     catalog = load(code)
-    missing = [t for t in strings if t not in catalog or not catalog[t]]
-    stale = [t for t in catalog if t not in strings]
-    for text in missing[:8]:
-        problems.append(f"  eksik ceviri: {text[:60]!r} ({strings[text][0]})")
-    if len(missing) > 8:
-        problems.append(f"  ... {len(missing) - 8} eksik ceviri daha")
-    for text in stale[:8]:
-        problems.append(f"  bayat giris (kaynakta yok): {text[:60]!r}")
-    if len(stale) > 8:
-        problems.append(f"  ... {len(stale) - 8} bayat giris daha")
-    for text, translated in catalog.items():
-        if text not in strings or not translated:
+    girisler = catalog.by_key()
+    forms = nplurals(catalog)
+
+    eksik, fuzzy = [], []
+    for giris in kaynak:
+        mevcut = girisler.get(giris.key)
+        if mevcut is None or not mevcut.translated:
+            (fuzzy if (mevcut is not None and mevcut.fuzzy) else eksik).append(giris)
             continue
-        if placeholders(text) != placeholders(translated):
+        if giris.plural is not None:
+            dolu = [x for x in mevcut.plurals if x]
+            if len(dolu) < forms:
+                problems.append(
+                    f"  cogul bicimi eksik ({len(dolu)}/{forms}): {giris.msgid[:45]!r}")
+        if placeholders(giris.msgid) != placeholders(mevcut.msgstr or
+                                                    (mevcut.plurals or [""])[0]):
             problems.append(
-                f"  yer tutucu uyusmuyor: {text[:45]!r} -> {translated[:45]!r}")
-        if sorted(HTML_TAG.findall(text)) != sorted(HTML_TAG.findall(translated)):
-            problems.append(
-                f"  HTML etiketi uyusmuyor: {text[:45]!r} -> {translated[:45]!r}")
+                f"  yer tutucu uyusmuyor: {giris.msgid[:45]!r}")
+        beklenen = sorted(HTML_TAG.findall(giris.msgid))
+        gelen = sorted(HTML_TAG.findall(mevcut.msgstr or
+                                        (mevcut.plurals or [""])[0]))
+        if beklenen != gelen:
+            problems.append(f"  HTML etiketi uyusmuyor: {giris.msgid[:45]!r}")
+
+    for giris in eksik[:6]:
+        yer = giris.references[0] if giris.references else "?"
+        problems.append(f"  eksik ceviri: {giris.msgid[:55]!r} ({yer})")
+    if len(eksik) > 6:
+        problems.append(f"  ... {len(eksik) - 6} eksik ceviri daha")
+    for giris in fuzzy[:6]:
+        problems.append(
+            f"  fuzzy (gozden gecirilmeli, arayuzde Turkce gorunur): "
+            f"{giris.msgid[:45]!r}")
+    if len(fuzzy) > 6:
+        problems.append(f"  ... {len(fuzzy) - 6} fuzzy giris daha")
     return problems
 
 
@@ -186,34 +263,39 @@ def check_actions() -> list:
             for sub in ast.walk(node):
                 if isinstance(sub, ast.Attribute) and sub.attr.startswith("act_"):
                     retranslated.add(sub.attr)
-    eksik = sorted(created - retranslated)
     return [f"  _retranslate_actions() icinde yok: self.{name}"
-            for name in eksik]
+            for name in sorted(created - retranslated)]
 
 
 def check_runtime() -> list:
     """Sozluk yuklenince `tr()` gercekten cevirir mi?"""
-    sys.path.insert(0, os.path.join(ROOT, "src"))
     from diskultimate import i18n
 
     problems = []
-    source_before = i18n.current_language()
+    onceki = i18n.current_language()
     try:
         for code in languages():
             catalog = load(code)
-            sample = next((k for k, v in catalog.items()
-                           if v and "{" not in k and k != v), None)
+            ornek = next((e for e in catalog.entries
+                          if e.translated and "{" not in e.msgid
+                          and e.msgstr != e.msgid and e.context is None
+                          and e.plural is None), None)
             i18n.set_language(code, remember=False)
             if i18n.current_language() != code:
                 problems.append(f"  dil secilemedi: {code}")
                 continue
-            if sample and i18n.tr(sample) != catalog[sample]:
-                problems.append(f"  {code}: tr() cevirmedi: {sample[:40]!r}")
+            if ornek and i18n.tr(ornek.msgid) != ornek.msgstr:
+                problems.append(f"  {code}: tr() cevirmedi: {ornek.msgid[:40]!r}")
             i18n.set_language("tr", remember=False)
-            if sample and i18n.tr(sample) != sample:
+            if ornek and i18n.tr(ornek.msgid) != ornek.msgid:
                 problems.append("  kaynak dile donulunce metin geri gelmedi")
+        # sozde dil: metin donusmeli, yer tutucu bozulmamali
+        i18n.set_language(i18n.PSEUDO_LANGUAGE, remember=False)
+        deneme = i18n.tr("Bolum {} bicimlendir", 3)
+        if not deneme.startswith("[!") or "3" not in deneme:
+            problems.append(f"  sozde dil bozuk: {deneme!r}")
     finally:
-        i18n.set_language(source_before, remember=False)
+        i18n.set_language(onceki, remember=False)
     return problems
 
 
@@ -223,31 +305,39 @@ def main() -> int:
         if len(args) < 2:
             print("kullanim: --write <dil kodu>")
             return 2
-        added, removed, total = refresh(args[1])
-        print(f"{args[1]}.json tazelendi: {total} giris "
-              f"(+{added} eksik, -{removed} bayat)")
+        sayac = refresh(args[1])
+        print(f"{args[1]}.po tazelendi: {sayac['toplam']} giris "
+              f"({sayac['korunan']} korundu, {sayac['yeni']} yeni, "
+              f"{sayac['fuzzy']} fuzzy tasindi, "
+              f"{sayac['bayatlayan']} bayatladi)")
         return 0
     if args and args[0] == "--list":
-        for text, places in sorted(collect_strings().items()):
-            print(f"{places[0]:<48} {text[:80]!r}")
+        for giris in collect_entries():
+            yer = giris.references[0] if giris.references else "?"
+            print(f"{yer:<48} {giris.msgid[:80]!r}")
         return 0
 
-    strings = collect_strings()
-    print(f"Kaynakta {len(strings)} cevrilecek metin bulundu.")
+    kaynak = collect_entries()
+    cogullar = sum(1 for e in kaynak if e.plural is not None)
+    baglamlar = sum(1 for e in kaynak if e.context is not None)
+    print(f"Kaynakta {len(kaynak)} cevrilecek metin bulundu "
+          f"({cogullar} cogul, {baglamlar} baglamli).")
     failures = 0
 
     codes = languages()
     if not codes:
         print("UYARI: hicbir ceviri dosyasi yok (i18n/catalogs bos)")
     for code in codes:
-        problems = check_language(code, strings)
+        problems = check_language(code, kaynak)
+        sayim = load(code).counts()
         if problems:
             failures += 1
-            print(f"\n{code}.json: {len(problems)} sorun")
+            print(f"\n{code}.po: {len(problems)} sorun")
             for line in problems:
                 print(line)
         else:
-            print(f"{code}.json: TAMAM ({len(load(code))} giris)")
+            print(f"{code}.po: TAMAM ({sayim['cevrili']} ceviri, "
+                  f"{sayim['bayat']} bayat giris arsivde)")
 
     for name, problems in (("eylem metinleri", check_actions()),
                            ("calisma zamani", check_runtime())):

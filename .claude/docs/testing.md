@@ -131,10 +131,15 @@ raporunu goster** altindadir.
 ## Ceviri denetimi
 
 ```bash
-python3 -m tests.i18n_check              # butun dilleri denetler
-python3 -m tests.i18n_check --write <kod>  # sozluk iskeletini uretir/tazeler
-python3 -m tests.i18n_check --list       # cevrilecek metinleri listeler
+python3 -m tests.i18n_check               # butun dilleri denetler
+python3 -m tests.i18n_check --write <kod> # <kod>.po dosyasini kaynaktan tazeler
+python3 -m tests.i18n_check --list        # cevrilecek metinleri listeler
 ```
+
+Sozlukler gettext `.po` bicimindedir (`i18n/catalogs/<dil>.po`). `--write`
+`msgmerge` gibi calisir: mevcut ceviriler korunur, kaynakta kalmayan giris
+**silinmez, bayatlatilir** (`#~`), benzeyen yeni bir giris varsa ceviri oraya
+tasinip `#, fuzzy` isaretlenir.
 
 Kaynaktaki her `tr(...)` / `mark(...)` metnini toplar (su an **1062**) ve her
 dil dosyasi icin dogrular:
@@ -142,7 +147,8 @@ dil dosyasi icin dogrular:
 | Denetim | Dogruladigi |
 |---|---|
 | eksik ceviri | Kaynaktaki her metin sozlukte var ve bos degil |
-| bayat giris | Sozlukte kaynakta olmayan metin kalmamis |
+| fuzzy giris | `#, fuzzy` isaretli giris **eksik sayilir**: calisma aninda kullanilmaz, kullanici Turkce gorur |
+| cogul bicimi | `Plural-Forms` kac bicim diyorsa o kadar `msgstr[n]` dolu |
 | yer tutucu | `{}` sayisi ve `{ad}` adlari kaynakla ceviride ayni |
 | HTML etiketi | `<b>`, `<br>` gibi etiketler ceviride korunmus |
 | eylem metinleri | Her `self.act_*` icin `_retranslate_actions()` satiri var |

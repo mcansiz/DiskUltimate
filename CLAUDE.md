@@ -41,7 +41,8 @@ DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
 - **Çoklu dil:** arayüzde görünen her metin `i18n.tr("...")` ile sarılır; modül
   düzeyinde üretilen metinler (`MBR_TYPES`, `WIPE_METHODS`, `operations.KINDS`)
   `mark("...")` ile işaretlenip gösterim anında çevrilir (ADR 0027).
-  Sözlükler: `src/diskultimate/i18n/catalogs/<dil>.json`.
+  Sözlükler: `src/diskultimate/i18n/catalogs/<dil>.po` (gettext biçimi;
+  çoğul için `trn()`, bağlam için `trc()`). Poedit/Weblate doğrudan açar.
   Denetim: `python3 -m tests.i18n_check` (beklenen: her dil TAMAM).
 - **Yazım kuralı:** konsol/günlük çıktısı ve kod ASCII kalabilir; **arayüz
   metni ve çeviriler dilin doğru yazımıyla** yazılır. Almanca çeviriler bir kez

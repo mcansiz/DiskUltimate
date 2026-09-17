@@ -49,7 +49,7 @@ from .widgets.file_browser import FileBrowser
 from .widgets.hex_view import HexViewer
 from .widgets.partition_table import PartitionTableWidget, color_chip
 from .. import i18n
-from ..i18n import mark, tr
+from ..i18n import mark, tr, trn
 
 APP_NAME = "DiskUltimate"
 # Surumun tek kaynagi burasidir. Degistirildiginde README.md'deki surum rozeti
@@ -1884,7 +1884,8 @@ class MainWindow(QMainWindow):
                 QMessageBox.Yes) != QMessageBox.Yes:
             return
         count = self.queue.clear()
-        self.log(tr("{} bekleyen adim iptal edildi", count))
+        self.log(trn("{} bekleyen adim iptal edildi",
+                     "{} bekleyen adim iptal edildi", count, count))
         self._refresh_pending()
 
     def apply_steps(self) -> None:
