@@ -6,8 +6,10 @@ Sonuclar .claude/logs/test-<tarih>.md dosyasina da yazilabilir (--log).
 from __future__ import annotations
 
 import datetime
+import hashlib
 import os
 import shutil
+import copy
 import struct
 import subprocess
 import sys
@@ -42,6 +44,11 @@ from diskultimate.core.mbr import MBRTable  # noqa: E402
 from diskultimate.core.ptable import human_size, parse_size  # noqa: E402
 from diskultimate.core.clone import read_backup_info  # noqa: E402
 from diskultimate.core.session import DiskSession  # noqa: E402
+from diskultimate.core import bootloader  # noqa: E402
+from diskultimate.core import efiboot  # noqa: E402
+from diskultimate.core import efistore  # noqa: E402
+from diskultimate.core import operations as ops  # noqa: E402
+from diskultimate.core import platform as platform_mod  # noqa: E402
 
 from diskultimate.paths import scratch  # noqa: E402
 
@@ -1427,6 +1434,829 @@ def t24_yedek_onizleme():
         assert False, "ham goruntu yedek sayilmamaliydi"
     except Exception as exc:
         assert "yedegi degil" in str(exc) or "yedek" in str(exc).lower(), exc
+
+
+# --------------------------------------------------------------------------
+@test
+def t25_islem_kuyrugu():
+    """Bekleyen islem kuyrugu: kuyruk dolarken diske DOKUNULMAZ, Uygula sirayla isler
+
+    Disk araclarinin ortak calisma bicimi (Acronis, EaseUS, AOMEI): islemler
+    once kuyruga girer, hicbir sey yazilmaz; kullanici hepsini gorup tek bir
+    "Uygula" ile calistirir (ADR 0025).
+
+    Burada dogrulanan sozler:
+      1. Kuyruga eklemek diski **degistirmez** (sha256 ayni kalir).
+      2. Adimlar **sirayla** calisir; sonraki oncekinin sonucuna dayanabilir.
+      3. Basarisiz adim kuyrugu **durdurur**; tamamlananlar raporlanir ve
+         duran adim kuyrukta kalir ki kullanici duzeltebilsin.
+      4. Salt okunur kaynakta kuyruk dolar ama uygulama reddedilir.
+    """
+    from diskultimate.core import operations as ops
+
+    yol = img_path("t25.img")
+    s = DiskSession.create(yol, 256 * MIB, overwrite=True)
+    s.close()
+    with open(yol, "rb") as fh:
+        once = hashlib.sha256(fh.read()).hexdigest()
+
+    kuyruk = ops.OperationQueue()
+    assert kuyruk.is_empty and len(kuyruk) == 0
+
+    s = DiskSession.open(yol)
+    sektor = s.image.sector_size
+    kuyruk.add(ops.create_table_op("gpt"))
+    kuyruk.add(ops.create_op(2048, 64 * MIB // sektor, sektor,
+                             fs_key="fat32", label="BIR"))
+    kuyruk.add(ops.create_op(2048 + 64 * MIB // sektor, 64 * MIB // sektor,
+                             sektor, fs_key="fat32", label="IKI"))
+    kuyruk.add(ops.label_op(1, "YENIAD"))
+    assert len(kuyruk) == 4, len(kuyruk)
+    assert kuyruk.destructive_count == 1, "yalnizca tablo olusturma yikici"
+
+    # 1. Kuyruk dolarken hicbir sey yazilmamis olmali
+    s.close()
+    with open(yol, "rb") as fh:
+        assert hashlib.sha256(fh.read()).hexdigest() == once, \
+            "kuyruga eklemek diski degistirdi"
+
+    # Kuyruk yonetimi: cikarma, geri alma, tasima
+    kopya = ops.OperationQueue()
+    for op in kuyruk:
+        kopya.add(op)
+    kopya.remove(0)
+    assert len(kopya) == 3
+    assert kopya.undo().kind == "label", "undo son adimi almali"
+    assert len(kopya) == 2
+    kopya.move(1, 0)
+    assert kopya[0].params["label"] == "IKI", "tasima calismadi"
+    assert kopya.clear() == 2 and kopya.is_empty
+
+    # 2. Uygula: adimlar sirayla islemeli
+    s = DiskSession.open(yol)
+    adimlar = []
+    sonuc = kuyruk.apply(s, on_step=lambda i, op: adimlar.append(op.kind))
+    assert sonuc.ok, sonuc.summary()
+    assert adimlar == ["create_table", "create", "create", "label"], adimlar
+    assert len(sonuc.done) == 4, sonuc.summary()
+    assert kuyruk.is_empty, "uygulanan adimlar kuyrukta kalmamali"
+
+    s.reload()
+    assert s.scheme == "gpt", s.scheme
+    assert len(s.partitions) == 2, s.partitions
+    fs = s.filesystem(1)
+    assert fs.label == "YENIAD", f"etiket adimi islemedi: {fs.label}"
+    s.close()
+
+    # 3. Basarisiz adim kuyrugu durdurmali
+    s = DiskSession.open(yol)
+    kuyruk2 = ops.OperationQueue()
+    kuyruk2.add(ops.label_op(2, "OLUR"))
+    kuyruk2.add(ops.format_op(99, "fat32"))          # boyle bir bolum yok
+    kuyruk2.add(ops.label_op(1, "CALISMAMALI"))
+    sonuc2 = kuyruk2.apply(s)
+    assert not sonuc2.ok, "olmayan bolum bicimlendirilemez"
+    assert len(sonuc2.done) == 1, sonuc2.summary()
+    assert sonuc2.failed.kind == "format", sonuc2.failed
+    assert len(sonuc2.pending) == 1, sonuc2.pending
+    assert len(kuyruk2) == 2, "duran adim ve sonrasi kuyrukta kalmali"
+    assert s.filesystem(1).label == "YENIAD", "durdurulan adim yine de islemis"
+    s.close()
+
+    # 4. Salt okunur kaynak: kuyruk dolar, uygulama reddedilir
+    s = DiskSession.open(yol, readonly=True)
+    assert s.readonly
+    uygun, neden = s.can_become_writable()
+    assert uygun and not neden, (uygun, neden)     # goruntu dosyasi gecebilir
+    kuyruk3 = ops.OperationQueue()
+    kuyruk3.add(ops.label_op(1, "REDDEDILMELI"))
+    sonuc3 = kuyruk3.apply(s)
+    assert not sonuc3.ok, "salt okunur kaynakta yazma basarili olmamaliydi"
+    s.close()
+
+    # Yedek dosyasi yazma moduna GECEMEZ ve bunu soyler
+    dub = img_path("t25.dub")
+    s = DiskSession.open(yol, readonly=True)
+    backup(s.image, dub, compress=True)
+    s.close()
+    s = DiskSession.open(dub)
+    uygun, neden = s.can_become_writable()
+    assert not uygun and "arsiv" in neden.lower(), (uygun, neden)
+    s.close()
+
+
+# --------------------------------------------------------------------------
+@test
+def t26_dogrudan_yazma_yollari():
+    """Kuyruga GIRMEYEN yazma islemleri de salt okunur kaynakta calisabilmeli
+
+    ADR 0025 ile kaynak her zaman salt okunur acilir. Geri yukleme, klonlama
+    gibi **kuyruklanmayan** islemler bundan etkilendi: Linux'ta bir `.dub`
+    yedegi `/dev/sdb` diskine yazilmak istendiginde "Fiziksel diskler ...
+    SALT OKUNUR acilir" hatasi aliniyordu (2026-09-15, kullanici bildirimi).
+
+    Cozum: bu yollar once `become_writable()` cagirir. Burada dogrulanan:
+      1. Salt okunur acilan bir kaynak yazma moduna **gecebiliyor**.
+      2. Gectikten sonra geri yukleme gercekten calisiyor.
+      3. Gecilemeyen kaynak (yedek dosyasi) nedenini soyluyor.
+      4. `become_writable()` idempotent: zaten yazilabilirken bozmuyor.
+    """
+    kaynak = img_path("t26_kaynak.img")
+    s = DiskSession.create(kaynak, 128 * MIB, scheme="mbr", overwrite=True)
+    r = s.free_regions()[0]
+    p = s.create_partition(r.start_lba, 64 * MIB // 512, fs_key="fat32",
+                           label="KAYNAK")
+    fs = s.filesystem(p.index)
+    fs.write_file("/imza.txt", b"t26 imzasi\n")
+    fs.flush()
+    s.close_filesystems()
+    dub = img_path("t26.dub")
+    backup(s.view(s.table.get(1)), dub, compress=True, fs_type="FAT32")
+    s.close()
+
+    # --- hedef: salt okunur acilmis bir goruntu ---
+    hedef = img_path("t26_hedef.img")
+    s = DiskSession.create(hedef, 128 * MIB, scheme="mbr", overwrite=True)
+    r = s.free_regions()[0]
+    s.create_partition(r.start_lba, 64 * MIB // 512, fs_key="fat32",
+                       label="HEDEF")
+    s.close()
+
+    s = DiskSession.open(hedef, readonly=True)
+    assert s.readonly, "test salt okunur acmali"
+
+    # 1. Gecis mumkun olmali ve nedeni bos olmali
+    uygun, neden = s.can_become_writable()
+    assert uygun and not neden, (uygun, neden)
+
+    # Gecmeden once yazma reddedilmeli (eski hatanin ta kendisi)
+    try:
+        s.restore_partition(1, dub)
+        assert False, "salt okunur kaynakta geri yukleme basarili olmamaliydi"
+    except Exception as exc:
+        assert "salt okunur" in str(exc).lower(), exc
+
+    # 2. Gectikten sonra calismali
+    s.become_writable(confirm=True)
+    assert not s.readonly, "yazma moduna gecilemedi"
+    s.restore_partition(1, dub)
+    fs = s.filesystem(1)
+    assert fs.read("/imza.txt") == b"t26 imzasi\n", "geri yukleme icerigi bozuk"
+    assert fs.label == "KAYNAK", f"etiket geri yuklenmedi: {fs.label}"
+
+    # 4. Ikinci cagri zararsiz olmali
+    s.become_writable(confirm=True)
+    assert not s.readonly
+    s.close()
+
+    # 3. Gecilemeyen kaynak nedenini soylemeli
+    s = DiskSession.open(dub)
+    uygun, neden = s.can_become_writable()
+    assert not uygun and neden, (uygun, neden)
+    try:
+        s.become_writable(confirm=True)
+        assert False, "yedek dosyasi yazma moduna gecmemeliydi"
+    except Exception as exc:
+        assert "arsiv" in str(exc).lower(), exc
+    assert s.readonly, "basarisiz gecis kaynagi bozmamali"
+    # Kaynak hala okunabilir olmali
+    assert s.image.size > 0
+    s.close()
+
+
+# --------------------------------------------------------------------------
+@test
+def t27_disk_yoklamasi():
+    """Disk bolumleri **acilmadan** okunabilmeli, aygit hemen birakilmali
+
+    Acronis vari gorunum icin diskin bolumlerini diski acmadan bilmek gerekir
+    (ADR 0026). `survey_disk` aygiti salt okunur acar, bolum tablosunu ve her
+    bolumun dosya sistemini okur, sonra **hemen kapatir**.
+
+    Gercek diske dokunulmaz: `PhysicalDisk` sahte bir surumle degistirilir,
+    aygitin acilip kapandigi ve **hicbir yazma yapilmadigi** sayilarak
+    dogrulanir.
+    """
+    from diskultimate.core import session as session_mod
+    from diskultimate.core.physical import DiskInfo
+
+    # Icinde iki bolumlu bir MBR bulunan goruntu
+    yol = img_path("t27.img")
+    s = DiskSession.create(yol, 256 * MIB, scheme="mbr", overwrite=True)
+    r = s.free_regions()[0]
+    s.create_partition(r.start_lba, 100 * MIB // 512, fs_key="fat32",
+                       label="BIRINCI")
+    r = s.free_regions()[0]
+    s.create_partition(r.start_lba, 80 * MIB // 512, fs_key="fat16",
+                       label="IKINCI")
+    s.close()
+
+    olaylar = []
+
+    class SahteAygit(DiskImage):
+        """Goruntu dosyasini fiziksel disk gibi sunar; yazmayi reddeder."""
+
+        def __init__(self, info, readonly=True, confirm=False,
+                     allow_system=False):
+            super().__init__(yol, readonly=True)
+            self.info = info
+            olaylar.append(("acildi", readonly))
+
+        def write(self, offset, data):
+            olaylar.append(("YAZMA", offset))
+            raise AssertionError("yoklama sirasinda yazma yapilmamali")
+
+        def close(self):
+            olaylar.append(("kapandi", 0))
+            super().close()
+
+    gercek = session_mod.PhysicalDisk
+    session_mod.PhysicalDisk = SahteAygit
+    try:
+        info = DiskInfo(path="/sahte/t27", name="SahteT27", size=256 * MIB)
+        survey = DiskSession.survey_disk(info)
+    finally:
+        session_mod.PhysicalDisk = gercek
+
+    assert survey.error == "", survey.error
+    assert survey.scheme == "mbr", survey.scheme
+    assert survey.scheme_name == "MBR", survey.scheme_name
+    assert len(survey.partitions) == 2, survey.partitions
+    etiketler = [p.fs_label for p in survey.partitions]
+    assert etiketler == ["BIRINCI", "IKINCI"], etiketler
+    turler = [p.fs_type for p in survey.partitions]
+    assert turler == ["FAT32", "FAT16"], turler
+
+    # Aygit salt okunur acilmis, yazilmamis ve KAPATILMIS olmali
+    assert ("acildi", True) in olaylar, olaylar
+    assert not any(e[0] == "YAZMA" for e in olaylar), olaylar
+    assert olaylar[-1][0] == "kapandi", f"aygit birakilmadi: {olaylar}"
+
+    # Uygulamanin kendi acik tuttugu aygit YOKLANMAZ (ADR 0021)
+    from diskultimate.core import physical
+
+    kayitli = DiskInfo(path="/sahte/t27b", name="SahteT27b", size=MIB)
+    physical._register_open(kayitli)
+    try:
+        session_mod.PhysicalDisk = SahteAygit
+        onceki = len(olaylar)
+        survey2 = DiskSession.survey_disk(kayitli)
+    finally:
+        session_mod.PhysicalDisk = gercek
+        physical._unregister_open(kayitli.path)
+    assert survey2.error == "uygulamada acik", survey2.error
+    assert len(olaylar) == onceki, "acik aygit yine de acilmaya calisildi"
+
+    # Bolum tablosu olmayan disk hatasiz, bos sonuc dondurmeli
+    bos_yol = img_path("t27_bos.img")
+    DiskImage.create(bos_yol, 16 * MIB, overwrite=True).close()
+
+    class BosAygit(SahteAygit):
+        def __init__(self, info, readonly=True, confirm=False,
+                     allow_system=False):
+            DiskImage.__init__(self, bos_yol, readonly=True)
+            self.info = info
+
+    session_mod.PhysicalDisk = BosAygit
+    try:
+        bos = DiskSession.survey_disk(
+            DiskInfo(path="/sahte/t27c", name="Bos", size=16 * MIB))
+    finally:
+        session_mod.PhysicalDisk = gercek
+    assert bos.error == "", bos.error
+    assert bos.partitions == [], bos.partitions
+    assert bos.scheme_name == "Bolum tablosu yok", bos.scheme_name
+
+
+# --------------------------------------------------------------------------
+@test
+def t28_dosya_ekleme_yazma_modu():
+    """Salt okunur acilan kaynaga dosya eklenebilmeli (yetki ilk yazmada)
+
+    ADR 0025 ile kaynak her zaman salt okunur aciliyor. Dosya islemleri
+    kuyruga **girmez** (bir dosya sisteminin icinde olurlar), bu yuzden
+    yazma yetkisini kendileri istemek zorunda. Bu yapilmayinca Linux Mint'te
+    bir USB diske dosya eklenemiyordu (kullanici bildirimi).
+
+    Burada dogrulanan:
+      1. Salt okunur oturumun dosya sistemi `writable=False` verir.
+      2. `become_writable()` sonrasi **taze** dosya sistemi yazilabilirdir.
+      3. Eski (bayat) dosya sistemi nesnesi kullanilmaz — yeniden alinir.
+      4. Dosya gercekten yazilir ve geri okunur.
+    """
+    yol = img_path("t28.img")
+    s = DiskSession.create(yol, 128 * MIB, scheme="mbr", overwrite=True)
+    r = s.free_regions()[0]
+    s.create_partition(r.start_lba, 64 * MIB // 512, fs_key="fat32",
+                       label="HEDEF")
+    s.close()
+
+    # 1. Salt okunur acilan kaynak: yazilamaz
+    s = DiskSession.open(yol, readonly=True)
+    fs = s.filesystem(1)
+    assert fs is not None and fs.readable, "bolum okunabilir olmali"
+    assert not fs.writable, "salt okunur kaynakta yazilabilir gorunmemeli"
+    assert fs.write_reason, "neden bos olmamali"
+    bayat = fs
+
+    try:
+        fs.write_file("/olmaz.txt", b"x")
+        assert False, "salt okunur kaynakta yazma basarili olmamaliydi"
+    except Exception:
+        pass
+
+    # 2. Yazma moduna gec — kaynak yeniden acilir
+    uygun, neden = s.can_become_writable()
+    assert uygun and not neden, (uygun, neden)
+    s.become_writable(confirm=True)
+    assert not s.readonly
+
+    # 3. Taze dosya sistemi alinmali; bayat nesne artik kullanilmaz
+    taze = s.filesystem(1)
+    assert taze is not bayat, "yeniden acilan kaynakta ayni fs nesnesi donuyor"
+    assert taze.writable, f"taze dosya sistemi yazilabilir olmali: {taze.write_reason}"
+
+    # 4. Dosya gercekten yazilmali
+    veri = b"DiskUltimate t28\n" * 64
+    taze.write_file("/eklendi.txt", veri)
+    taze.mkdir("/klasor")
+    taze.flush()
+    s.close()
+
+    s = DiskSession.open(yol, readonly=True)
+    fs = s.filesystem(1)
+    adlar = {n.name for n in fs.listdir("/")}
+    assert "eklendi.txt" in adlar, adlar
+    assert "klasor" in adlar, adlar
+    assert fs.read("/eklendi.txt") == veri, "yazilan icerik bozuk"
+    s.close()
+
+
+
+# --------------------------------------------------------------------------
+@test
+def t29_uefi_yapilari():
+    """UEFI onyukleme girisi, aygit yolu ve kisayol yapilari gidis-donus olmali
+
+    Bu sinama bir UEFI makinesi gerektirmez ve bu bilerek boyledir: yapi
+    cozumlemesi `core/efiboot.py` icinde, bellenim erisiminden **ayri**
+    durur (ADR 0029). Ayrilma olmasaydi cozumleyici yalnizca UEFI ile
+    acilmis bir makinede test edilebilirdi.
+
+    Olculen sey `efibootmgr`in urettigi metnin birebir aynisidir; boylece
+    ciktimiz bagimsiz bir araca karsi dogrulanabilir.
+    """
+    # -- aygit yolu: gercek bir Ubuntu shim girisinin bileseni --------------
+    nodes = [
+        efiboot.DevicePathNode(efiboot.TYPE_ACPI, 0x01,
+                               struct.pack("<II", 0x0A0341D0, 0)),
+        efiboot.DevicePathNode(efiboot.TYPE_HARDWARE, 0x01,
+                               struct.pack("<BB", 0x00, 0x1D)),
+        efiboot.make_hard_drive_node(2, 264192, 204800, "gpt",
+                                     "a967f8c5-ed93-4c8d-927d-61ca376a5e9b"),
+        efiboot.make_file_node("/EFI/ubuntu/shimx64.efi"),
+    ]
+    beklenen = ("PciRoot(0x0)/Pci(0x1d,0x00)/"
+                "HD(2,GPT,a967f8c5-ed93-4c8d-927d-61ca376a5e9b,0x40800,0x32000)/"
+                "File(\\EFI\\ubuntu\\shimx64.efi)")
+    uretilen = efiboot.device_path_text(nodes)
+    assert uretilen == beklenen, f"{uretilen!r} != {beklenen!r}"
+
+    ham = efiboot.build_device_path(nodes)
+    geri = efiboot.parse_device_path(ham)
+    assert efiboot.device_path_text(geri) == beklenen, "yol gidis-donus bozuk"
+    assert geri[-1].is_end, "bitis dugumu eklenmedi"
+
+    # -- onyukleme girisi ---------------------------------------------------
+    option = efiboot.LoadOption(number=5, description="ubuntu",
+                                path_nodes=nodes,
+                                optional_data="root=UUID=x".encode("utf-16-le"))
+    ham = option.to_bytes()
+    geri = efiboot.LoadOption.parse(ham, number=5)
+    assert geri.to_bytes() == ham, "giris gidis-donus bozuk"
+    assert geri.description == "ubuntu", geri.description
+    assert geri.active, "etkin bayragi kayboldu"
+    assert geri.name == "Boot0005", geri.name
+    assert geri.file_path == "\\EFI\\ubuntu\\shimx64.efi", geri.file_path
+    bolum = geri.partition
+    assert bolum["number"] == 2 and bolum["start_lba"] == 264192, bolum
+    assert bolum["guid"] == "a967f8c5-ed93-4c8d-927d-61ca376a5e9b", bolum
+    assert geri.optional_text == "root=UUID=x", geri.optional_text
+
+    # Etkin bayragini kapatmak yalnizca o biti degistirmeli
+    geri.active = False
+    assert not geri.active and geri.description == "ubuntu"
+    assert efiboot.LoadOption.parse(geri.to_bytes()).attributes \
+        == option.attributes & ~efiboot.LOAD_OPTION_ACTIVE
+
+    # -- cozulemeyen dugum korunmali ---------------------------------------
+    # Tanimadigimiz bir bellenimin dugumunu dusurmek, girisi sessizce bozmak
+    # olurdu; ham haliyle saklanir.
+    garip = efiboot.DevicePathNode(0x42, 0x13, b"\xde\xad\xbe\xef")
+    ham = efiboot.build_device_path([garip])
+    geri = efiboot.parse_device_path(ham)
+    assert geri[0].data == b"\xde\xad\xbe\xef", "bilinmeyen dugum bozuldu"
+    assert "deadbeef" in geri[0].text(), geri[0].text()
+
+    # -- GUID karisik siralamasi -------------------------------------------
+    metin = "8be4df61-93ca-11d2-aa0d-00e098032b8c"
+    ham = efiboot.guid_to_bytes(metin)
+    assert ham[:4] == bytes.fromhex("61dfe48b"), ham[:4].hex()
+    assert efiboot.guid_from_bytes(ham) == metin
+
+    # -- sira listesi -------------------------------------------------------
+    sira = [7, 5, 0, 1, 2, 3]
+    assert efiboot.parse_order(efiboot.build_order(sira)) == sira
+
+    # -- kisayol ------------------------------------------------------------
+    key_data = (2 << 30) | (1 << 9) | (1 << 10)      # iki tus, Ctrl+Alt
+    ham = (struct.pack("<IIH", key_data, 0, 5)
+           + struct.pack("<HH", 0x0B, 0) + struct.pack("<HH", 0, ord("X")))
+    kisayol = efiboot.KeyOption.parse(ham, number=0)
+    assert kisayol.to_bytes() == ham, "kisayol gidis-donus bozuk"
+    assert kisayol.text() == "Ctrl+Alt+F1+X", kisayol.text()
+    assert kisayol.boot_option == 5, kisayol.boot_option
+
+
+# --------------------------------------------------------------------------
+def _poke(sector: bytes, offset: int, data: bytes) -> bytes:
+    """Sektorun icine **uzunlugunu degistirmeden** bayt yazar.
+
+    Dilim atamasi (`sektor[a:b] = veri`) veri daha uzunsa bytearray'i buyutur
+    ve 512 bayt 514'e cikar; `write_sector` bunu haklı olarak hizalama hatasi
+    sayar. Bu yardimci o tuzagi kapatir.
+    """
+    body = bytearray(sector)
+    assert offset + len(data) <= len(body), "sektor disina yazma"
+    body[offset:offset + len(data)] = data
+    return bytes(body)
+
+
+@test
+def t30_onyukleme_kodu_ve_sistem_tespiti():
+    """Onyukleme kodu taninmali, kaldirilmasi bolum tablosunu KORUMALI
+
+    `exxos-easy-grub-manager` iki isi de kabuk araclariyla yapiyordu:
+    `dd | strings | grep GRUB` ile tanima ve `dd if=/dev/zero bs=440` ile
+    kaldirma. Birincisi bolum tablosundaki rastgele baytlara takilabiliyor,
+    ikincisi yalnizca Linux'ta calisiyordu. Buradaki karsiliklari her
+    platformda ayni kodla, goruntu dosyasi uzerinde sinanir.
+    """
+    yol = img_path("t30.img")
+    s = DiskSession.create(yol, 128 * MIB, scheme="mbr", overwrite=True)
+    bolge = s.free_regions()[0]
+    s.create_partition(bolge.start_lba, 64 * MIB // 512, fs_key="fat32",
+                       label="SISTEM")
+    tablo_once = s.read_sector(0)[bootloader.PARTITION_TABLE_OFFSET:512]
+    assert any(tablo_once), "bolum tablosu bos cikti"
+
+    # -- bos disk ----------------------------------------------------------
+    assert s.boot_code().kind == "empty", s.boot_code().kind
+
+    # -- GRUB imzasi taninmali --------------------------------------------
+    sektor = _poke(s.read_sector(0), 0, b"\xeb\x63\x90")
+    sektor = _poke(sektor, 0x180,
+                   b"GRUB \x00Geom\x00Hard Disk\x00Read\x00 Error\x00")
+    s.write_sector(0, sektor)
+    kod = s.boot_code()
+    assert kod.kind == "grub2", kod.kind
+    assert kod.is_grub and not kod.is_empty
+    assert kod.label, "onyukleme kodunun gorunen adi bos"
+
+    # -- imza YALNIZCA ilk 440 bayttan okunmali ---------------------------
+    # Bolum tablosunun icine "GRUB" yazmak tanimayi etkilememeli; eski
+    # `strings | grep` yaklasiminin yaniltildigi nokta tam olarak burasiydi.
+    s2 = DiskSession.create(img_path("t30b.img"), 64 * MIB, scheme="mbr",
+                            overwrite=True)
+    sektor = _poke(s2.read_sector(0),
+                   bootloader.PARTITION_TABLE_OFFSET + 4, b"GRUB")
+    s2.write_sector(0, sektor)
+    assert s2.boot_code().kind != "grub2", \
+        "bolum tablosundaki bayt onyukleme kodu sanildi"
+    s2.close()
+
+    # -- Windows onyukleyicisi --------------------------------------------
+    sektor = _poke(s.read_sector(0), 0, b"\x00" * 440)
+    sektor = _poke(sektor, 0x120, b"Invalid partition table\x00")
+    s.write_sector(0, sektor)
+    assert s.boot_code().kind == "windows", s.boot_code().kind
+
+    # -- kaldirma: kod gitmeli, tablo DURMALI ------------------------------
+    # Onceki adimin biraktigi Windows imzasi once temizlenir: iki imza ayni
+    # sektorde bulunmaz ve `identify_boot_code` once Windows'a bakar.
+    sektor = _poke(s.read_sector(0), 0, b"\x00" * 440)
+    sektor = _poke(sektor, 0x180,
+                   b"GRUB \x00Geom\x00Hard Disk\x00Read\x00 Error\x00")
+    sektor = _poke(sektor, 0, b"\xeb\x63\x90")
+    s.write_sector(0, sektor)
+    assert s.boot_code().is_grub, s.boot_code().kind
+
+    s.clear_boot_code()
+    ilk = s.read_sector(0)
+    assert ilk[:bootloader.BOOT_CODE_BYTES] == b"\x00" * bootloader.BOOT_CODE_BYTES, \
+        "onyukleme kodu sifirlanmadi"
+    assert ilk[bootloader.PARTITION_TABLE_OFFSET:512] == tablo_once, \
+        "bolum tablosu bozuldu — veri erisilemez olurdu"
+    assert ilk[510:512] == b"\x55\xaa", "MBR imzasi silindi"
+    assert s.boot_code().kind == "empty", s.boot_code().kind
+    # Bolum hala okunabilmeli
+    s.reload()
+    assert len(s.partitions) == 1, s.partitions
+    assert s.filesystem(1) is not None, "bolum artik acilmiyor"
+    s.close()
+
+    # -- islem kuyrugundan calistirilabilmeli ------------------------------
+    s = DiskSession.open(yol, readonly=False)
+    sektor = _poke(s.read_sector(0), 0x100, b"GRUB \x00Geom\x00Read\x00")
+    s.write_sector(0, sektor)
+    s.close()
+
+    s = DiskSession.open(yol, readonly=False)
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.Operation(kind="clear_boot_code",
+                             title_text="Onyukleme kodunu kaldir"))
+    assert kuyruk.destructive_count == 1, "adim yikici sayilmadi"
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, sonuc.summary()
+    assert s.read_sector(0)[:440] == b"\x00" * 440, "kuyruk adimi is gormedi"
+    assert s.read_sector(0)[bootloader.PARTITION_TABLE_OFFSET:512] == tablo_once
+    s.close()
+
+
+# --------------------------------------------------------------------------
+@test
+def t31_isletim_sistemi_tespiti():
+    """Kurulu sistem, VERI bolumunden ayirt edilmeli (baglamadan, her platformda)
+
+    Dosya sisteminin turu kanit degildir: ext4 bir bolum, kurulu bir sistem
+    kadar kolaylikla bir yedek diski olabilir. Orijinal arac bunu
+    `mount -o ro` ile acip bakarak cozuyordu — root ve Linux gerektiriyordu.
+    Burada ayni sey projenin kendi surucileriyle yapilir.
+    """
+    yol = img_path("t31.img")
+    s = DiskSession.create(yol, 400 * MIB, scheme="gpt", overwrite=True)
+    mevcut = {k.key for k in available_kinds()}
+
+    # 1) ESP: FAT32 + \EFI klasoru
+    bolge = s.free_regions()[0]
+    esp = s.create_partition(bolge.start_lba, 100 * MIB // 512, fs_key="fat32",
+                            label="ESP", type_guid=bootloader.ESP_GUID)
+    fs = s.filesystem(esp.index)
+    fs.mkdir("/EFI")
+    fs.mkdir("/EFI/ubuntu")
+    fs.write_file("/EFI/ubuntu/shimx64.efi", b"MZ" + b"\x00" * 256)
+    fs.mkdir("/EFI/BOOT")
+    fs.write_file("/EFI/BOOT/BOOTX64.EFI", b"MZ" + b"\x00" * 256)
+    fs.flush()
+
+    # 2) Kurulu Linux gorunumu (ext varsa) ya da FAT uzerinde veri bolumu
+    linux_index = -1
+    if "ext4" in mevcut:
+        bolge = s.free_regions()[0]
+        kok = s.create_partition(bolge.start_lba, 120 * MIB // 512,
+                                 fs_key="ext4", label="KOK")
+        fs = s.filesystem(kok.index)
+        fs.mkdir("/etc")
+        fs.write_file("/etc/os-release",
+                      b'PRETTY_NAME="Linux Mint 22.3"\nNAME="Linux Mint"\n')
+        fs.flush()
+        linux_index = kok.index
+
+        # 3) Ayni dosya sisteminde ama sistemsiz: veri bolumu
+        bolge = s.free_regions()[0]
+        veri = s.create_partition(bolge.start_lba, 100 * MIB // 512,
+                                  fs_key="ext4", label="YEDEK")
+        fs = s.filesystem(veri.index)
+        fs.mkdir("/yedekler")
+        fs.flush()
+    else:
+        veri = None
+
+    def kayit(rapor, numara):
+        """Bolum NUMARASINA gore kaydi bulur — liste konumu degil.
+
+        `Partition.index` 1 tabanlidir ve GPT'de bosluk birakabilir; listeyi
+        konumla indekslemek yanlis bolume bakmak olur.
+        """
+        for item in rapor.systems:
+            if item.index == numara:
+                return item
+        raise AssertionError(f"bolum {numara} raporda yok: "
+                             f"{[i.index for i in rapor.systems]}")
+
+    rapor = bootloader.survey_session(s)
+    assert rapor.readable, rapor.reason
+    esp_kaydi = kayit(rapor, esp.index)
+    assert esp_kaydi.is_esp, "EFI Sistem Bolumu taninmadi"
+    assert rapor.esp_index == esp.index, rapor.esp_index
+    assert "\\EFI\\ubuntu\\shimx64.efi" in esp_kaydi.loaders, esp_kaydi.loaders
+    assert "\\EFI\\BOOT\\BOOTX64.EFI" in esp_kaydi.loaders, esp_kaydi.loaders
+
+    if linux_index >= 0:
+        kurulu = kayit(rapor, linux_index)
+        assert kurulu.os_kind == "linux", kurulu.os_kind
+        assert "Mint" in kurulu.os_name, kurulu.os_name
+        bos = kayit(rapor, veri.index)
+        assert not bos.os_name, f"veri bolumu sistem sanildi: {bos.os_name}"
+        assert bos.reason, "atlanma nedeni yazilmadi"
+        assert kurulu.os_name in rapor.os_names, rapor.os_names
+    s.close()
+
+    # Buyuk/kucuk harf duyarsiz arama: NTFS'te Windows, FAT'te WINDOWS
+    s = DiskSession.open(yol, readonly=True)
+    fs = s.filesystem(esp.index)
+    assert bootloader.find_path(fs, "efi", "UBUNTU", "ShimX64.efi"), \
+        "harf buyuklugunden bagimsiz arama calismiyor"
+    assert not bootloader.find_path(fs, "EFI", "yok"), "olmayan yol bulundu"
+    s.close()
+
+
+# --------------------------------------------------------------------------
+@test
+def t32_grub_yapilandirmasi():
+    """GRUB ayar dosyasi duzenlenirken yorumlar ve sira KORUNMALI
+
+    Bir yapilandirma dosyasini sozluge cevirip geri yazmak kullanicinin kendi
+    notlarini siler. Duzenleme satir satir yapilir.
+    """
+    kaynak = (
+        "# GRUB varsayilanlari\n"
+        "GRUB_DEFAULT=0\n"
+        "GRUB_TIMEOUT=5\n"
+        "\n"
+        "# Diger sistemleri tara\n"
+        "#GRUB_DISABLE_OS_PROBER=true\n"
+        "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"\n"
+    )
+    ayarlar = bootloader.GrubDefaults(kaynak)
+    assert ayarlar.get("GRUB_TIMEOUT") == "5", ayarlar.get("GRUB_TIMEOUT")
+    assert ayarlar.get("GRUB_CMDLINE_LINUX_DEFAULT") == "quiet splash"
+    assert ayarlar.is_commented("GRUB_DISABLE_OS_PROBER"), \
+        "yoruma alinmis anahtar etkin sanildi"
+
+    # Yoruma alinmis anahtar **yerinde** acilmali, sona eklenmemeli
+    ayarlar.set("GRUB_DISABLE_OS_PROBER", "false")
+    uretilen = ayarlar.render()
+    assert "GRUB_DISABLE_OS_PROBER=false" in uretilen
+    assert "#GRUB_DISABLE_OS_PROBER" not in uretilen
+    assert "# GRUB varsayilanlari" in uretilen, "yorum satiri kayboldu"
+    assert "# Diger sistemleri tara" in uretilen, "yorum satiri kayboldu"
+    satirlar = uretilen.splitlines()
+    assert satirlar.index("GRUB_DEFAULT=0") < satirlar.index("GRUB_TIMEOUT=5"), \
+        "sira bozuldu"
+    assert satirlar.index("GRUB_DISABLE_OS_PROBER=false") \
+        < satirlar.index('GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"'), \
+        "anahtar yerinde acilmadi, sona eklendi"
+
+    # Var olan anahtari degistirmek satiri yerinde guncellemeli
+    ayarlar.set("GRUB_TIMEOUT", "10")
+    assert ayarlar.get("GRUB_TIMEOUT") == "10"
+    assert ayarlar.render().count("GRUB_TIMEOUT=") == 1, "anahtar cogaldi"
+
+    # Hic olmayan anahtar sona eklenmeli
+    ayarlar.set("GRUB_GFXMODE", "auto")
+    assert ayarlar.render().rstrip().endswith("GRUB_GFXMODE=auto")
+
+    # -- menu cozumlemesi ---------------------------------------------------
+    cfg = (
+        "menuentry 'Linux Mint 22.3' --class linuxmint --class gnu-linux {\n"
+        "  linux /boot/vmlinuz root=UUID=x\n"
+        "}\n"
+        "submenu 'Gelismis secenekler' {\n"
+        "  menuentry 'Linux Mint 22.3 (kurtarma kipi)' --class linuxmint {\n"
+        "    linux /boot/vmlinuz single\n"
+        "  }\n"
+        "}\n"
+        "menuentry 'Windows Boot Manager (on /dev/sda2)' --class windows {\n"
+        "  chainloader /EFI/Microsoft/Boot/bootmgfw.efi\n"
+        "}\n"
+    )
+    girisler = bootloader.parse_grub_cfg(cfg)
+    basliklar = [g.title for g in girisler]
+    assert len(girisler) == 3, basliklar
+    assert basliklar[0] == "Linux Mint 22.3", basliklar
+    assert girisler[0].classes == ["linuxmint", "gnu-linux"], girisler[0].classes
+    assert girisler[1].submenu == "Gelismis secenekler", girisler[1].submenu
+    assert "Gelismis secenekler >" in girisler[1].display, girisler[1].display
+    assert girisler[2].submenu == "", "alt menuden cikilmadi"
+    assert "Windows" in basliklar[2], basliklar
+
+
+# --------------------------------------------------------------------------
+@test
+def t33_uefi_yedegi_ve_degisiklik_plani():
+    """UEFI duzeni yedeklenip geri okunmali; degisiklikler GUVENLI sirada olmali
+
+    Yazma sirasi rastgele degildir: once girisler, sonra sira listesi, en son
+    silmeler. Silmeyi basa almak `BootOrder`in var olmayan bir girisi
+    gosterdigi bir an yaratir ve bazi bellenimler o anda butun sirayi
+    "onarip" bozar.
+    """
+    def giris(numara, ad, dosya):
+        return efiboot.LoadOption(
+            number=numara, description=ad,
+            path_nodes=[efiboot.make_hard_drive_node(
+                1, 2048, 204800, "gpt",
+                "11111111-2222-3333-4444-555555555555"),
+                efiboot.make_file_node(dosya)])
+
+    once = efistore.BootState(firmware="uefi", readable=True, writable=True,
+                              source="firmware")
+    once.entries["Boot"] = {0: giris(0, "Windows Boot Manager",
+                                     "/EFI/Microsoft/Boot/bootmgfw.efi"),
+                            1: giris(1, "ubuntu", "/EFI/ubuntu/shimx64.efi"),
+                            2: giris(2, "Eski kurulum", "/EFI/eski/boot.efi")}
+    once.orders["Boot"] = [0, 1, 2]
+    once.timeout = 5
+    once.boot_current = 0
+
+    # -- yedek gidis-donus --------------------------------------------------
+    hedef = os.path.join(TMP, "t33-uefi.json")
+    efistore.save_backup(once, hedef)
+    geri = efistore.load_backup(hedef)
+    assert geri.orders["Boot"] == [0, 1, 2], geri.orders
+    assert len(geri.boot_entries) == 3, geri.boot_entries
+    for numara, option in once.boot_entries.items():
+        assert geri.boot_entries[numara].to_bytes() == option.to_bytes(), \
+            f"Boot{numara:04X} yedekten bozuk dondu"
+    assert not geri.writable, "yedek dosyasi yazilabilir isaretlendi"
+    assert geri.reason, "neden yazilamadigi soylenmedi"
+    assert not efistore.changes(once, geri), "yedek kendinden farkli gorundu"
+
+    # -- degisiklik plani ---------------------------------------------------
+    sonra = copy.deepcopy(once)
+    sonra.boot_entries[1].description = "Linux Mint"    # guncelleme
+    sonra.boot_entries[1].active = False                # etkin bayragi
+    sonra.boot_entries.pop(2)                           # silme
+    sonra.orders["Boot"] = [1, 0]                       # sira
+    sonra.timeout = 10
+    yeni = sonra.free_number("Boot")
+    assert yeni == 2, yeni                              # bosalan numara
+    sonra.boot_entries[yeni] = giris(2, "Kurtarma", "/EFI/kurtarma/boot.efi")
+    sonra.orders["Boot"] = [1, 0, 2]
+
+    plan = efistore.changes(once, sonra)
+    adlar = [c.name for c in plan]
+    eylemler = {c.name: c.action for c in plan}
+    assert "Boot0001" in adlar and eylemler["Boot0001"] == "write", adlar
+    assert "BootOrder" in adlar, adlar
+    assert "Timeout" in adlar, adlar
+    assert "Boot0000" not in adlar, "degismeyen giris plana girdi"
+
+    # Boot0002 hem silinip hem yazildi: sondaki durum yazmadir, silme
+    # olmamalidir (numara yeniden kullanildi).
+    assert eylemler["Boot0002"] == "write", eylemler
+    assert adlar.index("Boot0001") < adlar.index("BootOrder"), \
+        "sira listesi girislerden ONCE yaziliyor"
+    assert plan[-1].name in ("BootOrder", "Timeout", "Boot0002") or \
+        plan[-1].action == "delete", [c.name for c in plan]
+
+    # Silmenin gercekten sona kaldigini ayri bir durumda olc
+    silinen = copy.deepcopy(once)
+    silinen.boot_entries.pop(2)
+    silinen.orders["Boot"] = [0, 1]
+    plan2 = efistore.changes(once, silinen)
+    adlar2 = [c.name for c in plan2]
+    assert adlar2 == ["BootOrder", "Boot0002"], adlar2
+    assert plan2[-1].action == "delete", plan2[-1].action
+    assert plan2[0].destructive, "sira degisikligi yikici sayilmadi"
+    assert plan2[-1].destructive, "silme yikici sayilmadi"
+
+    # -- sirada olmayan giris gizlenmemeli ---------------------------------
+    oksuz = copy.deepcopy(once)
+    oksuz.orders["Boot"] = [0, 9]           # 9 yok, 1 ve 2 sirada degil
+    sirali = [o.number for o in oksuz.ordered("Boot")]
+    assert sirali == [0, 1, 2], sirali
+    assert oksuz.orphans("Boot") == [9], oksuz.orphans("Boot")
+
+
+# --------------------------------------------------------------------------
+@test
+def t34_bellenime_yazma_kapisi():
+    """Bellenim yazilamiyorken plan UYGULANMAMALI ve nedeni soylenmeli
+
+    Bu test **gercek bellenime** dokunan tek testtir ve yalnizca yazmanin
+    zaten kapali oldugu makinede kosar (BIOS kipi, yetki yok ya da desteksiz
+    platform). Yazmanin acik oldugu bir makinede atlanir: bir testin
+    makinenin onyukleme duzenini degistirmesi kabul edilemez.
+    """
+    readable, writable, reason = platform_mod.efivars_state()
+    if writable:
+        raise Atlandi("bellenim yazilabilir — gercek degiskenlere dokunulmaz")
+    assert reason, "erisilemeyen bellenim icin neden yazilmadi"
+    rapor = efistore.apply([efistore.VariableChange("Boot0000", "write",
+                                                    b"\x00" * 8, 7)])
+    assert not rapor.ok, "yazilamayan bellenime yazildi sanildi"
+    assert rapor.error, "neden yazilamadigi soylenmedi"
+    assert rapor.pending, "uygulanmayan adimlar bildirilmedi"
+
+    # Okunamayan bir duzen bos degil, **aciklamali** donmeli
+    durum = efistore.load()
+    assert durum.reason or durum.readable, \
+        "okunamayan duzen icin aciklama yok"
+    if not durum.readable:
+        assert not durum.boot_entries, "okunamayan duzende giris uretildi"
+
 
 # --------------------------------------------------------------------------
 def main() -> int:

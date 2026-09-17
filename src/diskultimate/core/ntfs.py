@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple
 
 from .image import BlockDevice
+from ..i18n import tr
 
 NTFS_OEM = b"NTFS    "
 FILE_MAGIC = b"FILE"
@@ -158,7 +159,7 @@ class NtfsFormatter:
         self.sector_size = dev.sector_size
         self.cluster_size = cluster_size or self._default_cluster()
         if self.cluster_size % self.sector_size:
-            raise NtfsError("Kume boyutu sektor boyutunun kati olmalidir")
+            raise NtfsError(tr("Kume boyutu sektor boyutunun kati olmalidir"))
         import time
         self.now = _nt_time(time.time())
         import os as _os
@@ -186,7 +187,7 @@ class NtfsFormatter:
         usable_sectors = total_sectors - 1
         total_clusters = usable_sectors // spc
         if total_clusters < 64:
-            raise NtfsError("Bolum NTFS icin cok kucuk")
+            raise NtfsError(tr("Bolum NTFS icin cok kucuk"))
 
         def clusters(nbytes: int) -> int:
             return max(1, (nbytes + cs - 1) // cs)
@@ -217,7 +218,7 @@ class NtfsFormatter:
         secure_lcn = imlec
         imlec += 1
         if imlec >= total_clusters - 2:
-            raise NtfsError("Bolum NTFS metaverisi icin yetersiz")
+            raise NtfsError(tr("Bolum NTFS metaverisi icin yetersiz"))
         # $MFTMirr ilk dort MFT kaydini tutar; kayit boyutuna gore yer ayrilir
         mftmirr_cluster = clusters(4 * MFT_RECORD_SIZE)
         mftmirr_lcn = total_clusters - mftmirr_cluster
@@ -372,7 +373,7 @@ class NtfsFormatter:
         imlec = attrs_offset
         for i, attr in enumerate(oznitelikler):
             if imlec + len(attr) + 8 > MFT_RECORD_SIZE:
-                raise NtfsError(f"MFT kaydi {rec_no} tasti")
+                raise NtfsError(tr("MFT kaydi {} tasti", rec_no))
             # Oznitelik kimligi kayit icinde BENZERSIZ olmalidir; elle verilen
             # degerler cakisabildigi icin burada sirayla yeniden atanir
             # (cakisma `chkdsk` tarafindan "attribute record is corrupt" olarak
@@ -451,34 +452,34 @@ class _NtfsBuilder(NtfsFormatter):
             if progress:
                 progress(message, percent)
 
-        report("NTFS yerlesimi hazirlaniyor...", 5)
-        report("Sabit tablolar yaziliyor ($UpCase, $AttrDef)...", 15)
+        report(tr("NTFS yerlesimi hazirlaniyor..."), 5)
+        report(tr("Sabit tablolar yaziliyor ($UpCase, $AttrDef)..."), 15)
         self._write_clusters(L.upcase_lcn, upcase_table())
         self._write_clusters(L.attrdef_lcn, attrdef_table())
 
-        report("Islem gunlugu ($LogFile) hazirlaniyor...", 30)
+        report(tr("Islem gunlugu ($LogFile) hazirlaniyor..."), 30)
         self._write_logfile()
 
-        report("Kok dizin olusturuluyor...", 45)
+        report(tr("Kok dizin olusturuluyor..."), 45)
         self._write_root_index()
 
-        report("Kume bitmap'i yaziliyor...", 60)
+        report(tr("Kume bitmap'i yaziliyor..."), 60)
         self._write_bitmap()
 
-        report("MFT kayitlari olusturuluyor...", 70)
+        report(tr("MFT kayitlari olusturuluyor..."), 70)
         records = self._build_mft_records()
         self._write_mft(records)
 
-        report("MFT yedegi yaziliyor...", 85)
+        report(tr("MFT yedegi yaziliyor..."), 85)
         self._write_mftmirr(records)
 
-        report("Onyukleme sektoru yaziliyor...", 95)
+        report(tr("Onyukleme sektoru yaziliyor..."), 95)
         self._write_boot()
 
         f = getattr(self.dev, "flush", None)
         if f:
             f()
-        report("Tamamlandi", 100)
+        report(tr("Tamamlandi"), 100)
         return {
             "cluster_size": L.cluster_size, "clusters": L.total_clusters,
             "mft_lcn": L.mft_lcn, "mft_clusters": L.mft_clusters,
@@ -808,7 +809,7 @@ class _NtfsBuilder(NtfsFormatter):
         for i, record in enumerate(records):
             ofset = i * MFT_RECORD_SIZE
             if ofset + MFT_RECORD_SIZE > len(veri):
-                raise NtfsError("MFT alani yetersiz")
+                raise NtfsError(tr("MFT alani yetersiz"))
             veri[ofset:ofset + MFT_RECORD_SIZE] = record
         self._write_clusters(L.mft_lcn, bytes(veri))
 

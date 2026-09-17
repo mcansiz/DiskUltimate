@@ -16,6 +16,7 @@ from typing import List, Optional
 from .image import BlockDevice
 from .ptable import (MBR_EXTENDED_TYPES, Partition, PartitionTable,
                      PartitionTableError)
+from ..i18n import tr
 
 MBR_SIGNATURE = 0xAA55
 ENTRY_OFFSET = 446
@@ -50,7 +51,7 @@ def _pack_entry(part: Optional[Partition], start_lba: int = 0,
         return b"\x00" * ENTRY_SIZE
     if sector_count > MAX_MBR_SECTORS or start_lba > MAX_MBR_SECTORS:
         raise PartitionTableError(
-            "MBR 2 TiB sinirini asiyor; GPT kullanin")
+            tr("MBR 2 TiB sinirini asiyor; GPT kullanin"))
     return (bytes([0x80 if bootable else 0x00])
             + lba_to_chs(start_lba)
             + bytes([type_id])
@@ -85,7 +86,7 @@ class MBRTable(PartitionTable):
         table = cls(device)
         sector = device.read_sectors(0)
         if struct.unpack_from("<H", sector, 510)[0] != MBR_SIGNATURE:
-            raise PartitionTableError("Gecerli MBR imzasi bulunamadi")
+            raise PartitionTableError(tr("Gecerli MBR imzasi bulunamadi"))
         table.bootcode = sector[:ENTRY_OFFSET]
         table.disk_signature = struct.unpack_from("<I", sector, 440)[0]
 
@@ -157,7 +158,7 @@ class MBRTable(PartitionTable):
         struct.pack_into("<I", sector, 440, self.disk_signature & 0xFFFFFFFF)
         primaries = [p for p in self.partitions if not p.logical]
         if len(primaries) > MAX_PRIMARY:
-            raise PartitionTableError("MBR en fazla 4 birincil bolum destekler")
+            raise PartitionTableError(tr("MBR en fazla 4 birincil bolum destekler"))
         primaries.sort(key=lambda p: p.start_lba)
         for i in range(MAX_PRIMARY):
             entry = _pack_entry(primaries[i]) if i < len(primaries) else b"\x00" * ENTRY_SIZE
@@ -224,7 +225,7 @@ class MBRTable(PartitionTable):
         if logical:
             if extended is None:
                 raise PartitionTableError(
-                    "Mantiksal bolum icin once genisletilmis bolum olusturun")
+                    tr("Mantiksal bolum icin once genisletilmis bolum olusturun"))
             ebr_lba = self.align_down(start_lba) - self.align_sectors
             if ebr_lba < extended.start_lba:
                 ebr_lba = extended.start_lba
@@ -233,7 +234,7 @@ class MBRTable(PartitionTable):
         else:
             if not self.can_add_primary():
                 raise PartitionTableError(
-                    "4 birincil bolum dolu; genisletilmis bolum kullanin")
+                    tr("4 birincil bolum dolu; genisletilmis bolum kullanin"))
             self.check_range(start_lba, sector_count)
             ebr_lba = 0
         part = Partition(index=0, start_lba=start_lba, sector_count=sector_count,
@@ -248,7 +249,7 @@ class MBRTable(PartitionTable):
     def create_extended(self, start_lba: int, sector_count: int) -> Partition:
         """Genisletilmis kapsayici bolum olusturur."""
         if self.extended_partition() is not None:
-            raise PartitionTableError("Zaten bir genisletilmis bolum var")
+            raise PartitionTableError(tr("Zaten bir genisletilmis bolum var"))
         return self.add_partition(start_lba, sector_count, type_id=0x0F,
                                   logical=False)
 
@@ -256,10 +257,11 @@ class MBRTable(PartitionTable):
                              extended: Partition) -> None:
         if start_lba < extended.start_lba or start_lba + sector_count - 1 > extended.end_lba:
             raise PartitionTableError(
-                "Mantiksal bolum genisletilmis bolumun disinda")
+                tr("Mantiksal bolum genisletilmis bolumun disinda"))
         for p in self.partitions:
             if p.logical and p.overlaps(start_lba, sector_count):
-                raise PartitionTableError(f"{p.index} numarali bolum ile cakisiyor")
+                raise PartitionTableError(tr("{} numarali bolum ile cakisiyor",
+                                             p.index))
 
     def delete_partition(self, index: int) -> None:
         part = self.get(index)

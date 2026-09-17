@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox,
 
 from ...core.formatter import FS_BY_KEY, all_kinds
 from ...core.ptable import FreeRegion, Partition, human_size
+from ...i18n import tr
 
 MIB = 1024 * 1024
 
@@ -42,7 +43,7 @@ class CreatePartitionDialog(QDialog):
                  can_primary: bool = True, has_extended: bool = False,
                  inside_extended: bool = False):
         super().__init__(parent)
-        self.setWindowTitle("Yeni Bolum Olustur")
+        self.setWindowTitle(tr("Yeni Bolum Olustur"))
         self.setMinimumWidth(520)
         self.region = region
         self.scheme = scheme
@@ -57,11 +58,12 @@ class CreatePartitionDialog(QDialog):
         layout.setSpacing(10)
 
         info = QLabel(
-            f"Bos alan: <b>{human_size(self.region.size)}</b> "
-            f"(LBA {self.region.start_lba} – {self.region.end_lba})")
+            tr("Bos alan: <b>{}</b> (LBA {} – {})",
+               human_size(self.region.size), self.region.start_lba,
+               self.region.end_lba))
         layout.addWidget(info)
 
-        grup = QGroupBox("Bolum ayarlari")
+        grup = QGroupBox(tr("Bolum ayarlari"))
         form = QFormLayout(grup)
 
         # boyut
@@ -79,42 +81,43 @@ class CreatePartitionDialog(QDialog):
         self.size_slider.setValue(self.size_slider.maximum())
         self.size_slider.valueChanged.connect(self._slider_changed)
         size_line.addWidget(self.size_slider, 1)
-        form.addRow("Boyut:", size_line)
+        form.addRow(tr("Boyut:"), size_line)
 
         # tur (MBR)
         if self.scheme == "mbr":
             self.kind_combo = QComboBox()
             if self._inside_extended:
-                self.kind_combo.addItem("Mantiksal bolum", "logical")
+                self.kind_combo.addItem(tr("Mantiksal bolum"), "logical")
             else:
                 if self._can_primary:
-                    self.kind_combo.addItem("Birincil bolum", "primary")
+                    self.kind_combo.addItem(tr("Birincil bolum"), "primary")
                 if not self._has_extended and self._can_primary:
-                    self.kind_combo.addItem("Genisletilmis bolum (kapsayici)", "extended")
-            form.addRow("Bolum turu:", self.kind_combo)
+                    self.kind_combo.addItem(tr("Genisletilmis bolum "
+                                               "(kapsayici)"), "extended")
+            form.addRow(tr("Bolum turu:"), self.kind_combo)
             self.kind_combo.currentIndexChanged.connect(self._kind_changed)
         else:
             self.kind_combo = None
             self.name_edit = QLineEdit("")
             self.name_edit.setMaxLength(36)
-            self.name_edit.setPlaceholderText("GPT bolum adi (istege bagli)")
-            form.addRow("Bolum adi:", self.name_edit)
+            self.name_edit.setPlaceholderText(tr("GPT bolum adi (istege bagli)"))
+            form.addRow(tr("Bolum adi:"), self.name_edit)
 
         # dosya sistemi
         self.fs_combo = QComboBox()
-        self.fs_combo.addItem("Bicimlendirme (ham bolum)", "")
+        self.fs_combo.addItem(tr("Bicimlendirme (ham bolum)"), "")
         _fill_fs_combo(self.fs_combo, self.region.size)
         idx = self.fs_combo.findData("fat32")
         self.fs_combo.setCurrentIndex(idx if idx >= 0 else 0)
         self.fs_combo.currentIndexChanged.connect(self._fs_changed)
-        form.addRow("Dosya sistemi:", self.fs_combo)
+        form.addRow(tr("Dosya sistemi:"), self.fs_combo)
 
         self.label_edit = QLineEdit("")
         self.label_edit.setMaxLength(32)
-        self.label_edit.setPlaceholderText("Birim etiketi (istege bagli)")
-        form.addRow("Etiket:", self.label_edit)
+        self.label_edit.setPlaceholderText(tr("Birim etiketi (istege bagli)"))
+        form.addRow(tr("Etiket:"), self.label_edit)
 
-        self.boot_check = QCheckBox("Onyuklenebilir olarak isaretle")
+        self.boot_check = QCheckBox(tr("Onyuklenebilir olarak isaretle"))
         form.addRow("", self.boot_check)
         layout.addWidget(grup)
 
@@ -123,8 +126,8 @@ class CreatePartitionDialog(QDialog):
         layout.addWidget(self.summary)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText("Olustur")
-        butonlar.button(QDialogButtonBox.Cancel).setText("Iptal")
+        butonlar.button(QDialogButtonBox.Ok).setText(tr("Olustur"))
+        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
         butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
@@ -158,10 +161,10 @@ class CreatePartitionDialog(QDialog):
     def _update_summary(self) -> None:
         sector = self.sector_count()
         fs = self.fs_combo.currentData()
-        name = FS_BY_KEY[fs].label if fs else "bicimlendirilmemis"
+        name = FS_BY_KEY[fs].label if fs else tr("bicimlendirilmemis")
         self.summary.setText(
-            f"{human_size(sector * self.sector_size)} — {sector:,} sektor — {name}"
-            .replace(",", "."))
+            tr("{} — {} sektor — {}", human_size(sector * self.sector_size),
+               f"{sector:,}".replace(",", "."), name))
 
     # -- degerler ------------------------------------------------------------
     def sector_count(self) -> int:
@@ -188,7 +191,7 @@ class FormatDialog(QDialog):
     def __init__(self, partition: Partition, parent=None):
         super().__init__(parent)
         self.partition = partition
-        self.setWindowTitle(f"Bolum {partition.index} Bicimlendir")
+        self.setWindowTitle(tr("Bolum {} Bicimlendir", partition.index))
         self.setMinimumWidth(460)
         self._build()
 
@@ -197,36 +200,37 @@ class FormatDialog(QDialog):
         layout.setSpacing(10)
         p = self.partition
         layout.addWidget(QLabel(
-            f"<b>Bolum {p.index}</b> — {human_size(p.size)}<br>"
-            f"Mevcut dosya sistemi: {p.fs_type or 'yok'}"))
+            tr("<b>Bolum {}</b> — {}<br>Mevcut dosya sistemi: {}",
+               p.index, human_size(p.size), p.fs_type or 'yok')))
 
-        grup = QGroupBox("Bicimlendirme secenekleri")
+        grup = QGroupBox(tr("Bicimlendirme secenekleri"))
         form = QFormLayout(grup)
         self.fs_combo = QComboBox()
         _fill_fs_combo(self.fs_combo, p.size)
         idx = self.fs_combo.findData((p.fs_type or "fat32").lower())
         self.fs_combo.setCurrentIndex(idx if idx >= 0 else 0)
         self.fs_combo.currentIndexChanged.connect(self._fs_changed)
-        form.addRow("Dosya sistemi:", self.fs_combo)
+        form.addRow(tr("Dosya sistemi:"), self.fs_combo)
 
         self.label_edit = QLineEdit(p.fs_label or "")
         self.label_edit.setMaxLength(32)
-        form.addRow("Birim etiketi:", self.label_edit)
+        form.addRow(tr("Birim etiketi:"), self.label_edit)
 
         self.cluster_combo = QComboBox()
-        form.addRow("Kume boyutu:", self.cluster_combo)
+        form.addRow(tr("Kume boyutu:"), self.cluster_combo)
 
-        self.quick_check = QCheckBox("Hizli bicimlendirme (veri alani silinmez)")
+        self.quick_check = QCheckBox(tr("Hizli bicimlendirme (veri alani silinmez)"))
         self.quick_check.setChecked(True)
         form.addRow("", self.quick_check)
         layout.addWidget(grup)
 
-        warning = QLabel("<span style='color:#b23c17'>Uyari: bolumdeki tum veriler silinir.</span>")
+        warning = QLabel(tr("<span style='color:#b23c17'>Uyari: bolumdeki tum "
+                            "veriler silinir.</span>"))
         layout.addWidget(warning)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText("Bicimlendir")
-        butonlar.button(QDialogButtonBox.Cancel).setText("Iptal")
+        butonlar.button(QDialogButtonBox.Ok).setText(tr("Bicimlendir"))
+        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
         butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
@@ -235,7 +239,7 @@ class FormatDialog(QDialog):
 
     def _fs_changed(self) -> None:
         self.cluster_combo.clear()
-        self.cluster_combo.addItem("Varsayilan", 0)
+        self.cluster_combo.addItem(tr("Varsayilan"), 0)
         fs = self.fs_combo.currentData() or ""
         if fs.startswith("fat") or fs == "exfat" or fs == "ntfs":
             for kb in (0.5, 1, 2, 4, 8, 16, 32, 64):
@@ -245,7 +249,7 @@ class FormatDialog(QDialog):
                         f"{nbytes} bayt" if nbytes < 1024 else f"{nbytes // 1024} KB", nbytes)
         elif fs.startswith("ext"):
             for nbytes in (1024, 2048, 4096):
-                self.cluster_combo.addItem(f"{nbytes // 1024} KB blok", nbytes)
+                self.cluster_combo.addItem(tr("{} KB blok", nbytes // 1024), nbytes)
 
     def values(self) -> dict:
         return {

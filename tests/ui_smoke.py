@@ -31,8 +31,10 @@ os.environ["QT_QPA_PLATFORM"] = _qt_platformu()
 # Yetki yukseltme teklifi modal bir penceredir; otomatik kosumu kilitler.
 os.environ["DISKULTIMATE_NO_ELEVATION_PROMPT"] = "1"
 
+from PyQt5.QtCore import Qt  # noqa: E402
 from PyQt5.QtWidgets import QApplication  # noqa: E402
 
+from diskultimate import i18n  # noqa: E402
 from diskultimate.core.formatter import available_kinds  # noqa: E402
 from diskultimate.core.ptable import FreeRegion  # noqa: E402
 from diskultimate.core.session import DiskSession  # noqa: E402
@@ -80,6 +82,169 @@ def ornek_goruntu() -> str:
                            label=etiket, name=ad)
     s.close()
     return yol
+
+
+def _sozde_diyaloglar(pencere):
+    """Sozde dil denetimi icin olusturulan diyaloglar.
+
+    Duman testinin geri kalaninda zaten kurulan pencereler; burada **sozde
+    dilde** yeniden kurulup metinleri denetleniyor.
+    """
+    from diskultimate.core.ptable import FreeRegion
+
+    oturum = pencere.session
+    bolum = oturum.table.get(1)
+    diyaloglar = [
+        NewImageDialog(pencere, os.path.dirname(oturum.path)),
+        CreatePartitionDialog(FreeRegion(6014976, 2373598, 512), "gpt", pencere),
+        FormatDialog(bolum, pencere),
+        # Cagiranin verdigi metinler gercek kodda da `tr()` ile uretilir;
+        # fixture de oyle davranmali, yoksa denetim kendi verisine takilir.
+        WipeDialog(pencere, i18n.tr("Bolum {}", 1), 512 * MIB,
+                   allow_free_space=True),
+        CarveOptionsDialog(pencere, i18n.tr("Bolum {}", 1)),
+        InfoDialog(i18n.tr("Sistem Bilgisi"), dict(platform_summary()), pencere,
+                   note=i18n.tr("Tanilama notu")),
+    ]
+    try:
+        diyaloglar.append(ResizePartitionDialog(
+            bolum, oturum.resize_window(bolum.index),
+            oturum.resize_info(bolum.index), align_sectors=2048,
+            used_bytes=-1, parent=pencere))
+    except Exception:
+        pass            # boyutlandirilamayan bolumde bu diyalog acilmaz
+    return diyaloglar
+
+
+def sozde_denetimi(app, hedef: str, kaynak=None) -> None:
+    """Sozde-yerellestirme ile **sarilmamis** metni calisma aninda arar.
+
+    Statik denetim (`tests/i18n_check.py`) yalnizca `tr()`/`mark()` ile
+    isaretlenmis metni gorur; hic sarilmamis olani bilemez. Sozde dilde ise
+    sarili her metin `[!...!]` bicimine girer — **girmeyen** metin ya
+    sarilmamistir ya da veridir (dosya adi, boyut, dosya sistemi adi).
+
+    Iki duzey:
+      * **Kesin denetim** — menu basliklari, eylem metinleri, sekme basliklari
+        ve tablo sutunlari saf arayuz metnidir, veri icermez: hepsi sozde
+        olmali. Olmayan varsa test **duser**.
+      * **Bilgi listesi** — kalan metinler basilir; cogu veridir, gozle bakilir.
+    """
+    from PyQt5.QtWidgets import (QAbstractButton, QGroupBox, QLabel, QMenu,
+                                 QTabWidget)
+
+    onceki = i18n.current_language()
+    i18n.set_language(i18n.PSEUDO_LANGUAGE, remember=False)
+    pencere = MainWindow()
+    pencere._disk_timer.stop()          # yoklama bu denetimde gereksiz
+    pencere.resize(1280, 800)
+    app.processEvents()
+
+    def sozde(metin: str) -> bool:
+        return not metin.strip() or metin.startswith("[!")
+
+    kesin_hata = []
+
+    # 1) eylemler ve menuler
+    for ad, nesne in vars(pencere).items():
+        if ad.startswith("act_") and hasattr(nesne, "text"):
+            if not sozde(nesne.text()):
+                kesin_hata.append(f"eylem {ad}: {nesne.text()!r}")
+            ipucu = nesne.toolTip()
+            if ipucu and not sozde(ipucu):
+                kesin_hata.append(f"ipucu {ad}: {ipucu[:50]!r}")
+    for menu, _kaynak in pencere._menus:
+        if not sozde(menu.title()):
+            kesin_hata.append(f"menu: {menu.title()!r}")
+
+    # 2) sekmeler ve tablo sutunlari
+    for i in range(pencere.tabs.count()):
+        if not sozde(pencere.tabs.tabText(i)):
+            kesin_hata.append(f"sekme {i}: {pencere.tabs.tabText(i)!r}")
+    for i in range(pencere.part_table.columnCount()):
+        baslik = pencere.part_table.horizontalHeaderItem(i)
+        if baslik and not sozde(baslik.text()):
+            kesin_hata.append(f"sutun {i}: {baslik.text()!r}")
+    if not sozde(pencere.tree.headerItem().text(0)):
+        kesin_hata.append(f"agac basligi: {pencere.tree.headerItem().text(0)!r}")
+
+    # 3) bilgi listesi: kalan gorunur metinler
+    kalan = []
+    for w in pencere.findChildren((QLabel, QAbstractButton, QGroupBox, QMenu,
+                                   QTabWidget)):
+        for metin in (getattr(w, "text", lambda: "")(),
+                      getattr(w, "title", lambda: "")()):
+            if isinstance(metin, str) and not sozde(metin) \
+                    and sum(c.isalpha() for c in metin) >= 3:
+                kalan.append(metin.strip()[:60])
+
+    # 4) diyaloglar — arayuz metninin buyuk bolumu burada ve sozde dilde
+    #    **yeniden kuruluyorlar**, yani sarilmamis metin hemen belli olur.
+    if kaynak is not None and kaynak.session is not None:
+        for diyalog in _sozde_diyaloglar(kaynak):
+            app.processEvents()
+            ad = type(diyalog).__name__
+            for w in diyalog.findChildren((QLabel, QAbstractButton, QGroupBox)):
+                for metin in (getattr(w, "text", lambda: "")(),
+                              getattr(w, "title", lambda: "")()):
+                    if isinstance(metin, str) and not sozde(metin) \
+                            and sum(c.isalpha() for c in metin) >= 3:
+                        kalan.append(f"{ad}: {metin.strip()[:55]}")
+            if not sozde(diyalog.windowTitle()):
+                kesin_hata.append(f"{ad} basligi: {diyalog.windowTitle()!r}")
+            diyalog.close()
+
+    pencere.close()
+    i18n.set_language(onceki, remember=False)
+    app.processEvents()
+
+    if kalan:
+        print(f"  (sozde dil: {len(set(kalan))} metin sarilmamis GORUNUYOR — "
+              "cogu veri olabilir)")
+        for metin in sorted(set(kalan))[:12]:
+            print(f"     ? {metin}")
+    assert not kesin_hata, ("sozde dilde cevrilmemis arayuz metni:\n  "
+                            + "\n  ".join(kesin_hata))
+    print("  (sozde-yerellestirme: eylem/menu/sekme/sutun metinleri tamam)")
+
+
+def dil_denetimi(pencere, app, hedef: str) -> None:
+    """Dil degisimi arayuzde gercekten uygulaniyor mu? (ADR 0027)
+
+    Duman testinin geri kalani Turkce kosar; burada dil gecici olarak
+    degistirilir, metinlerin **yerinde** yenilendigi dogrulanir ve kaynak dile
+    donulur. Uygulamanin yeniden baslatilmasi gerekmez — gerekseydi acik disk
+    kapanirdi.
+    """
+    diller = [kod for kod, _ad in i18n.available_languages()
+              if kod != i18n.SOURCE_LANGUAGE]
+    if not diller:
+        print("  (ceviri dosyasi yok; dil denetimi atlandi)")
+        return
+    onceki_uygula = pencere.act_apply.text()
+    onceki_sekme = pencere.tabs.tabText(0)
+    for kod in diller:
+        i18n.set_language(kod, remember=False)
+        app.processEvents()
+        assert pencere.act_apply.text() != onceki_uygula, \
+            f"{kod}: arac cubugu metni degismedi ({pencere.act_apply.text()})"
+        assert pencere.tabs.tabText(0) != onceki_sekme, \
+            f"{kod}: sekme basligi degismedi ({pencere.tabs.tabText(0)})"
+        assert pencere.tree.headerItem().text(0), f"{kod}: agac basligi bos"
+        # Menu basliklari ve bolum tablosu sutunlari da yenilenmeli
+        basliklar = [m.title() for m, _kaynak in pencere._menus]
+        assert all(basliklar), f"{kod}: bos menu basligi: {basliklar}"
+        sutun = pencere.part_table.horizontalHeaderItem(0).text()
+        assert sutun, f"{kod}: bos sutun basligi"
+        app.processEvents()
+        pencere.grab().save(os.path.join(hedef, f"24-dil-{kod}.png"))
+        print(f"  24-dil-{kod}.png")
+    i18n.set_language(i18n.SOURCE_LANGUAGE, remember=False)
+    app.processEvents()
+    assert pencere.act_apply.text() == onceki_uygula, \
+        f"kaynak dile donulunce metin geri gelmedi: {pencere.act_apply.text()}"
+    assert pencere.tabs.tabText(0) == onceki_sekme, pencere.tabs.tabText(0)
+    print(f"  (dil degisimi: {', '.join(diller)} denendi, Turkce'ye donuldu)")
 
 
 def main() -> int:
@@ -213,6 +378,200 @@ def main() -> int:
     d9.close()
     print("  (ilerleme penceresi: yuzde ve belirsiz kip denetlendi)")
 
+    # --- onyukleyici yoneticisi (ADR 0028) ---
+    # Inceleme pencereden ONCE calisir; pencere hazir sonucu alir. Boylece
+    # yapici icinde modal ilerleme penceresi acilmaz.
+    from diskultimate.core import bootloader as bl
+    from diskultimate.ui.dialogs.bootloader import BootloaderDialog
+
+    rapor = bl.survey_session(pencere.session)
+    d10 = BootloaderDialog(pencere, pencere.session, pencere.enqueue)
+    d10.adopt(rapor)
+    d10.show()
+    kaydet(d10, "25-onyukleyici-yonetici.png")
+    assert d10.os_tree.topLevelItemCount() == len(rapor.systems), \
+        f"{d10.os_tree.topLevelItemCount()} satir, {len(rapor.systems)} bolum"
+    assert d10.state_form.rowCount() > 0, "onyukleme durumu bos"
+    # GRUB kurulumu bu platformda yoksa dugme PASIF olmali ve nedeni yazmali
+    if not d10.status.available:
+        assert not d10.btn_install.isEnabled(), \
+            "kurulamayacak platformda kurma dugmesi etkin"
+        assert d10.btn_install.toolTip(), "neden kullanilamadigi yazilmadi"
+    d10.close()
+    print(f"  (onyukleyici: {len(rapor.systems)} bolum, onyukleme kodu "
+          f"'{rapor.boot_code.kind}')")
+
+    # --- UEFI onyukleme duzenleyici (ADR 0029) ---
+    # Bellenime erisilemeyen makinede de acilmali ve NEDENINI soylemeli;
+    # bos bir liste gostermek girisler silinmis gibi gorunurdu.
+    from diskultimate.core import efiboot as efi
+    from diskultimate.core import efistore
+    from diskultimate.ui.dialogs.efiboot import EfiBootDialog
+
+    sahte = efistore.BootState(firmware="uefi", readable=True, writable=False,
+                               source="file",
+                               reason="Yedek dosyasi dogrudan yazilamaz.")
+    yol = [efi.make_hard_drive_node(2, 264192, 204800, "gpt",
+                                    "a967f8c5-ed93-4c8d-927d-61ca376a5e9b")]
+    sahte.entries["Boot"] = {
+        0: efi.LoadOption(number=0, description="Windows Boot Manager",
+                          path_nodes=yol + [efi.make_file_node(
+                              "/EFI/Microsoft/Boot/bootmgfw.efi")]),
+        1: efi.LoadOption(number=1, description="Linux Mint",
+                          path_nodes=yol + [efi.make_file_node(
+                              "/EFI/ubuntu/shimx64.efi")]),
+        2: efi.LoadOption(number=2, description="UEFI Shell",
+                          path_nodes=yol + [efi.make_file_node(
+                              "/EFI/tools/shell.efi")]),
+    }
+    sahte.entries["Boot"][2].active = False
+    sahte.orders["Boot"] = [1, 0]          # 2 sirada degil: gorunmeli ama '-'
+    sahte.timeout = 5
+    sahte.boot_current = 1
+
+    d11 = EfiBootDialog(pencere)
+    d11.adopt(sahte)
+    d11.show()
+    kaydet(d11, "26-uefi-onyukleme.png")
+    assert d11.tree.topLevelItemCount() == 3, d11.tree.topLevelItemCount()
+    sirasiz = [d11.tree.topLevelItem(i) for i in range(3)
+               if d11.tree.topLevelItem(i).text(0) == "-"]
+    assert len(sirasiz) == 1, "sirada olmayan giris isaretlenmedi"
+    assert sirasiz[0].toolTip(0), "neden sirada olmadigi yazilmadi"
+    # Yazilamayan kaynakta duzenleme dugmeleri pasif olmali
+    assert not d11.btn_apply.isEnabled(), "yazilamaz durumda 'yaz' etkin"
+    assert not d11.btn_delete.isEnabled(), "yazilamaz durumda 'sil' etkin"
+    assert d11.btn_apply.toolTip(), "neden yazilamadigi yazilmadi"
+    # Satirlar BootOrder'a gore siralanir: sira [1, 0] oldugu icin ilk satir
+    # Boot0001'dir. Windows girisi konumla degil, numarasiyla bulunur.
+    assert d11.tree.topLevelItem(0).text(1) == "Boot0001", \
+        f"BootOrder'a gore siralanmadi: {d11.tree.topLevelItem(0).text(1)}"
+    # Ad bilerek `hedef` degil: disaridaki `hedef` ekran goruntusu dizinidir
+    # ve golgelemek sonraki `kaydet()` cagrisini bozar.
+    windows_satiri = [d11.tree.topLevelItem(i) for i in range(3)
+                      if d11.tree.topLevelItem(i).data(0, Qt.UserRole) == 0]
+    assert windows_satiri, "Boot0000 listede yok"
+    d11.tree.setCurrentItem(windows_satiri[0])
+    app.processEvents()
+    ayrinti = d11.detail.toPlainText()
+    assert "bootmgfw.efi" in ayrinti, ayrinti[:200]
+    assert "HD(2,GPT," in ayrinti, ayrinti[:200]
+    d11.close()
+    print("  (UEFI duzenleyici: 3 giris, sirasiz giris ve yazma kilidi "
+          "denetlendi)")
+
+    # --- bekleyen islem kuyrugu: ekle, goster, geri al, iptal ---
+    # Kuyruk dolarken diske HICBIR SEY yazilmaz; bu, modelin tum guvenlik
+    # gerekcesidir (ADR 0025), bu yuzden burada da olculur.
+    from diskultimate.core import operations as ops
+
+    kuyruk_oncesi = os.path.getsize(goruntu)
+    sektor = pencere.session.image.sector_size
+    pencere.enqueue(ops.format_op(1, "fat32", label="DENEME", fs_name="FAT32"))
+    pencere.enqueue(ops.boot_op(1, True))
+    pencere.enqueue(ops.delete_op(2, name="deneme"))
+    app.processEvents()
+    assert len(pencere.queue) == 3, len(pencere.queue)
+    assert pencere.pending_view.topLevelItemCount() == 3
+    assert pencere.act_apply.text() == "Uygula (3)", pencere.act_apply.text()
+    assert pencere.act_apply.isEnabled() and pencere.act_discard.isEnabled()
+    assert os.path.getsize(goruntu) == kuyruk_oncesi,         "kuyruga eklemek goruntuyu degistirdi"
+    kaydet(pencere, "21-bekleyen-islemler.png")
+
+    # Tabloda bekleyen isaret gorunmeli
+    isaretli = [pencere.part_table.item(r, 0).text()
+                for r in range(pencere.part_table.rowCount())
+                if pencere.part_table.item(r, 0)
+                and "⏳" in pencere.part_table.item(r, 0).text()]
+    assert len(isaretli) == 2, f"bekleyen isaret sayisi: {isaretli}"
+
+    pencere.undo_step()
+    assert len(pencere.queue) == 2, "geri alma calismadi"
+    pencere.queue.clear()
+    pencere._refresh_pending()
+    app.processEvents()
+    assert pencere.pending_view.topLevelItemCount() == 0
+    assert not pencere.act_apply.isEnabled(), "bos kuyrukta Uygula etkin kalmamali"
+    isaretli = [r for r in range(pencere.part_table.rowCount())
+                if pencere.part_table.item(r, 0)
+                and "⏳" in pencere.part_table.item(r, 0).text()]
+    assert not isaretli, "kuyruk bosalinca isaretler kalmamali"
+    print("  (bekleyen islem kuyrugu: ekleme, isaret, geri alma, iptal denetlendi)")
+
+    # --- salt okunur acilan kaynak yazma moduna gecebilmeli ---
+    # Kuyruga girmeyen islemler (geri yukleme, klonlama) bunu kullanir.
+    # Eksik oldugunda Linux'ta ".dub yedegini /dev/sdb diskine yaz" islemi
+    # "salt okunur" hatasiyla dusuyordu (ADR 0025 gerilemesi).
+    salt_yol = os.path.join(scratch("ui"), "saltokunur.img")
+    s_ro = DiskSession.create(salt_yol, 64 * MIB, scheme="mbr", overwrite=True)
+    s_ro.close()
+    pencere.open_path(salt_yol)
+    app.processEvents()
+    pencere.session.close_filesystems()
+    pencere.session.image.close()
+    pencere.session.image = __import__(
+        "diskultimate.core.vdisk", fromlist=["open_disk"]).open_disk(
+            salt_yol, readonly=True)
+    pencere.session.reload()
+    assert pencere.session.readonly, "test salt okunur duruma getirmeli"
+    assert pencere.session.can_become_writable()[0], "gecis mumkun olmali"
+    assert pencere._make_writable(), "arayuz yazma moduna gecirememeli degil"
+    assert not pencere.session.readonly, "_make_writable gecisi yapmadi"
+    pencere.close_image()
+    app.processEvents()
+    print("  (salt okunur kaynak yazma moduna gecti)")
+
+    # --- dosya gezgini: salt okunur kaynakta yazma yetkisi isteyebilmeli ---
+    # Dosya islemleri kuyruga girmez; kaynak salt okunur acildigi icin yetkiyi
+    # kendileri istemek zorunda. Yoksa fiziksel diske dosya eklenemiyordu
+    # (Linux Mint, kullanici bildirimi — ADR 0025 gerilemesi).
+    assert pencere.browser.ensure_writable is not None,         "dosya gezgini yazma yetkisi isteyemiyor"
+    yazma_yolu = os.path.join(scratch("ui"), "gezgin-salt.img")
+    s_g = DiskSession.create(yazma_yolu, 128 * MIB, scheme="mbr", overwrite=True)
+    r_g = s_g.free_regions()[0]
+    s_g.create_partition(r_g.start_lba, 64 * MIB // 512, fs_key="fat32",
+                         label="GEZGIN")
+    s_g.close()
+    pencere.open_path(yazma_yolu)
+    app.processEvents()
+    # Kaynagi salt okunur duruma getir
+    pencere.session.close_filesystems()
+    pencere.session.image.close()
+    pencere.session.image = __import__(
+        "diskultimate.core.vdisk", fromlist=["open_disk"]).open_disk(
+            yazma_yolu, readonly=True)
+    pencere.session.reload()
+    pencere.select_partition(1)
+    app.processEvents()
+    assert not pencere.browser.fs.writable, "test salt okunur baslamali"
+    # Yazma dugmeleri PASIF OLMAMALI: yetki ilk denemede istenir
+    assert pencere.browser.act_import.isEnabled(),         "salt okunur kaynakta 'Dosya ekle' pasif kalmamali"
+    assert pencere.browser._require_writable(), "yazma yetkisi alinamadi"
+    assert pencere.browser.fs.writable, "gezgin taze dosya sistemine baglanmadi"
+    icerik = b"tamam\n"
+    pencere.browser.fs.write_file("/gezgin.txt", icerik)
+    pencere.browser.fs.flush()
+    assert pencere.browser.fs.read("/gezgin.txt") == icerik
+    pencere.close_image()
+    app.processEvents()
+    print("  (dosya gezgini: salt okunur kaynakta yazma yetkisi alindi)")
+
+    # --- ikon seti: hepsi cizilebilmeli ---
+    from diskultimate.ui import icons
+
+    bos_olanlar = [ad for ad in icons.names()
+                   if icons.icon(ad).pixmap(24, 24).isNull()]
+    assert not bos_olanlar, f"cizilemeyen ikon: {bos_olanlar}"
+    # Cok boyutlu olmali: arac cubugu 24 isterken 18'lik goruntu olceklenip
+    # bulaniklasmamali.
+    for boyut in (16, 24, 32):
+        pix = icons.icon("apply").pixmap(boyut, boyut)
+        assert pix.width() == boyut, f"{boyut} px istendi, {pix.width()} geldi"
+    # "Her platformda ayni" olcusu: cizimlerin PIKSEL ozeti. Windows ve
+    # Linux'ta ayni deger cikmalidir (olculdu, ADR 0025).
+    print(f"  ({len(icons.names())} ikon cizildi — "
+          f"cizim ozeti {icons.digest()})")
+
     # --- yedek dosyasi bilgisi: icerik listesi + "gez" dugmesi ---
     from diskultimate.core.clone import backup
     from diskultimate.ui.dialogs.tools import BackupInfoDialog
@@ -332,6 +691,59 @@ def main() -> int:
     try:
         hp = MainWindow()
         tarama_bekle(hp)
+        # --- Acronis vari gorunum: diskin altinda bolumleri ---
+        # Bolumleri gormek icin diski ACMAK GEREKMEZ (ADR 0026). Sahte bir
+        # yoklama sonucu verilir; gercek diske dokunulmaz.
+        from diskultimate.core.ptable import Partition
+        from diskultimate.core.session import DiskSurvey
+
+        def _sahte_bolum(no, fs, etiket, lba, sayi):
+            p = Partition(index=no, start_lba=lba, sector_count=sayi,
+                          scheme="mbr")
+            p.fs_type, p.fs_label = fs, etiket
+            return p
+
+        hp._surveys["/sahte/disk0"] = DiskSurvey(
+            path="/sahte/disk0", scheme="mbr",
+            partitions=[_sahte_bolum(1, "FAT32", "ONYUKLEME", 2048, 200 * 2048),
+                        _sahte_bolum(2, "NTFS", "VERI", 411648, 900 * 2048)])
+        hp._build_tree([])
+        hp._refresh_overview()
+        app.processEvents()
+        disk_dugumu = hp.tree.topLevelItem(0).child(0)
+        assert disk_dugumu.childCount() == 2,             f"diskin altinda bolumler gorunmedi: {disk_dugumu.childCount()}"
+        assert "ONYUKLEME" in disk_dugumu.child(0).text(0),             disk_dugumu.child(0).text(0)
+        tur, deger = disk_dugumu.child(1).data(0, Qt.UserRole)
+        assert tur == "physpart" and deger == ("/sahte/disk0", 2), (tur, deger)
+        # Genel bakis seridi de ayni bolumleri cizmeli
+        hp.disk_overview.resize(900, 200)
+        hp.disk_overview._layout()
+        assert len(hp.disk_overview._blocks) == 2, hp.disk_overview._blocks
+        hp.grab().save(os.path.join(hedef, "23-disk-genel-bakis.png"))
+        print("  23-disk-genel-bakis.png")
+        print("  (disk agaci: bolumler acilmadan gorunuyor)")
+
+        # --- acilan fiziksel disk YERINDE kalmali, asagida ikinci dal olmamali ---
+        # Eskiden disk acilinca satirinda "(asagida acik)" yazip bolumleri
+        # agacin altinda ikinci bir dala tasiyordu (ADR 0026 duzeltmesi).
+        sahte_oturum = pencere.session          # acik bir goruntu oturumu
+        kok_sayisi_once = hp.tree.topLevelItemCount()
+        hp.sessions.append(sahte_oturum)
+        hp.session = sahte_oturum
+        try:
+            hp._build_tree([])
+            app.processEvents()
+            # Goruntu dosyasi fiziksel disk listesinde olmadigi icin kendi
+            # dalinda gorunur; fiziksel disk olsaydi gorunmeyecekti.
+            assert hp.tree.topLevelItemCount() == kok_sayisi_once + 1,                 "goruntu oturumu kendi dalinda gorunmeli"
+            metinler = [hp.tree.topLevelItem(i).text(0)
+                        for i in range(hp.tree.topLevelItemCount())]
+            assert not any("asagida acik" in m for m in metinler), metinler
+        finally:
+            hp.sessions.remove(sahte_oturum)
+            hp.session = None
+        print("  (acik kaynak agacta yerinde: '(asagida acik)' yok)")
+        hp._surveys.clear()
         kok = lambda: hp.tree.topLevelItem(0).text(0)  # noqa: E731
         assert "(1)" in kok(), kok()
         durum["liste"].append(_sahte_disk(1, "SD/MMC kart", 59 * 1024 ** 3))
@@ -349,6 +761,9 @@ def main() -> int:
         print("  (aygit takma/cikarma: agac kendiliginden tazelendi)")
     finally:
         DiskSession.list_physical_disks = gercek_listeleme
+
+    dil_denetimi(pencere, app, hedef)
+    sozde_denetimi(app, hedef, pencere)
 
     pencere.close_image()
     from PyQt5.QtGui import QFontDatabase

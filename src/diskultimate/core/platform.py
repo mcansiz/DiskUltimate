@@ -8,7 +8,9 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
+
+from ..i18n import tr
 
 IS_WINDOWS = sys.platform.startswith("win")
 IS_MACOS = sys.platform == "darwin"
@@ -228,22 +230,22 @@ def elevation_available() -> Tuple[bool, str]:
     calismayacak bir dugmeyi etkin gostermek kullaniciyi yaniltir.
     """
     if is_elevated():
-        return False, f"Uygulama zaten {ELEVATION_NAME} yetkisiyle calisiyor."
+        return False, tr("Uygulama zaten {} yetkisiyle calisiyor.", elevation_name())
     if not _relaunch_target():
-        return False, ("Uygulamanin yeniden baslatilacagi betik yolu "
-                       "belirlenemedi.")
+        return False, (tr("Uygulamanin yeniden baslatilacagi betik yolu "
+                       "belirlenemedi."))
     if IS_WINDOWS:
         return True, ""
     if IS_LINUX:
         if shutil.which("pkexec"):
             return True, ""
-        return False, ("Grafik yetki penceresi icin `pkexec` gerekiyor "
+        return False, (tr("Grafik yetki penceresi icin `pkexec` gerekiyor "
                        "(polkit paketi). Uygulamayi `sudo python3 main.py` ile "
-                       "baslatabilirsiniz.")
+                       "baslatabilirsiniz."))
     if IS_MACOS:
         return bool(shutil.which("osascript")), (
-            "" if shutil.which("osascript") else "`osascript` bulunamadi.")
-    return False, "Bu platformda yetki yukseltme desteklenmiyor."
+            "" if shutil.which("osascript") else tr("`osascript` bulunamadi."))
+    return False, tr("Bu platformda yetki yukseltme desteklenmiyor.")
 
 
 def relaunch_elevated() -> Tuple[bool, str]:
@@ -302,8 +304,8 @@ def _win_relaunch(command: List[str]) -> Tuple[bool, str]:
     # 32'nin altindaki degerler hata kodudur; en sik goruleni kullanicinin
     # UAC penceresinde "Hayir" demesidir.
     if code in (5, 1223):
-        return False, "Yetki verilmedi (UAC penceresinde iptal edildi)."
-    return False, f"Yeniden baslatilamadi (ShellExecute hatasi {code})."
+        return False, tr("Yetki verilmedi (UAC penceresinde iptal edildi).")
+    return False, tr("Yeniden baslatilamadi (ShellExecute hatasi {}).", code)
 
 
 # --------------------------------------------------------------------------
@@ -357,17 +359,95 @@ def default_image_dir() -> str:
     return os.path.expanduser("~")
 
 
+def config_dir() -> str:
+    r"""Kullaniciya ozel ayar klasoru (gerekirse olusturulur).
+
+    Isletim sistemlerinin kendi gelenegi kullanilir; cekirdegin geri kalani
+    bu ayrimi bilmez:
+
+        Windows : %APPDATA%\DiskUltimate
+        macOS   : ~/Library/Application Support/DiskUltimate
+        Linux   : $XDG_CONFIG_HOME/diskultimate (yoksa ~/.config/diskultimate)
+
+    Ayarlar **proje dizinine degil** buraya yazilir: uygulama salt okunur bir
+    klasorden (Program Files, /usr/bin) calistirilabilir.
+    """
+    if IS_WINDOWS:
+        base = os.environ.get("APPDATA") or os.path.join(
+            os.path.expanduser("~"), "AppData", "Roaming")
+        path = os.path.join(base, "DiskUltimate")
+    elif IS_MACOS:
+        path = os.path.join(os.path.expanduser("~"), "Library",
+                            "Application Support", "DiskUltimate")
+    else:
+        base = os.environ.get("XDG_CONFIG_HOME") or os.path.join(
+            os.path.expanduser("~"), ".config")
+        path = os.path.join(base, "diskultimate")
+    try:
+        os.makedirs(path, exist_ok=True)
+    except OSError:
+        pass
+    return path
+
+
+# Windows LANGID -> dil kodu (yalnizca birincil dil kimligi kullanilir).
+_WINDOWS_LANGUAGES = {
+    0x01: "ar", 0x02: "bg", 0x04: "zh", 0x05: "cs", 0x06: "da", 0x07: "de",
+    0x08: "el", 0x09: "en", 0x0A: "es", 0x0B: "fi", 0x0C: "fr", 0x0D: "he",
+    0x0E: "hu", 0x10: "it", 0x11: "ja", 0x12: "ko", 0x13: "nl", 0x15: "pl",
+    0x16: "pt", 0x19: "ru", 0x1D: "sv", 0x1F: "tr", 0x22: "uk",
+}
+
+
+def system_language() -> str:
+    """Isletim sisteminin arayuz dilini iki harfli kod olarak dondurur.
+
+    Bulunamazsa bos dize doner; cagiran taraf kendi varsayilanina duser.
+    `locale.getdefaultlocale()` kullanilmaz: Python 3.11'den beri kullanimdan
+    kaldirilmistir ve Windows'ta kullanicinin **arayuz** dilini degil bolge
+    ayarini verir.
+    """
+    if IS_WINDOWS:
+        try:
+            import ctypes
+
+            langid = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+            return _WINDOWS_LANGUAGES.get(langid & 0x3FF, "")
+        except Exception:
+            return ""
+    for name in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"):
+        value = os.environ.get(name, "").strip()
+        if not value or value in ("C", "POSIX"):
+            continue
+        # "tr_TR.UTF-8:en_US" -> "tr"
+        code = value.split(":")[0].split(".")[0].split("_")[0].split("-")[0]
+        if code:
+            return code.lower()
+    return ""
+
+
+def elevation_name() -> str:
+    """Yetki adinin **cevrilmis** hali ("Yonetici" / "root").
+
+    `ELEVATION_NAME` sabiti Turkce kalir ve cekirdek testlerinde kullanilir;
+    arayuz bu islevi cagirir, boylece dil degisince metin de degisir.
+    """
+    return tr("Yonetici") if IS_WINDOWS else "root"
+
+
 def summary() -> dict:
     """Tani amacli platform ozeti."""
+    name = elevation_name()
     return {
-        "Platform": PLATFORM_NAME,
-        "Python": sys.version.split()[0],
-        "Mimari": "64 bit" if sys.maxsize > 2 ** 32 else "32 bit",
-        "Yetki": (f"{ELEVATION_NAME} (tam erisim)" if is_elevated()
-                  else f"Normal kullanici — fiziksel disk icin {ELEVATION_NAME} "
-                       "gerekir"),
-        "Harici araclar": ", ".join(
-            f"{k}:{'var' if find_tool(k) else 'yok'}" for k in EXTERNAL_TOOLS),
+        tr("Platform"): PLATFORM_NAME,
+        tr("Python"): sys.version.split()[0],
+        tr("Mimari"): "64 bit" if sys.maxsize > 2 ** 32 else "32 bit",
+        tr("Yetki"): (tr("{} (tam erisim)", name) if is_elevated()
+                      else tr("Normal kullanici — fiziksel disk icin {} gerekir",
+                              name)),
+        tr("Harici araclar"): ", ".join(
+            f"{k}:{tr('var') if find_tool(k) else tr('yok')}"
+            for k in EXTERNAL_TOOLS),
     }
 
 
@@ -394,11 +474,11 @@ def windows_format_volume(disk_number: int, partition_number: int,
     (basarili_mi, mesaj) dondurur.
     """
     if not IS_WINDOWS:
-        return False, "Yalnizca Windows"
+        return False, tr("Yalnizca Windows")
     fs_name = {"ntfs": "NTFS", "exfat": "exFAT",
               "fat32": "FAT32", "fat16": "FAT"}.get(fs_key)
     if not fs_name:
-        return False, f"{fs_key} Windows araciyla olusturulamaz"
+        return False, tr("{} Windows araciyla olusturulamaz", fs_key)
     etiket = (label or "").replace('"', "")
     komut = (f"$ErrorActionPreference='Stop'; "
              f"$p = Get-Partition -DiskNumber {disk_number} "
@@ -414,7 +494,7 @@ def windows_format_volume(disk_number: int, partition_number: int,
     except Exception as exc:
         return False, str(exc)
     if result.returncode == 0 and "TAMAM" in (result.stdout or ""):
-        return True, "Windows bicimlendiricisi kullanildi"
+        return True, tr("Windows bicimlendiricisi kullanildi")
     return False, ((result.stderr or result.stdout or "").strip()[:300]
                    or f"cikis kodu {result.returncode}")
 
@@ -432,7 +512,7 @@ def native_resize_supported() -> bool:
 def windows_partition_size_limits(disk_number: int, partition_number: int) -> tuple:
     """(basarili_mi, en_kucuk_bayt, en_buyuk_bayt, mesaj)."""
     if not IS_WINDOWS:
-        return False, 0, 0, "Yalnizca Windows"
+        return False, 0, 0, tr("Yalnizca Windows")
     komut = (f"$ErrorActionPreference='Stop'; "
              f"$s = Get-PartitionSupportedSize -DiskNumber {disk_number} "
              f"-PartitionNumber {partition_number}; "
@@ -448,7 +528,7 @@ def windows_partition_size_limits(disk_number: int, partition_number: int) -> tu
         lower, upper = (result.stdout or "").strip().split()
         return True, int(lower), int(upper), ""
     except ValueError:
-        return False, 0, 0, "Beklenmeyen cikti"
+        return False, 0, 0, tr("Beklenmeyen cikti")
 
 
 def windows_resize_partition(disk_number: int, partition_number: int,
@@ -458,7 +538,7 @@ def windows_resize_partition(disk_number: int, partition_number: int,
     Dosya sistemi de birlikte boyutlandirilir. (basarili_mi, mesaj) dondurur.
     """
     if not IS_WINDOWS:
-        return False, "Yalnizca Windows"
+        return False, tr("Yalnizca Windows")
     komut = (f"$ErrorActionPreference='Stop'; "
              f"Resize-Partition -DiskNumber {disk_number} "
              f"-PartitionNumber {partition_number} -Size {int(size_bytes)}; "
@@ -469,5 +549,491 @@ def windows_resize_partition(disk_number: int, partition_number: int,
     except Exception as exc:                       # noqa: BLE001
         return False, str(exc)
     if result.returncode == 0 and "TAMAM" in (result.stdout or ""):
-        return True, "Windows boyutlandiricisi kullanildi"
+        return True, tr("Windows boyutlandiricisi kullanildi")
     return False, (result.stderr or result.stdout or "").strip()[:300]
+
+
+# ==========================================================================
+# Onyukleyici araclari ve bellenim degiskenleri
+# ==========================================================================
+# CLAUDE.md kurali: isletim sistemi farklari **yalnizca bu dosyada** durur.
+# Onyukleyici yonetimi bu kuralin en sert sinandigi yerdir: GRUB yalnizca
+# Linux'ta kurulur, UEFI degiskenleri Linux'ta bir dosya sistemi, Windows'ta
+# bir cekirdek cagrisidir. Yapiyi cozen kod (`core/efiboot.py`) ve cozumleme
+# (`core/bootloader.py`) bu ayrimi hic gormez; buradan **ham bayt** alirlar.
+
+# Onyukleyici araclarinin platforma gore adlari.
+BOOT_TOOLS = {
+    "grub-install": {"linux": ["grub-install", "grub2-install"],
+                     "darwin": [], "win32": []},
+    "grub-mkconfig": {"linux": ["grub-mkconfig", "grub2-mkconfig"],
+                      "darwin": [], "win32": []},
+    "update-grub": {"linux": ["update-grub"], "darwin": [], "win32": []},
+    "os-prober": {"linux": ["os-prober"], "darwin": [], "win32": []},
+    "efibootmgr": {"linux": ["efibootmgr"], "darwin": [], "win32": []},
+    "bcdedit": {"linux": [], "darwin": [], "win32": ["bcdedit"]},
+}
+
+# GRUB'un yapilandirma dosyalari (Linux). Dagitimlar arasinda ad degisir:
+# Debian ailesi `/boot/grub`, Fedora/SUSE `/boot/grub2` kullanir.
+GRUB_DEFAULTS_PATH = "/etc/default/grub"
+GRUB_SCRIPT_DIR = "/etc/grub.d"
+GRUB_CONFIG_PATHS = ["/boot/grub/grub.cfg", "/boot/grub2/grub.cfg",
+                     "/boot/efi/EFI/*/grub.cfg"]
+
+# Linux'ta UEFI degiskenleri bir dosya sistemi olarak gorunur.
+EFIVARS_DIR = "/sys/firmware/efi/efivars"
+EFI_FIRMWARE_DIR = "/sys/firmware/efi"
+
+# ext dosya sistemlerinde "degistirilemez" bayragi (linux/fs.h).
+_FS_IOC_GETFLAGS = 0x80086601
+_FS_IOC_SETFLAGS = 0x40086602
+_FS_IMMUTABLE_FL = 0x00000010
+
+
+def find_boot_tool(name: str) -> Optional[str]:
+    """Onyukleyici aracinin tam yolu (bu platformda yoksa None)."""
+    for candidate in BOOT_TOOLS.get(name, {}).get(_platform_key(), []):
+        path = shutil.which(candidate)
+        if path:
+            return path
+        for directory in _EK_ARAMA_YOLLARI:     # grub-install cogunlukla sbin'de
+            full = os.path.join(directory, candidate)
+            if os.path.isfile(full) and os.access(full, os.X_OK):
+                return full
+    return None
+
+
+def boot_tools_present() -> Dict[str, str]:
+    """Bulunan onyukleyici araclari: {ad: yol}. Arayuz eksikleri boyle gosterir."""
+    return {name: (find_boot_tool(name) or "") for name in BOOT_TOOLS}
+
+
+def grub_management_available() -> Tuple[bool, str]:
+    """GRUB kurulabilir/guncellenebilir mi? (evet_mi, neden).
+
+    Cozumleme her platformda yapilir ama **kurulum** calisan sistemin
+    araclarini gerektirir. Windows'ta bir Linux diskini inceleyebiliriz,
+    ona GRUB kuramayiz — bunu acikca soylemek, calismayan bir dugme
+    gostermekten iyidir.
+    """
+    if not IS_LINUX:
+        return False, tr("GRUB kurulumu yalnizca Linux'ta yapilabilir; bu "
+                         "sistemde ({}) yalnizca inceleme yapilir.",
+                         PLATFORM_NAME)
+    if not find_boot_tool("grub-install"):
+        return False, tr("`grub-install` bulunamadi (grub-pc ya da "
+                         "grub-efi paketi kurulu degil).")
+    return True, ""
+
+
+def run_privileged(command: List[str], timeout: int = 900) -> Tuple[int, str, str]:
+    """Komutu gerektiginde yetki yukselterek calistirir.
+
+    Zaten root/yonetici isek dogrudan calistirilir; degilsek Linux'ta
+    `pkexec` grafik parola penceresi acar. Doner: (cikis kodu, cikti, hata).
+
+    Bu islev **uzun surebilir** ve kullanicidan parola bekleyebilir; arayuz
+    is parcaciginda degil, `dialogs/task.run_task` icinde cagrilmalidir
+    (ADR 0020).
+    """
+    if not command:
+        return 1, "", tr("Bos komut")
+    if is_elevated():
+        full = list(command)
+    elif IS_LINUX:
+        agent = shutil.which("pkexec")
+        if not agent:
+            return 1, "", tr("Grafik yetki penceresi icin `pkexec` gerekiyor "
+                             "(polkit paketi).")
+        # pkexec ortami temizler; araclar sbin'de oldugu icin PATH elle verilir.
+        full = [agent, "env", "PATH=/usr/sbin:/usr/bin:/sbin:/bin"] + list(command)
+    else:
+        return 1, "", tr("Bu islem {} yetkisi gerektiriyor.", elevation_name())
+    try:
+        result = run_tool(full, timeout=timeout)
+    except Exception as exc:                        # noqa: BLE001
+        return 1, "", str(exc)
+    return (result.returncode, (result.stdout or "").strip(),
+            (result.stderr or "").strip())
+
+
+def write_system_file(path: str, text: str) -> Tuple[bool, str]:
+    """Yetki gerektiren bir metin dosyasini yazar (once gecici dosyaya).
+
+    Dogrudan `pkexec tee` gibi bir kabuk hilesine basvurulmaz: icerik once
+    proje calisma alanina yazilir, sonra tek bir `cp` ile yerine konur.
+    Boylece yarim yazilmis bir yapilandirma dosyasi olusamaz.
+    """
+    from ..paths import scratch
+
+    staging = os.path.join(scratch("boot"), os.path.basename(path) or "config")
+    try:
+        with open(staging, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
+    except OSError as exc:
+        return False, str(exc)
+    if is_elevated():
+        try:
+            with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(text)
+            return True, ""
+        except OSError as exc:
+            return False, str(exc)
+    code, _, error = run_privileged(["cp", staging, path], timeout=60)
+    return (code == 0), error
+
+
+# --------------------------------------------------------------------------
+# Bellenim turu
+# --------------------------------------------------------------------------
+def firmware_type() -> str:
+    """Makine nasil acildi: 'uefi' | 'bios' | '' (bilinmiyor).
+
+    Onemlidir: UEFI ile acilmamis bir makinede onyukleme degiskenleri
+    **yoktur**, bos degildir. Ikisini ayni gostermek kullaniciyi yaniltir.
+    """
+    if IS_LINUX:
+        return "uefi" if os.path.isdir(EFI_FIRMWARE_DIR) else "bios"
+    if IS_WINDOWS:
+        try:
+            import ctypes
+            import ctypes.wintypes as wt
+
+            kind = wt.DWORD(0)
+            k32 = ctypes.windll.kernel32
+            k32.GetFirmwareType.argtypes = [ctypes.POINTER(wt.DWORD)]
+            k32.GetFirmwareType.restype = wt.BOOL
+            if k32.GetFirmwareType(ctypes.byref(kind)):
+                return {1: "bios", 2: "uefi"}.get(kind.value, "")
+        except Exception:                           # noqa: BLE001
+            return ""
+        return ""
+    if IS_MACOS:
+        return "uefi"       # Intel Mac'ler EFI ile acilir; degiskenler kapali
+    return ""
+
+
+def efivars_state() -> Tuple[bool, bool, str]:
+    """(okunabilir mi, yazilabilir mi, aciklama).
+
+    Aciklama her durumda doludur: erisilemiyorsa **neden** erisilemedigini
+    soyler. "Giris bulunamadi" ile "yetki yok" ayni sey degildir.
+    """
+    kind = firmware_type()
+    if kind == "bios":
+        return False, False, tr("Makine BIOS (eski) kipinde acilmis; UEFI "
+                                "onyukleme degiskenleri yok.")
+    if IS_LINUX:
+        if not os.path.isdir(EFIVARS_DIR):
+            return False, False, tr("`{}` bagli degil; `efivarfs` cekirdek "
+                                    "modulu yuklu olmayabilir.", EFIVARS_DIR)
+        if not os.access(EFIVARS_DIR, os.R_OK):
+            return False, False, tr("Degiskenler okunamiyor; root yetkisi "
+                                    "gerekiyor.")
+        return True, is_elevated(), ("" if is_elevated() else
+                                     tr("Degistirmek icin root yetkisi gerekir."))
+    if IS_WINDOWS:
+        if kind != "uefi":
+            return False, False, tr("Bellenim turu belirlenemedi.")
+        if not is_elevated():
+            return False, False, tr("Bellenim degiskenleri icin {} yetkisi "
+                                    "gerekiyor.", elevation_name())
+        ok, reason = _win_enable_firmware_privilege()
+        return ok, ok, ("" if ok else reason)
+    if IS_MACOS:
+        return False, False, tr("macOS bellenim degiskenlerine erisim "
+                                "vermiyor.")
+    return False, False, tr("Bu platformda bellenim degiskenleri okunamiyor.")
+
+
+# --------------------------------------------------------------------------
+# Bellenim degiskenleri — Linux (efivarfs)
+# --------------------------------------------------------------------------
+def _linux_var_path(name: str, guid: str) -> str:
+    return os.path.join(EFIVARS_DIR, f"{name}-{guid.lower()}")
+
+
+def _linux_var_names() -> List[Tuple[str, str]]:
+    try:
+        entries = os.listdir(EFIVARS_DIR)
+    except OSError:
+        return []
+    found = []
+    for entry in entries:
+        # Ad bicimi: <ad>-<36 karakterlik guid>
+        if len(entry) < 38 or entry[-37] != "-":
+            continue
+        found.append((entry[:-37], entry[-36:]))
+    return found
+
+
+def _linux_clear_immutable(path: str) -> None:
+    """efivarfs dosyasindaki "degistirilemez" bayragini kaldirir.
+
+    Cekirdek bircok degiskeni bu bayrakla acar; kaldirilmadan yazma
+    `EPERM` verir. `chattr -i` calistirmak yerine ayni ioctl dogrudan
+    cagrilir — harici arac gerektirmez.
+    """
+    try:
+        import fcntl
+        import array
+
+        with open(path, "rb") as fh:
+            flags = array.array("i", [0])
+            fcntl.ioctl(fh.fileno(), _FS_IOC_GETFLAGS, flags, True)
+            if not (flags[0] & _FS_IMMUTABLE_FL):
+                return
+        with open(path, "rb") as fh:
+            flags[0] &= ~_FS_IMMUTABLE_FL
+            fcntl.ioctl(fh.fileno(), _FS_IOC_SETFLAGS, flags, False)
+    except Exception:                               # noqa: BLE001
+        pass            # bayrak kaldirilamadiysa yazma denemesi zaten hata verir
+
+
+# --------------------------------------------------------------------------
+# Bellenim degiskenleri — Windows
+# --------------------------------------------------------------------------
+_WIN_PRIVILEGE_DONE = [False]
+
+
+def _win_enable_firmware_privilege() -> Tuple[bool, str]:
+    """SeSystemEnvironmentPrivilege ayricaligini etkinlestirir.
+
+    Windows bellenim degiskeni cagrilarini yalnizca bu ayricalik acikken
+    kabul eder ve ayricalik yonetici belirtecinde bile **varsayilan olarak
+    kapalidir**.
+    """
+    if _WIN_PRIVILEGE_DONE[0]:
+        return True, ""
+    try:
+        import ctypes
+        import ctypes.wintypes as wt
+
+        class LUID(ctypes.Structure):
+            _fields_ = [("LowPart", wt.DWORD), ("HighPart", ctypes.c_long)]
+
+        class LUID_AND_ATTRIBUTES(ctypes.Structure):
+            _fields_ = [("Luid", LUID), ("Attributes", wt.DWORD)]
+
+        class TOKEN_PRIVILEGES(ctypes.Structure):
+            _fields_ = [("PrivilegeCount", wt.DWORD),
+                        ("Privileges", LUID_AND_ATTRIBUTES * 1)]
+
+        advapi = ctypes.windll.advapi32
+        k32 = ctypes.windll.kernel32
+        TOKEN_ADJUST_PRIVILEGES = 0x0020
+        TOKEN_QUERY = 0x0008
+        SE_PRIVILEGE_ENABLED = 0x0002
+
+        # argtypes acikca verilir: ctypes varsayilanlari 64 bit tutamaci
+        # 32 bite keser ve cagri sessizce basarisiz olur (bkz. _win_kernel32).
+        k32.GetCurrentProcess.restype = wt.HANDLE
+        advapi.OpenProcessToken.argtypes = [wt.HANDLE, wt.DWORD,
+                                            ctypes.POINTER(wt.HANDLE)]
+        advapi.OpenProcessToken.restype = wt.BOOL
+        advapi.LookupPrivilegeValueW.argtypes = [wt.LPCWSTR, wt.LPCWSTR,
+                                                 ctypes.POINTER(LUID)]
+        advapi.LookupPrivilegeValueW.restype = wt.BOOL
+        advapi.AdjustTokenPrivileges.argtypes = [
+            wt.HANDLE, wt.BOOL, ctypes.POINTER(TOKEN_PRIVILEGES), wt.DWORD,
+            wt.LPVOID, wt.LPVOID]
+        advapi.AdjustTokenPrivileges.restype = wt.BOOL
+
+        token = wt.HANDLE()
+        if not advapi.OpenProcessToken(k32.GetCurrentProcess(),
+                                       TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+                                       ctypes.byref(token)):
+            return False, tr("Surec belirteci acilamadi.")
+        try:
+            luid = LUID()
+            if not advapi.LookupPrivilegeValueW(None,
+                                                "SeSystemEnvironmentPrivilege",
+                                                ctypes.byref(luid)):
+                return False, tr("Bellenim ayricaligi bulunamadi.")
+            privileges = TOKEN_PRIVILEGES()
+            privileges.PrivilegeCount = 1
+            privileges.Privileges[0].Luid = luid
+            privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED
+            k32.SetLastError(0)
+            advapi.AdjustTokenPrivileges(token, False,
+                                         ctypes.byref(privileges), 0, None, None)
+            # AdjustTokenPrivileges ayricaligin bir bolumu verilmese de
+            # "basarili" doner; gercek sonuc son hata kodundadir.
+            if k32.GetLastError() != 0:
+                return False, tr("Bellenim ayricaligi verilmedi ({} yetkisi "
+                                 "gerekir).", elevation_name())
+        finally:
+            k32.CloseHandle(token)
+        _WIN_PRIVILEGE_DONE[0] = True
+        return True, ""
+    except Exception as exc:                        # noqa: BLE001
+        return False, str(exc)
+
+
+def _win_guid(guid: str) -> str:
+    """Windows API'sinin bekledigi susluparantezli GUID bicimi."""
+    clean = guid.strip().strip("{}")
+    return "{" + clean + "}"
+
+
+def _win_var_names() -> List[Tuple[str, str]]:
+    """Bellenim degiskenlerini sayar (`NtEnumerateSystemEnvironmentValuesEx`).
+
+    Windows'ta bu sayimin belgelenmis bir karsiligi yoktur; cagri ntdll
+    icindedir. Basarisiz olursa bos liste doner ve cagiran **bilinen adlari
+    tek tek dener** — eksik bir liste gostermektense bilinenleri gostermek
+    daha dogrudur.
+    """
+    try:
+        import ctypes
+        import ctypes.wintypes as wt
+
+        ntdll = ctypes.windll.ntdll
+        VARIABLE_INFORMATION_NAMES = 1
+        size = wt.ULONG(0)
+        ntdll.NtEnumerateSystemEnvironmentValuesEx(
+            VARIABLE_INFORMATION_NAMES, None, ctypes.byref(size))
+        if size.value == 0:
+            return []
+        buffer = ctypes.create_string_buffer(size.value)
+        status = ntdll.NtEnumerateSystemEnvironmentValuesEx(
+            VARIABLE_INFORMATION_NAMES, buffer, ctypes.byref(size))
+        if status != 0:
+            return []
+    except Exception:                               # noqa: BLE001
+        return []
+
+    found: List[Tuple[str, str]] = []
+    raw = buffer.raw[:size.value]
+    offset = 0
+    # Kayit: ULONG NextEntryOffset; GUID VendorGuid (16 bayt); WCHAR Name[]
+    while offset + 20 <= len(raw):
+        next_offset = int.from_bytes(raw[offset:offset + 4], "little")
+        guid_raw = raw[offset + 4:offset + 20]
+        name_raw = raw[offset + 20:offset + next_offset] if next_offset \
+            else raw[offset + 20:]
+        name = name_raw.decode("utf-16-le", "replace").split("\x00", 1)[0]
+        if name:
+            found.append((name, _guid_text(guid_raw)))
+        if not next_offset:
+            break
+        offset += next_offset
+    return found
+
+
+def _guid_text(raw: bytes) -> str:
+    """16 baytlik EFI GUID'ini metne cevirir (karisik siralama)."""
+    ordered = raw[0:4][::-1] + raw[4:6][::-1] + raw[6:8][::-1] + raw[8:16]
+    text = ordered.hex()
+    return f"{text[0:8]}-{text[8:12]}-{text[12:16]}-{text[16:20]}-{text[20:32]}"
+
+
+# --------------------------------------------------------------------------
+# Bellenim degiskenleri — ortak arayuz
+# --------------------------------------------------------------------------
+def efivar_names() -> List[Tuple[str, str]]:
+    """Butun bellenim degiskenleri: [(ad, guid)]."""
+    if IS_LINUX:
+        return _linux_var_names()
+    if IS_WINDOWS:
+        # Windows **okumak** icin de ayricaligi ister; etkinlestirilmeden
+        # yapilan her cagri sessizce bos doner.
+        _win_enable_firmware_privilege()
+        return _win_var_names()
+    return []
+
+
+def efivar_read(name: str, guid: str) -> Tuple[int, bytes]:
+    """Bir degiskeni okur: (oznitelikler, veri). Yoksa (0, b"")."""
+    if IS_LINUX:
+        try:
+            with open(_linux_var_path(name, guid), "rb") as fh:
+                raw = fh.read()
+        except OSError:
+            return 0, b""
+        if len(raw) < 4:
+            return 0, b""
+        return int.from_bytes(raw[:4], "little"), raw[4:]
+    if IS_WINDOWS:
+        try:
+            import ctypes
+            import ctypes.wintypes as wt
+
+            _win_enable_firmware_privilege()
+            k32 = ctypes.windll.kernel32
+            k32.GetFirmwareEnvironmentVariableExW.argtypes = [
+                wt.LPCWSTR, wt.LPCWSTR, wt.LPVOID, wt.DWORD,
+                ctypes.POINTER(wt.DWORD)]
+            k32.GetFirmwareEnvironmentVariableExW.restype = wt.DWORD
+            buffer = ctypes.create_string_buffer(8192)
+            attributes = wt.DWORD(0)
+            length = k32.GetFirmwareEnvironmentVariableExW(
+                name, _win_guid(guid), buffer, len(buffer),
+                ctypes.byref(attributes))
+            if length == 0:
+                return 0, b""
+            return attributes.value, buffer.raw[:length]
+        except Exception:                           # noqa: BLE001
+            return 0, b""
+    return 0, b""
+
+
+def efivar_write(name: str, guid: str, attributes: int,
+                 data: bytes) -> Tuple[bool, str]:
+    """Bir degiskeni yazar. (basarili_mi, hata).
+
+    **Yikici olabilir**: yanlis yazilmis bir `BootOrder` makineyi acilmaz
+    hale getirebilir. Cagiran once yedek almalidir; arayuz bunu zorunlu
+    tutar (bkz. `ui/dialogs/efiboot.py`).
+    """
+    readable, writable, reason = efivars_state()
+    if not writable:
+        return False, reason or tr("Bellenim degiskenleri yazilamiyor.")
+    if IS_LINUX:
+        path = _linux_var_path(name, guid)
+        payload = int(attributes).to_bytes(4, "little") + bytes(data)
+        _linux_clear_immutable(path)
+        try:
+            # Oznitelik ve veri **tek yazmada** gitmelidir: efivarfs parcali
+            # yazmayi kabul etmez.
+            handle = os.open(path, os.O_WRONLY | os.O_CREAT, 0o644)
+            try:
+                os.write(handle, payload)
+            finally:
+                os.close(handle)
+            return True, ""
+        except OSError as exc:
+            return False, str(exc)
+    if IS_WINDOWS:
+        try:
+            import ctypes
+            import ctypes.wintypes as wt
+
+            k32 = ctypes.windll.kernel32
+            k32.SetFirmwareEnvironmentVariableExW.argtypes = [
+                wt.LPCWSTR, wt.LPCWSTR, wt.LPVOID, wt.DWORD, wt.DWORD]
+            k32.SetFirmwareEnvironmentVariableExW.restype = wt.BOOL
+            payload = ctypes.create_string_buffer(bytes(data), len(data)) \
+                if data else None
+            ok = k32.SetFirmwareEnvironmentVariableExW(
+                name, _win_guid(guid), payload, len(data), int(attributes))
+            if ok:
+                return True, ""
+            return False, tr("Windows hata kodu {}", k32.GetLastError())
+        except Exception as exc:                    # noqa: BLE001
+            return False, str(exc)
+    return False, tr("Bu platformda bellenim degiskeni yazilamiyor.")
+
+
+def efivar_delete(name: str, guid: str) -> Tuple[bool, str]:
+    """Bir degiskeni siler (bos veri yazmak silme anlamina gelir)."""
+    if IS_LINUX:
+        path = _linux_var_path(name, guid)
+        _linux_clear_immutable(path)
+        try:
+            os.unlink(path)
+            return True, ""
+        except OSError as exc:
+            return False, str(exc)
+    return efivar_write(name, guid, 0, b"")

@@ -8,6 +8,7 @@ Polinom: 0x1EDC6F41, yansitilmis (reflected) bicimde 0x82F63B78.
 Dogrulama olcutu: `crc32c(b"123456789") == 0xE3069283` (RFC 3720 / SCTP).
 """
 from __future__ import annotations
+from ..i18n import tr
 
 POLY = 0x82F63B78          # yansitilmis 0x1EDC6F41
 
@@ -65,13 +66,13 @@ def self_test() -> None:
         result = crc32c(data)
         if result != expected:
             raise AssertionError(
-                f"CRC32C hatasi: {data[:12]!r} -> {result:08X}, "
-                f"{expected:08X} bekleniyordu")
+                tr("CRC32C hatasi: {!r} -> {:08X}, {:08X} bekleniyordu",
+                   data[:12], result, expected))
     # zincirleme: parcali hesap butunle ayni olmali
     whole = crc32c(b"DiskUltimate ext4 saglama denemesi")
     chunked = crc32c(b"ext4 saglama denemesi", crc32c(b"DiskUltimate "))
     if whole != chunked:
-        raise AssertionError("CRC32C zincirlemesi tutarsiz")
+        raise AssertionError(tr("CRC32C zincirlemesi tutarsiz"))
 
 
 if __name__ == "__main__":

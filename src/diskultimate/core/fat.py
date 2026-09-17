@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 from .image import BlockDevice
+from ..i18n import tr
 
 ATTR_READ_ONLY = 0x01
 ATTR_HIDDEN = 0x02
@@ -128,7 +129,7 @@ class FatFS:
     def _mount(self) -> None:
         boot = self.dev.read(0, 512)
         if boot[510:512] != b"\x55\xAA":
-            raise FatError("FAT onyukleme sektoru imzasi yok")
+            raise FatError(tr("FAT onyukleme sektoru imzasi yok"))
         self.bytes_per_sector = struct.unpack_from("<H", boot, 11)[0]
         self.sectors_per_cluster = boot[13]
         self.reserved_sectors = struct.unpack_from("<H", boot, 14)[0]
@@ -139,9 +140,9 @@ class FatFS:
         fat16_size = struct.unpack_from("<H", boot, 22)[0]
         total32 = struct.unpack_from("<I", boot, 32)[0]
         if self.bytes_per_sector not in (512, 1024, 2048, 4096):
-            raise FatError("Gecersiz sektor boyutu")
+            raise FatError(tr("Gecersiz sektor boyutu"))
         if self.sectors_per_cluster == 0 or self.num_fats == 0:
-            raise FatError("Gecersiz BPB")
+            raise FatError(tr("Gecersiz BPB"))
         self.total_sectors = total16 or total32
         self.fat_size = fat16_size or struct.unpack_from("<I", boot, 36)[0]
         self.root_dir_sectors = (self.root_entries * 32 + self.bytes_per_sector - 1) \
@@ -151,7 +152,7 @@ class FatFS:
                                   + self.root_dir_sectors)
         data_sectors = self.total_sectors - self.first_data_sector
         if data_sectors <= 0:
-            raise FatError("Gecersiz FAT yerlesimi")
+            raise FatError(tr("Gecersiz FAT yerlesimi"))
         self.cluster_count = data_sectors // self.sectors_per_cluster
         if self.cluster_count < FAT12_MAX + 1:
             self.fat_type = 12
@@ -308,7 +309,7 @@ class FatFS:
                     if self._free_count is not None:
                         self._free_count -= 1
                     return c
-        raise FatError("Birimde bos kume kalmadi")
+        raise FatError(tr("Birimde bos kume kalmadi"))
 
     def free_chain(self, start: int) -> None:
         serbest = 0
@@ -345,7 +346,7 @@ class FatFS:
                                            self.root_dir_sectors * self.bytes_per_sector)), []
         chain = self.chain(cluster)
         if not chain:
-            raise FatError("Bozuk dizin kume zinciri")
+            raise FatError(tr("Bozuk dizin kume zinciri"))
         buf = bytearray()
         for c in chain:
             buf += self.read_cluster(c)
@@ -356,7 +357,7 @@ class FatFS:
         if cluster is None:
             cap = self.root_dir_sectors * self.bytes_per_sector
             if len(data) > cap:
-                raise FatError("Kok dizin dolu (FAT16 giris siniri)")
+                raise FatError(tr("Kok dizin dolu (FAT16 giris siniri)"))
             self.dev.write(self.root_dir_offset, bytes(data).ljust(cap, b"\x00"))
             return
         need = max(1, (len(data) + self.cluster_bytes - 1) // self.cluster_bytes)
@@ -454,9 +455,9 @@ class FatFS:
                     match = e
                     break
             if match is None:
-                raise FatError(f"Yol bulunamadi: {path}")
+                raise FatError(tr("Yol bulunamadi: {}", path))
             if not match.is_dir:
-                raise FatError(f"Dizin degil: {path}")
+                raise FatError(tr("Dizin degil: {}", path))
             cluster = match.cluster if match.cluster else (
                 self.root_cluster if self.fat_type == 32 else None)
             cur = cur.rstrip("/") + "/" + part
@@ -493,7 +494,7 @@ class FatFS:
         for e in self._list_raw(cluster, parent):
             if e.name.lower() == parts[-1].lower() or e.short_name.lower() == parts[-1].lower():
                 return e
-        raise FatError(f"Bulunamadi: {path}")
+        raise FatError(tr("Bulunamadi: {}", path))
 
     def exists(self, path: str) -> bool:
         try:
@@ -506,7 +507,7 @@ class FatFS:
     def read_file(self, path: str, max_bytes: int = -1) -> bytes:
         entry = self.find(path)
         if entry.is_dir:
-            raise FatError("Dizin dosya olarak okunamaz")
+            raise FatError(tr("Dizin dosya olarak okunamaz"))
         return self.read_entry(entry, max_bytes)
 
     def read_entry(self, entry: DirEntry, max_bytes: int = -1) -> bytes:
@@ -588,7 +589,7 @@ class FatFS:
             cand_text = (stem.strip() + ("." + cext if cext else "")).upper()
             if cand_text not in taken:
                 return (stem + cext.ljust(3)).encode("latin-1"), True
-        raise FatError("Kisa ad uretilemedi")
+        raise FatError(tr("Kisa ad uretilemedi"))
 
     def _build_entry_bytes(self, name: str, short11: bytes, attr: int,
                            cluster: int, size: int,
@@ -638,7 +639,7 @@ class FatFS:
         pos = self._find_free_slots(data, need)
         if pos < 0:
             if cluster is None:
-                raise FatError("Kok dizin dolu")
+                raise FatError(tr("Kok dizin dolu"))
             pos = len(data)
             data += bytearray(self.cluster_bytes)
         data[pos:pos + len(blob)] = blob
@@ -676,15 +677,15 @@ class FatFS:
     def write_file(self, path: str, data: bytes, overwrite: bool = True) -> DirEntry:
         """Birime dosya yazar (ust dizin var olmali)."""
         if self.readonly:
-            raise FatError("Birim salt okunur")
+            raise FatError(tr("Birim salt okunur"))
         parts = _norm(path)
         if not parts:
-            raise FatError("Gecersiz dosya yolu")
+            raise FatError(tr("Gecersiz dosya yolu"))
         name = parts[-1]
         parent = "/" + "/".join(parts[:-1])
         if self.exists(path):
             if not overwrite:
-                raise FatError(f"Dosya zaten var: {path}")
+                raise FatError(tr("Dosya zaten var: {}", path))
             self.remove(path)
         # kumeleri ayir
         first_cluster = 0
@@ -731,14 +732,14 @@ class FatFS:
 
     def mkdir(self, path: str) -> DirEntry:
         if self.readonly:
-            raise FatError("Birim salt okunur")
+            raise FatError(tr("Birim salt okunur"))
         parts = _norm(path)
         if not parts:
-            raise FatError("Gecersiz klasor yolu")
+            raise FatError(tr("Gecersiz klasor yolu"))
         name = parts[-1]
         parent = "/" + "/".join(parts[:-1])
         if self.exists(path):
-            raise FatError(f"Zaten var: {path}")
+            raise FatError(tr("Zaten var: {}", path))
         cluster = self.alloc_cluster()
         self.write_cluster(cluster, b"\x00" * self.cluster_bytes)
         # "." ve ".." girisleri
@@ -768,15 +769,15 @@ class FatFS:
     def remove(self, path: str, recursive: bool = False) -> None:
         """Dosya veya (bos) klasoru siler."""
         if self.readonly:
-            raise FatError("Birim salt okunur")
+            raise FatError(tr("Birim salt okunur"))
         parts = _norm(path)
         if not parts:
-            raise FatError("Kok dizin silinemez")
+            raise FatError(tr("Kok dizin silinemez"))
         entry = self.find(path)
         if entry.is_dir:
             children = self.listdir(path)
             if children and not recursive:
-                raise FatError("Klasor bos degil")
+                raise FatError(tr("Klasor bos degil"))
             for child in children:
                 self.remove(path.rstrip("/") + "/" + child.name, recursive=True)
         parent = "/" + "/".join(parts[:-1])
@@ -909,7 +910,7 @@ class FatFS:
         bps = dev.sector_size
         total = dev.sector_count
         if total < 128:
-            raise FatError("Bolum FAT icin cok kucuk")
+            raise FatError(tr("Bolum FAT icin cok kucuk"))
         if fat_type == 0:
             fat_type = FatFS.choose_fat_type(total, bps)
         if cluster_sectors == 0:
@@ -924,7 +925,8 @@ class FatFS:
             clusters = layout["clusters"]
             if clusters > limits[fat_type]:
                 if cluster_sectors >= 128:
-                    raise FatError(f"FAT{fat_type} bu boyut icin uygun degil; FAT32 secin")
+                    raise FatError(tr("FAT{} bu boyut icin uygun degil; FAT32 "
+                                      "secin", fat_type))
                 cluster_sectors *= 2
                 continue
             if clusters < mins[fat_type]:
@@ -932,10 +934,11 @@ class FatFS:
                     cluster_sectors //= 2
                     continue
                 raise FatError(
-                    f"Bolum FAT{fat_type} icin cok kucuk (kume sayisi {clusters})")
+                    tr("Bolum FAT{} icin cok kucuk (kume sayisi {})",
+                       fat_type, clusters))
             break
         else:
-            raise FatError("Uygun FAT yerlesimi hesaplanamadi")
+            raise FatError(tr("Uygun FAT yerlesimi hesaplanamadi"))
 
         if volume_id == 0:
             now = datetime.datetime.now()

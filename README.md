@@ -7,7 +7,7 @@ DiskGenius benzeri gorsel disk yonetim araci: disk goruntuleri, sanal diskler ve
 Cekirdek saf Python ve macOS kod yollari (`diskutil`) yazilmis durumda, ancak
 **macOS'ta hicbir test calistirilmamistir**; bu yuzden destegi ilan edilmiyor.
 
-![surum](https://img.shields.io/badge/surum-0.4.0-blue) ![python](https://img.shields.io/badge/python-3.8%2B-green) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen) ![test](https://img.shields.io/badge/test-18%2F18-brightgreen)
+![surum](https://img.shields.io/badge/surum-0.4.0-blue) ![python](https://img.shields.io/badge/python-3.8%2B-green) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen) ![test](https://img.shields.io/badge/test-28%2F28-brightgreen) ![dil](https://img.shields.io/badge/dil-tr%20%7C%20en%20%7C%20de-blue)
 
 Bolum tablolari ve dosya sistemleri **sifirdan, saf Python ile** yazilir. Sekiz
 dosya sisteminin (FAT12/16/32, exFAT, NTFS, ext2/3/4) tamaminda **bicimlendirme,
@@ -57,6 +57,23 @@ okuma ve yazma** calisir; uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2fsck`,
   (fiziksel hedefte alti katmanli onay gecerlidir)
 - Disk ve bolum klonlama, seyreklik korunarak
 
+**Onyukleme**
+- **Onyukleyici yoneticisi** — diskteki isletim sistemlerini ve onyukleme
+  kodunu (GRUB 2 / GRUB Legacy / Windows / SYSLINUX / LILO) gosterir.
+  Tespit **her platformda** calisir: bolumler projenin kendi dosya sistemi
+  surucileriyle okunur, `mount` ve yonetici yetkisi gerekmez; goruntu
+  dosyalarindaki sistemler de gorunur
+- **Onyukleme kodunu kaldirma** — ilk 440 bayti sifirlar, bolum tablosunu ve
+  dosyalari **korur**; bekleyen islem olarak kuyruga girer
+- **GRUB yonetimi (Linux)** — kurulum, onyukleme menusunu yeniden uretme,
+  `os-prober`i acma, ayarlari yedekleme/geri yukleme ve tek dugmeyle onarim.
+  Onarim GRUB'u yalnizca **zaten bulundugu** diske yazar
+- **UEFI onyukleme duzenleyici** — bellenimdeki girisleri listeler, sirayi
+  degistirir, etkin/gizli bayragini ve menu bekleme suresini ayarlar.
+  Aygit yolu `efibootmgr` bicimindedir. Hicbir sey aninda yazilmaz: once
+  degisiklik listesi gosterilir, sonra **yedek alinir**, sonra yazilir
+- Onyukleme duzenini JSON olarak disa/ice aktarma
+
 **Veri kurtarma**
 - Silinmis dosya tarama ve kurtarma (FAT + exFAT, **uzun adlar dahil**),
   kurtarilabilirlik degerlendirmesi
@@ -95,6 +112,19 @@ python3 main.py                 # bos baslat
 python3 main.py disk.img        # dosya acarak baslat
 ```
 
+**Dil.** Arayuz Turkce, Ingilizce ve Almanca calisir. Secim
+**Araclar > Dil** menusundedir ve **aninda** uygulanir — uygulama yeniden
+baslatilmaz, acik disk ve bekleyen islem kuyrugu kaybolmaz. Secim saklanir.
+Acilisda sira: `DISKULTIMATE_LANG` > kayitli secim > isletim sisteminin dili >
+Turkce.
+
+```bash
+DISKULTIMATE_LANG=en python3 main.py    # arayuzu Ingilizce ac
+```
+
+Yeni dil eklemek icin kod degistirmek gerekmez; ayrintilar:
+`.claude/decisions/0027-cok-dilli-arayuz.md`.
+
 **Wayland notu:** Qt5'in yerel Wayland eklentisinde modal pencereler bos ciziliyor,
 bu yuzden uygulama Wayland oturumlarinda otomatik olarak XWayland (`xcb`) uzerinde
 acilir. Zorlamak isterseniz: `DISKULTIMATE_QPA=wayland python3 main.py`
@@ -106,9 +136,11 @@ haritada bos alana sag tikla > `Yeni bolum...` → dosya sistemini sec →
 ## Test
 
 ```bash
-python3 -m tests.run_all        # cekirdek: 18 test
+python3 -m tests.run_all        # cekirdek: 28 test
 python3 -m tests.platform_check # capraz platform denetimi (beklenen: 0 bulgu)
-python3 -m tests.ui_smoke       # arayuz: ornek goruntu + 18 ekran goruntusu
+python3 -m tests.i18n_check     # ceviri sozlukleri (eksik/bayat/yer tutucu)
+python3 -m tests.diag_check     # tanilama / donma yakalayici (13/13)
+python3 -m tests.ui_smoke       # arayuz: ornek goruntu + ekran goruntuleri
 ```
 
 Uretilen birimler bagimsiz araclarla capraz dogrulanir: FAT icin `fsck.vfat`,

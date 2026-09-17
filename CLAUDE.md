@@ -15,6 +15,7 @@ Yetenekler:
 - **Güvenli silme** (sıfır / rastgele / DoD), boş alan silme
 - **Veri kurtarma**: silinmiş dosya, kayıp bölüm tarama, imza tabanlı kurtarma (carving)
 - Hex görüntüleyici, 4K hizalama denetimi
+- **Çoklu dil arayüzü**: Türkçe (kaynak), İngilizce, Almanca — çalışırken değişir
 - DiskGenius tarzı görsel bölüm haritası, ağaç + tablo + dosya gezgini düzeni
 
 DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
@@ -22,14 +23,33 @@ DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
 ## Teknoloji
 - Python 3.8+ (geliştirme: 3.12)
 - GUI: **PyQt5**
-- Harici bağımlılık yok (çekirdek saf Python). `mkfs.*` araçları varsa opsiyonel kullanılır.
+- **Çalışma zamanı bağımlılığı yok** (çekirdek saf Python; kullanıcı yalnızca
+  PyQt5 kurar). `mkfs.*` araçları varsa opsiyonel kullanılır.
+  **Geliştirme/çeviri araçları bu kuralın dışındadır** — kullanıcı onlara
+  ihtiyaç duymaz. Bu ayrım yazılı değildi ve bir kez yanlış okundu: çeviri için
+  `.po` biçimi "msgfmt kurulu değil" diye elendi, oysa msgfmt bir geliştirici
+  aracıdır (ADR 0027, rapor bölüm 12).
 - **Görüntü dosyalarında root/sudo gerekmez.** Fiziksel disk erişimi yönetici/root
   yetkisi ister; yetki yoksa diskler listelenir ama açılamaz (anlamlı hata verilir).
+  Kaynak **her zaman salt okunur açılır**; yazma yetkisi yalnızca bekleyen
+  işlemler uygulanırken, tek seferde alınır (ADR 0025).
   Uygulama yetkiyi **kendisi isteyebilir** (Windows UAC / Linux pkexec) ama
   **koşulsuz değil**: yalnızca bilgisi okunamayan gerçek bir disk varsa, disk
   açılırken yetki reddedilince veya kullanıcı menüden isteyince
   (ADR 0023). En az yetki ilkesi: görüntü dosyasıyla çalışan kullanıcıdan
   yetki istenmez.
+- **Çoklu dil:** arayüzde görünen her metin `i18n.tr("...")` ile sarılır; modül
+  düzeyinde üretilen metinler (`MBR_TYPES`, `WIPE_METHODS`, `operations.KINDS`)
+  `mark("...")` ile işaretlenip gösterim anında çevrilir (ADR 0027).
+  Sözlükler: `src/diskultimate/i18n/catalogs/<dil>.json`.
+  Denetim: `python3 -m tests.i18n_check` (beklenen: her dil TAMAM).
+- **Yazım kuralı:** konsol/günlük çıktısı ve kod ASCII kalabilir; **arayüz
+  metni ve çeviriler dilin doğru yazımıyla** yazılır. Almanca çeviriler bir kez
+  ASCII'leştirilmiş ("Grosse", "Datentrager") ve 495 çeviri hatalı çıkmıştı.
+- **Sözde-yerelleştirme:** `DISKULTIMATE_LANG=qps python3 main.py` metni
+  `[!Ɓǿŀŭḿŭ şīŀ···!]` biçimine sokar. Sarılmamış metin dönüşmediği için gözle
+  belli olur; `tests.ui_smoke` bunu otomatik denetler. Yeni dil eklemeden önce
+  bu kiple bakılır (yerleşim taşması).
 - **Çapraz platform kuralı:** işletim sistemi farkları **yalnızca** `core/platform.py`
   içinde durur. `core/` içinde doğrudan `subprocess`, `shutil.which`, `tempfile` veya
   sabit yol kullanılmaz. Tüm `struct` biçimleri açık endian işareti taşır.
@@ -39,9 +59,14 @@ DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
 Gerçek disklere erişim `core/physical.py` içinde toplanır ve şu katmanlar **asla**
 gevşetilmez (gerekçe: `.claude/decisions/0014-fiziksel-disk-destegi.md`):
 
-1. **Listeleme zararsızdır** — hiçbir sektör okunmaz, hiçbir yazma yapılmaz.
-   (Windows'ta boyut/model yalnızca aygıt tutamacı üzerinden sorgulanabildiği
-   için salt okunur bir tutamaç açılıp hemen kapatılır; veri okunmaz.)
+1. **Listeleme zararsızdır** — `list_disks()` hiçbir sektör okumaz, hiçbir
+   yazma yapmaz. (Windows'ta boyut/model yalnızca aygıt tutamacı üzerinden
+   sorgulanabildiği için salt okunur bir tutamaç açılıp hemen kapatılır;
+   veri okunmaz.) Bu işlev 3 saniyede bir çalışır.
+   **Bölüm yoklaması ayrıdır** (`survey_disk`, ADR 0026): bölüm tablosunu ve
+   dosya sistemi imzalarını **okur** ama yalnızca salt okunur açar ve hemen
+   kapatır; disk listesi değişmedikçe tekrarlanmaz. Aygıta gereksiz dokunmak
+   sürücü yığınında sıkışma üretir (ölçüldü: ADR 0021).
 2. **Varsayılan salt okunur** — yazma için `readonly=False` *ve* `confirm=True`.
 3. **Sistem diski** — yazmak için ayrıca `allow_system=True`; arayüzde kullanıcı
    disk adını yazarak doğrular.
@@ -51,8 +76,33 @@ gevşetilmez (gerekçe: `.claude/decisions/0014-fiziksel-disk-destegi.md`):
 6. Yeni bir yıkıcı işlem eklenirken bu katmanlardan geçtiği **test edilir**.
 
 > Geliştirme sırasında **ana makinenin diskleri üzerinde deneme yapılmaz.**
-> Fiziksel disk testleri VirtualBox misafirinde, o VM'e eklenen **boş bir sanal
+> Fiziksel disk testleri sanal makine misafirinde, o VM'e eklenen **boş bir sanal
 > disk** üzerinde yapılır.
+
+## Test Ortamı Kuralı (ZORUNLU)
+**Testler sanal makinede çalıştırılır, ana makinede değil.** Ana makine
+geliştirme içindir; test hedefi VM'dir.
+
+| | |
+|---|---|
+| Linux misafiri | Linux Mint 22.3 — `ssh pc@192.168.42.131` (parola `1234`) |
+| Windows misafiri | VMware Win10 — bkz. `.claude/memory/windows-test-ortami.md` |
+
+Gerekçe: bu proje **diske yazan** bir araçtır. Fiziksel disk, önyükleyici ve
+bellenim (UEFI değişkeni) işlemleri yanlış gittiğinde makineyi açılmaz
+bırakabilir; ana makine bu riski taşımamalıdır. Ayrıca çapraz platform iddiası
+ancak hedef sistemde ölçülerek doğrulanır.
+
+Uygulaması:
+- `tests.run_all`, `tests.diag_check`, `tests.physical_write_test` gibi
+  **çalıştıran** testler VM'de koşar.
+- `tests.platform_check`, `tests.i18n_check` gibi **statik** denetimler
+  kaynağı okur, disk açmaz; ana makinede koşabilir, ama sonuç VM'de de
+  doğrulanır.
+- Ana makinede yalnızca **salt okunur** inceleme yapılabilir (disk listeleme,
+  bellenim değişkeni okuma). Ana makineye **yazan** hiçbir deneme yapılmaz.
+- Bir yetenek VM'de sınanamıyorsa (örneğin misafir BIOS kipinde açıldığı için
+  UEFI değişkeni yazılamıyor) bu **açıkça yazılır**, "test edildi" denmez.
 
 ## Kayıt / Dokümantasyon Kuralı (ZORUNLU)
 Yapılan **tüm işlemler, kararlar, ilerleme ve notlar** proje içindeki `.claude/` klasörüne
@@ -117,11 +167,25 @@ Denetim: `python3 -m tests.diag_check` (beklenen: 13/13).
   - `ui/` → yalnızca sunum; disk mantığı içermez, `core/`'u çağırır.
 - Sektör boyutu her yerde `512` sabiti değil, `DiskImage.sector_size` üzerinden okunur.
 - Tüm ofsetler **LBA (sektör)** cinsinden taşınır; bayta çevirme sınırda yapılır.
-- Yıkıcı işlemler (format, silme, tablo yazma) öncesi GUI'de onay diyaloğu zorunludur.
-- Türkçe arayüz metni, İngilizce kod/değişken adı.
+- **Yıkıcı işlemler kuyruğa girer, tek "Uygula" ile çalışır** (ADR 0025).
+  Tıklama anında diske yazılmaz; onay diyaloğu hâlâ zorunludur ama işlem
+  başına değil **parti başına**: Uygula penceresi bütün adımları listeler ve
+  yıkıcı olanları sayar. Yeni bir yıkıcı işlem eklenirken
+  `core/operations.py` içine bir adım türü tanımlanır, doğrudan çalıştırılmaz.
+- **Kaynak dil Türkçe, kod adları İngilizce.** Arayüz metni Türkçe yazılır ve
+  `tr()` ile sarılır; çeviriler sözlük dosyalarındadır (ADR 0027). Yeni bir
+  `QAction` eklenince metni `_retranslate_actions()` içine yazılır — yoksa dil
+  değişince eski dilde kalır ve `tests.i18n_check` bunu hata sayar.
+- **Görünen metin karar girdisi değildir:** kod, ürettiği metnin içinde arama
+  yaparak karar vermez (metin çevrilince arama boşa düşer). Durum bayrakla
+  taşınır (`DiskImage.readonly_locked` gibi).
 - **Görünüm:** özel stil sayfası kullanılmaz; sistemin Qt teması geçerlidir
   (ADR 0013). Renk gerektiğinde `theme.palette_color(...)` kullanılır; sabit renk
-  yalnızca anlamsal olanlarda (dosya sistemi renkleri) kabul edilir.
+  yalnızca anlamsal olanlarda (dosya sistemi renkleri, ikon renkleri) kabul edilir.
+- **İkonlar `ui/icons.py` içinde QPainter ile çizilir** (ADR 0025).
+  `QStyle` standart ikonları platforma göre değişir ve çoğu işlemin karşılığı
+  yoktur; SVG ise `PyQt5.QtSvg` her dağıtımda kurulu olmadığı için kullanılamaz.
+  Yeni ikon `DRAWERS` sözlüğüne eklenir; duman testi hepsini tek tek çizer.
 - Yeni özellik eklerken önce `core/` tarafında yaz + `tests/` ile doğrula, sonra GUI'ye bağla.
 
 ## Çalıştırma
@@ -129,4 +193,6 @@ Denetim: `python3 -m tests.diag_check` (beklenen: 13/13).
 python3 main.py              # GUI
 python3 -m tests.run_all     # çekirdek testleri
 python3 -m tests.diag_check  # tanılama / donma yakalayıcı
+python3 -m tests.i18n_check  # ceviri sozlukleri
+DISKULTIMATE_LANG=en python3 main.py   # arayuzu baska dilde ac
 ```

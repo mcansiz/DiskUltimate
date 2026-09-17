@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Iterator, List, Optional, Tuple
 
 from .image import BlockDevice
+from ..i18n import tr
 
 FILE_MAGIC = b"FILE"
 INDX_MAGIC = b"INDX"
@@ -131,7 +132,7 @@ class MftRecord:
         self.raw = raw
         self.fs = fs
         if raw[:4] != FILE_MAGIC:
-            raise NtfsError(f"FILE imzasi yok: kayit {number}")
+            raise NtfsError(tr("FILE imzasi yok: kayit {}", number))
         (self.sequence, self.link_count, self.attrs_offset,
          self.flags) = struct.unpack_from("<HHHH", raw, 0x10)
         self.base_ref = struct.unpack_from("<Q", raw, 0x20)[0]
@@ -272,7 +273,7 @@ class NtfsFS:
     def _read_boot(self) -> None:
         boot = self.dev.read(0, 512)
         if len(boot) < 512 or boot[3:11] != b"NTFS    ":
-            raise NtfsError("NTFS imzasi yok")
+            raise NtfsError(tr("NTFS imzasi yok"))
         self.sector_size = struct.unpack_from("<H", boot, 0x0B)[0]
         spc = boot[0x0D]
         # 0x80..0xFF arasi deger 2'nin kuvveti olarak yorumlanir (buyuk kumeler)
@@ -285,7 +286,7 @@ class NtfsFS:
         self.index_size = self._sized(boot[0x44])
         self.serial = struct.unpack_from("<Q", boot, 0x48)[0]
         if self.cluster_size <= 0 or self.record_size <= 0:
-            raise NtfsError("Onyukleme sektoru degerleri tutarsiz")
+            raise NtfsError(tr("Onyukleme sektoru degerleri tutarsiz"))
 
     def _sized(self, value: int) -> int:
         """`clusters_per_*` alani: pozitifse kume, negatifse 2^(-deger) bayt."""
@@ -301,7 +302,7 @@ class NtfsFS:
         rec = MftRecord(0, bytes(raw), self)
         data = rec.find(AT_DATA)
         if data is None or data.resident:
-            raise NtfsError("$MFT veri oznitelugu okunamadi")
+            raise NtfsError(tr("$MFT veri oznitelugu okunamadi"))
         self._mft_runs = data.runs
         self.mft_size = data.data_size
         self._cache[0] = rec
@@ -323,7 +324,7 @@ class NtfsFS:
             if last + 2 > len(raw):
                 break
             if bytes(raw[last:last + 2]) != bytes(marker):
-                raise NtfsError("Fixup imzasi tutmuyor (kayit bozuk)")
+                raise NtfsError(tr("Fixup imzasi tutmuyor (kayit bozuk)"))
             raw[last:last + 2] = raw[usa_off + i * 2:usa_off + i * 2 + 2]
 
     # ------------------------------------------------------------------
@@ -366,7 +367,7 @@ class NtfsFS:
         if attr.resident:
             return bytes(attr.value[offset:offset + length])
         if attr.flags & ATTR_COMPRESSED:
-            raise NtfsError("Sikistirilmis NTFS akisi bu surumde okunamaz")
+            raise NtfsError(tr("Sikistirilmis NTFS akisi bu surumde okunamaz"))
         end = min(offset + length, attr.data_size)
         if end <= offset:
             return b""
@@ -383,7 +384,7 @@ class NtfsFS:
             return attr.value if max_bytes < 0 else attr.value[:max_bytes]
         if attr.flags & ATTR_COMPRESSED:
             raise NtfsError(
-                "Sikistirilmis NTFS akisi bu surumde okunamaz")
+                tr("Sikistirilmis NTFS akisi bu surumde okunamaz"))
         size = attr.data_size if max_bytes < 0 else min(attr.data_size, max_bytes)
         data = self._run_read(attr.runs, 0, size)
         # initialized_size sonrasi tanimsizdir, sifir okunur
@@ -400,7 +401,7 @@ class NtfsFS:
         offset = number * self.record_size
         raw = bytearray(self._run_read(self._mft_runs, offset, self.record_size))
         if len(raw) < self.record_size:
-            raise NtfsError(f"MFT kaydi okunamadi: {number}")
+            raise NtfsError(tr("MFT kaydi okunamadi: {}", number))
         self._apply_fixup(raw)
         rec = MftRecord(number, bytes(raw), self)
         self._cache[number] = rec
@@ -412,7 +413,7 @@ class NtfsFS:
     def listdir_record(self, rec: MftRecord) -> List[NtfsEntry]:
         """Bir dizin kaydinin girislerini dondurur."""
         if not rec.is_dir:
-            raise NtfsError("Dizin degil")
+            raise NtfsError(tr("Dizin degil"))
         root = rec.find(AT_INDEX_ROOT, "$I30")
         if root is None:
             return []
@@ -504,14 +505,14 @@ class NtfsFS:
         rec = self.record(MFT_RECORD_ROOT)
         for part in [p for p in path.replace("\\", "/").split("/") if p]:
             if not rec.is_dir:
-                raise NtfsError(f"Dizin degil: {part}")
+                raise NtfsError(tr("Dizin degil: {}", part))
             target = None
             for e in self.listdir_record(rec):
                 if e.name.lower() == part.lower():
                     target = e
                     break
             if target is None:
-                raise NtfsError(f"Bulunamadi: {path}")
+                raise NtfsError(tr("Bulunamadi: {}", path))
             rec = self.record(target.mft_ref)
         return rec
 
@@ -521,7 +522,7 @@ class NtfsFS:
     def read_file(self, path: str, max_bytes: int = -1) -> bytes:
         rec = self.resolve(path)
         if rec.is_dir:
-            raise NtfsError("Klasor okunamaz")
+            raise NtfsError(tr("Klasor okunamaz"))
         data = rec.find(AT_DATA, "")
         if data is None:
             return b""

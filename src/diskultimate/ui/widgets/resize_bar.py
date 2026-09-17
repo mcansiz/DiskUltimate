@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import QSizePolicy, QWidget
 
 from ...core.ptable import human_size
 from ..theme import FREE_COLOR, darken, fs_color, lighten, palette_color
+from ...i18n import tr
 
 HANDLE_W = 7           # tutamagin piksel genisligi
 KENAR = 12            # seridin sol/sag bosluğu
@@ -146,7 +147,7 @@ class ResizeBar(QWidget):
             yazi = QFont(self.font())
             yazi.setPointSizeF(max(7.5, yazi.pointSizeF()))
             p.setFont(yazi)
-            title = self.label or (self.fs_type or "Bolum")
+            title = self.label or (self.fs_type or tr("Bolum"))
             p.drawText(block.adjusted(6, 5, -6, 0), Qt.AlignLeft | Qt.AlignTop,
                        title)
             p.drawText(block.adjusted(6, 21, -6, 0), Qt.AlignLeft | Qt.AlignTop,
@@ -166,14 +167,14 @@ class ResizeBar(QWidget):
         taban = QRect(s.left(), s.bottom() + 4, s.width(), 18)
         if on > 0:
             p.drawText(taban, Qt.AlignLeft | Qt.AlignVCenter,
-                       f"◀ onunde {human_size(on)}")
+                       tr("◀ onunde {}", human_size(on)))
         if arka > 0:
             p.drawText(taban, Qt.AlignRight | Qt.AlignVCenter,
-                       f"arkasinda {human_size(arka)} ▶")
+                       tr("arkasinda {} ▶", human_size(arka)))
         if on <= 0 and arka <= 0:
             p.setPen(sonuk)
             p.drawText(taban, Qt.AlignHCenter | Qt.AlignVCenter,
-                       "bolum kapsayici alanin tamamini kapliyor")
+                       tr("bolum kapsayici alanin tamamini kapliyor"))
 
     def _draw_handle(self, p: QPainter, x: int, s: QRect, highlight: bool) -> None:
         renk = palette_color(self, "highlight")

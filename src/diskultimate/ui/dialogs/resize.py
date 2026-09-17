@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QDoubleSpinBox,
 from ...core.ptable import Partition, human_size
 from ...core.resize import FsResizeInfo, ResizeError, ResizeWindow
 from ..widgets.resize_bar import ResizeBar
+from ...i18n import tr
 
 MIB = 1024 * 1024
 
@@ -31,7 +32,7 @@ class ResizePartitionDialog(QDialog):
                  fs_info: FsResizeInfo, align_sectors: int = 2048,
                  used_bytes: int = -1, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Bolumu Boyutlandir")
+        self.setWindowTitle(tr("Bolumu Boyutlandir"))
         self.setMinimumWidth(660)
         self.part = part
         self.win = window
@@ -55,12 +56,11 @@ class ResizePartitionDialog(QDialog):
         duzen.setSizeConstraint(QLayout.SetMinimumSize)
 
         title = QLabel(
-            f"<b>{self.part.display_name}</b> &nbsp; "
-            f"{self.part.type_name} &nbsp; "
-            f"{self.fs.fs_type or 'bicimlendirilmemis'} &nbsp; "
-            f"{human_size(self.part.size)}"
-            f" &nbsp;—&nbsp; kapsayici alan "
-            f"<b>{human_size(self.win.size)}</b>")
+            tr("<b>{}</b> &nbsp; {} &nbsp; {} &nbsp; {} &nbsp;—&nbsp; "
+               "kapsayici alan <b>{}</b>",
+               self.part.display_name, self.part.type_name,
+               self.fs.fs_type or 'bicimlendirilmemis',
+               human_size(self.part.size), human_size(self.win.size)))
         duzen.addWidget(title)
 
         self.bar = ResizeBar(self)
@@ -72,12 +72,12 @@ class ResizePartitionDialog(QDialog):
         self.bar.rangeChanged.connect(self._from_bar)
         duzen.addWidget(self.bar)
 
-        ipucu = QLabel("Serit uzerindeki tutamaklari fareyle saga/sola surukleyin. "
-                       "Ok tuslari ince ayar yapar (Shift ile hizli).")
+        ipucu = QLabel(tr("Serit uzerindeki tutamaklari fareyle saga/sola surukleyin. "
+                       "Ok tuslari ince ayar yapar (Shift ile hizli)."))
         ipucu.setWordWrap(True)
         duzen.addWidget(ipucu)
 
-        grup = QGroupBox("(Gecerli Veri Ayrimi)")
+        grup = QGroupBox(tr("(Gecerli Veri Ayrimi)"))
         govde = QHBoxLayout(grup)
         sol = QFormLayout()
         sag = QFormLayout()
@@ -86,27 +86,27 @@ class ResizePartitionDialog(QDialog):
 
         self.kapasite = self._mb_spin()
         self.kapasite.valueChanged.connect(self._on_capacity)
-        sol.addRow("Yeni Kapasite:", self.kapasite)
+        sol.addRow(tr("Yeni Kapasite:"), self.kapasite)
 
         self.on_bosluk = self._mb_spin()
         self.on_bosluk.valueChanged.connect(self._on_gap_before)
-        sol.addRow("Onundeki Bosluk:", self.on_bosluk)
+        sol.addRow(tr("Onundeki Bosluk:"), self.on_bosluk)
 
         self.arka_bosluk = self._mb_spin()
         self.arka_bosluk.valueChanged.connect(self._on_gap_after)
-        sol.addRow("Arkasindaki Bosluk:", self.arka_bosluk)
+        sol.addRow(tr("Arkasindaki Bosluk:"), self.arka_bosluk)
 
         self.start_offset = self._offset_spin()
         self.start_offset.setRange(0, 2 ** 31 - 1)
         self.start_offset.setGroupSeparatorShown(True)
         self.start_offset.valueChanged.connect(self._on_offset)
-        sag.addRow("Baslangic Kesimi:", self.start_offset)
+        sag.addRow(tr("Baslangic Kesimi:"), self.start_offset)
 
         self.end_offset = self._offset_spin()
         self.end_offset.setRange(0, 2 ** 31 - 1)
         self.end_offset.setGroupSeparatorShown(True)
         self.end_offset.valueChanged.connect(self._on_offset)
-        sag.addRow("Bitis Kesimi:", self.end_offset)
+        sag.addRow(tr("Bitis Kesimi:"), self.end_offset)
 
         duzen.addWidget(grup)
 
@@ -121,9 +121,9 @@ class ResizePartitionDialog(QDialog):
         duzen.addWidget(self.ozet)
 
         dugmeler = QDialogButtonBox()
-        self.basla = dugmeler.addButton("Baslat", QDialogButtonBox.AcceptRole)
-        dugmeler.addButton("Iptal", QDialogButtonBox.RejectRole)
-        sifirla = QPushButton("Eski haline dondur")
+        self.basla = dugmeler.addButton(tr("Baslat"), QDialogButtonBox.AcceptRole)
+        dugmeler.addButton(tr("Iptal"), QDialogButtonBox.RejectRole)
+        sifirla = QPushButton(tr("Eski haline dondur"))
         sifirla.clicked.connect(
             lambda: self._from_bar(self.part.start_lba, self.part.sector_count,
                                    update_bar=True))
@@ -156,12 +156,13 @@ class ResizePartitionDialog(QDialog):
         return kutu
 
     def _limits_text(self) -> str:
-        parcalar = [f"<b>Sinirlar:</b> en az {human_size(self.min_count * self.ss)}",
-                    f"en cok {human_size(self.max_count * self.ss)}"]
+        parcalar = [tr("<b>Sinirlar:</b> en az {}",
+                       human_size(self.min_count * self.ss)),
+                    tr("en cok {}", human_size(self.max_count * self.ss))]
         if self.fs.note:
             parcalar.append(self.fs.note)
         if not self.fs.movable:
-            parcalar.append("baslangic degistirilemez")
+            parcalar.append(tr("baslangic degistirilemez"))
         return " · ".join(parcalar)
 
     # ------------------------------------------------------------- baglantilar
@@ -229,19 +230,19 @@ class ResizePartitionDialog(QDialog):
         tasima = (start - self.part.start_lba) * self.ss
         lines = []
         if delta > 0:
-            lines.append(f"Bolum <b>{human_size(delta)} buyuyecek</b>")
+            lines.append(tr("Bolum <b>{} buyuyecek</b>", human_size(delta)))
         elif delta < 0:
-            lines.append(f"Bolum <b>{human_size(-delta)} kuculecek</b>")
+            lines.append(tr("Bolum <b>{} kuculecek</b>", human_size(-delta)))
         if tasima:
             yon = "ileri" if tasima > 0 else "geri"
             kopya = min(count, self.part.sector_count) * self.ss
             lines.append(
-                f"Bolum <b>{human_size(abs(tasima))} {yon} tasinacak</b> "
-                f"({human_size(kopya)} veri kopyalanir — uzun surebilir)")
+                tr("Bolum <b>{} {} tasinacak</b> ({} veri kopyalanir — uzun "
+                   "surebilir)", human_size(abs(tasima)), yon, human_size(kopya)))
         if self.used_bytes >= 0 and count * self.ss < self.used_bytes:
-            lines.append("<b>Dikkat:</b> yeni boyut kullanilan alandan kucuk")
+            lines.append(tr("<b>Dikkat:</b> yeni boyut kullanilan alandan kucuk"))
         if not lines:
-            lines.append("Degisiklik yok")
+            lines.append(tr("Degisiklik yok"))
         self.ozet.setText(" · ".join(lines))
         self.basla.setEnabled(
             (start, count) != (self.part.start_lba, self.part.sector_count))

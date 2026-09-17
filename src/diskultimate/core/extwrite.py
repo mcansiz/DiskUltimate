@@ -42,6 +42,7 @@ from .extcsum import (DIRENT_TAIL_FT, DIRENT_TAIL_SIZE, GD_CHECKSUM_OFFSET,
                       ExtChecksums)
 from .extread import (EXTENTS_FL, INO_ROOT, S_IFDIR, S_IFMT, S_IFREG,
                       ExtError, ExtFS, ExtInode, _normalize)
+from ..i18n import tr
 
 # Desteklenmeyen ozellikler
 INCOMPAT_64BIT = 0x0080
@@ -76,7 +77,7 @@ class ExtWriter:
         """(destekleniyor mu, neden) — neden yalnizca desteklenmiyorsa dolu."""
         fs = self.fs
         if getattr(self.dev, "readonly", False):
-            return False, "Kaynak salt okunur acildi."
+            return False, tr("Kaynak salt okunur acildi.")
         missing = []
         if fs.ro_compat & RO_BIGALLOC:
             missing.append("bigalloc")
@@ -86,7 +87,7 @@ class ExtWriter:
             # `64bit` ozelligi tek basina engel degil: sorun ancak blok numarasi
             # 32 biti asarsa cikar. Saglamalar ve 64 baytlik grup tanimlayicisi
             # desteklenir.
-            missing.append("64bit (4 milyar bloktan buyuk birim)")
+            missing.append(tr("64bit (4 milyar bloktan buyuk birim)"))
         if missing:
             return False, (
                 "Bu birim su ozellikleri kullaniyor ve bu surumde yazma "
@@ -107,9 +108,9 @@ class ExtWriter:
 
     def _write_block(self, block: int, data: bytes) -> None:
         if len(data) != self.bs:
-            raise ExtError("Blok boyutu uyusmuyor")
+            raise ExtError(tr("Blok boyutu uyusmuyor"))
         if block <= 0 or block >= self.fs.blocks_count:
-            raise ExtError(f"Sinir disi blok yazimi: {block}")
+            raise ExtError(tr("Sinir disi blok yazimi: {}", block))
         self.dev.write(block * self.bs, bytes(data))
 
     # ------------------------------------------------------------------
@@ -262,8 +263,8 @@ class ExtWriter:
         if len(out) < count:
             # Kismi tahsis birakilmaz: alinanlar geri verilir.
             self.free_blocks(out)
-            raise ExtError(f"Bos blok yetersiz: {count} istendi, "
-                           f"{len(out)} bulundu")
+            raise ExtError(tr("Bos blok yetersiz: {} istendi, {} bulundu",
+                              count, len(out)))
         return out
 
     def free_blocks(self, blocks: List[int]) -> None:
@@ -309,7 +310,7 @@ class ExtWriter:
                     self._refresh_bitmap_csum(group, inode_map=False)
                     self._bump_free_blocks(group, -1)
                     return first + i
-        raise ExtError("Bos blok kalmadi")
+        raise ExtError(tr("Bos blok kalmadi"))
 
     def free_block(self, block: int) -> None:
         fs = self.fs
@@ -350,7 +351,7 @@ class ExtWriter:
                     if is_dir:
                         self._bump_used_dirs(group, +1)
                     return ino
-        raise ExtError("Bos inode kalmadi")
+        raise ExtError(tr("Bos inode kalmadi"))
 
     def free_inode(self, ino: int, was_dir: bool) -> None:
         fs = self.fs
@@ -446,7 +447,7 @@ class ExtWriter:
         bs = self.bs
         if len(data) > self._max_bytes():
             raise ExtError(
-                f"Dosya cok buyuk: en fazla {self._max_bytes() >> 30} GB")
+                tr("Dosya cok buyuk: en fazla {} GB", self._max_bytes() >> 30))
         needed = (len(data) + bs - 1) // bs
         if needed == 0:
             return [0] * 15, 0
@@ -605,7 +606,7 @@ class ExtWriter:
         raw_name = name.encode("utf-8")
         needed = _align4(DIRENT_HEAD + len(raw_name))
         if needed > self.bs:
-            raise ExtError("Dosya adi cok uzun")
+            raise ExtError(tr("Dosya adi cok uzun"))
         node = self.fs.read_inode(parent)
 
         for blk in self._dir_blocks(node):
@@ -643,8 +644,8 @@ class ExtWriter:
         """Dizin inode'una yeni bir veri blogu baglar."""
         if node.uses_extents:
             raise ExtError(
-                "Bu dizin extent kullaniyor ve dolu; yeni blok eklemek extent "
-                "agacini degistirmeyi gerektirir, bu surumde desteklenmiyor.")
+                tr("Bu dizin extent kullaniyor ve dolu; yeni blok eklemek extent "
+                "agacini degistirmeyi gerektirir, bu surumde desteklenmiyor."))
         direct = list(struct.unpack_from("<12I", node.raw_block, 0))
         for i, b in enumerate(direct):
             if b == 0:
@@ -656,8 +657,8 @@ class ExtWriter:
                     self._inode_offset(ino) + 0x1C, 4))[0]
                 self._patch_inode(ino, 0x1C, "<I", sectors + self.bs // 512)
                 return
-        raise ExtError("Dizin bu surumde daha fazla buyutulemez "
-                       "(yalnizca 12 dogrudan blok)")
+        raise ExtError(tr("Dizin bu surumde daha fazla buyutulemez "
+                       "(yalnizca 12 dogrudan blok)"))
 
     def dir_remove(self, parent: int, name: str) -> None:
         """Girisi siler: onceki kaydin `rec_len` degeri uzerine alinir."""
@@ -681,7 +682,7 @@ class ExtWriter:
                     return
                 prev = pos
                 pos += rec_len
-        raise ExtError(f"Dizin girisi bulunamadi: {name}")
+        raise ExtError(tr("Dizin girisi bulunamadi: {}", name))
 
     # ------------------------------------------------------------------
     # Ust duzey islemler
@@ -690,7 +691,7 @@ class ExtWriter:
     def _split(path: str) -> Tuple[str, str]:
         norm = _normalize(path)
         if norm == "/":
-            raise ExtError("Kok dizin uzerinde islem yapilamaz")
+            raise ExtError(tr("Kok dizin uzerinde islem yapilamaz"))
         i = norm.rfind("/")
         return (norm[:i] or "/"), norm[i + 1:]
 
@@ -700,7 +701,7 @@ class ExtWriter:
         parent_path, name = self._split(path)
         parent = self.fs.resolve(parent_path)
         if not parent.is_dir:
-            raise ExtError(f"Dizin degil: {parent_path}")
+            raise ExtError(tr("Dizin degil: {}", parent_path))
 
         existing = None
         for e in self.fs.read_dir(parent):
@@ -710,7 +711,7 @@ class ExtWriter:
         if existing is not None:
             old = self.fs.read_inode(existing.inode)
             if old.is_dir:
-                raise ExtError(f"Ayni adda klasor var: {name}")
+                raise ExtError(tr("Ayni adda klasor var: {}", name))
             self._release_data(old)
             ino = existing.inode
         else:
@@ -729,9 +730,9 @@ class ExtWriter:
         parent_path, name = self._split(path)
         parent = self.fs.resolve(parent_path)
         if not parent.is_dir:
-            raise ExtError(f"Dizin degil: {parent_path}")
+            raise ExtError(tr("Dizin degil: {}", parent_path))
         if any(e.name == name for e in self.fs.read_dir(parent)):
-            raise ExtError(f"Zaten var: {name}")
+            raise ExtError(tr("Zaten var: {}", name))
 
         ino = self.alloc_inode(is_dir=True)
         blk, buf = self._new_dir_block()
@@ -763,14 +764,15 @@ class ExtWriter:
                 target = e
                 break
         if target is None:
-            raise ExtError(f"Bulunamadi: {path}")
+            raise ExtError(tr("Bulunamadi: {}", path))
         node = self.fs.read_inode(target.inode)
 
         if node.is_dir:
             remaining = [e.name for e in self.fs.read_dir(node)
                      if e.name not in (".", "..")]
             if remaining:
-                raise ExtError(f"Klasor bos degil: {name} ({len(remaining)} giris)")
+                raise ExtError(tr("Klasor bos degil: {} ({} giris)",
+                                  name, len(remaining)))
 
         # Hizli sembolik bagin hedefi `i_block` icindedir, blok tutmaz;
         # yalnizca blok tabanli baglar ve normal dosyalar serbest birakilir.
@@ -790,16 +792,16 @@ class ExtWriter:
         self._require_writable()
         parent_path, name = self._split(path)
         if "/" in new_name:
-            raise ExtError("Yeni ad yol icermemeli")
+            raise ExtError(tr("Yeni ad yol icermemeli"))
         parent = self.fs.resolve(parent_path)
         target = None
         for e in self.fs.read_dir(parent):
             if e.name == new_name:
-                raise ExtError(f"Zaten var: {new_name}")
+                raise ExtError(tr("Zaten var: {}", new_name))
             if e.name == name:
                 target = e
         if target is None:
-            raise ExtError(f"Bulunamadi: {path}")
+            raise ExtError(tr("Bulunamadi: {}", path))
         ftype = FT_DIR if self.fs.read_inode(target.inode).is_dir else FT_REG
         self.dir_remove(parent.number, name)
         self.dir_add(parent.number, new_name, target.inode, ftype)

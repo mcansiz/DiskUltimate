@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
 from .image import BlockDevice
+from ..i18n import tr
 
 EXT_MAGIC = 0xEF53
 JBD2_MAGIC = 0xC03B3998
@@ -109,7 +110,7 @@ class ExtFormatter:
                  block_size: int = 0, label: str = "",
                  bytes_per_inode: int = 16384, reserved_percent: float = 5.0):
         if version not in ("ext2", "ext3", "ext4"):
-            raise ExtError(f"Bilinmeyen surum: {version}")
+            raise ExtError(tr("Bilinmeyen surum: {}", version))
         self.dev = dev
         self.version = version
         self.label = label[:16]
@@ -117,7 +118,7 @@ class ExtFormatter:
         self.reserved_percent = max(0.0, min(50.0, reserved_percent))
         self.block_size = block_size or self._default_block_size()
         if self.block_size not in (1024, 2048, 4096):
-            raise ExtError("Blok boyutu 1024, 2048 veya 4096 olmalidir")
+            raise ExtError(tr("Blok boyutu 1024, 2048 veya 4096 olmalidir"))
         self.uuid = _uuid.uuid4()
         self.now = int(time.time())
         self.layout = self._compute_layout()
@@ -151,7 +152,7 @@ class ExtFormatter:
         bs = self.block_size
         total_blocks = self.dev.size // bs
         if total_blocks < 64:
-            raise ExtError("Bolum ext icin cok kucuk")
+            raise ExtError(tr("Bolum ext icin cok kucuk"))
         first_data = 1 if bs == 1024 else 0
         blocks_per_group = bs * 8              # blok bitmap tek blok
         inode_size = 128 if self.version == "ext2" else 256
@@ -184,7 +185,7 @@ class ExtFormatter:
             # Son grup metaverisini alamiyor: onu tumuyle dusur.
             trimmed = first_data + last_group * blocks_per_group
             if trimmed <= 64:
-                raise ExtError("Bolum ext icin cok kucuk")
+                raise ExtError(tr("Bolum ext icin cok kucuk"))
             total_blocks = trimmed
 
         total_inodes = inodes_per_group * group_count
@@ -265,7 +266,7 @@ class ExtFormatter:
 
         L = self.layout
         bs = L.block_size
-        report(f"{self.version} yerlesimi hazirlaniyor...", 5)
+        report(tr("{} yerlesimi hazirlaniyor...", self.version), 5)
 
         # --- blok tahsis defteri ---
         kullanilan: Dict[int, bool] = {}
@@ -295,7 +296,7 @@ class ExtFormatter:
                 "data_start": inode_table + L.inode_table_blocks,
             })
 
-        report("Metaveri alanlari sifirlaniyor...", 15)
+        report(tr("Metaveri alanlari sifirlaniyor..."), 15)
         for g, meta in enumerate(grup_meta):
             self._zero_blocks(meta["inode_table"], L.inode_table_blocks)
 
@@ -311,7 +312,7 @@ class ExtFormatter:
         journal_blocks: List[int] = []
         journal_indirect = 0
         if self._journal_blocks:
-            report("Gunluk (journal) ayriliyor...", 25)
+            report(tr("Gunluk (journal) ayriliyor..."), 25)
             # 12 dogrudan blogu asan kisim icin bir dolayli blok daha gerekir
             gerekli = self._journal_blocks + (1 if self._journal_blocks > 12 else 0)
             # ardisik yer bul
@@ -333,32 +334,32 @@ class ExtFormatter:
                     journal_blocks = list(range(aday, aday + gerekli))
 
         if journal_blocks:
-            report("Gunluk alani hazirlaniyor...", 35)
+            report(tr("Gunluk alani hazirlaniyor..."), 35)
             # Once TUM gunluk araligi sifirlanir, superblok yazilir; dolayli
             # tablo blogu bu araligin ortasindadir ve inode yaziminda
             # doldurulacaktir. Sira ters olursa tablo silinir ve e2fsck
             # "gecersiz gunluk" der.
             self._write_journal(journal_blocks, journal_indirect)
 
-        report("Inode tablosu yaziliyor...", 40)
+        report(tr("Inode tablosu yaziliyor..."), 40)
         self._write_root_inode(grup_meta, root_block, lost_block, journal_blocks,
                                journal_indirect)
 
-        report("Dizin bloklari yaziliyor...", 55)
+        report(tr("Dizin bloklari yaziliyor..."), 55)
         self._write_root_dir(root_block, lost_block)
         self._write_lost_found(lost_block)
 
-        report("Bitmapler yaziliyor...", 75)
+        report(tr("Bitmapler yaziliyor..."), 75)
         group_free_blocks, total_free_blocks = self._write_bitmaps(grup_meta, kullanilan)
 
-        report("Superbloklar yaziliyor...", 90)
+        report(tr("Superbloklar yaziliyor..."), 90)
         self._write_superblocks(grup_meta, group_free_blocks, total_free_blocks,
                                 bool(journal_blocks))
 
         f = getattr(self.dev, "flush", None)
         if f:
             f()
-        report("Tamamlandi", 100)
+        report(tr("Tamamlandi"), 100)
         return {
             "version": self.version, "block_size": bs,
             "blocks": L.block_count, "inodes": L.inode_count,
@@ -412,7 +413,7 @@ class ExtFormatter:
             if journal_indirect:
                 kalan = journal[12:]
                 if len(kalan) > bs // 4:
-                    raise ExtError("Gunluk tek dolayli blogun kapasitesini asiyor")
+                    raise ExtError(tr("Gunluk tek dolayli blogun kapasitesini asiyor"))
                 table = bytearray(bs)
                 for i, b in enumerate(kalan):
                     struct.pack_into("<I", table, i * 4, b)

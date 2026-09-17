@@ -10,16 +10,18 @@ from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QLabel, QPlainTextEdit,
 from ...core.filesystem import FileNode
 from ...core.ptable import human_size
 from ..widgets.hex_view import hexdump
+from ...i18n import tr
 
 
 class PreviewDialog(QDialog):
     def __init__(self, node: FileNode, data: bytes, text: Optional[str], parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f"Onizleme — {node.name}")
+        self.setWindowTitle(tr("Onizleme — {}", node.name))
         self.resize(820, 560)
         layout = QVBoxLayout(self)
-        info = QLabel(f"<b>{node.path}</b> — {human_size(node.size)} "
-                       f"(ilk {human_size(len(data))} gosteriliyor)")
+        info = QLabel(tr("<b>{}</b> — {} (ilk {} gosteriliyor)",
+                         node.path, human_size(node.size),
+                         human_size(len(data))))
         layout.addWidget(info)
 
         sekmeler = QTabWidget()
@@ -29,15 +31,15 @@ class PreviewDialog(QDialog):
             metin = QPlainTextEdit(text)
             metin.setReadOnly(True)
             metin.setFont(mono)
-            sekmeler.addTab(metin, "Metin")
+            sekmeler.addTab(metin, tr("Metin"))
         hexed = QPlainTextEdit(hexdump(data))
         hexed.setReadOnly(True)
         hexed.setFont(mono)
         hexed.setLineWrapMode(QPlainTextEdit.NoWrap)
-        sekmeler.addTab(hexed, "Onaltilik")
+        sekmeler.addTab(hexed, tr("Onaltilik"))
         layout.addWidget(sekmeler, 1)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Close)
-        butonlar.button(QDialogButtonBox.Close).setText("Kapat")
+        butonlar.button(QDialogButtonBox.Close).setText(tr("Kapat"))
         butonlar.rejected.connect(self.reject)
         layout.addWidget(butonlar)

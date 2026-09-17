@@ -19,6 +19,7 @@ from ...core.recovery import SIGNATURES
 from ...core.wipe import WIPE_METHODS
 from ..theme import fs_color
 from ..widgets.partition_table import color_chip
+from ...i18n import tr
 
 
 class WipeDialog(QDialog):
@@ -27,55 +28,58 @@ class WipeDialog(QDialog):
     def __init__(self, parent=None, target_label: str = "", size: int = 0,
                  allow_free_space: bool = False):
         super().__init__(parent)
-        self.setWindowTitle("Guvenli Silme")
+        self.setWindowTitle(tr("Guvenli Silme"))
         self.setMinimumWidth(520)
         self._build(target_label, size, allow_free_space)
 
     def _build(self, target: str, size_bytes: int, allow_free_space: bool) -> None:
         duzen = QVBoxLayout(self)
         duzen.setSpacing(10)
-        duzen.addWidget(QLabel(f"<b>Hedef:</b> {target} — {human_size(size_bytes)}"))
+        duzen.addWidget(QLabel(tr("<b>Hedef:</b> {} — {}",
+                                  target, human_size(size_bytes))))
 
-        kapsam = QGroupBox("Kapsam")
+        kapsam = QGroupBox(tr("Kapsam"))
         kapsam_duzen = QVBoxLayout(kapsam)
-        self.radio_tum = QRadioButton("Tum alani sil (icindeki her sey yok olur)")
+        self.radio_tum = QRadioButton(tr("Tum alani sil (icindeki her sey yok olur)"))
         self.radio_tum.setChecked(True)
         kapsam_duzen.addWidget(self.radio_tum)
         self.radio_bos = QRadioButton(
-            "Yalnizca bos alani sil (mevcut dosyalar korunur, silinmis dosyalarin "
-            "artigi yok edilir)")
+            tr("Yalnizca bos alani sil (mevcut dosyalar korunur, silinmis dosyalarin "
+            "artigi yok edilir)"))
         self.radio_bos.setEnabled(allow_free_space)
         if not allow_free_space:
             self.radio_bos.setToolTip(
-                "Bu secenek yalnizca okunabilir bir dosya sistemi varsa kullanilabilir")
+                tr("Bu secenek yalnizca okunabilir bir dosya sistemi varsa "
+                   "kullanilabilir"))
         kapsam_duzen.addWidget(self.radio_bos)
         duzen.addWidget(kapsam)
 
-        yontem_grup = QGroupBox("Yontem")
+        yontem_grup = QGroupBox(tr("Yontem"))
         form = QFormLayout(yontem_grup)
         self.method_combo = QComboBox()
         for m in WIPE_METHODS:
-            self.method_combo.addItem(m.label, m.key)
+            self.method_combo.addItem(tr(m.label), m.key)
         self.method_combo.currentIndexChanged.connect(self._method_changed)
-        form.addRow("Silme yontemi:", self.method_combo)
+        form.addRow(tr("Silme yontemi:"), self.method_combo)
         self.method_info = QLabel()
         self.method_info.setWordWrap(True)
         self.method_info.setEnabled(False)   # paletten soluk ton
         form.addRow("", self.method_info)
-        self.verify_check = QCheckBox("Silme sonrasi dogrula (yalnizca sifirlamada)")
+        self.verify_check = QCheckBox(tr("Silme sonrasi dogrula (yalnizca "
+                                         "sifirlamada)"))
         form.addRow("", self.verify_check)
         duzen.addWidget(yontem_grup)
         self.radio_bos.toggled.connect(lambda v: yontem_grup.setEnabled(not v))
 
-        warning = QLabel("<span style='color:#b23c17'><b>Uyari:</b> Bu islem geri "
-                       "alinamaz. Silinen veriler kurtarilamaz.</span>")
+        warning = QLabel(tr("<span style='color:#b23c17'><b>Uyari:</b> Bu islem geri "
+                       "alinamaz. Silinen veriler kurtarilamaz.</span>"))
         warning.setWordWrap(True)
         duzen.addWidget(warning)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText("Sil")
+        butonlar.button(QDialogButtonBox.Ok).setText(tr("Sil"))
         butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
-        butonlar.button(QDialogButtonBox.Cancel).setText("Iptal")
+        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
@@ -85,7 +89,8 @@ class WipeDialog(QDialog):
         key = self.method_combo.currentData()
         for m in WIPE_METHODS:
             if m.key == key:
-                self.method_info.setText(f"{m.description} ({m.pass_count} gecis)")
+                self.method_info.setText(
+                    tr("{} ({} gecis)", tr(m.description), m.pass_count))
                 self.verify_check.setEnabled(m.passes[-1] == "zero")
                 break
 
@@ -100,10 +105,10 @@ class WipeDialog(QDialog):
 class DeletedFilesDialog(QDialog):
     """Silinmis dosya tarama sonuclari."""
 
-    def __init__(self, items: List, parent=None, title: str = "Silinmis Dosyalar"):
+    def __init__(self, items: List, parent=None, title: str = ""):
         super().__init__(parent)
         self.items = items
-        self.setWindowTitle(title)
+        self.setWindowTitle(title or tr("Silinmis Dosyalar"))
         self.resize(900, 560)
         self._build()
 
@@ -111,11 +116,11 @@ class DeletedFilesDialog(QDialog):
         duzen = QVBoxLayout(self)
         kurtarilabilir = sum(1 for i in self.items if i.confidence >= 100)
         duzen.addWidget(QLabel(
-            f"<b>{len(self.items)}</b> silinmis giris bulundu — "
-            f"<b>{kurtarilabilir}</b> tanesi eksiksiz kurtarilabilir gorunuyor."))
+            tr("<b>{}</b> silinmis giris bulundu — <b>{}</b> tanesi eksiksiz "
+               "kurtarilabilir gorunuyor.", len(self.items), kurtarilabilir)))
 
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Ad", "Yol", "Boyut", "Durum", "Kurtarilabilirlik"])
+        self.tree.setHeaderLabels(["Ad", tr("Yol"), tr("Boyut"), tr("Durum"), tr("Kurtarilabilirlik")])
         self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.tree.setAlternatingRowColors(True)
         self.tree.setRootIsDecorated(False)
@@ -139,16 +144,16 @@ class DeletedFilesDialog(QDialog):
         duzen.addWidget(self.tree, 1)
 
         lower = QHBoxLayout()
-        sec_tum = QPushButton("Tumunu sec")
+        sec_tum = QPushButton(tr("Tumunu sec"))
         sec_tum.clicked.connect(self.tree.selectAll)
         lower.addWidget(sec_tum)
         lower.addStretch(1)
         duzen.addLayout(lower)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText("Secilenleri kurtar...")
+        butonlar.button(QDialogButtonBox.Ok).setText(tr("Secilenleri kurtar..."))
         butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
-        butonlar.button(QDialogButtonBox.Cancel).setText("Kapat")
+        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Kapat"))
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
@@ -164,17 +169,18 @@ class LostPartitionsDialog(QDialog):
     def __init__(self, items: List, parent=None):
         super().__init__(parent)
         self.items = items
-        self.setWindowTitle("Kayip Bolum Tarama Sonuclari")
+        self.setWindowTitle(tr("Kayip Bolum Tarama Sonuclari"))
         self.resize(760, 460)
         self._build()
 
     def _build(self) -> None:
         duzen = QVBoxLayout(self)
         duzen.addWidget(QLabel(
-            f"Bolum tablosunda bulunmayan <b>{len(self.items)}</b> dosya sistemi "
-            "tespit edildi. Tabloya eklemek istediginizi secin."))
+            tr("Bolum tablosunda bulunmayan <b>{}</b> dosya sistemi tespit "
+               "edildi. Tabloya eklemek istediginizi secin.", len(self.items))))
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Baslangic LBA", "Boyut", "Dosya sistemi", "Etiket"])
+        self.tree.setHeaderLabels([tr("Baslangic LBA"), tr("Boyut"), tr("Dosya "
+                                                                     "sistemi"), tr("Etiket")])
         self.tree.setRootIsDecorated(False)
         self.tree.setAlternatingRowColors(True)
         self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -189,16 +195,16 @@ class LostPartitionsDialog(QDialog):
             self.tree.setColumnWidth(i, w)
         duzen.addWidget(self.tree, 1)
         not_etiketi = QLabel(
-            "Not: Eklenen bolum bicimlendirilmez; yalnizca tabloya kaydedilir. "
-            "Cakisma varsa islem reddedilir.")
+            tr("Not: Eklenen bolum bicimlendirilmez; yalnizca tabloya kaydedilir. "
+            "Cakisma varsa islem reddedilir."))
         not_etiketi.setEnabled(False)
         not_etiketi.setWordWrap(True)
         duzen.addWidget(not_etiketi)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText("Tabloya ekle")
+        butonlar.button(QDialogButtonBox.Ok).setText(tr("Tabloya ekle"))
         butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
-        butonlar.button(QDialogButtonBox.Cancel).setText("Kapat")
+        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Kapat"))
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
@@ -213,20 +219,21 @@ class CarveOptionsDialog(QDialog):
 
     def __init__(self, parent=None, scope_label: str = ""):
         super().__init__(parent)
-        self.setWindowTitle("Imza Tabanli Dosya Kurtarma")
+        self.setWindowTitle(tr("Imza Tabanli Dosya Kurtarma"))
         self.setMinimumWidth(460)
         self._build(scope_label)
 
     def _build(self, kapsam: str) -> None:
         duzen = QVBoxLayout(self)
         duzen.addWidget(QLabel(
-            f"<b>Tarama alani:</b> {kapsam}<br>"
-            "Dizin kaydi olmadan, dosya imzalarindan kurtarma yapilir. "
-            "Bicimlendirilmis alanlarda da calisir."))
+            tr("<b>Tarama alani:</b> {}<br>Dizin kaydi olmadan, dosya "
+               "imzalarindan kurtarma yapilir. Bicimlendirilmis alanlarda da "
+               "calisir.", kapsam)))
         self.liste = QListWidget()
         self.liste.setSelectionMode(QAbstractItemView.NoSelection)
         for imza in SIGNATURES:
-            item = QListWidgetItem(f"{imza.label}  (.{imza.extension})")
+            item = QListWidgetItem(
+                tr("{}  (.{})", tr(imza.label), imza.extension))
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(Qt.Checked if imza.key in
                                ("jpg", "png", "pdf", "zip") else Qt.Unchecked)
@@ -235,9 +242,9 @@ class CarveOptionsDialog(QDialog):
         duzen.addWidget(self.liste, 1)
 
         lower = QHBoxLayout()
-        tumu = QPushButton("Tumunu sec")
+        tumu = QPushButton(tr("Tumunu sec"))
         tumu.clicked.connect(lambda: self._set_all(Qt.Checked))
-        hicbiri = QPushButton("Temizle")
+        hicbiri = QPushButton(tr("Temizle"))
         hicbiri.clicked.connect(lambda: self._set_all(Qt.Unchecked))
         lower.addWidget(tumu)
         lower.addWidget(hicbiri)
@@ -245,9 +252,9 @@ class CarveOptionsDialog(QDialog):
         duzen.addLayout(lower)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText("Taramayi baslat")
+        butonlar.button(QDialogButtonBox.Ok).setText(tr("Taramayi baslat"))
         butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
-        butonlar.button(QDialogButtonBox.Cancel).setText("Iptal")
+        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
@@ -268,12 +275,13 @@ class CarvedFilesDialog(QDialog):
     def __init__(self, items: List, parent=None):
         super().__init__(parent)
         self.items = items
-        self.setWindowTitle("Bulunan Dosyalar")
+        self.setWindowTitle(tr("Bulunan Dosyalar"))
         self.resize(820, 520)
         duzen = QVBoxLayout(self)
-        duzen.addWidget(QLabel(f"<b>{len(items)}</b> dosya imzasi bulundu."))
+        duzen.addWidget(QLabel(tr("<b>{}</b> dosya imzasi bulundu.", len(items))))
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Tur", "Ofset", "Boyut", "Onerilen ad"])
+        self.tree.setHeaderLabels([tr("Tur"), tr("Ofset"), tr("Boyut"), tr("Onerilen "
+                                                                        "ad")])
         self.tree.setRootIsDecorated(False)
         self.tree.setAlternatingRowColors(True)
         self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -281,7 +289,7 @@ class CarvedFilesDialog(QDialog):
         self.tree.header().setSectionResizeMode(3, QHeaderView.Stretch)
         for oge in items:
             item = QTreeWidgetItem(self.tree)
-            item.setText(0, oge.label)
+            item.setText(0, tr(oge.label))
             item.setText(1, f"0x{oge.offset:X}")
             item.setText(2, human_size(oge.size))
             item.setText(3, oge.suggested_name)
@@ -290,16 +298,16 @@ class CarvedFilesDialog(QDialog):
         for i, w in enumerate((190, 130, 100)):
             self.tree.setColumnWidth(i, w)
         duzen.addWidget(self.tree, 1)
-        sec = QPushButton("Tumunu sec")
+        sec = QPushButton(tr("Tumunu sec"))
         sec.clicked.connect(self.tree.selectAll)
         lower = QHBoxLayout()
         lower.addWidget(sec)
         lower.addStretch(1)
         duzen.addLayout(lower)
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText("Secilenleri cikar...")
+        butonlar.button(QDialogButtonBox.Ok).setText(tr("Secilenleri cikar..."))
         butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
-        butonlar.button(QDialogButtonBox.Cancel).setText("Kapat")
+        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Kapat"))
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
@@ -329,7 +337,7 @@ class InfoDialog(QDialog):
             n.setEnabled(False)
             duzen.addWidget(n)
         butonlar = QDialogButtonBox(QDialogButtonBox.Close)
-        butonlar.button(QDialogButtonBox.Close).setText("Kapat")
+        butonlar.button(QDialogButtonBox.Close).setText(tr("Kapat"))
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
 
@@ -355,7 +363,7 @@ class TextViewDialog(QDialog):
         view.setLineWrapMode(QPlainTextEdit.NoWrap)
         duzen.addWidget(view, 1)
         butonlar = QDialogButtonBox(QDialogButtonBox.Close)
-        butonlar.button(QDialogButtonBox.Close).setText("Kapat")
+        butonlar.button(QDialogButtonBox.Close).setText(tr("Kapat"))
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
 
@@ -375,11 +383,11 @@ class BackupInfoDialog(QDialog):
         self.preview = preview
         self.browse = False          # kullanici gezmeyi sectiyse True
         info = preview.info
-        self.setWindowTitle(f"Yedek Dosyasi — {os.path.basename(info.path)}")
+        self.setWindowTitle(tr("Yedek Dosyasi — {}", os.path.basename(info.path)))
         self.resize(720, 560)
         duzen = QVBoxLayout(self)
 
-        grup = QGroupBox("Yedek bilgisi")
+        grup = QGroupBox(tr("Yedek bilgisi"))
         form = QFormLayout(grup)
         for key, value in info.summary().items():
             etiket = QLabel(str(value))
@@ -387,10 +395,10 @@ class BackupInfoDialog(QDialog):
             form.addRow(f"{key}:", etiket)
         duzen.addWidget(grup)
 
-        contents = QGroupBox("Icerik (geri yuklenmeden okundu)")
+        contents = QGroupBox(tr("Icerik (geri yuklenmeden okundu)"))
         contents_layout = QVBoxLayout(contents)
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Ad", "Dosya Sistemi", "Etiket", "Boyut"])
+        self.tree.setHeaderLabels(["Ad", tr("Dosya Sistemi"), tr("Etiket"), tr("Boyut")])
         self.tree.setRootIsDecorated(True)
         self.tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
         for col, width in ((1, 110), (2, 130), (3, 90)):
@@ -400,19 +408,19 @@ class BackupInfoDialog(QDialog):
         duzen.addWidget(contents, 1)
 
         self.note = QLabel(
-            "Yedek <b>salt okunur</b> acilir: bolumleri ve dosyalari gezebilir, "
+            tr("Yedek <b>salt okunur</b> acilir: bolumleri ve dosyalari gezebilir, "
             "dosyalari disa aktarabilirsiniz. Degistirmek icin bir diske veya "
-            "goruntuye yazmaniz gerekir.")
+            "goruntuye yazmaniz gerekir."))
         self.note.setWordWrap(True)
         self.note.setEnabled(False)
         duzen.addWidget(self.note)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Close)
-        butonlar.button(QDialogButtonBox.Close).setText("Kapat")
-        self.btn_browse = butonlar.addButton("Icerigini gez",
+        butonlar.button(QDialogButtonBox.Close).setText(tr("Kapat"))
+        self.btn_browse = butonlar.addButton(tr("Icerigini gez"),
                                              QDialogButtonBox.AcceptRole)
         self.btn_browse.setToolTip(
-            "Yedegi ana pencerede acar; bolum ve dosya gezgini calisir")
+            tr("Yedegi ana pencerede acar; bolum ve dosya gezgini calisir"))
         butonlar.accepted.connect(self._browse)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
@@ -426,7 +434,7 @@ class BackupInfoDialog(QDialog):
         if preview.partitions:
             for part in preview.partitions:
                 node = QTreeWidgetItem(self.tree, [
-                    f"Bolum {part.index}",
+                    tr("Bolum {}", part.index),
                     part.fs_type or "-",
                     part.name or part.fs_label or "-",
                     human_size(part.size)])
@@ -440,7 +448,7 @@ class BackupInfoDialog(QDialog):
         fs = preview.filesystem
         fs_type = getattr(fs, "fs_type", "") or preview.info.fs_type
         node = QTreeWidgetItem(self.tree, [
-            "Tek bolum yedegi", fs_type or "-",
+            tr("Tek bolum yedegi"), fs_type or "-",
             (getattr(fs, "label", "") or preview.info.label or "-"),
             human_size(preview.info.total_bytes)])
         node.setIcon(0, color_chip(fs_color(fs_type), 12))
@@ -461,7 +469,7 @@ class BackupInfoDialog(QDialog):
         if names == []:
             metin = "(bos)"
         elif not fs_type:
-            metin = "(bicimlendirilmemis)"
+            metin = tr("(bicimlendirilmemis)")
         else:
             metin = f"({fs_type} icerigi bu surumde listelenemiyor)"
         empty = QTreeWidgetItem(parent, [metin, "", "", ""])

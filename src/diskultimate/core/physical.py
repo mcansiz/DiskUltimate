@@ -27,6 +27,7 @@ from contextlib import contextmanager
 from . import diagnostics
 from .image import BlockDevice, DiskImageError
 from .platform import IS_LINUX, IS_MACOS, IS_WINDOWS, run_tool
+from ..i18n import tr
 
 SECTOR = 512
 
@@ -94,30 +95,35 @@ class DiskInfo:
     @property
     def risk_text(self) -> str:
         if self.is_system:
-            return "ISLETIM SISTEMI DISKI — yazmak makineyi kullanilamaz hale getirir"
+            return tr("ISLETIM SISTEMI DISKI — yazmak makineyi kullanilamaz "
+                      "hale getirir")
         if self.mounted:
-            return f"Bagli bolum var ({', '.join(self.mounted[:3])}) — yazmak veri kaybettirir"
+            return tr("Bagli bolum var ({}) — yazmak veri kaybettirir",
+                      ", ".join(self.mounted[:3]))
         if not self.info_complete:
-            return ("Disk bilgileri okunamadi (yetki yok) — sistem diski olup "
-                    "olmadigi BILINMIYOR")
-        return "Bagli bolum yok"
+            return tr("Disk bilgileri okunamadi (yetki yok) — sistem diski olup "
+                      "olmadigi BILINMIYOR")
+        return tr("Bagli bolum yok")
 
     def summary(self) -> Dict[str, str]:
         from .ptable import human_size
         return {
-            "Aygit": self.path,
-            "Bilgi durumu": "Eksiksiz" if self.info_complete else "EKSIK (yetki yok)",
-            "Model": self.model or "-",
-            "Seri no": self.serial or "-",
-            "Boyut": human_size(self.size),
-            "Sektor boyutu": f"{self.sector_size} bayt",
-            "Baglanti": self.bus or "-",
-            "Cikarilabilir": "Evet" if self.removable else "Hayir",
-            "Yazma korumali": "Evet" if self.readonly else "Hayir",
-            "Sistem diski": ("EVET" if self.is_system else
-                             ("Hayir" if self.info_complete else "BILINMIYOR")),
-            "Isletim sistemi": self.os_label or "-",
-            "Bagli bolumler": ", ".join(self.mounted) if self.mounted else "yok",
+            tr("Aygit"): self.path,
+            tr("Bilgi durumu"): (tr("Eksiksiz") if self.info_complete
+                                 else tr("EKSIK (yetki yok)")),
+            tr("Model"): self.model or "-",
+            tr("Seri no"): self.serial or "-",
+            tr("Boyut"): human_size(self.size),
+            tr("Sektor boyutu"): tr("{} bayt", self.sector_size),
+            tr("Baglanti"): self.bus or "-",
+            tr("Cikarilabilir"): tr("Evet") if self.removable else tr("Hayir"),
+            tr("Yazma korumali"): tr("Evet") if self.readonly else tr("Hayir"),
+            tr("Sistem diski"): (tr("EVET") if self.is_system else
+                                 (tr("Hayir") if self.info_complete
+                                  else tr("BILINMIYOR"))),
+            tr("Isletim sistemi"): self.os_label or "-",
+            tr("Bagli bolumler"): (", ".join(self.mounted) if self.mounted
+                                   else tr("yok")),
         }
 
 
@@ -193,6 +199,17 @@ def _unregister_open(path: str) -> None:
     with _open_lock:
         _open_devices.pop(path, None)
     diagnostics.info(f"aygit acik kutugunden cikti: {path}")
+
+
+def locks_volumes_on_write() -> bool:
+    """Yazma modunda acarken birimler **kilitlenip ayriliyor mu**?
+
+    Yalnizca Windows'ta evet (`FSCTL_LOCK_VOLUME` + `FSCTL_DISMOUNT_VOLUME`,
+    ADR 0016/0022). Linux ve macOS'ta bagli bir bolumun ham sektorlerine
+    yazmak isletim sistemi tarafindan engellenmez ve **dosya sistemini
+    bozabilir**; kullaniciya bu gercek soylenmelidir.
+    """
+    return IS_WINDOWS
 
 
 def open_device_paths() -> Dict[str, DiskInfo]:
@@ -413,11 +430,11 @@ def _win_handle(path: str, write: bool = False):
         error = ctypes.get_last_error() or k32.GetLastError()
         if error == ERROR_ACCESS_DENIED:
             raise AccessDeniedError(
-                f"{path} acilamadi: Yonetici yetkisi gerekiyor "
-                "(uygulamayi 'Yonetici olarak calistir' ile baslatin)")
+                tr("{} acilamadi: Yonetici yetkisi gerekiyor (uygulamayi "
+                   "'Yonetici olarak calistir' ile baslatin)", path))
         if error == ERROR_NOT_READY:
-            raise MediaNotReadyError(f"{path}: aygitta ortam yok")
-        raise PhysicalDiskError(f"{path} acilamadi (Windows hatasi {error})")
+            raise MediaNotReadyError(tr("{}: aygitta ortam yok", path))
+        raise PhysicalDiskError(tr("{} acilamadi (Windows hatasi {})", path, error))
     return handle
 
 
@@ -659,7 +676,7 @@ class PhysicalDisk(BlockDevice):
         info = info_or_path if isinstance(info_or_path, DiskInfo) else find_disk(info_or_path)
         if info is None:
             path = info_or_path if isinstance(info_or_path, str) else ""
-            raise PhysicalDiskError(f"Disk bulunamadi: {path}")
+            raise PhysicalDiskError(tr("Disk bulunamadi: {}", path))
         self.info = info
         self.path = info.path
         self.sector_size = info.sector_size or SECTOR
@@ -667,19 +684,19 @@ class PhysicalDisk(BlockDevice):
         if not readonly:
             if not confirm:
                 raise PhysicalDiskError(
-                    "Yazma modu acikca onaylanmalidir (confirm=True)")
+                    tr("Yazma modu acikca onaylanmalidir (confirm=True)"))
             if info.readonly:
-                raise PhysicalDiskError("Aygit donanimsal olarak yazma korumali")
+                raise PhysicalDiskError(tr("Aygit donanimsal olarak yazma korumali"))
             if not info.info_complete and not allow_system:
                 raise SystemDiskError(
-                    f"{info.path} bilgileri okunamadi (yetki yok); sistem diski "
-                    "olup olmadigi bilinmiyor. Bilinmeyen bir diske yazma "
-                    "reddedildi.")
+                    tr("{} bilgileri okunamadi (yetki yok); sistem diski olup "
+                       "olmadigi bilinmiyor. Bilinmeyen bir diske yazma "
+                       "reddedildi.", info.path))
             if info.is_system and not allow_system:
                 raise SystemDiskError(
-                    f"{info.path} isletim sistemi diskidir. Yazma islemi "
-                    "makineyi acilamaz hale getirebilir; bu diske yazmak icin "
-                    "ayrica onay gerekir.")
+                    tr("{} isletim sistemi diskidir. Yazma islemi makineyi "
+                       "acilamaz hale getirebilir; bu diske yazmak icin "
+                       "ayrica onay gerekir.", info.path))
         self.readonly = readonly
         self._size = info.size
         self._fh = None
@@ -711,12 +728,12 @@ class PhysicalDisk(BlockDevice):
             fd = os.open(self.path, mod)
         except PermissionError:
             raise AccessDeniedError(
-                f"{self.path} acilamadi: yetki yetersiz. Uygulamayi 'sudo' ile "
-                "calistirin veya kullaniciyi 'disk' grubuna ekleyin.")
+                tr("{} acilamadi: yetki yetersiz. Uygulamayi 'sudo' ile "
+                   "calistirin veya kullaniciyi 'disk' grubuna ekleyin.", self.path))
         except FileNotFoundError:
-            raise PhysicalDiskError(f"Aygit yok: {self.path}")
+            raise PhysicalDiskError(tr("Aygit yok: {}", self.path))
         except OSError as exc:
-            raise PhysicalDiskError(f"{self.path} acilamadi: {exc}")
+            raise PhysicalDiskError(tr("{} acilamadi: {}", self.path, exc))
         self._fh = os.fdopen(fd, "rb" if self.readonly else "r+b", buffering=0)
         if self._size <= 0:
             self._size = self._fh.seek(0, os.SEEK_END)
@@ -761,7 +778,7 @@ class PhysicalDisk(BlockDevice):
             try:
                 handle = _win_handle(f"\\\\.\\{harf.rstrip(chr(92))}", write=True)
             except PhysicalDiskError as exc:
-                failed.append(f"{harf} (acilamadi: {exc})")
+                failed.append(tr("{} (acilamadi: {})", harf, exc))
                 continue
             kilitlendi = _win_ioctl(handle, FSCTL_LOCK_VOLUME, b"", 0) is not None
             _win_ioctl(handle, FSCTL_DISMOUNT_VOLUME, b"", 0)
@@ -771,7 +788,7 @@ class PhysicalDisk(BlockDevice):
             else:
                 # kilitlenemedi: tutamaci birak, birim kullanimda olabilir
                 _win_close(handle)
-                failed.append(f"{harf} (kilitlenemedi — birim kullanimda)")
+                failed.append(tr("{} (kilitlenemedi — birim kullanimda)", harf))
         self._locked_letters = locked
         self._unlocked_letters = failed
         diagnostics.info(f"{self.path}: kilitlenen birim {locked or 'yok'}"
@@ -829,7 +846,7 @@ class PhysicalDisk(BlockDevice):
 
     def read(self, offset: int, length: int) -> bytes:
         if offset + length > self._size:
-            raise PhysicalDiskError("Okuma disk sinirini asiyor")
+            raise PhysicalDiskError(tr("Okuma disk sinirini asiyor"))
         # Aygit okumasi arayuzun takilabilecegi yerlerden biridir (yavas USB,
         # uyuyan disk). `track=False`: her okuma gecmise yazilmaz, ama okuma
         # suruyorken donma olursa raporda bu satir gorunur.
@@ -843,9 +860,9 @@ class PhysicalDisk(BlockDevice):
 
     def write(self, offset: int, data: bytes) -> None:
         if self.readonly:
-            raise PhysicalDiskError("Disk salt okunur acildi")
+            raise PhysicalDiskError(tr("Disk salt okunur acildi"))
         if offset + len(data) > self._size:
-            raise PhysicalDiskError("Yazma disk sinirini asiyor")
+            raise PhysicalDiskError(tr("Yazma disk sinirini asiyor"))
         with diagnostics.span("disk.write", track=False,
                               lba=offset // self.sector_size, size=len(data)):
             if IS_WINDOWS:
@@ -911,12 +928,12 @@ class PhysicalDisk(BlockDevice):
         k32.ReadFile.restype = wt.BOOL
         if not k32.SetFilePointerEx(wt.HANDLE(self._win_handle),
                                     ctypes.c_longlong(bas), None, 0):
-            raise PhysicalDiskError("Disk konumlandirilamadi")
+            raise PhysicalDiskError(tr("Disk konumlandirilamadi"))
         tampon = ctypes.create_string_buffer(last - bas)
         okunan = wt.DWORD(0)
         if not k32.ReadFile(wt.HANDLE(self._win_handle), tampon, last - bas,
                             ctypes.byref(okunan), None):
-            raise PhysicalDiskError(f"Okuma hatasi (Windows {k32.GetLastError()})")
+            raise PhysicalDiskError(tr("Okuma hatasi (Windows {})", k32.GetLastError()))
         ham = tampon.raw[:okunan.value]
         ic = offset - bas
         return ham[ic:ic + length].ljust(length, b"\x00")
@@ -941,7 +958,7 @@ class PhysicalDisk(BlockDevice):
         k32.WriteFile.restype = wt.BOOL
         if not k32.SetFilePointerEx(wt.HANDLE(self._win_handle),
                                     ctypes.c_longlong(bas), None, 0):
-            raise PhysicalDiskError("Disk konumlandirilamadi")
+            raise PhysicalDiskError(tr("Disk konumlandirilamadi"))
         tampon = ctypes.create_string_buffer(bytes(mevcut))
         yazilan = wt.DWORD(0)
         if not k32.WriteFile(wt.HANDLE(self._win_handle), tampon, len(mevcut),
@@ -949,7 +966,7 @@ class PhysicalDisk(BlockDevice):
             error = k32.GetLastError()
             if error == ERROR_ACCESS_DENIED:
                 raise AccessDeniedError(self._write_denied_text(bas))
-            raise PhysicalDiskError(f"Yazma hatasi (Windows {error})")
+            raise PhysicalDiskError(tr("Yazma hatasi (Windows {})", error))
 
     def _write_denied_text(self, offset: int) -> str:
         """ERROR_ACCESS_DENIED icin **gercek** nedeni soyleyen metin.
@@ -962,18 +979,18 @@ class PhysicalDisk(BlockDevice):
         base = (f"Yazma reddedildi (LBA {lba}): Windows **bagli** bir birimin "
                 "sektorlerine dogrudan yazmayi engeller.")
         if self._unlocked_letters:
-            return (f"{base}\n\nSu birim(ler) kilitlenemedi: "
-                    f"{', '.join(self._unlocked_letters)}\n"
-                    "Birimi kullanan programlari (Gezgin penceresi, virus "
-                    "tarayici, yedekleme) kapatip diski yeniden acin; ya da "
-                    "birimi Windows'tan cikarin (eject).")
+            return (tr("{}\n\nSu birim(ler) kilitlenemedi: {}\nBirimi "
+                       "kullanan programlari (Gezgin penceresi, virus "
+                       "tarayici, yedekleme) kapatip diski yeniden acin; ya "
+                       "da birimi Windows'tan cikarin (eject).",
+                       base, ', '.join(self._unlocked_letters)))
         if not self._volume_handles:
-            return (f"{base}\n\nBu diskte hicbir birim kilitlenemedi. Diski "
-                    "kapatip yeniden yazma modunda acin; sorun surerse birimi "
-                    "Windows'tan cikarin (eject).")
-        return (f"{base}\n\nKilitli birimler: "
-                f"{', '.join(self._locked_letters)}. Yazilan alan bu birimlerin "
-                "disinda, baska bir bagli birime ait olabilir.")
+            return (tr("{}\n\nBu diskte hicbir birim kilitlenemedi. Diski "
+                       "kapatip yeniden yazma modunda acin; sorun surerse "
+                       "birimi Windows'tan cikarin (eject).", base))
+        return (tr("{}\n\nKilitli birimler: {}. Yazilan alan bu birimlerin "
+                   "disinda, baska bir bagli birime ait olabilir.",
+                   base, ', '.join(self._locked_letters)))
 
     def __repr__(self) -> str:
         kip = "salt okunur" if self.readonly else "YAZILABILIR"

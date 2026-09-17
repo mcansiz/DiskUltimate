@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
+from ..i18n import mark, tr
+from ..i18n import tr
 
 MIB = 1024 * 1024
 ALIGN_BYTES = 1 * MIB  # bolum hizalama: 1 MiB (modern standart)
@@ -17,49 +19,49 @@ class PartitionTableError(Exception):
 
 # --- MBR tip kodlari ------------------------------------------------------
 MBR_TYPES = {
-    0x00: "Bos",
-    0x01: "FAT12",
-    0x04: "FAT16 (<32M)",
-    0x05: "Genisletilmis (CHS)",
-    0x06: "FAT16",
-    0x07: "NTFS / exFAT",
-    0x0B: "FAT32 (CHS)",
-    0x0C: "FAT32 (LBA)",
-    0x0E: "FAT16 (LBA)",
-    0x0F: "Genisletilmis (LBA)",
-    0x11: "Gizli FAT12",
-    0x16: "Gizli FAT16",
-    0x1B: "Gizli FAT32",
-    0x1C: "Gizli FAT32 (LBA)",
-    0x27: "Windows Kurtarma",
-    0x42: "Windows Dinamik",
-    0x82: "Linux Takas",
-    0x83: "Linux",
-    0x85: "Linux Genisletilmis",
-    0x8E: "Linux LVM",
-    0xA5: "FreeBSD",
-    0xAF: "Mac OS X HFS+",
-    0xEE: "GPT Koruyucu",
-    0xEF: "EFI Sistem (FAT)",
-    0xFD: "Linux RAID",
+    0x00: mark("Bos"),
+    0x01: mark("FAT12"),
+    0x04: mark("FAT16 (<32M)"),
+    0x05: mark("Genisletilmis (CHS)"),
+    0x06: mark("FAT16"),
+    0x07: mark("NTFS / exFAT"),
+    0x0B: mark("FAT32 (CHS)"),
+    0x0C: mark("FAT32 (LBA)"),
+    0x0E: mark("FAT16 (LBA)"),
+    0x0F: mark("Genisletilmis (LBA)"),
+    0x11: mark("Gizli FAT12"),
+    0x16: mark("Gizli FAT16"),
+    0x1B: mark("Gizli FAT32"),
+    0x1C: mark("Gizli FAT32 (LBA)"),
+    0x27: mark("Windows Kurtarma"),
+    0x42: mark("Windows Dinamik"),
+    0x82: mark("Linux Takas"),
+    0x83: mark("Linux"),
+    0x85: mark("Linux Genisletilmis"),
+    0x8E: mark("Linux LVM"),
+    0xA5: mark("FreeBSD"),
+    0xAF: mark("Mac OS X HFS+"),
+    0xEE: mark("GPT Koruyucu"),
+    0xEF: mark("EFI Sistem (FAT)"),
+    0xFD: mark("Linux RAID"),
 }
 MBR_EXTENDED_TYPES = (0x05, 0x0F, 0x85)
 
 # --- GPT tip GUID'leri ----------------------------------------------------
 GPT_UNUSED = "00000000-0000-0000-0000-000000000000"
 GPT_TYPES = {
-    GPT_UNUSED: "Bos",
-    "C12A7328-F81F-11D2-BA4B-00A0C93EC93B": "EFI Sistem Bolumu",
-    "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7": "Microsoft Temel Veri",
-    "E3C9E316-0B5C-4DB8-817D-F92DF00215AE": "Microsoft Ayrilmis (MSR)",
-    "DE94BBA4-06D1-4D40-A16A-BFD50179D6AC": "Windows Kurtarma",
-    "0FC63DAF-8483-4772-8E79-3D69D8477DE4": "Linux Dosya Sistemi",
-    "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F": "Linux Takas",
-    "E6D6D379-F507-44C2-A23C-238F2A3DF928": "Linux LVM",
-    "933AC7E1-2EB4-4F13-B844-0E14E2AEF915": "Linux /home",
-    "21686148-6449-6E6F-744E-656564454649": "BIOS Onyukleme",
-    "48465300-0000-11AA-AA11-00306543ECAC": "Apple HFS+",
-    "516E7CB4-6ECF-11D6-8FF8-00022D09712B": "FreeBSD",
+    GPT_UNUSED: mark("Bos"),
+    "C12A7328-F81F-11D2-BA4B-00A0C93EC93B": mark("EFI Sistem Bolumu"),
+    "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7": mark("Microsoft Temel Veri"),
+    "E3C9E316-0B5C-4DB8-817D-F92DF00215AE": mark("Microsoft Ayrilmis (MSR)"),
+    "DE94BBA4-06D1-4D40-A16A-BFD50179D6AC": mark("Windows Kurtarma"),
+    "0FC63DAF-8483-4772-8E79-3D69D8477DE4": mark("Linux Dosya Sistemi"),
+    "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F": mark("Linux Takas"),
+    "E6D6D379-F507-44C2-A23C-238F2A3DF928": mark("Linux LVM"),
+    "933AC7E1-2EB4-4F13-B844-0E14E2AEF915": mark("Linux /home"),
+    "21686148-6449-6E6F-744E-656564454649": mark("BIOS Onyukleme"),
+    "48465300-0000-11AA-AA11-00306543ECAC": mark("Apple HFS+"),
+    "516E7CB4-6ECF-11D6-8FF8-00022D09712B": mark("FreeBSD"),
 }
 
 
@@ -96,8 +98,8 @@ class Partition:
     @property
     def type_name(self) -> str:
         if self.scheme == "gpt":
-            return GPT_TYPES.get(self.type_guid.upper(), "Bilinmeyen")
-        return MBR_TYPES.get(self.type_id, f"0x{self.type_id:02X}")
+            return tr(GPT_TYPES.get(self.type_guid.upper(), mark("Bilinmeyen")))
+        return tr(MBR_TYPES.get(self.type_id, f"0x{self.type_id:02X}"))
 
     @property
     def display_name(self) -> str:
@@ -105,7 +107,7 @@ class Partition:
             return self.name
         if self.fs_label:
             return self.fs_label
-        return f"Bolum {self.index}"
+        return tr("Bolum {}", self.index)
 
     def overlaps(self, start_lba: int, sector_count: int) -> bool:
         return not (start_lba + sector_count <= self.start_lba
@@ -174,7 +176,7 @@ class PartitionTable:
         for p in self.partitions:
             if p.index == index:
                 return p
-        raise PartitionTableError(f"{index} numarali bolum yok")
+        raise PartitionTableError(tr("{} numarali bolum yok", index))
 
     def sorted_partitions(self) -> List[Partition]:
         return sorted(self.partitions, key=lambda p: p.start_lba)
@@ -207,18 +209,18 @@ class PartitionTable:
                     ignore_index: int = -1) -> None:
         """Verilen araligin gecerli ve bos oldugunu dogrular."""
         if sector_count <= 0:
-            raise PartitionTableError("Bolum boyutu sifir olamaz")
+            raise PartitionTableError(tr("Bolum boyutu sifir olamaz"))
         if start_lba < self.first_usable_lba():
             raise PartitionTableError(
-                f"Baslangic cok erken (en az LBA {self.first_usable_lba()})")
+                tr("Baslangic cok erken (en az LBA {})", self.first_usable_lba()))
         if start_lba + sector_count - 1 > self.last_usable_lba():
-            raise PartitionTableError("Bolum disk sonunu asiyor")
+            raise PartitionTableError(tr("Bolum disk sonunu asiyor"))
         for p in self.partitions:
             if p.index == ignore_index:
                 continue
             if p.overlaps(start_lba, sector_count):
                 raise PartitionTableError(
-                    f"{p.index} numarali bolum ile cakisiyor")
+                    tr("{} numarali bolum ile cakisiyor", p.index))
 
     def total_used_sectors(self) -> int:
         return sum(p.sector_count for p in self.partitions if not p.logical)
@@ -247,7 +249,7 @@ def parse_size(text: str, default_unit: str = "MB") -> int:
     """'512MB', '1.5 GB', '2048' gibi metinleri bayta cevirir."""
     text = (text or "").strip().upper().replace(",", ".")
     if not text:
-        raise ValueError("Bos boyut")
+        raise ValueError(tr("Bos boyut"))
     mult = {"B": 1, "KB": 1024, "K": 1024, "MB": 1024 ** 2, "M": 1024 ** 2,
             "GB": 1024 ** 3, "G": 1024 ** 3, "TB": 1024 ** 4, "T": 1024 ** 4}
     unit = default_unit

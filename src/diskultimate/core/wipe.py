@@ -12,6 +12,7 @@ from typing import Callable, List, Optional
 
 from .image import BlockDevice
 from .ptable import human_size
+from ..i18n import mark, tr
 
 Progress = Optional[Callable[[str, int], None]]
 CHUNK = 4 * 1024 * 1024
@@ -34,15 +35,18 @@ class WipeMethod:
 
 
 WIPE_METHODS = [
-    WipeMethod("zero", "Sifirla (1 gecis)", ["zero"],
-               "Tum alani 0x00 ile doldurur. Hizli; gunluk kullanim icin yeterli."),
-    WipeMethod("random", "Rastgele (1 gecis)", ["random"],
-               "Tum alani rastgele veriyle doldurur. Eski icerigi desen analizine karsi gizler."),
-    WipeMethod("dod", "DoD 5220.22-M (3 gecis)", ["zero", "one", "random"],
-               "0x00, 0xFF ve rastgele veri. Kurumsal imha olcutlerinde yaygin."),
-    WipeMethod("dod7", "DoD 5220.22-M ECE (7 gecis)",
+    WipeMethod("zero", mark("Sifirla (1 gecis)"), ["zero"],
+               mark("Tum alani 0x00 ile doldurur. Hizli; gunluk kullanim icin "
+                    "yeterli.")),
+    WipeMethod("random", mark("Rastgele (1 gecis)"), ["random"],
+               mark("Tum alani rastgele veriyle doldurur. Eski icerigi desen "
+                    "analizine karsi gizler.")),
+    WipeMethod("dod", mark("DoD 5220.22-M (3 gecis)"), ["zero", "one", "random"],
+               mark("0x00, 0xFF ve rastgele veri. Kurumsal imha olcutlerinde "
+                    "yaygin.")),
+    WipeMethod("dod7", mark("DoD 5220.22-M ECE (7 gecis)"),
                ["zero", "one", "random", "random", "zero", "one", "random"],
-               "Yedi gecisli genisletilmis surum. Cok yavas."),
+               mark("Yedi gecisli genisletilmis surum. Cok yavas.")),
 ]
 WIPE_BY_KEY = {m.key: m for m in WIPE_METHODS}
 
@@ -60,9 +64,9 @@ def wipe_device(device: BlockDevice, method: str = "zero",
     """Aygitin tamamini secilen yontemle siler."""
     yontem = WIPE_BY_KEY.get(method)
     if yontem is None:
-        raise WipeError(f"Bilinmeyen silme yontemi: {method}")
+        raise WipeError(tr("Bilinmeyen silme yontemi: {}", method))
     if getattr(device, "readonly", False):
-        raise WipeError("Aygit salt okunur")
+        raise WipeError(tr("Aygit salt okunur"))
     total = device.size
     pass_count = yontem.pass_count
     for gecis, kind in enumerate(yontem.passes, 1):
@@ -77,8 +81,9 @@ def wipe_device(device: BlockDevice, method: str = "zero",
             if progress:
                 taban = 100 * (gecis - 1) / pass_count
                 pay = (100 / pass_count) * (yazilan / total)
-                progress(f"Gecis {gecis}/{pass_count} ({kind}) — "
-                         f"{human_size(yazilan)} / {human_size(total)}",
+                progress(tr("Gecis {}/{} ({}) — {} / {}",
+                            gecis, pass_count, kind, human_size(yazilan),
+                            human_size(total)),
                          int(taban + pay))
     f = getattr(device, "flush", None)
     if f:
@@ -88,7 +93,7 @@ def wipe_device(device: BlockDevice, method: str = "zero",
     if verify and yontem.passes[-1] == "zero":
         result["verified"] = _verify_zero(device, progress)
     if progress:
-        progress("Tamamlandi", 100)
+        progress(tr("Tamamlandi"), 100)
     return result
 
 
@@ -101,7 +106,7 @@ def _verify_zero(device: BlockDevice, progress: Progress = None) -> bool:
             return False
         okunan += length
         if progress:
-            progress(f"Dogrulaniyor... {human_size(okunan)}", int(99 * okunan / total))
+            progress(tr("Dogrulaniyor... {}", human_size(okunan)), int(99 * okunan / total))
     return True
 
 
@@ -112,7 +117,7 @@ def wipe_free_space(fs_access, progress: Progress = None) -> dict:
     Gecici bir dolgu dosyasi yazip sonra siler.
     """
     if not getattr(fs_access, "writable", False):
-        raise WipeError("Bu bolum yazilabilir degil")
+        raise WipeError(tr("Bu bolum yazilabilir degil"))
     istatistik = fs_access.stats()
     free = istatistik.get("free_bytes", 0)
     if free <= 0:
@@ -140,8 +145,8 @@ def wipe_free_space(fs_access, progress: Progress = None) -> dict:
             yazilan += length
             i += 1
             if progress:
-                progress(f"Bos alan dolduruluyor... {human_size(yazilan)} / "
-                         f"{human_size(target)}", int(90 * yazilan / max(1, target)))
+                progress(tr("Bos alan dolduruluyor... {} / {}",
+                            human_size(yazilan), human_size(target)), int(90 * yazilan / max(1, target)))
     finally:
         for name in files:
             try:
@@ -149,7 +154,7 @@ def wipe_free_space(fs_access, progress: Progress = None) -> dict:
             except Exception:
                 pass
     if progress:
-        progress("Tamamlandi", 100)
+        progress(tr("Tamamlandi"), 100)
     return {"bytes": yazilan, "files": len(files)}
 
 
@@ -164,4 +169,4 @@ def wipe_partition_table(device: BlockDevice, progress: Progress = None) -> None
     if f:
         f()
     if progress:
-        progress("Bolum tablosu silindi", 100)
+        progress(tr("Bolum tablosu silindi"), 100)

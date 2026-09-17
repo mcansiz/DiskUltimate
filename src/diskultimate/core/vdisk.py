@@ -19,6 +19,7 @@ import uuid
 from typing import List, Optional, Tuple
 
 from .image import BlockDevice, DiskImage, DiskImageError
+from ..i18n import tr
 
 SECTOR = 512
 
@@ -89,14 +90,14 @@ class _BaseVirtualDisk(BlockDevice):
 
     def read(self, offset: int, length: int) -> bytes:
         if offset < 0 or length < 0:
-            raise VirtualDiskError("Negatif ofset/uzunluk")
+            raise VirtualDiskError(tr("Negatif ofset/uzunluk"))
         if offset + length > self._size:
-            raise VirtualDiskError("Okuma sanal disk sinirini asiyor")
+            raise VirtualDiskError(tr("Okuma sanal disk sinirini asiyor"))
         return self._read_raw(offset, length)
 
     def write(self, offset: int, data: bytes) -> None:
         raise VirtualDiskError(
-            f"{self.format_name} bu surumde salt okunur acilir")
+            tr("{} bu surumde salt okunur acilir", self.format_name))
 
 
 # ==========================================================================
@@ -162,14 +163,14 @@ class VhdImage(_BaseVirtualDisk):
         super().__init__(path, readonly)
         file_size = os.path.getsize(self.path)
         if file_size < 512:
-            raise VirtualDiskError("VHD dosyasi cok kucuk")
+            raise VirtualDiskError(tr("VHD dosyasi cok kucuk"))
         self._fh.seek(-512, os.SEEK_END)
         footer = self._fh.read(512)
         if footer[:8] != VHD_COOKIE:
             self._fh.seek(0)
             footer = self._fh.read(512)
             if footer[:8] != VHD_COOKIE:
-                raise VirtualDiskError("VHD imzasi bulunamadi")
+                raise VirtualDiskError(tr("VHD imzasi bulunamadi"))
         self.disk_type = struct.unpack_from(">I", footer, 60)[0]
         self._size = struct.unpack_from(">Q", footer, 48)[0]
         self.data_offset = struct.unpack_from(">Q", footer, 16)[0]
@@ -178,19 +179,19 @@ class VhdImage(_BaseVirtualDisk):
         if self.disk_type == VHD_DYNAMIC:
             self._read_dynamic_header()
         elif self.disk_type == VHD_DIFFERENCING:
-            raise VirtualDiskError("Farklilik (differencing) VHD desteklenmiyor")
+            raise VirtualDiskError(tr("Farklilik (differencing) VHD desteklenmiyor"))
         elif self.disk_type != VHD_FIXED:
-            raise VirtualDiskError(f"Bilinmeyen VHD turu: {self.disk_type}")
+            raise VirtualDiskError(tr("Bilinmeyen VHD turu: {}", self.disk_type))
 
     @property
     def format_name(self) -> str:  # type: ignore[override]
-        return "VHD sabit" if self.disk_type == VHD_FIXED else "VHD dinamik"
+        return tr("VHD sabit") if self.disk_type == VHD_FIXED else tr("VHD dinamik")
 
     def _read_dynamic_header(self) -> None:
         self._fh.seek(self.data_offset)
         header = self._fh.read(1024)
         if header[:8] != VHD_DYNAMIC_COOKIE:
-            raise VirtualDiskError("VHD dinamik basligi bulunamadi")
+            raise VirtualDiskError(tr("VHD dinamik basligi bulunamadi"))
         self.bat_offset = struct.unpack_from(">Q", header, 16)[0]
         entry_count = struct.unpack_from(">I", header, 28)[0]
         self.block_size = struct.unpack_from(">I", header, 32)[0]
@@ -228,9 +229,9 @@ class VhdImage(_BaseVirtualDisk):
 
     def write(self, offset: int, data: bytes) -> None:
         if self.readonly:
-            raise VirtualDiskError("Sanal disk salt okunur acildi")
+            raise VirtualDiskError(tr("Sanal disk salt okunur acildi"))
         if offset + len(data) > self._size:
-            raise VirtualDiskError("Yazma sanal disk sinirini asiyor")
+            raise VirtualDiskError(tr("Yazma sanal disk sinirini asiyor"))
         if self.disk_type == VHD_FIXED:
             self._fh.seek(offset)
             self._fh.write(data)
@@ -242,7 +243,7 @@ class VhdImage(_BaseVirtualDisk):
             chunk = min(kalan, self.block_size - in_block)
             if block_no >= len(self._bat) or self._bat[block_no] == 0xFFFFFFFF:
                 raise VirtualDiskError(
-                    "Dinamik VHD'de yeni blok tahsisi bu surumde desteklenmiyor")
+                    tr("Dinamik VHD'de yeni blok tahsisi bu surumde desteklenmiyor"))
             taban = (self._bat[block_no] + self.bitmap_sectors) * SECTOR
             self._fh.seek(taban + in_block)
             self._fh.write(data[kaynak:kaynak + chunk])
@@ -257,7 +258,7 @@ class VhdImage(_BaseVirtualDisk):
         """Sabit boyutlu VHD olusturur (ham veri + 512 baytlik footer)."""
         path = os.path.abspath(path)
         if os.path.exists(path) and not overwrite:
-            raise VirtualDiskError(f"Dosya zaten var: {path}")
+            raise VirtualDiskError(tr("Dosya zaten var: {}", path))
         size_bytes -= size_bytes % SECTOR
         from .platform import make_sparse, truncate_sparse
         with open(path, "wb") as fh:
@@ -285,7 +286,7 @@ class VdiImage(_BaseVirtualDisk):
         self._fh.seek(0)
         header = self._fh.read(0x200)
         if struct.unpack_from("<I", header, 0x40)[0] != VDI_MAGIC:
-            raise VirtualDiskError("VDI imzasi bulunamadi")
+            raise VirtualDiskError(tr("VDI imzasi bulunamadi"))
         self.image_type = struct.unpack_from("<I", header, 0x4C)[0]
         self.blocks_offset = struct.unpack_from("<I", header, 0x154)[0]
         self.data_offset = struct.unpack_from("<I", header, 0x158)[0]
@@ -295,7 +296,7 @@ class VdiImage(_BaseVirtualDisk):
         self.block_extra = struct.unpack_from("<I", header, 0x17C)[0]
         block_count = struct.unpack_from("<I", header, 0x180)[0]
         if self.block_size == 0:
-            raise VirtualDiskError("Gecersiz VDI blok boyutu")
+            raise VirtualDiskError(tr("Gecersiz VDI blok boyutu"))
         self._fh.seek(self.blocks_offset)
         ham = self._fh.read(block_count * 4)
         self._bat = list(struct.unpack(f"<{block_count}I", ham[:block_count * 4]))
@@ -362,7 +363,7 @@ class VmdkImage(_BaseVirtualDisk):
         self._fh.seek(0)
         metin = self._fh.read(4096).decode("latin-1", "ignore")
         if "createType" not in metin and "RW " not in metin:
-            raise VirtualDiskError("VMDK tanimlayicisi cozumlenemedi")
+            raise VirtualDiskError(tr("VMDK tanimlayicisi cozumlenemedi"))
         veri_dosyasi = None
         total_sectors = 0
         for satir in metin.splitlines():
@@ -376,10 +377,10 @@ class VmdkImage(_BaseVirtualDisk):
                     veri_dosyasi = satir[tirnak + 1:last]
                 break
         if not veri_dosyasi:
-            raise VirtualDiskError("VMDK duz veri dosyasi bulunamadi")
+            raise VirtualDiskError(tr("VMDK duz veri dosyasi bulunamadi"))
         tam = os.path.join(os.path.dirname(self.path), veri_dosyasi)
         if not os.path.isfile(tam):
-            raise VirtualDiskError(f"VMDK veri dosyasi eksik: {veri_dosyasi}")
+            raise VirtualDiskError(tr("VMDK veri dosyasi eksik: {}", veri_dosyasi))
         self._fh.close()
         self._fh = open(tam, "rb" if self.readonly else "r+b")
         self._size = total_sectors * SECTOR or os.path.getsize(tam)
@@ -428,7 +429,7 @@ class VmdkImage(_BaseVirtualDisk):
 
     def write(self, offset: int, data: bytes) -> None:
         if self._gd is not None or self.readonly:
-            raise VirtualDiskError("Seyrek VMDK bu surumde salt okunur")
+            raise VirtualDiskError(tr("Seyrek VMDK bu surumde salt okunur"))
         self._fh.seek(offset)
         self._fh.write(data)
 
@@ -449,19 +450,20 @@ class Qcow2Image(_BaseVirtualDisk):
         self._fh.seek(0)
         header = self._fh.read(104)
         if header[:4] != QCOW_MAGIC:
-            raise VirtualDiskError("QCOW2 imzasi bulunamadi")
+            raise VirtualDiskError(tr("QCOW2 imzasi bulunamadi"))
         surum = struct.unpack_from(">I", header, 4)[0]
         if surum not in (2, 3):
-            raise VirtualDiskError(f"QCOW surumu desteklenmiyor: {surum}")
+            raise VirtualDiskError(tr("QCOW surumu desteklenmiyor: {}", surum))
         arka_ofset = struct.unpack_from(">Q", header, 8)[0]
         if arka_ofset:
-            raise VirtualDiskError("Arka plan dosyali (backing) QCOW2 desteklenmiyor")
+            raise VirtualDiskError(tr("Arka plan dosyali (backing) QCOW2 "
+                                      "desteklenmiyor"))
         self.cluster_bits = struct.unpack_from(">I", header, 20)[0]
         self.cluster_size = 1 << self.cluster_bits
         self._size = struct.unpack_from(">Q", header, 24)[0]
         sifreleme = struct.unpack_from(">I", header, 32)[0]
         if sifreleme:
-            raise VirtualDiskError("Sifreli QCOW2 desteklenmiyor")
+            raise VirtualDiskError(tr("Sifreli QCOW2 desteklenmiyor"))
         l1_size = struct.unpack_from(">I", header, 36)[0]
         l1_ofset = struct.unpack_from(">Q", header, 40)[0]
         self.l2_bits = self.cluster_bits - 3
@@ -487,7 +489,7 @@ class Qcow2Image(_BaseVirtualDisk):
         l2_indeks = (sanal >> self.cluster_bits) & (l2_entry_count - 1)
         entry = l2[l2_indeks] if l2_indeks < len(l2) else 0
         if entry & QCOW_FLAG_COMPRESSED:
-            raise VirtualDiskError("Sikistirilmis QCOW2 kumesi desteklenmiyor")
+            raise VirtualDiskError(tr("Sikistirilmis QCOW2 kumesi desteklenmiyor"))
         return entry & QCOW_OFFSET_MASK
 
     def _read_raw(self, offset: int, length: int) -> bytes:
@@ -558,11 +560,11 @@ def open_disk(path: str, readonly: bool = False) -> BlockDevice:
         # Yedek her zaman salt okunur acilir; `readonly` yok sayilir.
         from .clone import DubImage
         return DubImage(path)
-    raise VirtualDiskError(f"Bilinmeyen disk bicimi: {fmt}")
+    raise VirtualDiskError(tr("Bilinmeyen disk bicimi: {}", fmt))
 
 
 def format_label(fmt: str) -> str:
-    return {"raw": "Ham disk goruntusu (.img)", "vhd": "Microsoft VHD",
+    return {"raw": tr("Ham disk goruntusu (.img)"), "vhd": "Microsoft VHD",
             "vdi": "VirtualBox VDI", "vmdk": "VMware VMDK",
             "qcow2": "QEMU QCOW2",
-            "dub": "DiskUltimate yedegi (.dub)"}.get(fmt, fmt)
+            "dub": tr("DiskUltimate yedegi (.dub)")}.get(fmt, fmt)

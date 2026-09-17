@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from typing import Dict, Iterator, List, Optional, Tuple
 
 from .image import BlockDevice
+from ..i18n import tr
 
 EXT_MAGIC = 0xEF53
 SUPERBLOCK_OFFSET = 1024
@@ -113,9 +114,9 @@ class ExtFS:
     def _read_superblock(self) -> None:
         sb = self.dev.read(SUPERBLOCK_OFFSET, 1024)
         if len(sb) < 1024:
-            raise ExtError("Ustblok okunamadi")
+            raise ExtError(tr("Ustblok okunamadi"))
         if struct.unpack_from("<H", sb, 0x38)[0] != EXT_MAGIC:
-            raise ExtError("ext imzasi yok")
+            raise ExtError(tr("ext imzasi yok"))
 
         self.inodes_count = struct.unpack_from("<I", sb, 0x00)[0]
         blocks_lo = struct.unpack_from("<I", sb, 0x04)[0]
@@ -149,7 +150,7 @@ class ExtFS:
         self.blocks_count = (blocks_hi << 32) | blocks_lo
 
         if self.block_size <= 0 or self.blocks_per_group <= 0:
-            raise ExtError("Ustblok degerleri tutarsiz")
+            raise ExtError(tr("Ustblok degerleri tutarsiz"))
         self.group_count = max(
             1, (self.blocks_count - self.first_data_block
                 + self.blocks_per_group - 1) // self.blocks_per_group)
@@ -162,7 +163,7 @@ class ExtFS:
     def _inode_table_block(self, group: int) -> int:
         off = group * self.desc_size
         if off + 12 > len(self._gdt):
-            raise ExtError(f"Grup tanimlayicisi yok: {group}")
+            raise ExtError(tr("Grup tanimlayicisi yok: {}", group))
         lo = struct.unpack_from("<I", self._gdt, off + 0x08)[0]
         hi = struct.unpack_from("<I", self._gdt, off + 0x28)[0] \
             if self.desc_size >= 64 else 0
@@ -176,13 +177,13 @@ class ExtFS:
         if hit is not None:
             return hit
         if number < 1 or number > self.inodes_count:
-            raise ExtError(f"Gecersiz inode numarasi: {number}")
+            raise ExtError(tr("Gecersiz inode numarasi: {}", number))
         group, index = divmod(number - 1, self.inodes_per_group)
         offset = (self._inode_table_block(group) * self.block_size
                   + index * self.inode_size)
         raw = self.dev.read(offset, max(128, self.inode_size))
         if len(raw) < 128:
-            raise ExtError(f"Inode okunamadi: {number}")
+            raise ExtError(tr("Inode okunamadi: {}", number))
         mode, uid, size_lo, atime, ctime, mtime = struct.unpack_from("<HHIIII", raw, 0)
         gid, links = struct.unpack_from("<HH", raw, 0x18)
         flags = struct.unpack_from("<I", raw, 0x20)[0]
@@ -273,8 +274,8 @@ class ExtFS:
         """
         if node.is_symlink:
             raise ExtError(
-                "Sembolik bagin icerigi okunamaz; hedefi icin symlink_target() "
-                "kullanin veya resolve(..., follow=True) ile izleyin")
+                tr("Sembolik bagin icerigi okunamaz; hedefi icin symlink_target() "
+                "kullanin veya resolve(..., follow=True) ile izleyin"))
         size = node.size if max_bytes < 0 else min(node.size, max_bytes)
         if size <= 0:
             return b""
@@ -307,7 +308,7 @@ class ExtFS:
     # ------------------------------------------------------------------
     def read_dir(self, node: ExtInode) -> List[ExtDirEntry]:
         if not node.is_dir:
-            raise ExtError("Dizin degil")
+            raise ExtError(tr("Dizin degil"))
         data = self.read_data(node)
         out: List[ExtDirEntry] = []
         pos = 0
@@ -341,18 +342,18 @@ class ExtFS:
         kadarki dizine gore cozulur. Donguye karsi derinlik sinirlidir.
         """
         if _depth > 16:
-            raise ExtError(f"Sembolik bag dongusu: {path}")
+            raise ExtError(tr("Sembolik bag dongusu: {}", path))
         node = self.read_inode(INO_ROOT)
         parts = [p for p in path.replace("\\", "/").split("/") if p]
         for i, part in enumerate(parts):
             if not node.is_dir:
-                raise ExtError(f"Dizin degil: {part}")
+                raise ExtError(tr("Dizin degil: {}", part))
             for entry in self.read_dir(node):
                 if entry.name == part:
                     node = self.read_inode(entry.inode)
                     break
             else:
-                raise ExtError(f"Bulunamadi: {path}")
+                raise ExtError(tr("Bulunamadi: {}", path))
             if node.is_symlink and (follow or i < len(parts) - 1):
                 target = self.symlink_target(node)
                 if target.startswith("/"):

@@ -9,6 +9,7 @@ import os
 from typing import Optional
 
 from .platform import make_sparse, truncate_sparse
+from ..i18n import tr
 
 DEFAULT_SECTOR_SIZE = 512
 
@@ -42,7 +43,7 @@ class BlockDevice:
 
     def write_sectors(self, lba: int, data: bytes) -> None:
         if len(data) % self.sector_size:
-            raise DiskImageError("Sektor sinirina hizalanmamis yazma islemi")
+            raise DiskImageError(tr("Sektor sinirina hizalanmamis yazma islemi"))
         self.write(lba * self.sector_size, data)
 
     def zero_sectors(self, lba: int, count: int) -> None:
@@ -67,9 +68,13 @@ class DiskImage(BlockDevice):
         self.readonly = readonly
         self.sector_size = sector_size
         if not os.path.isfile(self.path):
-            raise DiskImageError(f"Dosya bulunamadi: {self.path}")
+            raise DiskImageError(tr("Dosya bulunamadi: {}", self.path))
         mode = "rb" if readonly else "r+b"
         self.readonly_reason = "Salt okunur acilmasi istendi" if readonly else ""
+        # Dosya **baska bir program tarafindan** kilitli mi? Arayuz buna gore
+        # "Yeniden dene" sunar. Bayrak olarak tasinir: nedeni metinden aramak,
+        # metin cevrildiginde calismazdi (ADR 0027).
+        self.readonly_locked = False
         try:
             self._fh = open(self.path, mode)
         except PermissionError as exc:
@@ -97,16 +102,17 @@ class DiskImage(BlockDevice):
 
         win = getattr(exc, "winerror", None)
         if win in (32, 33):
-            return ("Dosya baska bir program tarafindan kilitlenmis "
-                    "(ornegin baska bir disk araci acik olabilir)")
+            self.readonly_locked = True
+            return (tr("Dosya baska bir program tarafindan kilitlenmis "
+                    "(ornegin baska bir disk araci acik olabilir)"))
         try:
             kip = os.stat(self.path).st_mode
             if not (kip & _stat.S_IWUSR):
-                return "Dosya salt okunur isaretli (oznitelik/izin)"
+                return tr("Dosya salt okunur isaretli (oznitelik/izin)")
         except OSError:
             pass
-        return ("Yazma izni reddedildi — dosya baska bir program tarafindan "
-                "kullaniliyor ya da erisim engellendi")
+        return (tr("Yazma izni reddedildi — dosya baska bir program tarafindan "
+                "kullaniliyor ya da erisim engellendi"))
 
     # -- olusturma -----------------------------------------------------------
     @staticmethod
@@ -120,9 +126,9 @@ class DiskImage(BlockDevice):
         """
         path = os.path.abspath(path)
         if os.path.exists(path) and not overwrite:
-            raise DiskImageError(f"Dosya zaten var: {path}")
+            raise DiskImageError(tr("Dosya zaten var: {}", path))
         if size_bytes < 64 * 1024:
-            raise DiskImageError("Goruntu boyutu en az 64 KiB olmalidir")
+            raise DiskImageError(tr("Goruntu boyutu en az 64 KiB olmalidir"))
         size_bytes -= size_bytes % sector_size
         directory = os.path.dirname(path)
         if directory:
@@ -151,10 +157,11 @@ class DiskImage(BlockDevice):
 
     def read(self, offset: int, length: int) -> bytes:
         if offset < 0 or length < 0:
-            raise DiskImageError("Negatif ofset/uzunluk")
+            raise DiskImageError(tr("Negatif ofset/uzunluk"))
         if offset + length > self._size:
             raise DiskImageError(
-                f"Okuma goruntu sinirini asiyor (ofset={offset}, uzunluk={length}, boyut={self._size})")
+                tr("Okuma goruntu sinirini asiyor (ofset={}, uzunluk={}, "
+                   "boyut={})", offset, length, self._size))
         self._fh.seek(offset)
         data = self._fh.read(length)
         if len(data) < length:  # seyrek dosyada olmamali ama garanti
@@ -163,12 +170,13 @@ class DiskImage(BlockDevice):
 
     def write(self, offset: int, data: bytes) -> None:
         if self.readonly:
-            raise DiskImageError("Goruntu salt okunur acildi")
+            raise DiskImageError(tr("Goruntu salt okunur acildi"))
         if offset < 0:
-            raise DiskImageError("Negatif ofset")
+            raise DiskImageError(tr("Negatif ofset"))
         if offset + len(data) > self._size:
             raise DiskImageError(
-                f"Yazma goruntu sinirini asiyor (ofset={offset}, uzunluk={len(data)}, boyut={self._size})")
+                tr("Yazma goruntu sinirini asiyor (ofset={}, uzunluk={}, "
+                   "boyut={})", offset, len(data), self._size))
         self._fh.seek(offset)
         self._fh.write(data)
 
@@ -180,7 +188,7 @@ class DiskImage(BlockDevice):
     def resize(self, new_size: int) -> None:
         """Goruntuyu buyutur/kucultur (kucultmek veri kaybettirir)."""
         if self.readonly:
-            raise DiskImageError("Goruntu salt okunur acildi")
+            raise DiskImageError(tr("Goruntu salt okunur acildi"))
         new_size -= new_size % self.sector_size
         self._fh.flush()
         self._fh.truncate(new_size)
@@ -213,9 +221,9 @@ class PartitionView(BlockDevice):
     def __init__(self, device: BlockDevice, start_lba: int, sector_count: int,
                  label: Optional[str] = None):
         if start_lba < 0 or sector_count <= 0:
-            raise DiskImageError("Gecersiz bolum penceresi")
+            raise DiskImageError(tr("Gecersiz bolum penceresi"))
         if start_lba + sector_count > device.sector_count:
-            raise DiskImageError("Bolum disk sinirlarinin disinda")
+            raise DiskImageError(tr("Bolum disk sinirlarinin disinda"))
         self._dev = device
         self.sector_size = device.sector_size
         self.start_lba = start_lba
@@ -235,12 +243,12 @@ class PartitionView(BlockDevice):
 
     def read(self, offset: int, length: int) -> bytes:
         if offset + length > self.size:
-            raise DiskImageError("Okuma bolum sinirini asiyor")
+            raise DiskImageError(tr("Okuma bolum sinirini asiyor"))
         return self._dev.read(self._base() + offset, length)
 
     def write(self, offset: int, data: bytes) -> None:
         if offset + len(data) > self.size:
-            raise DiskImageError("Yazma bolum sinirini asiyor")
+            raise DiskImageError(tr("Yazma bolum sinirini asiyor"))
         self._dev.write(self._base() + offset, data)
 
     def flush(self) -> None:

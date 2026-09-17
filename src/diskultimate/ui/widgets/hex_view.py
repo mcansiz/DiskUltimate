@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (QHBoxLayout, QLabel, QPlainTextEdit, QPushButton,
                              QSpinBox, QVBoxLayout, QWidget)
 
 from ...core.image import BlockDevice
+from ...i18n import tr
 
 BYTES_PER_ROW = 16
 
@@ -38,15 +39,16 @@ class HexViewer(QWidget):
         layout.setSpacing(6)
 
         upper = QHBoxLayout()
-        upper.addWidget(QLabel("Sektor (LBA):"))
+        self.lbl_sector = QLabel(tr("Sektor (LBA):"))
+        upper.addWidget(self.lbl_sector)
         self.spin = QSpinBox()
         self.spin.setRange(0, 2 ** 31 - 1)
         self.spin.setFixedWidth(130)
         self.spin.valueChanged.connect(self.refresh)
         upper.addWidget(self.spin)
-        self.btn_prev = QPushButton("< Onceki")
+        self.btn_prev = QPushButton(tr("< Onceki"))
         self.btn_prev.clicked.connect(lambda: self.spin.setValue(max(0, self.spin.value() - 1)))
-        self.btn_next = QPushButton("Sonraki >")
+        self.btn_next = QPushButton(tr("Sonraki >"))
         self.btn_next.clicked.connect(lambda: self.spin.setValue(self.spin.value() + 1))
         upper.addWidget(self.btn_prev)
         upper.addWidget(self.btn_next)
@@ -64,6 +66,13 @@ class HexViewer(QWidget):
         self.view.setLineWrapMode(QPlainTextEdit.NoWrap)
         layout.addWidget(self.view, 1)
 
+    def retranslate(self) -> None:
+        """Dil degisince gorunen metinleri yeniden yazar (ADR 0027)."""
+        self.lbl_sector.setText(tr("Sektor (LBA):"))
+        self.btn_prev.setText(tr("< Onceki"))
+        self.btn_next.setText(tr("Sonraki >"))
+        self.refresh()
+
     def set_device(self, device: Optional[BlockDevice], title: str = "") -> None:
         self.device = device
         self.lbl_kaynak.setText(title or "-")
@@ -74,12 +83,12 @@ class HexViewer(QWidget):
 
     def refresh(self) -> None:
         if self.device is None:
-            self.view.setPlainText("Goruntulenecek aygit secilmedi.")
+            self.view.setPlainText(tr("Goruntulenecek aygit secilmedi."))
             return
         lba = self.spin.value()
         try:
             veri = self.device.read_sectors(lba, 1)
         except Exception as exc:
-            self.view.setPlainText(f"Okuma hatasi: {exc}")
+            self.view.setPlainText(tr("Okuma hatasi: {}", exc))
             return
         self.view.setPlainText(hexdump(veri, lba * self.device.sector_size))

@@ -18,6 +18,7 @@ from typing import Callable, Dict, List, Optional
 
 from .image import BlockDevice, DiskImage
 from .ptable import human_size
+from ..i18n import tr
 
 MAGIC = b"DUBACKUP"
 VERSION = 1
@@ -55,15 +56,16 @@ class BackupInfo:
 
     def summary(self) -> dict:
         return {
-            "Yedek dosyasi": os.path.basename(self.path),
-            "Kaynak boyut": human_size(self.total_bytes),
-            "Yedek boyut": human_size(self.file_size),
-            "Kazanc": f"%{100 * (1 - self.ratio):.1f}",
-            "Dosya sistemi": self.fs_type or "-",
-            "Etiket": self.label or "-",
-            "Blok boyutu": human_size(self.block_size),
-            "Olusturma": self.created.strftime("%Y-%m-%d %H:%M") if self.created else "-",
-            "Sikistirma": "zlib" if self.compressed else "yok",
+            tr("Yedek dosyasi"): os.path.basename(self.path),
+            tr("Kaynak boyut"): human_size(self.total_bytes),
+            tr("Yedek boyut"): human_size(self.file_size),
+            tr("Kazanc"): f"%{100 * (1 - self.ratio):.1f}",
+            tr("Dosya sistemi"): self.fs_type or "-",
+            tr("Etiket"): self.label or "-",
+            tr("Blok boyutu"): human_size(self.block_size),
+            tr("Olusturma"): (self.created.strftime("%Y-%m-%d %H:%M")
+                              if self.created else "-"),
+            tr("Sikistirma"): "zlib" if self.compressed else tr("yok"),
         }
 
 
@@ -81,7 +83,7 @@ def backup(device: BlockDevice, dest_path: str, compress: bool = True,
     """Aygiti (disk veya bolum) `.dub` dosyasina yedekler."""
     total = device.size
     if total <= 0:
-        raise CloneError("Kaynak bos")
+        raise CloneError(tr("Kaynak bos"))
     block_size = max(64 * 1024, block_size)
     block_count = (total + block_size - 1) // block_size
     index_bytes = block_count * INDEX_ENTRY
@@ -158,11 +160,11 @@ def read_backup_info(path: str) -> BackupInfo:
     with open(path, "rb") as fh:
         header = fh.read(HEADER_SIZE)
     if len(header) < HEADER_SIZE or header[:8] != MAGIC:
-        raise CloneError("Gecerli bir DiskUltimate yedek dosyasi degil")
+        raise CloneError(tr("Gecerli bir DiskUltimate yedek dosyasi degil"))
     (surum, bayraklar, block_size, total, sector_size, zaman,
      block_count) = struct.unpack_from("<HHIQIQI", header, 8)
     if surum > VERSION:
-        raise CloneError(f"Yedek surumu desteklenmiyor: {surum}")
+        raise CloneError(tr("Yedek surumu desteklenmiyor: {}", surum))
     fs_type = header[40:72].rstrip(b"\x00").decode("utf-8", "ignore")
     label = header[72:136].rstrip(b"\x00").decode("utf-8", "ignore")
     try:
@@ -206,7 +208,7 @@ class DubImage(BlockDevice):
         self._fh.seek(HEADER_SIZE)
         self._index = self._fh.read(index_bytes)
         if len(self._index) < index_bytes:
-            raise CloneError("Yedek dosyasi eksik: indeks okunamadi")
+            raise CloneError(tr("Yedek dosyasi eksik: indeks okunamadi"))
         # Kucuk bir LRU: ardisik okumalarda ayni blok tekrar acilmasin.
         self._cache: Dict[int, bytes] = {}
         self._cache_order: List[int] = []
@@ -223,7 +225,7 @@ class DubImage(BlockDevice):
 
     def read(self, offset: int, length: int) -> bytes:
         if offset < 0 or length < 0:
-            raise CloneError("Gecersiz okuma araligi")
+            raise CloneError(tr("Gecersiz okuma araligi"))
         total = self.info.total_bytes
         if offset >= total:
             return b""
@@ -280,10 +282,10 @@ def restore(src_path: str, device: BlockDevice, progress: Progress = None,
     info = read_backup_info(src_path)
     if info.total_bytes > device.size:
         raise CloneError(
-            f"Hedef cok kucuk: yedek {human_size(info.total_bytes)}, "
-            f"hedef {human_size(device.size)}")
+            tr("Hedef cok kucuk: yedek {}, hedef {}",
+               human_size(info.total_bytes), human_size(device.size)))
     if info.total_bytes < device.size and not allow_smaller_source:
-        raise CloneError("Yedek hedeften kucuk")
+        raise CloneError(tr("Yedek hedeften kucuk"))
 
     _report(progress, "Geri yukleme baslatiliyor...", 0)
     with open(src_path, "rb") as fh:
@@ -324,9 +326,10 @@ def clone(src: BlockDevice, dst: BlockDevice, block_size: int = DEFAULT_BLOCK,
     """Bir aygitin icerigini digerine kopyalar. Kopyalanan bayti dondurur."""
     if dst.size < src.size:
         raise CloneError(
-            f"Hedef cok kucuk: kaynak {human_size(src.size)}, hedef {human_size(dst.size)}")
+            tr("Hedef cok kucuk: kaynak {}, hedef {}",
+               human_size(src.size), human_size(dst.size)))
     if getattr(dst, "readonly", False):
-        raise CloneError("Hedef salt okunur")
+        raise CloneError(tr("Hedef salt okunur"))
     total = src.size
     kopyalanan = 0
     _report(progress, "Klonlama baslatiliyor...", 0)
@@ -353,7 +356,7 @@ def clone_to_new_image(src: BlockDevice, dest_path: str, size_bytes: int = 0,
     """Kaynagi yeni bir goruntu dosyasina klonlar."""
     size = size_bytes or src.size
     if size < src.size:
-        raise CloneError("Hedef boyut kaynaktan kucuk olamaz")
+        raise CloneError(tr("Hedef boyut kaynaktan kucuk olamaz"))
     target = DiskImage.create(dest_path, size, sparse=sparse, overwrite=True)
     try:
         clone(src, target, progress=progress)

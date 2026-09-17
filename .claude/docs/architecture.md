@@ -4,6 +4,9 @@
 main.py                       Giris noktasi (QApplication + MainWindow)
 └── src/diskultimate/
     ├── paths.py              Proje ici yollar (.tmp, .claude/logs)
+    ├── i18n/                 COK DILLI METINLER — saf Python, Qt'siz
+    │   ├── __init__.py       tr() / mark(), dil secimi, degisiklik bildirimi
+    │   └── catalogs/         <dil>.json sozlukleri (tr kaynak dildir, dosyasi yok)
     ├── core/                 SAF PYTHON — PyQt import etmez
     │   ├── platform.py       Isletim sistemi farklari (seyrek dosya, arac arama, Qt eklentisi)
     │   ├── physical.py       Fiziksel diskler: listeleme, acma, katmanli yazma guvenligi
@@ -32,9 +35,16 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     │   ├── wipe.py           Guvenli silme (sifir/rastgele/DoD), bos alan silme
     │   ├── recovery.py       Silinmis dosya, kayip bolum, imza tabanli kurtarma
     │   ├── diagnostics.py    Gunluk, sure olcumu (span), donma yakalayici, cokme dokumu
+    │   ├── operations.py     Bekleyen islem kuyrugu (planla -> Uygula)
+    │   ├── bootloader.py     Onyukleme kodu tanima, bolumdeki sistemi bulma, grub.cfg cozumu
+    │   ├── grub.py           GRUB kurulumu/menu uretimi/yedek/onarim (yalnizca Linux)
+    │   ├── efiboot.py        UEFI yapilari: EFI_LOAD_OPTION, aygit yolu, kisayol (spec)
+    │   ├── efistore.py       UEFI duzeninin okunmasi, yedeklenmesi, degisiklik plani, yazma
+    │   ├── settings.py       Kullanici tercihleri (dil) — isletim sisteminin ayar klasoru
     │   └── session.py        DiskSession — GUI'nin gordugu tek cephe
     └── ui/                   YALNIZCA SUNUM — disk bicimi bilgisi icermez
         ├── theme.py          Dosya sistemi renkleri, palet yardimcilari, isletim sistemi ikonlari
+        ├── icons.py          Uygulamanin kendi ikon seti (QPainter ile cizilir)
         ├── diag.py           Tanilamanin Qt tarafi: nabiz, Qt uyarilari, istisna kancasi
         ├── disk_scan.py      Fiziksel disk listesini arka planda toplayan QThread
         ├── main_window.py    Menu, arac cubugu, agac, yerlesim, is akislari
@@ -42,6 +52,7 @@ main.py                       Giris noktasi (QApplication + MainWindow)
         │   ├── disk_map.py        Gorsel bolum haritasi (QPainter)
         │   ├── partition_table.py Bolum listesi tablosu
         │   ├── file_browser.py    Klasor agaci + dosya listesi + islemler
+        │   ├── disk_overview.py   Butun disklerin genel bakisi (Acronis duzeni)
         │   ├── resize_bar.py      Suruklenebilir boyutlandirma seridi
         │   └── hex_view.py        Sektor onaltilik goruntuleyici (salt okunur)
         └── dialogs/
@@ -50,6 +61,8 @@ main.py                       Giris noktasi (QApplication + MainWindow)
             ├── partition.py       Bolum olusturma + bicimlendirme
             ├── resize.py          Bolum boyutlandirma / tasima penceresi
             ├── tools.py           Silme, kurtarma, imza tarama, yedek icerigi, bilgi pencereleri
+            ├── bootloader.py      Onyukleyici yoneticisi (GRUB, onyukleme kodu)
+            ├── efiboot.py         UEFI onyukleme duzenleyici (girisler, sira, yedek)
             ├── task.py            QThread + ilerleme penceresi
             └── preview.py         Dosya onizleme (metin / onaltilik)
 ```
@@ -70,7 +83,22 @@ Kullanici -> MainWindow -> DiskSession -> PartitionTable (MBR/GPT) -> BlockDevic
 ```
 
 **Onemli kural:** GUI hicbir zaman `MBRTable`, `GPTTable`, `FatFS` ile dogrudan
-konusmaz; her sey `DiskSession` uzerinden gecer. Boylece yeni bir sema veya dosya
+konusmaz; her sey `DiskSession` uzerinden gecer.
+
+**Yikici islemler iki asamalidir** (ADR 0025):
+
+```
+Kullanici -> MainWindow -> OperationQueue     (diske DOKUNULMAZ)
+                                |
+                          "Uygula" + tek onay
+                                v
+                    DiskSession.become_writable()      <- fiziksel disk kapilari
+                                v
+                    queue.apply(session) -> DiskSession -> BlockDevice
+```
+
+Kaynak hep salt okunur acilir; yazma yetkisi yalnizca uygulama suresince alinir.
+Kuyruk bos kaldiginda hicbir aygit yazilabilir acik kalmaz. Boylece yeni bir sema veya dosya
 sistemi eklendiginde arayuz kodu degismez.
 
 ## Arayuz is parcacigi kurali (ZORUNLU)
@@ -124,6 +152,73 @@ span("disk.read", ...) ---------> .claude/logs/runtime/session-<zaman>.log
 `core/diagnostics.py` Qt bilmez; nabiz, Qt uyarilari ve istisna kancasi
 `ui/diag.py` icindedir. Arayuzden erisim: **Araclar > Tanilama**.
 
+## Cok dilli metin akisi (ADR 0027)
+
+```
+kaynak metin (Turkce)            catalogs/en.json
+   tr("Bolumu sil")   ------>    {"Bolumu sil": "Delete partition"}
+        |                                  |
+        +---------- i18n.tr() -------------+
+                        |
+                  gosterilen metin
+```
+
+- **Kaynak dil Turkce**: kodun icindeki metin hem yazi hem ceviri anahtaridir.
+  Sozluk yuklenmese bile arayuz anlamli calisir.
+- `core/` de `tr()` kullanir (hata mesajlari, ilerleme bildirimleri); `i18n`
+  saf Python oldugu icin katman kurali bozulmaz.
+- Modul duzeyinde uretilen metinler (`MBR_TYPES`, `WIPE_METHODS`,
+  `operations.KINDS`) `mark()` ile **isaretlenir**, gosterim aninda `tr()` ile
+  cevrilir: dil degisince guncellenmeleri baska turlu mumkun olmazdi.
+- Dil degisince uygulama yeniden baslatilmaz. `i18n.add_listener` ->
+  `MainWindow.retranslate()` butun kalici bilesenleri yerinde tazeler;
+  diyaloglar zaten her acilista kurulur.
+- **Gorunen metin karar girdisi degildir:** metnin icinde arama yapan iki yer
+  (`"kilitlenmis" in reason`, `"[YIKICI]" in line`) veriye tasindi
+  (`DiskImage.readonly_locked`, `OperationQueue.describe_rows()`).
+
+## Onyukleme akisi (ADR 0028 / 0029)
+
+Onyukleme isleri **inceleme** ve **degistirme** olarak ikiye ayrilir; ayrimin
+karsiligi hangi platformda ne calistigidir.
+
+```
+                    ┌──────────────────────────────────────────┐
+  HER PLATFORM      │ core/bootloader.py                       │
+  (yazma yok)       │  identify_boot_code()  ilk 440 bayt      │
+                    │  detect_os()           kendi FS suruculeri│
+                    │  survey_session()      bolum bolum       │
+                    │  GrubDefaults / parse_grub_cfg()          │
+                    └──────────────────────────────────────────┘
+                                     │
+          ┌──────────────────────────┼──────────────────────────┐
+          ▼                          ▼                          ▼
+ ┌─────────────────┐      ┌────────────────────┐    ┌─────────────────────┐
+ │ operations.py   │      │ core/grub.py       │    │ core/efistore.py    │
+ │ clear_boot_code │      │ install / update   │    │ load / backup /     │
+ │  → KUYRUGA      │      │ repair / restore   │    │ changes / apply     │
+ │  (yikici)       │      │  → yalnizca Linux  │    │  → bellenim         │
+ └─────────────────┘      └────────────────────┘    └─────────────────────┘
+          │                          │                          │
+          └──────────────┬───────────┴──────────────┬───────────┘
+                         ▼                          ▼
+              core/platform.py (OS farkinin TEK durdugu yer)
+              find_boot_tool · run_privileged · write_system_file
+              firmware_type · efivar_read/write/delete/names
+```
+
+Uc kural:
+
+1. **Inceleme diske yazmaz** ve `mount` gerektirmez; goruntu dosyalarinda da
+   calisir. Bu yuzden testleri aygit olmadan kosar.
+2. **Sektor yazan is kuyruga girer.** Onyukleme kodunun kaldirilmasi
+   `session.clear_boot_code()` uzerinden `_require_writable()`e ugrar ve
+   fiziksel diskin butun koruma katmanlarindan gecer. `grub-install` sektor
+   yazmaz, calisan sisteme is yaptirir; kuyruga girmez.
+3. **Bellenim diskten ayridir.** UEFI degiskenleri anakart uzerindedir; ne
+   `DiskSession` ne de kuyruk onlari gorur. Kendi plan/onay/yedek akisi
+   vardir ve yazmadan once yedek **zorunludur**.
+
 ## Adresleme sozlesmesi
 - Tum bolum sinirlari **LBA (sektor)** cinsindendir.
 - Bayta cevirme yalnizca `BlockDevice` uygulamalarinda yapilir.
@@ -148,3 +243,9 @@ span("disk.read", ...) ---------> .claude/logs/runtime/session-<zaman>.log
 | Isletim sistemi farki | **yalnizca** `core/platform.py` |
 | Yeni uzun surecek islem | `dialogs/task.run_task` veya `QThread` — arayuz is parcaciginda **degil** |
 | Yeni olcum noktasi | `diagnostics.span(...)` / `@diagnostics.timed(...)` |
+| Yeni yikici islem | `operations.KINDS` + `RUNNERS` + bir `*_op()` uretici; arayuz `enqueue()` cagirir |
+| Yeni ikon | `ui/icons.py` icinde bir cizim islevi + `DRAWERS` girisi |
+| Yeni dil | `i18n/catalogs/<kod>.json` + `i18n.LANGUAGE_NAMES` girisi (ADR 0027; ayrinti: `.claude/docs/i18n-raporu.md`) |
+| Yeni arayuz metni | `tr("...")` ile sarilir; modul duzeyindeyse `mark("...")` |
+| Yeni `QAction` | `_build_actions()` kurar, metni `_retranslate_actions()` yazar |
+| Diskten acilmadan okunacak yeni bilgi | `DiskSession.survey_disk` (salt okunur, aygiti hemen birakir) |

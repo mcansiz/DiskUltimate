@@ -19,6 +19,7 @@ from .ntfswrite import NtfsWriter
 from .fat import ATTR_DIRECTORY, DirEntry, FatError, FatFS
 from .fsdetect import FSInfo, detect
 from .image import BlockDevice
+from ..i18n import tr
 
 
 @dataclass
@@ -49,7 +50,7 @@ class FileSystemAccess:
         kaynagin salt okunur acilmasi (cozulebilir) ile surucunun yazma
         destegi olmamasi (cozulemez). Her sinif kendi nedenini soyler.
         """
-        return "" if self.writable else "Bu bolume yazilamiyor."
+        return "" if self.writable else tr("Bu bolume yazilamiyor.")
 
     def listdir(self, path: str = "/") -> List[FileNode]:
         raise NotImplementedError
@@ -198,8 +199,8 @@ class FatAccess(FileSystemAccess):
     def write_reason(self) -> str:
         if self.writable:
             return ""
-        return ("Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda "
-                "acarsaniz bu bolume yazabilirsiniz.")
+        return (tr("Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda "
+                "acarsaniz bu bolume yazabilirsiniz."))
 
     def stats(self) -> Dict[str, int]:
         return self.fs.stats()
@@ -260,8 +261,8 @@ class ExFatAccess(FileSystemAccess):
     def write_reason(self) -> str:
         if self.writable:
             return ""
-        return ("Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda "
-                "acarsaniz bu bolume yazabilirsiniz.")
+        return (tr("Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda "
+                "acarsaniz bu bolume yazabilirsiniz."))
 
     def stats(self) -> Dict[str, int]:
         return self.fs.stats()
@@ -303,9 +304,9 @@ class ExtAccess(FileSystemAccess):
                 try:
                     attrs.append("-> " + self.fs.symlink_target(child))
                 except ExtError:
-                    attrs.append("bag")
+                    attrs.append(tr("bag"))
             if entry.name.startswith("."):
-                attrs.append("gizli")
+                attrs.append(tr("gizli"))
             out.append(FileNode(
                 name=entry.name, path=child_path, is_dir=child.is_dir,
                 size=0 if child.is_dir else child.size,
@@ -423,7 +424,7 @@ class NtfsAccess(FileSystemAccess):
         if entry.is_readonly:
             attrs.append("S")
         if entry.is_system:
-            attrs.append("Sis")
+            attrs.append(tr("Sis"))
         return FileNode(name=entry.name, path=path, is_dir=entry.is_dir,
                         size=0 if entry.is_dir else entry.size,
                         mtime=entry.mtime, attr_text=" ".join(attrs),
@@ -458,9 +459,9 @@ class UnsupportedAccess(FileSystemAccess):
 
     def listdir(self, path: str = "/") -> List[FileNode]:
         raise FatError(
-            f"{self.fs_type} icerigi bu surumde goruntulenemiyor. "
-            "Okunabilen dosya sistemleri: FAT12/16/32, exFAT, ext2/3/4. "
-            "NTFS okuyucusu yol haritasindadir.")
+            tr("{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya "
+               "sistemleri: FAT12/16/32, exFAT, ext2/3/4. NTFS okuyucusu yol "
+               "haritasindadir.", self.fs_type))
 
     def stats(self) -> Dict[str, int]:
         return {"total_bytes": self.info.total_bytes,

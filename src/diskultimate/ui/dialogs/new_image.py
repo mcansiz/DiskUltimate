@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox,
 
 from ...core.formatter import all_kinds
 from ...core.ptable import human_size
+from ...i18n import tr
 
 UNITS = {"MB": 1024 ** 2, "GB": 1024 ** 3, "TB": 1024 ** 4}
 
@@ -21,7 +22,7 @@ class NewImageDialog(QDialog):
 
     def __init__(self, parent=None, default_dir: str = ""):
         super().__init__(parent)
-        self.setWindowTitle("Yeni Disk Goruntusu")
+        self.setWindowTitle(tr("Yeni Disk Goruntusu"))
         self.setMinimumWidth(520)
         self._build(default_dir)
 
@@ -29,17 +30,17 @@ class NewImageDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
 
-        file_group = QGroupBox("Goruntu dosyasi")
+        file_group = QGroupBox(tr("Goruntu dosyasi"))
         form = QFormLayout(file_group)
         path_line = QHBoxLayout()
         default = os.path.join(default_dir or os.path.expanduser("~"), "yeni-disk.img")
         self.path_edit = QLineEdit(default)
         path_line.addWidget(self.path_edit, 1)
-        gozat = QPushButton("Gozat...")
+        gozat = QPushButton(tr("Gozat..."))
         gozat.setFixedWidth(86)
         gozat.clicked.connect(self._browse)
         path_line.addWidget(gozat)
-        form.addRow("Konum:", path_line)
+        form.addRow(tr("Konum:"), path_line)
 
         size_line = QHBoxLayout()
         self.size_spin = QDoubleSpinBox()
@@ -56,23 +57,24 @@ class NewImageDialog(QDialog):
         self.unit_combo.currentTextChanged.connect(self._update_info)
         size_line.addWidget(self.unit_combo)
         size_line.addStretch(1)
-        form.addRow("Boyut:", size_line)
+        form.addRow(tr("Boyut:"), size_line)
 
         self.sparse_check = QCheckBox(
-            "Seyrek dosya olarak olustur (diskte yalnizca kullanilan alani kaplar)")
+            tr("Seyrek dosya olarak olustur (diskte yalnizca kullanilan alani kaplar)"))
         self.sparse_check.setChecked(True)
         form.addRow("", self.sparse_check)
         layout.addWidget(file_group)
 
-        yapi_grup = QGroupBox("Baslangic yapisi")
+        yapi_grup = QGroupBox(tr("Baslangic yapisi"))
         form2 = QFormLayout(yapi_grup)
         self.scheme_combo = QComboBox()
-        self.scheme_combo.addItem("GPT (modern, 128 bolume kadar)", "gpt")
-        self.scheme_combo.addItem("MBR (klasik, 4 birincil bolum)", "mbr")
-        self.scheme_combo.addItem("Bolum tablosu olusturma", "")
-        form2.addRow("Bolum tablosu:", self.scheme_combo)
+        self.scheme_combo.addItem(tr("GPT (modern, 128 bolume kadar)"), "gpt")
+        self.scheme_combo.addItem(tr("MBR (klasik, 4 birincil bolum)"), "mbr")
+        self.scheme_combo.addItem(tr("Bolum tablosu olusturma"), "")
+        form2.addRow(tr("Bolum tablosu:"), self.scheme_combo)
 
-        self.auto_check = QCheckBox("Tum alani kaplayan tek bolum olustur ve bicimlendir")
+        self.auto_check = QCheckBox(tr("Tum alani kaplayan tek bolum olustur "
+                                       "ve bicimlendir"))
         self.auto_check.setChecked(True)
         self.auto_check.toggled.connect(self._toggle_auto)
         form2.addRow("", self.auto_check)
@@ -83,11 +85,11 @@ class NewImageDialog(QDialog):
         idx = self.fs_combo.findData("fat32")
         if idx >= 0:
             self.fs_combo.setCurrentIndex(idx)
-        form2.addRow("Dosya sistemi:", self.fs_combo)
+        form2.addRow(tr("Dosya sistemi:"), self.fs_combo)
 
-        self.label_edit = QLineEdit("YENI BIRIM")
+        self.label_edit = QLineEdit(tr("YENI BIRIM"))
         self.label_edit.setMaxLength(32)
-        form2.addRow("Birim etiketi:", self.label_edit)
+        form2.addRow(tr("Birim etiketi:"), self.label_edit)
         layout.addWidget(yapi_grup)
 
         self.info_label = QLabel()
@@ -95,8 +97,8 @@ class NewImageDialog(QDialog):
         layout.addWidget(self.info_label)
 
         butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText("Olustur")
-        butonlar.button(QDialogButtonBox.Cancel).setText("Iptal")
+        butonlar.button(QDialogButtonBox.Ok).setText(tr("Olustur"))
+        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
         butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
         butonlar.accepted.connect(self._validate)
         butonlar.rejected.connect(self.reject)
@@ -109,8 +111,8 @@ class NewImageDialog(QDialog):
 
     def _browse(self) -> None:
         path, _ = QFileDialog.getSaveFileName(
-            self, "Goruntu dosyasi", self.path_edit.text(),
-            "Disk goruntusu (*.img);;Tum dosyalar (*)")
+            self, tr("Goruntu dosyasi"), self.path_edit.text(),
+            tr("Disk goruntusu (*.img);;Tum dosyalar (*)"))
         if path:
             if not os.path.splitext(path)[1]:
                 path += ".img"
@@ -120,7 +122,8 @@ class NewImageDialog(QDialog):
         size = self.size_bytes()
         sector = size // 512
         self.info_label.setText(
-            f"Toplam {human_size(size)} — {sector:,} sektor x 512 bayt".replace(",", "."))
+            tr("Toplam {} — {} sektor x 512 bayt", human_size(size),
+               f"{sector:,}".replace(",", ".")))
 
     def size_bytes(self) -> int:
         return int(self.size_spin.value() * UNITS[self.unit_combo.currentText()])
@@ -128,23 +131,24 @@ class NewImageDialog(QDialog):
     def _validate(self) -> None:
         path = self.path_edit.text().strip()
         if not path:
-            QMessageBox.warning(self, "Eksik bilgi", "Bir dosya yolu girin.")
+            QMessageBox.warning(self, tr("Eksik bilgi"), tr("Bir dosya yolu girin."))
             return
         klasor = os.path.dirname(os.path.abspath(path))
         if not os.path.isdir(klasor):
-            QMessageBox.warning(self, "Gecersiz konum",
-                                f"Klasor bulunamadi:\n{klasor}")
+            QMessageBox.warning(self, tr("Gecersiz konum"),
+                                tr("Klasor bulunamadi:\n{}", klasor))
             return
         if os.path.exists(path):
             cevap = QMessageBox.question(
-                self, "Dosya var",
-                f"{path}\n\nDosya zaten var. Uzerine yazilsin mi?\n"
-                "Mevcut icerik tamamen kaybolur.",
+                self, tr("Dosya var"),
+                tr("{}\n\nDosya zaten var. Uzerine yazilsin mi?\nMevcut "
+                   "icerik tamamen kaybolur.", path),
                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if cevap != QMessageBox.Yes:
                 return
         if self.size_bytes() < 64 * 1024:
-            QMessageBox.warning(self, "Gecersiz boyut", "En az 64 KB olmalidir.")
+            QMessageBox.warning(self, tr("Gecersiz boyut"), tr("En az 64 KB "
+                                                            "olmalidir."))
             return
         self.accept()
 

@@ -18,6 +18,7 @@ from .fat import FatFS
 from .image import BlockDevice
 from .platform import PLATFORM_NAME, find_tool, run_tool, tool_names
 from .ptable import GPT_UNUSED
+from ..i18n import tr
 
 CHUNK = 4 * 1024 * 1024
 
@@ -51,22 +52,23 @@ class FsKind:
         if not self.available:
             adaylar = tool_names(self.key)
             if not adaylar:
-                return f"{PLATFORM_NAME} uzerinde bu bicim icin arac yok"
-            return f"{' veya '.join(adaylar)} kurulu degil"
+                return tr("{} uzerinde bu bicim icin arac yok", PLATFORM_NAME)
+            return tr("{} kurulu degil", tr(" veya ").join(adaylar))
         if size_bytes:
             from .ptable import human_size
             if self.min_bytes and size_bytes < self.min_bytes:
-                return f"en az {human_size(self.min_bytes)} gerekir"
+                return tr("en az {} gerekir", human_size(self.min_bytes))
             if self.max_bytes and size_bytes > self.max_bytes:
-                return f"en fazla {human_size(self.max_bytes)} destekler"
+                return tr("en fazla {} destekler", human_size(self.max_bytes))
         return ""
 
     @property
     def tool_hint(self) -> str:
         adaylar = tool_names(self.key)
         if not adaylar:
-            return f"{PLATFORM_NAME} uzerinde {self.label} icin harici arac yok"
-        return f"gerekli arac: {' veya '.join(adaylar)}"
+            return tr("{} uzerinde {} icin harici arac yok",
+                      PLATFORM_NAME, self.label)
+        return tr("gerekli arac: {}", tr(" veya ").join(adaylar))
 
 
 MSBASIC = "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7"
@@ -135,7 +137,7 @@ def wipe_signatures(view: BlockDevice) -> None:
     sektoru** temizlenir: NTFS yedek onyukleme sektoru orada durur.
     """
     if getattr(view, "readonly", False):
-        raise FormatError("Goruntu salt okunur acildi")
+        raise FormatError(tr("Goruntu salt okunur acildi"))
     ss = view.sector_size
     head = min(SIGNATURE_BYTES, view.size)
     zero = b"\x00" * ss
@@ -155,12 +157,13 @@ def format_partition(view: BlockDevice, fs_key: str, label: str = "",
     """
     kind = FS_BY_KEY.get(fs_key.lower())
     if kind is None:
-        raise FormatError(f"Bilinmeyen dosya sistemi: {fs_key}")
+        raise FormatError(tr("Bilinmeyen dosya sistemi: {}", fs_key))
     if getattr(view, "readonly", False):
-        raise FormatError("Goruntu salt okunur acildi")
+        raise FormatError(tr("Goruntu salt okunur acildi"))
     if kind.min_bytes and view.size < kind.min_bytes:
         raise FormatError(
-            f"{kind.label} icin en az {kind.min_bytes // (1024*1024)} MB gerekir")
+            tr("{} icin en az {} MB gerekir",
+               kind.label, kind.min_bytes // (1024*1024)))
 
     def report(msg: str, pct: int) -> None:
         if progress:
@@ -169,7 +172,7 @@ def format_partition(view: BlockDevice, fs_key: str, label: str = "",
     wipe_signatures(view)
 
     if kind.internal:
-        report(f"{kind.label} bicimlendiriliyor...", 10)
+        report(tr("{} bicimlendiriliyor...", kind.label), 10)
         spc = max(1, cluster_bytes // view.sector_size) if cluster_bytes else 0
         if kind.key == "exfat":
             offset = getattr(view, "start_lba", 0)
@@ -186,7 +189,7 @@ def format_partition(view: BlockDevice, fs_key: str, label: str = "",
         else:
             FatFS.format(view, fat_type=int(kind.key[3:]), label=label,
                          cluster_sectors=spc, quick=quick)
-        report("Tamamlandi", 100)
+        report(tr("Tamamlandi"), 100)
         return kind.label
 
     return _format_external(view, kind, label, cluster_bytes, quick, report)
@@ -198,24 +201,26 @@ def _format_external(view: BlockDevice, kind: FsKind, label: str,
     tool = find_tool(kind.key)
     if not tool:
         raise FormatError(
-            f"{kind.label} bu sistemde bicimlendirilemiyor ({kind.tool_hint})")
+            tr("{} bu sistemde bicimlendirilemiyor ({})", kind.label, kind.tool_hint))
     from ..paths import scratch
     tmp_path = os.path.join(scratch("format"), f"du_fmt_{os.getpid()}_{id(view):x}.img")
     try:
-        report("Gecici birim hazirlaniyor...", 5)
+        report(tr("Gecici birim hazirlaniyor..."), 5)
         with open(tmp_path, "wb") as fh:
             fh.truncate(view.size)
 
         cmd = _build_command(tool, kind, tmp_path, label, cluster_bytes, view)
-        report(f"{kind.label} olusturuluyor ({kind.tool})...", 20)
+        report(tr("{} olusturuluyor ({})...", kind.label, kind.tool), 20)
         proc = run_tool(cmd)
         if proc.returncode != 0:
             raise FormatError(
-                f"{os.path.basename(tool)} hata verdi:\n{(proc.stderr or proc.stdout).strip()[:800]}")
+                tr("{} hata verdi:\n{}",
+                   os.path.basename(tool),
+                   (proc.stderr or proc.stdout).strip()[:800]))
 
-        report("Bolume yaziliyor...", 60)
+        report(tr("Bolume yaziliyor..."), 60)
         _copy_back(tmp_path, view, report)
-        report("Tamamlandi", 100)
+        report(tr("Tamamlandi"), 100)
         return kind.label
     finally:
         try:
@@ -270,7 +275,7 @@ def _copy_back(tmp_path: str, view: BlockDevice,
                 if view.read(written, n).strip(b"\x00"):
                     view.write(written, block)
             written += n
-            report("Bolume yaziliyor...", 60 + int(39 * written / total))
+            report(tr("Bolume yaziliyor..."), 60 + int(39 * written / total))
     flush = getattr(view, "flush", None)
     if flush:
         flush()

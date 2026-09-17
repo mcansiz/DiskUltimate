@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import QSizePolicy, QWidget
 
 from ...core.ptable import FreeRegion, Partition, human_size
 from ..theme import darken, fs_color, lighten, palette_color
+from ...i18n import tr
 
 MIN_BLOCK_WIDTH = 64
 BLOCK_MARGIN = 8
@@ -151,7 +152,7 @@ class DiskMapWidget(QWidget):
         if not self._blocks:
             painter.setPen(palette_color(self, "dim"))
             painter.drawText(self.rect(), Qt.AlignCenter,
-                             "Disk goruntusu acik degil")
+                             tr("Disk goruntusu acik degil"))
             painter.end()
             return
 
@@ -167,13 +168,13 @@ class DiskMapWidget(QWidget):
             base = fs_color(part.fs_type)
             title = part.display_name
             lower = human_size(part.size)
-            tip = part.fs_type or "Bicimlendirilmemis"
+            tip = part.fs_type or tr("Bicimlendirilmemis")
         else:
             free: FreeRegion = block.obj
             base = palette_color(self, "window")
-            title = "Bos alan"
+            title = tr("Bos alan")
             lower = human_size(free.size)
-            tip = "Bolumlenmemis"
+            tip = tr("Bolumlenmemis")
 
         # govde
         grad = QLinearGradient(rect.topLeft(), rect.bottomLeft())
@@ -249,7 +250,7 @@ class DiskMapWidget(QWidget):
                     painter.setPen(metin_rengi)
                     f2 = painter.font(); f2.setPointSize(7); painter.setFont(f2)
                     painter.drawText(cub.adjusted(0, -1, 0, 0), Qt.AlignCenter,
-                                     f"%{oran*100:.0f} dolu")
+                                     tr("%{:.0f} dolu", oran*100))
 
     @staticmethod
     def _elide(painter: QPainter, text: str, width: int) -> str:
@@ -325,13 +326,14 @@ class DiskMapWidget(QWidget):
         if block.kind == "part":
             p: Partition = block.obj
             satir = [f"<b>{p.display_name}</b>",
-                     f"Tur: {p.type_name}",
-                     f"Dosya sistemi: {p.fs_type or 'yok'}",
-                     f"Boyut: {human_size(p.size)}",
-                     f"LBA: {p.start_lba} - {p.end_lba}"]
+                     tr("Tur: {}", p.type_name),
+                     tr("Dosya sistemi: {}", p.fs_type or tr("yok")),
+                     tr("Boyut: {}", human_size(p.size)),
+                     tr("LBA: {} - {}", p.start_lba, p.end_lba)]
             if p.fs_used >= 0 and p.fs_total > 0:
-                satir.append(f"Kullanilan: {human_size(p.fs_used)} / {human_size(p.fs_total)}")
+                satir.append(tr("Kullanilan: {} / {}",
+                                human_size(p.fs_used), human_size(p.fs_total)))
             return "<br>".join(satir)
         r: FreeRegion = block.obj
-        return (f"<b>Bos alan</b><br>Boyut: {human_size(r.size)}"
-                f"<br>LBA: {r.start_lba} - {r.end_lba}")
+        return (tr("<b>Bos alan</b><br>Boyut: {}", human_size(r.size))
+                + "<br>" + tr("LBA: {} - {}", r.start_lba, r.end_lba))

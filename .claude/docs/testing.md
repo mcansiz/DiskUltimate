@@ -17,6 +17,28 @@ altina yazilir (bkz. `src/diskultimate/paths.py`). `/tmp` kullanilmaz — cogu s
 Baska bir konum icin: `DISKULTIMATE_SCRATCH=/baska/yol python3 -m tests.run_all`
 Temizlik: `rm -rf .tmp`
 
+## Nerede calistirilir (ZORUNLU)
+
+**Calistiran testler sanal makinede kosar** (CLAUDE.md > Test Ortami Kurali).
+Linux hedefi Linux Mint 22.3'tur:
+
+```bash
+# ana makineden (Windows), PuTTY ile:
+plink -batch -ssh -l pc -pw 1234 192.168.42.131 "cd ~/DiskUltimate && python3 -m tests.run_all"
+```
+
+Kaynagi misafire aktarmak icin paylasilan klasor **kullanilmaz** (seyrek dosya
+desteklemez, ana makinenin diskini doldurur); arsiv kopyalanir:
+
+```bash
+tar --exclude=.git --exclude=.tmp --exclude=__pycache__ -czf du.tar.gz .
+pscp -pw 1234 du.tar.gz pc@192.168.42.131:/home/pc/
+plink -batch -ssh -l pc -pw 1234 192.168.42.131   "rm -rf ~/DiskUltimate && mkdir ~/DiskUltimate && tar -xzf ~/du.tar.gz -C ~/DiskUltimate"
+```
+
+Statik denetimler (`platform_check`, `i18n_check`) disk acmaz; ana makinede de
+kosabilir, ama sonuc VM'de de dogrulanir.
+
 ## Kapsam
 
 | Test | Dogruladigi |
@@ -45,6 +67,17 @@ Temizlik: `rm -rf .tmp`
 | `t22_yetki_yukseltme` | Yonetici/root yukseltmesi: durum sorgusu, yeniden baslatma komutu, betiksiz durumda **sunulmamasi** (ADR 0023) |
 | `t23_ntfs_bitmap_aralikli_yazma` | NTFS `$Bitmap`: aralikli yazmanin sonucu tam yazmayla **birebir ayni** olmali; pencere siniri, bitisik parca birlestirme, kismi tahsis birakmama (ADR 0024) |
 | `t24_yedek_onizleme` | `.dub` yedeginin icerigi **geri yuklenmeden** okunuyor: bolumler, dosya sistemleri, kok klasor; disk/bolum yedegi ayrimi; bos ile okunamayan ayrimi |
+| `t25_islem_kuyrugu` | Bekleyen islem kuyrugu: kuyruga eklemek diski **degistirmiyor** (sha256), adimlar sirayla isliyor, basarisiz adim durduruyor, yazilamaz kaynak reddediliyor (ADR 0025) |
+| `t26_dogrudan_yazma_yollari` | Kuyruga **girmeyen** yazmalar (geri yukleme) salt okunur kaynakta `become_writable()` ile calisabiliyor; gecemeyen kaynak nedenini soyluyor (ADR 0025 gerilemesi) |
+| `t27_disk_yoklamasi` | Bolumler disk **acilmadan** okunuyor; aygit salt okunur aciliyor, **yazilmiyor** ve hemen kapatiliyor; acik aygit yoklanmiyor (ADR 0026) |
+| `t28_dosya_ekleme_yazma_modu` | Salt okunur acilan kaynaga dosya eklenebiliyor: yetki ilk yazmada aliniyor, **taze** dosya sistemi kullaniliyor (ADR 0025 gerilemesi) |
+
+| `t29_uefi_yapilari` | UEFI giris/aygit yolu/kisayol gidis-donusu, `efibootmgr` metin bicimi, bilinmeyen dugumun korunmasi, GUID karisik siralamasi |
+| `t30_onyukleme_kodu_ve_sistem_tespiti` | Onyukleme kodu tanima (yalnizca ilk 440 bayt), bolum tablosundaki `GRUB` baytinin yaniltmamasi, kodun kaldirilmasinda tablonun/MBR imzasinin korunmasi, kuyruktan calistirma |
+| `t31_isletim_sistemi_tespiti` | ESP tanima ve `.efi` yukleyici listesi, kurulu Linux ile ayni FS'teki veri bolumunun ayirt edilmesi, harf duyarsiz yol aramasi |
+| `t32_grub_yapilandirmasi` | `GrubDefaults` duzenlemesinde yorum/sira korumasi ve yerinde guncelleme, `grub.cfg` menu + alt menu cozumu |
+| `t33_uefi_yedegi_ve_degisiklik_plani` | UEFI yedeginin bire bir gidis-donusu, degisiklik planinin **guvenli sirasi** (girisler → sira → silmeler), sirada olmayan girisin gizlenmemesi |
+| `t34_bellenime_yazma_kapisi` | Bellenim yazilamiyorken planin uygulanmamasi ve nedenin bildirilmesi (**gercek bellenime dokunan tek test**; yazma acikken atlanir) |
 
 ## Ortam guvenligi (onemli)
 
@@ -95,6 +128,58 @@ Uygulama takiliyken **Araclar > Tanilama > Simdi yigin dokumu al** ile elle de
 kanit alinabilir. Donma bittikten sonra rapor **Araclar > Tanilama > Son donma
 raporunu goster** altindadir.
 
+## Ceviri denetimi
+
+```bash
+python3 -m tests.i18n_check              # butun dilleri denetler
+python3 -m tests.i18n_check --write <kod>  # sozluk iskeletini uretir/tazeler
+python3 -m tests.i18n_check --list       # cevrilecek metinleri listeler
+```
+
+Kaynaktaki her `tr(...)` / `mark(...)` metnini toplar (su an **1062**) ve her
+dil dosyasi icin dogrular:
+
+| Denetim | Dogruladigi |
+|---|---|
+| eksik ceviri | Kaynaktaki her metin sozlukte var ve bos degil |
+| bayat giris | Sozlukte kaynakta olmayan metin kalmamis |
+| yer tutucu | `{}` sayisi ve `{ad}` adlari kaynakla ceviride ayni |
+| HTML etiketi | `<b>`, `<br>` gibi etiketler ceviride korunmus |
+| eylem metinleri | Her `self.act_*` icin `_retranslate_actions()` satiri var |
+| calisma zamani | Sozluk yuklenince `tr()` ceviriyor, kaynak dile donunce geri geliyor |
+
+> **Cevrilmemis metin** bu denetimle yakalanmaz (kaynakta olmayan bir seyi
+> bilemez). Onun icin sozde-yerellestirme vardir — asagida.
+> `tests/ui_smoke.py` ayrica her dil icin ekran goruntusu uretir
+> (`24-dil-<kod>.png`).
+
+### Sozde-yerellestirme (pseudolocalization)
+
+```bash
+DISKULTIMATE_LANG=qps python3 main.py      # arayuzu sahte dilde ac
+```
+
+Metin `[!Ɓǿŀŭḿŭ şīŀ···!]` bicimine girer. Yer tutucular (`{}`), HTML
+etiketleri ve varliklar **dokunulmadan** kalir.
+
+Uc seyi ayni anda yakalar:
+
+| Belirti | Ne demek |
+|---|---|
+| Metin Turkce kalmis | `tr()` ile **sarilmamis** — statik denetimin goremedigi tek bosluk turu |
+| Metin kutuya sigmamis | Yerlesim tasmasi (metin ~%30 uzatilir; Almanca'nin en kotu hali) |
+| Yan yana birden cok `[!...!]` | Metin parca parca birlestirilmis; cevirmen cumleyi kuramaz |
+
+`tests/ui_smoke.py` bunu **otomatik** denetler (`sozde_denetimi`): sozde dilde
+taze bir ana pencere ve alti diyalog kurar; eylem, menu, sekme ve sutun
+metinlerinin hepsinin sozde oldugunu **dogrular** (degilse test duser), kalan
+metinleri bilgi olarak listeler. Listede normalde yalnizca **veri** kalir
+(dosya adi, "64 bit", disk modeli, harici arac adlari).
+
+Cekirdek testleri Turkce mesaj icerigine bakar (orn. `"birincil" in str(exc)`).
+Bu yuzden `i18n` **kendiliginden** dil secmez: secim yalnizca `main.py` icinde
+`initialize()` ile yapilir, testler kaynak dilde kosar.
+
 ## Capraz platform denetimi
 
 ```bash
@@ -138,6 +223,105 @@ cd ~/du-test && python3 -m tests.run_all && python3 -m tests.fs_matrix
 
 Fiziksel disk testleri icin misafire **bos** bir disk eklenir (orn. `/dev/sdb`);
 sistem diski (`/dev/sda`) asla hedef gosterilmez.
+
+## Windows dogrulama ortami (VMware Player misafiri)
+
+Windows'a ozgu yazma testleri (NTFS `mkfs` yok; fiziksel diske yazma) bir
+**VMware Player** misafirinde kosulur. Misafir: **Windows 10 Enterprise 2016
+LTSB** (x64), `DESKTOP-GLH638P`, VM adi `ltsc`. Kanal: VMware Tools / `vmrun`
+(ana makinede `vmrun -T player ...`); ag kullanilmaz.
+
+**Yonetici hesabi (ZORUNLU).** Yazma testleri **`Admin`** hesabiyla kosulur.
+Bu hesap `vmrun` ile acildiginda **dogrudan yukseltilmis** gelir (High
+Integrity `S-1-16-12288`, `Administrators` etkin, `net session` calisir).
+`user` hesabi da yonetici grubundadir ama `vmrun` oturumunda UAC token
+filtresi yuzunden **Orta Duzey** kalir; yukseltmek icin
+`schtasks /rl highest /ru user /rp <parola>` gerekir. Bu yuzden yonetici is
+icin **`Admin`** kullanilir.
+
+**Cevrimdisi kurali (ZORUNLU).** Misafir **internete acilmaz**
+(`ethernet0.startConnected = "FALSE"`). Gerekli paketler (Python, PyQt5, ...)
+**ana makinede** indirilir, paylasilan klasore konur ve misafirde **oradan
+cevrimdisi** kurulur. Misafirde agdan `pip install <paket>` yapilmaz;
+`pip install --no-index --find-links <klasor>` ya da `.whl` tekerlekleri
+kullanilir.
+
+**Paylasilan klasor.** Ana makinedeki `D:\pythonProjeler\DiskUltimate`
+misafirde `\\vmware-host\Shared Folders\DiskUltimate` olarak baglidir (HGFS,
+yazma izinli). Proje koku:
+`\\vmware-host\Shared Folders\DiskUltimate\DiskUltimate`.
+
+> HGFS eslemesi **oturuma baglidir**: interaktif (konsol) oturumda gorunur,
+> ama `vmrun`'un batch oturumunda `\\vmware-host` **gorunmeyebilir**. `vmrun`
+> ile otomatik kosarken kaynagi/paketleri misafire `copyFileFromHostToGuest`
+> ile aktarin ya da testleri interaktif oturumda calistirin.
+
+**Testleri paylasilan klasorde calistirmayin** — Linux'taki ile ayni gerekce
+(HGFS seyrek dosya desteklemez, ana makine diski dolabilir). Kaynagi misafirin
+yerel diskine kopyalayin (orn. `C:\du-test`) ve orada kosun.
+
+Fiziksel disk testleri icin misafire eklenen **ikinci** disk hedeflenir:
+`\\.\PhysicalDrive1` (10 GB NVMe); sistem diski `\\.\PhysicalDrive0` asla
+hedef gosterilmez. Aygit yolu CreateFile ile acilir (`\\.\PhysicalDriveN`).
+
+## Onyukleme ve UEFI dogrulamasi (ADR 0028 / 0029)
+
+### Neyi aygitsiz sinayabiliriz
+
+Cozumleme bellenim erisiminden ayri durdugu icin (`core/efiboot.py` vs
+`core/platform.py`) UEFI yapilarinin tamami **UEFI olmayan bir makinede** bile
+dogrulanir. Ayni sekilde onyukleme kodu tanima ve isletim sistemi tespiti
+uretilmis bir `.img` uzerinde kosar; `mount` ve root gerekmez.
+
+```bash
+python3 -m tests.run_all      # t29 - t34
+```
+
+### Gercek bellenime karsi dogrulama (salt okunur)
+
+Cozumleyicinin dogrulugu, makinenin kendi onyukleme girisleriyle
+karsilastirilarak olculebilir. **Hicbir sey yazilmaz:**
+
+```bash
+python3 - <<'PY'
+import sys; sys.path.insert(0, "src")
+from diskultimate.core import efistore
+durum = efistore.load()
+for k, v in durum.summary().items():
+    print(f"{k}: {v}")
+for giris in durum.ordered("Boot"):
+    print(f"{giris.name}  etkin={giris.active}  {giris.description}")
+    print(f"    {giris.path_text}")
+PY
+```
+
+Beklenen: cikti `efibootmgr -v` (Linux) ya da bellenim menusuyle **ayni**
+girisleri ayni sirada gostermeli. Aygit yolu metni `efibootmgr` bicimindedir,
+bu yuzden satirlar dogrudan karsilastirilabilir.
+
+Bu, gelistirme makinesinde (Windows 10, UEFI) kosuldu: 205 degisken sayildi,
+alti onyukleme girisi cozuldu ve **hepsinin `to_bytes()` ciktisi okunan
+baytlarla bire bir ayni** cikti.
+
+### Olculemeyen: bellenime yazma
+
+**UEFI degiskenine yazma yolu gercek bellenimde denenmemistir.** Nedeni:
+
+- Linux Mint misafiri **BIOS (eski) kipinde** acilir; `/sys/firmware/efi`
+  yoktur, yazilacak degisken de yoktur.
+- Gelistirme makinesinde deneme yapilmaz (CLAUDE.md > Test Ortami Kurali).
+
+Sinanmis olan: yazmanin **reddedilmesi** ve nedenin bildirilmesi (t34),
+degisiklik planinin uretilmesi ve sirasi (t33). Sinanmamis olan: `efivar_write`
+cagrisinin bellenimde gercekten is gormesi. Bu, misafir UEFI kipinde
+acilacak sekilde yeniden kurulduktan sonra olculmelidir.
+
+### GRUB islemleri de calistirilmadi
+
+`grub-install` ve `update-grub` test misafirinde **kosturulmadi**: VM'in kendi
+onyukleyicisine dokunmak onu acilmaz birakabilirdi. Sinanmis olan arac bulma,
+yetki kapisi ve "bu platformda kullanilamaz" dallaridir. Bu islemleri gercekten
+olcmek icin **atilabilir** bir misafir gerekir.
 
 ## Dosya sistemi yetenek matrisi
 
@@ -214,7 +398,7 @@ DISKULTIMATE_QPA=xcb python3 -m tests.ui_smoke # gercek cizim yolu
 > testi burada duruyor ve sonraki adimlar Linux'ta hic kosmuyordu.
 
 Ornek bir 4 GB / dort bolumlu goruntu uretir ve `<proje>/.tmp/screenshots` altina
-**yirmi PNG** kaydeder: ana pencere, sekmeler, coklu goruntu ve diyaloglar
+**yirmi uc PNG** kaydeder: ana pencere, sekmeler, coklu goruntu ve diyaloglar
 (bolum boyutlandirma penceresi ve suruklemesi dahil). Arayuzde degisiklik
 yapildiginda bu goruntuler gozle denetlenir — ozellikle:
 - disk haritasinda metin ile doluluk cubugunun cakismamasi
@@ -228,6 +412,19 @@ yapildiginda bu goruntuler gozle denetlenir — ozellikle:
 - **yedek icerik listesinin** dolu olmasi (`18-yedek-bilgisi.png`): bolum
   satirlari, dosya sistemi/etiket sutunlari ve kok klasor girisleri; bos bolum
   `(bos)`, okunamayan icerik ise nedeniyle yazilir
+- **bekleyen islem panelinin** dolu olmasi (`21-bekleyen-islemler.png`): sol
+  alttaki liste, arac cubugundaki `Uygula (N)` ve tabloda etkilenen bolumlerin
+  kum saati isareti (ADR 0025)
+- **ikon setinin tamaminin cizilmesi**: `icons.names()` icindeki her ad bos
+  olmayan bir pixmap uretmeli, her `QIcon` **cok boyutlu** olmali
+  (`20-ikon-seti.png` elle gozle denetlenir)
+- **ikonlarin her platformda ayni olmasi**: duman testi `icons.digest()`
+  degerini basar. Windows ve Linux ciktilari **ayni** olmalidir
+  (`1ca31e30c5d79d2e0ed72a2132810cdd`). Ozet PNG degil **piksel** uzerinden
+  hesaplanir; PNG kodlamasi Qt eklentisine gore degisir (ADR 0025)
+- **diskin altinda bolumlerin gorunmesi** (`23-disk-genel-bakis.png`): agacta
+  `physpart` dugumleri ve genel bakis seridindeki bloklar; hicbir disk
+  acilmadan (ADR 0026)
 
 > Windows'ta platform eklentisi otomatik olarak `windows` secilir: Qt'nin
 > `offscreen` eklentisi orada hic font yuklemez ve goruntulerde metin gorunmez.
@@ -236,6 +433,18 @@ yapildiginda bu goruntuler gozle denetlenir — ozellikle:
 ```bash
 python3 main.py disk.img                     # gercek ekranda, dosya acarak
 ```
+
+### Neden Linux'ta da kosulmali
+
+Coklu dil calismasi yalnizca Windows misafirinde dogrulanmisti. Onyukleme
+ozellikleri eklenirken ayni duman testi Linux'ta kosuldu ve **dil adiminda
+dondu**: `FileBrowser.retranslate()` gecerli klasoru yeniden listelerken
+basarisiz oluyor ve **modal** bir uyari aciyordu; kapatacak kimse olmadigi
+icin surec sonsuza kadar bekledi. Duzeltildi (`navigate(..., quiet=True)`),
+bkz. worklog 2026-09-17 (4).
+
+Ders: dil degisimi gibi **kullanicinin baslatmadigi** tazelemeler modal
+pencere dogurmamalidir. Yeni bir `retranslate()` yazarken bu denetlenir.
 
 ## Bilinen sinirlar (test disi)
 - NTFS kullanim orani okunamiyor (MFT cozumlemesi yok) — tabloda `-` gosterilir.

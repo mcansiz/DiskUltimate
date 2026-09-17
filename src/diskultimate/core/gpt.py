@@ -17,6 +17,7 @@ from typing import List, Optional
 from .image import BlockDevice
 from .ptable import (GPT_TYPES, GPT_UNUSED, Partition, PartitionTable,
                      PartitionTableError)
+from ..i18n import tr
 
 GPT_SIGNATURE = b"EFI PART"
 GPT_REVISION = 0x00010000
@@ -105,7 +106,7 @@ class GPTTable(PartitionTable):
             except Exception:
                 header = b""
             if header[:8] != GPT_SIGNATURE:
-                raise PartitionTableError("Gecerli GPT basligi bulunamadi")
+                raise PartitionTableError(tr("Gecerli GPT basligi bulunamadi"))
             table.header_backup_ok = False
 
         (_sig, _rev, hdr_size, hdr_crc, _res, _my_lba, _other_lba,
@@ -152,7 +153,7 @@ class GPTTable(PartitionTable):
     def create(cls, device: BlockDevice) -> "GPTTable":
         min_sectors = 2 + 2 * (ENTRY_COUNT * ENTRY_SIZE // device.sector_size) + 2
         if device.sector_count < min_sectors:
-            raise PartitionTableError("Disk GPT icin cok kucuk")
+            raise PartitionTableError(tr("Disk GPT icin cok kucuk"))
         table = cls(device)
         table.disk_guid = new_guid()
         table._first_usable = max(2 + table.entry_sectors, table.align_sectors)
@@ -166,7 +167,7 @@ class GPTTable(PartitionTable):
         parts = sorted(self.partitions, key=lambda p: p.start_lba)
         if len(parts) > self.entry_count:
             raise PartitionTableError(
-                f"GPT en fazla {self.entry_count} bolum destekler")
+                tr("GPT en fazla {} bolum destekler", self.entry_count))
         for i, p in enumerate(parts):
             off = i * self.entry_size
             attrs = p.attributes
@@ -248,7 +249,7 @@ class GPTTable(PartitionTable):
                       attributes: int = 0, **_ignored) -> Partition:
         self.check_range(start_lba, sector_count)
         if len(self.partitions) >= self.entry_count:
-            raise PartitionTableError("GPT giris dizisi dolu")
+            raise PartitionTableError(tr("GPT giris dizisi dolu"))
         part = Partition(index=0, start_lba=start_lba, sector_count=sector_count,
                          scheme="gpt", type_guid=type_guid.upper(),
                          part_guid=new_guid(), name=name, bootable=bootable,

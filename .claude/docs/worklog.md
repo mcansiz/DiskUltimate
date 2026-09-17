@@ -2065,7 +2065,7 @@ Bir onceki oturumda kurulan donma yakalayici olayi kendiliginden kaydetti:
 `.claude/logs/freeze/freeze-20260915-134507.md` — **63.0 sn**, 29 yigin ornegi.
 
 ```
-13:44:46  Fiziksel disk acildi: \.\PhysicalDrive1 (YAZMA)
+13:44:46  Fiziksel disk acildi: \\.\PhysicalDrive1 (YAZMA)
 13:45:01  [Dummy-8]    win.query_drive(n=1)  basladi       <- arka plan yoklamasi
 13:45:05  [MainThread] disk.read(lba=2165024) basladi
 13:46:05.718 YAVAS disk.read(lba=8456192, size=1024) — 32250 ms
@@ -2129,8 +2129,8 @@ Kullanici zaten yoneticiydi. Linux'ta ayni islem sorunsuzdu.
 ### Bulgu — kendi soktugum hata
 Oturum gunlugu (`session-20260915-135924-13908.log`):
 ```
-13:59:32.068  aygit acik kutugune eklendi: \.\PhysicalDrive1
-13:59:32.100  arayuz: Fiziksel disk acildi: \.\PhysicalDrive1 (YAZMA)
+13:59:32.068  aygit acik kutugune eklendi: \\.\PhysicalDrive1
+13:59:32.100  arayuz: Fiziksel disk acildi: \\.\PhysicalDrive1 (YAZMA)
 13:59:41.651  disk.write(lba=8452440, size=1915168) — 78 ms
               HATA AccessDeniedError: Yazma reddedildi...
 ```
@@ -2389,3 +2389,812 @@ var?" sorusu yanitsizdi.
 Yeniden adlandirma sirasinda duzenli ifade, kullaniciya gorunen Turkce metni de
 degistirmisti (`"(bos)"` -> `"(empty)"`). Ekran goruntusunden fark edildi ve
 geri alindi — CLAUDE.md kurali: **Turkce arayuz metni, Ingilizce kod adi.**
+
+---
+
+## 2026-09-15 (8) — Bekleyen islem kuyrugu, tek "Uygula", cizilen ikon seti
+
+### Istek
+Kullanici `example guı/` altina Acronis, EaseUS, AOMEI, MiniTool ve Macrorit
+ekran goruntulerini koydu: *"islemler yapilir, adimlar uygula butonu ile
+sirayla uygulanir, Acronis'teki bayrak butonu gibi. Salt okunur ozelligine
+gerek kalmaz. Tum platformlarda kullanilabilecek gorsel ikonlar kullanalim."*
+
+Bes aracin besi de ayni kalibi kullaniyor: islemler kuyruga girer, tek bir
+Apply/Commit ile calisir, solda bir "Pending Operations" paneli durur.
+
+### Yapilanlar
+- **`core/operations.py`** (yeni): `Operation`, `OperationQueue`, `ApplyResult`.
+  14 islem turu kuyruklanir; adim eklemek diske dokunmaz, adimlar cikarilabilir,
+  yeniden siralanabilir, tumden iptal edilebilir.
+- **`DiskSession.become_writable()` / `can_become_writable()`**: kaynak hep salt
+  okunur acilir, yazma yetkisi yalnizca uygulama aninda alinir. Fiziksel diskin
+  butun koruma katmanlari orada calisir.
+- **Arayuz**: `Uygula (N)` / `Geri al` / `Vazgec` arac cubugu dugmeleri,
+  sol altta bekleyen islem paneli (sag tik: kaldir, yukari/asagi tasi),
+  tabloda etkilenen bolumlerde kum saati isareti.
+- **`ui/icons.py`** (yeni): 34 ikon, `QPainter` ile cizilir. Butun `QStyle`
+  ikonlari degistirildi; arac cubugu 14 dugmeden 9'a indirildi (tasma oku
+  cikiyordu).
+- Fiziksel diskte **"yazma modunda ac"** secimi kaldirildi. Sistem diski onayi
+  ve bagli bolum uyarisi kalkmadi — uygulama anina tasindi.
+
+### Neden salt okunurluk tumden kalkmadi
+Kullanicinin sezgisi dogruydu ama tam degil: kip **secimi** kalkti, **yetenek
+bilgisi** kaldi. `.dub` yedegi bir arsivdir; VDI/QCOW2 bu surumde yazilamaz;
+seyrek VMDK salt okunurdur. Bunlar icin arayuz artik "SALT OKUNUR" degil
+**"DEGISTIRILEMEZ"** der ve nedenini yazar. Fiziksel disk ve yazilabilir
+goruntu icin ise salt okunurluk normal kiptir, uyari degildir.
+
+### Yikici islem onayi nereye gitti
+CLAUDE.md kurali islem basina onay istiyordu; uc bolum olusturup ikisini
+bicimlendiren kullanici bes kutu goruyordu. Onay kalkmadi, **parti basina**
+oldu: Uygula tek pencerede butun adimlari numarali listeler, yikici olanlari
+kalin gosterir ve sayar. Daha az tiklama, daha cok bilgi.
+
+### SVG neden kullanilmadi
+`PyQt5.QtSvg` Ubuntu 24.04 misafirinde **kurulu degil** (olculdu: ImportError;
+ayri paket). Harici bagimlilik yok kurali geregi elendi. `QStyle` ikonlari da
+yetersiz: platforma gore degisiyor ve "bicimlendir", "boyutlandir", "onyukleme
+bayragi" gibi islemlerin karsiligi yok. Geriye `QPainter` kaldi.
+
+### Yol acilan bir hata
+Kum saati isareti satirda **asili kaliyordu**: `_apply_pending` yalnizca isaret
+ekliyor, kalkarken metni geri yazmiyordu. Ekran goruntusunden fark edildi;
+bolum adi tek kaynaga (`part_label`) alindi ve metin her seferinde bastan
+yaziliyor.
+
+### Dogrulama
+- Yeni `t25_islem_kuyrugu`: kuyruga eklemek diski degistirmiyor (sha256 ayni),
+  adimlar sirayla isliyor, basarisiz adim kuyrugu durduruyor ve duran adim
+  listede kaliyor, yazilamaz kaynak reddediliyor.
+- `ui_smoke`: kuyruk akisi + 34 ikonun hepsinin cizilmesi denetleniyor.
+  Yeni goruntuler: `20-ikon-seti.png`, `21-bekleyen-islemler.png`.
+- Windows: `run_all` **25/25** · `platform_check` 0 bulgu · `diag_check` 13/13 ·
+  `ui_smoke` tamam.
+- Linux (SSH): `run_all` **23/25 · 2 atlandi** (Windows dali) ·
+  `platform_check` 0 bulgu · `ui_smoke` tamam.
+
+### Kalan sinir
+Bekleyen durum **isaretlenir, simule edilmez**: "bicimlendir" kuyruktayken
+tabloda eski dosya sistemi gorunur, yaninda kum saati durur. Acronis sonucu
+haritada onizler; bunun icin bolum tablosunu bellekte bir golge aygit uzerinde
+calistirmak gerekir — ayri ve buyuk bir is. Yanlis onizleme gostermektense
+isaretlemek yeglendi.
+
+Ayrinti: `.claude/decisions/0025-bekleyen-islem-kuyrugu.md`
+
+---
+
+## 2026-09-15 (9) — ADR 0025 gerilemesi: geri yukleme "salt okunur" diyordu
+
+### Bildirilen sorun
+Linux Mint misafirinde `sdcard.img.dub` yedegi `/dev/sdb` diskine yazilmak
+istendi. **Bir kez calisti**, sonraki denemelerde:
+
+> Geri yukleme basarisiz: Fiziksel diskler guvenlik gerekcesiyle varsayilan
+> olarak SALT OKUNUR acilir. Degisiklik yapmak icin diski yazma modunda
+> acmaniz gerekir.
+
+Bu mesaj artik var olmayan bir secimi tarif ediyordu — "yazma modunda ac"
+dugmesi ADR 0025 ile kaldirilmisti.
+
+### Neden
+Kendi degisikligimin acigi. ADR 0025 ile kaynak **her zaman** salt okunur
+aciliyor ve yazma yetkisi yalnizca `apply_steps()` icinde aliniyor. Ama
+**kuyruga girmeyen** islemler var: geri yukleme ve klonlama dogrudan ve tek
+seferlik yazmalardir. Onlar hala yazilabilir bir oturum bekliyordu.
+
+"Bir kez calisti" da tutarli: ilk denemede *Yedegi diske yaz...* kullanilmis,
+o yol hedefi kendi acar (`restore_to_physical`) ve oturumdan bagimsizdir.
+
+### Yapilanlar
+- `restore()` artik once `_make_writable()` cagiriyor (fiziksel diskin sistem
+  diski / bagli bolum kapilari orada calisir).
+- Kayip bolumu tabloya ekleme (`adopt_lost_partition`) **kuyruga** alindi;
+  dogrudan yazan tek istisna kalmadi.
+- Yaniltici metinler duzeltildi:
+  - `readonly_reason` artik "yazma modunda acin" demiyor.
+  - Agacta `[salt okunur]` yerine, yalnizca gercekten degistirilemeyen
+    kaynakta `[degistirilemez]`.
+  - Bilgi panelinde `Erisim` satiri uc durumu ayiriyor: "Okuma/Yazma (acik)",
+    "Salt okunur — degisiklikler Uygula ile yazilir", "Degistirilemez — <neden>".
+
+### Denetim
+Arayuzdeki **butun** dogrudan yazan cagrilar tarandi; geriye yalnizca
+`recover_deleted` kaldi ve o oturuma degil, yerel klasore yazar.
+
+### Dogrulama
+- Yeni `t26_dogrudan_yazma_yollari`: salt okunur kaynakta geri yukleme
+  reddediliyor, `become_writable()` sonrasi calisiyor ve icerik doğru;
+  yedek dosyasi gecemiyor ve nedenini soyluyor; ikinci gecis zararsiz.
+- `ui_smoke`: arayuzun `_make_writable()` yolu denetleniyor.
+- Windows: `run_all` **26/26** · `platform_check` 0 bulgu.
+- Linux: `run_all` **24/26 · 2 atlandi** (Windows dali) · `ui_smoke` tamam ·
+  `platform_check` 0 bulgu.
+
+---
+
+## 2026-09-15 (10) — Acronis vari gorunum: diskler ve bolumleri acilmadan
+
+### Istek
+"Fiziksel disklere tiklayip icerik goruntuleme yerine Acronis vari gorunum
+yapalim, disk ve altinda bolumler gorunsun."
+
+Onceki akis iki adimliydi: once diski **ac**, sonra bolumleri gor. Incelenen
+araclarin hepsi ise butun diskleri ve bolumlerini acilista gosterir.
+
+### Guvenlik kurali acikca ikiye ayrildi
+`physical.py` katman 1 "listeleme hicbir sektor okumaz" diyordu. Bolumleri
+gostermek icin bolum tablosunu okumak sart. Kurali sessizce esnetmek yerine:
+
+| Islem | Sektor okur mu | Siklik |
+|---|---|---|
+| `list_disks()` listeleme | **Hayir** | 3 sn (yoklama) |
+| `survey_disk()` bolum yoklamasi | **Evet** (tablo + imzalar) | yalnizca disk listesi degisince / elle yenilemede |
+
+Yazma tarafinda hicbir sey degismedi. Siklik ayrimi onemli: ADR 0021'de aygita
+gereksiz dokunmanin 64 saniyelik sikismalar urettigi olculmustu.
+
+### Yapilanlar
+- **`DiskSession.survey_disk()`** + `DiskSurvey`: aygiti salt okunur acar,
+  GPT/MBR tablosunu ve dosya sistemi imzalarini okur, **hemen kapatir**.
+  Uygulamanin kendi acik tuttugu disk yoklanmaz.
+- **`DiskScanner`** artik (diskler, ozetler) donduruyor; imzasi degismeyen
+  disk yeniden yoklanmiyor.
+- **Agac**: her diskin altinda bolumleri (renk, etiket, boyut). Bir bolume
+  tiklamak diski salt okunur acip dogrudan o bolumu seciyor.
+- **`ui/widgets/disk_overview.py`** (yeni): hicbir kaynak acik degilken butun
+  diskler alt alta — solda kimlik kutusu, sagda bolum seridi. Kaynak acilinca
+  `QStackedWidget` tek disk haritasina geciyor. `DiskMapWidget` degistirilmedi.
+
+### Olcum (3 disk, hicbiri acilmadan)
+```
+PhysicalDrive0  GPT   5 bolum   (ham, FAT32 NO NAME, NTFS x3)
+PhysicalDrive1  MBR   3 bolum   (FAT16 NO NAME, ext4 rootfs, NTFS)
+PhysicalDrive2  MBR   1 bolum   (FAT32 NO NAME)
+```
+
+### Ilk surumde gorulen iki duzen hatasi
+- Genel bakis seridi kirpiliyordu (sabit yukseklik). Artik disk sayisina gore
+  buyur, uc satirda durur, fazlasi kaydirilir.
+- Sol paneldeki bolum adlari kirpiliyordu; panel 380 -> 440 piksele cikti.
+
+### Dogrulama
+- Yeni `t27_disk_yoklamasi`: aygit salt okunur aciliyor, **hicbir yazma**
+  yapilmiyor, **kapatiliyor**; bolumler ve dosya sistemleri dogru; acik aygit
+  yoklanmiyor; tablosuz disk hatasiz bos donuyor. Gercek diske dokunulmaz.
+- `ui_smoke`: sahte yoklama sonucuyla agac dugumleri ve serit bloklari
+  denetleniyor (`23-disk-genel-bakis.png`).
+- Windows: `run_all` **27/27** · `platform_check` 0 bulgu · `diag_check` 13/13.
+- Linux: `run_all` **25/27 · 2 atlandi** (Windows dali) · `platform_check`
+  0 bulgu · `ui_smoke` tamam.
+
+### Sinir
+Genel bakis **bekleyen islemleri gostermez**: kuyruk isaretleri acik oturumun
+bolum tablosundadir (ADR 0025), serit diskin mevcut durumunu cizer.
+
+Ayrinti: `.claude/decisions/0026-disk-genel-bakisi.md`
+
+---
+
+## 2026-09-15 (11) — Acik disk agacta yerinde kalir ("(asagida acik)" kalkti)
+
+### Bildirilen sorun
+"Bu sekilde tiklandiginda asagida acik yaziyor, bunu istemiyorum. Diskler
+uzerinde direk islem istiyorum, bunu asagiya tasimani istemiyorum. Acronis,
+DiskGenius vb. uygulamalarda bu sekilde."
+
+Haklıydi: bir onceki adimda diskin altina bolumleri koymustum ama disk
+**acilinca** hala ayri bir dal uretiliyordu — disk satirinda "(asagida acik)"
+yaziyor, bolumler agacin altindaki ikinci koke tasiniyordu. Ayni disk iki
+yerde gorunuyordu.
+
+### Yapilanlar
+- Fiziksel disk oturumu icin **ayri dal olusturulmuyor**. Disk kendi satirinda
+  kalir; acikken bolumleri oturumdan (canli), kapaliyken yoklamadan gelir.
+- Acik disk satiri kalin ve semasiyla yazilir; tiklamak onu etkin kaynak yapar.
+  Sag tik: "Bu diski kapat".
+- Bolum dugumleri hem agacta hem tabloda bekleyen islem kum saatini gosteriyor.
+- `_select_tree` agaci **her derinlikte** ariyor (bolumler artik torun dugum);
+  eski surum acik diskin bolumunu agacta hic secemiyordu.
+- Goruntu dosyalari (.img, VHD, .dub) kendi dallarinda kalmaya devam ediyor —
+  fiziksel disk listesinde yer almazlar.
+
+### Tanilamanin yakaladigi israf
+Disk acilirken arayuz **1.5 sn** takildi. Gunluk nedeni gosterdi: 14.7 GB
+FAT32 bolumun tespiti 7.7 MB okuyor (FAT tablosunun tamami, ~590 ms) ve bu is
+**uc kez** yapiliyordu — oturum kurulurken, `refresh()` icinde, secimde.
+
+`refresh(reload=False)` eklendi: az once acilmis kaynak yeniden okunmuyor.
+**1.5 sn -> 0.95 sn.** Kalan iki okumadan biri tespit, oteki dosya sistemi
+surucusunun acilisi; ikisini tek okumaya indirmek `fsdetect` ile `filesystem`
+katmanlarini birlestirmeyi gerektiriyor — ayri is olarak not edildi.
+
+### Dogrulama
+- `ui_smoke`: acik kaynakta agacta "(asagida acik)" **bulunmamali** ve goruntu
+  oturumu kendi dalinda gorunmeli.
+- Elle: SanDisk USB bellek acildi, agacta yerinde kaldi, bolumu secildi,
+  dosya gezgini icerigi listeledi, ikinci dal olusmadi
+  (`24-yerinde-acik.png`).
+- Windows: `run_all` **27/27** · `platform_check` 0 bulgu · `diag_check` 13/13.
+- Linux: `run_all` **25/27 · 2 atlandi** · `platform_check` 0 bulgu ·
+  `ui_smoke` tamam.
+
+---
+
+## 2026-09-15 (12) — Ikonlar: her platformda ayni, daha buyuk
+
+### Istek
+"Ikonlar her platformda ayni olacak, biraz daha buyut." + "Dosya gezgini
+ikonlarini da ayni sekilde ayni olsun."
+
+### Durum tespiti
+Ana pencere zaten cizilen ikonlara gecmisti (ADR 0025) ama **dosya gezgini**
+hala `QStyle` standart ikonlarini kullaniyordu — yani uygulamanin o bolumu
+platforma gore degisiyordu.
+
+### Yapilanlar
+- Kalan on iki ikon cizildi: `up`, `export`, `import`, `folder`,
+  `folder-add`, `folder-new`, `file`, `trash`. Toplam **42 ikon**.
+- `theme.standard_icon()` **kaldirildi**; kaynak agacinda artik hicbir
+  `QStyle` ikonu yok.
+- `open` ile `folder` 16 pikselde karisiyordu; `open` ikonuna klasorden
+  tasan bir belge eklendi.
+- **Cok boyutlu ikon**: her `QIcon` 16/20/24/32/48 px pixmap tasiyor. Tek
+  pixmap tutup Qt'ye olcekletmek bulanik cikiyordu.
+- Boyutlar: ana arac cubugu 18 -> **24 px**, dosya gezgini 16 -> 20, agaclar
+  20, bolum tablosu cipleri 11 -> 13, satir yuksekligi 24 -> 26.
+
+### "Her platformda ayni" — olculdu
+`icons.digest()` butun cizimlerin piksel ozetini verir:
+```
+Windows 10   Qt 5.15.2    windowsvista   1ca31e30c5d79d2e0ed72a2132810cdd
+Ubuntu 24.04 Qt 5.15.13   fusion         1ca31e30c5d79d2e0ed72a2132810cdd
+```
+
+### Olcumu bir kez yanlis kurdum
+Ilk surum **PNG baytlarini** karsilastiriyordu ve Windows ile Linux farkli
+deger veriyordu. Arastirinca sebep cikti: ayni makinede bile `offscreen` ile
+`windows` eklentisi farkli bayt uretiyor, cunku `QPixmap` bicimi ekrana gore
+secilir. Piksel degerleri aynidir. Karsilastirma sabit bicime (`ARGB32`)
+cevrilerek duzeltildi — yanlis olcum "platformlar farkli" dedirtiyordu.
+
+### Dogrulama
+- `ui_smoke`: her ikon bos olmayan pixmap uretiyor, `QIcon`lar cok boyutlu,
+  cizim ozeti basiliyor (iki platformda ayni).
+- Windows: `run_all` **27/27** · `platform_check` 0 bulgu · `diag_check` 13/13.
+- Linux: `ui_smoke` tamam, ayni ozet.
+
+---
+
+## 2026-09-15 (13) — Linux Mint: fiziksel diske dosya eklenemiyordu
+
+### Bildirilen sorun
+"Linux Mint'te /dev/sdb'ye dosya yukleme yapamiyorum, sebebi nedir?"
+
+### Tani — gunlukten
+Kullanicinin oturum gunlugu paylasilan klasorde oldugu icin dogrudan okundu
+(`session-20260915-164211-16325.log`):
+```
+16:42:39  arayuz: Fiziksel disk acildi (salt okunur): /dev/sdb — 10.00 GB, MBR
+```
+Disk **salt okunur** acilmis (ADR 0025 ile artik hep boyle). Diskin durumu da
+misafir makinede okundu: `sdb1` FAT32 32 MB (bagli, /media/pc/...), `sdb2`
+ext4 1 GB.
+
+**Neden:** dosya islemleri bekleyen islem kuyruguna **girmez** — bir dosya
+sisteminin icinde olurlar, disk yerlesimini degistirmezler (ADR 0025 boyle
+karar vermisti). Ama ayni ADR kaynagi her zaman salt okunur acar hale
+getirdi. Sonuc: `FileBrowser` icin `fs.writable` hep `False`, "Dosya ekle"
+dugmesi hep pasif. Fiziksel diske dosya eklemek **hic mumkun degildi**.
+
+Bu, geri yukleme yolundaki (13. oturum) hatanin **ayni sinifta ikinci
+ornegi**: bir kip secimini kaldirirken ona dolayli bagli yollari taramak
+gerekiyordu; ilk taramada dosya gezgini gozden kacmis.
+
+### Yapilanlar
+- `FileBrowser.ensure_writable` geri cagirmasi: ilk yazma denemesinde kaynagi
+  yazma moduna alir ve **taze** dosya sistemi dondurur (kaynak yeniden
+  acildigi icin eski nesne gecersizdir).
+- Yazma dugmeleri salt okunur kaynakta artik **pasif degil**: pasif dugme
+  "bu is hic yapilamaz" der ki dogru degil; yetki ilk denemede istenir.
+- `_browser_write_access()` ana pencerede: fiziksel diskin sistem diski /
+  bagli bolum kapilarindan gecer, sonra bolumu yeniden secip gezgini baglar.
+
+### Yol acilan bir guvenlik duzeltmesi
+Bagli bolum uyarisi her platformda "Yazma sirasinda bu bolumler gecici olarak
+cikarilacak" diyordu. Bu **yalnizca Windows'ta dogru** (FSCTL_LOCK_VOLUME +
+DISMOUNT). Linux/macOS'ta hicbir sey cikarilmaz ve bagli bir dosya sistemine
+ham yazmak onu bozar. `physical.locks_volumes_on_write()` eklendi; Linux'ta
+uyari artik gercegi soyluyor: *"Bu bolumler hala bagli... once cikarmaniz
+(unmount) onerilir."*
+
+Kullanicinin durumunda bu dogrudan gecerli: `sdb1` bagliydi.
+
+### Dogrulama
+- Yeni `t28_dosya_ekleme_yazma_modu`: salt okunur kaynakta yazma reddediliyor,
+  `become_writable()` sonrasi **taze** dosya sistemi yazilabiliyor, bayat
+  nesne kullanilmiyor, dosya gercekten yazilip geri okunuyor.
+- `ui_smoke`: `ensure_writable` bagli, salt okunur kaynakta "Dosya ekle"
+  **pasif degil**, `_require_writable()` yetkiyi aliyor ve gezgin taze dosya
+  sistemine baglaniyor.
+- Windows: `run_all` **28/28** · `platform_check` 0 bulgu · `diag_check` 13/13.
+- Linux: `run_all` **26/28 · 2 atlandi** · `ui_smoke` tamam ·
+  `platform_check` 0 bulgu.
+
+---
+
+## 2026-09-15 (14) — Ust panel ikonlari 32 piksele cikti
+
+Istek: "Ust panel ikonlarini daha da buyut."
+
+Ana arac cubugu 24 -> **32 px**. Ikonlar zaten 32 px pixmap tasidigi icin
+olcekleme yok, keskin cikiyor.
+
+Tasma denetlendi: 32 px ikon + metin ile arac cubugu **866 px** genislik
+istiyor; 1024 / 1280 / 1600 px pencerelerin ucunde de `>>` tasma oku
+cikmiyor (olculdu).
+
+Dosya gezgini arac cubugu 20 px'te birakildi — ikincil bir cubuk, gorsel
+hiyerarsi boyle dogru.
+
+`run_all` 28/28 · `platform_check` 0 bulgu · `ui_smoke` tamam.
+
+## 2026-09-17 — VMware Windows 10 yazma testi ortami (Admin hesabi, cevrimdisi)
+
+Kullanici Windows yazma testleri icin bir **VMware Player** misafirine
+(`ltsc`, Windows 10 Enterprise 2016 LTSB x64, `DESKTOP-GLH638P`) yonetici
+erisimi istedi. Kanal: VMware Tools / `vmrun` (ana makinede VMware Player
+16.2.3). Ag kullanilmaz; misafir cevrimdisi kalir.
+
+### Baglanti bulgulari
+- `user` hesabi baglaniyor ama `vmrun` oturumunda **Orta Duzey** kaliyor (UAC
+  token filtresi; Administrators uyesi olsa da pasif). Yukseltme
+  `schtasks /rl highest /ru user /rp <parola>` ile dogrulandi (High Integrity).
+- **`Admin` hesabi** `vmrun` ile **dogrudan yukseltilmis** geliyor: High
+  Integrity (`S-1-16-12288`), `Administrators` etkin, `net session` OK.
+  Yonetici is icin bu hesap secildi.
+- Yukseltilmis baglamda `\\.\PhysicalDrive1` CreateFile ile acilip okundu
+  (MBR imzasi `55aa` — ikinci disk uzerinde tablo var, tam bos degil; yikici
+  testten once icerigi denetlenmeli).
+
+### Kararlastirilan kurallar (kullanici)
+1. Windows yazma testi icin **`Admin` hesabi** kullanilacak.
+2. Misafir **internete acilmayacak**; paketler ana makinede indirilip
+   paylasilan klasor uzerinden misafire alinip **cevrimdisi** kurulacak.
+3. Paylasim: ana makine `D:\pythonProjeler\DiskUltimate` → misafir
+   `\\vmware-host\Shared Folders\DiskUltimate` (proje koku alt klasor
+   `...\DiskUltimate\DiskUltimate`).
+
+### Notlar
+- HGFS eslemesi `vmrun`'un batch oturumunda **gorunmedi** (oturuma bagli);
+  interaktif oturumda bagli. Otomasyonda `copyFileFromHostToGuest` kullanilir.
+- Python misafirde **kurulu degil**; ilk is offline Python + PyQt5 kurulumu.
+- `vmrun runProgramInGuest` arguman aktariminda `/c`, `&`, `^`, `\` bozuluyor;
+  guvenilir yol komutu `.bat`/`.ps1`'e yazip kopyalamak, ciktiyi dosyaya alip
+  geri cekmek. Aygit yolundaki ters bolu `[char]92` ile kurulur.
+
+Kurallar `.claude/docs/testing.md` (Windows dogrulama ortami) ve
+`.claude/memory/windows-test-ortami.md` altina islendi. Parola guvenlik
+geregi depoya yazilmadi (`.claude/` commit ediliyor).
+
+## 2026-09-17 (2) — Oturum arsivi denetimi: bir oturum kayitsiz kalmis
+
+Kullanici arsivde yalnizca 4 satir gorunce "tum oturumlar kaydediliyor mu?"
+diye sordu. `~/.claude/projects/d--pythonProjeler-DiskUltimate-DiskUltimate/`
+ile `.claude/sessions/` karsilastirildi.
+
+### Bulgular
+- Projede bugune kadar **5 oturum** acildi (suregelen oturum haric 4 tamamlanmis).
+  Arsivde 4 satir vardi ama bunlarin ikisi **ayni oturumun** iki gunluk
+  kopyasiydi (`240115eb`, 15 ve 16 Eylul). Yani gercekte 3 farkli oturum
+  arsivlenmisti.
+- **`fa7e2993-d71e-400b-bc6a-ae88ced433ef` hic arsivlenmemisti** (15 Eylul
+  13:27–17:01, 2827 satir, 10.5 MB). Tanilama/donma yakalayici calismasinin
+  (ADR 0020) yapildigi oturum bu. `isSidechain: false`, cwd proje koku,
+  dal `tanilama-ve-donma-duzeltmeleri` — gercek bir proje oturumu.
+  Ham dokum hala duruyordu; `.claude/sessions/` altina kendi tarihiyle
+  kopyalandi, INDEX satiri `kurtarildi` olarak eklendi.
+
+### Kancanin yapisal acigi (henuz duzeltilmedi)
+1. **`SessionEnd` tetiklenmezse kayit yok.** Surec oldurulur, pencere kapanir
+   veya makine kapanirsa kanca hic calismaz; oturum sessizce kaybolur.
+   Kanca zaten her hatada sessizce 0 donuyor (tasarim geregi), bu yuzden
+   kayip **fark edilmiyor**.
+2. **Dosya adindaki tarih arsivleme tarihi** (`datetime.now()`), oturumun
+   tarihi degil. Devam ettirilen bir oturum her gun **tam kopya** cikariyor:
+   `240115eb` iki kez, 7.8 MB + 7.8 MB. 15 Eylul kopyasi 16 Eylul'unkinin
+   eksik on-eki.
+3. Telafi yolu yok: `SessionStart` kancasi olsa, acilista onceki kayitsiz
+   dokumler taranip arsivlenebilirdi.
+
+## 2026-09-17 (3) — Coklu dil arayuzu (tr / en / de), VM'de dogrulandi
+
+Kullanici istegi: *"projeye coklu dil secenegi ekleyelim; gerekli denemeleri
+VM Win10'da dene, bagimliliklari ana makineden indirip VM'e kopyala, VM
+internete acilmasin."*
+
+### Yapilan
+
+**Yeni altyapi** (`src/diskultimate/i18n/`, saf Python, Qt'siz — ADR 0027):
+
+| Parca | Isi |
+|---|---|
+| `i18n/__init__.py` | `tr()`, `mark()`, dil secimi, ayar, degisiklik bildirimi |
+| `i18n/catalogs/en.json`, `de.json` | 1062'ser ceviri (tr kaynak dildir, dosyasi yok) |
+| `core/settings.py` | Tercihlerin JSON saklanmasi (isletim sisteminin ayar klasoru) |
+| `core/platform.py` | `config_dir()`, `system_language()`, `elevation_name()` |
+| `tests/i18n_check.py` | Sozluk denetimi + iskelet uretimi (6 denetim) |
+
+**Cevrilen yuzey.** Yalnizca `ui/` degil, `core/` de: hata mesajlari (`raise`),
+ilerleme bildirimleri, ozet tablolari (`summary()`), bolum turu adlari, silme
+yontemleri, imza adlari ve islem kuyrugu basliklari. Toplam **1062 metin**.
+Cekirdegi cevirmek katman kuralini bozmadi: `i18n` saf Python, `core/` hala
+PyQt import etmiyor (`platform_check`: 0 bulgu).
+
+**Modul duzeyindeki metinler.** `MBR_TYPES`, `GPT_TYPES`, `WIPE_METHODS`,
+`SIGNATURES`, `operations.KINDS` uygulama acilirken, dil secilmeden once
+uretiliyor. gettext'in `N_()` yaklasimi kullanildi: `mark()` ile isaretlenip
+gosterim aninda `tr()` ile cevriliyor.
+
+**Bekleyen islem basliklari.** `Operation` artik hazir metin degil, **kalip +
+argumanlari** sakliyor; `title`/`detail`/`target` okundugunda ceviriliyor.
+Boylece kuyruk doldurulduktan sonra dil degistirilirse adim basliklari da
+donuyor.
+
+**Dil degisimi yeniden baslatma istemiyor.** Acik disk ve bekleyen kuyruk
+kaybolmasin diye metinler yerinde yenileniyor: `i18n.add_listener` ->
+`MainWindow.retranslate()`; `_build_actions()` eylemleri bos metinle kurup
+metni `_retranslate_actions()` yaziyor (metnin tek kaynagi orasi).
+`FileBrowser`, `PartitionTableWidget`, `HexViewer` kendi `retranslate()`
+islevlerini aldi.
+
+### Yol acilirken bulunan iki gercek kusur
+
+1. **Metinden karar cikarma.** Iki yerde kod, urettigi metnin **icinde arama**
+   yapiyordu: `"kilitlenmis" in reason` (salt okunur acilis uyarisi) ve
+   `"[YIKICI]" in line` (uygulama onayi). Metin cevrilince ikisi de sessizce
+   bosa duserdi. Veriye tasindi: `DiskImage.readonly_locked` bayragi ve
+   `OperationQueue.describe_rows()` -> `(metin, yikici mi)`.
+2. **`elevation_available()` cevrilmemis kaliyordu** — `platform.py` `tr`'yi
+   yalnizca islev icinde import ediyordu; modul duzeyine alindi (dongu yok,
+   `i18n` cekirdegi import etmiyor).
+
+### Dogrulama — **VM Win10 misafirinde** (kullanici istegi)
+
+Bagimlilik: PyQt5 5.15.11 ana makinede indirildi (win32/cp312 tekerlekleri),
+misafire kopyalandi ve **cevrimdisi** kuruldu
+(`pip install --no-index --find-links C:\du-deps PyQt5`). Misafirin agi kapali
+kaldi (`ping 8.8.8.8` -> General failure).
+
+| Kosum (misafirde, `C:\du-test`) | Sonuc |
+|---|---|
+| `python -m tests.run_all` | **28/28 basarili** |
+| `python -m tests.platform_check` | **0 bulgu** |
+| `python -m tests.i18n_check` | tr/en/de **TAMAM**, 1062 metin |
+| `python -m tests.diag_check` | **13/13 gecti** |
+| `python -m tests.ui_smoke` | tamamlandi; `24-dil-de.png`, `24-dil-en.png` uretildi |
+
+Dil secimi de misafirde dogrulandi: secim
+`C:\Users\Admin\AppData\Roaming\DiskUltimate\settings.json` icine yaziliyor,
+**yeni surec** onu okuyor (`initialize() -> de`), `DISKULTIMATE_LANG=en` kayitli
+secimi geciyor ve `tr`'ye geri donuluyor.
+
+Ekran goruntulerinde butun arayuz cevriliyor: menuler, arac cubugu, agac,
+tablo sutunlari, sekmeler, durum cubugu, hex denetimleri. Almanca'da uzun
+kacan uc etiket kisaltildi (arac cubugu tasma okuna dusuyordu).
+
+### VM'de yasanan takilma (ceviriyle ilgisiz, kayit icin)
+
+Ilk `ui_smoke` kosumu 23. ekran goruntusunden sonra **kilitlendi** (CPU 0,
+15 sn boyunca ilerleme yok). Misafirde onceki kosumdan kalan ikinci bir
+`python.exe` vardi; o surec oldurulup test yeniden kosuldugunda **sorunsuz
+tamamlandi**. ADR 0021'deki kural bunu aciklar: ayni aygita iki yerden
+dokunmak surucu yiginini asili birakiyor. Tek basina kosan test takilmiyor.
+
+Ayrica misafirde bir donma raporu uretildi: `ui_smoke` 4 GB'lik goruntuyu
+**arayuz is parcaciginda** yedekliyor (`backup(...)`, satir 375) ve yavas
+makinede bu 1.8 sn suruyor. Testin kendi kurgusu; uygulama kodu degil.
+Yakalayici dogru calisti.
+
+### Belgeler
+
+- `.claude/decisions/0027-cok-dilli-arayuz.md` — karar, secenekler, gerekce
+- `.claude/docs/architecture.md` — `i18n/` agaci, metin akisi, genisletme noktalari
+- `.claude/docs/testing.md` — ceviri denetimi bolumu
+- `CLAUDE.md` — coklu dil kurali, "gorunen metin karar girdisi degildir"
+- `README.md` — dil rozeti, **Araclar > Dil**, `DISKULTIMATE_LANG`
+
+---
+
+## 2026-09-17 (4) — Onyukleyici yonetimi ve UEFI onyukleme duzenleyici
+
+Kullanici iki uygulamanin projeye entegre edilmesini istedi:
+
+- [exxos-easy-grub-manager](https://github.com/exxosuk/exxos-easy-grub-manager)
+  — *"gerekli uygulama durumlarini analiz et, projeyi degistirebilirsin bize
+  gore uygun olsun, capraz platform destegi saglansin"*
+- [efibooteditor](https://github.com/Neverous/efibooteditor) — *"bu projedeki
+  ozellikleride istiyorum"*
+
+Ayrica oturum sirasinda yeni bir kural koydu: **testler sanal makinede
+calistirilir**, ana makinede degil.
+
+### Lisans
+
+exxos-easy-grub-manager GPL-3.0 (bu projeyle ayni), efibooteditor LGPL-3.0
+(GPL-3 projeye katilabilir). Ikinci uygulamadan **kod alinmadi**: C++/Qt
+yazilmis ve zaten birebir cevrilemezdi; UEFI yapilari **UEFI Specification
+2.10**'dan yeniden yazildi.
+
+### Analiz — kaynak araclarin sinirlari
+
+| Kaynaktaki yol | Sinir |
+|---|---|
+| `lsblk` + `mount -o ro` ile bolum incelemesi | Yalnizca Linux, yalnizca root |
+| `dd bs=512 \| strings \| grep GRUB` | 512 baytin tamaminda arar; bolum tablosundaki rastgele "GRUB" baytlari yanlis eslesme uretir |
+| `dd if=/dev/zero of=$dev bs=440` | Dogru genislik, ama tiklama aninda diske yazar — kuyrugu (ADR 0025) ve fiziksel disk kapilarini (ADR 0014) atlar |
+| efibooteditor: efivar + Windows API | Yapi cozumlemesi bellenim erisimiyle ic ice; UEFI'siz makinede test edilemez |
+
+DiskUltimate'in kaynakta olmayan bir kozu vardi: **kendi dosya sistemi
+surucileri**. Bir bolumu okumak icin isletim sistemine baglatmak gerekmiyor.
+
+### Yapilanlar
+
+**Yeni cekirdek modulleri**
+
+| Dosya | Is |
+|---|---|
+| `core/bootloader.py` | Onyukleme kodu tanima (yalnizca ilk 440 bayt), bolumdeki sistemi kendi FS suruculeriyle bulma, `GrubDefaults`, `parse_grub_cfg` |
+| `core/grub.py` | `grub-install`, menu uretimi, yedekle/geri yukle, "tumunu onar" — yalnizca Linux |
+| `core/efiboot.py` | `EFI_LOAD_OPTION`, aygit yolu dugumleri, `EFI_KEY_OPTION`, sira listeleri — saf Python |
+| `core/efistore.py` | Butun UEFI duzenini okuma, JSON yedek, degisiklik plani, yazma |
+
+**`core/platform.py`ye eklenen** (OS farkinin tek durdugu yer): onyukleyici
+arac arama, `run_privileged` (pkexec), `write_system_file`, `firmware_type`,
+`efivar_names/read/write/delete` (Linux efivarfs + Windows bellenim API'si).
+
+**Kuyruk:** `clear_boot_code` islem turu — ilk 440 bayti sifirlar, bolum
+tablosunu korur, yikici isaretlidir ve `_require_writable()` uzerinden butun
+fiziksel disk kapilarindan gecer.
+
+**Arayuz:** yeni `&Onyukleme` menusu, `ui/dialogs/bootloader.py` (onyukleyici
+yoneticisi) ve `ui/dialogs/efiboot.py` (UEFI duzenleyici); uc yeni cizilmis
+ikon (`bootloader`, `efi`, `boot-order`).
+
+**Ceviri:** 249 yeni metin; tr/en/de **TAMAM** (toplam 1311).
+
+### Gelistirme sirasinda bulunan uc gercek hata
+
+1. **`Partition.index` 1 tabanli, liste konumu degil.** `survey_session()`
+   `enumerate()` konumunu `session.filesystem()`e veriyordu — **yanlis bolumu
+   acardi**. VM'deki t31 testi yakaladi; duzeltildi ve kod yorumuyla isaretlendi.
+2. **Windows'ta bellenim ayricaligi okumak icin de gerekiyor.**
+   `SeSystemEnvironmentPrivilege` yonetici belirtecinde bile kapali gelir ve
+   acilmadan yapilan cagri **sessizce bos doner**. Sayim 205 degisken buldu
+   ama okuma bos donuyordu; `efivar_read`/`efivar_names` artik ayricaligi
+   kendileri aciyor.
+3. **ctypes 64 bit tutamaci kesiyordu.** `OpenProcessToken` argtypes verilmeden
+   basarisiz oluyordu — `_win_kernel32`'nin ayni nedenle var oldugu tuzak
+   (ADR 0011).
+
+Ayrica bir tasarim duzeltmesi: her iki pencere de yapicisinda modal ilerleme
+penceresi aciyordu. Projenin kendi kalibina cevrildi — once `run_task`, sonra
+pencere (`show_bootloader` / `show_efi_boot`).
+
+### Olcum
+
+**Gercek bellenim verisi** (gelistirme makinesi, Windows 10, UEFI, **salt
+okunur**): 205 degisken sayildi, `BootOrder` = 0007, 0005, 0000, 0001, 0002,
+0003. Windows Boot Manager, ubuntu shim, NVMe UEFI girisi, iki ag girisi ve
+`Uri()` dugumlu HTTPs Boot girisi cozuldu; **alti girisin de `to_bytes()`
+ciktisi okunan baytlarla bire bir ayni**. Uretilen aygit yolu metni
+`efibootmgr` bicimiyle ayni:
+
+```
+HD(2,GPT,a967f8c5-...,0x40800,0x32000)/File(\EFI\Microsoft\Boot\bootmgfw.efi)
+```
+
+**Sanal makinede** (Linux Mint 22.3, `ssh pc@192.168.42.131` — yeni kural):
+
+| Kosum | Sonuc |
+|---|---|
+| `python3 -m tests.run_all` | **32/34 basarili** · 2 atlandi (yalnizca Windows dali) |
+| `python3 -m tests.platform_check` | **0 bulgu** |
+| `python3 -m tests.i18n_check` | tr/en/de **TAMAM**, 1311 metin |
+| `python3 -m tests.diag_check` | **13/13 gecti** |
+| `python3 -m tests.ui_smoke` | yeni pencereler dahil gecti; `25-onyukleyici-yonetici.png`, `26-uefi-onyukleme.png` |
+
+Yeni testler: **t29** (UEFI yapilari gidis-donus, `efibootmgr` bicimi,
+bilinmeyen dugumun korunmasi), **t30** (onyukleme kodu tanima; bolum
+tablosuna yazilan `GRUB` baytinin yaniltmamasi; kaldirmanin tabloyu ve MBR
+imzasini korumasi; kuyruktan calisma), **t31** (ESP tanima, kurulu Linux ile
+veri bolumunun ayirt edilmesi, harf duyarsiz yol aramasi), **t32**
+(`GrubDefaults` yorum/sira korumasi, `grub.cfg` menu cozumu), **t33** (yedek
+gidis-donusu, degisiklik plani sirasi), **t34** (bellenim yazilamiyorken
+planin uygulanmamasi).
+
+Ikonlar VM'de de birebir ayni cizildi: 45 ikon, ozet
+`62232ccc5d2ab89a741258f921716488` — Windows'taki degerle ayni.
+
+### Sinanamayan
+
+**UEFI degiskenine yazma yolu olculmedi.** Test misafiri BIOS (eski) kipinde
+aciliyor (`/sys/firmware/efi` yok), gelistirme makinesinde ise deneme
+yapilmiyor (yeni test ortami kurali). Kod tamamdir ama **yazma yolu gercek
+bellenimde denenmemistir**; bu ADR 0029'da da boyle yazildi.
+
+Ayni nedenle `grub-install` ve `update-grub` **calistirilmadi**: VM'in kendi
+onyukleyicisine dokunmak, onu acilmaz birakabilirdi. Arac bulma, yetki kapisi
+ve "kullanilamaz" dallari sinandi.
+
+### Yan bulgu: dil degisimi arayuzu kilitliyordu (duzeltildi)
+
+Yeni duman testi bolumlerini VM'de kosarken `ui_smoke` **dil adiminda dondu**.
+Ana makinede (Windows) ayni test geciyordu; onceki oturumun coklu dil
+calismasi yalnizca Windows misafirinde dogrulanmis, Linux'ta hic kosulmamisti.
+
+Yigin dokumu nedeni gosterdi:
+
+```
+file_browser.py:186 navigate
+file_browser.py:129 retranslate
+main_window.py:645  retranslate
+i18n/__init__.py:181 set_language
+MODAL: QMessageBox  "Der Ordner konnte nicht geoffnet werden"
+```
+
+`FileBrowser.retranslate()` gecerli klasoru yeniden listelemek icin
+`navigate()` cagiriyor; `navigate()` basarisiz olunca **modal** bir uyari
+aciyordu. Dil degistirmek bir dosya islemi degildir ve kullanicinin
+baslatmadigi bir tazelemeden modal pencere cikmasi arayuzu kilitler —
+otomatik kosumda kapatacak kimse olmadigi icin surec sonsuza kadar bekledi.
+
+Duzeltme: `navigate(path, quiet=True)` hatada pencere acmaz, bilgi satirina
+yazar; `retranslate()` bu kipi kullanir. Duzeltmeden sonra `ui_smoke` VM'de
+**tamamlandi** (cikis kodu 0, `24-dil-de.png` / `24-dil-en.png` uretildi).
+
+Bu, yeni test ortami kuralinin ilk somut kazancidir: hata yalnizca Linux'ta
+gorunuyordu ve ana makinede kosulan testler onu hic yakalamamisti.
+
+### Belgeler
+
+- `.claude/decisions/0028-onyukleyici-yonetimi.md`
+- `.claude/decisions/0029-uefi-onyukleme-duzenleyici.md`
+- `.claude/docs/architecture.md` — onyukleme akisi semasi, modul agaci
+- `.claude/docs/testing.md` — yeni testler ve VM yordami
+- `CLAUDE.md` — **Test Ortami Kurali** (testler VM'de kosar)
+- `.claude/memory/linux-test-ortami.md` — VM erisimi ve olculmus durumu
+- `README.md` — onyukleme ozellikleri
+
+## 2026-09-17 (5) — Ceviri katmani raporu; onyukleyici ozelliginde dort bosluk kapatildi
+
+Kullanici: *"dil destegi icin i18n mi kullaniyorsun... bu konu uzerinde
+konusalim, detayli rapor hazirla."*
+
+### Rapor
+
+`.claude/docs/i18n-raporu.md` yazildi: degerlendirilen dort yol (Qt Linguist,
+gettext, harici kutuphane, kendi JSON sozlugumuz) ve **neden elendikleri**,
+secilen tasarimin ayrintisi, olcumler, dogrulama, bilinen sinirlar ve oncelikli
+oneriler. ADR 0027 karari veriyor; bu belge gerekceyi ve sayilari tasiyor.
+
+### Olcumler (Linux misafiri, Py 3.12.3)
+
+| | |
+|---|---|
+| Cevrilebilir farkli metin | 1315 |
+| `tr()`/`mark()` cagrisi | 1656 (ui 914, core 742) |
+| Sozluk | `en.json` 91 KB, `de.json` 100 KB; bellekte ~220 KB (tek dil) |
+| Yukleme | 0.5–0.8 ms |
+| `tr()` | ~125 ns (ceviri etkin), ~395 ns (bicimlendirmeli) |
+| 1000 metinlik pencere kurulumu | 0.23 ms |
+| `initialize()` | 7.1 ms |
+
+Yani ceviri katmani, olculen hicbir yavaslik kaynaginda gorunmuyor
+(karsilastirma: bir bolum tablosu okumasi ~600 ms, ADR 0026).
+
+### Bulunan ve kapatilan dort bosluk
+
+Rapor icin yapilan taramada, ceviri calismasindan **sonra** eklenen
+onyukleyici ozelliginde sarilmamis metinler cikti:
+
+| Yer | Metin |
+|---|---|
+| `ui/dialogs/bootloader.py:286` | `title_text="Onyukleme kodunu kaldir"` |
+| `ui/dialogs/bootloader.py:287` | `detail_text="{} — ilk 440 bayt sifirlanir"` |
+| `ui/dialogs/bootloader.py:289` | `target_text="Disk"` |
+| `ui/main_window.py:2989` | `f"BOLUM {part.index}"` (bolum bilgisi basligi) |
+
+Dordu de `mark()`/`tr()` ile sarildi; iki yeni metin en/de'ye cevrildi
+(1313 -> 1315). Bu, `i18n_check`'in yapisal sinirini gosteriyor: denetim
+yalnizca **isaretlenmis** metni gorur, hic sarilmamis olani bilemez. Rapor
+9.1'de bunun icin bir uyari denetimi onerildi.
+
+### Dogrulama (VM'de)
+
+| Ortam | Kosum | Sonuc |
+|---|---|---|
+| Mint 22.3 misafiri | `tests.i18n_check` | tr/en/de TAMAM (1315) |
+| " | `tests.platform_check` | 0 bulgu |
+| " | canli dil degisimi | 8 menu + 4 sekme + tablo sutunlari uc dilde dogrulandi |
+
+Yeni `&Onyukleme` menusu de dil degisimine katiliyor (`&Boot` / `&Start`) —
+sonradan eklenen ozellik ceviri duzenine uymus.
+
+## 2026-09-17 (6) — Almanca yazim duzeltmesi ve sozde-yerellestirme
+
+Kullanici: *"daha efektif yontem ne olmalaydi? bu dil meselesi global
+uygulamalarda nasil yapiliyor"* -> sektor karsilastirmasi yapildi
+(`.claude/docs/i18n-raporu.md` bolum 12), ardindan *"sistemin daha iyi
+olmasini onleyen kurallarimiz var mi"* -> kural denetimi, ardindan *"evet"*
+ile iyilestirmelere baslandi.
+
+### 1. Almanca: 495 ceviri duzeldi
+
+Projenin "ASCII Turkce" alismasi ceviriye de tasinmisti. Turkce'de bu bir
+tercih, **Almanca'da yanlis**: "Grosse" (→ Größe), "Datentrager" (→
+Datenträger), "fur" (→ für), "loschen" (→ löschen). Ustelik tutarsizdi: 88
+ceviride umlaut vardi, kalanlarda yoktu.
+
+Yontem — kor arama-degistirme **yapilmadi**: katalogda gecen 1360 farkli
+umlautsuz sozcuk listelenip tek tek gozden gecirildi, 201 sozcukluk harita
+kuruldu. Haritada olmayan sozcuge dokunulmadi; boylece "konnte" (gecmis zaman),
+"Vorgangsprotokoll" (birlesik), "Flache (flat)" (sifat) gibi **dogru** olanlar
+bozulmadi.
+
+Sonuc: **495/1315 ceviri** duzeldi, umlaut iceren ceviri 88 → 583.
+`i18n_check` yer tutucu/HTML butunlugunu dogruladi.
+
+### 2. Sozde-yerellestirme (pseudolocalization) eklendi
+
+```
+DISKULTIMATE_LANG=qps python3 main.py
+"Bolumu sil"  ->  "[!Ɓǿŀŭḿŭ şīŀ···!]"
+```
+
+- `i18n.pseudo()` — sozluk yok, metin calisma aninda donusur. Yer tutucular
+  (`{}`, `{:08X}`, `{{`), HTML etiketleri ve varliklar (`&nbsp;`) korunur.
+- Dil menusunde gorunmez (kalite aracidir), ayar dosyasina yazilmaz.
+- `tests/ui_smoke.py -> sozde_denetimi()`: sozde dilde taze bir ana pencere ve
+  alti diyalog kurar; eylem/menu/sekme/sutun metinlerinin hepsinin sozde
+  oldugunu **dogrular** (degilse test duser), kalanlari bilgi olarak listeler.
+
+Neden gerekliydi: `i18n_check` yalnizca **isaretlenmis** metni gorur; hic
+sarilmamis olani bilemez (bu oturumda onyukleyici ozelliginde dort bosluk elle
+taramayla bulunmustu). Sozde dilde sarilmamis metin donusmedigi icin
+kendiliginden belli olur.
+
+**Denetim ilk kosumda kendi test verimizi yakaladi** (`InfoDialog`'a
+cevrilmemis baslik veriliyordu) ve testi dusurdu — yani calisiyor. Fixture
+duzeltildikten sonra listede yalnizca veri kaldi: "64 bit", "Linux", harici
+arac adlari.
+
+### 3. Kural degisiklikleri (CLAUDE.md)
+
+| Kural | Neden |
+|---|---|
+| "Calisma zamani bagimliligi yok" — **gelistirme/ceviri araclari haric** | Ayrim yazili degildi; `.po` bicimi "msgfmt kurulu degil" diye elenmisti. Oysa msgfmt bir gelistirici aracidir ve `.po` icin sart da degil. |
+| Yazim: konsol/gunluk ASCII kalabilir, **arayuz metni ve ceviriler dogru yazimla** | 495 hatali Almanca cevirinin kaynagi bu belirsizlikti. |
+| Sozde-yerellestirme kalite kapisi | Yeni dil eklemeden once tasma/bosluk denetimi. |
+
+### 4. Dogrulama (Linux misafiri, Mint 22.3)
+
+| Kosum | Sonuc |
+|---|---|
+| `tests.i18n_check` | tr/en/de **TAMAM** (1315) |
+| `tests.platform_check` | **0 bulgu** |
+| `tests.ui_smoke` | **cikis 0**; dil degisimi + sozde denetimi yesil |
+
+### Siradaki (rapor bolum 13.4)
+
+1. `.po` gecisi — cogul eki, baglam, fuzzy/msgmerge, Poedit/Weblate.
+2. Kayit defterli `retranslate` — eylem metnini unutmayi imkansiz kilmak.
+3. Yerel sayi/tarih bicimi (Almanca'da `1,00 GB`).
+4. Almanca icin anadil gozden gecirmesi.
+
+> **Not:** calisma agacinda cok dil calismasinin tamami hala **islenmemis**
+> durumda (3950+ satir). `.po` gecisine baslamadan once bunun commit edilmesi
+> onerilir; yoksa iki buyuk degisiklik ic ice girer.
+

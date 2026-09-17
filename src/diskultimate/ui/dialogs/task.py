@@ -5,6 +5,7 @@ from typing import Callable, Optional
 
 from PyQt5.QtCore import QThread, Qt, QTimer, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QDialog, QLabel, QProgressBar, QVBoxLayout
+from ...i18n import tr
 
 
 class _Worker(QThread):
@@ -41,7 +42,7 @@ class TaskDialog(QDialog):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(18, 16, 18, 16)
-        self.label = QLabel("Hazirlaniyor...")
+        self.label = QLabel(tr("Hazirlaniyor..."))
         layout.addWidget(self.label)
         self.bar = QProgressBar()
         self.bar.setRange(0, 100)

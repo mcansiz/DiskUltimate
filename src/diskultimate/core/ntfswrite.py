@@ -37,6 +37,7 @@ from .ntfsread import (AT_BITMAP, AT_DATA, AT_END, AT_FILE_NAME,
                        FILE_MAGIC, INDEX_ENTRY_END, INDEX_ENTRY_NODE,
                        MFT_FLAG_DIRECTORY, MFT_FLAG_IN_USE, MFT_RECORD_ROOT,
                        Attribute, MftRecord, NtfsError, NtfsFS)
+from ..i18n import tr
 
 # $Bitmap pencere boyutu: bir kerede okunup taranan bayt. 64 KB, 4 KB
 # kumede 512 bin kumeyi (~2 GB alan) kapsar; tahsis genellikle ilk
@@ -81,7 +82,7 @@ class NtfsWriter:
     # ------------------------------------------------------------------
     def write_support(self) -> Tuple[bool, str]:
         if getattr(self.dev, "readonly", False):
-            return False, "Kaynak salt okunur acildi."
+            return False, tr("Kaynak salt okunur acildi.")
         return True, ""
 
     def _require_writable(self) -> None:
@@ -109,7 +110,7 @@ class NtfsWriter:
     def _bitmap_attr(self) -> Attribute:
         attr = self.fs.record(BITMAP_RECORD).find(AT_DATA)
         if attr is None:
-            raise NtfsError("$Bitmap okunamadi")
+            raise NtfsError(tr("$Bitmap okunamadi"))
         return attr
 
     def _write_attr_range(self, attr: Attribute, data: bytes,
@@ -122,7 +123,7 @@ class NtfsWriter:
         olculdu ve ADR 0024'te kayit altina alindi.
         """
         if attr.resident:
-            raise NtfsError("Yerlesik oznitelik bu yoldan yazilamaz")
+            raise NtfsError(tr("Yerlesik oznitelik bu yoldan yazilamaz"))
         if not data:
             return
         end = offset + len(data)
@@ -222,7 +223,7 @@ class NtfsWriter:
             # Kismi tahsis birakilmaz: alinan kumeler geri verilir.
             if runs:
                 self.free_clusters(runs)
-            raise NtfsError("Diskte yeterli bos kume yok")
+            raise NtfsError(tr("Diskte yeterli bos kume yok"))
         return runs
 
     def free_clusters(self, runs: List[Tuple[int, int]]) -> None:
@@ -267,7 +268,7 @@ class NtfsWriter:
     def _mft_bitmap(self) -> Attribute:
         attr = self.fs.record(MFT_BITMAP_RECORD).find(AT_BITMAP)
         if attr is None:
-            raise NtfsError("$MFT bitmap'i okunamadi")
+            raise NtfsError(tr("$MFT bitmap'i okunamadi"))
         return attr
 
     def alloc_record(self) -> int:
@@ -283,7 +284,7 @@ class NtfsWriter:
                     return i
             if attempt == 0:
                 self._extend_mft()
-        raise NtfsError("Bos MFT kaydi yok ve $MFT buyutulemedi")
+        raise NtfsError(tr("Bos MFT kaydi yok ve $MFT buyutulemedi"))
 
     def _extend_mft(self) -> None:
         """`$MFT`'yi birkac kayit kadar buyutur.
@@ -296,7 +297,7 @@ class NtfsWriter:
         rec0 = self.fs.record(MFT_BITMAP_RECORD)
         data = rec0.find(AT_DATA)
         if data is None or data.resident:
-            raise NtfsError("$MFT veri oznitelugu okunamadi")
+            raise NtfsError(tr("$MFT veri oznitelugu okunamadi"))
 
         grow_bytes = MFT_GROW_RECORDS * self.fs.record_size
         grow_clusters = max(1, (grow_bytes + self.cs - 1) // self.cs)
@@ -317,8 +318,8 @@ class NtfsWriter:
         pairs = _encode_runs(runs)
         if mapping_off + len(pairs) > attr_len:
             raise NtfsError(
-                "$MFT buyutulemedi: veri kosullari kayda sigmiyor "
-                "(bu surumde $MFT kaydi genisletilemez).")
+                tr("$MFT buyutulemedi: veri kosullari kayda sigmiyor "
+                "(bu surumde $MFT kaydi genisletilemez)."))
 
         total_clusters = sum(c for _l, c in runs)
         struct.pack_into("<Q", raw, pos + 0x18, max(0, total_clusters - 1))
@@ -371,7 +372,7 @@ class NtfsWriter:
             if target < pos + span and lcn >= 0:
                 return lcn * self.cs + (target - pos)
             pos += span
-        raise NtfsError(f"MFT kaydi diskte bulunamadi: {number}")
+        raise NtfsError(tr("MFT kaydi diskte bulunamadi: {}", number))
 
     def _apply_fixup_out(self, raw: bytearray, usn: int) -> None:
         """Fixup dizisini **kurar**: her sektorun son iki bayti diziye tasinir.
@@ -390,7 +391,7 @@ class NtfsWriter:
     def write_record(self, number: int, raw: bytearray) -> None:
         """FILE kaydini fixup kurarak diske yazar."""
         if raw[:4] != FILE_MAGIC:
-            raise NtfsError("FILE imzasi yok")
+            raise NtfsError(tr("FILE imzasi yok"))
         usn = (struct.unpack_from("<H", raw, struct.unpack_from("<H", raw, 4)[0])[0]
                + 1) & 0xFFFF
         if usn in (0, 0xFFFF):
@@ -421,7 +422,7 @@ class NtfsWriter:
         pos = self._find_attr_offset(raw, attr)
         value_len, value_off = struct.unpack_from("<IH", raw, pos + 0x10)
         if len(value) != value_len:
-            raise NtfsError("Yerlesik oznitelik boyutu degisemez")
+            raise NtfsError(tr("Yerlesik oznitelik boyutu degisemez"))
         raw[pos + value_off:pos + value_off + value_len] = value
         self.write_record(rec_no, raw)
 
@@ -450,7 +451,7 @@ class NtfsWriter:
             if kind == attr.kind and name == attr.name:
                 return pos
             pos += length
-        raise NtfsError("Oznitelik kayitta bulunamadi")
+        raise NtfsError(tr("Oznitelik kayitta bulunamadi"))
 
     # ------------------------------------------------------------------
     # Oznitelik kurucular
@@ -544,7 +545,7 @@ class NtfsWriter:
         for a in attrs:
             if pos + len(a) + 8 > size:
                 raise NtfsError(
-                    "Kayit dolu: bu surumde oznitelikler tek FILE kaydina sigmali")
+                    tr("Kayit dolu: bu surumde oznitelikler tek FILE kaydina sigmali"))
             raw[pos:pos + len(a)] = a
             pos += len(a)
         struct.pack_into("<I", raw, pos, AT_END)
@@ -559,7 +560,7 @@ class NtfsWriter:
     def _index_root(self, rec: MftRecord) -> Attribute:
         root = rec.find(AT_INDEX_ROOT, "$I30")
         if root is None:
-            raise NtfsError("Dizin indeksi bulunamadi")
+            raise NtfsError(tr("Dizin indeksi bulunamadi"))
         return root
 
     # --- $INDEX_ALLOCATION (INDX bloklari) ------------------------------
@@ -609,7 +610,7 @@ class NtfsWriter:
             vcn = child
             block = self.fs._index_block(alloc, vcn)
             if block is None:
-                raise NtfsError(f"INDX blogu okunamadi (VCN {vcn})")
+                raise NtfsError(tr("INDX blogu okunamadi (VCN {})", vcn))
             buf, base = block, 0x18
 
     def _write_indx(self, alloc: Attribute, vcn: int, buf: bytearray) -> None:
@@ -627,7 +628,7 @@ class NtfsWriter:
                 self.dev.write(lcn * self.cs + (target - pos), bytes(buf))
                 return
             pos += span
-        raise NtfsError(f"INDX blogu diskte bulunamadi (VCN {vcn})")
+        raise NtfsError(tr("INDX blogu diskte bulunamadi (VCN {})", vcn))
 
     def _indx_entries(self, block: bytes) -> Tuple[List[bytes], bytes]:
         """INDX govdesindeki girisler ve son (END) giris."""
@@ -653,7 +654,7 @@ class NtfsWriter:
         """Girisleri sirali yazarak INDX blogunu yeniden kurar."""
         block = self.fs._index_block(alloc, vcn)
         if block is None:
-            raise NtfsError(f"INDX blogu okunamadi (VCN {vcn})")
+            raise NtfsError(tr("INDX blogu okunamadi (VCN {})", vcn))
         entries = sorted(entries, key=lambda e: self.collation_key(
             self._entry_name(e)))
         body = b"".join(entries) + tail
@@ -666,8 +667,8 @@ class NtfsWriter:
             "<III", block, 0x18)
         if len(body) > allocated_size - entries_off:
             raise NtfsError(
-                "Dizin indeks blogu doldu; bu surumde B+ dugumu bolunemez. "
-                "Daha az giris deneyin.")
+                tr("Dizin indeks blogu doldu; bu surumde B+ dugumu bolunemez. "
+                "Daha az giris deneyin."))
         new_block = bytearray(block)
         struct.pack_into("<I", new_block, 0x18 + 4, entries_off + len(body))
         start = 0x18 + entries_off
@@ -739,8 +740,8 @@ class NtfsWriter:
         delta = len(new_attr) - old_len
         if bytes_in_use + delta + 8 > self.fs.record_size:
             raise NtfsError(
-                "Dizin kaydi doldu: bu surumde indeks $INDEX_ALLOCATION'a "
-                "tasinamaz. Daha az giris deneyin.")
+                tr("Dizin kaydi doldu: bu surumde indeks $INDEX_ALLOCATION'a "
+                "tasinamaz. Daha az giris deneyin."))
         tail = bytes(raw[pos + old_len:bytes_in_use])
         new_raw = bytearray(raw)
         new_raw[pos:pos + len(new_attr)] = new_attr
@@ -762,7 +763,7 @@ class NtfsWriter:
         rec = self.fs.record(dir_no)
         if any(e.name.lower() == name.lower()
                for e in self.fs.listdir_record(rec)):
-            raise NtfsError(f"Zaten var: {name}")
+            raise NtfsError(tr("Zaten var: {}", name))
         key = self._file_name_value(
             (rec.sequence << 48) | dir_no, name, file_attr, size, allocated)
         entry = self._make_index_entry(mft_ref, sequence, key)
@@ -776,7 +777,7 @@ class NtfsWriter:
         alloc = rec.find(AT_INDEX_ALLOCATION, "$I30")
         block = self.fs._index_block(alloc, vcn)
         if block is None:
-            raise NtfsError(f"INDX blogu okunamadi (VCN {vcn})")
+            raise NtfsError(tr("INDX blogu okunamadi (VCN {})", vcn))
         entries, tail = self._indx_entries(block)
         entries.append(entry)
         self._rewrite_indx(alloc, vcn, entries, tail)
@@ -795,14 +796,14 @@ class NtfsWriter:
                 else:
                     remaining.append(e)
             if target is None:
-                raise NtfsError(f"Bulunamadi: {name}")
+                raise NtfsError(tr("Bulunamadi: {}", name))
             self._replace_index_root(dir_no, self._rebuild_index_root(remaining))
             return target
 
         alloc = rec.find(AT_INDEX_ALLOCATION, "$I30")
         block = self.fs._index_block(alloc, vcn)
         if block is None:
-            raise NtfsError(f"INDX blogu okunamadi (VCN {vcn})")
+            raise NtfsError(tr("INDX blogu okunamadi (VCN {})", vcn))
         entries, tail = self._indx_entries(block)
         remaining, target = [], None
         for e in entries:
@@ -811,7 +812,7 @@ class NtfsWriter:
             else:
                 remaining.append(e)
         if target is None:
-            raise NtfsError(f"Bulunamadi: {name}")
+            raise NtfsError(tr("Bulunamadi: {}", name))
         self._rewrite_indx(alloc, vcn, remaining, tail)
         return target
 
@@ -822,14 +823,14 @@ class NtfsWriter:
     def _split(path: str) -> Tuple[str, str]:
         norm = "/" + "/".join(p for p in path.replace("\\", "/").split("/") if p)
         if norm == "/":
-            raise NtfsError("Kok dizin uzerinde islem yapilamaz")
+            raise NtfsError(tr("Kok dizin uzerinde islem yapilamaz"))
         i = norm.rfind("/")
         return (norm[:i] or "/"), norm[i + 1:]
 
     def _dir_number(self, path: str) -> int:
         rec = self.fs.resolve(path)
         if not rec.is_dir:
-            raise NtfsError(f"Dizin degil: {path}")
+            raise NtfsError(tr("Dizin degil: {}", path))
         return rec.number
 
     def write_file(self, path: str, data: bytes) -> None:
@@ -913,7 +914,7 @@ class NtfsWriter:
         rec = self.fs.resolve(path)
         if rec.is_dir:
             if self.fs.listdir_record(rec):
-                raise NtfsError(f"Klasor bos degil: {name}")
+                raise NtfsError(tr("Klasor bos degil: {}", name))
         else:
             data = rec.find(AT_DATA)
             if data is not None and not data.resident:
@@ -934,7 +935,7 @@ class NtfsWriter:
         self._require_writable()
         parent_path, name = self._split(path)
         if "/" in new_name or "\\" in new_name:
-            raise NtfsError("Yeni ad yol icermemeli")
+            raise NtfsError(tr("Yeni ad yol icermemeli"))
         rec = self.fs.resolve(path)
         data = rec.find(AT_DATA)
         size = data.data_size if data is not None else 0
@@ -981,4 +982,4 @@ def _signed_bytes(value: int, unsigned: bool = False) -> bytes:
         except OverflowError:
             length += 1
             if length > 8:
-                raise NtfsError("Veri kosulu degeri cok buyuk")
+                raise NtfsError(tr("Veri kosulu degeri cok buyuk"))

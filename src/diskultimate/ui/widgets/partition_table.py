@@ -3,19 +3,37 @@ from __future__ import annotations
 
 from typing import List, Optional, Tuple
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QHeaderView, QTableWidget,
                              QTableWidgetItem)
 
 from ...core.ptable import FreeRegion, Partition, human_size
 from ..theme import FREE_COLOR, fs_color, palette_color
+from ...i18n import mark, tr
 
-COLUMNS = ["Bolum", "Dosya Sistemi", "Etiket", "Boyut", "Kullanilan", "Bos",
-           "Baslangic LBA", "Bitis LBA", "Tur", "Bayrak"]
+# Kaynak metinler; gosterilirken `columns()` ile cevrilir (ADR 0027).
+COLUMNS = [mark("Bolum"), mark("Dosya Sistemi"), mark("Etiket"), mark("Boyut"),
+           mark("Kullanilan"), mark("Bos"), mark("Baslangic LBA"),
+           mark("Bitis LBA"), mark("Tur"), mark("Bayrak")]
 
 
-def color_chip(color: QColor, size: int = 11) -> QIcon:
+def columns() -> List[str]:
+    """Sutun basliklarinin etkin dildeki hali."""
+    return [tr(name) for name in COLUMNS]
+
+
+def part_label(p: Partition) -> str:
+    """Tablodaki bolum adi — tek kaynak.
+
+    Bekleyen islem isareti eklenirken metin yeniden uretildigi icin bu ad iki
+    yerde ayni olmak zorunda; yoksa isaret kalkinca "(mantiksal)" eki kaybolur.
+    """
+    return (tr("Bolum {}", p.index)
+            + (" " + tr("(mantiksal)") if p.logical else ""))
+
+
+def color_chip(color: QColor, size: int = 13) -> QIcon:
     pix = QPixmap(size + 3, size + 3)
     pix.fill(Qt.transparent)
     p = QPainter(pix)
@@ -37,13 +55,14 @@ class PartitionTableWidget(QTableWidget):
 
     def __init__(self, parent=None):
         super().__init__(0, len(COLUMNS), parent)
-        self.setHorizontalHeaderLabels(COLUMNS)
+        self.setHorizontalHeaderLabels(columns())
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setAlternatingRowColors(True)
         self.verticalHeader().setVisible(False)
-        self.verticalHeader().setDefaultSectionSize(24)
+        self.verticalHeader().setDefaultSectionSize(26)
+        self.setIconSize(QSize(18, 18))
         self.setShowGrid(False)
         self.setContextMenuPolicy(Qt.DefaultContextMenu)
         header = self.horizontalHeader()
@@ -60,10 +79,49 @@ class PartitionTableWidget(QTableWidget):
         self.setColumnWidth(7, 100)
         self.setColumnWidth(8, 160)
         self._rows: List[Tuple[str, object]] = []
+        self._pending: dict = {}
         self.itemSelectionChanged.connect(self._on_selection)
         self.itemDoubleClicked.connect(self._on_double)
 
+    def retranslate(self) -> None:
+        """Dil degisince sutun basliklarini yeniler.
+
+        Satirlarin icerigi `set_partitions()` ile yeniden doldurulur; ana
+        pencere dil degisiminde zaten tabloyu tazeler.
+        """
+        self.setHorizontalHeaderLabels(columns())
+
     # -- doldurma ------------------------------------------------------------
+    def set_pending(self, marks: dict) -> None:
+        """{bolum numarasi: [aciklama, ...]} — bekleyen islem isaretleri.
+
+        Bekleyen adimlar diske yazilmadan once burada gorunur: kullanici
+        "Uygula" demeden neyin degisecegini tabloda da gormelidir, yalnizca
+        kenardaki listede degil.
+        """
+        self._pending = dict(marks or {})
+        self._apply_pending()
+
+    def _apply_pending(self) -> None:
+        """Isaretleri satirlara isler.
+
+        Metin **her seferinde bastan** yazilir. Yalnizca isaret eklemek, adim
+        uygulandiktan sonra kum saatinin satirda asili kalmasina yol aciyordu.
+        """
+        for row, (kind, obj) in enumerate(self._rows):
+            if kind != "part":
+                continue
+            notes = self._pending.get(obj.index)
+            item = self.item(row, 0)
+            if item is None:
+                continue
+            font = item.font()
+            font.setItalic(bool(notes))
+            item.setFont(font)
+            item.setText(part_label(obj) + ("  ⏳" if notes else ""))
+            item.setToolTip(tr("Bekleyen islemler:") + "\n• "
+                            + "\n• ".join(notes) if notes else "")
+
     def set_partitions(self, partitions: List[Partition],
                  free: List[FreeRegion]) -> None:
         self.blockSignals(True)
@@ -82,6 +140,7 @@ class PartitionTableWidget(QTableWidget):
                 self._fill_partition(row, obj)
             else:
                 self._fill_free(row, obj)
+        self._apply_pending()
         self.blockSignals(False)
 
     def _set(self, row: int, col: int, text: str, *, dim: bool = False,
@@ -99,8 +158,7 @@ class PartitionTableWidget(QTableWidget):
         return item
 
     def _fill_partition(self, row: int, p: Partition) -> None:
-        etiket = f"{p.index}" + (" (mantiksal)" if p.logical else "")
-        self._set(row, 0, f"Bolum {etiket}", icon=color_chip(fs_color(p.fs_type)),
+        self._set(row, 0, part_label(p), icon=color_chip(fs_color(p.fs_type)),
                   bold=True)
         self._set(row, 1, p.fs_type or "-")
         self._set(row, 2, p.name or p.fs_label or "-")
@@ -114,19 +172,19 @@ class PartitionTableWidget(QTableWidget):
         self._set(row, 8, p.type_name)
         bayraklar = []
         if p.bootable:
-            bayraklar.append("Onyukleme")
+            bayraklar.append(tr("Onyukleme"))
         if p.logical:
-            bayraklar.append("Mantiksal")
+            bayraklar.append(tr("Mantiksal"))
         self._set(row, 9, ", ".join(bayraklar) or "-", dim=not bayraklar)
 
     def _fill_free(self, row: int, r: FreeRegion) -> None:
-        self._set(row, 0, "Bos alan", icon=color_chip(QColor(FREE_COLOR)), dim=True)
+        self._set(row, 0, tr("Bos alan"), icon=color_chip(QColor(FREE_COLOR)), dim=True)
         for col in (1, 2, 4, 5):
             self._set(row, col, "-", dim=True)
         self._set(row, 3, human_size(r.size), align=Qt.AlignRight, dim=True)
         self._set(row, 6, str(r.start_lba), align=Qt.AlignRight, dim=True)
         self._set(row, 7, str(r.end_lba), align=Qt.AlignRight, dim=True)
-        self._set(row, 8, "Bolumlenmemis", dim=True)
+        self._set(row, 8, tr("Bolumlenmemis"), dim=True)
         self._set(row, 9, "-", dim=True)
 
     # -- secim ---------------------------------------------------------------

@@ -20,7 +20,7 @@ from .gpt import GPTTable
 from .image import BlockDevice, DiskImage, PartitionView
 from .mbr import MBRTable
 from .physical import (DiskInfo, PhysicalDisk, PhysicalDiskError,
-                       can_access, list_disks)
+                       can_access, list_disks, open_device_paths)
 from .platform import (IS_WINDOWS, native_format_supported,
                        native_resize_supported, windows_format_volume,
                        windows_partition_size_limits, windows_resize_partition)
@@ -29,6 +29,7 @@ from .resize import (FsResizeInfo, ResizeError, ResizePlan, ResizeWindow,
 from .ptable import (FreeRegion, Partition, PartitionTable,
                      PartitionTableError, human_size)
 from .vdisk import detect_format, format_label, open_disk
+from ..i18n import tr
 
 
 class SessionError(Exception):
@@ -61,6 +62,35 @@ class BackupPreview:
         olan gercekten bolum bulunup bulunmadigidir.
         """
         return bool(self.partitions)
+
+
+@dataclass
+class DiskSurvey:
+    """Bir fiziksel diskin **acilmadan once** okunan bolum ozeti.
+
+    `list_disks()` hicbir sektor okumaz (guvenlik katmani 1) ve okumamalidir:
+    o islev 3 saniyede bir calisir. Bolumleri gormek icin ise bolum tablosunu
+    okumak sart. Bu yuzden yoklama **ayri bir adimdir**: yalnizca disk listesi
+    degistiginde veya elle yenilemede yapilir, arka plan is parcaciginda
+    calisir ve aygiti okuduktan hemen sonra kapatir (ADR 0026).
+
+    `error` doluysa tablo okunamamistir (yetki yok, ortam yok, bozuk tablo);
+    bu bir kusur degil bilgidir ve arayuzde oyle gosterilir.
+    """
+
+    path: str
+    scheme: str = ""                                   # 'mbr' | 'gpt' | ''
+    partitions: List[Partition] = None
+    error: str = ""
+
+    def __post_init__(self):
+        if self.partitions is None:
+            self.partitions = []
+
+    @property
+    def scheme_name(self) -> str:
+        return {"mbr": "MBR", "gpt": "GPT"}.get(self.scheme,
+                                                tr("Bolum tablosu yok"))
 
 
 class DiskSession:
@@ -99,6 +129,51 @@ class DiskSession:
     def has_disk_privileges() -> bool:
         return can_access()
 
+    @staticmethod
+    def survey_disk(info) -> DiskSurvey:
+        """Bir fiziksel diskin bolum tablosunu **salt okunur** okur.
+
+        Aygit acilir, tablo okunur ve **hemen kapatilir**; hicbir sey yazilmaz.
+        Uygulamanin kendi acik tuttugu disk yoklanmaz: ayni aygita ikinci bir
+        tutamac acmak surucu yiginini bloklayabiliyor (ADR 0021). O durumda
+        arayuz zaten oturumun kendi bolum listesine sahiptir.
+        """
+        path = getattr(info, "path", str(info))
+        if path in open_device_paths():
+            return DiskSurvey(path=path, error="uygulamada acik")
+        with diagnostics.span("disk.survey", path=path):
+            device = None
+            try:
+                device = PhysicalDisk(info, readonly=True)
+                table = None
+                if GPTTable.is_present(device):
+                    table = GPTTable.read(device)
+                elif MBRTable.is_present(device):
+                    table = MBRTable.read(device)
+                if table is None:
+                    return DiskSurvey(path=path)
+                parts = table.sorted_partitions()
+                for part in parts:
+                    try:
+                        found = detect(PartitionView(device, part.start_lba,
+                                                     part.sector_count))
+                    except Exception:
+                        continue
+                    part.fs_type = found.fs_type
+                    part.fs_label = found.label
+                    part.fs_used = found.used_bytes
+                    part.fs_total = found.total_bytes
+                return DiskSurvey(path=path, scheme=table.scheme,
+                                  partitions=parts)
+            except Exception as exc:
+                return DiskSurvey(path=path, error=str(exc))
+            finally:
+                if device is not None:
+                    try:
+                        device.close()
+                    except Exception:
+                        pass
+
     @property
     def is_physical(self) -> bool:
         return isinstance(self.image, PhysicalDisk)
@@ -119,7 +194,7 @@ class DiskSession:
     def format_name(self) -> str:
         if self.is_physical:
             info = self.image.info
-            return f"Fiziksel disk — {info.model or info.name}"
+            return tr("Fiziksel disk — {}", info.model or info.name)
         return format_label(self.image_format)
 
     @classmethod
@@ -157,16 +232,19 @@ class DiskSession:
         if not self.readonly:
             return ""
         if self.is_physical:
-            return ("Fiziksel diskler guvenlik gerekcesiyle varsayilan olarak "
-                    "SALT OKUNUR acilir. Degisiklik yapmak icin diski yazma "
-                    "modunda acmaniz gerekir.")
+            # "Yazma modunda acin" tavsiyesi kaldirildi: oyle bir secim artik
+            # yok (ADR 0025). Disk hep salt okunur acilir ve yazma yetkisi
+            # yalnizca bekleyen islemler uygulanirken alinir.
+            return (tr("Fiziksel diskler guvenlik gerekcesiyle salt okunur acilir. "
+                    "Degisiklikler bekleyen islem olarak birikir ve diske "
+                    "ancak Uygula ile yazilir."))
         fmt = self.image_format
         if fmt in ("vdi", "qcow2"):
-            return (f"{self.format_name} bu surumde yalnizca okunabilir; "
-                    "yazma destegi yol haritasinda.")
+            return (tr("{} bu surumde yalnizca okunabilir; yazma destegi yol "
+                       "haritasinda.", self.format_name))
         if fmt == "vmdk":
-            return ("Seyrek (sparse) VMDK bu surumde salt okunur. Duz (flat) "
-                    "VMDK ve VHD yazilabilir.")
+            return (tr("Seyrek (sparse) VMDK bu surumde salt okunur. Duz (flat) "
+                    "VMDK ve VHD yazilabilir."))
         return (getattr(self.image, "readonly_reason", "")
                 or "Kaynak salt okunur acildi")
 
@@ -176,7 +254,8 @@ class DiskSession:
 
     @property
     def scheme_name(self) -> str:
-        return {"mbr": "MBR", "gpt": "GPT"}.get(self.scheme, "Bolum tablosu yok")
+        return {"mbr": "MBR", "gpt": "GPT"}.get(self.scheme,
+                                                tr("Bolum tablosu yok"))
 
     @property
     def partitions(self) -> List[Partition]:
@@ -235,7 +314,7 @@ class DiskSession:
         elif scheme == "gpt":
             self.table = GPTTable.create(self.image)
         else:
-            raise SessionError(f"Bilinmeyen sema: {scheme}")
+            raise SessionError(tr("Bilinmeyen sema: {}", scheme))
         self.reload()
         return self.table
 
@@ -314,7 +393,7 @@ class DiskSession:
         if not numaralar:
             return None
         if progress:
-            progress("Windows bicimlendiricisi cagriliyor...", 20)
+            progress(tr("Windows bicimlendiricisi cagriliyor..."), 20)
         # Bolum tablosu degisikliginin goruldugunden emin olmak icin bildir
         try:
             self.image.rescan_partitions()
@@ -376,7 +455,7 @@ class DiskSession:
         self._require_table()
         self._require_writable()
         if self.scheme != "gpt":
-            raise SessionError("Bolum adi yalnizca GPT semasinda desteklenir")
+            raise SessionError(tr("Bolum adi yalnizca GPT semasinda desteklenir"))
         self.table.set_name(index, name)
         self.reload()
 
@@ -440,13 +519,38 @@ class DiskSession:
         self.image.write_sectors(lba, data)
         self.image.flush()
 
+    # -- onyukleme kodu ------------------------------------------------------
+    def boot_code(self):
+        """Ilk sektordeki onyukleme kodunun kimligi (`bootloader.BootCode`)."""
+        from .bootloader import identify_boot_code
+
+        return identify_boot_code(self.read_sector(0))
+
+    def clear_boot_code(self) -> None:
+        """Ilk 440 bayti sifirlar — bolum tablosuna **dokunmaz**.
+
+        GRUB'u bir diskten kaldirmanin dogru yolu budur. `exxos-easy-grub-
+        manager` bunu `dd if=/dev/zero of=$dev bs=440 count=1` ile yapiyordu;
+        burada ayni is, fiziksel diskin butun koruma katmanlarindan gecerek
+        (`_require_writable`, sistem diski onayi, bagli bolum uyarisi)
+        yapilir ve **bekleyen islem kuyruguna** girer.
+        """
+        from .bootloader import clear_boot_code
+
+        self._require_writable()
+        with diagnostics.span("session.clear_boot_code", reason=self.name):
+            sector = bytearray(self.read_sector(0))
+            self.write_sector(0, clear_boot_code(bytes(sector)))
+            diagnostics.info(f"onyukleme kodu silindi: {self.name}")
+
     def resize_image(self, new_size: int) -> None:
         self._require_writable()
         if self.is_physical:
-            raise SessionError("Fiziksel diskin boyutu degistirilemez")
+            raise SessionError(tr("Fiziksel diskin boyutu degistirilemez"))
         if not isinstance(self.image, DiskImage):
             raise SessionError(
-                f"{self.format_name} dosyalarinin boyutu bu surumde degistirilemez")
+                tr("{} dosyalarinin boyutu bu surumde degistirilemez",
+                   self.format_name))
         self.close_filesystems()
         self.image.resize(new_size)
         if self.scheme == "gpt" and self.table:
@@ -493,8 +597,8 @@ class DiskSession:
         self._require_table()
         self._require_writable()
         if not confirm:
-            raise SessionError("Yeniden boyutlandirma icin onay gerekli "
-                               "(confirm=True)")
+            raise SessionError(tr("Yeniden boyutlandirma icin onay gerekli "
+                               "(confirm=True)"))
         plan = self.plan_resize(index, new_start_lba, new_sector_count)
         if not plan.changed:
             return self.table.get(index)
@@ -507,11 +611,11 @@ class DiskSession:
     def _native_size_limits(self, index: int) -> tuple:
         """Windows'un bolum icin bildirdigi (tamam, en_kucuk, en_buyuk, mesaj)."""
         if not (self.is_physical and native_resize_supported()):
-            return False, 0, 0, "Yerel boyutlandirici yok"
+            return False, 0, 0, tr("Yerel boyutlandirici yok")
         info = self.disk_info
         numara = getattr(info, "disk_number", None)
         if numara is None:
-            return False, 0, 0, "Disk numarasi bilinmiyor"
+            return False, 0, 0, tr("Disk numarasi bilinmiyor")
         return windows_partition_size_limits(numara, index)
 
     def _try_native_resize(self, index: int, sector_count: int,
@@ -524,16 +628,16 @@ class DiskSession:
         if numara is None:
             return False
         if progress:
-            progress("Windows boyutlandiricisi calisiyor...", 20)
+            progress(tr("Windows boyutlandiricisi calisiyor..."), 20)
         ok, message = windows_resize_partition(
             numara, index, sector_count * self.table.sector_size)
         if not ok:
-            raise SessionError(f"Windows boyutlandiricisi basarisiz: {message}")
+            raise SessionError(tr("Windows boyutlandiricisi basarisiz: {}", message))
         if progress:
-            progress("Yenileniyor...", 90)
+            progress(tr("Yenileniyor..."), 90)
         self.reload()
         if progress:
-            progress("Tamamlandi", 100)
+            progress(tr("Tamamlandi"), 100)
         return True
 
     # ======================================================================
@@ -542,14 +646,14 @@ class DiskSession:
     def can_convert_to(self, scheme: str) -> tuple:
         """Hedef semaya donusum yapilabilir mi? (uygun_mu, aciklama)"""
         if not self.table:
-            return False, "Once bir bolum tablosu olusturun"
+            return False, tr("Once bir bolum tablosu olusturun")
         if self.table.scheme == scheme:
-            return False, f"Tablo zaten {scheme.upper()} biciminde"
+            return False, tr("Tablo zaten {} biciminde", scheme.upper())
         if scheme == "gpt":
             return convert_mod.check_mbr_to_gpt(self.image, self.table)
         if scheme == "mbr":
             return convert_mod.check_gpt_to_mbr(self.image, self.table)
-        return False, f"Bilinmeyen sema: {scheme}"
+        return False, tr("Bilinmeyen sema: {}", scheme)
 
     def convert_scheme(self, scheme: str, progress=None) -> PartitionTable:
         """Bolum tablosunu MBR <-> GPT donusturur (veri yerinde kalir)."""
@@ -561,7 +665,7 @@ class DiskSession:
         elif scheme == "mbr":
             convert_mod.gpt_to_mbr(self.image, self.table, progress=progress)
         else:
-            raise SessionError(f"Bilinmeyen sema: {scheme}")
+            raise SessionError(tr("Bilinmeyen sema: {}", scheme))
         self.reload()
         return self.table
 
@@ -578,7 +682,7 @@ class DiskSession:
                          progress=None):
         part = self.table.get(index) if self.table else None
         if part is None:
-            raise SessionError("Bolum bulunamadi")
+            raise SessionError(tr("Bolum bulunamadi"))
         return clone_mod.backup(self.view(part), dest_path, compress=compress,
                                 fs_type=part.fs_type, label=part.fs_label or part.name,
                                 progress=progress)
@@ -592,7 +696,7 @@ class DiskSession:
         self._require_writable()
         part = self.table.get(index) if self.table else None
         if part is None:
-            raise SessionError("Bolum bulunamadi")
+            raise SessionError(tr("Bolum bulunamadi"))
         self._fs_cache.pop(index, None)
         result = clone_mod.restore(src_path, self.view(part), progress=progress)
         self.reload()
@@ -616,7 +720,7 @@ class DiskSession:
         kaynak = self.table.get(index)
         target = self.table.get(target_index)
         if kaynak.index == target.index:
-            raise SessionError("Kaynak ve hedef ayni bolum")
+            raise SessionError(tr("Kaynak ve hedef ayni bolum"))
         self._fs_cache.pop(target_index, None)
         result = clone_mod.clone(self.view(kaynak), self.view(target), progress=progress)
         self.reload()
@@ -641,7 +745,7 @@ class DiskSession:
         session = DiskSession.open(path)
         try:
             if not session.is_backup:
-                raise SessionError("Bu dosya bir DiskUltimate yedegi degil")
+                raise SessionError(tr("Bu dosya bir DiskUltimate yedegi degil"))
             partitions = list(session.partitions)
             entries: Dict[int, Optional[List[str]]] = {}
             for part in partitions:
@@ -735,7 +839,7 @@ class DiskSession:
         self._require_writable()
         part = self.table.get(index) if self.table else None
         if part is None:
-            raise SessionError("Bolum bulunamadi")
+            raise SessionError(tr("Bolum bulunamadi"))
         self._fs_cache.pop(index, None)
         result = wipe_mod.wipe_device(self.view(part), method=method, progress=progress)
         self.reload()
@@ -751,7 +855,7 @@ class DiskSession:
     def wipe_free_space(self, index: int, progress=None):
         fs = self.filesystem(index)
         if fs is None:
-            raise SessionError("Bolumde okunabilir dosya sistemi yok")
+            raise SessionError(tr("Bolumde okunabilir dosya sistemi yok"))
         result = wipe_mod.wipe_free_space(fs, progress=progress)
         self.reload()
         return result
@@ -764,14 +868,14 @@ class DiskSession:
         fs = self.filesystem(index)
         if fs is None or not hasattr(fs, "fs"):
             raise SessionError(
-                "Bu bolumde silinmis dosya taramasi desteklenmiyor "
-                "(yalnizca FAT ve exFAT)")
+                tr("Bu bolumde silinmis dosya taramasi desteklenmiyor "
+                "(yalnizca FAT ve exFAT)"))
         return recovery_mod.scan_deleted(fs.fs, progress=progress)
 
     def recover_deleted(self, index: int, item, dest_path: str) -> int:
         fs = self.filesystem(index)
         if fs is None or not hasattr(fs, "fs"):
-            raise SessionError("Kurtarma desteklenmiyor")
+            raise SessionError(tr("Kurtarma desteklenmiyor"))
         return recovery_mod.recover_deleted(fs.fs, item, dest_path)
 
     def scan_lost_partitions(self, deep: bool = False, progress=None):
@@ -800,20 +904,82 @@ class DiskSession:
     def summary(self) -> Dict[str, str]:
         used = sum(p.size for p in self.partitions if not p.logical)
         summary = {
-            "Dosya": self.path,
-            "Bicim": self.format_name,
-            "Boyut": human_size(self.image.size),
-            "Sektor": f"{self.image.sector_count} x {self.image.sector_size} B",
-            "Bolum tablosu": self.scheme_name,
-            "Bolum sayisi": str(len(self.partitions)),
-            "Bolumlenmis": f"{human_size(used)} (%{100*used/max(1,self.image.size):.1f})",
-            "Erisim": "Salt okunur" if self.readonly else "Okuma/Yazma",
+            tr("Dosya"): self.path,
+            tr("Bicim"): self.format_name,
+            tr("Boyut"): human_size(self.image.size),
+            tr("Sektor"): f"{self.image.sector_count} x {self.image.sector_size} B",
+            tr("Bolum tablosu"): self.scheme_name,
+            tr("Bolum sayisi"): str(len(self.partitions)),
+            tr("Bolumlenmis"): f"{human_size(used)} (%{100*used/max(1,self.image.size):.1f})",
+            tr("Erisim"): self._access_text(),
         }
         if self.is_physical:
             info = self.image.info
-            summary["Aygit"] = info.path
-            summary["Durum"] = info.risk_text
+            summary[tr("Aygit")] = info.path
+            summary[tr("Durum")] = info.risk_text
         return summary
+
+    # ======================================================================
+    # Yazma moduna gecis (bekleyen islem kuyrugu icin)
+    # ======================================================================
+    def can_become_writable(self) -> tuple:
+        """(Yazma moduna gecilebilir mi, gecilemiyorsa neden).
+
+        Kaynak salt okunur aciliyorsa bu **her zaman** bir kusur degildir:
+        `.dub` yedegi bir arsivdir, VDI/QCOW2 bu surumde yazilamaz. Bunlar
+        gecilemez; fiziksel disk ve yazilabilir goruntu dosyasi gecilebilir.
+        """
+        if not self.readonly:
+            return True, ""
+        if self.is_backup:
+            return False, (tr("Yedek dosyasi (.dub) bir arsivdir; uzerine "
+                           "yazilamaz. Yedegi bir diske veya yeni bir "
+                           "goruntuye yazin."))
+        if self.is_physical:
+            return True, ""
+        fmt = self.image_format
+        if fmt in ("vdi", "qcow2"):
+            return False, (tr("{} bu surumde yalnizca okunabilir; yazma "
+                              "destegi yol haritasinda.", self.format_name))
+        if fmt == "vmdk" and getattr(self.image, "readonly", False):
+            return False, (tr("Seyrek (sparse) VMDK bu surumde salt okunur."))
+        return True, ""
+
+    def become_writable(self, confirm: bool = False,
+                        allow_system: bool = False) -> None:
+        """Ayni kaynagi **yazma modunda** yeniden acar.
+
+        Bekleyen islem kuyrugunun temeli budur: kaynak hep salt okunur acilir,
+        yazma yetkisi yalnizca kuyruk uygulanacagi anda ve tek seferde alinir
+        (ADR 0025). Fiziksel diskin butun koruma katmanlari burada calisir —
+        `confirm` ve gerekiyorsa `allow_system` olmadan aygit acilmaz.
+
+        Zaten yazilabilirse hicbir sey yapmaz.
+        """
+        if not self.readonly:
+            return
+        ok, reason = self.can_become_writable()
+        if not ok:
+            raise SessionError(reason)
+        if self.is_physical:
+            info = self.image.info
+            self.close_filesystems()
+            self.image.close()
+            self.image = PhysicalDisk(info, readonly=False, confirm=confirm,
+                                      allow_system=allow_system)
+        else:
+            path = self.path
+            self.close_filesystems()
+            self.image.close()
+            self.image = open_disk(path, readonly=False)
+            if self.image.readonly:
+                raise SessionError(
+                    f"{os.path.basename(path)} yazma modunda acilamadi: "
+                    + (getattr(self.image, "readonly_reason", "")
+                       or "dosya baska bir program tarafindan kullaniliyor "
+                          "olabilir"))
+        diagnostics.info(f"kaynak yazma moduna alindi: {self.name}")
+        self.reload()
 
     def close(self) -> None:
         self.close_filesystems()
@@ -822,7 +988,20 @@ class DiskSession:
     # -- ic yardimcilar ------------------------------------------------------
     def _require_table(self) -> None:
         if not self.table:
-            raise SessionError("Once bir bolum tablosu olusturun (MBR veya GPT)")
+            raise SessionError(tr("Once bir bolum tablosu olusturun (MBR veya GPT)"))
+
+    def _access_text(self) -> str:
+        """Bilgi panelindeki "Erisim" satiri.
+
+        "Salt okunur" demek artik yetmez: kaynaklarin tamami boyle acilir
+        (ADR 0025). Ayirt edici olan, **degistirilebilir olup olmadigidir**.
+        """
+        if not self.readonly:
+            return tr("Okuma/Yazma (acik)")
+        can_write, why_not = self.can_become_writable()
+        if can_write:
+            return tr("Salt okunur — degisiklikler Uygula ile yazilir")
+        return tr("Degistirilemez — {}", why_not)
 
     def _require_writable(self) -> None:
         if self.image.readonly:

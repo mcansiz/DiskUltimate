@@ -334,11 +334,7 @@ def _draw_macos(p: QPainter, size: int) -> None:
 # --------------------------------------------------------------------------
 # Ortak arayuz yardimcilari
 # --------------------------------------------------------------------------
-def standard_icon(widget, standard) -> QIcon:
-    """Widget'in kendi stilinden standart bir Qt ikonu dondurur.
-
-    Ayni iki satir hem `MainWindow` hem `FileBrowser` icinde tekrarlaniyordu;
-    ikon kaynagi tek yerde toplandi. Sistem temasinin ikonlari kullanilir
-    (ADR 0013: ozel ikon temasi zorlanmaz).
-    """
-    return widget.style().standardIcon(standard)
+# `standard_icon()` kaldirildi: sistem `QStyle` ikonlari platforma gore
+# bambaska goruntuluyordu ve aradigimiz islemlerin cogunun karsiligi yoktu.
+# Butun ikonlar artik `ui/icons.py` icinde cizilir ve uc platformda da
+# **birebir ayni** cikar (olculdu: ayni sha256, ADR 0025).

@@ -13,6 +13,7 @@ from .image import BlockDevice
 from .mbr import MAX_MBR_SECTORS, MBRTable
 from .ptable import (GPT_UNUSED, MBR_EXTENDED_TYPES, Partition, PartitionTable,
                      PartitionTableError, human_size)
+from ..i18n import tr
 
 MSBASIC = "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7"
 LINUXFS = "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
@@ -81,21 +82,22 @@ def _partitions_for_convert(table: PartitionTable) -> List[Partition]:
 def check_mbr_to_gpt(device: BlockDevice, table: PartitionTable) -> Tuple[bool, str]:
     """Donusumun yapilabilirligini denetler. (uygun_mu, aciklama)"""
     if table.scheme != "mbr":
-        return False, "Kaynak tablo MBR degil"
+        return False, tr("Kaynak tablo MBR degil")
     parts = _partitions_for_convert(table)
     if len(parts) > 128:
-        return False, "GPT en fazla 128 bolum tasiyabilir"
+        return False, tr("GPT en fazla 128 bolum tasiyabilir")
 
     first = min((p.start_lba for p in parts), default=device.sector_count)
     if first < GPT_RESERVED_HEAD:
-        return False, (f"Ilk bolum LBA {first} konumunda basliyor; GPT giris dizisi icin "
-                       f"disk basinda en az {GPT_RESERVED_HEAD} sektor bos olmalidir")
+        return False, (tr("Ilk bolum LBA {} konumunda basliyor; GPT giris "
+                          "dizisi icin disk basinda en az {} sektor bos "
+                          "olmalidir", first, GPT_RESERVED_HEAD))
     last = max((p.end_lba for p in parts), default=0)
     if last >= device.sector_count - GPT_RESERVED_TAIL:
         gerekli = human_size(GPT_RESERVED_TAIL * device.sector_size)
-        return False, (f"Disk sonunda yedek GPT icin {gerekli} bos alan gerekiyor; "
-                       f"son bolum LBA {last} konumunda bitiyor")
-    return True, f"{len(parts)} bolum GPT'ye tasinabilir"
+        return False, (tr("Disk sonunda yedek GPT icin {} bos alan gerekiyor; "
+                          "son bolum LBA {} konumunda bitiyor", gerekli, last))
+    return True, tr("{} bolum GPT'ye tasinabilir", len(parts))
 
 
 def mbr_to_gpt(device: BlockDevice, table: PartitionTable,
@@ -147,16 +149,16 @@ def mbr_to_gpt(device: BlockDevice, table: PartitionTable,
 # --------------------------------------------------------------------------
 def check_gpt_to_mbr(device: BlockDevice, table: PartitionTable) -> Tuple[bool, str]:
     if table.scheme != "gpt":
-        return False, "Kaynak tablo GPT degil"
+        return False, tr("Kaynak tablo GPT degil")
     parts = table.sorted_partitions()
     if len(parts) > 4:
-        return False, (f"MBR en fazla 4 birincil bolum tasir; tabloda {len(parts)} "
-                       "bolum var. Once bolum sayisini azaltin.")
+        return False, (tr("MBR en fazla 4 birincil bolum tasir; tabloda {} "
+                          "bolum var. Once bolum sayisini azaltin.", len(parts)))
     for p in parts:
         if p.end_lba > MAX_MBR_SECTORS:
-            return False, (f"Bolum {p.index} 2 TiB sinirinin otesinde bitiyor; "
-                           "MBR bu yerlesimi tasiyamaz")
-    return True, f"{len(parts)} bolum MBR'ye tasinabilir"
+            return False, (tr("Bolum {} 2 TiB sinirinin otesinde bitiyor; MBR "
+                              "bu yerlesimi tasiyamaz", p.index))
+    return True, tr("{} bolum MBR'ye tasinabilir", len(parts))
 
 
 def gpt_to_mbr(device: BlockDevice, table: PartitionTable,

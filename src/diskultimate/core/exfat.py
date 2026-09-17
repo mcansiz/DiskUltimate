@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 from .image import BlockDevice
+from ..i18n import tr
 
 ENTRY_SIZE = 32
 
@@ -266,7 +267,7 @@ class ExFatFS:
     def _mount(self) -> None:
         boot = self.dev.read(0, 512)
         if boot[3:11] != b"EXFAT   ":
-            raise ExFatError("exFAT imzasi bulunamadi")
+            raise ExFatError(tr("exFAT imzasi bulunamadi"))
         self.partition_offset = struct.unpack_from("<Q", boot, 64)[0]
         self.volume_length = struct.unpack_from("<Q", boot, 72)[0]
         self.fat_offset = struct.unpack_from("<I", boot, 80)[0]
@@ -281,7 +282,7 @@ class ExFatFS:
         self.num_fats = boot[110]
         self.percent_in_use = boot[112]
         if self.cluster_count == 0 or self.sectors_per_cluster == 0:
-            raise ExFatError("Gecersiz exFAT parametreleri")
+            raise ExFatError(tr("Gecersiz exFAT parametreleri"))
         self.label = ""
         self.bitmap_cluster = 0
         self.bitmap_length = 0
@@ -412,7 +413,7 @@ class ExFatFS:
                 if len(secilen) == count:
                     break
         if len(secilen) < count:
-            raise ExFatError("Birimde yeterli bos alan yok")
+            raise ExFatError(tr("Birimde yeterli bos alan yok"))
         for i, c in enumerate(secilen):
             self._set_used(c, True)
             self.set_fat(c, secilen[i + 1] if i + 1 < len(secilen) else EOC)
@@ -529,9 +530,9 @@ class ExFatFS:
                     eslesen = e
                     break
             if eslesen is None:
-                raise ExFatError(f"Yol bulunamadi: {path}")
+                raise ExFatError(tr("Yol bulunamadi: {}", path))
             if not eslesen.is_dir:
-                raise ExFatError(f"Dizin degil: {path}")
+                raise ExFatError(tr("Dizin degil: {}", path))
             cluster = eslesen.cluster
             cur = cur.rstrip("/") + "/" + chunk
         return cluster
@@ -552,7 +553,7 @@ class ExFatFS:
         for e in self._parse_dir(self._read_chain_data(self._dir_cluster(upper)), upper):
             if e.name.lower() == parcalar[-1].lower():
                 return e
-        raise ExFatError(f"Bulunamadi: {path}")
+        raise ExFatError(tr("Bulunamadi: {}", path))
 
     def exists(self, path: str) -> bool:
         try:
@@ -565,7 +566,7 @@ class ExFatFS:
     def read_file(self, path: str, max_bytes: int = -1) -> bytes:
         entry = self.find(path)
         if entry.is_dir:
-            raise ExFatError("Dizin dosya olarak okunamaz")
+            raise ExFatError(tr("Dizin dosya olarak okunamaz"))
         return self.read_entry(entry, max_bytes)
 
     def read_entry(self, entry: ExEntry, max_bytes: int = -1) -> bytes:
@@ -690,14 +691,14 @@ class ExFatFS:
 
     def write_file(self, path: str, data: bytes, overwrite: bool = True) -> ExEntry:
         if self.readonly:
-            raise ExFatError("Birim salt okunur")
+            raise ExFatError(tr("Birim salt okunur"))
         parcalar = _norm(path)
         if not parcalar:
-            raise ExFatError("Gecersiz dosya yolu")
+            raise ExFatError(tr("Gecersiz dosya yolu"))
         name, upper = parcalar[-1], "/" + "/".join(parcalar[:-1])
         if self.exists(path):
             if not overwrite:
-                raise ExFatError(f"Dosya zaten var: {path}")
+                raise ExFatError(tr("Dosya zaten var: {}", path))
             self.remove(path)
         first_cluster, ardisik = 0, True
         if data:
@@ -735,13 +736,13 @@ class ExFatFS:
 
     def mkdir(self, path: str) -> ExEntry:
         if self.readonly:
-            raise ExFatError("Birim salt okunur")
+            raise ExFatError(tr("Birim salt okunur"))
         parcalar = _norm(path)
         if not parcalar:
-            raise ExFatError("Gecersiz klasor yolu")
+            raise ExFatError(tr("Gecersiz klasor yolu"))
         name, upper = parcalar[-1], "/" + "/".join(parcalar[:-1])
         if self.exists(path):
-            raise ExFatError(f"Zaten var: {path}")
+            raise ExFatError(tr("Zaten var: {}", path))
         cluster, _ardisik = self.alloc_clusters(1)
         self.set_fat(cluster, EOC)
         self.dev.write(self.cluster_offset(cluster), b"\x00" * self.cluster_bytes)
@@ -759,15 +760,15 @@ class ExFatFS:
 
     def remove(self, path: str, recursive: bool = False) -> None:
         if self.readonly:
-            raise ExFatError("Birim salt okunur")
+            raise ExFatError(tr("Birim salt okunur"))
         parcalar = _norm(path)
         if not parcalar:
-            raise ExFatError("Kok dizin silinemez")
+            raise ExFatError(tr("Kok dizin silinemez"))
         entry = self.find(path)
         if entry.is_dir:
             cocuklar = self.listdir(path)
             if cocuklar and not recursive:
-                raise ExFatError("Klasor bos degil")
+                raise ExFatError(tr("Klasor bos degil"))
             for cocuk in cocuklar:
                 self.remove(path.rstrip("/") + "/" + cocuk.name, recursive=True)
         upper = "/" + "/".join(parcalar[:-1])
@@ -865,7 +866,7 @@ class ExFatFS:
         bps = dev.sector_size
         total = dev.sector_count
         if total < 2048:
-            raise ExFatError("Bolum exFAT icin cok kucuk (en az 1 MB)")
+            raise ExFatError(tr("Bolum exFAT icin cok kucuk (en az 1 MB)"))
         spc = cluster_sectors or ExFatFS.default_cluster_sectors(total, bps)
         bps_shift = bps.bit_length() - 1
         spc_shift = spc.bit_length() - 1
@@ -881,7 +882,7 @@ class ExFatFS:
                 heap_offset += spc - artik
             kalan = total - heap_offset
             if kalan <= 0:
-                raise ExFatError("Bolum exFAT icin cok kucuk")
+                raise ExFatError(tr("Bolum exFAT icin cok kucuk"))
             new_cluster = kalan // spc
             new_fat = ((new_cluster + 2) * 4 + bps - 1) // bps
             if new_fat == fat_length and new_cluster == cluster_count:
@@ -893,7 +894,7 @@ class ExFatFS:
             heap_offset += spc - artik
         cluster_count = (total - heap_offset) // spc
         if cluster_count < 8:
-            raise ExFatError("Bolum exFAT icin cok kucuk")
+            raise ExFatError(tr("Bolum exFAT icin cok kucuk"))
 
         if volume_serial == 0:
             simdi = datetime.datetime.now()
@@ -911,9 +912,9 @@ class ExFatFS:
         root_cluster = 1
         kullanilan = bitmap_cluster + upcase_cluster + root_cluster
         if kullanilan + 1 >= cluster_count:
-            raise ExFatError("Bolum exFAT metaverisi icin yetersiz")
+            raise ExFatError(tr("Bolum exFAT metaverisi icin yetersiz"))
 
-        report("exFAT onyukleme bolgesi yaziliyor...", 10)
+        report(tr("exFAT onyukleme bolgesi yaziliyor..."), 10)
         # --- onyukleme sektoru ---
         boot = bytearray(bps)
         boot[0:3] = b"\xEB\x76\x90"
@@ -954,7 +955,7 @@ class ExFatFS:
             dev.write_sectors(taban, bytes(bolge))
             dev.write_sectors(taban + 11, saglama_sektoru)
 
-        report("FAT bolgesi hazirlaniyor...", 30)
+        report(tr("FAT bolgesi hazirlaniyor..."), 30)
         # --- FAT ---
         fat = bytearray(fat_length * bps)
         struct.pack_into("<I", fat, 0, 0xFFFFFFF8)
@@ -967,7 +968,7 @@ class ExFatFS:
                 struct.pack_into("<I", fat, c * 4, value)
         dev.write_sectors(fat_offset, bytes(fat))
 
-        report("Ayirma bitmap'i yaziliyor...", 55)
+        report(tr("Ayirma bitmap'i yaziliyor..."), 55)
         # --- ayirma bitmap'i ---
         bitmap = bytearray((cluster_count + 7) // 8)
         for c in range(2, 2 + kullanilan):
@@ -977,11 +978,11 @@ class ExFatFS:
         dev.write(veri_ofseti + (bitmap_first - 2) * cluster_bytes,
                   bytes(bitmap).ljust(bitmap_cluster * cluster_bytes, b"\x00"))
 
-        report("Buyuk harf tablosu yaziliyor...", 70)
+        report(tr("Buyuk harf tablosu yaziliyor..."), 70)
         dev.write(veri_ofseti + (upcase_first - 2) * cluster_bytes,
                   upcase.ljust(upcase_cluster * cluster_bytes, b"\x00"))
 
-        report("Kok dizin olusturuluyor...", 85)
+        report(tr("Kok dizin olusturuluyor..."), 85)
         # --- kok dizin: etiket + bitmap + upcase girisleri ---
         root = bytearray(root_cluster * cluster_bytes)
         off = 0
@@ -1005,5 +1006,5 @@ class ExFatFS:
         f = getattr(dev, "flush", None)
         if f:
             f()
-        report("Tamamlandi", 100)
+        report(tr("Tamamlandi"), 100)
         return ExFatFS(dev)

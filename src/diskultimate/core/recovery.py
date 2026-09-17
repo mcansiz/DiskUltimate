@@ -20,6 +20,8 @@ from .exfat import (ATTR_DIRECTORY as EX_DIR, E_FILE, E_NAME, E_STREAM,
 from .fat import ATTR_DIRECTORY, ATTR_LFN, ATTR_VOLUME_ID, FatFS, FatError
 from .image import BlockDevice
 from .ptable import human_size
+from ..i18n import mark, tr
+from ..i18n import tr
 
 Progress = Optional[Callable[[str, int], None]]
 
@@ -57,7 +59,8 @@ def scan_deleted(fs, progress: Progress = None) -> List[DeletedFile]:
         return _scan_deleted_fat(fs, progress)
     if isinstance(fs, ExFatFS):
         return _scan_deleted_exfat(fs, progress)
-    raise RecoveryError("Bu dosya sisteminde silinmis dosya taramasi desteklenmiyor")
+    raise RecoveryError(tr("Bu dosya sisteminde silinmis dosya taramasi "
+                           "desteklenmiyor"))
 
 
 def _cluster_free_run(fs, start: int, needed: int) -> int:
@@ -145,7 +148,7 @@ def _scan_deleted_fat(fs: FatFS, progress: Progress = None,
     except FatError:
         pass
     if progress and depth == 0:
-        progress(f"{len(bulunan)} silinmis giris bulundu", 100)
+        progress(tr("{} silinmis giris bulundu", len(bulunan)), 100)
     return bulunan
 
 
@@ -208,7 +211,7 @@ def _scan_deleted_exfat(fs: ExFatFS, progress: Progress = None,
     except ExFatError:
         pass
     if progress and depth == 0:
-        progress(f"{len(bulunan)} silinmis giris bulundu", 100)
+        progress(tr("{} silinmis giris bulundu", len(bulunan)), 100)
     return bulunan
 
 
@@ -219,7 +222,7 @@ def recover_deleted(fs, item: DeletedFile, dest_path: str) -> int:
     parcalanmis dosyalarda sonuc eksik olabilir (durum alani bunu belirtir).
     """
     if item.size <= 0 or item.cluster < 2:
-        raise RecoveryError("Bu giriste kurtarilabilir veri yok")
+        raise RecoveryError(tr("Bu giriste kurtarilabilir veri yok"))
     if os.path.isdir(dest_path):
         dest_path = os.path.join(dest_path, item.name)
     os.makedirs(os.path.dirname(os.path.abspath(dest_path)), exist_ok=True)
@@ -332,11 +335,12 @@ def scan_lost_partitions(device: BlockDevice, step_sectors: int = 2048,
             bulunanlar.append(aday)
         lba += adet
         if progress:
-            progress(f"Taraniyor... {human_size(lba * device.sector_size)} / "
-                     f"{human_size(device.size)} — {len(bulunanlar)} aday",
+            progress(tr("Taraniyor... {} / {} — {} aday",
+                        human_size(lba * device.sector_size),
+                        human_size(device.size), len(bulunanlar)),
                      int(99 * lba / max(1, total_sectors)))
     if progress:
-        progress(f"Tarama bitti: {len(bulunanlar)} aday bolum", 100)
+        progress(tr("Tarama bitti: {} aday bolum", len(bulunanlar)), 100)
     return bulunanlar
 
 
@@ -354,19 +358,19 @@ class FileSignature:
 
 
 SIGNATURES: List[FileSignature] = [
-    FileSignature("jpg", "JPEG goruntu", b"\xFF\xD8\xFF", b"\xFF\xD9", 24 * 1024 * 1024, "jpg"),
-    FileSignature("png", "PNG goruntu", b"\x89PNG\r\n\x1a\n", b"IEND\xaeB`\x82", 64 * 1024 * 1024, "png"),
-    FileSignature("gif", "GIF goruntu", b"GIF8", b"\x00\x3B", 16 * 1024 * 1024, "gif"),
-    FileSignature("pdf", "PDF belgesi", b"%PDF-", b"%%EOF", 128 * 1024 * 1024, "pdf"),
-    FileSignature("zip", "ZIP / Office belgesi", b"PK\x03\x04", b"", 256 * 1024 * 1024, "zip"),
-    FileSignature("rar", "RAR arsivi", b"Rar!\x1a\x07", b"", 256 * 1024 * 1024, "rar"),
-    FileSignature("7z", "7-Zip arsivi", b"7z\xbc\xaf\x27\x1c", b"", 256 * 1024 * 1024, "7z"),
-    FileSignature("gz", "GZIP arsivi", b"\x1f\x8b\x08", b"", 128 * 1024 * 1024, "gz"),
-    FileSignature("mp3", "MP3 ses", b"ID3", b"", 32 * 1024 * 1024, "mp3"),
-    FileSignature("mp4", "MP4 video", b"\x00\x00\x00\x18ftyp", b"", 512 * 1024 * 1024, "mp4"),
-    FileSignature("exe", "Windows calistirilabilir", b"MZ", b"", 128 * 1024 * 1024, "exe"),
-    FileSignature("elf", "ELF calistirilabilir", b"\x7fELF", b"", 128 * 1024 * 1024, "elf"),
-    FileSignature("sqlite", "SQLite veritabani", b"SQLite format 3\x00", b"", 256 * 1024 * 1024, "db"),
+    FileSignature("jpg", mark("JPEG goruntu"), b"\xFF\xD8\xFF", b"\xFF\xD9", 24 * 1024 * 1024, "jpg"),
+    FileSignature("png", mark("PNG goruntu"), b"\x89PNG\r\n\x1a\n", b"IEND\xaeB`\x82", 64 * 1024 * 1024, "png"),
+    FileSignature("gif", mark("GIF goruntu"), b"GIF8", b"\x00\x3B", 16 * 1024 * 1024, "gif"),
+    FileSignature("pdf", mark("PDF belgesi"), b"%PDF-", b"%%EOF", 128 * 1024 * 1024, "pdf"),
+    FileSignature("zip", mark("ZIP / Office belgesi"), b"PK\x03\x04", b"", 256 * 1024 * 1024, "zip"),
+    FileSignature("rar", mark("RAR arsivi"), b"Rar!\x1a\x07", b"", 256 * 1024 * 1024, "rar"),
+    FileSignature("7z", mark("7-Zip arsivi"), b"7z\xbc\xaf\x27\x1c", b"", 256 * 1024 * 1024, "7z"),
+    FileSignature("gz", mark("GZIP arsivi"), b"\x1f\x8b\x08", b"", 128 * 1024 * 1024, "gz"),
+    FileSignature("mp3", mark("MP3 ses"), b"ID3", b"", 32 * 1024 * 1024, "mp3"),
+    FileSignature("mp4", mark("MP4 video"), b"\x00\x00\x00\x18ftyp", b"", 512 * 1024 * 1024, "mp4"),
+    FileSignature("exe", mark("Windows calistirilabilir"), b"MZ", b"", 128 * 1024 * 1024, "exe"),
+    FileSignature("elf", mark("ELF calistirilabilir"), b"\x7fELF", b"", 128 * 1024 * 1024, "elf"),
+    FileSignature("sqlite", mark("SQLite veritabani"), b"SQLite format 3\x00", b"", 256 * 1024 * 1024, "db"),
 ]
 SIGNATURES_BY_KEY = {s.key: s for s in SIGNATURES}
 
@@ -381,7 +385,7 @@ class CarvedFile:
 
     @property
     def suggested_name(self) -> str:
-        return f"kurtarilan_{self.offset:012X}.{self.extension}"
+        return tr("kurtarilan_{:012X}.{}", self.offset, self.extension)
 
 
 def carve_files(device: BlockDevice, keys: Optional[List[str]] = None,
@@ -394,7 +398,7 @@ def carve_files(device: BlockDevice, keys: Optional[List[str]] = None,
     """
     secilen = [s for s in SIGNATURES if not keys or s.key in keys]
     if not secilen:
-        raise RecoveryError("Hicbir dosya turu secilmedi")
+        raise RecoveryError(tr("Hicbir dosya turu secilmedi"))
     en_uzun_imza = max(len(s.header) for s in secilen)
     total = device.size
     bulunanlar: List[CarvedFile] = []
@@ -425,10 +429,10 @@ def carve_files(device: BlockDevice, keys: Optional[List[str]] = None,
         onceki_kuyruk = tampon[-(en_uzun_imza - 1):] if en_uzun_imza > 1 else b""
         pos += length
         if progress:
-            progress(f"Imza taraniyor... {human_size(pos)} / {human_size(total)} — "
-                     f"{len(bulunanlar)} dosya", int(99 * pos / max(1, total)))
+            progress(tr("Imza taraniyor... {} / {} — {} dosya",
+                        human_size(pos), human_size(total), len(bulunanlar)), int(99 * pos / max(1, total)))
     if progress:
-        progress(f"Tarama bitti: {len(bulunanlar)} dosya", 100)
+        progress(tr("Tarama bitti: {} dosya", len(bulunanlar)), 100)
     return bulunanlar
 
 
