@@ -4,6 +4,8 @@ from __future__ import annotations
 from PyQt5.QtCore import QPointF, QRectF, Qt
 from PyQt5.QtGui import QColor, QIcon, QPainter, QPixmap, QPolygonF
 
+from ..i18n import mark, tr
+
 # Ana palet (DiskGenius'a yakin, acik tema)
 BG = "#f4f6f9"
 PANEL = "#ffffff"
@@ -33,6 +35,24 @@ FS_COLORS = {
     "Bilinmeyen": "#9aa5b1",
     "": "#b6bfc9",          # bicimlendirilmemis
 }
+# Plan onizlemesi (ADR 0031): henuz diske yazilmamis bolumler bu renkle
+# isaretlenir. Anlamsal bir renktir — "bu gercek degil, planlanan" demek icin
+# kullanilir, bu yuzden paletten gelmez (CLAUDE.md renk kurali).
+PLAN_COLOR = "#8e44ad"
+PLAN_LABELS = {
+    "new": mark("YENI"),
+    "changed": mark("DEGISECEK"),
+    "format": mark("BICIMLENECEK"),
+    "wipe": mark("SILINECEK"),
+}
+
+
+def plan_label(part) -> str:
+    """Bolumun plan durumunun kisa adi (diskteki bolumlerde bostur)."""
+    key = getattr(part, "plan_state", "")
+    return tr(PLAN_LABELS[key]) if key in PLAN_LABELS else ""
+
+
 FREE_COLOR = "#dfe4ea"
 FREE_HATCH = "#c9d1d9"
 USED_BAR = "#2c5aa0"

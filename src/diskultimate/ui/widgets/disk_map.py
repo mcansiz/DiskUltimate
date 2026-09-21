@@ -13,7 +13,8 @@ from PyQt5.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
 from PyQt5.QtWidgets import QSizePolicy, QWidget
 
 from ...core.ptable import FreeRegion, Partition, human_size
-from ..theme import darken, fs_color, lighten, palette_color
+from ..theme import (PLAN_COLOR, darken, fs_color, lighten,
+                     palette_color, plan_label)
 from ...i18n import tr
 
 MIN_BLOCK_WIDTH = 64
@@ -212,6 +213,25 @@ class DiskMapWidget(QWidget):
             painter.setPen(QPen(darken(palette_color(self, "window"), 130), 1))
         painter.drawRect(rect.adjusted(0, 0, -1, -1))
 
+        # Plan onizlemesi: henuz diske yazilmamis bolum kesik cerceve ve
+        # kose rozetiyle isaretlenir (ADR 0031). Kullanici neyin gercek,
+        # neyin planlanan oldugunu **bakar bakmaz** ayirt etmelidir.
+        plan = plan_label(block.obj) if block.kind == "part" else ""
+        rozet_genisligi = 0
+        if plan:
+            painter.setPen(QPen(QColor(PLAN_COLOR), 2, Qt.DashLine))
+            painter.drawRect(rect.adjusted(2, 2, -3, -3))
+            f = painter.font(); f.setPointSize(7); f.setBold(True)
+            painter.setFont(f)
+            genislik = painter.fontMetrics().width(plan) + 10
+            if rect.width() > genislik + 60:
+                rozet = QRect(rect.right() - genislik - 5, rect.top() + 8,
+                              genislik, 15)
+                painter.fillRect(rozet, QColor(PLAN_COLOR))
+                painter.setPen(QColor("#ffffff"))
+                painter.drawText(rozet, Qt.AlignCenter, plan)
+                rozet_genisligi = genislik + 8
+
         # Metin rengi blok zeminine gore secilir: bolum bloklarinin zemini bizim
         # dosya sistemi rengimizdir, bos alaninki paletten gelir.
         if block.kind == "part":
@@ -221,7 +241,8 @@ class DiskMapWidget(QWidget):
             metin_rengi = palette_color(self, "dim")
         painter.setPen(metin_rengi)
         f = painter.font(); f.setPointSize(9); f.setBold(True); painter.setFont(f)
-        metin_alani = QRect(rect.left() + 6, rect.top() + 10, rect.width() - 12, 16)
+        metin_alani = QRect(rect.left() + 6, rect.top() + 10,
+                            rect.width() - 12 - rozet_genisligi, 16)
         painter.drawText(metin_alani, Qt.AlignLeft | Qt.AlignVCenter,
                          self._elide(painter, title, metin_alani.width()))
 

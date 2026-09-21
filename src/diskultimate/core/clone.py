@@ -30,6 +30,20 @@ BLOCK_ZERO = 0
 BLOCK_RAW = 1
 BLOCK_ZLIB = 2
 
+# Kullanici notu basligin bos alaninda durur (136..456). Baslik boyutu
+# degismedi: eski yedeklerde bu alan sifirdir ve not "yok" okunur, yeni
+# yedekler eski surumlerde de acilir (ADR 0032).
+REMARK_OFFSET = 136
+REMARK_SIZE = 320
+
+# Sikistirma duzeyleri — arayuzdeki dort secenek (DiskGenius ile ayni dil).
+# 0 "sikistirma yok" demektir; blok yine de sifir/ham olarak isaretlenir,
+# yani bos alan gene yer kaplamaz.
+LEVEL_NONE = 0
+LEVEL_FAST = 1
+LEVEL_NORMAL = 6
+LEVEL_HIGH = 9
+
 Progress = Optional[Callable[[str, int], None]]
 
 
@@ -49,6 +63,7 @@ class BackupInfo:
     created: Optional[datetime.datetime]
     compressed: bool
     file_size: int
+    remark: str = ""            # kullanicinin yedege iliskin notu
 
     @property
     def ratio(self) -> float:
@@ -66,6 +81,7 @@ class BackupInfo:
             tr("Olusturma"): (self.created.strftime("%Y-%m-%d %H:%M")
                               if self.created else "-"),
             tr("Sikistirma"): "zlib" if self.compressed else tr("yok"),
+            tr("Not"): self.remark or "-",
         }
 
 
@@ -79,8 +95,17 @@ def _report(progress: Progress, message: str, percent: int) -> None:
 # --------------------------------------------------------------------------
 def backup(device: BlockDevice, dest_path: str, compress: bool = True,
            block_size: int = DEFAULT_BLOCK, fs_type: str = "", label: str = "",
-           progress: Progress = None) -> BackupInfo:
-    """Aygiti (disk veya bolum) `.dub` dosyasina yedekler."""
+           progress: Progress = None, remark: str = "",
+           level: int = LEVEL_NORMAL) -> BackupInfo:
+    """Aygiti (disk veya bolum) `.dub` dosyasina yedekler.
+
+    `level` zlib duzeyidir (`LEVEL_FAST` / `LEVEL_NORMAL` / `LEVEL_HIGH`);
+    `compress=False` ya da `level=LEVEL_NONE` sikistirmayi kapatir. `remark`
+    kullanicinin notudur ve baslikta saklanir — yedegi acan herkes onu gorur,
+    yanina ayri bir metin dosyasi tasimak gerekmez.
+    """
+    if level <= LEVEL_NONE:
+        compress = False
     total = device.size
     if total <= 0:
         raise CloneError(tr("Kaynak bos"))
@@ -107,7 +132,7 @@ def backup(device: BlockDevice, dest_path: str, compress: bool = True,
                                  BLOCK_ZERO, 0, 0)
             else:
                 if compress:
-                    paket = zlib.compress(block, 6)
+                    paket = zlib.compress(block, level)
                     kind = BLOCK_ZLIB if len(paket) < length else BLOCK_RAW
                     if kind == BLOCK_RAW:
                         paket = block
@@ -131,6 +156,7 @@ def backup(device: BlockDevice, dest_path: str, compress: bool = True,
                          device.sector_size, int(simdi.timestamp()), block_count)
         header[40:72] = fs_type.encode("utf-8")[:32].ljust(32, b"\x00")
         header[72:136] = label.encode("utf-8")[:64].ljust(64, b"\x00")
+        header[REMARK_OFFSET:REMARK_OFFSET + REMARK_SIZE] = _remark_bytes(remark)
         struct.pack_into("<H", header, 510, 0xAA55)
         fh.seek(0)
         fh.write(bytes(header))
@@ -138,6 +164,44 @@ def backup(device: BlockDevice, dest_path: str, compress: bool = True,
 
     _report(progress, "Tamamlandi", 100)
     return read_backup_info(dest_path)
+
+
+def _remark_bytes(text: str) -> bytes:
+    """Notu baslik alanina sigacak sekilde kodlar.
+
+    Kirpma **karakter siniri degil bayt siniridir**: Turkce ve Almanca
+    harfler UTF-8'de iki bayt tutar. Kirpma cok baytli bir karakterin
+    ortasina denk gelirse o karakter tumuyle atilir, yoksa dosyada bozuk bir
+    dizi kalirdi.
+
+    Karar cozumlemeye birakilir: "son bayt surekli bayt mi?" diye bakmak
+    yanlisti — tam bir karakterin son bayti da surekli bayttir ve saglam
+    metinden bir harf koparirdi (olculdu: 160 'c' harfi 159'a dusuyordu).
+    """
+    data = (text or "").encode("utf-8")[:REMARK_SIZE]
+    while data:
+        try:
+            data.decode("utf-8")
+            break
+        except UnicodeDecodeError:               # yarim kalan dizi: sonu at
+            data = data[:-1]
+    return data.ljust(REMARK_SIZE, b"\x00")
+
+
+def write_remark(path: str, text: str) -> str:
+    """Var olan bir yedegin notunu degistirir; yazilan notu dondurur.
+
+    Yalnizca **baslik** alani yazilir; veri bloklarina ve indekse
+    dokunulmaz. Not bir arsivin etiketidir, icerigi degil — yedegi yeniden
+    uretmeye gerek kalmadan duzeltilebilmelidir.
+    """
+    data = _remark_bytes(text)
+    with open(path, "r+b") as fh:
+        if fh.read(len(MAGIC)) != MAGIC:
+            raise CloneError(tr("Gecerli bir DiskUltimate yedek dosyasi degil"))
+        fh.seek(REMARK_OFFSET)
+        fh.write(data)
+    return data.rstrip(b"\x00").decode("utf-8", "ignore")
 
 
 def is_backup_file(path: str) -> bool:
@@ -167,6 +231,8 @@ def read_backup_info(path: str) -> BackupInfo:
         raise CloneError(tr("Yedek surumu desteklenmiyor: {}", surum))
     fs_type = header[40:72].rstrip(b"\x00").decode("utf-8", "ignore")
     label = header[72:136].rstrip(b"\x00").decode("utf-8", "ignore")
+    remark = (header[REMARK_OFFSET:REMARK_OFFSET + REMARK_SIZE]
+              .rstrip(b"\x00").decode("utf-8", "ignore"))
     try:
         olusturma = datetime.datetime.fromtimestamp(zaman)
     except (OverflowError, OSError, ValueError):
@@ -175,7 +241,7 @@ def read_backup_info(path: str) -> BackupInfo:
                       sector_size=sector_size, block_size=block_size,
                       block_count=block_count, fs_type=fs_type, label=label,
                       created=olusturma, compressed=bool(bayraklar & 1),
-                      file_size=os.path.getsize(path))
+                      file_size=os.path.getsize(path), remark=remark)
 
 
 # --------------------------------------------------------------------------

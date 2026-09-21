@@ -78,6 +78,14 @@ kosabilir, ama sonuc VM'de de dogrulanir.
 | `t32_grub_yapilandirmasi` | `GrubDefaults` duzenlemesinde yorum/sira korumasi ve yerinde guncelleme, `grub.cfg` menu + alt menu cozumu |
 | `t33_uefi_yedegi_ve_degisiklik_plani` | UEFI yedeginin bire bir gidis-donusu, degisiklik planinin **guvenli sirasi** (girisler → sira → silmeler), sirada olmayan girisin gizlenmemesi |
 | `t34_bellenime_yazma_kapisi` | Bellenim yazilamiyorken planin uygulanmamasi ve nedenin bildirilmesi (**gercek bellenime dokunan tek test**; yazma acikken atlanir) |
+| `t35_ntfs_boyutlandirma` | Saf Python NTFS kucultme/buyutme: `$Bitmap` sinirlari, veri korunmasi, yedek onyukleme sektorunun yeni sona tasinmasi, buyuyen alana yazabilme, `ntfsinfo -m` + `ntfsfix -n` (ADR 0030) |
+| `t36_ntfs_bolum_boyutlandirma` | Ayni is **bolum tablosuyla birlikte**: `resize_info` NTFS dalini secmeli, plan dogrulanmali, tablo ve dosya sistemi birlikte degismeli |
+| `t37_plan_onizlemesi` | Bekleyen adimlarin uretecegi yerlesim: yeni/silinen/bicimlendirilen bolumler, bos alanin yeniden hesabi, **gercek tabloya dokunulmamasi** (ADR 0031) |
+| `t38_uygulama_adim_geri_cagrilari` | Adim basina ilerleme/bitis bildirimi ve genel cubugun geri gitmemesi (uygulama penceresi bunun uzerine kuruludur) |
+| `t39_yedek_notu_ve_sikistirma` | `.dub` kullanici notunun yazilmasi, **veriye dokunmadan** degistirilmesi, bayt kirpmasinin cok baytli karakteri bolmemesi, sikistirma duzeyleri ve notsuz eski yedeklerin okunabilmesi (ADR 0032) |
+| `t40_kuyrukta_bolum_numarasi_kaymasi` | Bolum numarasi kaysa bile adimlarin **dogru bolumu** bulmasi: iki silme adimi, ters sirada silme, silme+etiket karisimi, hedefi kaybolan adimin durmasi, capasiz eski adimlar ve onizlemenin ayni bolumu secmesi (ADR 0033) |
+| `t41_ust_uste_bolum_planlama` | Arka arkaya kuyruga alinan bolumlerin **ayni bos alani paylasmasi**: diske gore sorulan alanin degismedigi (kok neden), plana gore sorulunca her adimda kuculdugu ve uc adimin tek Uygula ile uygulandigi, `overlap_at` cakisma denetimi (ADR 0034) |
+| `t42_ntfs_isletim_sistemi_yazabilmeli` | Bicimlendirdigimiz NTFS'e **isletim sisteminin surucusu** yazabilmeli: `$MFT:$BITMAP` yerlesik olmamali, kok dizinde "." girisi olmali, `$Secure` gercek tanimlayici tasimali (karmalar dogrulanir) (ADR 0037) |
 
 ## Ortam guvenligi (onemli)
 
@@ -329,6 +337,50 @@ onyukleyicisine dokunmak onu acilmaz birakabilirdi. Sinanmis olan arac bulma,
 yetki kapisi ve "bu platformda kullanilamaz" dallaridir. Bu islemleri gercekten
 olcmek icin **atilabilir** bir misafir gerekir.
 
+### Misafiri UEFI kipine almak (VMware Player)
+
+Onyukleme ve bellenim yollarinin olculebilmesi icin Linux misafiri
+2026-09-17'de BIOS'tan UEFI'ye cevrildi. **Uc** degisiklik gerekti; ikisi
+beklenmiyordu ve her biri ayri bir acilis basarisizligi uretti:
+
+| `mint.vmx` satiri | Neden |
+|---|---|
+| `firmware = "efi"` | asil istenen |
+| diskler `scsi0:*` yerine `sata0:*` | VMware'in EFI bellenimi **LSI Logic SCSI icin surucu tasimaz**; disk gorunmuyor, *"No compatible bootloader found"* veriyor |
+| `guestOS = "ubuntu"` → `"ubuntu-64"` | EFI ROM'unun bit genisligi bu satirdan secilir; 32-bit ROM 64-bit `BOOTX64.EFI`'yi acamaz |
+
+`mint.nvram` silinir; VMware yeni bellenim icin yeniden uretir. Misafir ilk
+acilista `\EFI\BOOT\BOOTX64.EFI` yedek yolundan acilir ve kendi
+`Boot####` girisini olusturur.
+
+**Once tam yedek alin.** VM klasorunun kullanilan dosyalari (vmx, nvram ve
+butun vmdk uzantilari) kopyalanir; VMware Player'in anlik goruntu (snapshot)
+ozelligi yoktur. Geri yukleme yordami yedek klasorundeki `GERI-YUKLE.md`
+icindedir.
+
+> VMware Player calisirken `.vmx` dosyasini **kilitli tutar** (VM kapali olsa
+> bile). Yapilandirmayi degistirmeden once Player penceresi kapatilmalidir.
+
+### Onyukleme ve bellenim islemlerinin olculmesi
+
+```bash
+# 1) risksiz: yapilari ve cozumlemeyi dogrular, aygit gerektirmez
+python3 -m tests.run_all                 # t29 - t34
+
+# 2) GERCEK bellenime yazar — yalnizca atilabilir misafirde
+sudo python3 -m tests.efi_write_test --onayla
+```
+
+Ikinci betik `tests.run_all` icine **alinmadi**: makinenin kalici bellenim
+degiskenlerini degistirir. Her degisikligi geri alir ve her adimi
+`efibootmgr` ile dogrular; bitiste duzenin baslangictaki halle bire bir ayni
+oldugunu gosterir. Olculen: 29/29.
+
+`grub-install` ve `update-grub` betikle degil **elle** calistirildi (kendi
+`core/grub.py` islevlerimiz uzerinden), cunku misafirin onyukleyicisini
+degistirirler ve her kosumda yedek/geri yukleme kararini insan vermelidir.
+Bulgular: ADR 0028, "Gercek sistemde olcum".
+
 ## Dosya sistemi yetenek matrisi
 
 ```bash
@@ -346,7 +398,11 @@ Linux Mint 22.3 uzerinde olculen durum (2026-09-15):
 |---|---|---|---|---|---|
 | fat12/16/32 | ✅ | ✅ | ✅ | ✅ | ✅ `fsck.vfat` |
 | exfat | ✅ | ✅ | ✅ | ✅ | ✅ `fsck.exfat` |
-| ntfs | ✅ | ✅ | okuyucu yok | okuyucu yok | ✅ `ntfsfix` |
+| ntfs | ✅ | ✅ | ✅ | ✅ | ✅ `ntfsfix` |
+
+> NTFS satiri 2026-09-17'de guncellendi: okuma/yazma `ntfsread.py` ve
+> `ntfswrite.py` ile, **boyutlandirma** `ntfsresize.py` ile saf
+> Python'da yapiliyor (ADR 0030).
 | ext2/3/4 | ✅ | ✅ | ✅ | salt okunur | ✅ `e2fsck` |
 
 ## ext yazma dogrulamasi
@@ -362,7 +418,76 @@ demesi tehlikelidir.
 
 Yalnizca goruntu dosyalari uzerinde calisir.
 
+## Kuyruk dogrulamasi — fiziksel disk (ADR 0033 / 0034)
+
+```bash
+sudo python3 -m tests.physical_queue_test /dev/sdb --onayla --azami-gb=16
+```
+
+Iki hata gercek kullanimda, fiziksel diskte ortaya cikti ve **goruntu dosyasi
+testlerinde gorunmuyordu**; ikisi de kuyrugun "diskteki hal mi, plan mi?"
+sorusunu yanlis yanitlamasindan geliyordu. Bu betik kullanicinin yaptigi
+sirayla ikisini de gercek diskte tekrarlar:
+
+| Senaryo | Eski davranis |
+|---|---|
+| A) Arka arkaya uc "yeni bolum" | Ucunun de hedefi ayni LBA olur; ikinci adim "2 numarali bolum ile cakisiyor" der (ADR 0034) |
+| B) Arka arkaya uc "bolum sil" | Numaralar kayar; ikinci adim "2 numarali bolum yok" der (ADR 0033) |
+
+A senaryosu **kok nedeni de olcer**: diske gore sorulsaydi hedeflerin hala
+ayni cikacagini dogrular, sonra plana gore sorulunca ayristigini gosterir.
+Her senaryodan sonra `partprobe` + `lsblk` ile **cekirdegin gordugu** yazilir;
+yani dogrulama yalnizca bizim tablomuza degil, isletim sistemine de dayanir.
+
+Olculen (Mint 22.3, `/dev/sdb`, 2026-09-17):
+
+```
+[1] Diske gore sorulsaydi hedefler: [2048, 2048, 2048]
+[2] Plana gore hedefler: [2048, 1165312, 4102144]
+[3] Uygula -> uc adim da TAMAM
+[4] Cekirdegin gordugu: sdb1 vfat FAT32 | sdb2 ntfs NTFS | sdb3 exfat EXFAT
+B)  uc silme adimi da TAMAM -> disk bos
+```
+
+## NTFS boyutlandirma dogrulamasi (ADR 0030)
+
+Goruntu dosyasi uzerinde (her platformda kosar):
+
+```bash
+python3 -m tests.run_all          # t35, t36
+```
+
+Fiziksel diskte, **baskasinin araciyla** olusturulmus birim uzerinde:
+
+```bash
+sudo python3 -m tests.physical_ntfs_resize /dev/sdb --onayla --azami-gb=16
+```
+
+Bu betik `tests/physical_write_test.py` ile ayni alti guvenlik olcutunu
+kullanir (sistem diski degil, bagli bolum yok, bilgi eksiksiz, boyut sinirinin
+altinda, yol acikca verilmis, `--onayla` var) ve sirayla sunu yapar:
+
+1. GPT + 4 GB bolum olusturur (bizim kodumuz),
+2. birimi **`mkfs.ntfs`** ile bicimlendirir (bizim degil, baskasinin araci),
+3. ntfs-3g ile baglayip ~144 MB veri yazar,
+4. bizim kodumuzla 2 GB'a kucultur, sonra 3 GB'a buyutur,
+5. her adimdan sonra `ntfsfix -n`, `ntfsinfo -m` ve ntfs-3g baglamasi ile
+   **dosya ozetlerini (sha256)** karsilastirir.
+
+Neden ayri: kendi bicimlendiricimizin urettigi birimde `$MFTMirr` ve meta veri
+bizim koydugumuz yerdedir; gercek bir birimde her yere dagilmistir. Kucultmedeki
+**tasima** kodu ancak boyle bir birimde sinanir.
+
+Olculen (Mint 22.3, `/dev/sdb`, 2026-09-17): tum adimlar basarili, kucultmede
+5243 kume tasindi, sekiz dosyanin ozeti degismedi.
+
 ## NTFS yazma dogrulamasi
+
+> **Onemli:** bu denetim birimi artik **yazma icin** de bagliyor. Uzun sure
+> yalnizca `-o ro` bagliyordu ve bu yuzden "surucu yazamiyor" sinifindaki bir
+> kusur yillarca gorunmedi (ADR 0037). Bir dosya sistemi "okunabiliyor" diye
+> dogrulanmis sayilmaz.
+
 
 ```bash
 python3 -m tests.ntfs_write_check       # ntfsfix

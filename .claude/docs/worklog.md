@@ -5,6 +5,604 @@ Kayit yalnizca bu depo icindeki `.claude/` altinda tutulur.
 
 ---
 
+## 2026-09-18 (4) — DUZELTME: bicimlendirdigimiz NTFS artik isletim sistemi tarafindan yazilabiliyor (ADR 0037)
+
+Bir onceki girişteki bulgu duzeltildi. Kok neden **tek degil uctu**; her biri
+ancak bir oncekini gecince ortaya cikti. Yontem her adimda ayniydi: referans
+`mkfs.ntfs` birimiyle **yan yana** olcmek ve ntfs-3g'ye sebebi soyletmek.
+
+### 1. `$Secure` bostu
+
+NTFS 3.x'te her dosyaya bir guvenlik kimligi atanir; tanimlayicilar
+`$Secure` dosyasinda durur. Bizde `$SDS` akisi 0 bayt, `$SDH`/`$SII`
+indeksleri bostu.
+
+Duzeltme: iki standart tanimlayici (`0x100` salt okuma, `0x101` okuma+yazma)
+uretilip `$SDS`e 20 baytlik basliklariyla yazilir, 256 KiB'de aynalanir;
+`$SDH` (karma) ve `$SII` (kimlik) indeks kokleri doldurulur. Tanimlayici
+baytlari ve NTFS karma islevi referans birime karsi dogrulandi — ikisi de
+**birebir** tutuyor.
+
+### 2. `$MFT:$BITMAP` yerlesikti  ← asil engel
+
+ntfs-3g sebebi kendi soyledi:
+
+```
+CREATE ... Failed to determine last allocated cluster of mft bitmap attribute.
+   error: -22 (Invalid argument)
+```
+
+Yeni MFT kaydi ayirirken surucu bitmap'in son kumesini sorar; yerlesik
+oznitelikte kume yoktur. Referansta bitmap ayri bir kumede duruyor
+(`kosul=[(2, 1)]`). Duzeltme: `$MFT:$BITMAP` yerlesik olmaktan cikti, kendi
+kumesine yazilir ve bitmap boyutu MFT kapasitesine gore 8 baytin kati olarak
+hesaplanir.
+
+### 3. Kok dizinde "." girisi yoktu
+
+Birinci engel kalkinca ikincisi gorundu:
+
+```
+CREATE ... Index lookup failed, inode 5: No such file or directory
+           Failed to sync FILE_NAME (inode 5): Input/output error
+```
+
+Surucu dosya olusturduktan sonra **ust dizinin** adini ust dizinin
+indeksinde arayip tazeliyor; kok icin bu arama kendi "." girisine duser.
+Referansin kok indeksinde `'.' -> kayit 5` var, bizde yoktu. Duzeltme:
+kok indeksine kendi girisi eklendi (okuyucumuz "." girisini zaten
+listelemez).
+
+Ayrica: guvenlik kimligi `$STANDARD_INFORMATION` icinde **0x34**'te durur;
+yama sirasinda once 0x40'a (USN alani) yazilmisti, test yakaladi.
+
+### Olcum
+
+| Kosum | Once | Sonra |
+|---|---|---|
+| ntfs-3g ile dosya olusturma (goruntu) | EINVAL | **TAMAM** |
+| `tests.ntfs_write_check` (root) | 1/2 | **2/2** |
+| `/dev/sdb` uzerinde gercek senaryo | — | **TAMAM** |
+
+`/dev/sdb` kosumu kullanicinin yaptigi seydi: uygulamayla GPT + NTFS bolum,
+sonra isletim sisteminin surucusuyle yazma. Sonuc: metin dosyasi, ic ice
+klasor ve 20 MB rastgele dosya yazildi; yeniden baglamada sha1 ozeti ayni;
+`ntfsfix -n` temiz, birim bayraklari 0x0000, surum 3.1; **uygulamanin kendi
+okuyucusu** da isletim sisteminin yazdigi dosyalari goruyor.
+
+### Testler
+
+- `t42_ntfs_isletim_sistemi_yazabilmeli` (yeni, root gerektirmez): uc kusuru
+  da **yapisal olarak** yakalar — bitmap yerlesik mi, kok "." girisi var mi,
+  `$Secure` gercek icerik tasiyor mu (karmalar dahil).
+- `tests/ntfs_write_check.py` artik birimi **yazma icin** de bagliyor.
+  Eskiden yalnizca `-o ro` bagliyordu; hatanin yillarca gorulmemesinin
+  sebebi buydu. (Bu arada bir test tuzagi da temizlendi: ayni dosyayi once
+  ro sonra rw baglamak, ilk baglamadan kalan salt okunur loop aygitini
+  yeniden kullandirip yanlis hata veriyordu.)
+
+---
+
+## 2026-09-18 (3) — BULGU: bicimlendirdigimiz NTFS'e ntfs-3g dosya yazamiyor ($Secure bos)
+
+Mount/unmount ozelligini olcerken ortaya cikti. Kendi NTFS bicimlendiricimizle
+olusturulmus bir bolum **baglaniyor ve okunuyor**, ama uzerine dosya
+olusturulamiyor — root olarak bile:
+
+```
+touch /mnt/t3/deneme.txt  ->  Invalid argument   (EINVAL)
+ntfsfix -n /dev/sdb3      ->  "processed successfully" (saglam diyor)
+```
+
+### Yalitilmis karsilastirma (loop aygiti, ayni boyut, ayni surucu)
+
+| | referans `mkfs.ntfs` | bizimki |
+|---|---|---|
+| ntfs-3g ile baglama | rw | rw |
+| dosya olusturma | **TAMAM** | **EINVAL** |
+| `$Secure` (inode 9) `$SDS` veri boyutu | **262396 bayt** | **0 bayt** |
+
+Kok neden: bicimlendiricimiz `$Secure` dosyasini **bos** uretiyor — guvenlik
+tanimlayici akisi (`$SDS`) ve onun indeksleri (`$SDH`, `$SII`) yok. NTFS 3.x'te
+bir dosya olusturulurken surucu ona bir guvenlik kimligi atamak zorundadir;
+`$Secure` bos oldugu icin ntfs-3g bu adimda EINVAL ile duruyor.
+
+Neden bugune kadar gorulmedi: **okuma** ve **bizim kendi yazicimiz**
+(`ntfswrite.py`) `$Secure`'a dokunmaz, bu yuzden t17 ve `ntfs_write_check`
+gecmisti; `ntfsfix`/`ntfsinfo` da bos `$Secure`'u kusur saymiyor. Eksik yalnizca
+**isletim sisteminin kendi surucusuyle yazarken** ortaya cikiyor.
+
+Etki: uygulamayla NTFS bicimlendiren kullanici, bolume Linux'ta (ve buyuk
+olasilikla Windows'ta) dosya kopyalayamaz. Ciddi ve kullanicinin ilk
+karsilasacagi hatalardan.
+
+Duzeltme kapsami (yapilacak): dort standart guvenlik tanimlayicisini uretip
+`$SDS` akisina 20 baytlik basliklariyla yazmak (256 KiB aynalama dahil),
+`$SDH`/`$SII` indekslerini kurmak ve sistem dosyalarinin
+`$STANDARD_INFORMATION` kaydindaki `security_id` alanini bunlara baglamak.
+
+---
+
+## 2026-09-18 (2) — Sag tik menuleri ait oldugu dugume tasindi (ADR 0036)
+
+Kullanici: *"Fiziksel diskler uzerine sag tik menusu, ilgili diskin uzerinde
+gorunmesi daha mantikli olmaz mi?"*
+
+Agactaki **"Fiziksel Diskler"** satiri bir kategori basligidir ama menusunde
+"MBR/GPT bolum tablosu olustur" ve "Goruntu boyutunu degistir" duruyordu;
+diskin kendi satirinda ise yalnizca kapat/bilgi/yenile vardi.
+
+Bu yalnizca duzen sorunu degildi: o girisler **etkin kaynak** uzerinde
+calisir. Baslikta hedef olmadigi icin islem o sirada acik olan diske
+gidiyordu — sdb acikken baslikta "GPT olustur" demek sdb'nin tablosunu
+siliyordu. Kullanici hangi diske tikladigini gormeden onaylamis oluyordu.
+
+### Degisen
+
+| Dugum | Menu |
+|---|---|
+| Fiziksel Diskler (kategori) | diskleri yenile · (yetki yoksa) yetki al |
+| Disk satiri | Disk bilgisi · MBR/GPT olustur · tabloyu sil · yedekle/geri yukle · bu diski kapat · yenile |
+| Acik goruntu | kapat · MBR/GPT olustur · tabloyu sil · **goruntu boyutu** · yedekle/geri yukle · yenile |
+
+Iki kural: (1) sag tiklanan disk **etkin kaynak olur** — menu acilmadan once
+salt okunur acilir, boylece islem her zaman tiklanan diske gider; (2)
+"Goruntu boyutunu degistir" fiziksel disk oturumunda hic eklenmez, cunku
+diskin boyutu donanimdir.
+
+### Olcum
+
+Duman testi menuleri `QMenu.exec_` yakalayarak okur (pencere acilmaz):
+kategori basliginda "bolum tablosu" gecen giris yok, acik goruntu dugumunde
+MBR/GPT/goruntu boyutu/yedekleme var.
+
+Fiziksel disk satiri gercek aygitlarla olculdu (root, offscreen):
+
+```
+=== /dev/sdb satirindaki menu ===       === /dev/sda satirindaki menu ===
+    Disk bilgisi                            Disk bilgisi
+    MBR bolum tablosu olustur               MBR bolum tablosu olustur
+    GPT bolum tablosu olustur               GPT bolum tablosu olustur
+    Bolum tablosunu sil                     Bolum tablosunu sil
+    Diski yedekle... / geri yukle...        Diski yedekle... / geri yukle...
+    Bu diski kapat                          Bu diski kapat
+    Fiziksel diskleri yenile                Fiziksel diskleri yenile
+    -> etkin kaynak: sdb                    -> etkin kaynak: sda
+```
+
+---
+
+## 2026-09-18 — Inceleme: GParted bizim exFAT bolumunu "unknown" gosteriyor
+
+Kullanici sdb uzerinde uygulamayla bolumler olusturdu, exFAT bolume bir dosya
+yazdi. GNOME Disks bolumu exFAT gorup bagladi ve dosyayi listeledi; **GParted
+ise dosya sistemini "unknown"** gosterdi. Soru: sorun GParted'te mi?
+
+### Olculen (Mint 22.3, gercek aygit + loop aygitinda referans karsilastirmasi)
+
+Ayni kosulda `mkfs.exfat` (exfatprogs 1.2.2) ile bizim saf Python
+bicimlendiricimiz karsilastirildi:
+
+| Kontrol | Referans `mkfs.exfat` | Bizimki |
+|---|---|---|
+| `blkid -p` | `TYPE="exfat" VERSION="1.0"` | **ayni** |
+| `wipefs -n` | `0x3 exfat`, `0x1fe dos` | **ayni** |
+| `fsck.exfat -n` | clean | **clean** |
+| `parted` (libparted) | **"File system" sutunu BOS** | **BOS** |
+
+Yani libparted exFAT'i **hic** tanimiyor — referansla uretilmis birimi de
+taniyamiyor. GParted blkid'den tur alamadiginda libparted'e duser ve "unknown"
+yazar.
+
+### GParted'in kendi arac zinciri bizim birimi sorunsuz okuyor
+
+- `blkid -c /dev/null` (GParted'in **tam olarak** calistirdigi komut):
+  `/dev/sdb2: TYPE="exfat"`
+- `dump.exfat /dev/sdb2` (GParted'in exFAT araci): onyukleme sektorunu eksiksiz
+  okuyor (Volume Length 3512320, FAT Offset 24, Cluster Count 54872...)
+- GParted 1.5.0 ikilisi exFAT biliyor (`strings` icinde 13 gecis), exfatprogs
+  kurulu.
+
+### Sonuc
+
+Sorun bizim dosya sisteminde degil. GParted ekrandaki bilgiyi **kendiliginden
+tazelemez**; o pencere biz diski degistirirken acikti ve tur bilgisi bayat
+kaldi (libparted dalindan gelen "unknown").
+
+**Dogrulandi:** kullanici GParted'i kapatip yeniden acti ve bolum exFAT
+gorundu. Yani tani dogruydu; kod tarafinda yapilacak bir sey yok.
+
+Kod degisikligi yapilmadi. Bu olcum, saf Python exFAT ciktisinin **gercek bir
+aygitta** referans araclarla birebir denk oldugunun kaydidir.
+
+---
+
+## 2026-09-17 (14) — Acilista hazir ekran (ADR 0035)
+
+Kullanici: *"uygulama ilk acildiginda partitionlara tiklamayinca hicbir sey
+secemiyorum... direkt [hazir ekran] gibi baslayabilir, ilk hali bug gibi
+duruyor."*
+
+Acilisti durum: bolum tablosu bos, harita genel bakista, arac cubugunun
+neredeyse tamami pasif. Agacta bir **diske** tiklamak yalnizca bilgi panelini
+dolduruyor, ekran olu kaliyordu; ancak bir **bolume** tiklamak diski salt
+okunur acip her seyi canlandiriyordu. Yani calisir hale gelmenin yolu
+kesfedilecek gibi degildi ve diskin kendisine tiklamanin acmamasi tutarsizdi.
+
+### Degisen
+
+1. **Disk satirina tiklamak diski acar** — bolum satiriyla ayni davranis.
+   Guvenlik acisindan yeni bir sey yok: acma her zaman salt okunur, yazma
+   yetkisi yalnizca Uygula aninda aliniyor (ADR 0025).
+2. **Acilista ilk uygun disk secilip acilir.** Olcut acilabilirlik:
+   bilgisi eksik okunan (yetki yok) ve bolum tablosu okunamamis diskler
+   atlanir; kalan ilk disk acilir. Uc kural zararsiz tutar: bir kez calisir
+   (kullanici kapatinca yeniden acmaz), sessiz basarisizlik (acilista hata
+   penceresi yok), cizimden sonra siraya alinir.
+
+"Acmadan yalnizca tabloyu gostermek" secenegi reddedildi: ekran dolu gorunur
+ama butun islemler pasif kalirdi — sikayet edilen duygu daha kafa
+karistirici bicimde surerdi.
+
+### Olcum (Mint 22.3, root, offscreen, gercek aygitlar)
+
+```
+gorulen disk    : ['sda', 'sdb']
+acilan oturum   : sda           salt okunur: True
+sema / bolum    : GPT / 3 bolum tablo satiri: 3
+secili bolum    : 1             harita kipi: 1 (tek disk)
+etkin islemler  : ['Yeni bolum...', 'Bicimlendir...', 'Bolumu sil',
+                   'Diski yedekle...']
+durum cubugu    : Secili: Bolum 1 — Bolum 1 (1.00 MB)
+```
+
+Acma taramadan sonra ~70 ms surdu, donma yakalayici bir sey bildirmedi.
+Duman testi secim politikasini ayrica sinar (`first_openable_disk`).
+
+### Yan gozlem (duzeltilmedi)
+
+Kullanicinin gunlugunde acilista `DONMA — arayuz 1.9 sn yanit vermiyor` satiri
+var ve "isaretli islem yok" diyor; yani olculen bir isimiz degil, ilk cizim /
+X11 tarafi. Offscreen kosumda hic gorulmedi. Ayri bir is olarak not edildi.
+
+---
+
+## 2026-09-17 (13) — Hata: arka arkaya planlanan bolumler ayni yere kuruluyordu (ADR 0034)
+
+Kullanici `/dev/sdb` uzerinde uc bolum olusturmak istedi (568 MB FAT32,
+1.40 GB NTFS, 3.03 GB exFAT); birinci adim gecti, ikincisi durdu:
+
+```
+17:19:10 kuyruga eklendi (1): Yeni bolum olustur — 568.00 MB, fat32
+17:19:17 kuyruga eklendi (2): Yeni bolum olustur — 1.40 GB, ntfs
+17:19:30 kuyruga eklendi (3): Yeni bolum olustur — 3.03 GB, exfat
+17:19:34 HATA PartitionTableError: 2 numarali bolum ile cakisiyor
+```
+
+Ekran goruntusunde uc adimin da hedefi ayniydi: **LBA 14626816**.
+
+### Kok neden
+
+"Yeni bolum" penceresi bos alani `session.free_regions()` ile — yani
+**diskteki** duruma gore — soruyordu. Kuyruktaki bolum diske yazilmadigi icin
+o alan hala bos gorunuyor, ikinci ve ucuncu bolum de ayni yere kuruluyordu.
+
+Bu, bir onceki hatanin (ADR 0033, bolum numarasi kaymasi) kardesi: orada
+**kimlik**, burada **bos alan** diskten okunuyordu. Ikisinin koku ayni —
+kuyruk varken gecerli olan diskteki hal degil, **plan**dir.
+
+### Cozum
+
+Yeni adim kurulurken yerlesim `planview` uzerinden sorulur:
+
+- `planned_free_regions()` — bos alanlar, bekleyen adimlar dusulmus halde.
+- `planned_partitions()` — MBR'de "4 birincil doldu mu" sayimi da buradan;
+  yoksa kuyrukta bekleyen bolumler sayilmiyordu.
+- `planview.overlap_at()` — "yeni bolum" ve "boyutlandir" adimlari kuyruga
+  **girmeden once** denetlenir; cakisma uygulama ortasinda degil tiklama
+  aninda soylenir.
+- Secili bos alan kuyruk degisince yeniden cozulur (eskisi artik var
+  olmayabilir).
+
+Uygulama aninda adimi bir sonraki bos alana **kaydirmak** dusunuldu ve
+reddedildi: gorulen plan ile diske yazilan ayrilirdi. Kuyrugun butun degeri
+"ne gorduysen o uygulanir".
+
+### Olcum
+
+`t41_ust_uste_bolum_planlama`: diske gore sorulan alanin uc adimda da ayni
+kaldigi (kok neden), boyle bir kuyrugun gercekten kirildigi, plana gore
+kurulunca alanin her adimda kuculdugu ve uc adimin tek Uygula ile
+uygulandigi, `overlap_at`in cakismayi yakalayip uzaktaki alani yakalamadigi.
+Duman testi arayuz tarafini olcer: bekleyen "yeni bolum" adimindan sonra
+`planned_free_regions()` icinde o araligi kesen bolge kalmaz.
+
+| Kosum | Sonuc |
+|---|---|
+| `tests.run_all` | 39/41 (2 atlandi: yalnizca Windows dali) |
+| `tests.platform_check` | 0 bulgu |
+| `tests.i18n_check` | de/en TAMAM |
+| `tests.ui_smoke` | tamamlandi |
+
+### Fiziksel disk dogrulamasi (ayni gun, kullanici istegiyle)
+
+`tests/physical_queue_test.py` eklendi ve `/dev/sdb` uzerinde kosuldu. Betik
+kullanicinin yaptigi sirayla iki senaryoyu da gercek diskte tekrarlar ve her
+adimdan sonra `partprobe` + `lsblk` ile **cekirdegin gordugunu** yazar:
+
+```
+A) Arka arkaya uc bolum (ADR 0034)
+[1] Diske gore sorulsaydi hedefler: [2048, 2048, 2048]     <- kok neden duruyor
+[2] Plana gore hedefler: [2048, 1165312, 4102144]          <- duzeltme
+[3] Uygula -> uc adim da TAMAM
+[4] Cekirdegin gordugu: sdb1 vfat FAT32 | sdb2 ntfs NTFS | sdb3 exfat EXFAT
+
+B) Arka arkaya silme (ADR 0033)
+    uc silme adimi da TAMAM -> disk bos
+```
+
+Betik `tests/physical_write_test.py` ile ayni alti guvenlik olcutunu kullanir
+(sistem diski degil, bilgi eksiksiz, boyut sinirinin altinda, yol acikca
+verilmis, `--onayla`).
+
+---
+
+## 2026-09-17 (12) — Uygula penceresinin gorsel duzeni
+
+Kullanici: *"bekleyen islemleri uygulada progress bar guzel durmuyor, yazilar
+birbirine cok yakin gibi, gorsel acidan duzenle."* Hakliydi; ekran
+goruntusunde satirlar sikisikti.
+
+Duzeltilenler (yalnizca **yerlesim**; ozel stil sayfasi yok, ADR 0013 gecerli):
+
+- **Satirdaki ilerleme cubugu** dogrudan hucreye konuyordu ve hucre
+  kenarlarina yapisiyordu. Artik kenar payli bir kapsayici icinde
+  (10/12 piksel), her satirda ayni bosluk var.
+- **Odak cercevesi kaldirildi** (`setFocusPolicy(Qt.NoFocus)`): tablo zaten
+  secilemezken etkin hucrenin etrafina noktali bir kutu ciziliyor, satiri
+  daha da sikisik gosteriyordu.
+- Satir yuksekligi 30 -> 38, pencere 760x470 -> 820x520, genel aralik
+  10 -> 12 piksel.
+- "Durum" ve "Ilerleme" sutun basliklari ile durum metni **ortalandi**;
+  sutun genislikleri metne gore ayarlandi.
+- Durum satiri ile genel cubuk ayrildi: durum satirina en az 34 piksel
+  yukseklik (metin bir satirdan ikiye cikinca cubuk ziplamiyor), cubuga
+  en az 24 piksel (yuzde metni sigiyor) ve cubukla dugmeler arasina bosluk.
+- Ayni nefes payi yedekleme penceresinin durum/ilerleme alanina da verildi;
+  iki pencere ayni goruyor.
+
+Olcum: `tests.ui_smoke` VM'de temiz kosuyor; `33-uygula-adimlar`,
+`34-uygula-calisirken`, `35-uygula-durdu` goruntuleri yeniden uretildi.
+Metin degismedigi icin sozluklere dokunulmadi.
+
+---
+
+## 2026-09-17 (11) — Hata: kuyrukta bolum numarasi kaymasi (ADR 0033)
+
+Kullanici Linux misafirinde `/dev/sdb` uzerinde iki bolumu silmek istedi;
+birinci adim gecti, ikincisi durdu. Gunlukten:
+
+```
+17:05:13 kuyruga eklendi (1): Bolum 1 sil — DU NTFS, 8.37 GB
+17:05:16 kuyruga eklendi (2): Bolum 2 sil — Bolum 2, 1.63 GB
+17:05:20 WARNING operations.step(kind=delete) — 0 ms
+         HATA PartitionTableError: 2 numarali bolum yok
+```
+
+### Kok neden
+
+**Bolum numarasi kalici bir kimlik degil.** Numara tabloda saklanmiyor;
+tablo okunurken yerlesime gore bastan veriliyor (`gpt.py`, kullanilan girisler
+sirayla 1, 2, 3...). Birinci bolum silinince ikinci bolum 1 numara oluyor ve
+kuyrukta bekleyen "2 numarali bolumu sil" adiminin hedefi kayboluyor.
+
+Sorun silmeye ozgu degildi: "yeni bolum" (onune dustuyse numaralari yukari
+kaydirir), "boyutlandir + tasi" (siralamayi degistirebilir), "tablo olustur"
+ve "disk guvenli sil" de ayni etkiyi yapiyor. Yani hata bir senaryonun degil,
+kuyrugun **kimlik modelinin** kusuruydu.
+
+### Cozum
+
+Adimlar hedefi artik **baslangic LBA'si** ile de tasiyor (`params["at_lba"]`);
+iki bolum ayni sektorde baslayamaz. `operations.resolve_target()` her adimi
+calistirmadan once capayi o anki tabloda ariyor ve bolum numarasini tazeliyor:
+
+- capa bulunamazsa adim **duruyor** ("Hedef bolum bulunamadi (LBA ...)") —
+  yanlis bolume islem yapmaktansa durmak yeglenir;
+- boyutlandirma bolumu tasidiysa sonraki adimlarin capalari yeni yere
+  tasiniyor (`_follow_move`);
+- capasiz eski adimlar eskisi gibi numaradan calisiyor;
+- `planview` de ayni olcutu kullaniyor, boylece **ekranda gorunen ile
+  uygulanan ayni bolum** oluyor.
+
+Adim basligi degismiyor: kullanici kuyruga eklerken neye tikladiysa onu
+goruyor ("Bolum 2 sil"), degisen yalnizca icerideki hedef cozumu — gunluge
+"adim hedefi tazelendi: LBA 4096 -> bolum 1" diye yaziliyor.
+
+### Olcum
+
+Yeni test `t40_kuyrukta_bolum_numarasi_kaymasi` alti durumu sinar: kullanicinin
+karsilastigi iki-silme senaryosu, ters sirada silme, silme+etiket+bicimlendirme
+karisimi, hedefi kaybolan adimin durmasi, capasiz eski adimlar ve onizlemenin
+ayni bolumu secmesi.
+
+Testin gercekten bu hatayi yakaladigi **kaniti**: capa cozumleyicisi VM'de
+gecici olarak kapatilip kosuldu ve test tam kullanicinin gordugu metinle
+dustu — *"1 adim uygulandi, 'Bolum 2 sil' adiminda durdu: 2 numarali bolum
+yok"*. Acikken geciyor.
+
+| Kosum | Sonuc |
+|---|---|
+| `tests.run_all` | 38/40 (2 atlandi: yalnizca Windows dali) |
+| `tests.platform_check` | 0 bulgu |
+| `tests.i18n_check` | de/en TAMAM |
+| `tests.diag_check` | 13/13 |
+| `tests.ui_smoke` | tamamlandi |
+
+---
+
+## 2026-09-17 (10) — Yedekleme ve geri yukleme tek pencerede; yedek dosyasina not
+
+Kullanici istegi: *"yedek dosya bilgisi menusunu de tek bir form kontrolu
+olarak ayarlansin, surekli farkli formlar ve popup menuler aciliyor... formun
+ustunde secilmis olan dub dosyasi, dosya bilgileri ve icerigi, sonra asagida
+fiziksel diskler... ek olarak dub yedek dosyasina bilgi notu da
+ekleyebilelim... disk secili oldugunda yedek alma islemleri de secilebilir
+olmali."* Karar: **ADR 0032**.
+
+### Ne degisti
+
+**Tek pencere (`ui/dialogs/backup.py`, yeni).** Yedek alma, geri yukleme ve
+yedek dosyasini inceleme ayni formda. Ustte `.dub` dosyasi: yolu, bilgileri,
+**notu** ve icerigi (bolumler + kok klasor girisleri). Altta disk/bolum:
+secilenin bolum haritasi ve acik goruntuler + fiziksel diskler tek agacta.
+En altta durum satiri ve ilerleme cubugu — ayri ilerleme penceresi yok.
+
+Eski akis sekiz pencereye yayiliyordu (dosya sec → nereye yazilsin? → hedef
+sec → onay → sistem diski adi → ilerleme → sonuc). Hepsi bu forma girdi;
+`BackupInfoDialog` kaldirildi, `main_window` icindeki bes akis tek bir
+`open_backup_dialog()` cagrisina indi.
+
+**Yikici onay formun icinde.** "Hedefteki butun veriler silinecek" kutusu
+isaretlenmeden Baslat etkin olmuyor; hedef sistem diskiyse ayrica disk adi
+yaziliyor. CLAUDE.md'nin onay kurali korundu, yeri degisti — ve kullanici
+onayi verirken hedefi, kaynagi ve uyarilari ayni ekranda goruyor.
+
+**Yedek dosyasina not (`.dub` baslik ofset 136, 320 bayt).** Yedek alinirken
+yazilir, sonradan `clone.write_remark()` ile **veriye dokunmadan**
+degistirilebilir. Surum artirilmadi: eski yedeklerde alan sifir, not "yok"
+okunur; yeni yedekler eski surumlerde de acilir (gerekce ADR 0032 ve
+`specs/dub.md`).
+
+**Sikistirma duzeyi secilebilir:** Yok / Hizli / Normal / Yuksek (zlib
+0/1/6/9). "Yok" secildiginde bile sifir bloklar yer kaplamaz.
+
+**Eylem etkinligi duzeltildi.** "Diski yedekle / geri yukle" artik acik
+goruntu **ya da** bilinen bir fiziksel disk varken etkin; kaynak pencerede
+secildigi icin oturum sarti anlamsizdi. Kullanicinin bildirdigi "disk secili
+oldugunda yedek alma secilebilmeli" istegi buydu.
+
+### Olcum (Linux misafiri, Mint 22.3)
+
+| Kosum | Sonuc |
+|---|---|
+| `tests.run_all` | 39/39 (2 atlandi: yalnizca Windows dali) |
+| `tests.platform_check` | 0 bulgu |
+| `tests.i18n_check` | de/en TAMAM (1374 ceviri) |
+| `tests.diag_check` | 13/13 |
+| `tests.ui_smoke` | tamamlandi; `36-yedek-al`, `37-geri-yukle` |
+
+Yeni test `t39_yedek_notu_ve_sikistirma`: notun yazilmasi/okunmasi, sonradan
+degistirilmesinin **veriyi bozmamasi** (geri yukleme sha256 ile dogrulanir),
+bayt kirpmasinin cok baytli karakteri bolmemesi, sikistirma duzeylerinin dosya
+boyutunu degistirmesi ve notsuz (eski) yedeklerin okunabilmesi.
+
+Duman testi pencereyi iki kipte cizer, onay kutusu isaretlenmeden geri
+yuklemenin etkin **olmadigini** denetler ve pencereden **gercek bir yedek
+alir** (4 GB ornek goruntu -> 221 KB, not dosyaya yazilmis).
+
+### Yol boyunca cikan iki hata (duzeltildi)
+
+- Not kirpmasi "son bayt surekli bayt mi?" diye bakiyordu; tam bir karakterin
+  son bayti da surekli bayttir ve saglam metinden bir harf kopariyordu
+  (160 'c' harfi 159'a dusuyordu). Karar cozumlemeye birakildi.
+- `BackupDialog.mode` hedef agaci doldurulduktan **sonra** atanmisti; ilk
+  secim sinyali `self.mode` okurken patliyor, Qt istisnayi yutuyor ve icerik
+  agaci bos kaliyordu. Kip artik en basta belirleniyor.
+
+---
+
+## 2026-09-17 (9) — Plan onizlemesi, adim adim uygulama penceresi, saf Python NTFS boyutlandirma
+
+Kullanici uc sey istedi:
+
+1. *"bolumleme sonrasi uygula dedigimizde islemlerin siralamasini gosteren bir
+   form istiyorum, adimlarin bu formda progress bar ile uygulandigi gorulecek"*
+2. *"Disk silme bolme islemlerini yaptigimda bekleyen islemler tarafina bunu
+   ekliyor ve kum saati ekleniyor ama ana ekran eski halde kaliyor; ana ekranda
+   yapilacak isleme gore ayarlansin"*
+3. *"linuxda NTFS boyutlandirmasi yapamiyorum, bu crossplatform icin eksik bir
+   durum"*
+
+Ucu de yapildi. Kararlar: **ADR 0030** (NTFS saf Python boyutlandirma),
+**ADR 0031** (plan onizlemesi + uygulama penceresi).
+
+### 1. Saf Python NTFS boyutlandirma — `core/ntfsresize.py` (yeni, ~640 satir)
+
+Onceki durum: NTFS yalnizca Windows'ta, **fiziksel diskte**, isletim sisteminin
+`Resize-Partition` komutuyla boyutlandirilabiliyordu. Linux/macOS'ta islem
+reddediliyordu; goruntu dosyalarinda hicbir platformda calismiyordu.
+
+Yeni modul onyukleme sektorunu (ve yedegini), `$Bitmap`'i ve `$BadClus`'u
+gunceller, `$LogFile`'i sifirlar. Kucultmede sinirin otesinde kalan kume
+araliklarini **tasir**: yeni yer tahsis edilir, veri kopyalanir, oznitelugun
+veri kosullari yeniden yazilir. `$MFT` kendini de tasiyabilir (kayit yazmadan
+once kume zinciri guncellenir, sonra onyukleme sektorundeki `mft_lcn`).
+
+Reddedilen durumlar sessiz degil: sikistirilmis/sifrelenmis akis, kayda
+sigmayan veri kosullari, "kirli" isaretli birim.
+
+Baglanti noktalari: `resize.py` icinde `_ntfs_info()` sinirlari `$Bitmap`'ten
+verir, `_fs_resize()` NTFS dalini cagirir. Kucultmede pencere **eski boyutta**
+acilir (`span`) — birimin sonundaki yapilar yeni sinirin otesinde kalabiliyor
+ve okuma "bolum sinirini asiyor" diye reddediliyordu. Windows + fiziksel disk
+yolu **degismedi**: orada hala isletim sisteminin boyutlandiricisi tercih
+edilir.
+
+### 2. Ana ekran planlanan yerlesimi gosteriyor — `core/planview.py` (yeni)
+
+`planview.project(session, queue)` kuyruktaki adimlari bellekteki kopyalar
+uzerinde isler; gercek tabloya dokunmaz. `Partition.plan_state` alani eklendi
+(`new` / `changed` / `format` / `wipe`), diskten okunan bolumlerde hep bostur.
+
+Arayuz tarafinda:
+- Harita planlanan bolumu mor kesik cerceve + kose rozetiyle cizer; silinecek
+  bolum haritadan kalkar, yeni bolum belirir.
+- Tabloda yalnizca plan varken gorunen "Plan" sutunu ve mor satir.
+- Haritanin ustunde plan seridi: ne gosterildigini yazar ve "Diskteki hali
+  goster" ile gercek duruma gecirir.
+- Yalnizca planda var olan bolum secilirse icerik gosterilmez ve bolum
+  islemleri pasiflesir.
+
+### 3. Uygulama penceresi — `ui/dialogs/apply.py` (yeni)
+
+Onay kutusu + tek cubuklu ilerleme penceresi birlestirildi. Adimlar sira ile
+listelenir, her adimin **kendi ilerleme cubugu** vardir; calisan/biten/duran
+adim renkle isaretlenir, duran adimdan sonrasi "Calistirilmadi" kalir.
+`OperationQueue.apply()` uc yeni geri cagri kabul eder (`on_step`,
+`on_step_progress`, `on_step_done`) ve adim yuzdesini genel olcege sigdirir —
+genel cubuk artik geri gitmiyor.
+
+### Olcum (Linux misafiri, Mint 22.3)
+
+| Kosum | Sonuc |
+|---|---|
+| `tests.run_all` | 38/38 (2 atlandi: yalnizca Windows dali) |
+| `tests.platform_check` | 0 bulgu |
+| `tests.i18n_check` | de/en TAMAM (1356 ceviri) |
+| `tests.diag_check` | 13/13 |
+| `tests.ui_smoke` | tamamlandi, 5 yeni ekran goruntusu |
+| `tests/physical_ntfs_resize.py /dev/sdb` | TUM ADIMLAR BASARILI |
+
+Yeni testler: t35 (NTFS dosya sistemi boyutlandirma), t36 (bolum tablosuyla
+birlikte), t37 (plan onizlemesi), t38 (adim geri cagrilari) ve fiziksel disk
+betigi `tests/physical_ntfs_resize.py`.
+
+Fiziksel test **baskasinin araciyla** olusturulan birimi sinar: `/dev/sdb`
+uzerinde `mkfs.ntfs` ile 4 GB'lik NTFS olusturuldu, ntfs-3g ile baglanip ~144 MB
+dolduruldu, bizim kodumuzla 2 GB'a kucultuldu (5243 kume tasindi), sonra 3 GB'a
+buyutuldu. Her adimdan sonra `ntfsfix -n`, `ntfsinfo -m` ve ntfs-3g baglamasiyla
+sekiz dosyanin sha256 ozeti karsilastirildi — hepsi ayni.
+
+### Yan duzeltmeler
+
+- `tests/ui_smoke.py` icindeki eski beklenti guncellendi: silinecek bolum artik
+  tabloda gorunmedigi icin kum saati sayisi 2'den 1'e dustu (davranis dogru,
+  beklenti eskiydi).
+- Yeni 44 arayuz metni icin en/de cevirileri yazildi.
+
+---
+
 ## 2026-09-15 (2) — Tam tutarlilik denetimi (yalnizca analiz, kod degismedi)
 
 Kullanici istegi: projeyi bastan sona analiz et, tutarsizliklari bul, GUI
@@ -3257,3 +3855,115 @@ yerel degisken (kod adlari Ingilizce olmali) ve kacis tablosundaki iki ters
 bolunun "sabit Windows yolu" sanilmasi. 204 tanimlayici `tokenize` ile
 cevrildi (duz metin degistirme dize iceriklerini de bozmustu), kacis tablosu
 `chr(92)` ile kuruldu ve gerekce koda yazildi.
+---
+
+## 2026-09-17 (5) — Misafir UEFI'ye alindi; onyukleme ve bellenim yollari gercek sistemde olculdu
+
+Kullanici istegi: *"wm linux mint sanal makine suan kapali ayarlarini uefi
+olarak ayarla"* ve *"grub-install / update-grub calistirilmadi ... bunun icin
+gerekli yedek kaydini olustur ve dene, bozulursa tamir edilebilir"*.
+Oturum sirasinda ikinci bir kural daha koydu: *"yazilimi teste baslayinca onay
+bekle"* — VM hazirligi serbest, yazilim testleri icin onay alinir.
+
+### Yedek
+
+VMware Player'in anlik goruntu ozelligi yok; **tam dosya kopyasi** alindi:
+`C:\\VM-Yedek\\mint-bios-20260917` — 26 dosya, 38 GB (vmx, nvram ve kullanilan
+butun vmdk uzantilari). `yedek-*.vmdk` dosyalari bilerek atlandi: `mint.vmx`
+onlara basvurmuyor, eski bir yapilandirmadan kalmislar. Her dosyanin bayt
+boyutu `MANIFEST.txt` icine yazildi ve kopya sonrasi 26/26 dogrulandi.
+Geri yukleme yordami `GERI-YUKLE.md` icinde.
+
+### UEFI'ye gecis — uc engel
+
+Yalnizca `firmware = "efi"` yetmedi; ucu de ayri bir acilis basarisizligi
+uretti ve `vmware.log` ile teshis edildi:
+
+1. **`firmware = "efi"`** — asil istenen. Sonuc: *"No compatible bootloader
+   found"*.
+2. **Diskler LSI Logic SCSI'de.** VMware'in EFI bellenimi bu denetleyici icin
+   surucu tasimaz; log EFI'nin SATA portlarini tarayip diski hic gormedigini
+   gosterdi. Diskler `sata0:0` ve `sata0:2`ye alindi.
+3. **`guestOS = "ubuntu"` (32 bit).** Log'da *"The EFI ROM is 32-bit"*
+   yaziyordu; 32-bit ROM 64-bit `BOOTX64.EFI`'yi acamaz. `ubuntu-64` yapildi.
+
+`mint.nvram` silinip yeniden urettirildi. Misafir `\\EFI\\BOOT\\BOOTX64.EFI`
+yedek yolundan acildi ve `Boot0005* Ubuntu` girisini kendisi olusturdu.
+Calisir UEFI yapilandirmasi da yedek klasorune kopyalandi.
+
+> VMware Player, VM kapali olsa bile `.vmx` dosyasini kilitli tutuyor.
+> Pencerenin kapatilmasi gerekti (kullaniciya soruldu).
+
+### Adim 1 — salt okunur tur
+
+`run_all` 32/34 (2 atlanan Windows dali) · `platform_check` 0 · `i18n_check`
+BASARILI · `diag_check` 13/13 · `ui_smoke` cikis 0.
+
+### Adim 2 — UEFI bellenime yazma (yeni: `tests/efi_write_test.py`)
+
+`tests.run_all` icine **alinmadi**; gercek bellenim degiskenlerini degistirir,
+`physical_write_test.py` gibi `--onayla` ile calisir. Her degisiklik geri
+alinir, her adim `efibootmgr` ile dogrulanir.
+
+**Ilk kosum 28'de 27 gecti** ve dusen adim gercek bir hata gosterdi:
+`Timeout` degiskeni makinede **hic yoktu**; `load()` `None` okuyor ama
+`changes()` yalnizca deger varken is yapiyordu. Yani **bir duzeni okuyup aynen
+geri yazmak onu degistiriyordu** (degisken yokken 0 olarak olusuyordu).
+`BootNext` icin silme dali vardi, `Timeout` icin yoktu. Duzeltildi; artik
+`Timeout` icin de silme uretiliyor.
+
+Duzeltmeden sonra: **29/29**. Bitiste duzen baslangictaki halle bire bir ayni;
+girisler bayt bayt korunmus. Ilk kosumun biraktigi artik `Timeout` degiskeni de
+kendi kodumuzla silindi. Makine yeniden baslatildi ve normal acildi.
+
+### Adim 3 — `grub-install` ve `update-grub`
+
+Kendi `core/grub.py` islevlerimiz uzerinden calistirildi. Islemler calisti ve
+misafir her adimdan sonra acildi (uc yeniden baslatma `last -x reboot` ile
+dogrulandi). **Uc gercek hata** cikti:
+
+1. **UEFI'de aygit argumani anlamsiz.** `grub-install <disk>` *"Installing for
+   x86_64-efi platform"* der, ESP'ye kurar, aygiti **yok sayar**. Olculdu:
+   islem oncesi/sonrasi MBR'nin ilk 440 baytinin ozeti degismedi. Bizim onay
+   penceremiz ise "Diskin ilk sektoru degisir" diyordu — yanlis. Eklenen
+   `grub.install_target()` bellenim kipini sorar; UEFI'de aygit hic gecirilmez
+   ve onay metni ikiye ayrilir.
+2. **Aracin ciktisi kayboluyordu.** `grub-install` satirlarini **stderr**'e
+   yazar, basarili kosumda stdout bostur; biz yalnizca stdout'a bakiyorduk.
+3. **`grub.cfg` cozumleyicisi ic ice menuyu erken kapatiyordu.** Her `}`
+   satirinda alt menu yigindan cikiyordu, oysa `menuentry` bloklari da `}` ile
+   biter: "Advanced options" altindaki **ikinci** giris (kurtarma kipi) ust
+   duzeyde gorunuyordu. Artik blok derinligi sayiliyor, `${...}` yazimlari
+   sayimdan once atiliyor. Testi yazildi (t32).
+
+Yan bulgu: `/boot/grub/grub.cfg` cogu dagitimda `-rw-------` root'a aittir;
+yetkisiz kosumda okunamiyor ve biz "Menu girisi: 0" yaziyorduk — menu doluyken
+bos gorunuyordu. `GrubStatus.config_readable` eklendi, artik "okunamadi (yetki
+yok)" yazar.
+
+**Bizim kodumuza yuklenmeyen bir degisiklik:** `update-grub` menu basliklarini
+"Linux Mint 22.3 Xfce"den "Ubuntu"ya cevirdi. Dogrudan `sudo update-grub`
+calistirildiginda **birebir ayni** sonuc cikti — bu sistemin
+`GRUB_DISTRIBUTOR` degerlendirmesinden geliyor, bizim cagri ortamimizdan degil.
+Eski `grub.cfg` alinan yedekte duruyor.
+
+### Kosum sonrasi tam gerileme turu (VM)
+
+`run_all` 32/34 · `platform_check` 0 · `i18n_check` BASARILI (1321 ceviri) ·
+`diag_check` 13/13 · `ui_smoke` cikis 0.
+
+### Olculmeyen kalan
+
+- **BIOS kipinde `grub-install <disk>`** — misafir artik UEFI'de; MBR'ye yazan
+  dal calistirilmadi.
+- **`repair()` birlesik akisi** — adimlari tek tek olculdu, tumu birlikte degil.
+- **`upgrade_packages()`** — paket yoneticisine dokunmak misafirin durumunu
+  degistirir; denenmedi.
+
+### Bir yordam dersi
+
+Paylasilan klasor (`/mnt/hgfs`) her yeniden baslatmadan sonra **dusuyor**.
+Kaynak kopyalama komutunda hatalar `2>/dev/null` ile gizlenmisti; iki kosum
+sessizce **eski kodla** calisti ve yanlis sonuc uretti. Sonra bir kosumda
+hedef once silinip kaynak bulunamayinca VM'deki kopya bosaldi. Artik kaynak
+varligi kopyalamadan **once** dogrulanıyor ve hata gizlenmiyor.

@@ -86,6 +86,9 @@ class Partition:
     fs_used: int = -1                # kullanilan bayt (-1 = bilinmiyor)
     fs_total: int = -1               # toplam bayt (-1 = bilinmiyor)
     sector_size: int = 512
+    # Bekleyen islem onizlemesinde bu bolumun durumu ("" = diskteki hali).
+    # Degerler `planview.STATE_*`; diskten okunan bolumlerde hep bostur.
+    plan_state: str = ""
 
     @property
     def end_lba(self) -> int:

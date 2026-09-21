@@ -166,7 +166,35 @@ gitmelidir; efivarfs parcali yazmayi kabul etmez.
   **yalnizca yazmanin zaten kapali oldugu makinede** kosar; Linux Mint
   misafiri BIOS kipinde acildigi icin orada gercekten kostu.
 
-**Sinanamayan:** UEFI degiskenine **yazma** yolu. Test misafiri BIOS kipinde
-acilir, gelistirme makinesinde ise deneme yapilmaz (CLAUDE.md test ortami
-kurali). Yazma yolu kod olarak tamamdir ama **olculmemistir** ve bu boyle
-yazilmistir.
+### Yazma yolu olculdu (2026-09-17, ikinci tur)
+
+Ilk yazimda yazma yolu olculememisti: test misafiri BIOS kipinde aciliyordu.
+Kullanicinin istegiyle misafir **UEFI kipine cevrildi** (ayrintilar:
+`.claude/docs/testing.md` > "Misafiri UEFI kipine almak") ve
+`tests/efi_write_test.py` yazildi — `tests.run_all` icine **alinmadi**, cunku
+gercek bellenim degiskenlerini degistirir; `physical_write_test.py` gibi acik
+onayla calisir.
+
+**Sonuc: 29/29 gecti.** Her adim bagimsiz bir araca (`efibootmgr`) karsi
+dogrulandi:
+
+| Olculen | Sonuc |
+|---|---|
+| `Timeout` yaz / geri al | yazildi, `efibootmgr` dogruladi, geri alindi |
+| `BootOrder` sirala / geri al | yazildi, dogrulandi, geri alindi |
+| `BootNext` yaz / **sil** | degisken silme yolu da olculdu |
+| Girislerin baytlari | islem sonunda **bayt bayt korundu** |
+| Duzenin butunu | baslangictaki halle **bire bir ayni** |
+
+Makine her turdan sonra yeniden baslatildi ve normal acildi.
+
+### Olcum bir hata buldu: "yokluk" ile "sifir" ayni degil
+
+Ilk kosumda 28 adimdan biri dustu. `Timeout` degiskeni makinede **hic yoktu**;
+`load()` bunu `None` okuyordu ama `changes()` yalnizca `updated.timeout is not
+None` oldugunda is yapiyordu — yani bir duzeni okuyup **aynen geri yazmak onu
+degistiriyordu** (degisken yokken 0 olarak olusuyordu). `BootNext` icin silme
+dali zaten vardi, `Timeout` icin yoktu.
+
+Duzeltildi: `changes()` artik `Timeout` icin de **silme** uretir. Bu, ancak
+gercek bir makinede goruldu — uretilmis bir durumda `Timeout` hep vardi.

@@ -23,9 +23,18 @@ okuma ve yazma** calisir; uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2fsck`,
   USB bellek ve SD kart uygulama acikken takilsa da listede **kendiliginden** belirir
 - MBR (4 birincil + genisletilmis + mantiksal) ve GPT (128 bolum, CRC32, yedek baslik)
 - **MBR ↔ GPT donusumu** — bolum verileri yerinde kalir
-- **Bolumu boyutlandirma / tasima** — fareyle suruklenebilir serit; FAT ve exFAT
-  veri korunarak kucultulur/buyutulur, NTFS ve ext Windows'ta yerel araca devredilir
+- **Bolumu boyutlandirma / tasima** — fareyle suruklenebilir serit; FAT, exFAT
+  ve **NTFS** veri korunarak kucultulur/buyutulur (saf Python, her platformda ve
+  goruntu dosyalarinda); ext hala harici arac ister. Windows'ta fiziksel diskte
+  isletim sisteminin kendi boyutlandiricisi tercih edilir.
 - 4K hizalama denetimi
+
+- **Yedekleme ve geri yukleme tek pencerede** — ustte `.dub` dosyasinin
+  bilgisi, **notu** ve icerigi; altta acik goruntuler ve fiziksel diskler.
+  Sikistirma duzeyi secilir, ilerleme ayni formda izlenir.
+- **Planlanan yerlesim ana ekranda** — bekleyen adimlar harita ve tabloya
+  islenir; yeni bolum belirir, silinecek kalkar. "Uygula" penceresi adimlari
+  sirayla ve **adim basina ilerleme cubuguyla** calistirir.
 
 **Dosya sistemleri**
 - **FAT12 / FAT16 / FAT32 ve exFAT: saf Python** — bicimlendirme ve tam okuma/yazma,

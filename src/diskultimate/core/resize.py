@@ -16,9 +16,12 @@ Tasarim:
         tasima:    veri kopyalanir, ardindan onyukleme sektorundeki
                    "gizli sektor" alani yeni baslangica gore duzeltilir.
 
-Su an gercek dosya sistemi boyutlandirmasi FAT12/16/32 ve exFAT icin saf
-Python'da yapilir. NTFS ve ext icin Windows'un kendi araci denenir; o da
-yoksa islem reddedilir (bkz. `FsResizeInfo.note`).
+Gercek dosya sistemi boyutlandirmasi FAT12/16/32, exFAT ve **NTFS** icin saf
+Python'da yapilir; yani her platformda ve goruntu dosyalarinda da calisir
+(NTFS icin bkz. `ntfsresize.py`, ADR 0030). Windows'ta fiziksel disklerde
+isletim sisteminin kendi boyutlandiricisi yine tercih edilir: bagli birimi
+kendisi cozer. ext icin hala harici arac gerekir; yoksa islem reddedilir
+(bkz. `FsResizeInfo.note`).
 """
 from __future__ import annotations
 
@@ -30,6 +33,8 @@ from .exfat import EOC as EXFAT_EOC
 from .exfat import ExFatError, ExFatFS, boot_checksum
 from .fat import FatError, FatFS
 from .image import BlockDevice, PartitionView
+from .ntfsread import NtfsError
+from .ntfsresize import ntfs_resize, ntfs_size_info
 from .ptable import (MBR_EXTENDED_TYPES, Partition, PartitionTable,
                      PartitionTableError, human_size)
 from ..i18n import tr
@@ -121,7 +126,7 @@ class FsResizeInfo:
 
     @property
     def resizable(self) -> bool:
-        return self.kind in ("fat", "exfat", "raw", "native")
+        return self.kind in ("fat", "exfat", "ntfs", "raw", "native")
 
     def limit_note(self) -> str:
         parcalar = []
@@ -141,7 +146,9 @@ def fs_resize_info(view: BlockDevice, fs_type: str,
             return _fat_info(view)
         if kind == "exfat":
             return _exfat_info(view)
-    except (FatError, ExFatError, Exception) as exc:   # noqa: BLE001
+        if kind == "ntfs" and not native_ok:
+            return _ntfs_info(view)
+    except (FatError, ExFatError, NtfsError, Exception) as exc:   # noqa: BLE001
         return FsResizeInfo(
             kind="unsupported", fs_type=fs_type, movable=False,
             note=f"Dosya sistemi okunamadi ({exc}); boyutlandirma guvenli degil")
@@ -160,6 +167,21 @@ def fs_resize_info(view: BlockDevice, fs_type: str,
         kind="unsupported", fs_type=fs_type, movable=False,
         note=f"{fs_type} boyutlandirmasi bu platformda desteklenmiyor; "
              f"bolum kucultulemez")
+
+
+# ---- NTFS -----------------------------------------------------------------
+def _ntfs_info(view: BlockDevice) -> FsResizeInfo:
+    """NTFS sinirlarini `$Bitmap` uzerinden cikarir (saf Python, ADR 0030)."""
+    info = ntfs_size_info(view)
+    note = info.note
+    if info.dirty:
+        # Kirli birim boyutlandirilmaz; sinir gostermek yerine nedeni soylenir.
+        return FsResizeInfo(kind="unsupported", fs_type="NTFS", movable=False,
+                            note=note)
+    return FsResizeInfo(kind="ntfs", fs_type="NTFS",
+                        min_sectors=info.min_sectors,
+                        max_sectors=info.max_sectors,
+                        movable=True, note=note)
 
 
 # ---- FAT ------------------------------------------------------------------
@@ -238,12 +260,12 @@ def _fat_info(view: BlockDevice) -> FsResizeInfo:
     # kucultmede FAT tablosunun yeri degismez: asgari boyut mevcut yerlesimden
     asgari = fs.first_data_sector + needed_clusters * fs.sectors_per_cluster
     azami = _fat_max_total(fs)
-    not_ = ""
+    note = ""
     if azami <= fs.total_sectors:
-        not_ = f"FAT{fs.fat_type} kume siniri doldu; bu bolum buyutulemez"
+        note = f"FAT{fs.fat_type} kume siniri doldu; bu bolum buyutulemez"
     return FsResizeInfo(kind="fat", fs_type=fs.fs_type_name,
                         min_sectors=asgari, max_sectors=azami,
-                        movable=True, note=not_)
+                        movable=True, note=note)
 
 
 def fat_resize(view: BlockDevice, new_sector_count: int) -> None:
@@ -745,10 +767,13 @@ def apply_resize(session, plan: ResizePlan,
     image = session.image
 
     # 1) kucultme: once dosya sistemi (eski yerinde)
-    if plan.shrinks and plan.fs.kind in ("fat", "exfat"):
+    if plan.shrinks and plan.fs.kind in ("fat", "exfat", "ntfs"):
         report(tr("Dosya sistemi kucultuluyor..."), 5)
+        # Gizli sektor alani bolumun **son** yerine gore yazilir: tasima
+        # bundan sonra gelir ve dosya sistemi oraya varacaktir.
         _fs_resize(image, plan.old_start, plan.new_count, plan.fs.kind,
-                   plan.new_start)
+                   plan.new_start, span=plan.old_count,
+                   progress=lambda m, p: report(m, 5 + int(0.75 * p)))
 
     # 2) tasima
     if plan.moves:
@@ -772,11 +797,12 @@ def apply_resize(session, plan: ResizePlan,
         raise ResizeError(tr("Bolum tablosu yazilamadi: {}", exc)) from exc
 
     # 4) buyutme: dosya sistemi yeni yerinde buyutulur
-    if plan.grows and plan.fs.kind in ("fat", "exfat"):
+    if plan.grows and plan.fs.kind in ("fat", "exfat", "ntfs"):
         report(tr("Dosya sistemi buyutuluyor..."), 90)
         try:
             _fs_resize(image, plan.new_start, plan.new_count, plan.fs.kind,
-                       plan.new_start)
+                       plan.new_start,
+                       progress=lambda m, p: report(m, 88 + int(0.11 * p)))
         except ResizeError:
             raise
         except Exception as exc:   # noqa: BLE001
@@ -793,13 +819,24 @@ def apply_resize(session, plan: ResizePlan,
 
 
 def _fs_resize(image: BlockDevice, start_lba: int, sector_count: int,
-               kind: str, partition_offset: int) -> None:
-    view = PartitionView(image, start_lba, sector_count)
+               kind: str, partition_offset: int, span: int = 0,
+               progress=None) -> None:
+    """Dosya sistemini `sector_count` sektore getirir.
+
+    `span`: acilacak pencerenin sektor sayisi. Kucultmede bolum **henuz eski
+    boyuttadir** ve NTFS'in sondaki yapilarina (yedek onyukleme sektoru,
+    birimin sonuna dusmus meta veri) erisilmesi gerekir; pencere yeni boyutta
+    acilirsa bu okuma "bolum sinirini asiyor" diye reddedilir.
+    """
+    view = PartitionView(image, start_lba, max(span, sector_count))
     if kind == "fat":
         fat_resize(view, sector_count)
         _patch_hidden_sectors(view, partition_offset)
     elif kind == "exfat":
         exfat_resize(view, sector_count, partition_offset)
+    elif kind == "ntfs":
+        ntfs_resize(view, sector_count, partition_offset=partition_offset,
+                    progress=progress)
 
 
 def _patch_hidden_sectors(view: BlockDevice, partition_offset: int) -> None:

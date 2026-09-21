@@ -129,6 +129,163 @@ def upcase_table() -> bytes:
 
 
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# $Secure — guvenlik tanimlayicilari
+# --------------------------------------------------------------------------
+# NTFS 3.x'te her dosyanin bir **guvenlik kimligi** vardir; tanimlayicinin
+# kendisi `$Secure` dosyasinda durur. Bicimlendirici bu dosyayi bos biraktiginda
+# birim okunur ama isletim sisteminin surucusu uzerine **dosya olusturamaz**:
+# yeni dosyaya kimlik atamak icin `$Secure` indekslerine bakar ve bulamayinca
+# hata verir (olculdu: ntfs-3g "Invalid argument", ADR 0037).
+#
+# Asagidaki iki tanimlayici `mkntfs`in urettiklerinin aynisidir; baytlari
+# referans birimden dogrulanmistir (bkz. tests t42).
+SECURITY_ID_SYSTEM = 0x100      # SYSTEM + Administrators: okuma
+SECURITY_ID_FULL = 0x101        # SYSTEM + Administrators: okuma + yazma
+SDS_MIRROR = 0x40000            # $SDS icerigi 256 KiB'de bir aynalanir
+ACCESS_READ = 0x00120089
+ACCESS_MODIFY = 0x0012019F
+COLLATION_ULONG = 0x10          # $SII: kimlige gore
+COLLATION_SECURITY_HASH = 0x12  # $SDH: karmaya gore
+INDEX_ENTRY_END = 0x02
+
+
+def _sid(authority: int, *subs: int) -> bytes:
+    """S-1-<yetki>-<alt...> guvenlik kimligi (ikili bicim)."""
+    out = bytearray([1, len(subs)])
+    out += authority.to_bytes(6, "big")
+    for value in subs:
+        out += struct.pack("<I", value)
+    return bytes(out)
+
+
+SID_SYSTEM = _sid(5, 18)               # S-1-5-18  LOCAL SYSTEM
+SID_ADMINS = _sid(5, 32, 544)          # S-1-5-32-544  BUILTIN\Administrators
+
+
+def _allow_ace(mask: int, sid: bytes) -> bytes:
+    """ACCESS_ALLOWED_ACE: verilen kimlige verilen haklar."""
+    return struct.pack("<BBHI", 0, 0, 8 + len(sid), mask) + sid
+
+
+def security_descriptor(mask: int) -> bytes:
+    """Kendine goreli (self-relative) guvenlik tanimlayicisi.
+
+    Sahibi ve grubu Administrators, DACL'i SYSTEM + Administrators. `mask`
+    verilen haklardir (`ACCESS_READ` / `ACCESS_MODIFY`).
+    """
+    aces = _allow_ace(mask, SID_SYSTEM) + _allow_ace(mask, SID_ADMINS)
+    acl = struct.pack("<BBHHH", 2, 0, 8 + len(aces), 2, 0) + aces
+    owner_offset = 0x14 + len(acl)
+    group_offset = owner_offset + len(SID_ADMINS)
+    head = struct.pack("<BBHIIII", 1, 0, 0x8004,       # revizyon, SE_SELF_RELATIVE
+                       owner_offset, group_offset, 0, 0x14)
+    return head + acl + SID_ADMINS + SID_ADMINS
+
+
+def security_hash(descriptor: bytes) -> int:
+    """NTFS guvenlik tanimlayici karmasi (`$SDH` anahtarinin ilk yarisi)."""
+    value = 0
+    for (word,) in struct.iter_unpack("<I", descriptor):
+        value = (word + (((value << 3) | (value >> 29)) & 0xFFFFFFFF)) & 0xFFFFFFFF
+    return value
+
+
+def _sds_entries() -> List[Tuple[int, int, int, bytes]]:
+    """(kimlik, karma, ofset, tanimlayici) — $SDS icindeki sirayla."""
+    out = []
+    offset = 0
+    for sec_id, mask in ((SECURITY_ID_SYSTEM, ACCESS_READ),
+                         (SECURITY_ID_FULL, ACCESS_MODIFY)):
+        descriptor = security_descriptor(mask)
+        out.append((sec_id, security_hash(descriptor), offset, descriptor))
+        offset = (offset + 20 + len(descriptor) + 15) & ~15
+    return out
+
+
+def _sds_header(sec_id: int, hash_value: int, offset: int,
+                descriptor: bytes) -> bytes:
+    """$SDS giris basligi: karma, kimlik, akistaki ofset, toplam uzunluk."""
+    return struct.pack("<IIQI", hash_value, sec_id, offset, 20 + len(descriptor))
+
+
+def secure_sds_stream() -> bytes:
+    """`$SDS` akisinin tamami (icerik + 256 KiB'deki aynasi).
+
+    Windows akisi 256 KiB'lik bloklar halinde **iki kez** tutar; `chkdsk` ve
+    `ntfs-3g` ikinci kopyayi bekler.
+    """
+    entries = _sds_entries()
+    last = entries[-1]
+    used = last[2] + 20 + len(last[3])       # son girisin bittigi yer
+    block = bytearray(used)
+    for sec_id, hash_value, offset, descriptor in entries:
+        # Girisler 16 bayta hizali ofsetlerde durur ama akis **son girisin
+        # bittigi yerde biter**: sonuna dolgu eklenmez (referans boyle).
+        head = _sds_header(sec_id, hash_value, offset, descriptor)
+        block[offset:offset + len(head)] = head
+        block[offset + len(head):offset + len(head) + len(descriptor)] = descriptor
+    stream = bytearray(SDS_MIRROR + used)
+    stream[0:used] = block
+    stream[SDS_MIRROR:SDS_MIRROR + used] = block
+    return bytes(stream)
+
+
+def _view_index_root(collation: int, entries: List[bytes],
+                     index_size: int, cluster_size: int) -> bytes:
+    """Dolu bir "gorunum indeksi" ($SDH / $SII) kokU.
+
+    Dosya adi indekslerinden farki: giris basligi MFT basvurusu degil
+    (veri ofseti, veri uzunlugu) tasir ve anahtarin yaninda **veri** durur.
+    """
+    body = b"".join(entries)
+    end = struct.pack("<QHHHH", 0, 0x10, 0, INDEX_ENTRY_END, 0)
+    body += end
+    value = bytearray(0x20 + len(body))
+    struct.pack_into("<IIIBBBB", value, 0, 0, collation, index_size,
+                     max(1, index_size // cluster_size), 0, 0, 0)
+    struct.pack_into("<IIII", value, 0x10, 0x10, 0x10 + len(body),
+                     0x10 + len(body), 0)
+    value[0x20:] = body
+    return bytes(value)
+
+
+def sdh_index_root(index_size: int, cluster_size: int) -> bytes:
+    """`$SDH`: karma + kimlik anahtarli indeks (karmaya gore sirali)."""
+    entries = []
+    for sec_id, hash_value, offset, descriptor in sorted(
+            _sds_entries(), key=lambda item: (item[1], item[0])):
+        key = struct.pack("<II", hash_value, sec_id)
+        data = _sds_header(sec_id, hash_value, offset, descriptor)
+        # 0x18: anahtardan sonra 8 bayta hizalanmis veri; sonundaki "II"
+        # dolgusu referans bicimin parcasidir.
+        entry = bytearray(0x30)
+        struct.pack_into("<HHIHHHH", entry, 0, 0x18, len(data), 0,
+                         0x30, len(key), 0, 0)
+        entry[0x10:0x10 + len(key)] = key
+        entry[0x18:0x18 + len(data)] = data
+        entry[0x2C:0x30] = b"I\x00I\x00"
+        entries.append(bytes(entry))
+    return _view_index_root(COLLATION_SECURITY_HASH, entries, index_size,
+                            cluster_size)
+
+
+def sii_index_root(index_size: int, cluster_size: int) -> bytes:
+    """`$SII`: kimlik anahtarli indeks (kimlige gore sirali)."""
+    entries = []
+    for sec_id, hash_value, offset, descriptor in sorted(
+            _sds_entries(), key=lambda item: item[0]):
+        key = struct.pack("<I", sec_id)
+        data = _sds_header(sec_id, hash_value, offset, descriptor)
+        entry = bytearray(0x28)
+        struct.pack_into("<HHIHHHH", entry, 0, 0x14, len(data), 0,
+                         0x28, len(key), 0, 0)
+        entry[0x10:0x10 + len(key)] = key
+        entry[0x14:0x14 + len(data)] = data
+        entries.append(bytes(entry))
+    return _view_index_root(COLLATION_ULONG, entries, index_size, cluster_size)
+
+
 @dataclass
 class NtfsLayout:
     cluster_size: int
@@ -148,6 +305,8 @@ class NtfsLayout:
     bitmap_clusters: int
     root_index_lcn: int
     secure_lcn: int
+    secure_clusters: int = 1
+    mft_bitmap_lcn: int = 0
 
 
 class NtfsFormatter:
@@ -216,6 +375,13 @@ class NtfsFormatter:
         root_index_lcn = imlec
         imlec += clusters(INDEX_RECORD_SIZE)
         secure_lcn = imlec
+        # $SDS 256 KiB aynalama yuzunden tek kumeden buyuktur
+        secure_cluster = clusters(len(secure_sds_stream()))
+        imlec += secure_cluster
+        # $MFT'nin kendi $BITMAP'i **ayri bir kumede** durur; yerlesik
+        # birakilirsa isletim sisteminin surucusu yeni MFT kaydi ayiramaz
+        # (ADR 0037).
+        mft_bitmap_lcn = imlec
         imlec += 1
         if imlec >= total_clusters - 2:
             raise NtfsError(tr("Bolum NTFS metaverisi icin yetersiz"))
@@ -231,7 +397,8 @@ class NtfsFormatter:
             logfile_clusters=logfile_cluster, upcase_lcn=upcase_lcn,
             upcase_clusters=upcase_cluster, attrdef_lcn=attrdef_lcn,
             bitmap_lcn=bitmap_lcn, bitmap_clusters=bitmap_cluster,
-            root_index_lcn=root_index_lcn, secure_lcn=secure_lcn)
+            root_index_lcn=root_index_lcn, secure_lcn=secure_lcn,
+            secure_clusters=secure_cluster, mft_bitmap_lcn=mft_bitmap_lcn)
 
     # ---- dusuk seviye yardimcilar ----------------------------------------
     def _write_clusters(self, lcn: int, veri: bytes) -> None:
@@ -326,11 +493,28 @@ class NtfsFormatter:
         attr[esleme_ofseti:esleme_ofseti + len(kosular)] = kosular
         return bytes(attr)
 
-    def _std_info(self, file_attr: int = FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM) -> bytes:
+    def _std_info(self, file_attr: int = FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM,
+                  security_id: Optional[int] = None) -> bytes:
+        """$STANDARD_INFORMATION.
+
+        `security_id` verilmezse **48 baytlik** (NTFS 1.2) bicim yazilir;
+        `mkntfs` de $Volume, $AttrDef, $Boot ve kok dizin icin boyle yapar ve
+        surucu o dosyalar icin baglama seceneklerine duser. Kimlik verilirse
+        72 baytlik NTFS 3.x bicimi yazilir ve kimlik `$Secure` icindeki bir
+        tanimlayiciyi gosterir (ADR 0037).
+        """
+        if security_id is None:
+            value = bytearray(48)
+            struct.pack_into("<QQQQ", value, 0, self.now, self.now, self.now,
+                             self.now)
+            struct.pack_into("<I", value, 32, file_attr)
+            return bytes(value)
         value = bytearray(72)
         struct.pack_into("<QQQQ", value, 0, self.now, self.now, self.now, self.now)
-        struct.pack_into("<I", value, 32, file_attr)
-        struct.pack_into("<I", value, 64, 0)            # security id
+        struct.pack_into("<I", value, 0x20, file_attr)
+        # Guvenlik kimligi 0x34'tedir; 0x40 USN alanidir. Referans birimde
+        # olculdu (t42 bu ofseti dogrular).
+        struct.pack_into("<I", value, 0x34, security_id)
         return bytes(value)
 
     def _file_name(self, parent_ref: int, name: str, file_attr: int,
@@ -463,6 +647,10 @@ class _NtfsBuilder(NtfsFormatter):
         report(tr("Kok dizin olusturuluyor..."), 45)
         self._write_root_index()
 
+        report(tr("Guvenlik tanimlayicilari yaziliyor ($Secure)..."), 55)
+        self._write_secure()
+        self._write_mft_bitmap()
+
         report(tr("Kume bitmap'i yaziliyor..."), 60)
         self._write_bitmap()
 
@@ -488,6 +676,37 @@ class _NtfsBuilder(NtfsFormatter):
         }
 
     # ---- veri alanlari ---------------------------------------------------
+    def _mft_bitmap(self) -> bytes:
+        """`$MFT` kayit kullanim bitmap'i.
+
+        Boyut **8 baytin kati** olur (NTFS boyle bekler) ve yalnizca sistem
+        kayitlari dolu isaretlenir; gerisi isletim sistemine acik durur.
+        """
+        records = max(1, self.layout.mft_clusters * self.layout.cluster_size
+                      // MFT_RECORD_SIZE)
+        size = max(8, ((records + 63) // 64) * 8)
+        bitmap = bytearray(size)
+        for i in range(MFT_RESERVED_COUNT):
+            bitmap[i >> 3] |= 1 << (i & 7)
+        return bytes(bitmap)
+
+    def _write_mft_bitmap(self) -> None:
+        """`$MFT:$BITMAP` akisini kendi kumesine yazar.
+
+        Yerlesik birakilirsa `ntfs-3g` yeni dosya olustururken bitmap'in son
+        kumesini soruyor ve bulamayinca duruyordu: *"Failed to determine last
+        allocated cluster of mft bitmap attribute"* -> EINVAL (ADR 0037).
+        """
+        self._write_clusters(self.layout.mft_bitmap_lcn, self._mft_bitmap())
+
+    def _write_secure(self) -> None:
+        """`$Secure:$SDS` akisini diske yazar.
+
+        Bos birakilirsa birim okunur ama isletim sisteminin surucusu uzerine
+        dosya olusturamaz (ADR 0037).
+        """
+        self._write_clusters(self.layout.secure_lcn, secure_sds_stream())
+
     def _write_logfile(self) -> None:
         """$LogFile alanini 0xFF ile doldurur (bos gunluk)."""
         L = self.layout
@@ -514,11 +733,17 @@ class _NtfsBuilder(NtfsFormatter):
     def _root_index_entries(self) -> bytes:
         """Kok dizindeki sistem dosyasi girisleri (siralama kuralina uygun)."""
         girisler = bytearray()
-        sirali = sorted((k for k in self.SYSTEM_FILES if k[0] != MFT_ROOT),
+        # Kok dizinin **kendi girisi** ("." -> kayit 5) de listeye girer.
+        # Isletim sisteminin surucusu bir dosya olusturduktan sonra ust
+        # dizinin adini kendi indeksinde arayip tazeler; kok icin bu arama
+        # "." girisine dusur. Giris yoksa olusturma yarida kalir:
+        # *"Index lookup failed, inode 5"* -> G/C hatasi (ADR 0037).
+        # Okuyucumuz "." girisini zaten listelemez (`ntfsread`).
+        sirali = sorted(self.SYSTEM_FILES,
                         key=lambda oge: self._collation_key(oge[1]))
         for rec_no, name in sirali:
             feature = FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM
-            if rec_no == MFT_EXTEND:
+            if rec_no in (MFT_EXTEND, MFT_ROOT):
                 feature |= FILE_ATTR_DIRECTORY
             key = self._file_name(MFT_ROOT, name, feature)
             girisler += _index_entry(rec_no, key,
@@ -560,7 +785,8 @@ class _NtfsBuilder(NtfsFormatter):
             (L.attrdef_lcn, 1),
             (L.bitmap_lcn, L.bitmap_clusters),
             (L.root_index_lcn, max(1, INDEX_RECORD_SIZE // L.cluster_size)),
-            (L.secure_lcn, 1),
+            (L.secure_lcn, L.secure_clusters),
+            (L.mft_bitmap_lcn, 1),
             (L.mftmirr_lcn, L.mftmirr_clusters),
         ]
 
@@ -592,23 +818,23 @@ class _NtfsBuilder(NtfsFormatter):
                 self._file_name(MFT_ROOT, name, feature, allocated, size),
                 indexed=1)
 
-        # 0: $MFT
+        # 0: $MFT — bitmap'i AYRI KUMEDE durur (bkz. _mft_bitmap)
         mft_size = L.mft_clusters * cs
-        mft_bitmap = bytearray(max(8, (32 + 7) // 8))
-        for i in range(MFT_RESERVED_COUNT):
-            mft_bitmap[i >> 3] |= 1 << (i & 7)
         records.append(self._make_record(MFT_MFT, MFT_FLAG_IN_USE, [
-            self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(security_id=SECURITY_ID_SYSTEM)),
             system_file(MFT_MFT, "$MFT", mft_size, mft_size),
             self._attr_nonresident(AT_DATA, [(L.mft_lcn, L.mft_clusters)],
                                    mft_size, attr_id=1),
-            self._attr_resident(AT_BITMAP, bytes(mft_bitmap), attr_id=2),
+            self._attr_nonresident(AT_BITMAP, [(L.mft_bitmap_lcn, 1)],
+                                   len(self._mft_bitmap()), attr_id=2),
         ]))
 
         # 1: $MFTMirr
         mirr_size = 4 * MFT_RECORD_SIZE
         records.append(self._make_record(MFT_MFTMIRR, MFT_FLAG_IN_USE, [
-            self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(security_id=SECURITY_ID_SYSTEM)),
             system_file(MFT_MFTMIRR, "$MFTMirr", mirr_size,
                       L.mftmirr_clusters * cs),
             self._attr_nonresident(AT_DATA,
@@ -619,7 +845,8 @@ class _NtfsBuilder(NtfsFormatter):
         # 2: $LogFile
         log_size = L.logfile_clusters * cs
         records.append(self._make_record(MFT_LOGFILE, MFT_FLAG_IN_USE, [
-            self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(security_id=SECURITY_ID_SYSTEM)),
             system_file(MFT_LOGFILE, "$LogFile", log_size, log_size),
             self._attr_nonresident(AT_DATA, [(L.logfile_lcn, L.logfile_clusters)],
                                    log_size, attr_id=1),
@@ -656,7 +883,8 @@ class _NtfsBuilder(NtfsFormatter):
         # 6: $Bitmap
         bitmap_size = (L.total_clusters + 7) // 8
         records.append(self._make_record(MFT_BITMAP, MFT_FLAG_IN_USE, [
-            self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(security_id=SECURITY_ID_SYSTEM)),
             system_file(MFT_BITMAP, "$Bitmap", bitmap_size,
                       L.bitmap_clusters * cs),
             self._attr_nonresident(AT_DATA, [(L.bitmap_lcn, L.bitmap_clusters)],
@@ -674,7 +902,8 @@ class _NtfsBuilder(NtfsFormatter):
         # 8: $BadClus — seyrek, birim boyutunda
         volume_size = L.total_clusters * cs
         records.append(self._make_record(MFT_BADCLUS, MFT_FLAG_IN_USE, [
-            self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(security_id=SECURITY_ID_SYSTEM)),
             system_file(MFT_BADCLUS, "$BadClus"),
             self._attr_resident(AT_DATA, b"", attr_id=1),
             self._bad_stream(volume_size),
@@ -683,16 +912,19 @@ class _NtfsBuilder(NtfsFormatter):
         # 9: $Secure — $SDS akisi ve iki dizin ($SDH karma, $SII kimlik).
         # ntfs-3g bu iki dizini arar; yoksa birimi acamaz.
         # 0x08: kayit bir "gorunum indeksi" tasir ($SDH/$SII)
+        sds = secure_sds_stream()
         records.append(self._make_record(MFT_SECURE, MFT_FLAG_IN_USE | 0x08, [
-            self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(security_id=SECURITY_ID_FULL)),
             system_file(MFT_SECURE, "$Secure"),
-            self._attr_nonresident(AT_DATA, [(L.secure_lcn, 1)], 0, name="$SDS",
-                                   attr_id=1),
+            self._attr_nonresident(AT_DATA,
+                                   [(L.secure_lcn, L.secure_clusters)],
+                                   len(sds), name="$SDS", attr_id=1),
             self._attr_resident(AT_INDEX_ROOT,
-                                self._small_index_root(0, 0x12),
+                                sdh_index_root(INDEX_RECORD_SIZE, cs),
                                 name="$SDH", attr_id=2),
             self._attr_resident(AT_INDEX_ROOT,
-                                self._small_index_root(0, 0x10),
+                                sii_index_root(INDEX_RECORD_SIZE, cs),
                                 name="$SII", attr_id=3),
         ]))
 

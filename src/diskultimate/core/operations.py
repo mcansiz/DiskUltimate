@@ -262,6 +262,49 @@ RUNNERS: Dict[str, Callable] = {
 
 
 # ==========================================================================
+# Hedef bolumun uygulama aninda bulunmasi
+# ==========================================================================
+# Bolum **numarasi kalici bir kimlik degildir**: tablo yeniden okununca
+# numaralar yerlesime gore bastan verilir. Bir adim uygulandiktan sonra
+# sonraki adimlarin numaralari kayabilir:
+#
+#   "Bolum 1 sil" + "Bolum 2 sil"  ->  ilk adim uygulaninca 2 numarali bolum
+#   1 olur; ikinci adim "2 numarali bolum yok" diye duruyordu (2026-09-17'de
+#   Linux misafirinde olculdu, bkz. worklog).
+#
+# Kalici olan **baslangic LBA**'sidir: iki bolum ayni sektorde baslayamaz.
+# Bu yuzden adimlar hedefi LBA ile de tasir ve numara uygulama aninda
+# yeniden bulunur. Eski adimlarda capa yoksa davranis degismez.
+def target_lba(operation: "Operation") -> int:
+    """Adimin hedef bolumunun capasi (-1 = capa yok)."""
+    value = operation.params.get("at_lba", -1)
+    return -1 if value is None else int(value)
+
+
+def resolve_target(session, operation: "Operation") -> None:
+    """Adimin `index` alanini o anki bolum tablosuna gore tazeler.
+
+    Capa yoksa dokunulmaz (eski davranis). Capa varsa ve o sektorde bir bolum
+    kalmamissa adim **durdurulur**: yanlis bolume islem yapmaktansa durmak
+    yeglenir — burada yanlis bolum "baska bir bolumu silmek" demektir.
+    """
+    anchor = target_lba(operation)
+    if anchor < 0:
+        return
+    for part in getattr(session, "partitions", []) or []:
+        if part.start_lba == anchor:
+            if operation.params.get("index") != part.index:
+                diagnostics.info(
+                    f"adim hedefi tazelendi: LBA {anchor} -> bolum "
+                    f"{part.index} (adimda {operation.params.get('index')})")
+                operation.params["index"] = part.index
+            return
+    raise OperationError(
+        tr("Hedef bolum bulunamadi (LBA {}); yerlesim degismis olabilir",
+           anchor))
+
+
+# ==========================================================================
 # Sonuc
 # ==========================================================================
 @dataclass
@@ -359,6 +402,23 @@ class OperationQueue:
             diagnostics.info(f"kuyruk bosaltildi ({count} adim)")
         return count
 
+    def _follow_move(self, position: int, operation: Operation) -> None:
+        """Bolum tasindiysa sonraki adimlarin capalarini yeni yere tasir.
+
+        Boyutlandirma bolumun baslangicini degistirebilir; capa baslangic
+        LBA'si oldugu icin ayni bolumu hedefleyen sonraki adimlar yoksa
+        "bolum bulunamadi" derdi.
+        """
+        if operation.kind != "resize":
+            return
+        old_anchor = operation.params.get("at_lba", -1)
+        new_start = operation.params.get("start_lba", -1)
+        if old_anchor is None or old_anchor < 0 or new_start == old_anchor:
+            return
+        for later in self._items[position + 1:]:
+            if later.params.get("at_lba", -1) == old_anchor:
+                later.params["at_lba"] = new_start
+
     # -- ozet -------------------------------------------------------------
     def describe(self) -> List[str]:
         """Numarali, okunur adim listesi (gunluk ve testler icin)."""
@@ -376,8 +436,8 @@ class OperationQueue:
                 for i, op in enumerate(self._items, 1)]
 
     # -- uygulama ---------------------------------------------------------
-    def apply(self, session, progress: Progress = None,
-              on_step=None) -> ApplyResult:
+    def apply(self, session, progress: Progress = None, on_step=None,
+              on_step_progress=None, on_step_done=None) -> ApplyResult:
         """Adimlari **sirayla** calistirir.
 
         Bir adim basarisiz olursa durur: sonraki adimlar cogu zaman oncekinin
@@ -386,11 +446,22 @@ class OperationQueue:
 
         Tamamlanan adimlar **geri alinmaz** — bicimlendirilmis bir bolum geri
         gelmez. Sonuc nerede durulduğunu acikca soyler.
+
+        Geri cagrilar (hepsi istege bagli):
+
+        * `progress(mesaj, yuzde)` — **genel** ilerleme. Adimin kendi yuzdesi
+          bu olcege sigdirilir, boylece cubuk geri gitmez.
+        * `on_step(sira, adim)` — adim baslarken.
+        * `on_step_progress(sira, adim, mesaj, yuzde)` — adimin **kendi**
+          ilerlemesi (uygulama penceresi her adim icin ayri cubuk cizer).
+        * `on_step_done(sira, adim, hata)` — adim bitince; `hata` bos ise
+          basarili.
         """
         result = ApplyResult()
         total = len(self._items)
         if not total:
             return result
+        pay = 100.0 / total
         with diagnostics.span("operations.apply", count=total):
             for i, operation in enumerate(self._items):
                 percent = int(100 * i / total)
@@ -398,22 +469,51 @@ class OperationQueue:
                     progress(f"{i + 1}/{total} — {operation.title}", percent)
                 if on_step:
                     on_step(i, operation)
+                try:
+                    resolve_target(session, operation)
+                except OperationError as exc:
+                    diagnostics.error(f"adim hedefi bulunamadi: {operation}", exc)
+                    result.failed = operation
+                    result.error = str(exc)
+                    result.pending = self._items[i + 1:]
+                    if on_step_done:
+                        on_step_done(i, operation, result.error)
+                    break
                 runner = RUNNERS.get(operation.kind)
                 if runner is None:
                     result.failed = operation
                     result.error = f"Calistirici yok: {operation.kind}"
                     result.pending = self._items[i:]
+                    if on_step_done:
+                        on_step_done(i, operation, result.error)
                     break
+
+                def report(message: str, step_percent: int,
+                           _i: int = i, _op: Operation = operation,
+                           _base: int = percent) -> None:
+                    if on_step_progress:
+                        on_step_progress(_i, _op, message, step_percent)
+                    if progress:
+                        # Belirsiz adim (yuzde < 0) genel cubugu bozmaz:
+                        # adim basindaki degerde birakilir.
+                        progress(message, _base if step_percent < 0
+                                 else _base + int(pay * step_percent / 100))
+
                 try:
                     with diagnostics.span("operations.step", kind=operation.kind):
-                        runner(session, operation.params, progress)
+                        runner(session, operation.params, report)
                 except Exception as exc:
                     diagnostics.error(f"adim basarisiz: {operation}", exc)
                     result.failed = operation
                     result.error = str(exc)
                     result.pending = self._items[i + 1:]
+                    if on_step_done:
+                        on_step_done(i, operation, result.error)
                     break
+                self._follow_move(i, operation)
                 result.done.append(operation)
+                if on_step_done:
+                    on_step_done(i, operation, "")
         if progress:
             progress(tr("Tamamlandi"), 100)
         # Uygulanan adimlar kuyruktan dusulur; basarisiz olan ve sonrasi kalir
@@ -476,8 +576,9 @@ def create_op(start_lba: int, sector_count: int, sector_size: int = 512,
 
 
 def format_op(index: int, fs_key: str, label: str = "", fs_name: str = "",
-              **extra) -> Operation:
-    params = {"index": index, "fs_key": fs_key, "label": label}
+              at_lba: int = -1, **extra) -> Operation:
+    params = {"index": index, "fs_key": fs_key, "label": label,
+              "at_lba": at_lba}
     params.update(extra)
     operation = Operation("format", title_text=mark("Bolum {} bicimlendir"),
                           title_args=(index,), target_text=mark("Bolum {}"),
@@ -491,66 +592,72 @@ def format_op(index: int, fs_key: str, label: str = "", fs_name: str = "",
     return operation
 
 
-def delete_op(index: int, name: str = "", wipe: bool = True) -> Operation:
+def delete_op(index: int, name: str = "", wipe: bool = True,
+              at_lba: int = -1) -> Operation:
     return Operation("delete", title_text=mark("Bolum {} sil"),
                      title_args=(index,), detail_text=mark("{}"),
                      detail_args=(name,), target_text=mark("Bolum {}"),
                      target_args=(index,),
-                     params={"index": index, "wipe": wipe})
+                     params={"index": index, "wipe": wipe, "at_lba": at_lba})
 
 
 def resize_op(index: int, start_lba: int, sector_count: int,
-              sector_size: int = 512) -> Operation:
+              sector_size: int = 512, at_lba: int = -1) -> Operation:
     return Operation("resize", title_text=mark("Bolum {} boyutlandir"),
                      title_args=(index,),
                      detail_text=mark("yeni boyut {}"),
                      detail_args=(human_size(sector_count * sector_size),),
                      target_text=mark("Bolum {}"), target_args=(index,),
                      params={"index": index, "start_lba": start_lba,
-                             "sector_count": sector_count})
+                             "sector_count": sector_count,
+                             "at_lba": at_lba})
 
 
-def label_op(index: int, label: str) -> Operation:
+def label_op(index: int, label: str, at_lba: int = -1) -> Operation:
     return Operation("label", title_text=mark("Bolum {} etiketi"),
                      title_args=(index,), detail_text=mark("'{}'"),
                      detail_args=(label,), target_text=mark("Bolum {}"),
                      target_args=(index,),
-                     params={"index": index, "label": label})
+                     params={"index": index, "label": label,
+                             "at_lba": at_lba})
 
 
-def rename_op(index: int, name: str) -> Operation:
+def rename_op(index: int, name: str, at_lba: int = -1) -> Operation:
     return Operation("rename", title_text=mark("Bolum {} adi"),
                      title_args=(index,), detail_text=mark("'{}'"),
                      detail_args=(name,), target_text=mark("Bolum {}"),
                      target_args=(index,),
-                     params={"index": index, "name": name})
+                     params={"index": index, "name": name,
+                             "at_lba": at_lba})
 
 
 def type_op(index: int, type_id: int = 0, type_guid: str = "",
-            name: str = "") -> Operation:
+            name: str = "", at_lba: int = -1) -> Operation:
     return Operation("type", title_text=mark("Bolum {} turu"),
                      title_args=(index,), detail_text=mark("{}"),
                      detail_args=(name,), target_text=mark("Bolum {}"),
                      target_args=(index,),
                      params={"index": index, "type_id": type_id,
-                             "type_guid": type_guid})
+                             "type_guid": type_guid, "at_lba": at_lba})
 
 
-def boot_op(index: int, value: bool) -> Operation:
+def boot_op(index: int, value: bool, at_lba: int = -1) -> Operation:
     return Operation("boot",
                      title_text=mark("Bolum {} onyukleme bayragi"),
                      title_args=(index,),
                      detail_text=mark("isaretle") if value else mark("kaldir"),
                      target_text=mark("Bolum {}"), target_args=(index,),
-                     params={"index": index, "value": value})
+                     params={"index": index, "value": value,
+                             "at_lba": at_lba})
 
 
-def wipe_partition_op(index: int, method: str,
-                      method_name: str = "") -> Operation:
+def wipe_partition_op(index: int, method: str, method_name: str = "",
+                      at_lba: int = -1) -> Operation:
     """Guvenli silme adimi. `index < 0` ise hedef **butun disktir**."""
     operation = Operation("wipe_partition", detail_text=mark("{}"),
                           detail_args=(method_name or method,),
-                          params={"index": index, "method": method})
+                          params={"index": index, "method": method,
+                                  "at_lba": at_lba})
     if index < 0:
         operation.title_text = mark("Disk guvenli sil")
         operation.target_text = mark("Disk")
@@ -562,12 +669,12 @@ def wipe_partition_op(index: int, method: str,
     return operation
 
 
-def wipe_free_op(index: int) -> Operation:
+def wipe_free_op(index: int, at_lba: int = -1) -> Operation:
     return Operation("wipe_free", title_text=mark("Bolum {} bos alanini sil"),
                      title_args=(index,),
                      detail_text=mark("dosyalar korunur"),
                      target_text=mark("Bolum {}"), target_args=(index,),
-                     params={"index": index})
+                     params={"index": index, "at_lba": at_lba})
 
 
 def resize_image_op(size: int) -> Operation:

@@ -26,6 +26,7 @@ Gerekce: `.claude/decisions/0028-onyukleyici-yonetimi.md`
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Dict, List
 
@@ -393,6 +394,10 @@ def _unquote(value: str) -> str:
     return value
 
 
+# `${...}` kabuk degisken yazimi; parantez sayiminda gormezden gelinir.
+_VARIABLE = re.compile(r"\$\{[^{}]*\}")
+
+
 @dataclass
 class MenuEntry:
     """`grub.cfg` icindeki tek bir menu satiri."""
@@ -415,30 +420,43 @@ def parse_grub_cfg(text: str) -> List[MenuEntry]:
     `menuentry` ve `submenu` satirlarinin basliklari yeter.
     """
     entries: List[MenuEntry] = []
-    stack: List[str] = []
+    # (baslik, acildigi derinlik) — alt menu yalnizca **kendi** kapanis
+    # parantezinde yigindan cikar. Onceki surum her `}` satirinda cikiyordu ve
+    # bir `menuentry` blogunun kapanisi alt menuyu de kapatiyordu: gercek bir
+    # `grub.cfg` uzerinde "Advanced options" altindaki ikinci giris (kurtarma
+    # kipi) ust duzeyde gorunuyordu.
+    stack: List[tuple] = []
+    depth = 0
     index = 0
     for line in text.splitlines():
         stripped = line.strip()
-        if stripped.startswith("}") and stack:
+        opened = None
+        if stripped.startswith("submenu "):
+            opened = _quoted(stripped[len("submenu"):])
+        elif stripped.startswith("menuentry "):
+            entries.append(MenuEntry(title=_quoted(stripped[len("menuentry"):]),
+                                     classes=_classes(stripped),
+                                     submenu=" > ".join(t for t, _d in stack),
+                                     index=index))
+            index += 1
+
+        depth += _brace_delta(stripped)
+        if opened is not None:
+            stack.append((opened, depth))
+        while stack and depth < stack[-1][1]:
             stack.pop()
-            continue
-        for keyword in ("menuentry", "submenu"):
-            if not stripped.startswith(keyword + " "):
-                continue
-            title = _quoted(stripped[len(keyword):])
-            if keyword == "submenu":
-                stack.append(title)
-            else:
-                entries.append(MenuEntry(title=title,
-                                         classes=_classes(stripped),
-                                         submenu=" > ".join(stack),
-                                         index=index))
-                index += 1
-                # Tek satirlik `menuentry ... { ... }` yazimi yigini bozmasin.
-                if stripped.endswith("}"):
-                    continue
-            break
     return entries
+
+
+def _brace_delta(line: str) -> int:
+    """Satirin blok derinligine katkisi.
+
+    `${degisken}` yazimlari once atilir: ikisi de dengeli oldugu icin sonucu
+    degistirmezler ama atmak, tek satirda kapanan bir degisken adinin
+    sayimla karismasini onler.
+    """
+    clean = _VARIABLE.sub("", line)
+    return clean.count("{") - clean.count("}")
 
 
 def _quoted(text: str) -> str:

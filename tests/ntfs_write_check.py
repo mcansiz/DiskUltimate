@@ -83,13 +83,23 @@ def _ntfsfix(path: str, step: str) -> None:
 
 
 def _mount_check(path: str, expect_text: bytes, expect_size: int) -> str:
-    """`ntfs-3g` varsa birimi salt okunur baglar ve icerigi dogrular."""
+    """`ntfs-3g` varsa birimi baglar: once okur, sonra **uzerine yazar**.
+
+    Salt okunur baglamak yetmiyor. Bicimlendirdigimiz birim uzun sure
+    "ntfs-3g dogruladi" raporu verdi, oysa isletim sisteminin surucusu
+    uzerine **dosya olusturamiyordu** (ADR 0037): `$MFT:$BITMAP` yerlesikti
+    ve kok dizinde "." girisi yoktu. Ikisi de yalnizca yazma yolunda ortaya
+    cikiyor, bu yuzden bu denetim artik yazma da yapar.
+    """
     if not shutil.which("ntfs-3g") or os.geteuid() != 0:
         return "ntfs-3g baglama atlandi (arac yok veya root degil)"
     nokta = os.path.join(TMP, "mnt")
     os.makedirs(nokta, exist_ok=True)
-    r = subprocess.run(["mount", "-o", "ro", path, nokta],
-                       capture_output=True, text=True)
+    # **Tek** baglama: once salt okunur baglayip sonra yeniden baglamak,
+    # ilk baglamadan kalan salt okunur loop aygitini yeniden kullandirip
+    # "Read-only file system" hatasi uretiyordu (bu bir test tuzagiydi,
+    # birimin kusuru degil).
+    r = subprocess.run(["mount", path, nokta], capture_output=True, text=True)
     if r.returncode != 0:
         raise Basarisiz(f"ntfs-3g baglayamadi: {(r.stdout + r.stderr)[:200]}")
     try:
@@ -99,9 +109,26 @@ def _mount_check(path: str, expect_text: bytes, expect_size: int) -> str:
         boyut = os.path.getsize(os.path.join(nokta, "klasor", "buyuk.bin"))
         if boyut != expect_size:
             raise Basarisiz(f"ntfs-3g: buyuk.bin {boyut}, {expect_size} bekleniyordu")
-        return f"ntfs-3g dogruladi ({len(os.listdir(nokta))} giris)"
+        girisler = len(os.listdir(nokta))
+
+        # --- yazma: surucu birime dosya/klasor ekleyebilmeli ---
+        yeni = os.path.join(nokta, "surucu-yazdi.txt")
+        icerik = b"isletim sisteminin surucusu yazdi\n" * 64
+        try:
+            with open(yeni, "wb") as fh:
+                fh.write(icerik)
+            os.mkdir(os.path.join(nokta, "surucu-klasor"))
+        except OSError as exc:
+            raise Basarisiz(f"ntfs-3g birime YAZAMADI: {exc}")
+        with open(yeni, "rb") as fh:
+            if fh.read() != icerik:
+                raise Basarisiz("ntfs-3g: yazilan dosya farkli okundu")
+        if "surucu-klasor" not in os.listdir(nokta):
+            raise Basarisiz("ntfs-3g: olusturulan klasor listede yok")
     finally:
         subprocess.run(["umount", nokta], capture_output=True)
+    _ntfsfix(path, "surucu yazmasi sonrasi")
+    return f"ntfs-3g okudu ve YAZDI ({girisler} giris)"
 
 
 def _make_ours(path: str) -> None:

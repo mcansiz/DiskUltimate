@@ -149,6 +149,57 @@ gerekceyle buradaki karsiligidir: bilinmeyeni bilinen gibi sunmak yaniltir.
   dosya sistemleri icin surucusu yok. Tur taninir, icerik okunamaz ve bu
   **neden** olarak yazilir.
 
+## Gercek sistemde olcum (2026-09-17, UEFI misafiri)
+
+Ilk yazimda `grub-install` ve `update-grub` **calistirilmamisti**. Kullanicinin
+istegiyle test misafiri UEFI kipine cevrildi, tam yedegi alindi ve her iki islem
+kendi kodumuz uzerinden calistirildi. Sonuc: islemler calisti, misafir her
+adimdan sonra normal acildi — ve **uc gercek hata** ortaya cikti. Ucu de
+yalnizca gercek bir sistemde gorulebilirdi.
+
+### 1. UEFI'de aygit argumani anlamsiz — arayuz yanlis sey soyluyordu
+
+`grub-install <disk>` UEFI ile acilmis bir makinede *"Installing for x86_64-efi
+platform"* der, **EFI Sistem Bolumune** kurar ve verilen aygiti **yok sayar**.
+Olculdu: islemden once ve sonra MBR'nin ilk 440 baytinin sha256 ozeti
+degismedi; degisen sey ESP altindaki `.efi` dosyalarinin zaman damgasiydi.
+
+Bizim onay penceremiz ise *"Diskin ilk sektoru degisir"* diyordu — UEFI'de bu
+**dogru degil**. Eklenen `grub.install_target()` bellenim kipini sorar;
+`install()` UEFI'de aygiti hic gecirmez ve arayuz metni ikiye ayrilir.
+
+### 2. Aracin kendi ciktisi kayboluyordu
+
+`grub-install` ilerleme ve sonuc satirlarini **stderr'e** yazar; basarili
+kosumda stdout bostur. `install()` yalnizca stdout'a bakiyordu, bu yuzden
+kullaniciya kendi urettigimiz tek cumleden baska hicbir sey gosteremiyorduk.
+Artik ikisi de toplanir.
+
+### 3. `grub.cfg` cozumleyicisi ic ice menuyu erken kapatiyordu
+
+Her `}` satirinda alt menu yigindan cikariliyordu; oysa `menuentry` bloklari da
+`}` ile biter. Gercek bir `grub.cfg` uzerinde "Advanced options" altindaki
+**ikinci** giris (kurtarma kipi) ust duzeyde gorunuyordu. Cozumleyici artik
+blok derinligi sayar ve alt menu yalnizca **kendi** kapanisinda cikar;
+`${...}` yazimlari sayimdan once atilir (grub.cfg bunlarla doludur).
+
+### 4. Yan bulgu: okunamayan `grub.cfg` "0 giris" gibi sunuluyordu
+
+`/boot/grub/grub.cfg` cogu dagitimda `-rw-------` ve root'a aittir. Yetkisiz
+kosumda okunamiyor, biz de "Menu girisi: 0" yaziyorduk — menu doluyken bos
+gorunuyordu. `GrubStatus.config_readable` eklendi; artik "okunamadi (yetki
+yok)" yazar. Bu, os-prober icin zaten uygulanan ayrimin ayni gerekceyle
+tekrari (CLAUDE.md, eksik disk bilgisi kurali).
+
+### Olculmeyen kalan
+
+- **BIOS kipinde `grub-install <disk>`** — misafir artik UEFI'dedir; MBR'ye
+  yazan dal calistirilmadi. Kod yolu ayni, yalnizca aygit argumani eklenir.
+- **`repair()` (tumunu onar)** — adimlari (yedek, os-prober, kurulum, menu)
+  tek tek olculdu, birlesik akis calistirilmadi.
+- **`upgrade_packages()`** — paket yoneticisine dokunmak misafirin durumunu
+  degistirir; denenmedi.
+
 ## Olcum
 
 `tests.run_all` icinde (Linux Mint 22.3 misafirinde kosuldu):

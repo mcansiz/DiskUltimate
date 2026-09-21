@@ -299,18 +299,28 @@ class BootloaderDialog(QDialog):
         return getattr(info, "path", "") if info is not None else ""
 
     def install_grub(self) -> None:
+        # UEFI'de hedef disk degil, EFI Sistem Bolumudur ve `grub-install`
+        # aygit argumanini yok sayar (olculdu; bkz. `grub.install_target`).
+        # Onay metni bunu soylemezse kullaniciya yanlis bir sey vaat ederiz.
+        target = grub_mod.install_target()
         device = self._target_device()
-        if not device:
+        if target != "esp" and not device:
             QMessageBox.information(
                 self, tr("Fiziksel disk gerekli"),
-                tr("GRUB yalnizca gercek bir diske kurulabilir. Once sol "
-                   "agactan bir fiziksel disk acin."))
+                tr("BIOS kipinde GRUB yalnizca gercek bir diske kurulabilir. "
+                   "Once sol agactan bir fiziksel disk acin."))
             return
-        answer = QMessageBox.question(
-            self, tr("GRUB kur"),
-            tr("GRUB <b>{}</b> diskine kurulacak.<br><br>Diskin ilk sektoru "
-               "degisir. Devam edilsin mi?", device),
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if target == "esp":
+            question = tr("GRUB, bu makinenin <b>EFI Sistem Bolumune</b> "
+                          "kurulacak.<br><br>Makine UEFI ile acildigi icin "
+                          "hedef disk degil ESP'dir; <b>diskin ilk sektoru "
+                          "degismez</b>.<br><br>Devam edilsin mi?")
+        else:
+            question = tr("GRUB <b>{}</b> diskine kurulacak.<br><br>Diskin "
+                          "ilk sektoru degisir. Devam edilsin mi?", device)
+        answer = QMessageBox.question(self, tr("GRUB kur"), question,
+                                      QMessageBox.Yes | QMessageBox.No,
+                                      QMessageBox.No)
         if answer != QMessageBox.Yes:
             return
 

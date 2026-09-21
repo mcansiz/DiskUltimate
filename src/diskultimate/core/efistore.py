@@ -392,12 +392,24 @@ def changes(original: BootState, updated: BootState) -> List[VariableChange]:
                 description=tr("Sonraki acilis: Boot{}",
                                f"{updated.boot_next:04X}")))
 
-    if original.timeout != updated.timeout and updated.timeout is not None:
-        plan.append(VariableChange(
-            name="Timeout", action="write",
-            data=build_uint16(updated.timeout),
-            attributes=_order_attributes(original, "Timeout"),
-            description=tr("Menu bekleme suresi: {} saniye", updated.timeout)))
+    if original.timeout != updated.timeout:
+        if updated.timeout is None:
+            # **Yokluk sifir degildir.** `Timeout` degiskeni hic yoksa bellenim
+            # kendi varsayilanini kullanir; 0 yazmak "hic bekleme" demektir ve
+            # ayni sey degildir. Bu ayrim `BootNext` icin zaten vardi, burada
+            # yoktu: okurken None dondurup yazarken yok sayiyorduk, yani bir
+            # duzeni okuyup geri yazmak onu **degistiriyordu** (olculdu:
+            # `tests.efi_write_test`, 28 adimdan biri bu yuzden dusuyordu).
+            removals.append(VariableChange(
+                name="Timeout", action="delete",
+                description=tr("Menu bekleme suresi kaldirildi")))
+        else:
+            plan.append(VariableChange(
+                name="Timeout", action="write",
+                data=build_uint16(updated.timeout),
+                attributes=_order_attributes(original, "Timeout"),
+                description=tr("Menu bekleme suresi: {} saniye",
+                               updated.timeout)))
 
     return plan + removals
 

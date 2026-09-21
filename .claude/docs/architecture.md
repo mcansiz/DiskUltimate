@@ -27,16 +27,18 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     │   ├── ntfs.py           NTFS saf Python bicimlendirme (MFT, $UpCase, $AttrDef)
     │   ├── ntfsread.py       NTFS okuyucu (MFT, fixup, veri kosullari, B+ indeks)
     │   ├── ntfswrite.py      NTFS yazici ($Bitmap/$MFT tahsisi, INDX giris ekleme)
+    │   ├── ntfsresize.py     NTFS kucultme/buyutme (kume tasima, $Bitmap, $BadClus)
     │   ├── _ntfs_data.py     NTFS icin gomulu sabit tablolar
-    │   ├── resize.py         Bolum boyutlandirma / tasima (FAT + exFAT yerlesimi)
+    │   ├── resize.py         Bolum boyutlandirma / tasima (FAT + exFAT + NTFS yerlesimi)
     │   ├── fsdetect.py       Imza tabanli dosya sistemi tespiti (FSInfo)
     │   ├── formatter.py      Bicimlendirme dagiticisi (sekiz FS; yerel arac → mkfs → saf Python)
     │   ├── filesystem.py     FileSystemAccess arayuzu; FatAccess, ExFatAccess, ExtAccess
-    │   ├── clone.py          .dub yedek bicimi, geri yukleme, klonlama
+    │   ├── clone.py          .dub yedek bicimi (kullanici notu dahil), geri yukleme, klonlama
     │   ├── wipe.py           Guvenli silme (sifir/rastgele/DoD), bos alan silme
     │   ├── recovery.py       Silinmis dosya, kayip bolum, imza tabanli kurtarma
     │   ├── diagnostics.py    Gunluk, sure olcumu (span), donma yakalayici, cokme dokumu
     │   ├── operations.py     Bekleyen islem kuyrugu (planla -> Uygula)
+    │   ├── planview.py       Kuyruk uygulaninca olusacak yerlesim (ana ekran onizlemesi)
     │   ├── bootloader.py     Onyukleme kodu tanima, bolumdeki sistemi bulma, grub.cfg cozumu
     │   ├── grub.py           GRUB kurulumu/menu uretimi/yedek/onarim (yalnizca Linux)
     │   ├── efiboot.py        UEFI yapilari: EFI_LOAD_OPTION, aygit yolu, kisayol (spec)
@@ -64,6 +66,8 @@ main.py                       Giris noktasi (QApplication + MainWindow)
             ├── tools.py           Silme, kurtarma, imza tarama, yedek icerigi, bilgi pencereleri
             ├── bootloader.py      Onyukleyici yoneticisi (GRUB, onyukleme kodu)
             ├── efiboot.py         UEFI onyukleme duzenleyici (girisler, sira, yedek)
+            ├── apply.py           Bekleyen adimlari sirayla uygulayan pencere
+            ├── backup.py          Yedek al / geri yukle / yedegi incele (tek form)
             ├── task.py            QThread + ilerleme penceresi
             └── preview.py         Dosya onizleme (metin / onaltilik)
 ```

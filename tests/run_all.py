@@ -2134,6 +2134,41 @@ def t32_grub_yapilandirmasi():
     girisler = bootloader.parse_grub_cfg(cfg)
     basliklar = [g.title for g in girisler]
     assert len(girisler) == 3, basliklar
+    # Alt menude **birden fazla** giris olmali ve `menuentry` blogunun kapanis
+    # parantezi alt menuyu kapatmamali. Gercek bir `grub.cfg` uzerinde
+    # olculdu: eski surum ikinci girisi (kurtarma kipi) ust duzeyde
+    # gosteriyordu.
+    ic_ice = (
+        "submenu 'Gelismis' {\n"
+        "  menuentry 'Cekirdek A' {\n"
+        "    linux /boot/a\n"
+        "  }\n"
+        "  menuentry 'Cekirdek B (kurtarma)' {\n"
+        "    linux /boot/b single\n"
+        "  }\n"
+        "}\n"
+        "menuentry 'Disarida' {\n"
+        "  chainloader +1\n"
+        "}\n"
+    )
+    ic = bootloader.parse_grub_cfg(ic_ice)
+    assert [g.submenu for g in ic] == ["Gelismis", "Gelismis", ""], \
+        [(g.submenu, g.title) for g in ic]
+
+    # `${...}` yazimi parantez sayimini bozmamali (grub.cfg bunlarla doludur)
+    degiskenli = (
+        "if [ \"${next_entry}\" ] ; then\n"
+        "  set default=\"${next_entry}\"\n"
+        "fi\n"
+        "submenu 'Ust' ${menuentry_id_option} 'x' {\n"
+        "  menuentry 'Icerideki' {\n"
+        "    linux /boot/c\n"
+        "  }\n"
+        "}\n"
+    )
+    dg = bootloader.parse_grub_cfg(degiskenli)
+    assert [(g.submenu, g.title) for g in dg] == [("Ust", "Icerideki")], \
+        [(g.submenu, g.title) for g in dg]
     assert basliklar[0] == "Linux Mint 22.3", basliklar
     assert girisler[0].classes == ["linuxmint", "gnu-linux"], girisler[0].classes
     assert girisler[1].submenu == "Gelismis secenekler", girisler[1].submenu
@@ -2256,6 +2291,660 @@ def t34_bellenime_yazma_kapisi():
         "okunamayan duzen icin aciklama yok"
     if not durum.readable:
         assert not durum.boot_entries, "okunamayan duzende giris uretildi"
+
+
+# --------------------------------------------------------------------------
+@test
+def t35_ntfs_boyutlandirma():
+    """NTFS saf Python boyutlandirma: kucultme, buyutme, veri korunur
+
+    Bu yetenek Linux/macOS icin **yeniydi**: NTFS yalnizca Windows'un kendi
+    `Resize-Partition` komutuyla boyutlandirilabiliyordu, goruntu
+    dosyalarinda ise hic calismiyordu (ADR 0030).
+
+    Dogrulananlar:
+      1. Sinirlar `$Bitmap`'ten gelir; dolu veriden kucuge inilemez.
+      2. Kucultmeden sonra birim **acilir ve dosyalar okunur**.
+      3. Buyutmeden sonra bos alan gercekten kullanilabilir (yeni dosya).
+      4. Onyukleme sektoru ve yedegi yeni boyutla tutarli.
+      5. `ntfsfix`/`ntfsinfo` varsa birim onlarin gozunde de saglam.
+    """
+    from diskultimate.core.ntfsresize import (NtfsResizeError, ntfs_resize,
+                                              ntfs_size_info)
+
+    yol = img_path("t35.img")
+    d = DiskImage.create(yol, 256 * MIB, overwrite=True)
+    bas, toplam = 2048, d.sector_count - 2048
+    format_ntfs(PartitionView(d, bas, toplam), label="BOYUT")
+
+    # --- icerik: kucultmeden sonra da bulunmali ---
+    erisim = open_filesystem(PartitionView(d, bas, toplam),
+                             detect(PartitionView(d, bas, toplam)))
+    veri = b"NTFS boyutlandirma denemesi\n" * 64
+    erisim.write_file("/deneme.txt", veri)
+    erisim.mkdir("/klasor")
+    erisim.flush()
+
+    bilgi = ntfs_size_info(PartitionView(d, bas, toplam))
+    assert bilgi.cluster_count > 0 and bilgi.used_clusters > 0, bilgi
+    assert bilgi.min_sectors < toplam, bilgi.min_sectors
+    assert not bilgi.dirty, "yeni bicimlendirilmis birim kirli olmamali"
+
+    # 1) Dolu veriden kucuge inilemez
+    try:
+        ntfs_resize(PartitionView(d, bas, toplam), 64)
+        raise AssertionError("cok kucuk boyut kabul edildi")
+    except NtfsResizeError:
+        pass
+
+    # 2) Kucultme: 256 MB -> 96 MB
+    kucuk = 96 * MIB // 512
+    ntfs_resize(PartitionView(d, bas, toplam), kucuk)
+    gorunum = PartitionView(d, bas, kucuk)
+    fs = NtfsFS(gorunum)
+    assert fs.total_sectors == kucuk - 1, (fs.total_sectors, kucuk)
+    yedek = d.read((bas + kucuk - 1) * 512, 512)
+    assert yedek[3:11] == b"NTFS    ", "yedek onyukleme sektoru tasinmadi"
+    erisim = open_filesystem(gorunum, detect(gorunum))
+    assert erisim.read("/deneme.txt") == veri, "kucultmede veri bozuldu"
+    assert {"deneme.txt", "klasor"} <= {n.name for n in erisim.listdir("/")}
+
+    # Kume haritasi yeni boyutla tutarli olmali
+    bilgi = ntfs_size_info(gorunum)
+    assert bilgi.cluster_count == (kucuk - 1) * 512 // bilgi.cluster_size
+    assert bilgi.highest_used < bilgi.cluster_count, (
+        "sinir otesinde tahsisli kume kaldi")
+
+    # 3) Buyutme: 96 MB -> 200 MB, sonra yeni dosya yazilabilmeli
+    buyuk = 200 * MIB // 512
+    ntfs_resize(PartitionView(d, bas, buyuk), buyuk)
+    gorunum = PartitionView(d, bas, buyuk)
+    bilgi = ntfs_size_info(gorunum)
+    assert bilgi.cluster_count == (buyuk - 1) * 512 // bilgi.cluster_size
+    erisim = open_filesystem(gorunum, detect(gorunum))
+    assert erisim.read("/deneme.txt") == veri, "buyutmede veri bozuldu"
+    buyuk_veri = os.urandom(3 * MIB)
+    erisim.write_file("/buyuk.bin", buyuk_veri)
+    erisim.flush()
+    erisim = open_filesystem(PartitionView(d, bas, buyuk),
+                             detect(PartitionView(d, bas, buyuk)))
+    assert erisim.read("/buyuk.bin") == buyuk_veri, "buyuyen alana yazilamadi"
+    d.close()
+
+    # 4) Harici araclar (varsa) birimi saglam gormeli
+    parca = yol + ".part"
+    with open(yol, "rb") as kaynak, open(parca, "wb") as hedef:
+        kaynak.seek(bas * 512)
+        kalan = buyuk * 512
+        while kalan > 0:
+            blok = kaynak.read(min(4 * MIB, kalan))
+            if not blok:
+                break
+            hedef.write(blok)
+            kalan -= len(blok)
+    try:
+        for arac, bayraklar in (("ntfsinfo", ["-m"]), ("ntfsfix", ["-n"])):
+            konum = shutil.which(arac)
+            if not konum:
+                continue
+            r = subprocess.run([konum] + bayraklar + [parca],
+                               capture_output=True, text=True)
+            assert r.returncode == 0, f"{arac} hata: {r.stdout}{r.stderr}"
+    finally:
+        os.unlink(parca)
+
+
+# --------------------------------------------------------------------------
+@test
+def t36_ntfs_bolum_boyutlandirma():
+    """Oturum uzerinden NTFS bolumu kucultme/buyutme (her platformda)
+
+    `t35` dosya sistemini dogrudan boyutlandirir; burada **bolum tablosuyla
+    birlikte** yol denenir: sinirlar `resize_info` ile bildirilir, plan
+    dogrulanir ve `resize_partition` tabloyu da gunceller.
+    """
+    yol = img_path("t36.img")
+    s = DiskSession.create(yol, 400 * MIB, overwrite=True)
+    s.create_table("gpt")
+    sektor = s.image.sector_size
+    s.create_partition(2048, 300 * MIB // sektor, fs_key="ntfs", label="NT")
+    s.reload()
+    assert s.partitions[0].fs_type == "NTFS", s.partitions[0].fs_type
+
+    fs = s.filesystem(1)
+    icerik = b"bolum boyutlandirma\n" * 256
+    fs.write_file("/veri.txt", icerik)
+    fs.flush()
+    s.close_filesystems()
+
+    bilgi = s.resize_info(1)
+    assert bilgi.kind == "ntfs", f"NTFS saf Python yolu secilmedi: {bilgi.kind}"
+    assert bilgi.resizable and bilgi.min_sectors > 1, bilgi
+
+    hedef = 150 * MIB // sektor
+    plan = s.plan_resize(1, 2048, hedef)
+    assert plan.shrinks and not plan.moves, plan.summary()
+    s.resize_partition(1, 2048, hedef, confirm=True)
+    s.reload()
+    assert s.partitions[0].sector_count == hedef, s.partitions[0].sector_count
+    assert s.partitions[0].fs_type == "NTFS", s.partitions[0].fs_type
+    assert s.filesystem(1).read("/veri.txt") == icerik, "kucultmede veri gitti"
+    s.close_filesystems()
+
+    buyuk = 350 * MIB // sektor
+    s.resize_partition(1, 2048, buyuk, confirm=True)
+    s.reload()
+    assert s.partitions[0].sector_count == buyuk
+    assert s.filesystem(1).read("/veri.txt") == icerik, "buyutmede veri gitti"
+    s.close()
+
+
+# --------------------------------------------------------------------------
+@test
+def t37_plan_onizlemesi():
+    """Bekleyen adimlar ana ekranda gosterilecek yerlesimi uretmeli
+
+    Kuyruk diske dokunmaz; ama kullanici "Uygula" demeden sonucu gormelidir
+    (ADR 0031). `planview.project` o sonucu **bellekte** uretir ve gercek
+    bolum tablosuna dokunmaz.
+    """
+    from diskultimate.core import planview
+
+    yol = img_path("t37.img")
+    s = DiskSession.create(yol, 256 * MIB, overwrite=True)
+    s.create_table("gpt")
+    sektor = s.image.sector_size
+    s.create_partition(2048, 64 * MIB // sektor, fs_key="fat32", label="BIR")
+    s.reload()
+    once = [(p.index, p.start_lba, p.sector_count) for p in s.partitions]
+
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.create_op(2048 + 64 * MIB // sektor, 64 * MIB // sektor,
+                             sektor, fs_key="ntfs", label="IKI"))
+    kuyruk.add(ops.format_op(1, "exfat", label="DEGISTI", fs_name="exFAT"))
+
+    plan = planview.project(s, kuyruk)
+    assert len(plan.partitions) == 2, plan.partitions
+    yeni = [p for p in plan.partitions if p.plan_state == planview.STATE_NEW]
+    assert len(yeni) == 1 and yeni[0].fs_type == "NTFS", yeni
+    eski = [p for p in plan.partitions if p.index == 1][0]
+    assert eski.plan_state == planview.STATE_FORMAT, eski.plan_state
+    assert eski.fs_type == "exFAT" and eski.fs_label == "DEGISTI", eski
+    assert plan.notes.get(1), "bicimlendirme adimi nota yazilmadi"
+
+    # Onizleme gercek tabloya DOKUNMAMALI
+    assert [(p.index, p.start_lba, p.sector_count) for p in s.partitions] == once
+    assert all(p.plan_state == "" for p in s.partitions), "gercek bolum isaretlendi"
+
+    # Bos alan yeniden hesaplanmali: iki bolumden sonra kalan yer
+    assert plan.free, "planlanan yerlesimde bos alan bulunamadi"
+    assert plan.free[0].start_lba >= 2048 + 128 * MIB // sektor, plan.free[0]
+
+    # Silme adimi bolumu haritadan kaldirir
+    kuyruk2 = ops.OperationQueue()
+    kuyruk2.add(ops.delete_op(1, "BIR"))
+    plan2 = planview.project(s, kuyruk2)
+    assert not plan2.partitions, plan2.partitions
+    assert len(s.partitions) == 1, "silme adimi gercek tabloyu degistirdi"
+
+    # Sema donusumu onizlemede de gorunmeli
+    kuyruk3 = ops.OperationQueue()
+    kuyruk3.add(ops.convert_table_op("mbr"))
+    plan3 = planview.project(s, kuyruk3)
+    assert plan3.scheme == "mbr", plan3.scheme
+    assert s.scheme == "gpt", "donusum adimi gercek semayi degistirdi"
+    s.close()
+
+
+# --------------------------------------------------------------------------
+@test
+def t38_uygulama_adim_geri_cagrilari():
+    """Uygulama penceresi icin adim basina ilerleme bildirilmeli
+
+    Pencere her adimin kendi cubugunu cizer (ADR 0031); bunun icin cekirdek
+    adim basina **ayri** ilerleme ve bitis bildirir. Genel cubuk geri
+    gitmemelidir: adimin kendi yuzdesi genel olcege sigdirilir.
+    """
+    yol = img_path("t38.img")
+    s = DiskSession.create(yol, 256 * MIB, overwrite=True)
+    s.close()
+    s = DiskSession.open(yol)
+    sektor = s.image.sector_size
+
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.create_table_op("gpt"))
+    kuyruk.add(ops.create_op(2048, 64 * MIB // sektor, sektor,
+                             fs_key="fat32", label="BIR"))
+    basladi, bitti, adim_yuzdeleri, genel = [], [], [], []
+    sonuc = kuyruk.apply(
+        s,
+        progress=lambda m, p: genel.append(p),
+        on_step=lambda i, op: basladi.append(i),
+        on_step_progress=lambda i, op, m, p: adim_yuzdeleri.append((i, p)),
+        on_step_done=lambda i, op, err: bitti.append((i, err)))
+    assert sonuc.ok, sonuc.summary()
+    assert basladi == [0, 1], basladi
+    assert [i for i, _err in bitti] == [0, 1], bitti
+    assert all(not err for _i, err in bitti), bitti
+    assert adim_yuzdeleri, "adim basina ilerleme hic bildirilmedi"
+    pozitif = [p for p in genel if p >= 0]
+    assert pozitif == sorted(pozitif), f"genel ilerleme geri gitti: {genel}"
+    assert max(pozitif) <= 100 and pozitif[-1] == 100, genel
+
+    # Basarisiz adim da bildirilmeli
+    kuyruk2 = ops.OperationQueue()
+    kuyruk2.add(ops.format_op(99, "fat32"))
+    hatalar = []
+    kuyruk2.apply(s, on_step_done=lambda i, op, err: hatalar.append(err))
+    assert hatalar and hatalar[0], "basarisiz adim bildirilmedi"
+    s.close()
+
+
+# --------------------------------------------------------------------------
+@test
+def t39_yedek_notu_ve_sikistirma():
+    """Yedek dosyasi kullanici notu tasimali; sikistirma duzeyi secilebilmeli
+
+    Not (`remark`) baslikta durur: yedegi acan herkes onu gorur, yanina ayri
+    bir metin dosyasi tasimak gerekmez (ADR 0032).
+
+    Dogrulananlar:
+      1. Not yazilir ve geri okunur; bos not "-" degil bos dizedir.
+      2. Not **sonradan** degistirilebilir ve bu veriye dokunmaz: notu
+         degistirilmis yedekten geri yukleme bire bir ayni veriyi verir.
+      3. Not bayt siniriyla kirpilir ve **cok baytli karakter ortadan
+         bolunmez** (Turkce harfler UTF-8'de iki bayt tutar).
+      4. Sikistirma duzeyi dosya boyutunu degistirir; "yok" secildiginde
+         baslik sikistirmasiz isaretlenir.
+    """
+    from diskultimate.core import clone as clone_mod
+
+    yol = img_path("t39.img")
+    d = DiskImage.create(yol, 32 * MIB, overwrite=True)
+    # Sikistirilabilir ama tumuyle tekduze olmayan icerik
+    for i in range(8):
+        d.write(i * MIB, (b"DiskUltimate yedek notu denemesi " * 1024)[:MIB])
+    ozet = hashlib.sha256(d.read(0, 8 * MIB)).hexdigest()
+    d.close()
+
+    # 1) Not yazilir ve okunur
+    dub = img_path("t39-normal.dub")
+    kaynak = DiskImage(yol, readonly=True)
+    not_metni = "Haftalik yedek - 2026 sunucu"
+    bilgi = clone_mod.backup(kaynak, dub, remark=not_metni,
+                             level=clone_mod.LEVEL_NORMAL)
+    kaynak.close()
+    assert bilgi.remark == not_metni, bilgi.remark
+    assert clone_mod.read_backup_info(dub).remark == not_metni
+    assert "Not" in " ".join(bilgi.summary().keys()), bilgi.summary()
+
+    # 2) Not sonradan degistirilir; veri bozulmaz
+    clone_mod.write_remark(dub, "Duzeltilmis not")
+    assert clone_mod.read_backup_info(dub).remark == "Duzeltilmis not"
+    geri = img_path("t39-geri.img")
+    clone_mod.restore(dub, DiskImage.create(geri, 32 * MIB, overwrite=True))
+    okunan = DiskImage(geri, readonly=True)
+    assert hashlib.sha256(okunan.read(0, 8 * MIB)).hexdigest() == ozet, \
+        "not degistirilince veri bozuldu"
+    okunan.close()
+
+    # 3) Bayt siniri: cok baytli karakter ortadan bolunmez
+    uzun = "ç" * 400                      # her biri UTF-8'de 2 bayt
+    yazilan = clone_mod.write_remark(dub, uzun)
+    ham = len(yazilan.encode("utf-8"))
+    assert ham <= clone_mod.REMARK_SIZE, ham
+    assert ham >= clone_mod.REMARK_SIZE - 1, ham
+    assert yazilan == "ç" * (ham // 2), "cok baytli karakter bolunmus"
+    assert clone_mod.read_backup_info(dub).remark == yazilan
+
+    # 4) Sikistirma duzeyleri
+    boyutlar = {}
+    for ad, duzey in (("none", clone_mod.LEVEL_NONE),
+                      ("fast", clone_mod.LEVEL_FAST),
+                      ("high", clone_mod.LEVEL_HIGH)):
+        hedef = img_path(f"t39-{ad}.dub")
+        kaynak = DiskImage(yol, readonly=True)
+        sonuc = clone_mod.backup(kaynak, hedef, level=duzey, remark=ad)
+        kaynak.close()
+        boyutlar[ad] = sonuc.file_size
+        assert sonuc.compressed == (duzey > clone_mod.LEVEL_NONE), ad
+        assert sonuc.remark == ad
+    assert boyutlar["none"] > boyutlar["fast"] > 0, boyutlar
+    assert boyutlar["high"] <= boyutlar["fast"], boyutlar
+
+    # Eski (notsuz) yedekler de okunmali: not alani sifir ise bos dize
+    with open(dub, "r+b") as fh:
+        fh.seek(clone_mod.REMARK_OFFSET)
+        fh.write(b"\x00" * clone_mod.REMARK_SIZE)
+    assert clone_mod.read_backup_info(dub).remark == "", "bos not bos gelmeli"
+
+
+# --------------------------------------------------------------------------
+@test
+def t40_kuyrukta_bolum_numarasi_kaymasi():
+    """Adimlar bolum numarasi kaysa bile DOGRU bolumu bulmali
+
+    Gercek bir hata: Linux misafirinde iki bolum silme adimi kuyruga alinip
+    uygulandiginda ilk adim gecti, ikincisi *"2 numarali bolum yok"* diye
+    durdu. Neden: bolum numarasi kalici bir kimlik degildir — tablo yeniden
+    okununca numaralar yerlesime gore bastan verilir, yani 1 numarali bolum
+    silinince 2 numarali bolum 1 olur (ADR 0033).
+
+    Cozum: adim hedefini **baslangic LBA'si** ile de tasir; numara uygulama
+    aninda yeniden bulunur.
+
+    Dogrulananlar:
+      1. "Bolum 1 sil" + "Bolum 2 sil" ikisi de uygulanir (asil hata).
+      2. Silme sirasi karisik verilse de dogru bolumler gider.
+      3. Bicimlendirme/etiket adimlari, araya bir silme girse bile **kendi**
+         bolumlerine uygulanir.
+      4. Hedef bolum artik yoksa adim durur ve nedeni acikca soylenir.
+      5. Capasiz (eski) adimlar eskisi gibi numaradan calisir.
+    """
+    from diskultimate.core import operations as ops
+
+    def yeni_disk(ad, adet=3, sema="gpt"):
+        yol = img_path(ad)
+        s = DiskSession.create(yol, 256 * MIB, overwrite=True)
+        s.create_table(sema)
+        sektor = s.image.sector_size
+        bas = 2048
+        for i in range(adet):
+            s.create_partition(bas, 48 * MIB // sektor, fs_key="fat32",
+                               label=f"BOLUM{i + 1}")
+            bas += 48 * MIB // sektor
+        s.reload()
+        return s
+
+    # 1) Asil hata: iki silme adimi arka arkaya
+    s = yeni_disk("t40a.img", adet=2)
+    lba = {p.index: p.start_lba for p in s.partitions}
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.delete_op(1, at_lba=lba[1]))
+    kuyruk.add(ops.delete_op(2, at_lba=lba[2]))
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, f"numara kaymasi hala kiriyor: {sonuc.summary()}"
+    s.reload()
+    assert not s.partitions, [p.index for p in s.partitions]
+    s.close()
+
+    # 2) Ters sirada silme de dogru bolumleri gotursun
+    s = yeni_disk("t40b.img", adet=3)
+    lba = {p.index: p.start_lba for p in s.partitions}
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.delete_op(2, at_lba=lba[2]))
+    kuyruk.add(ops.delete_op(1, at_lba=lba[1]))
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, sonuc.summary()
+    s.reload()
+    kalan = [p.start_lba for p in s.partitions]
+    assert kalan == [lba[3]], f"yanlis bolum silindi: {kalan}"
+    s.close()
+
+    # 3) Silme ile etiketleme karisik: etiket DOGRU bolume gitmeli
+    s = yeni_disk("t40c.img", adet=3)
+    lba = {p.index: p.start_lba for p in s.partitions}
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.delete_op(1, at_lba=lba[1]))
+    kuyruk.add(ops.label_op(3, "UCUNCU", at_lba=lba[3]))
+    kuyruk.add(ops.format_op(2, "exfat", label="IKINCI", at_lba=lba[2]))
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, sonuc.summary()
+    s.reload()
+    yerlesim = {p.start_lba: (p.fs_type, p.fs_label) for p in s.partitions}
+    assert yerlesim[lba[2]][0].lower().startswith("exfat"), yerlesim
+    assert yerlesim[lba[2]][1] == "IKINCI", yerlesim
+    assert yerlesim[lba[3]][1] == "UCUNCU", \
+        f"etiket yanlis bolume yazildi: {yerlesim}"
+    s.close()
+
+    # 4) Hedef bolum yoksa adim durmali ve nedeni soylenmeli
+    s = yeni_disk("t40d.img", adet=2)
+    lba = {p.index: p.start_lba for p in s.partitions}
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.delete_op(1, at_lba=lba[1]))
+    kuyruk.add(ops.label_op(1, "OLMAZ", at_lba=lba[1]))   # ayni bolum, artik yok
+    sonuc = kuyruk.apply(s)
+    assert not sonuc.ok, "silinmis bolume etiket yazildi"
+    assert "LBA" in sonuc.error, sonuc.error
+    assert len(sonuc.done) == 1, sonuc.summary()
+    s.close()
+
+    # 5) Capasiz adim (eski kuyruk) numaradan calismaya devam etmeli
+    s = yeni_disk("t40e.img", adet=2)
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.label_op(2, "ESKIYOL"))
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, sonuc.summary()
+    s.close_filesystems()
+    s.reload()
+    assert s.filesystem(2).label == "ESKIYOL"
+    s.close()
+
+    # 6) Onizleme de ayni bolumu secmeli (ekranla uygulama ayni seyi demeli)
+    from diskultimate.core import planview
+
+    s = yeni_disk("t40f.img", adet=3)
+    lba = {p.index: p.start_lba for p in s.partitions}
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.delete_op(1, at_lba=lba[1]))
+    kuyruk.add(ops.format_op(3, "ntfs", label="UC", at_lba=lba[3]))
+    plan = planview.project(s, kuyruk)
+    kalanlar = {p.start_lba: p for p in plan.partitions}
+    assert lba[1] not in kalanlar, "silinen bolum onizlemede duruyor"
+    assert kalanlar[lba[3]].fs_type == "NTFS", \
+        f"onizleme yanlis bolumu isaretledi: {kalanlar[lba[3]].fs_type}"
+    assert kalanlar[lba[2]].plan_state == "", "dokunulmayan bolum isaretlenmis"
+    s.close()
+
+
+# --------------------------------------------------------------------------
+@test
+def t41_ust_uste_bolum_planlama():
+    """Arka arkaya kuyruga alinan bolumler ayni bos alani PAYLASMALI
+
+    Gercek hata (Linux misafiri, /dev/sdb): kullanici uc "yeni bolum" adimini
+    arka arkaya kuyruga aldi; ucunun de hedefi **ayni LBA** oldu (14626816) ve
+    Uygula sirasinda ikinci adim *"2 numarali bolum ile cakisiyor"* diye durdu.
+
+    Neden: bos alan diskteki duruma gore soruluyordu. Kuyruktaki bolum diske
+    yazilmadigi icin o alan hala "bos" gorunuyordu (ADR 0034).
+
+    Dogrulananlar:
+      1. Diske gore sorulan bos alan **ayni** kalir — hatanin kok nedeni.
+      2. Plana gore sorulan bos alan her adimdan sonra kuculur.
+      3. Plana gore kurulan uc adim tek Uygula ile **sorunsuz** uygulanir.
+      4. `overlap_at` planlanan bolumle cakismayi tiklama aninda yakalar.
+    """
+    from diskultimate.core import operations as ops
+    from diskultimate.core import planview
+
+    yol = img_path("t41.img")
+    s = DiskSession.create(yol, 512 * MIB, overwrite=True)
+    s.create_table("gpt")
+    sektor = s.image.sector_size
+    s.create_partition(2048, 128 * MIB // sektor, fs_key="fat32", label="VAR")
+    s.reload()
+
+    boyutlar = [64 * MIB // sektor, 96 * MIB // sektor, 128 * MIB // sektor]
+
+    # 1) Kok neden: diske gore sorulan bos alan degismiyor
+    kuyruk = ops.OperationQueue()
+    diske_gore = []
+    for adet in boyutlar:
+        bolge = max(s.free_regions(), key=lambda r: r.sector_count)
+        diske_gore.append(bolge.start_lba)
+        kuyruk.add(ops.create_op(bolge.start_lba, adet, sektor, fs_key="fat32"))
+    assert len(set(diske_gore)) == 1, \
+        f"kok neden degismis olmali: {diske_gore}"
+
+    # Bu kuyruk gercekten kirikti: ikinci adim cakismadan durur
+    sonuc = kuyruk.apply(s)
+    assert not sonuc.ok, "ust uste planlanan bolumler sessizce uygulanmamali"
+    assert "cakis" in sonuc.error.lower(), sonuc.error
+    s.reload()
+    # Ilk adim uygulandi; temizleyip asil senaryoya gecilir
+    for part in list(s.partitions):
+        if part.start_lba != 2048:
+            s.delete_partition(part.index)
+    s.reload()
+    assert len(s.partitions) == 1, s.partitions
+
+    # 2 + 3) Plana gore sorulunca alan her adimda kuculur ve hepsi uygulanir
+    kuyruk = ops.OperationQueue()
+    plana_gore = []
+    for adet in boyutlar:
+        plan = planview.project(s, kuyruk)
+        bolgeler = plan.free if plan is not None else s.free_regions()
+        bolge = max(bolgeler, key=lambda r: r.sector_count)
+        plana_gore.append(bolge.start_lba)
+        kuyruk.add(ops.create_op(bolge.start_lba, adet, sektor, fs_key="fat32"))
+    assert len(set(plana_gore)) == 3, f"alan kuculmemis: {plana_gore}"
+    assert plana_gore == sorted(plana_gore), plana_gore
+
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, f"plana gore kurulan adimlar da kirildi: {sonuc.summary()}"
+    s.reload()
+    assert len(s.partitions) == 4, [p.index for p in s.partitions]
+    # Cakisma olmamali: her bolum bir oncekinin bitiminden sonra baslar
+    sirali = sorted(s.partitions, key=lambda p: p.start_lba)
+    for onceki, sonraki in zip(sirali, sirali[1:]):
+        assert sonraki.start_lba > onceki.end_lba, \
+            f"bolumler cakisti: {onceki.index} - {sonraki.index}"
+
+    # 4) Cakisma denetimi: planlanan bolumun uzerine yeni adim kurulamaz
+    s2 = DiskSession.create(img_path("t41b.img"), 256 * MIB, overwrite=True)
+    s2.create_table("gpt")
+    kuyruk2 = ops.OperationQueue()
+    kuyruk2.add(ops.create_op(2048, 64 * MIB // sektor, sektor, fs_key="fat32"))
+    plan = planview.project(s2, kuyruk2)
+    carpan = planview.overlap_at(plan, 2048 + 16 * MIB // sektor,
+                                 32 * MIB // sektor)
+    assert carpan is not None, "planlanan bolumle cakisma yakalanmadi"
+    uzak = planview.overlap_at(plan, 2048 + 128 * MIB // sektor,
+                               32 * MIB // sektor)
+    assert uzak is None, "cakismayan alan cakisti sanildi"
+    # Kendi kendini kesiyor sayilmamali (boyutlandirmada bolumun kendisi)
+    kendi = planview.overlap_at(plan, 2048, 96 * MIB // sektor, ignore_lba=2048)
+    assert kendi is None, "bolum kendisiyle cakisti sanildi"
+    s2.close()
+    s.close()
+
+
+# --------------------------------------------------------------------------
+@test
+def t42_ntfs_isletim_sistemi_yazabilmeli():
+    """Bicimlendirdigimiz NTFS'e isletim sisteminin surucusu YAZABILMELI
+
+    Gercek hata (Linux misafiri): uygulamayla NTFS bicimlendirilen bolum
+    baglaniyor ve okunuyordu ama `ntfs-3g` uzerine dosya olusturamiyordu.
+    Uc eksik vardi (ADR 0037):
+
+      1. `$MFT:$BITMAP` **yerlesikti**; surucu yeni MFT kaydi ayirirken
+         bitmap'in son kumesini soruyor, yerlesik oznitelikte boyle bir sey
+         olmadigi icin duruyordu ("Failed to determine last allocated
+         cluster of mft bitmap attribute" -> EINVAL).
+      2. Kok dizinde **"." girisi** yoktu; surucu dosya olusturduktan sonra
+         ust dizinin adini kendi indeksinde arayip tazeliyor, bulamayinca
+         islem G/C hatasiyla dusuyordu ("Index lookup failed, inode 5").
+      3. `$Secure` **bostu**; NTFS 3.x'te her dosyaya guvenlik kimligi
+         atanir ve tanimlayicilar bu dosyada durur.
+
+    Burada yapinin **kendisi** sinanir (root gerekmez). Gercek surucuyle
+    yazma denemesi `tests/ntfs_write_check.py` icindedir ve root ister.
+    """
+    import struct as _struct
+    from diskultimate.core.ntfs import (SECURITY_ID_FULL, SECURITY_ID_SYSTEM,
+                                        security_descriptor, security_hash)
+
+    yol = img_path("t42.img")
+    d = DiskImage.create(yol, 200 * MIB, overwrite=True)
+    format_ntfs(d, label="SURUCU")
+    d.close()
+
+    fs = NtfsFS(DiskImage(yol, readonly=True))
+
+    # 1) $MFT:$BITMAP yerlesik OLMAMALI ve kendi kumesi olmali
+    bitmap = fs.record(0).find(0xB0)
+    assert bitmap is not None, "$MFT'nin $BITMAP ozniteligi yok"
+    assert not bitmap.resident, \
+        "$MFT:$BITMAP yerlesik — surucu yeni kayit ayiramaz (ADR 0037)"
+    assert bitmap.runs and bitmap.runs[0][0] > 0, bitmap.runs
+    kullanim = fs.read_attribute(bitmap)
+    assert len(kullanim) >= 8 and len(kullanim) % 8 == 0, len(kullanim)
+    dolu = sum(bin(b).count("1") for b in kullanim)
+    kapasite = fs.mft_size // fs.record_size
+    assert 0 < dolu < kapasite, \
+        f"MFT bitmap'inde bos kayit kalmamis: {dolu}/{kapasite}"
+
+    # 2) Kok dizin kendi girisini ("." -> kayit 5) tasimali.
+    #    Okuyucumuz "." girisini listelemez, bu yuzden ham cozumlenir.
+    kok = fs.record(5).find(0x90, "$I30")
+    deger = kok.value
+    baslangic, uzunluk = _struct.unpack_from("<II", deger, 0x10)
+    pos, adlar = 0x10 + baslangic, []
+    while pos + 0x10 <= 0x10 + uzunluk:
+        ref, boy, anahtar, bayrak = _struct.unpack_from("<QHHH", deger, pos)
+        if boy < 0x10 or bayrak & 0x02:
+            break
+        n = deger[pos + 0x50]
+        adlar.append((deger[pos + 0x52:pos + 0x52 + n * 2].decode("utf-16-le"),
+                      ref & 0xFFFFFFFFFFFF))
+        pos += boy
+    assert (".", 5) in adlar, f"kok dizinde '.' girisi yok: {adlar}"
+    assert ("$MFT", 0) in adlar and ("$Secure", 9) in adlar, adlar
+    # Kullaniciya gosterilen listede "." gorunmemeli
+    assert all(e.name != "." for e in fs.listdir("/")), "'.' listelenmis"
+
+    # 3) $Secure gercek icerik tasimali
+    secure = fs.record(9)
+    sds = fs.read_attribute(secure.find(0x80, "$SDS"))
+    assert len(sds) == 0x400FC, f"$SDS boyutu {len(sds):#x}, 0x400fc bekleniyor"
+    assert sds[:0xFC] == sds[0x40000:0x40000 + 0xFC], "$SDS aynasi tutmuyor"
+    kimlikler = {}
+    pos = 0
+    while pos + 20 <= 0xFC:
+        karma, kimlik, ofset, boy = _struct.unpack_from("<IIQI", sds, pos)
+        if boy == 0:
+            break
+        tanim = sds[pos + 20:pos + boy]
+        assert security_hash(tanim) == karma, f"karma tutmuyor: {kimlik:#x}"
+        assert ofset == pos, (ofset, pos)
+        kimlikler[kimlik] = tanim
+        pos = (pos + boy + 15) & ~15
+    assert set(kimlikler) == {SECURITY_ID_SYSTEM, SECURITY_ID_FULL}, \
+        list(map(hex, kimlikler))
+    assert kimlikler[SECURITY_ID_SYSTEM] == security_descriptor(0x00120089)
+    assert kimlikler[SECURITY_ID_FULL] == security_descriptor(0x0012019F)
+
+    # Iki indeks de dolu olmali (bos indeks = surucu kimlik bulamaz)
+    for ad, anahtar_boyu in (("$SDH", 8), ("$SII", 4)):
+        indeks = secure.find(0x90, ad)
+        assert indeks is not None and indeks.resident, ad
+        veri = indeks.value
+        bas, boy = _struct.unpack_from("<II", veri, 0x10)
+        pos, sayi = 0x10 + bas, 0
+        while pos + 0x10 <= 0x10 + boy:
+            _ofset, _uzunluk, _ayrilmis, giris_boyu, anahtar, bayrak = \
+                _struct.unpack_from("<HHIHHH", veri, pos)[:6]
+            if giris_boyu < 0x10 or bayrak & 0x02:
+                break
+            assert anahtar == anahtar_boyu, (ad, anahtar)
+            sayi += 1
+            pos += giris_boyu
+        assert sayi == 2, f"{ad} icinde {sayi} giris var, 2 bekleniyor"
+
+    # Sistem dosyalari gecerli bir kimlik gostermeli
+    std = fs.record(0).find(0x10)
+    assert len(std.value) >= 0x48, "standart bilgi NTFS 3.x bicimi degil"
+    assert _struct.unpack_from("<I", std.value, 0x34)[0] == SECURITY_ID_SYSTEM
+
+    # 4) Kendi okuyucumuz ve yazicimiz bozulmamis olmali
+    erisim = open_filesystem(DiskImage(yol, readonly=False), detect(fs.dev))
+    erisim.write_file("/kendi.txt", b"kendi yazicimiz\n")
+    assert erisim.read("/kendi.txt") == b"kendi yazicimiz\n"
+    erisim.flush()
+    fs.dev.close()
 
 
 # --------------------------------------------------------------------------

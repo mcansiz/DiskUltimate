@@ -10,7 +10,8 @@ from PyQt5.QtGui import QColor, QFontDatabase, QIcon, QKeySequence
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QFileDialog,
                              QFormLayout, QHBoxLayout, QHeaderView,
                              QInputDialog, QLabel, QMainWindow, QMenu,
-                             QMessageBox, QPlainTextEdit, QSplitter,
+                             QMessageBox, QPlainTextEdit, QPushButton,
+                             QSplitter,
                              QScrollArea, QStackedWidget, QTabWidget, QToolBar,
                              QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
@@ -28,8 +29,8 @@ from ..core.vdisk import VhdImage
 from ..paths import LOG_DIR
 from ..core.clone import is_backup_file
 from ..core.image import DiskImage
-from ..core.ptable import (GPT_TYPES, MBR_TYPES, FreeRegion, Partition,
-                           human_size, parse_size)
+from ..core.ptable import (GPT_TYPES, MBR_EXTENDED_TYPES, MBR_TYPES,
+                           FreeRegion, Partition, human_size, parse_size)
 from ..core.session import DiskSession, SessionError
 from .dialogs.base import exec_dialog
 from .diag import install as install_diagnostics
@@ -38,8 +39,11 @@ from .disk_scan import DiskScanner, disk_signature
 from .dialogs.new_image import NewImageDialog
 from .dialogs.partition import CreatePartitionDialog, FormatDialog
 from .dialogs.resize import ResizePartitionDialog
+from ..core import planview
+from .dialogs.apply import run_apply
+from .dialogs.backup import BackupDialog, MODE_BACKUP, MODE_RESTORE
 from .dialogs.task import run_task
-from .dialogs.tools import (BackupInfoDialog, CarveOptionsDialog,
+from .dialogs.tools import (CarveOptionsDialog,
                             CarvedFilesDialog, DeletedFilesDialog, InfoDialog,
                             LostPartitionsDialog, TextViewDialog, WipeDialog)
 from .theme import fs_color, os_icon, palette_color
@@ -89,6 +93,14 @@ class MainWindow(QMainWindow):
         # Her oturumun kendi bekleyen islem kuyrugu vardir: adimlar o oturumun
         # bolum numaralarina baglidir, baska bir goruntuye tasinamazlar.
         self._queues: Dict[int, ops.OperationQueue] = {}
+        # Harita ve tablo, kuyruk doluyken **planlanan** yerlesimi gosterir.
+        # `_plan_layout` o yerlesimi tasir; `_show_plan` kullanicinin
+        # "diskteki hali" secimiyle kapanir.
+        self._plan_layout = None
+        self._show_plan = True
+        # Acilistaki otomatik disk secimi bir kez yapilir (ADR 0035).
+        self._auto_opened = False
+        self.selected_is_planned = False
         self._build_ui()
         self._build_actions()
         self._build_tree([])        # acik goruntu olmadan da diskler listelenir
@@ -189,6 +201,22 @@ class MainWindow(QMainWindow):
         self.overview_scroll.setWidgetResizable(True)
         self.overview_scroll.setFrameShape(QScrollArea.NoFrame)
         self.overview_scroll.setMaximumHeight(300)
+
+        # Plan seridi: kuyruk doluyken haritanin **planlanan** yerlesimi
+        # gosterdigini soyler ve diskteki hale gecmeyi sunar (ADR 0031).
+        self.plan_bar = QWidget()
+        plan_duzen = QHBoxLayout(self.plan_bar)
+        plan_duzen.setContentsMargins(8, 2, 8, 2)
+        plan_duzen.setSpacing(8)
+        self.plan_label = QLabel("")
+        self.plan_label.setWordWrap(True)
+        plan_duzen.addWidget(self.plan_label, 1)
+        self.plan_toggle = QPushButton("")
+        self.plan_toggle.setFlat(True)
+        self.plan_toggle.clicked.connect(self.toggle_plan_preview)
+        plan_duzen.addWidget(self.plan_toggle)
+        self.plan_bar.setVisible(False)
+        sag_duzen.addWidget(self.plan_bar)
 
         self.map_stack = QStackedWidget()
         self.map_stack.addWidget(self.overview_scroll)      # 0: genel bakis
@@ -314,15 +342,19 @@ class MainWindow(QMainWindow):
 
         # --- Yedekleme / klonlama ---
         self.act_backup_disk = QAction(app_icon("backup"), "", self)
-        self.act_backup_disk.triggered.connect(lambda: self.backup(disk=True))
+        self.act_backup_disk.triggered.connect(
+            lambda: self.open_backup_dialog(MODE_BACKUP))
         self.act_restore_disk = QAction(app_icon("backup"), "", self)
-        self.act_restore_disk.triggered.connect(lambda: self.restore(disk=True))
+        self.act_restore_disk.triggered.connect(
+            lambda: self.open_backup_dialog(MODE_RESTORE))
         self.act_clone_disk = QAction(app_icon("clone"), "", self)
         self.act_clone_disk.triggered.connect(self.clone_disk)
         self.act_backup_part = QAction(app_icon("save"), "", self)
-        self.act_backup_part.triggered.connect(lambda: self.backup(disk=False))
+        self.act_backup_part.triggered.connect(
+            lambda: self.open_backup_dialog(MODE_BACKUP, partition=True))
         self.act_restore_part = QAction(app_icon("open"), "", self)
-        self.act_restore_part.triggered.connect(lambda: self.restore(disk=False))
+        self.act_restore_part.triggered.connect(
+            lambda: self.open_backup_dialog(MODE_RESTORE, partition=True))
 
         # --- Guvenli silme ---
         self.act_wipe_disk = QAction(app_icon("wipe"), "", self)
@@ -815,140 +847,6 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # Yedegi hedefe yazma (goruntu dosyasi veya fiziksel disk)
     # ------------------------------------------------------------------
-    def write_backup_to_target(self) -> None:
-        """Acik yedegi bir hedefe yazar: yeni goruntu dosyasi veya fiziksel disk.
-
-        Hedef fiziksel diskse `open_physical`in tum guvenlik kapilari gecerlidir
-        (yazma onayi, sistem diskinde ad dogrulama, bagli bolum uyarisi).
-        """
-        if not (self.session and self.session.is_backup):
-            QMessageBox.information(self, tr("Yedek acik degil"),
-                                    tr("Once bir .dub yedek dosyasi acin."))
-            return
-        info = self.session.image.info
-        box = QMessageBox(QMessageBox.Question, tr("Yedek nereye yazilsin?"),
-                           tr("<b>{}</b> ({}) nereye "
-                              "yazilsin?<br><br>Hedefteki <b>tum veriler</b> "
-                              "uzerine yazilir.",
-                              os.path.basename(info.path),
-                              human_size(info.total_bytes)),
-                           QMessageBox.NoButton, self)
-        file_btn = box.addButton(tr("Yeni goruntu dosyasi..."), QMessageBox.AcceptRole)
-        disk_btn = box.addButton(tr("Fiziksel disk..."), QMessageBox.ActionRole)
-        box.addButton(tr("Vazgec"), QMessageBox.RejectRole)
-        box.exec_()
-        if box.clickedButton() is file_btn:
-            self._restore_to_new_image(info.path, info)
-        elif box.clickedButton() is disk_btn:
-            self._restore_to_physical(info)
-
-    def _restore_to_physical(self, info) -> None:
-        """Yedegi secili fiziksel diske yazar (katmanli onaydan gecerek)."""
-        path = self._selected_disk_path()
-        disk = getattr(self, "_physical_cache", {}).get(path or "")
-        if disk is None:
-            QMessageBox.information(
-                self, tr("Disk secili degil"),
-                tr("Once sol agactan hedef fiziksel diski secin.\n\n"
-                "Disk gorunmuyorsa: Disk > Fiziksel diskleri yenile."))
-            return
-        if not disk.info_complete:
-            self.error(tr("Disk bilgisi eksik"),
-                       tr("{} hakkinda yeterli bilgi alinamadi (yonetici "
-                          "yetkisi gerekebilir). Bilgisi eksik bir diske "
-                          "yazma reddedilir.", disk.name))
-            return
-        if info.total_bytes > disk.size:
-            self.error(tr("Disk cok kucuk"),
-                       tr("Yedek {}, hedef disk {}.",
-                          human_size(info.total_bytes), human_size(disk.size)))
-            return
-
-        metin = tr("<b>{}</b><br>{}<br><br><b>Durum:</b> {}<br><br>"
-                   "Yedek: {} ({})<br><br>"
-                   "Bu diskteki <b>tum veriler silinecek</b> ve yedek icerigi "
-                   "yazilacak. Islem <b>geri alinamaz</b>.<br><br>"
-                   "Devam edilsin mi?",
-                   disk.display_name, human_size(disk.size), disk.risk_text,
-                   os.path.basename(info.path), human_size(info.total_bytes))
-        if QMessageBox.warning(self, tr("Fiziksel diske yazma onayi"), metin,
-                               QMessageBox.Yes | QMessageBox.No,
-                               QMessageBox.No) != QMessageBox.Yes:
-            return
-        allow_system = False
-        if disk.is_system:
-            name, ok = QInputDialog.getText(
-                self, tr("Sistem diski onayi"),
-                tr("{} ISLETIM SISTEMI DISKIDIR.\n\n"
-                   "Uzerine yazmak isletim sistemini acilamaz hale getirir.\n"
-                   "Devam etmek icin disk adini yazin: {}",
-                   disk.path, disk.name))
-            if not ok or name.strip() != disk.name:
-                self.log(tr("Sistem diski yazma onayi verilmedi, islem iptal edildi"))
-                return
-            allow_system = True
-        elif disk.mounted:
-            if QMessageBox.warning(
-                    self, tr("Bagli bolum uyarisi"),
-                    tr("Bu diskte bagli bolumler var:\n{}\n\nYazmadan once "
-                       "bolumleri cikarmaniz onerilir.\n\nYine de devam "
-                       "edilsin mi?", ', '.join(disk.mounted)),
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No) != QMessageBox.Yes:
-                return
-
-        backup_path = info.path
-
-        def task(progress):
-            return DiskSession.restore_to_physical(
-                backup_path, disk, allow_system=allow_system, progress=progress)
-
-        ok, result = run_task(self, tr("Yedek diske yaziliyor"), task)
-        if not ok:
-            self.error(tr("Yazma basarisiz"), str(result))
-            return
-        self.log(tr("Yedek diske yazildi: {} -> {} ({})",
-                    os.path.basename(backup_path), disk.path,
-                    human_size(info.total_bytes)))
-        QMessageBox.information(
-            self, tr("Yazma tamamlandi"),
-            tr("{} -> {}\n\nIsletim sisteminin yeni bolum tablosunu gormesi "
-               "icin diski cikarip yeniden takmaniz gerekebilir.",
-               os.path.basename(backup_path), disk.display_name))
-        self.refresh_disks()
-
-    def _restore_to_new_image(self, backup_path: str, info) -> None:
-        """Yedegi yeni bir goruntu dosyasina acar ve acilan goruntuyu gosterir.
-
-        Boylece "yedegi acmak" kullanicinin bekledigi sonucu verir: icerik
-        gezilebilir hale gelir, mevcut hicbir disk uzerine yazilmaz.
-        """
-        onerilen = os.path.splitext(backup_path)[0]
-        if not onerilen.lower().endswith((".img", ".raw", ".dd")):
-            onerilen += ".img"
-        target, _ = QFileDialog.getSaveFileName(
-            self, tr("Geri yuklenecek goruntu dosyasi"), onerilen,
-            tr("Disk goruntusu (*.img *.raw *.dd);;Tum dosyalar (*)"))
-        if not target:
-            return
-        if os.path.abspath(target) == os.path.abspath(backup_path):
-            self.error(tr("Gecersiz hedef"), tr("Hedef, yedek dosyasinin "
-                                                "kendisi olamaz."))
-            return
-
-        def task(progress):
-            return DiskSession.restore_to_new_image(backup_path, target,
-                                                    progress=progress)
-
-        ok, result = run_task(self, tr("Yedek geri yukleniyor"), task)
-        if not ok:
-            self.error(tr("Geri yukleme basarisiz"), str(result))
-            return
-        self.log(tr("Yedek geri yuklendi: {} -> {} ({})",
-                    os.path.basename(backup_path), target,
-                    human_size(info.total_bytes)))
-        self.open_path(target)
-
     def close_image(self) -> None:
         """Etkin oturumu kapatir; diger acik goruntuler listede kalir."""
         if self.session:
@@ -1046,10 +944,15 @@ class MainWindow(QMainWindow):
             if not self.session.table:
                 return
 
-        bolgeler = self.session.free_regions()
+        # Bos alan **plana gore** sorulur: kuyrukta bekleyen "yeni bolum"
+        # adimlari diskte gorunmez ama o alani tutar (ADR 0034).
+        bolgeler = self.planned_free_regions()
         if not bolgeler:
-            QMessageBox.information(self, tr("Bos alan yok"),
-                                    tr("Yeni bolum icin yeterli bos alan bulunamadi."))
+            QMessageBox.information(
+                self, tr("Bos alan yok"),
+                tr("Yeni bolum icin yeterli bos alan bulunamadi.\n\n"
+                   "Bekleyen adimlar da yer tutar; listeyi bosaltmak alani "
+                   "geri verir."))
             return
         if self.selected_free:
             selected = [r for r in bolgeler if r.start_lba == self.selected_free[0]]
@@ -1062,9 +965,14 @@ class MainWindow(QMainWindow):
         genisletilmis_var = False
         birincil_musait = True
         if self.session.scheme == "mbr":
-            ext = table.extended_partition()
+            # Birincil bolum sayisi da plana gore sayilir: kuyruktaki
+            # bolumler de yer kaplayacaktir.
+            planlananlar = self.planned_partitions()
+            ext = next((p for p in planlananlar
+                        if not p.logical and p.type_id in MBR_EXTENDED_TYPES),
+                       None)
             genisletilmis_var = ext is not None
-            birincil_musait = table.can_add_primary()
+            birincil_musait = sum(1 for p in planlananlar if not p.logical) < 4
             if ext is not None and ext.start_lba <= bolge.start_lba <= ext.end_lba:
                 ic_genisletilmis = True
             if not birincil_musait and not ic_genisletilmis:
@@ -1084,6 +992,8 @@ class MainWindow(QMainWindow):
         v = dlg.values()
 
         sector = self.session.image.sector_size
+        if self._planned_conflict(v["start_lba"], v["sector_count"]):
+            return
         if v["kind"] == "extended":
             self.enqueue(ops.create_op(v["start_lba"], v["sector_count"], sector,
                                        extended=True))
@@ -1101,9 +1011,11 @@ class MainWindow(QMainWindow):
         if exec_dialog(dlg) != FormatDialog.Accepted:
             return
         v = dlg.values()
+        # Hedef **LBA ile** de tasinir: onceki adimlar bolum numaralarini
+        # kaydirabilir (ADR 0033).
         self.enqueue(ops.format_op(
             part.index, v["fs"], label=v["label"],
-            fs_name=FS_BY_KEY[v["fs"]].label,
+            fs_name=FS_BY_KEY[v["fs"]].label, at_lba=part.start_lba,
             cluster_bytes=v["cluster"], quick=v["quick"]))
 
     def resize_partition(self) -> None:
@@ -1147,12 +1059,16 @@ class MainWindow(QMainWindow):
             return
         if not plan.changed:
             return
+        if self._planned_conflict(v["start_lba"], v["sector_count"],
+                                  ignore_lba=part.start_lba):
+            return
 
         # Plan uyarilari kuyruga eklerken gosterilir; onay uygulama aninda.
         for note in plan.warnings:
             self.log(tr("Boyutlandirma uyarisi: {}", note))
         operation = ops.resize_op(part.index, v["start_lba"], v["sector_count"],
-                                  self.session.image.sector_size)
+                                  self.session.image.sector_size,
+                                  at_lba=part.start_lba)
         operation.detail = plan.summary()
         self.enqueue(operation)
 
@@ -1161,14 +1077,15 @@ class MainWindow(QMainWindow):
         if part is None:
             return
         self.enqueue(ops.delete_op(
-            part.index,
+            part.index, at_lba=part.start_lba,
             name=f"{part.display_name}, {human_size(part.size)}"))
 
     def toggle_bootable(self) -> None:
         part = self._current_partition()
         if part is None:
             return
-        self.enqueue(ops.boot_op(part.index, not part.bootable))
+        self.enqueue(ops.boot_op(part.index, not part.bootable,
+                                 at_lba=part.start_lba))
 
     def rename_partition(self) -> None:
         part = self._current_partition()
@@ -1182,7 +1099,8 @@ class MainWindow(QMainWindow):
         name, ok = QInputDialog.getText(self, tr("Bolum adi"), tr("Yeni ad:"), text=part.name)
         if not ok:
             return
-        self.enqueue(ops.rename_op(part.index, name.strip()))
+        self.enqueue(ops.rename_op(part.index, name.strip(),
+                                   at_lba=part.start_lba))
 
     def change_type(self) -> None:
         part = self._current_partition()
@@ -1199,7 +1117,7 @@ class MainWindow(QMainWindow):
                 return
             self.enqueue(ops.type_op(part.index,
                                      type_id=int(choice.split(" ")[0], 16),
-                                     name=choice))
+                                     name=choice, at_lba=part.start_lba))
             return
         else:
             secenekler = [f"{tr(v)} — {k}"
@@ -1210,7 +1128,7 @@ class MainWindow(QMainWindow):
                 return
             self.enqueue(ops.type_op(part.index,
                                      type_guid=choice.split(" — ")[1],
-                                     name=choice))
+                                     name=choice, at_lba=part.start_lba))
 
     def change_label(self) -> None:
         part = self._current_partition()
@@ -1227,7 +1145,8 @@ class MainWindow(QMainWindow):
                                              text=fs.label)
         if not ok:
             return
-        self.enqueue(ops.label_op(part.index, etiket.strip()))
+        self.enqueue(ops.label_op(part.index, etiket.strip(),
+                                  at_lba=part.start_lba))
 
 
     # ==================================================================
@@ -1272,99 +1191,54 @@ class MainWindow(QMainWindow):
     # ==================================================================
     # Yedekleme / geri yukleme / klonlama
     # ==================================================================
-    def backup(self, disk: bool = True) -> None:
-        if self.session is None:
-            QMessageBox.information(self, tr("Goruntu yok"), tr("Once bir "
-                                                             "goruntu acin."))
-            return
-        if not disk:
-            part = self._current_partition()
-            if part is None:
-                return
-            default = f"{self.session.name}-bolum{part.index}.dub"
-            target_name = tr("Bolum {}", part.index)
-        else:
-            default = f"{self.session.name}.dub"
-            target_name = tr("Tum disk")
-        path, _ = QFileDialog.getSaveFileName(
-            self, tr("Yedek dosyasi"), os.path.join(os.path.dirname(self.session.path),
-                                                default),
-            tr("DiskUltimate yedegi (*.dub)"))
-        if not path:
-            return
-        if not path.endswith(".dub"):
-            path += ".dub"
+    # ==================================================================
+    # Yedekleme ve geri yukleme — tek pencere (ADR 0032)
+    # ==================================================================
+    def open_backup_dialog(self, mode: str = MODE_BACKUP,
+                           partition: bool = False,
+                           backup_path: str = "") -> None:
+        """Yedekleme/geri yukleme penceresini acar.
 
-        def task(progress):
-            if disk:
-                return self.session.backup_disk(path, progress=progress)
-            return self.session.backup_partition(part.index, path, progress=progress)
-
-        ok, result = run_task(self, tr("{} yedekleniyor", target_name), task)
-        if not ok:
-            self.error(tr("Yedekleme basarisiz"), str(result))
+        Kaynak ve hedef **pencerenin icinde** secilir; bu yuzden burada acik
+        oturum sarti yoktur. Secili disk ya da bolum varsa listede onceden
+        isaretlenir — kullanici menuden ne bekliyorsa onu bulur.
+        """
+        index = -1
+        if partition and self.selected_partition is not None \
+                and not self.selected_is_planned:
+            index = self.selected_partition
+        if not self.sessions and not self._physical_cache:
+            QMessageBox.information(
+                self, tr("Kaynak yok"),
+                tr("Yedeklenecek bir goruntu veya disk bulunamadi.\n\n"
+                   "Bir goruntu acin ya da Disk > Fiziksel diskleri yenile."))
             return
-        self.log(tr("{} yedeklendi: {} ({}, kaynak {})",
-                    target_name, path, human_size(result.file_size),
-                    human_size(result.total_bytes)))
-        InfoDialog(tr("Yedekleme tamamlandi"), result.summary(), self).exec_()
-
-    def restore(self, disk: bool = True) -> None:
-        if not self._require_session():
+        dlg = BackupDialog(
+            self, mode=mode, sessions=list(self.sessions),
+            disks=list(self._physical_cache.values()), surveys=self._surveys,
+            session=self.session, partition_index=index,
+            backup_path=backup_path, disk_path=self._selected_disk_path() or "")
+        dlg.exec_()
+        if dlg.result_value is not None:
+            self.log(dlg.status.text())
+        if dlg.opened_path:
+            self.open_path(dlg.opened_path)
             return
-        if not disk:
-            part = self._current_partition()
-            if part is None:
-                return
-        path, _ = QFileDialog.getOpenFileName(
-            self, tr("Yedek dosyasi"), os.path.dirname(self.session.path),
-            tr("DiskUltimate yedegi (*.dub);;Tum dosyalar (*)"))
-        if not path:
-            return
-        try:
-            info = self.session.backup_info(path)
-        except Exception as exc:
-            self.error(tr("Yedek okunamadi"), str(exc))
-            return
-        target_size = self.session.image.size if disk else part.size
-        target_name = tr("tum disk") if disk else tr("Bolum {}", part.index)
-        if info.total_bytes > target_size:
-            self.error(tr("Hedef cok kucuk"),
-                       tr("Yedek {}, hedef {}",
-                          human_size(info.total_bytes),
-                          human_size(target_size)))
-            return
-        cevap = QMessageBox.warning(
-            self, tr("Geri yukleme onayi"),
-            tr("Yedek: {}\nKaynak boyut: {}\nDosya sistemi: {}\nOlusturma: "
-               "{}\n\nHedef: {}\n\nHedefteki tum veriler uzerine yazilacak. "
-               "Devam edilsin mi?",
-               os.path.basename(path), human_size(info.total_bytes),
-               info.fs_type or '-',
-               info.created.strftime('%Y-%m-%d %H:%M') if info.created else '-',
-               target_name),
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if cevap != QMessageBox.Yes:
-            return
-
-        # Geri yukleme kuyruga GIRMEZ: dogrudan ve tek seferlik bir yazmadir.
-        # Kaynak salt okunur acildigi icin (ADR 0025) once yazma moduna alinir;
-        # bu adim atlandiginda islem "salt okunur" hatasiyla dusuyordu.
-        if not self._make_writable():
-            return
-
-        def task(progress):
-            if disk:
-                return self.session.restore_disk(path, progress=progress)
-            return self.session.restore_partition(part.index, path, progress=progress)
-
-        ok, result = run_task(self, tr("Geri yukleniyor"), task)
-        if not ok:
-            self.error(tr("Geri yukleme basarisiz"), str(result))
+        if dlg.reload_needed:
             self.refresh()
-            return
-        self.log(tr("{} geri yuklendi: {}", target_name, os.path.basename(path)))
-        self.refresh()
+            self.refresh_disks()
+
+    def write_backup_to_target(self) -> None:
+        """Acik `.dub` yedegini bir hedefe yazar (ayni pencere, geri yukleme kipi)."""
+        path = ""
+        if self.session is not None and self.session.is_backup:
+            path = getattr(self.session.image, "info", None)
+            path = getattr(path, "path", "") or self.session.path
+        self.open_backup_dialog(MODE_RESTORE, backup_path=path)
+
+    def show_backup_info(self) -> None:
+        """Yedek dosyasinin bilgisi ve icerigi — ayri pencere yok, ayni form."""
+        self.open_backup_dialog(MODE_RESTORE)
 
     def clone_disk(self) -> None:
         if self.session is None:
@@ -1405,6 +1279,7 @@ class MainWindow(QMainWindow):
             size = self.session.image.size
             free_region = False
             index = -1
+            at_lba = -1
         else:
             part = self._current_partition()
             if part is None:
@@ -1412,6 +1287,7 @@ class MainWindow(QMainWindow):
             target_name = tr("Bolum {} ({})", part.index, part.display_name)
             size = part.size
             index = part.index
+            at_lba = part.start_lba
             fs = None
             try:
                 fs = self.session.filesystem(index)
@@ -1424,10 +1300,11 @@ class MainWindow(QMainWindow):
             return
         v = dlg.values()
         if v["scope"] == "free":
-            self.enqueue(ops.wipe_free_op(index))
+            self.enqueue(ops.wipe_free_op(index, at_lba=at_lba))
             return
         self.enqueue(ops.wipe_partition_op(
-            index, v["method"], method_name=dlg.method_combo.currentText()))
+            index, v["method"], method_name=dlg.method_combo.currentText(),
+            at_lba=at_lba))
 
     # ==================================================================
     # Kurtarma
@@ -1615,37 +1492,6 @@ class MainWindow(QMainWindow):
         self.log(tr("VHD olusturuldu: {} ({})", path, human_size(v['size'])))
         self.refresh()
 
-    def show_backup_info(self) -> None:
-        """Yedek dosyasinin bilgisini **ve icerigini** gosterir.
-
-        Icerik okuma yedegi acmayi gerektirir (bolum tablosu + dosya sistemi);
-        buyuk ve sikistirilmis bir yedekte bu birkac saniye surebilir, bu yuzden
-        ilerleme penceresiyle calisir.
-        """
-        path, _ = QFileDialog.getOpenFileName(
-            self, tr("Yedek dosyasi"), "", tr("DiskUltimate yedegi "
-                                              "(*.dub);;Tum dosyalar (*)"))
-        if not path:
-            return
-        ok, preview = run_task(
-            self, tr("Yedek okunuyor"),
-            lambda report: self._read_backup(path, report))
-        if not ok:
-            self.error(tr("Yedek okunamadi"), str(preview))
-            return
-        dlg = BackupInfoDialog(preview, self)
-        dlg.exec_()
-        if dlg.browse:
-            self.log(tr("Yedek gezilmek uzere aciliyor: {}", os.path.basename(path)))
-            self.open_path(path)
-
-    @staticmethod
-    def _read_backup(path: str, report):
-        report(tr("Yedek basligi okunuyor..."), 10)
-        preview = DiskSession.backup_preview(path)
-        report(tr("Tamamlandi"), 100)
-        return preview
-
     # ==================================================================
     # Onyukleme
     # ==================================================================
@@ -1775,6 +1621,154 @@ class MainWindow(QMainWindow):
         QApplication.instance().quit()
 
     # ==================================================================
+    # Plan onizlemesi
+    # ==================================================================
+    def _compute_plan(self):
+        """Kuyruk uygulandiginda ortaya cikacak yerlesimi hesaplar.
+
+        Kuyruk bossa `None` doner — o zaman harita zaten diskteki hali
+        gosterir. Hesap bellekte yapilir, diske dokunmaz (`core/planview.py`).
+        """
+        if self.session is None or self.session.table is None:
+            return None
+        queue = self.queue
+        if queue.is_empty:
+            return None
+        try:
+            return planview.project(self.session, queue)
+        except Exception as exc:          # onizleme hicbir zaman engel olmaz
+            diagnostics.error("plan onizlemesi hesaplanamadi", exc)
+            return None
+
+    def _planned_layout(self):
+        """Kuyruk uygulandiginda ortaya cikacak yerlesim (yoksa `None`).
+
+        `_plan_layout` yalnizca tazeleme sirasinda hesaplanir; yeni bir adim
+        kurulurken **o anki** kuyruk gecerlidir, bu yuzden gerekirse yeniden
+        hesaplanir.
+        """
+        if self.session is None or self.session.table is None:
+            return None
+        if self.queue.is_empty:
+            return None
+        if self._plan_layout is None:
+            self._plan_layout = self._compute_plan()
+        return self._plan_layout
+
+    def planned_free_regions(self):
+        """Bos alanlar — **bekleyen adimlar dusulmus** halde.
+
+        `session.free_regions()` diskteki durumu anlatir; kuyruktaki "yeni
+        bolum" adimlari diske yazilmadigi icin orada gorunmez. Yeni bir bolum
+        bu listeye gore kurulursa az once planlanan bolumun uzerine denk gelir
+        ve uygulama ortasinda "cakisiyor" diye durur (ADR 0034).
+        """
+        layout = self._planned_layout()
+        if layout is not None:
+            return layout.free
+        return self.session.free_regions()
+
+    def planned_partitions(self):
+        """Bolumler — bekleyen adimlar uygulandiktan sonraki hali."""
+        layout = self._planned_layout()
+        if layout is not None:
+            return layout.partitions
+        return self.session.partitions
+
+    def _planned_conflict(self, start_lba: int, sector_count: int,
+                          ignore_lba: int = -1) -> bool:
+        """Aralik planlanan bir bolumu kesiyorsa uyarir ve `True` doner."""
+        layout = self._planned_layout()
+        if layout is None:
+            return False
+        clash = planview.overlap_at(layout, start_lba, sector_count,
+                                    ignore_lba=ignore_lba)
+        if clash is None:
+            return False
+        self.error(
+            tr("Bekleyen adimla cakisiyor"),
+            tr("Bu alan <b>{}</b> ile cakisiyor. O bolum henuz diske "
+               "yazilmadi ama bekleyen islemler arasinda ve bu alani "
+               "tutuyor.<br><br>Once bekleyen adimi kaldirin ya da baska bir "
+               "alan secin.", clash.display_name))
+        return True
+
+    @staticmethod
+    def _scheme_name(scheme: str) -> str:
+        return {"mbr": "MBR", "gpt": "GPT"}.get(scheme, scheme.upper())
+
+    def _refresh_plan_views(self):
+        """Harita ve tabloyu (varsa) planlanan yerlesime gore cizer.
+
+        Gosterilen (bolumler, bos alanlar) ciftini dondurur; cagiran taraf
+        secimi bunun uzerinden tazeler.
+        """
+        session = self.session
+        if session is None:
+            return [], []
+        self._plan_layout = self._compute_plan()
+        plan = self._plan_layout if self._show_plan else None
+        partitions = plan.partitions if plan else session.partitions
+        free = plan.free if plan else session.free_regions()
+        sema = (session.scheme_name if plan is None
+                else self._scheme_name(plan.scheme))
+        self.disk_map.set_disk(
+            f"{session.name} — {human_size(session.image.size)} — {sema}",
+            session.image.sector_count, partitions, free)
+        self.part_table.set_partitions(partitions, free)
+        self._update_plan_bar()
+        if self.selected_partition is not None:
+            self.disk_map.select_partition(self.selected_partition)
+            self.part_table.select_partition(self.selected_partition)
+        elif self.selected_free is not None and free:
+            # Secili bos alan kuyruk degisince kuculmus ya da bolunmus
+            # olabilir; secim eski baslangicta kalirsa "yeni bolum" yanlis
+            # yere kurulur (ADR 0034). Eski baslangici kapsayan bolgeye,
+            # yoksa en buyuguene gecilir.
+            start = self.selected_free[0]
+            match = next((r for r in free if r.start_lba <= start <= r.end_lba),
+                         max(free, key=lambda r: r.sector_count))
+            self.selected_free = (match.start_lba, match.sector_count)
+            self.disk_map.select_free(match.start_lba)
+            self.part_table.select_free(match.start_lba)
+        return partitions, free
+
+    def _update_plan_bar(self) -> None:
+        """Plan seridini tazeler (kuyruk bossa gizlenir)."""
+        plan = self._plan_layout
+        if plan is None:
+            self.plan_bar.setVisible(False)
+            return
+        self.plan_bar.setVisible(True)
+        adet = len(self.queue)
+        if self._show_plan:
+            self.plan_label.setText(
+                tr("<b>Planlanan yerlesim</b> gosteriliyor — {} bekleyen adim "
+                   "uygulandiginda disk boyle olacak ({}). Diske henuz "
+                   "yazilmadi.", adet, planview.summary(plan)))
+            self.plan_toggle.setText(tr("Diskteki hali goster"))
+        else:
+            self.plan_label.setText(
+                tr("<b>Diskteki hali</b> gosteriliyor — {} bekleyen adim "
+                   "listede bekliyor.", adet))
+            self.plan_toggle.setText(tr("Planlanani goster"))
+
+    def toggle_plan_preview(self) -> None:
+        """Planlanan yerlesim ile diskteki hali arasinda gecis yapar."""
+        self._show_plan = not self._show_plan
+        self.refresh(reload=False)
+
+    def _planned_partition(self, index: int):
+        """Onizlemedeki bolum (yalnizca planda varsa)."""
+        plan = self._plan_layout
+        if plan is None or not self._show_plan:
+            return None
+        for p in plan.partitions:
+            if p.index == index:
+                return p
+        return None
+
+    # ==================================================================
     # Bekleyen islem kuyrugu
     # ==================================================================
     @property
@@ -1811,6 +1805,10 @@ class MainWindow(QMainWindow):
             index = operation.params.get("index")
             if isinstance(index, int) and index >= 0:
                 marks.setdefault(index, []).append(str(operation))
+        # Harita/tablo planlanan yerlesime gore yeniden cizilir; ana ekran
+        # kuyruktaki degisikligi **hemen** gosterir (ADR 0031).
+        if self.session is not None and self.session.table is not None:
+            self._refresh_plan_views()
         self.part_table.set_pending(marks)
         count = len(queue)
         self.pending_view.setHeaderLabels(
@@ -1902,57 +1900,25 @@ class MainWindow(QMainWindow):
         if not can_write:
             self.error(tr("Yazilamaz kaynak"), reason)
             return
-        if not self._confirm_apply(queue):
-            return
-        if not self._make_writable():
-            return
-        ok, result = run_task(
-            self, tr("{} adim uygulaniyor", len(queue)),
-            lambda report: queue.apply(self.session, progress=report))
-        if not ok:
-            self.error(tr("Uygulama basarisiz"), str(result))
+        # Onay, ilerleme ve sonuc **tek pencerededir**: kullanici adimlari
+        # sirayla gorur ve hangisinde durdugunu okur (ADR 0031).
+        ran, outcome = run_apply(self, self.session, queue,
+                                 prepare=self._make_writable)
+        if not ran:
+            if outcome:
+                self.log(tr("Uygulama basarisiz: {}", outcome))
             self.refresh()
             self._refresh_pending()
             return
+        result = outcome
         for operation in result.done:
             self.log(tr("Uygulandi: {}", operation.title))
         if result.ok:
             self.log(result.summary())
-            QMessageBox.information(self, tr("Uygulandi"), result.summary())
         else:
             self.log(tr("DIKKAT: {}", result.summary()))
-            self.error(
-                tr("Uygulama yarida kaldi"),
-                tr("{} adim uygulandi, sonra <b>{}</b> adiminda "
-                   "durdu:<br><br>{}<br><br>Tamamlanan adimlar <b>geri "
-                   "alinmaz</b>. Duran adim ve sonrasi listede kaldi; "
-                   "duzeltip yeniden deneyebilirsiniz.",
-                   len(result.done), result.failed.title, result.error))
         self.refresh()
         self._refresh_pending()
-
-    def _confirm_apply(self, queue) -> bool:
-        """Uygulama onayi — butun adimlari ve yikici olanlari gosterir."""
-        steps = "<br>".join(
-            (f"<b>{line} {tr('[YIKICI]')}</b>" if destructive else line)
-            for line, destructive in queue.describe_rows())
-        destructive = queue.destructive_count
-        warning = ""
-        if destructive:
-            warning = tr("<br><br><b>{} adim veri kaybettirebilir.</b> "
-                         "Uygulandiktan sonra geri alinamaz.", destructive)
-        target = self.session.name
-        box = QMessageBox(QMessageBox.Warning, tr("Bekleyen islemleri uygula"),
-                          tr("Asagidaki <b>{} adim</b> sirayla <b>{}</b> "
-                             "uzerinde "
-                             "calistirilacak:<br><br>{}{}<br><br>Devam "
-                             "edilsin mi?", len(queue), target, steps, warning),
-                          QMessageBox.NoButton, self)
-        run = box.addButton(tr("Uygula"), QMessageBox.AcceptRole)
-        box.addButton(tr("Vazgec"), QMessageBox.RejectRole)
-        box.setDefaultButton(run)
-        box.exec_()
-        return box.clickedButton() is run
 
     def _make_writable(self) -> bool:
         """Kaynagi yazma moduna alir; fiziksel diskte tum kapilardan gecer."""
@@ -2254,10 +2220,22 @@ class MainWindow(QMainWindow):
     def select_partition(self, index: int) -> None:
         if not self.session or not self.session.table:
             return
+        planlanan = None
         try:
             part = self.session.table.get(index)
         except Exception:
-            return
+            # Bolum diskte yok: yalnizca planda olabilir (kuyrukta "yeni
+            # bolum" adimi). Secilebilir ve incelenebilir ama uzerinde islem
+            # yapilamaz — henuz var degildir.
+            planlanan = self._planned_partition(index)
+            if planlanan is None:
+                return
+            part = planlanan
+        else:
+            shown_parts = self._planned_partition(index)
+            if shown_parts is not None:
+                part = shown_parts        # boyut/etiket planlanan haliyle
+        self.selected_is_planned = planlanan is not None
         self.selected_partition = index
         self.selected_free = None
         self.disk_map.select_partition(index)
@@ -2267,6 +2245,16 @@ class MainWindow(QMainWindow):
             tr("Secili: Bolum {} — {} ({})",
                index, part.display_name, human_size(part.size)))
         self._show_partition_info(part)
+        if self.selected_is_planned:
+            # Diskte karsiligi yok: icerik gosterilemez, gosteriliyormus gibi
+            # de yapilmaz.
+            self.browser.set_filesystem(None)
+            self.hex_view.set_device(self.session.image, tr("Tum goruntu"))
+            self.status_sel.setText(
+                tr("Secili: Bolum {} — {} ({}) — planlanan, henuz olusturulmadi",
+                   index, part.display_name, human_size(part.size)))
+            self._update_actions()
+            return
         fs = None
         try:
             fs = self.session.filesystem(index)
@@ -2281,6 +2269,7 @@ class MainWindow(QMainWindow):
     @diagnostics.timed("ui.select_free")
     def select_free(self, start_lba: int, sector_count: int) -> None:
         self.selected_partition = None
+        self.selected_is_planned = False
         self.selected_free = (start_lba, sector_count)
         self.disk_map.select_free(start_lba)
         self.part_table.select_free(start_lba)
@@ -2321,10 +2310,10 @@ class MainWindow(QMainWindow):
         free = session.free_regions()
         self.map_stack.setCurrentIndex(1)
         self.map_stack.setMinimumHeight(self.disk_map.minimumHeight())
-        self.disk_map.set_disk(
-            f"{session.name} — {human_size(session.image.size)} — {session.scheme_name}",
-            session.image.sector_count, partitions, free)
-        self.part_table.set_partitions(partitions, free)
+        # Bekleyen adimlar varsa harita ve tablo **planlanan** yerlesimi
+        # gosterir: kullanici Uygula demeden sonucu gorur (ADR 0031).
+        # Agac diskteki gercek duruma bagli kalir.
+        shown_parts, shown_free = self._refresh_plan_views()
         self._build_tree(partitions)
         self.setWindowTitle(f"{session.name} — {APP_NAME}")
         self.status_file.setText(session.path)
@@ -2344,12 +2333,13 @@ class MainWindow(QMainWindow):
         self.status_scheme.setText(state)
 
         if self.selected_partition is not None and \
-                any(p.index == self.selected_partition for p in partitions):
+                any(p.index == self.selected_partition for p in shown_parts):
             self.select_partition(self.selected_partition)
-        elif partitions:
-            self.select_partition(partitions[0].index)
-        elif free:
-            self.select_free(free[0].start_lba, free[0].sector_count)
+        elif shown_parts:
+            self.select_partition(shown_parts[0].index)
+        elif shown_free:
+            self.select_free(shown_free[0].start_lba,
+                             shown_free[0].sector_count)
         else:
             self.status_sel.setText("")
             self.browser.set_filesystem(None)
@@ -2529,11 +2519,55 @@ class MainWindow(QMainWindow):
             if not is_elevated():
                 self.log(tr("Yetki: normal kullanici — fiziksel disk icin {} gerekir",
                             elevation_name()))
+            # Ekran bos baslamaz: ilk okunabilir disk secilip **salt okunur**
+            # acilir. Cizim once bitsin diye siraya alinir (ADR 0035).
+            QTimer.singleShot(0, lambda: self._autoselect_disk(disks))
         self._update_actions()
         # Yetki teklifi ilk taramadan SONRA yapilir: ancak o zaman hangi
         # diskin bilgisinin okunamadigi bilinir.
         if first:
             self._offer_elevation([d for d in disks if not d.info_complete])
+
+    @staticmethod
+    def first_openable_disk(disks, surveys):
+        """Acilista acilacak disk — yoksa `None`.
+
+        Olcut **acilabilirlik**tir, buyukluk ya da tur degil: bilgisi eksik
+        okunan (yetki yok) ya da bolum tablosu okunamamis bir diski acmak
+        kullaniciya acilista bir hata penceresi gosterirdi. Ilk uygun disk
+        secilir; listedeki sira isletim sisteminin sirasidir (sda, sdb...).
+        """
+        for info in disks or []:
+            if not getattr(info, "info_complete", False):
+                continue
+            survey = (surveys or {}).get(info.path)
+            if survey is None or getattr(survey, "error", ""):
+                continue
+            return info
+        return None
+
+    def _autoselect_disk(self, disks) -> None:
+        """Acilista ilk uygun diski secer ve salt okunur acar.
+
+        Yalnizca **bir kez** calisir: kullanici diski kapattiginda pencere
+        onu yeniden acmaya kalkmaz. Basarisizlik sessizdir — acilista hata
+        penceresi cikarmak, kullanicinin istemedigi bir isin bedelidir.
+        """
+        if self._auto_opened or self.session is not None:
+            return
+        self._auto_opened = True
+        info = self.first_openable_disk(disks, self._surveys)
+        if info is None:
+            return
+        try:
+            self._wait_for_scan()
+            self._add_session(DiskSession.open_physical(info, readonly=True))
+        except Exception as exc:                       # noqa: BLE001
+            diagnostics.info(f"acilista disk acilamadi: {info.path}: {exc}")
+            return
+        self.log(tr("Fiziksel disk acildi (salt okunur): {} — {}, {}",
+                    info.path, human_size(info.size), self.session.scheme_name))
+        self.refresh(reload=False)
 
     def _add_session_node(self, session: DiskSession) -> None:
         """Bir acik goruntu/disk icin agac dali olusturur."""
@@ -2760,6 +2794,22 @@ class MainWindow(QMainWindow):
         self.tree.setCurrentItem(found)
         self.tree.blockSignals(False)
 
+    def _find_tree_item_by_kind(self, kind: str, parent=None):
+        """Agacta verilen **turde** ilk dugumu bulur (testler ve menuler icin)."""
+        if parent is None:
+            nodes = [self.tree.topLevelItem(i)
+                     for i in range(self.tree.topLevelItemCount())]
+        else:
+            nodes = [parent.child(i) for i in range(parent.childCount())]
+        for node in nodes:
+            data = node.data(0, Qt.UserRole)
+            if data and data[0] == kind:
+                return node
+            hit = self._find_tree_item_by_kind(kind, node)
+            if hit is not None:
+                return hit
+        return None
+
     def _find_tree_item(self, target, parent=None):
         """Agacta verilen `Qt.UserRole` verisine sahip dugumu arar."""
         if parent is None:
@@ -2784,13 +2834,22 @@ class MainWindow(QMainWindow):
             # Disk acik ise uzerine tiklamak onu **etkin kaynak** yapar;
             # islemler dogrudan bu diske uygulanir (ayri bir dal yoktur).
             session = self._find_open(value)
-            if session is not None and session is not self.session:
-                self.session = session
-                self.selected_partition = None
-                self.selected_free = None
-                self.refresh()
+            if session is not None:
+                if session is not self.session:
+                    self.session = session
+                    self.selected_partition = None
+                    self.selected_free = None
+                    self.refresh()
+                else:
+                    self.show_disk_info(value)
                 return
+            # Disk kapali: bilgisi gosterilir **ve salt okunur acilir**.
+            # Eskiden yalnizca bilgi paneli doluyordu; bolum tablosu bos,
+            # butun islemler pasif kaliyordu ve kullanici "hicbir sey
+            # secemiyorum" diyordu. Bolume tiklamak zaten diski aciyordu;
+            # diskin kendisine tiklamanin acmamasi tutarsizdi (ADR 0035).
             self.show_disk_info(value)
+            self.open_physical(path=value)
             return
         if kind == "physpart":
             self._open_physical_partition(*value)
@@ -2936,31 +2995,74 @@ class MainWindow(QMainWindow):
         elif kind == "free":
             self._free_menu().exec_(kuresel)
         elif kind == "phys":
-            menu = QMenu(self)
+            # Disk islemleri **diskin kendi satirinda** durur. Eskiden bolum
+            # tablosu olusturma "Fiziksel Diskler" baslik satirindaydi; orasi
+            # bir kategori basligidir, hedefi yoktur ve islem o sirada etkin
+            # olan kaynaga gidiyordu — yani sag tiklanan diske degil
+            # (ADR 0036).
             session = self._find_open(value)
+            if session is None:
+                self.open_physical(path=value)
+                session = self._find_open(value)
+            elif session is not self.session:
+                self.session = session
+                self.selected_partition = None
+                self.selected_free = None
+                self.refresh()
+            menu = QMenu(self)
+            menu.addAction(self.act_disk_info)
             if session is not None:
+                menu.addSeparator()
+                self._readonly_hint(menu)
+                menu.addAction(self.act_mbr)
+                menu.addAction(self.act_gpt)
+                menu.addAction(self.act_clear_table)
+                menu.addSeparator()
+                menu.addAction(self.act_backup_disk)
+                menu.addAction(self.act_restore_disk)
+                menu.addSeparator()
                 menu.addAction(tr("Bu diski kapat"),
                                lambda: self._close_session(session))
-                menu.addSeparator()
-            menu.addAction(self.act_disk_info)
+            menu.addSeparator()
             menu.addAction(self.act_refresh_disks)
             menu.exec_(kuresel)
+        elif kind == "physroot":
+            # Kategori basligi: yalnizca **butun listeye** ait isler.
+            menu = QMenu(self)
+            menu.addAction(self.act_refresh_disks)
+            if not is_elevated():
+                menu.addAction(self.act_elevate)
+            menu.exec_(kuresel)
         elif kind == "session":
+            target = self._session_by_id(value)
+            if target is not None and target is not self.session:
+                self.session = target
+                self.selected_partition = None
+                self.selected_free = None
+                self.refresh()
             menu = QMenu(self)
             # `act_close` etkin oturumu kapatir; buradaki giris sag tiklanan
             # oturumu kapatir. Ayri islem oldugu icin ayri etiket tasir.
             menu.addAction(tr("Bu goruntuyu kapat"), self._close_tree_session)
             menu.addSeparator()
+            self._readonly_hint(menu)
+            menu.addAction(self.act_mbr)
+            menu.addAction(self.act_gpt)
+            menu.addAction(self.act_clear_table)
+            # Goruntu boyutu yalnizca **dosyada** degistirilebilir; fiziksel
+            # diskin boyutu donanimdir.
+            if target is not None and not target.is_physical:
+                menu.addSeparator()
+                menu.addAction(self.act_resize_img)
+            menu.addSeparator()
+            menu.addAction(self.act_backup_disk)
+            menu.addAction(self.act_restore_disk)
+            menu.addSeparator()
             menu.addAction(self.act_refresh)
             menu.exec_(kuresel)
         else:
             menu = QMenu(self)
-            self._readonly_hint(menu)
-            menu.addAction(self.act_mbr)
-            menu.addAction(self.act_gpt)
-            menu.addSeparator()
-            menu.addAction(self.act_resize_img)
-            menu.addAction(self.act_refresh)
+            menu.addAction(self.act_refresh_disks)
             menu.exec_(kuresel)
 
     # ==================================================================
@@ -3131,7 +3233,10 @@ class MainWindow(QMainWindow):
         self.act_apply.setEnabled(acik and queue_len > 0)
         self.act_undo_step.setEnabled(queue_len > 0)
         self.act_discard.setEnabled(queue_len > 0)
-        part_selected = acik and self.selected_partition is not None
+        # Planlanan (henuz olusturulmamis) bolum uzerinde islem
+        # yapilamaz: diskte karsiligi yoktur.
+        part_selected = (acik and self.selected_partition is not None
+                         and not self.selected_is_planned)
         self.act_close.setEnabled(acik)
         self.act_refresh.setEnabled(acik)
         self.act_mbr.setEnabled(yazilabilir)
@@ -3158,11 +3263,15 @@ class MainWindow(QMainWindow):
         # Onyukleyici yoneticisi acik bir disk ister; UEFI duzenleyici
         # istemez — bellenim degiskenleri diskte degil anakarttadir.
         self.act_bootloader.setEnabled(acik)
-        # yedekleme ve klonlama
-        self.act_backup_disk.setEnabled(acik)
+        # Yedekleme ve geri yukleme: kaynak/hedef **pencerenin icinde**
+        # secilir (ADR 0032). Bu yuzden acik oturum sart degildir; agacta
+        # secili bir disk de yeter. Eskiden bu eylemler yalnizca acik
+        # goruntude etkindi ve kullanici "diski yedekleyecegim" derken once
+        # diski acmak zorunda kaliyordu.
+        kaynak_var = acik or bool(self._physical_cache)
+        self.act_backup_disk.setEnabled(kaynak_var)
+        self.act_restore_disk.setEnabled(kaynak_var)
         self.act_clone_disk.setEnabled(acik)
-        self.act_restore_disk.setEnabled(yazilabilir)
-        # Yedek yazma yalnizca acik oturum bir .dub yedegi iken anlamli.
         self.act_write_backup.setEnabled(acik and self.session.is_backup)
         self.act_backup_part.setEnabled(acik and part_selected)
         self.act_restore_part.setEnabled(yazilabilir and part_selected)

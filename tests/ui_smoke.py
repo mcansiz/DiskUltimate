@@ -106,6 +106,14 @@ def _sozde_diyaloglar(pencere):
         InfoDialog(i18n.tr("Sistem Bilgisi"), dict(platform_summary()), pencere,
                    note=i18n.tr("Tanilama notu")),
     ]
+    from diskultimate.core import operations as ops
+    from diskultimate.ui.dialogs.apply import ApplyDialog
+
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.format_op(1, "fat32", label="SOZDE", fs_name="FAT32"))
+    kuyruk.add(ops.delete_op(2, "Linux kok"))
+    diyaloglar.append(ApplyDialog(pencere, oturum, kuyruk))
+
     try:
         diyaloglar.append(ResizePartitionDialog(
             bolum, oturum.resize_window(bolum.index),
@@ -355,6 +363,72 @@ def main() -> int:
     kaydet(d8, "13-bulunan-dosyalar.png")
     d8.close()
 
+    # --- plan onizlemesi ve uygulama penceresi (ADR 0031) ---
+    # Kuyruga adim eklenince ana ekran **planlanan** yerlesimi gostermeli:
+    # yeni bolum haritada belirir, silinen kaybolur. Eskiden ekran hic
+    # degismiyordu ve kullanici ne olacagini goremiyordu.
+    from diskultimate.core import operations as ops
+    from diskultimate.ui.dialogs.apply import ApplyDialog
+
+    once_bolum = len(pencere.session.partitions)
+    bos_alan = pencere.session.free_regions()[0]
+    pencere.enqueue(ops.create_op(bos_alan.start_lba, 400 * MIB // 512, 512,
+                                  fs_key="ntfs", label="PLANLI"))
+    pencere.enqueue(ops.delete_op(3, "Windows Veri"))
+    pencere.enqueue(ops.format_op(1, "exfat", label="YENIDEN",
+                                  fs_name="exFAT"))
+    app.processEvents()
+    assert pencere.plan_bar.isVisible(), "plan seridi gorunmedi"
+    plan = pencere._plan_layout
+    assert plan is not None, "plan hesaplanmadi"
+    assert len(plan.partitions) == once_bolum, (
+        f"planlanan bolum sayisi yanlis: {len(plan.partitions)}")
+    assert any(p.plan_state == "new" for p in plan.partitions), "yeni bolum yok"
+    assert not any(p.index == 3 for p in plan.partitions), "silinen bolum durdu"
+    # Bekleyen "yeni bolum" adimi bos alani **tutar**: bir sonraki bolum onun
+    # uzerine kurulmamali (ADR 0034). Eskiden ucu de ayni LBA'ya kuruluyordu.
+    kalan = pencere.planned_free_regions()
+    yeni_bas = bos_alan.start_lba
+    yeni_son = yeni_bas + 400 * MIB // 512 - 1
+    cakisan = [r for r in kalan
+               if not (r.end_lba < yeni_bas or r.start_lba > yeni_son)]
+    assert not cakisan, (
+        "planlanan bolum bos alani tutmadi: "
+        f"{[(r.start_lba, r.end_lba) for r in cakisan]}")
+    kaydet(pencere, "31-plan-onizlemesi.png")
+
+    # Diskteki hale donunce gercek yerlesim gorunur
+    pencere.toggle_plan_preview()
+    app.processEvents()
+    assert not pencere._show_plan
+    assert len(pencere.session.partitions) == once_bolum
+    kaydet(pencere, "32-diskteki-hali.png")
+    pencere.toggle_plan_preview()
+    app.processEvents()
+
+    d11 = ApplyDialog(pencere, pencere.session, pencere.queue)
+    d11.show()
+    kaydet(d11, "33-uygula-adimlar.png")
+    assert d11.table.rowCount() == len(pencere.queue), "adim listesi eksik"
+    # Calisiyor / bitti / hata durumlari cizilebilmeli (is parcacigi
+    # baslatmadan, dogrudan sinyal isleyicileri cagrilarak)
+    d11._on_step_started(0)
+    d11._on_step_progress(0, "Bicimlendiriliyor...", 45)
+    d11._on_overall("1/3 — Bolum 1 bicimlendir", 15)
+    kaydet(d11, "34-uygula-calisirken.png")
+    d11._on_step_done(0, "")
+    d11._on_step_started(1)
+    d11._on_step_done(1, "Bolum bulunamadi")
+    app.processEvents()
+    assert d11.table.item(2, 2).text() == i18n.tr("Calistirilmadi"), \
+        "duran adimdan sonrasi 'calistirilmadi' isaretlenmedi"
+    kaydet(d11, "35-uygula-durdu.png")
+    d11.close()
+    pencere.queue.clear()
+    pencere._refresh_pending()
+    app.processEvents()
+    assert not pencere.plan_bar.isVisible(), "kuyruk bosalinca serit kalmamali"
+
     # --- kopyalama ilerleme penceresi ---
     # Buyuk bir dosya bolume yazilirken hicbir sey gosterilmiyordu; kullanici
     # bunu donma sanmisti (ADR 0021). Pencere gercekten cizilsin diye burada
@@ -478,12 +552,19 @@ def main() -> int:
     assert os.path.getsize(goruntu) == kuyruk_oncesi,         "kuyruga eklemek goruntuyu degistirdi"
     kaydet(pencere, "21-bekleyen-islemler.png")
 
-    # Tabloda bekleyen isaret gorunmeli
+    # Tabloda bekleyen isaret gorunmeli. **Silinen** bolum artik tabloda
+    # yoktur: ana ekran planlanan yerlesimi gosterir (ADR 0031), silinecek
+    # bolum haritadan da tablodan da kalkar. Bu yuzden isaret yalnizca
+    # kalan/degisen bolumlerde aranir.
     isaretli = [pencere.part_table.item(r, 0).text()
                 for r in range(pencere.part_table.rowCount())
                 if pencere.part_table.item(r, 0)
                 and "⏳" in pencere.part_table.item(r, 0).text()]
-    assert len(isaretli) == 2, f"bekleyen isaret sayisi: {isaretli}"
+    assert len(isaretli) == 1, f"bekleyen isaret sayisi: {isaretli}"
+    assert not any(p.index == 2 for p in pencere._plan_layout.partitions),         "silinecek bolum planlanan yerlesimde durdu"
+    plan_durumlari = {p.index: p.plan_state
+                      for p in pencere._plan_layout.partitions}
+    assert plan_durumlari.get(1) == "format", plan_durumlari
 
     pencere.undo_step()
     assert len(pencere.queue) == 2, "geri alma calismadi"
@@ -497,6 +578,76 @@ def main() -> int:
                 and "⏳" in pencere.part_table.item(r, 0).text()]
     assert not isaretli, "kuyruk bosalinca isaretler kalmamali"
     print("  (bekleyen islem kuyrugu: ekleme, isaret, geri alma, iptal denetlendi)")
+
+    # --- sag tik menuleri: her islem AIT OLDUGU dugumde (ADR 0036) ---
+    # "Fiziksel Diskler" bir kategori basligidir; bolum tablosu olusturma
+    # orada durunca islem sag tiklanan diske degil, o sirada etkin olan
+    # kaynaga gidiyordu. Menuler exec_ yakalanarak okunur; hicbir pencere
+    # acilmaz ve hicbir aygita dokunulmaz.
+    from PyQt5.QtWidgets import QMenu
+
+    yakalanan = []
+    orijinal_exec = QMenu.exec_
+    QMenu.exec_ = lambda self, *a, **k: yakalanan.append(
+        [act.text() for act in self.actions() if act.text()])
+
+    def _menu_ac(hedef_tur):
+        yakalanan.clear()
+        dugum = pencere._find_tree_item_by_kind(hedef_tur)
+        assert dugum is not None, f"agacta {hedef_tur} dugumu yok"
+        pencere.tree.scrollToItem(dugum)
+        pencere._tree_context(pencere.tree.visualItemRect(dugum).center())
+        assert yakalanan, f"{hedef_tur} icin menu acilmadi"
+        return yakalanan[-1]
+
+    try:
+        kok_menu = _menu_ac("physroot")
+        assert not any("bolum tablosu" in m.lower() for m in kok_menu),             f"kategori basliginda disk islemi duruyor: {kok_menu}"
+        assert any("yenile" in m.lower() for m in kok_menu), kok_menu
+
+        oturum_menu = _menu_ac("session")
+        assert any("MBR" in m for m in oturum_menu), oturum_menu
+        assert any("GPT" in m for m in oturum_menu), oturum_menu
+        assert any("Goruntu boyutunu" in m for m in oturum_menu), oturum_menu
+        assert any("yedekle" in m.lower() for m in oturum_menu), oturum_menu
+    finally:
+        QMenu.exec_ = orijinal_exec
+    print(f"  (sag tik: kategori basliginda {len(kok_menu)} giris, "
+          f"goruntu dugumunde {len(oturum_menu)} giris)")
+
+    # --- acilista hazir ekran: ilk uygun disk secilir (ADR 0035) ---
+    # Politika ayri sinanir: gercek bir aygit acmadan, hangi diskin
+    # secilecegini belirleyen kural olculur. Bilgisi eksik ya da bolum
+    # tablosu okunamamis disk acilista **acilmaz** — yoksa kullanici
+    # acilir acilmaz bir hata penceresiyle karsilasirdi.
+    class _SahteDisk:
+        def __init__(self, path, info_complete=True):
+            self.path = path
+            self.name = os.path.basename(path)
+            self.size = 10 * 1024 * MIB
+            self.info_complete = info_complete
+
+    class _SahteYoklama:
+        def __init__(self, error=""):
+            self.error = error
+
+    eksik = _SahteDisk("/dev/sdx", info_complete=False)
+    okunamaz = _SahteDisk("/dev/sdy")
+    saglam = _SahteDisk("/dev/sdz")
+    yoklamalar = {"/dev/sdx": _SahteYoklama(),
+                  "/dev/sdy": _SahteYoklama("tablo okunamadi"),
+                  "/dev/sdz": _SahteYoklama()}
+    secim = MainWindow.first_openable_disk([eksik, okunamaz, saglam], yoklamalar)
+    assert secim is saglam, f"acilista yanlis disk secildi: {secim}"
+    assert MainWindow.first_openable_disk([eksik, okunamaz], yoklamalar) is None,         "acilamayacak disk secildi"
+    assert MainWindow.first_openable_disk([], {}) is None
+    # Bir kez calisir: kullanici diski kapatinca pencere yeniden acmaz
+    assert pencere._auto_opened in (True, False)
+    pencere._auto_opened = True
+    onceki = pencere.session
+    pencere._autoselect_disk([saglam])
+    assert pencere.session is onceki, "otomatik secim ikinci kez calisti"
+    print("  (acilis secimi: bilgisi eksik ve okunamayan diskler atlaniyor)")
 
     # --- salt okunur acilan kaynak yazma moduna gecebilmeli ---
     # Kuyruga girmeyen islemler (geri yukleme, klonlama) bunu kullanir.
@@ -572,26 +723,77 @@ def main() -> int:
     print(f"  ({len(icons.names())} ikon cizildi — "
           f"cizim ozeti {icons.digest()})")
 
-    # --- yedek dosyasi bilgisi: icerik listesi + "gez" dugmesi ---
-    from diskultimate.core.clone import backup
-    from diskultimate.ui.dialogs.tools import BackupInfoDialog
+    # --- yedekleme/geri yukleme: TEK pencere (ADR 0032) ---
+    # Eskiden yedek bilgisi ayri bir pencereydi, yedek almak ve geri yuklemek
+    # ise bir dizi dosya secme + soru kutusuydu. Artik hepsi ayni formda:
+    # ustte dosya + bilgi + icerik + not, altta disk/bolum agaci.
+    from diskultimate.core.clone import backup, read_backup_info
+    from diskultimate.ui.dialogs.backup import (MODE_BACKUP, MODE_RESTORE,
+                                                BackupDialog)
 
     dub_yolu = os.path.join(scratch("ui"), "ornek.dub")
     kaynak_oturum = DiskSession.open(goruntu, readonly=True)
-    backup(kaynak_oturum.image, dub_yolu, compress=True)
+    backup(kaynak_oturum.image, dub_yolu, compress=True,
+           remark="Duman testi yedegi — 2026")
     kaynak_oturum.close()
-    onizleme = DiskSession.backup_preview(dub_yolu)
-    d10 = BackupInfoDialog(onizleme, pencere)
+    assert read_backup_info(dub_yolu).remark.startswith("Duman testi"), \
+        "not dosyaya yazilmadi"
+
+    d10 = BackupDialog(pencere, mode=MODE_BACKUP,
+                       sessions=list(pencere.sessions),
+                       disks=list(pencere._physical_cache.values()),
+                       surveys=pencere._surveys, session=pencere.session)
     d10.show()
-    kaydet(d10, "18-yedek-bilgisi.png")
-    assert d10.tree.topLevelItemCount() == len(onizleme.partitions), \
-        "yedek icerigi agaca yansimadi"
-    assert not d10.browse, "gez dugmesine basilmadan istek olusmamali"
-    d10._browse()
-    assert d10.browse, "gez dugmesi istegi kaydetmedi"
+    app.processEvents()
+    assert d10.current_target() is not None, "kaynak secilmedi"
+    assert d10.tree.topLevelItemCount() >= 1, "hedef agaci bos"
+    d10._set_path(os.path.join(scratch("ui"), "yeni-yedek.dub"))
+    d10.remark.setPlainText("Ana diskin haftalik yedegi")
+    d10.level_buttons["high"].setChecked(True)
+    app.processEvents()
+    assert d10.level() == 9, d10.level()
+    assert not d10._problem(), d10._problem()
+    # Yedek alma kipinde icerik agaci KAYNAGIN bolumlerini gosterir
+    assert d10.content.topLevelItemCount() == len(pencere.session.partitions),         f"kaynak icerigi listelenmedi: {d10.content.topLevelItemCount()}"
+    kaydet(d10, "36-yedek-al.png")
+
+    # Gercek yedek: pencere kendi is parcaciginda calistirir ve sonucu
+    # **ayni formda** gosterir; ayri bir ilerleme penceresi acilmaz.
+    yeni_yedek = d10.path_edit.text()
+    d10._start()
+    assert d10._worker is not None, "yedekleme is parcacigi baslamadi"
+    d10._worker.wait()
+    app.processEvents()
+    assert d10.result_value is not None, f"yedek alinamadi: {d10.status.text()}"
+    assert os.path.isfile(yeni_yedek), "yedek dosyasi olusmadi"
+    assert read_backup_info(yeni_yedek).remark == "Ana diskin haftalik yedegi",         "not yeni yedege yazilmadi"
+    print(f"  (yedek penceresi: {os.path.basename(yeni_yedek)} "
+          f"{d10.result_value.file_size} bayt, not dosyada)")
     d10.close()
-    print(f"  (yedek bilgisi: {d10.tree.topLevelItemCount()} bolum listelendi, "
-          "gez dugmesi calisiyor)")
+
+    d11 = BackupDialog(pencere, mode=MODE_RESTORE,
+                       sessions=list(pencere.sessions),
+                       disks=list(pencere._physical_cache.values()),
+                       surveys=pencere._surveys, session=pencere.session,
+                       backup_path=dub_yolu)
+    d11.show()
+    app.processEvents()
+    if d11._worker is not None:
+        d11._worker.wait()
+    app.processEvents()
+    assert d11.info is not None, "yedek basligi okunmadi"
+    assert d11.remark.toPlainText().startswith("Duman testi"), \
+        "not forma yuklenmedi"
+    assert d11.content.topLevelItemCount() >= 1, "yedek icerigi listelenmedi"
+    # Yikici islem: onay kutusu isaretlenmeden Baslat etkin olmamali
+    assert not d11.btn_start.isEnabled(), \
+        "silme onayi verilmeden geri yukleme etkin"
+    d11.confirm.setChecked(True)
+    app.processEvents()
+    kaydet(d11, "37-geri-yukle.png")
+    print(f"  (yedek penceresi: {d11.content.topLevelItemCount()} bolum, "
+          f"not {len(d11.remark.toPlainText())} karakter)")
+    d11.close()
 
     # --- coklu goruntu: ikinci bir imaj acilinca ilki listede kalmali ---
     ikinci = os.path.join(scratch("ui"), "ikinci.img")

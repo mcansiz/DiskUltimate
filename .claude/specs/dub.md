@@ -26,7 +26,25 @@ Blok tabanli, sifir bloklari atlayan, istege bagli zlib sikistirmali yedek bicim
 | 36 | 4 | Blok sayisi |
 | 40 | 32 | Dosya sistemi adi (UTF-8) |
 | 72 | 64 | Birim etiketi (UTF-8) |
+| 136 | 320 | **Kullanici notu** (UTF-8, sifirla doldurulur) |
+| 456 | 54 | Ayrilmis (sifir) |
 | 510 | 2 | `0xAA55` — basligi 512 bayta tamamlar |
+
+### Kullanici notu (136)
+
+Yedegin ne oldugunu anlatan serbest metin; arayuzde "Not" alanidir ve
+`clone.write_remark()` ile **yedegi yeniden uretmeden** degistirilebilir
+(yalnizca baslik yazilir, veri bloklarina dokunulmaz).
+
+Alan surum yukseltmeden eklendi ve bu **bilincli**dir: eski yedeklerde bu
+bolge sifirdir ve not "yok" okunur, yeni yedekler eski surumlerde de acilir.
+Surum numarasi artsaydi eski surum yeni dosyayi tumden reddederdi — oysa
+degisen tek sey, okunmadiginda hicbir sey kaybettirmeyen bir etikettir.
+
+Kirpma **bayt** siniridir (320) ama cok baytli karakterin ortasindan
+kesilmez: kirpilan dizi cozulemiyorsa son bayt atilir. Turkce ve Almanca
+harfler UTF-8'de iki bayt tuttugu icin bu sinir ~160 karaktere karsilik
+gelir.
 
 > **Uyari.** 510. bayttaki `0xAA55`, `.dub` dosyasini ham goruntu olarak acan
 > her araca **gecerli ama bos bir MBR** gibi gosterir. DiskUltimate bu yuzden

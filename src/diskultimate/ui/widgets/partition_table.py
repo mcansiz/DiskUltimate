@@ -9,13 +9,20 @@ from PyQt5.QtWidgets import (QAbstractItemView, QHeaderView, QTableWidget,
                              QTableWidgetItem)
 
 from ...core.ptable import FreeRegion, Partition, human_size
-from ..theme import FREE_COLOR, fs_color, palette_color
+from ..theme import (FREE_COLOR, PLAN_COLOR, fs_color, palette_color,
+                     plan_label)
 from ...i18n import mark, tr
 
 # Kaynak metinler; gosterilirken `columns()` ile cevrilir (ADR 0027).
-COLUMNS = [mark("Bolum"), mark("Dosya Sistemi"), mark("Etiket"), mark("Boyut"),
-           mark("Kullanilan"), mark("Bos"), mark("Baslangic LBA"),
-           mark("Bitis LBA"), mark("Tur"), mark("Bayrak")]
+# "Plan" sutunu yalnizca bekleyen adim varken gorunur (`set_partitions`
+# gizler/gosterir): bos bir sutunu surekli tasimak yer israfi olurdu.
+COLUMNS = [mark("Bolum"), mark("Plan"), mark("Dosya Sistemi"), mark("Etiket"),
+           mark("Boyut"), mark("Kullanilan"), mark("Bos"),
+           mark("Baslangic LBA"), mark("Bitis LBA"), mark("Tur"),
+           mark("Bayrak")]
+PLAN_COLUMN = 1
+
+
 
 
 def columns() -> List[str]:
@@ -69,15 +76,17 @@ class PartitionTableWidget(QTableWidget):
         header.setStretchLastSection(True)
         for i, mode in enumerate([QHeaderView.Interactive] * len(COLUMNS)):
             header.setSectionResizeMode(i, mode)
-        self.setColumnWidth(0, 120)
-        self.setColumnWidth(1, 110)
-        self.setColumnWidth(2, 120)
-        self.setColumnWidth(3, 90)
+        self.setColumnWidth(0, 150)
+        self.setColumnWidth(1, 140)
+        self.setColumnWidth(2, 110)
+        self.setColumnWidth(3, 120)
         self.setColumnWidth(4, 90)
         self.setColumnWidth(5, 90)
-        self.setColumnWidth(6, 100)
+        self.setColumnWidth(6, 90)
         self.setColumnWidth(7, 100)
-        self.setColumnWidth(8, 160)
+        self.setColumnWidth(8, 100)
+        self.setColumnWidth(9, 160)
+        self.setColumnHidden(PLAN_COLUMN, True)
         self._rows: List[Tuple[str, object]] = []
         self._pending: dict = {}
         self.itemSelectionChanged.connect(self._on_selection)
@@ -140,6 +149,11 @@ class PartitionTableWidget(QTableWidget):
                 self._fill_partition(row, obj)
             else:
                 self._fill_free(row, obj)
+        # Plan sutunu yalnizca gerektiginde gorunur
+        self.setColumnHidden(
+            PLAN_COLUMN,
+            not any(kind == "part" and plan_label(obj)
+                    for kind, obj in self._rows))
         self._apply_pending()
         self.blockSignals(False)
 
@@ -158,34 +172,50 @@ class PartitionTableWidget(QTableWidget):
         return item
 
     def _fill_partition(self, row: int, p: Partition) -> None:
-        self._set(row, 0, part_label(p), icon=color_chip(fs_color(p.fs_type)),
-                  bold=True)
-        self._set(row, 1, p.fs_type or "-")
-        self._set(row, 2, p.name or p.fs_label or "-")
-        self._set(row, 3, human_size(p.size), align=Qt.AlignRight)
-        self._set(row, 4, human_size(p.fs_used) if p.fs_used >= 0 else "-",
+        # Plan onizlemesindeki bolumler durumlariyla birlikte yazilir;
+        # diskteki bolumlerde `plan_state` bostur ve hicbir sey eklenmez.
+        # Durum **ilk sutunda** durur: ayri bir sutun saga kayip ekrandan
+        # cikiyordu ve kullanici planlanan satiri fark etmiyordu.
+        state_text = plan_label(p)
+        name_item = self._set(row, 0, part_label(p),
+                              icon=color_chip(fs_color(p.fs_type)), bold=True)
+        plan_item = self._set(row, PLAN_COLUMN, state_text or "-",
+                              dim=not state_text)
+        if state_text:
+            for cell in (name_item, plan_item):
+                cell.setForeground(QBrush(QColor(PLAN_COLOR)))
+                cell.setToolTip(
+                    tr("Bekleyen islemlerden geliyor: {}", state_text))
+            font = plan_item.font()
+            font.setBold(True)
+            plan_item.setFont(font)
+        self._set(row, 2, p.fs_type or "-")
+        self._set(row, 3, p.name or p.fs_label or "-")
+        self._set(row, 4, human_size(p.size), align=Qt.AlignRight)
+        self._set(row, 5, human_size(p.fs_used) if p.fs_used >= 0 else "-",
                   align=Qt.AlignRight)
         free = p.fs_total - p.fs_used if (p.fs_total >= 0 and p.fs_used >= 0) else -1
-        self._set(row, 5, human_size(free) if free >= 0 else "-", align=Qt.AlignRight)
-        self._set(row, 6, str(p.start_lba), align=Qt.AlignRight)
-        self._set(row, 7, str(p.end_lba), align=Qt.AlignRight)
-        self._set(row, 8, p.type_name)
-        bayraklar = []
+        self._set(row, 6, human_size(free) if free >= 0 else "-", align=Qt.AlignRight)
+        self._set(row, 7, str(p.start_lba), align=Qt.AlignRight)
+        self._set(row, 8, str(p.end_lba), align=Qt.AlignRight)
+        self._set(row, 9, p.type_name)
+        flags = []
         if p.bootable:
-            bayraklar.append(tr("Onyukleme"))
+            flags.append(tr("Onyukleme"))
         if p.logical:
-            bayraklar.append(tr("Mantiksal"))
-        self._set(row, 9, ", ".join(bayraklar) or "-", dim=not bayraklar)
+            flags.append(tr("Mantiksal"))
+        self._set(row, 10, ", ".join(flags) or "-", dim=not flags)
+
 
     def _fill_free(self, row: int, r: FreeRegion) -> None:
         self._set(row, 0, tr("Bos alan"), icon=color_chip(QColor(FREE_COLOR)), dim=True)
-        for col in (1, 2, 4, 5):
+        for col in (1, 2, 3, 5, 6):
             self._set(row, col, "-", dim=True)
-        self._set(row, 3, human_size(r.size), align=Qt.AlignRight, dim=True)
-        self._set(row, 6, str(r.start_lba), align=Qt.AlignRight, dim=True)
-        self._set(row, 7, str(r.end_lba), align=Qt.AlignRight, dim=True)
-        self._set(row, 8, tr("Bolumlenmemis"), dim=True)
-        self._set(row, 9, "-", dim=True)
+        self._set(row, 4, human_size(r.size), align=Qt.AlignRight, dim=True)
+        self._set(row, 7, str(r.start_lba), align=Qt.AlignRight, dim=True)
+        self._set(row, 8, str(r.end_lba), align=Qt.AlignRight, dim=True)
+        self._set(row, 9, tr("Bolumlenmemis"), dim=True)
+        self._set(row, 10, "-", dim=True)
 
     # -- secim ---------------------------------------------------------------
     def current_target(self) -> Optional[Tuple[str, object]]:

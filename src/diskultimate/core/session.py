@@ -679,18 +679,20 @@ class DiskSession:
     # Yedekleme / geri yukleme / klonlama
     # ======================================================================
     def backup_partition(self, index: int, dest_path: str, compress: bool = True,
-                         progress=None):
+                         progress=None, remark: str = "",
+                         level: int = clone_mod.LEVEL_NORMAL):
         part = self.table.get(index) if self.table else None
         if part is None:
             raise SessionError(tr("Bolum bulunamadi"))
         return clone_mod.backup(self.view(part), dest_path, compress=compress,
                                 fs_type=part.fs_type, label=part.fs_label or part.name,
-                                progress=progress)
+                                progress=progress, remark=remark, level=level)
 
-    def backup_disk(self, dest_path: str, compress: bool = True, progress=None):
+    def backup_disk(self, dest_path: str, compress: bool = True, progress=None,
+                    remark: str = "", level: int = clone_mod.LEVEL_NORMAL):
         return clone_mod.backup(self.image, dest_path, compress=compress,
                                 fs_type=self.scheme_name, label=self.name,
-                                progress=progress)
+                                progress=progress, remark=remark, level=level)
 
     def restore_partition(self, index: int, src_path: str, progress=None):
         self._require_writable()
@@ -798,6 +800,25 @@ class DiskSession:
     def is_backup(self) -> bool:
         """Acik oturum bir `.dub` yedegi mi? (salt okunur, gezilebilir)"""
         return isinstance(self.image, clone_mod.DubImage)
+
+    @staticmethod
+    def backup_physical(disk, dest_path: str, compress: bool = True,
+                        progress=None, remark: str = "",
+                        level: int = clone_mod.LEVEL_NORMAL):
+        """Fiziksel diski **salt okunur** acip `.dub` dosyasina yedekler.
+
+        Yedek almak icin diski oturum olarak acmak gerekmez: okumak zararsizdir
+        ve aygit is bitince hemen kapatilir. Boylece kullanici yedekleme
+        penceresinden herhangi bir diski dogrudan secebilir (ADR 0032).
+        """
+        device = PhysicalDisk(disk, readonly=True)
+        try:
+            return clone_mod.backup(device, dest_path, compress=compress,
+                                    fs_type="", label=disk.name,
+                                    progress=progress, remark=remark,
+                                    level=level)
+        finally:
+            device.close()
 
     @staticmethod
     def restore_to_physical(src_path: str, disk, allow_system: bool = False,

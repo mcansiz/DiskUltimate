@@ -65,6 +65,7 @@ class GrubStatus:
     defaults_path: str = ""
     defaults_readable: bool = False
     config_path: str = ""
+    config_readable: bool = False
     os_prober_enabled: bool = False
     os_prober_present: bool = False
     menu_entries: int = 0
@@ -82,6 +83,16 @@ class GrubStatus:
             prober = tr("Acik")
         else:
             prober = tr("Kapali — diger sistemler menude cikmaz")
+        # `grub.cfg` cogu dagitimda `-rw-------` root'a aittir. Okuyamadigimizda
+        # "0 giris" yazmak menuyu bos gostermek olurdu — oysa menu doludur,
+        # yalnizca bizim yetkimiz yoktur. Ayni ilke: CLAUDE.md, eksik disk
+        # bilgisi kurali.
+        if not self.config_path:
+            menu = tr("bulunamadi")
+        elif not self.config_readable:
+            menu = tr("okunamadi (yetki yok)")
+        else:
+            menu = str(self.menu_entries)
         return {
             tr("GRUB yonetimi"): (tr("Kullanilabilir") if self.available
                                   else (self.reason or tr("Kullanilamaz"))),
@@ -90,7 +101,7 @@ class GrubStatus:
                 self.firmware, tr("Bilinmiyor")),
             tr("Surum"): self.version or "-",
             tr("Yapilandirma"): self.config_path or tr("bulunamadi"),
-            tr("Menu girisi"): str(self.menu_entries),
+            tr("Menu girisi"): menu,
             tr("os-prober"): prober,
             tr("Eksik arac"): ", ".join(missing) if missing else tr("yok"),
         }
@@ -130,7 +141,9 @@ def status() -> GrubStatus:
                 with open(state.config_path, "r", encoding="utf-8",
                           errors="replace") as fh:
                     state.menu_entries = len(parse_grub_cfg(fh.read()))
+                state.config_readable = True
             except OSError:
+                state.config_readable = False
                 state.menu_entries = 0
 
         tool = state.tools.get("grub-install", "")
@@ -328,24 +341,61 @@ def restore_config(stamp: str) -> Tuple[bool, str]:
 # ==========================================================================
 # Kurulum ve yapilandirma uretimi
 # ==========================================================================
-def install(device: str, progress=None) -> Tuple[bool, str]:
-    """Verilen **diske** GRUB kurar (`grub-install`).
+def install_target() -> str:
+    """GRUB'un nereye kurulacagi: 'esp' (UEFI) | 'disk' (BIOS) | '' (bilinmiyor).
 
-    `device` bir bolum degil, **diskin kendisidir**. Bolume kurmak cogu
-    yapilandirmada calismaz ve dosya sistemini bozabilir; bu yuzden arayuz
-    yalnizca disk secmeye izin verir.
+    Bu ayrim kozmetik degildir. **UEFI'de `grub-install` aygit argumanini yok
+    sayar**: kurulum EFI Sistem Bolumune yapilir ve diskin ilk sektoruna
+    dokunulmaz. Olculdu (Linux Mint 22.3, UEFI): araca sistem diski verildi,
+    arac *"Installing for x86_64-efi platform"* dedi, ESP dosyalarini yeniden
+    yazdi ve MBR'nin ilk 440 bayti **bit bit ayni kaldi**.
+
+    Arayuz bunu bilmezse kullaniciya yanlis bir sey soyler ("diskin ilk
+    sektoru degisecek") ve kullanici yanlis diski sectigini sanip bosuna
+    tedirgin olur.
+    """
+    return {"uefi": "esp", "bios": "disk"}.get(platform.firmware_type(), "")
+
+
+def install(device: str, progress=None) -> Tuple[bool, str]:
+    """GRUB'u kurar (`grub-install`).
+
+    BIOS kipinde `device` **diskin kendisidir** ve ilk sektorune yazilir;
+    bolume kurmak cogu yapilandirmada calismaz, bu yuzden arayuz yalnizca disk
+    secmeye izin verir.
+
+    UEFI kipinde `device` **kullanilmaz**: hedef EFI Sistem Bolumudur. Araca
+    anlamsiz bir arguman gecirmek yerine hic gecirilmez — boylece ciktisi da
+    kullanicinin gordugu metinle tutarli olur.
     """
     available, reason = platform.grub_management_available()
     if not available:
         return False, reason
     tool = platform.find_boot_tool("grub-install")
+    target = install_target()
+
+    if target == "esp":
+        command = [tool]
+        message = tr("GRUB, EFI Sistem Bolumune kuruluyor...")
+    else:
+        command = [tool, device]
+        message = tr("GRUB {} diskine kuruluyor...", device)
     if progress:
-        progress(tr("GRUB {} diskine kuruluyor...", device), -1)
-    with diagnostics.span("grub.install", reason=device):
-        code, out, error = platform.run_privileged([tool, device], timeout=600)
+        progress(message, -1)
+
+    with diagnostics.span("grub.install", reason=device or target):
+        code, out, error = platform.run_privileged(command, timeout=600)
+
+    # `grub-install` ilerleme ve sonuc satirlarini **stderr'e** yazar; basarili
+    # kosumda stdout bos gelir. Ikisini de toplamazsak kullaniciya "kuruldu"
+    # disinda hicbir sey gosteremeyiz.
+    detail = "\n".join(p for p in (out, error) if p).strip()
     if code == 0:
-        return True, out or tr("GRUB {} diskine kuruldu.", device)
-    return False, error or out or tr("`grub-install` basarisiz oldu.")
+        done = (tr("GRUB, EFI Sistem Bolumune kuruldu (diskin ilk sektoru "
+                   "degismedi).") if target == "esp"
+                else tr("GRUB {} diskine kuruldu.", device))
+        return True, f"{done}\n{detail}" if detail else done
+    return False, detail or tr("`grub-install` basarisiz oldu.")
 
 
 def update_config(progress=None) -> Tuple[bool, str]:
