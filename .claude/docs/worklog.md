@@ -3967,3 +3967,112 @@ Kaynak kopyalama komutunda hatalar `2>/dev/null` ile gizlenmisti; iki kosum
 sessizce **eski kodla** calisti ve yanlis sonuc uretti. Sonra bir kosumda
 hedef once silinip kaynak bulunamayinca VM'deki kopya bosaldi. Artik kaynak
 varligi kopyalamadan **once** dogrulanıyor ve hata gizlenmiyor.
+
+## 2026-09-21 — Windows EXE paketlemesi: `build_exe.bat` + `DiskUltimate.spec`
+
+Iki dosya da baska bir projeden (SchematicViz / `altium-monley`) kopyalanmisti
+ve bu projeyle hicbir ilgisi yoktu: giris noktasi `gui.py`, veri olarak
+`gui.ui` + `icon.ico`, `collect_all` ile `altium_monkey`/`openpyxl`/`trimesh`/
+`cascadio`, on kontrol icin var olmayan `deps.py`, hedef dizin olarak sabit
+`D:\pythonProjeler\altium-monley`. Bu haliyle paketleme ilk adimda duruyordu.
+
+DiskUltimate'a uyarlandi:
+
+- **Giris noktasi** `main.py`; `pathex=[src]` — `main.py` yolu calisma aninda
+  ekliyor ama Analysis statik cozumleme yapiyor, paketi gormesi gerekiyor.
+- **Ceviri sozlukleri veri olarak gomuluyor**: `src/diskultimate/i18n/catalogs/
+  *.po` -> pakette `diskultimate/i18n/catalogs/`. `i18n.CATALOG_DIR` paketin
+  yanina baktigi icin goreli yer birebir korunmali; yoksa exe yalnizca kaynak
+  dille (Turkce) acilirdi. `.po` veri dosyasidir, PyInstaller kendiliginde
+  almaz.
+- **`collect_all` yok**: tek calisma zamani bagimliligi PyQt5; cekirdek saf
+  Python. Kullanilmayan PyQt5 modulleri (QML/Quick/WebEngine/Multimedia...)
+  ve bilimsel yigin `excludes` ile disarida.
+- `_DROP` / `_DROP_DATA` filtreleri korundu (qwebgl, Qt5Qml, opengl32sw,
+  d3dcompiler, Qt cevirileri, `uic/widget-plugins` — projede hic `.ui` yok).
+  Windows tarafinda `qwindows.dll` ve `qwindowsvistastyle.dll` kaldi: uygulama
+  sistemin Qt temasini kullanir (ADR 0013).
+- **Ikon satiri kaldirildi** — depoda `.ico` yok; ikonlar `ui/icons.py` icinde
+  QPainter ile cizilir (ADR 0025). Eklenirse nereye yazilacagi yorumda.
+- **`.bat`**: sabit yol yerine `%~dp0`; yorumlayici secimi `py -3.12` -> `py -3`
+  -> `python` sirasiyla deneniyor; on kontrol `deps.py` yerine dogrudan
+  `import PyQt5.QtWidgets`; kaynak agaci denetimi; PyInstaller cikis kodu
+  `echo` oncesinde `%ERRORLEVEL%`'e aliniyor (eski surumde `echo.` araya
+  giriyordu) ve ayrica `dist\DiskUltimate.exe` varligi dogrulaniyor.
+- `.gitignore`: `build/` ve `dist/`.
+
+### Olculen
+
+Ana makinede paketlendi ve **salt okunur** duman testi yapildi (disk yazma
+yok): `dist\DiskUltimate.exe` 25 MB; arsivde `diskultimate\i18n\catalogs\
+{de,en}.po` ve `qwindows.dll` var, `Qt5Qml`/`opengl32sw`/`Qt5\translations`
+yok. `DISKULTIMATE_QPA=offscreen` ile calistirildi: arayuz acildi, gunluge
+"Fiziksel disk listesi hazir: 2 disk" yazdi, 30 sn sonra zaman asimiyla
+kapatildi. Eksik modul uyarisi yalnizca `fcntl` (Linux'a ozgu, `delayed,
+optional`).
+
+### Acik kalan — donmus pakette gunluk yolu
+
+`paths.PROJECT_ROOT` dosya konumundan uc dizin yukari cikarak hesaplaniyor.
+Onefile pakette `paths.py` `<Temp>\_MEIxxxx\diskultimate\` altinda durdugu icin
+PROJECT_ROOT **`%LOCALAPPDATA%\Temp`** cikiyor; gunlukler `Temp\.claude\logs\`
+altina yaziliyor (olculdu). Yazilabilir oldugu icin cokme yok, ama yer yanlis
+ve "Araclar > Tanilama" oraya aciliyor. Duzeltme `paths.py` icinde: `sys.frozen`
+ise kok olarak `os.path.dirname(sys.executable)` ya da
+`%LOCALAPPDATA%\DiskUltimate` alinmali. Bu oturumda **yapilmadi** (istenen
+kapsam iki paketleme dosyasiydi).
+
+## 2026-09-21 (2) — Oturum transcript'leri projeye alindi (depo tarafi hazirlandi)
+
+`session-persistence` skill'i: `~/.claude/projects/<slug>` klasoru
+`.claude/sessions/<slug>/` icine tasinir, yerine junction birakilir. Iki sorunu
+cozer — `cleanupPeriodDays` varsayilani 30 gundur (baska bir projede 18 gunluk
+oturum boyle kayboldu) ve dokumler makineye baglidir.
+
+Durum: `--check` -> `[BAGLI DEGIL] d--pythonProjeler-DiskUltimate-DiskUltimate`
+(9 transcript, ~44 MB). Depo **private** (`mcansiz/DiskUltimate`) oldugu icin
+transcript'lerin Git'e alinmasinda sakinca yok.
+
+### Kurulum calistirildi (acik oturumla, --force ile)
+
+Script acik Claude Code'u gorup durdu (cikis 2). Acik olan bu projenin kendisi
+oldugu icin skill `--force` onermiyor; kullanici riski bilerek devam dedi.
+
+**Korkulan olmadi: transcript bolunmedi.** Bu oturumun dosyasi
+(`ff9f0f73-...jsonl`) tasindiktan sonra junction uzerinden ayni dosyaya yazmaya
+devam etti (741 KB -> 753 KB, iki olcum arasi buyudu). Dosya tutamaci yola
+degil inode'a bagli oldugu icin rename calisan yazimi kesmiyor; Claude Code
+klasoru yeniden olusturmaya kalkmadan once junction yerine kondu. Not: bu
+zamanlamaya bagli, garanti degil — skill'in uyarisi yerinde.
+
+- `.gitignore` — desenin **tek yildizli** oldugu (`.claude/sessions/*.jsonl`)
+  ve alt dizini kapsamadigi aciklandi. Boylece kancanin urettigi **arsiv
+  kopyalari** disarida kalirken **canli transcript'ler**
+  (`.claude/sessions/<slug>/*.jsonl`) depoya girer. `git check-ignore` ile
+  ikisi de dogrulandi. `**` yapilirsa kalicilik ortadan kalkar — uyari yazildi.
+- `CLAUDE.md` — kayit kurali guncellendi: eski "ham `.jsonl` depoya girmez"
+  satiri artik arsiv kopyalarini anlatiyor; canli transcript'ler ve
+  `.gitattributes` (`.claude/sessions/** -text -diff`, CRLF cevrimi canli
+  yazilan JSONL'i bozar) kurali eklendi.
+- `SessionEnd` kancasi **kaldirilmadi** (kullanici karari): arsiv kopyalari
+  junction'in yanindan devam eder, INDEX.md uretimi degismez. Bedeli diskte
+  ~2 kat yer.
+
+### Dogrulandi
+
+- `--check` -> `[OK] d--pythonProjeler-DiskUltimate-DiskUltimate`
+- `~/.claude/projects/d--pythonProjeler-DiskUltimate-DiskUltimate` artik
+  `<JUNCTION>` -> proje icindeki klasor. Artik kalan `.yedek-*` klasoru yok.
+- 9 transcript + `memory/` projeye tasindi (~44 MB).
+- `.gitattributes` depo kokune yazildi (`.claude/sessions/** -text -diff`).
+- `.claude/settings.json` gecerli JSON, `SessionEnd` kancasi yerinde,
+  `cleanupPeriodDays: 36500` eklendi (global ayar Git'te olmadigi icin yetmezdi).
+- Arsiv kopyalari hala yok sayiliyor; canli transcript klasoru izlenmemis
+  olarak gorunuyor - yani commit'e girmeye hazir.
+
+### Kalan adim (kullanici)
+
+    git add .claude .gitattributes .gitignore CLAUDE.md
+    git commit -m "Oturum gecmisi projeye alindi"
+
+Ilk commit ~44 MB ekler. Commit yapilmadi - istenmedi.

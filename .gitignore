@@ -22,7 +22,16 @@ System Volume Information/
 Thumbs.db
 desktop.ini
 
-# Claude oturum kayitlari (proje icinde durur, ham dokum depoya girmez)
+# Claude oturum kayitlari (proje icinde durur).
+#   .claude/sessions/<slug>/*.jsonl  CANLI transcript'ler. session-persistence
+#       skill'i ~/.claude/projects/<slug> klasorunu buraya tasiyip yerine junction
+#       birakir. Bunlar DEPOYA GIRER: gecmis boylece makineler arasi tasinir ve
+#       cleanupPeriodDays'ten bagimsiz kalici olur. Depo private olmalidir --
+#       transcript konusmanin tamamidir (parola, token, ic bilgi).
+#   .claude/sessions/*.jsonl         SessionEnd kancasinin ust dizine biraktigi
+#       ARSIV KOPYALARI. Ayni veri ikinci kez depoya girmesin diye yok sayilir.
+# DIKKAT: asagidaki desen tek yildizlidir ve alt dizinleri KAPSAMAZ. `**` yapmayin;
+# yoksa canli transcript'ler de depodan duser ve kalicilik ortadan kalkar.
 .claude/settings.local.json
 .claude/sessions/*.jsonl
 
@@ -34,3 +43,7 @@ desktop.ini
 # Bir donma raporunu saklamak gerekirse .claude/logs/ altina tasinir.
 .claude/logs/runtime/
 .claude/logs/freeze/
+
+# PyInstaller paketleme ciktilari (build_exe.bat / DiskUltimate.spec)
+build/
+dist/

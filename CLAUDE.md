@@ -119,7 +119,7 @@ yapılmaz.**
 | `.claude/decisions/*.md` | Teknik kararlar (ADR): neden bu yol seçildi |
 | `.claude/specs/*.md` | Format/yapı spesifikasyonları (MBR, GPT, FAT vb.) |
 | `.claude/logs/*.md` | Uzun çıktı, hata ayıklama dökümleri |
-| `.claude/sessions/` | Claude oturum dökümleri (`.jsonl`) + `INDEX.md` — otomatik |
+| `.claude/sessions/` | Claude oturum dökümleri: canlı transcript'ler `<slug>/` altında (junction), arşiv kopyaları + `INDEX.md` — otomatik |
 | `.claude/memory/` | Claude kalıcı hafızası (`MEMORY.md` + tekil notlar) |
 | `.claude/hooks/` | Kayıt otomasyonu betikleri |
 
@@ -128,12 +128,25 @@ yapılmaz.**
 **Nasıl zorlanır:**
 - `.claude/settings.json` → `SessionEnd` kancası her oturum sonunda dökümü
   `.claude/hooks/archive-session.py` ile `.claude/sessions/` altına kopyalar.
+- **Canlı transcript'ler de projede durur** (`session-persistence` skill'i):
+  `~/.claude/projects/<slug>` klasörü `.claude/sessions/<slug>/` içine taşınır,
+  yerine bir junction bırakılır. İki sorunu birden çözer: `cleanupPeriodDays`
+  varsayılanı 30 gündür ve dökümler makineye bağlıdır. Ayar `.claude/settings.json`
+  içindeki `cleanupPeriodDays` ile birlikte klonla taşınır.
+  Kurulum/denetim: `python <skill>/scripts/setup_sessions.py [--check|--dry-run]`
+  — **Claude Code kapalıyken** çalıştırılır, yoksa açık oturumun transcript'i ikiye
+  bölünür. Başka bir yola klonlanırsa slug değişir; script durumu bildirir.
 - `.claude/settings.local.json` → `autoMemoryDirectory` hafızayı `.claude/memory/`
   içine yönlendirir. (Bu anahtar güvenlik gereği depoya giren `settings.json`
   içinden okunmaz; bu yüzden makineye özel `settings.local.json` içindedir ve
   yolu mutlaktır — depo başka bir yola klonlanırsa bu dosya yeniden yazılmalıdır.)
-- `.gitignore` → ham `.jsonl` dökümleri ve `settings.local.json` depoya girmez;
-  `.claude/sessions/INDEX.md` girer.
+- `.gitignore` → `settings.local.json` ve kancanın ürettiği **arşiv kopyaları**
+  (`.claude/sessions/*.jsonl`) depoya girmez. **Canlı transcript'ler**
+  (`.claude/sessions/<slug>/*.jsonl`) ve `INDEX.md` **girer** — geçmişin
+  makineler arasında taşınmasının tek yolu budur. Desen bilerek tek yıldızlıdır;
+  `**` yapılırsa kalıcılık ortadan kalkar. Bu yüzden depo **private** kalmalıdır:
+  transcript konuşmanın tamamıdır. `.gitattributes` → `.claude/sessions/** -text -diff`
+  (CRLF çevrimi canlı yazılan JSONL'i bozar).
 
 ## Arayuz Donmasi ve Tanilama (ZORUNLU)
 Arayuz is parcaciginda **suresi ongorulemeyen is yapilmaz**: isletim sistemi
