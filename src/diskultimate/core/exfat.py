@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 from .image import BlockDevice
+from .platform import restore_owner
 from ..i18n import tr
 
 ENTRY_SIZE = 32
@@ -597,6 +598,7 @@ class ExFatFS:
                 block = self.dev.read(self.cluster_offset(c), self.cluster_bytes)
                 fh.write(block[:kalan])
                 kalan -= len(block)
+        restore_owner(dest)     # yetkili kopyada dosya root'a ait kalmasin
         if entry.mtime:
             ts = entry.mtime.timestamp()
             os.utime(dest, (ts, ts))

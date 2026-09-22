@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 from .image import BlockDevice
+from .platform import restore_owner
 from ..i18n import tr
 
 ATTR_READ_ONLY = 0x01
@@ -537,6 +538,7 @@ class FatFS:
                 blob = self.read_cluster(c)
                 fh.write(blob[:remaining])
                 remaining -= len(blob)
+        restore_owner(dest)     # yetkili kopyada dosya root'a ait kalmasin
         if entry.mtime:
             ts = entry.mtime.timestamp()
             os.utime(dest, (ts, ts))

@@ -20,7 +20,8 @@ from .gpt import GPTTable
 from .image import BlockDevice, DiskImage, PartitionView
 from .mbr import MBRTable
 from .physical import (DiskInfo, PhysicalDisk, PhysicalDiskError,
-                       can_access, list_disks, open_device_paths)
+                       can_access, fill_mount_points, list_disks,
+                       open_device_paths)
 from .platform import (IS_WINDOWS, native_format_supported,
                        native_resize_supported, windows_format_volume,
                        windows_partition_size_limits, windows_resize_partition)
@@ -163,6 +164,9 @@ class DiskSession:
                     part.fs_label = found.label
                     part.fs_used = found.used_bytes
                     part.fs_total = found.total_bytes
+                # Baglama noktalari disk listesinden gelir (OS sorgusu yok).
+                fill_mount_points(info if hasattr(info, "mount_map") else None,
+                                  parts)
                 return DiskSurvey(path=path, scheme=table.scheme,
                                   partitions=parts)
             except Exception as exc:
@@ -303,6 +307,8 @@ class DiskSession:
                 part.fs_label = info.label
                 part.fs_used = info.used_bytes
                 part.fs_total = info.total_bytes
+        if self.is_physical and self.table:
+            fill_mount_points(self.disk_info, self.table.partitions)
 
     def create_table(self, scheme: str) -> PartitionTable:
         """Yeni bolum tablosu kurar (mevcut bolumler kaybolur)."""

@@ -19,6 +19,7 @@ from .exfat import (ATTR_DIRECTORY as EX_DIR, E_FILE, E_NAME, E_STREAM,
                     ExFatFS, ExFatError)
 from .fat import ATTR_DIRECTORY, ATTR_LFN, ATTR_VOLUME_ID, FatFS, FatError
 from .image import BlockDevice
+from .platform import restore_owner
 from .ptable import human_size
 from ..i18n import mark, tr
 from ..i18n import tr
@@ -240,6 +241,7 @@ def recover_deleted(fs, item: DeletedFile, dest_path: str) -> int:
             kalan = item.size - yazilan
             fh.write(block[:kalan])
             yazilan += min(len(block), kalan)
+    restore_owner(dest_path)    # yetkili kopyada dosya root'a ait kalmasin
     return yazilan
 
 
@@ -471,4 +473,5 @@ def extract_carved(device: BlockDevice, item: CarvedFile, dest_dir: str,
             fh.write(device.read(pos, length))
             pos += length
             kalan -= length
+    restore_owner(target)       # yetkili kopyada dosya root'a ait kalmasin
     return target

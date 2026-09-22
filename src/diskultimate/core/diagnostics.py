@@ -36,7 +36,7 @@ from collections import deque
 from contextlib import contextmanager
 from typing import Any, Deque, Dict, List, Optional, Tuple
 
-from ..paths import LOG_DIR
+from ..paths import log_root
 
 # -- ayarlar ---------------------------------------------------------------
 SLOW_MS = 200.0          # bu suren uzerindeki islem gunluge YAVAS girer
@@ -66,7 +66,7 @@ _start_time = 0.0
 # ==========================================================================
 def log_dir() -> str:
     """Gunluk dizini (gerekirse olusturulur)."""
-    base = os.environ.get("DISKULTIMATE_LOG_DIR") or LOG_DIR
+    base = os.environ.get("DISKULTIMATE_LOG_DIR") or log_root()
     path = os.path.join(base, "runtime")
     os.makedirs(path, exist_ok=True)
     return path
@@ -74,7 +74,7 @@ def log_dir() -> str:
 
 def report_dir() -> str:
     """Donma / cokme raporlarinin dizini."""
-    base = os.environ.get("DISKULTIMATE_LOG_DIR") or LOG_DIR
+    base = os.environ.get("DISKULTIMATE_LOG_DIR") or log_root()
     path = os.path.join(base, "freeze")
     os.makedirs(path, exist_ok=True)
     return path

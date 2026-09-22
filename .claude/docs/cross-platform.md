@@ -122,11 +122,18 @@ aksi halde gercek yorumlayiciyi golgeleyip Microsoft Store'a yonlendiriyor.
 **Testleri paylasilan klasorde calistirmayin** — `vboxsf` seyrek dosya desteklemez;
 goruntuler tum boyutlariyla yazilir ve host diski dolabilir.
 
-## Paketleme (onerilen)
+## Paketleme
+
+Ayarlar tek yerde, `DiskUltimate.spec` icindedir (giris noktasi, `.po`
+sozlukleri, haric tutulan Qt modulleri). Elle bayrak verilmez; betikler
+ortami da dogrular (PyQt5 kurulu mu, kaynak agaci yerinde mi):
 
 ```bash
-pip install pyinstaller
-pyinstaller --noconsole --name DiskUltimate --add-data "src:src" main.py
+./build_linux.sh          # Linux  -> dist/DiskUltimate     (--clean: onbellegi bosalt)
+build_exe.bat             # Windows -> dist\DiskUltimate.exe
 ```
 
-Windows'ta `--add-data "src;src"` (noktali virgul) kullanilir.
+Uretilen tek dosyalik paket kendi icinde calisir; yalnizca sistemin Qt/X11
+kitapliklarina ihtiyac duyar. Paketlenmis kopya gunlugunu ve gecici
+dosyalarini proje dizinine degil kullanicinin veri dizinine yazar
+(Linux'ta `~/.local/state/DiskUltimate/`, bkz. ADR 0040).

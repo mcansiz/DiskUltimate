@@ -63,6 +63,11 @@ NAME_DOS = 2                   # 8.3 kisa ad — listelemede atlanir
 MFT_RECORD_ROOT = 5            # kok dizin
 
 
+# Bayt -> icindeki 1 bit sayisi. `bytes.translate` ile milyonlarca bayt
+# tek cagrida sayilir (bkz. NtfsFS.used_bytes).
+_POPCOUNT = bytes(bin(i).count("1") for i in range(256))
+
+
 class NtfsError(Exception):
     """NTFS okumasiyla ilgili hatalar."""
 
@@ -538,18 +543,50 @@ class NtfsFS:
         except NtfsError:
             return ""
 
-    def stats(self) -> Dict[str, int]:
-        total = self.total_sectors * self.sector_size
-        free = 0
+    @property
+    def cluster_count(self) -> int:
+        """Birimdeki kume sayisi ($Bitmap'te anlami olan bit sayisi)."""
+        return self.total_sectors // self.sectors_per_cluster
+
+    def used_bytes(self) -> int:
+        """$Bitmap'teki dolu kumelerin toplami; okunamazsa -1.
+
+        -1 "bilinmiyor" demektir, "bos" degil: doluluk cubugu ancak gercek
+        bir olcum varken cizilir.
+
+        Yalnizca kume sayisi kadar bit sayilir. $Bitmap'in son baytlari birim
+        disinda kalan bitleri tasir; Windows onlari dolu isaretler, sayiya
+        katilirsa birim oldugundan dolu gorunur.
+        """
+        need = (self.cluster_count + 7) // 8
+        if need <= 0:
+            return -1
         try:
             bitmap = self.record(6).find(AT_DATA)   # $Bitmap
-            data = self.read_attribute(bitmap)
-            # Her sifir bit bos bir kume demektir.
-            free = sum(8 - bin(b).count("1") for b in data) * self.cluster_size
+            if bitmap is None:
+                return -1
+            data = self.read_attribute(bitmap, need)
         except Exception:
-            free = 0
-        return {"total_bytes": total, "used_bytes": max(0, total - free),
-                "free_bytes": free, "cluster_size": self.cluster_size}
+            return -1
+        if len(data) < need:
+            return -1
+        # Bayt basina bit sayimi tabloyla yapilir: 200 GB'lik bir birimde
+        # bitmap 6 MB'tir, bayt basina `bin(b).count()` saniyeler surerdi.
+        used = sum(data[:need - 1].translate(_POPCOUNT))
+        last = data[need - 1]
+        tail_bits = self.cluster_count - (need - 1) * 8
+        used += _POPCOUNT[last & ((1 << tail_bits) - 1)]
+        return used * self.cluster_size
+
+    def stats(self) -> Dict[str, int]:
+        total = self.total_sectors * self.sector_size
+        used = self.used_bytes()
+        if used < 0:
+            return {"total_bytes": total, "used_bytes": -1, "free_bytes": -1,
+                    "cluster_size": self.cluster_size}
+        used = min(used, total)
+        return {"total_bytes": total, "used_bytes": used,
+                "free_bytes": total - used, "cluster_size": self.cluster_size}
 
 
 def detect_ntfs(device: BlockDevice) -> bool:

@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 from typing import Optional
 
-from .platform import make_sparse, truncate_sparse
+from .platform import make_sparse, restore_owner, truncate_sparse
 from ..i18n import tr
 
 DEFAULT_SECTOR_SIZE = 512
@@ -144,6 +144,7 @@ class DiskImage(BlockDevice):
                     n = min(len(block), remaining)
                     fh.write(block[:n])
                     remaining -= n
+        restore_owner(path)     # yetkili kopyada dosya root'a ait kalmasin
         return DiskImage(path, sector_size=sector_size)
 
     # -- temel G/C -----------------------------------------------------------

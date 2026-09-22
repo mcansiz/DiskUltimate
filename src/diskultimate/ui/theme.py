@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import QPointF, QRectF, Qt
-from PyQt5.QtGui import QColor, QIcon, QPainter, QPixmap, QPolygonF
+from PyQt5.QtGui import (QBrush, QColor, QIcon, QLinearGradient, QPainter,
+                         QPainterPath, QPen, QPixmap, QPolygonF)
 
 from ..i18n import mark, tr
 
@@ -69,6 +70,134 @@ def lighten(color: QColor, factor: int = 150) -> QColor:
 
 def darken(color: QColor, factor: int = 120) -> QColor:
     return QColor(color).darker(factor)
+
+
+# --------------------------------------------------------------------------
+# Doluluk cubugu
+# --------------------------------------------------------------------------
+# Cubuk iki yerde cizilir (harita blogu ve boyutlandirma seridi); ayni koddan
+# gelmezse ikisi zamanla birbirinden ayrilir.
+#
+# Renk iki isi birden yapar: govde blogun kendi tonundan turedigi icin uyumlu
+# kalir, doluluk arttikca uyari tonuna kayar — yeri bitmek uzere olan bir
+# bolum yuzdeyi okumadan, bakar bakmaz gorulmelidir. Esikler anlamsaldir,
+# bu yuzden paletten degil buradan gelir (CLAUDE.md renk kurali).
+USAGE_WARN = "#e0a33c"       # %75'ten sonra karisan ton
+USAGE_FULL = "#d94f4f"       # %90'dan sonra karisan "yer bitiyor" tonu
+USAGE_WARN_AT = 0.75
+USAGE_FULL_AT = 0.90
+
+
+def blend(first: QColor, second: QColor, ratio: float) -> QColor:
+    """Iki rengi orana gore karistirir (0 = birinci, 1 = ikinci)."""
+    ratio = max(0.0, min(1.0, ratio))
+    return QColor(round(first.red() + (second.red() - first.red()) * ratio),
+                  round(first.green() + (second.green() - first.green()) * ratio),
+                  round(first.blue() + (second.blue() - first.blue()) * ratio))
+
+
+def readable_text(color: QColor) -> QColor:
+    """Verilen zemin uzerinde okunacak yazi rengi.
+
+    Karar HSL "lightness" ile degil, algilanan parlaklikla verilir: kehribar
+    (#e0a33c) HSL'de orta cikar ve koyu sayilip uzerine beyaz yazi
+    konuyordu; goz ise onu acik bir renk olarak gorur.
+    """
+    lum = (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue())
+    return QColor("#1b2430") if lum > 150 else QColor("#f7f9fc")
+
+
+def usage_fill(base: QColor, ratio: float) -> QColor:
+    """Doluluk cubugunun dolu kisminin rengi.
+
+    Esigin altinda blogun kendi tonunda kalir — daha doygun ve orta
+    parlaklikta, cunku cubuk acik bir olugun icindedir: koyulastirmak camur
+    gibi gosterir, aydinlatmak olugun icinde kaybeder.
+
+    Esikten sonra dogrudan uyari renklerine gecer. Iki ton **karistirilmaz**:
+    mavi/mor/yesil bir blokla kehribar karisimi her seferinde donuk bir zeytin
+    tonu veriyordu (grid onizlemesinde goruldu) — hem cirkin hem de uyari
+    oldugu anlasilmiyordu.
+    """
+    if ratio >= USAGE_FULL_AT:
+        return QColor(USAGE_FULL)
+    if ratio >= USAGE_WARN_AT:
+        return QColor(USAGE_WARN)
+    hue, sat, val, _ = base.getHsv()
+    if hue < 0:                       # gri tonlarda doygunluk yok
+        return darken(base, 165)
+    return QColor.fromHsv(hue, min(255, int(sat * 1.25)),
+                          max(120, min(val, 195)))
+
+
+def draw_usage_bar(painter: QPainter, rect, ratio: float, base: QColor,
+                   label: str = "") -> None:
+    """Doluluk cubugu: acik oluk + doygun dolgu + ince cerceve.
+
+    Bicim, ornek alinan bolum araclarindan gelir (EaseUS, Macrorit, Acronis —
+    `example gui/`): cubuk blogun **ustunde** durur ve renk yuku ondadir;
+    blogun zemini acik kalir. Renkli bir zemin uzerine kucuk bir cubuk
+    koymak denendi, iki renk birbiriyle yarisiyordu.
+
+    `ratio` sifirdan kucukse doluluk **bilinmiyor** demektir: oluk taramali
+    cizilir ve yuzde yazilmaz. "Bilinmiyor"u bos cubukla gostermek onu
+    "bombos" gibi okuturdu.
+    """
+    if rect.width() < 6 or rect.height() < 5:
+        return
+    painter.save()
+    painter.setRenderHint(QPainter.Antialiasing, True)
+    area = QRectF(rect).adjusted(0.5, 0.5, -0.5, -0.5)
+    path = QPainterPath()
+    path.addRoundedRect(area, 2.5, 2.5)
+
+    known = ratio >= 0.0
+    ratio = min(1.0, ratio) if known else 0.0
+    track = lighten(base, 178) if known else lighten(base, 160)
+    painter.fillPath(path, QBrush(track))
+
+    if not known:
+        painter.save()
+        painter.setClipPath(path)
+        painter.setPen(QPen(darken(track, 112), 1))
+        step = 7
+        for x in range(int(area.left() - area.height()), int(area.right()), step):
+            painter.drawLine(QPointF(x, area.bottom()),
+                             QPointF(x + area.height(), area.top()))
+        painter.restore()
+
+    fill = usage_fill(base, ratio)
+    filled = area.width() * ratio
+    if known and filled > 0.5:
+        painter.save()
+        painter.setClipPath(path)
+        gradient = QLinearGradient(area.topLeft(), area.bottomLeft())
+        gradient.setColorAt(0.0, lighten(fill, 124))
+        gradient.setColorAt(0.55, fill)
+        gradient.setColorAt(1.0, darken(fill, 108))
+        painter.fillRect(QRectF(area.left(), area.top(), filled, area.height()),
+                         QBrush(gradient))
+        painter.restore()
+
+    edge = darken(base, 145)
+    edge.setAlpha(200)
+    painter.setPen(QPen(edge, 1))
+    painter.setBrush(Qt.NoBrush)
+    painter.drawPath(path)
+
+    if label and known:
+        # Etiket iki kez cizilir: once oluk, sonra dolu kisim kirpilarak.
+        # Boylece cubugun her iki yarisinda da okunur kalir.
+        painter.setPen(QColor("#1b2430"))
+        painter.drawText(rect, Qt.AlignCenter, label)
+        if filled > 1:
+            painter.save()
+            painter.setClipRect(QRectF(area.left(), area.top(), filled,
+                                       area.height()))
+            painter.setPen(readable_text(fill))
+            painter.drawText(rect, Qt.AlignCenter, label)
+            painter.restore()
+    painter.restore()
 
 
 # NOT: Bu stil sayfasi su an UYGULANMIYOR. Uygulama sistemin varsayilan Qt

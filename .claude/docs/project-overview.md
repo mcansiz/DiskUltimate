@@ -120,7 +120,11 @@ Bunlarin hicbiri sessizce basarisiz olmaz; nedeni metinle bildirilip reddedilir.
 Bu maddeler bilincli olarak disarida birakilmistir; gerekceleri
 [diskgenius-parity.md](diskgenius-parity.md) icindedir:
 S.M.A.R.T. izleme, bozuk sektor onarimi, RAID kurtarma, dinamik disk (LDM),
-surucu harfi atama, UEFI onyukleme girisi yonetimi, WinPE kurtarma ortami.
+WinPE kurtarma ortami.
+
+> Bu listeden iki madde **cikti**: UEFI onyukleme girisi yonetimi (Araclar >
+> UEFI onyukleme girisleri) ve surucu harfi atama — ikincisi "bolum baglama /
+> cikarma" olarak, her platformun kendi kavramiyla yapildi (ADR 0043).
 
 ## Ilgili belgeler
 - Ozellik matrisi (DiskGenius): [diskgenius-parity.md](diskgenius-parity.md)

@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
 from .image import BlockDevice, DiskImage
+from .platform import restore_owner
 from .ptable import human_size
 from ..i18n import tr
 
@@ -162,6 +163,7 @@ def backup(device: BlockDevice, dest_path: str, compress: bool = True,
         fh.write(bytes(header))
         fh.write(bytes(index))
 
+    restore_owner(dest_path)    # yetkili kopyada dosya root'a ait kalmasin
     _report(progress, "Tamamlandi", 100)
     return read_backup_info(dest_path)
 

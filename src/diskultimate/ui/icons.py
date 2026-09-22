@@ -15,6 +15,17 @@ yuzden her boyutta ve HiDPI ekranda keskin kalir.
 
 ## Renk kurali
 
+## Kapsam: burasi ISLEM ikonlaridir
+
+Yukaridaki "dosya degil, cizim" karari arac cubugu / menu / agac ikonlari
+icindir. Uygulamanin kendi **marka ikonu** (pencere, gorev cubugu, exe) bunun
+disindadir ve `ui/appicon.py` icinde dosyadan okunur — gerekce ADR 0044.
+Kisaca: o ikon kodla yeniden uretilemez ve paketleyicinin de ayni dosyaya
+ihtiyaci vardir; `.ico` cozucusu Qt'nin kendi eklentisinde oldugu icin yeni
+bagimlilik dogurmaz (SVG'den farki budur).
+
+## Renk kurali
+
 ADR 0013: ozel stil sayfasi yok, sistem temasi gecerli. Buradaki renkler
 **anlamsaldir** — yesil ekleme, kirmizi silme, turuncu uyari — ve dosya sistemi
 renkleri gibi sabit kalmasi gerekir. Notr parcalar (govde cizgileri) paletten
@@ -148,6 +159,14 @@ def _badge(p: QPainter, u: float, glyph: str, color: QColor,
             QPointF(center.x() + arm * 0.4, center.y() - arm * 0.6),
             QPointF(center.x() + arm, center.y()),
             QPointF(center.x() + arm * 0.4, center.y() + arm * 0.6)]))
+    elif glyph in ("down", "up"):
+        yon = 1.0 if glyph == "down" else -1.0
+        p.drawLine(QPointF(center.x(), center.y() - arm * yon),
+                   QPointF(center.x(), center.y() + arm * yon))
+        p.drawPolyline(QPolygonF([
+            QPointF(center.x() - arm * 0.7, center.y() + arm * 0.3 * yon),
+            QPointF(center.x(), center.y() + arm * yon),
+            QPointF(center.x() + arm * 0.7, center.y() + arm * 0.3 * yon)]))
     elif glyph == "clock":
         p.drawLine(center, QPointF(center.x(), center.y() - arm * 0.8))
         p.drawLine(center, QPointF(center.x() + arm * 0.7, center.y()))
@@ -661,6 +680,18 @@ def _boot_order(p, u, dark):
         QPointF(2.6 * u, 14.2 * u), QPointF(0.7 * u, 11.2 * u),
         QPointF(4.5 * u, 11.2 * u)]))
 
+def _mount(p, u, dark):
+    """Bagla: bolum serviti + asagi inen ok (sisteme takilir)."""
+    _volume(p, u, dark, _tone(GREEN, dark), 0.5)
+    _badge(p, u, "down", _tone(GREEN, dark), dark)
+
+
+def _unmount(p, u, dark):
+    """Cikar: bolum serviti + yukari cikan ok (sistemden ayrilir)."""
+    _volume(p, u, dark, _tone(BLUE, dark), 0.5)
+    _badge(p, u, "up", _tone(BLUE, dark), dark)
+
+
 DRAWERS = {
     # kuyruk
     "apply": _apply, "pending": _pending, "discard": _discard,
@@ -670,7 +701,7 @@ DRAWERS = {
     "partition-new": _partition_new, "partition-delete": _partition_delete,
     "format": _format, "resize": _resize, "label": _label, "rename": _rename,
     "type": _type, "boot": _boot, "wipe": _wipe, "wipe-free": _wipe_free,
-    "image-resize": _image_resize,
+    "image-resize": _image_resize, "mount": _mount, "unmount": _unmount,
     # kaynaklar ve araclar
     "disk": _disk, "disk-system": _disk_system,
     "disk-removable": _disk_removable, "image": _image, "backup": _backup,

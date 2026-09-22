@@ -33,11 +33,19 @@ DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
   yetkisi ister; yetki yoksa diskler listelenir ama açılamaz (anlamlı hata verilir).
   Kaynak **her zaman salt okunur açılır**; yazma yetkisi yalnızca bekleyen
   işlemler uygulanırken, tek seferde alınır (ADR 0025).
-  Uygulama yetkiyi **kendisi isteyebilir** (Windows UAC / Linux pkexec) ama
-  **koşulsuz değil**: yalnızca bilgisi okunamayan gerçek bir disk varsa, disk
-  açılırken yetki reddedilince veya kullanıcı menüden isteyince
-  (ADR 0023). En az yetki ilkesi: görüntü dosyasıyla çalışan kullanıcıdan
-  yetki istenmez.
+  Uygulama yetkiyi **açılışta, pencere açılmadan ve koşulsuz** ister
+  (Windows UAC / Linux pkexec) — ADR 0042. Gerekçe: araç fiziksel disklerde
+  root olmadan iş görmez, her açılışta soru sormak yalnızca bir tık ekler.
+  Yetki verilmezse uygulama **yine açılır**; görüntü dosyalarıyla çalışmak
+  için yetki gerekmez ve aynı oturumda ikinci kez sorulmaz. Çıkış kapıları:
+  `--no-root`, `DISKULTIMATE_AUTO_ROOT=0`,
+  `DISKULTIMATE_NO_ELEVATION_PROMPT=1` (otomatik koşumlar).
+  (Önceki kural — yalnızca bilgisi okunamayan disk varken sormak, ADR 0023 —
+  kullanıcı kararıyla değiştirildi.)
+  **Yetkili kopyada üretilen dosyaların sahipliği geri verilir:** pkexec/sudo
+  `PKEXEC_UID`/`SUDO_UID` bırakır, `platform.restore_owner()` görüntü, yedek
+  ve dışa aktarılan dosyaları çağıran kullanıcıya çevirir — yoksa kullanıcı
+  kendi yedeğini silemez.
 - **Çoklu dil:** arayüzde görünen her metin `i18n.tr("...")` ile sarılır; modül
   düzeyinde üretilen metinler (`MBR_TYPES`, `WIPE_METHODS`, `operations.KINDS`)
   `mark("...")` ile işaretlenip gösterim anında çevrilir (ADR 0027).
@@ -119,7 +127,7 @@ yapılmaz.**
 | `.claude/decisions/*.md` | Teknik kararlar (ADR): neden bu yol seçildi |
 | `.claude/specs/*.md` | Format/yapı spesifikasyonları (MBR, GPT, FAT vb.) |
 | `.claude/logs/*.md` | Uzun çıktı, hata ayıklama dökümleri |
-| `.claude/sessions/` | Claude oturum dökümleri: canlı transcript'ler `<slug>/` altında (junction), arşiv kopyaları + `INDEX.md` — otomatik |
+| `.claude/sessions/` | Claude oturum dökümleri: canlı transcript'ler `live/` altında (symlink/junction), arşiv kopyaları + `INDEX.md` — otomatik |
 | `.claude/memory/` | Claude kalıcı hafızası (`MEMORY.md` + tekil notlar) |
 | `.claude/hooks/` | Kayıt otomasyonu betikleri |
 
@@ -128,21 +136,26 @@ yapılmaz.**
 **Nasıl zorlanır:**
 - `.claude/settings.json` → `SessionEnd` kancası her oturum sonunda dökümü
   `.claude/hooks/archive-session.py` ile `.claude/sessions/` altına kopyalar.
-- **Canlı transcript'ler de projede durur** (`session-persistence` skill'i):
-  `~/.claude/projects/<slug>` klasörü `.claude/sessions/<slug>/` içine taşınır,
-  yerine bir junction bırakılır. İki sorunu birden çözer: `cleanupPeriodDays`
-  varsayılanı 30 gündür ve dökümler makineye bağlıdır. Ayar `.claude/settings.json`
-  içindeki `cleanupPeriodDays` ile birlikte klonla taşınır.
-  Kurulum/denetim: `python <skill>/scripts/setup_sessions.py [--check|--dry-run]`
-  — **Claude Code kapalıyken** çalıştırılır, yoksa açık oturumun transcript'i ikiye
-  bölünür. Başka bir yola klonlanırsa slug değişir; script durumu bildirir.
+- **Canlı transcript'ler de projede durur:** `~/.claude/projects/<slug>` klasörü
+  **tek** bir klasöre — `.claude/sessions/live/` — bağlanır (Linux/macOS symlink,
+  Windows junction). İki sorunu birden çözer: `cleanupPeriodDays` varsayılanı
+  30 gündür ve dökümler makineye bağlıdır. Ayar `.claude/settings.json` içindeki
+  `cleanupPeriodDays` ile birlikte klonla taşınır.
+  Kurulum/denetim: `python3 .claude/hooks/setup-sessions.py [--check|--dry-run]
+  [--import-legacy]` — **Claude Code kapalıyken** çalıştırılır, yoksa açık oturumun
+  transcript'i ikiye bölünür (betik açık oturum görürse durur).
+  **Klasör adı slug olamaz** (ADR 0038): slug çalışma dizininin yolundan üretilir,
+  yani her makinede başkadır; `live/` ortak olduğu için Windows'ta yazılan geçmiş
+  Linux'ta da listelenir. Yeni bir makinede (veya proje başka bir yola taşınınca)
+  betik bir kez çalıştırılır; eski yolda kalmış dökümler `--import-legacy` ile
+  alınır.
 - `.claude/settings.local.json` → `autoMemoryDirectory` hafızayı `.claude/memory/`
   içine yönlendirir. (Bu anahtar güvenlik gereği depoya giren `settings.json`
   içinden okunmaz; bu yüzden makineye özel `settings.local.json` içindedir ve
   yolu mutlaktır — depo başka bir yola klonlanırsa bu dosya yeniden yazılmalıdır.)
 - `.gitignore` → `settings.local.json` ve kancanın ürettiği **arşiv kopyaları**
   (`.claude/sessions/*.jsonl`) depoya girmez. **Canlı transcript'ler**
-  (`.claude/sessions/<slug>/*.jsonl`) ve `INDEX.md` **girer** — geçmişin
+  (`.claude/sessions/live/*.jsonl`) ve `INDEX.md` **girer** — geçmişin
   makineler arasında taşınmasının tek yolu budur. Desen bilerek tek yıldızlıdır;
   `**` yapılırsa kalıcılık ortadan kalkar. Bu yüzden depo **private** kalmalıdır:
   transcript konuşmanın tamamıdır. `.gitattributes` → `.claude/sessions/** -text -diff`

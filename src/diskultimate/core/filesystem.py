@@ -15,6 +15,7 @@ from .exfat import ExEntry, ExFatError, ExFatFS
 from .extread import ExtError, ExtFS
 from .extwrite import ExtWriter
 from .ntfsread import NtfsEntry, NtfsError, NtfsFS
+from .platform import restore_owner
 from .ntfswrite import NtfsWriter
 from .fat import ATTR_DIRECTORY, DirEntry, FatError, FatFS
 from .fsdetect import FSInfo, detect
@@ -323,6 +324,7 @@ class ExtAccess(FileSystemAccess):
         data = self.read(path)
         with open(dest, "wb") as fh:
             fh.write(data)
+        restore_owner(dest)     # yetkili kopyada dosya root'a ait kalmasin
         return dest
 
     @property
@@ -441,6 +443,7 @@ class NtfsAccess(FileSystemAccess):
     def extract(self, path: str, dest: str) -> str:
         with open(dest, "wb") as fh:
             fh.write(self.read(path))
+        restore_owner(dest)     # yetkili kopyada dosya root'a ait kalmasin
         return dest
 
     def stats(self) -> Dict[str, int]:

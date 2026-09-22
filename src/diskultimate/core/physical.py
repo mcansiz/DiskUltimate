@@ -20,13 +20,16 @@ import re
 import struct
 import threading
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from contextlib import contextmanager
 
 from . import diagnostics
 from .image import BlockDevice, DiskImageError
 from .platform import IS_LINUX, IS_MACOS, IS_WINDOWS, run_tool
+from .platform import mount_partition as pf_mount
+from .platform import partition_mount_point as pf_mount_point
+from .platform import unmount_partition as pf_unmount
 from ..i18n import tr
 
 SECTOR = 512
@@ -64,6 +67,10 @@ class DiskInfo:
     readonly: bool = False        # aygit donanimsal olarak yazma korumali mi
     is_system: bool = False       # isletim sistemi bu diskte mi
     mounted: List[str] = field(default_factory=list)   # bagli bolum yollari
+    # {bolum baslangici (bayt): baglama noktasi / surucu harfi}. Disk
+    # listelenirken bir kez doldurulur; bolum basina isletim sistemi sorgusu
+    # yapmamak icindir (ADR 0021: acik aygita gereksiz dokunulmaz).
+    mount_map: Dict[int, str] = field(default_factory=dict)
     partitions: List[str] = field(default_factory=list)
     info_complete: bool = True    # bilgiler eksiksiz okunabildi mi (yetki!)
     os_hint: str = ""             # 'windows' | 'linux' | 'macos' | ''
@@ -218,6 +225,87 @@ def open_device_paths() -> Dict[str, DiskInfo]:
         return dict(_open_devices)
 
 
+# --------------------------------------------------------------------------
+# Baglama / cikarma (ADR 0043)
+# --------------------------------------------------------------------------
+# Islemin kendisi `platform.py` icindedir; burada **guvenlik katmani** durur.
+# Baglamak zararsizdir, cikarmak degildir: calisan sistemin kokunu ayirmak
+# makineyi kullanilamaz hale getirir. Bu yuzden cikarma kritik baglama
+# noktalarinda reddedilir.
+CRITICAL_MOUNTS = ("/", "/boot", "/boot/efi", "/usr", "/var", "/etc", "/home",
+                   "/nix", "/run")
+
+
+def is_critical_mount(point: str) -> bool:
+    """Bu baglama noktasi calisan sistemin isine yariyor mu?"""
+    if not point:
+        return False
+    if IS_WINDOWS:
+        system_root = os.environ.get("SystemRoot") or os.environ.get("windir") or "C:\\"
+        return point.strip("\\").upper()[:2] == system_root.upper()[:2]
+    duz = os.path.normpath(point)
+    return duz in CRITICAL_MOUNTS
+
+
+def partition_mount_point(info: DiskInfo, index: int) -> str:
+    """Bolum su an nereye bagli (bagli degilse bos dize)."""
+    return pf_mount_point(info.path, index)
+
+
+def mount_partition(info: DiskInfo, index: int, label: str = "",
+                    fs_type: str = "") -> Tuple[bool, str]:
+    """Bolumu baglar / surucu harfi atar.
+
+    Baglama **yikici degildir**: kuyruga girmez, dogrudan calisir (ADR 0043).
+    Doner: (basarili, baglama noktasi veya hata metni).
+    """
+    ok, result = pf_mount(info.path, index, label, fs_type)
+    diagnostics.info(f"bolum baglandi: {info.path}#{index} -> {result}" if ok
+                     else f"bolum baglanamadi: {info.path}#{index}: {result}")
+    return ok, result
+
+
+def unmount_partition(info: DiskInfo, index: int) -> Tuple[bool, str]:
+    """Bolumun baglantisini keser / surucu harfini kaldirir.
+
+    Calisan sistemin kullandigi bir bolum **cikarilmaz**: kok dosya sistemini
+    ya da `/boot`u ayirmak makineyi aninda kullanilamaz hale getirir.
+    """
+    point = pf_mount_point(info.path, index)
+    if point and is_critical_mount(point):
+        return False, tr("Bu bolum calisan sistemin parcasi ({}); "
+                         "cikarilamaz.", point)
+    ok, error = pf_unmount(info.path, index)
+    diagnostics.info(f"bolum cikarildi: {info.path}#{index}" if ok
+                     else f"bolum cikarilamadi: {info.path}#{index}: {error}")
+    return ok, error
+
+
+def fill_mount_points(info: Optional[DiskInfo], partitions) -> None:
+    """Bolumlere baglama noktasini / surucu harfini yazar.
+
+    Kaynak, disk listelenirken bir kez toplanan `DiskInfo.mount_map`tir;
+    bolum basina isletim sistemine sormayiz — Windows'ta her sorgu bir
+    aygit tutamaci demektir ve acik diske dokunmak surucu yiginini
+    bloklayabilir (ADR 0021).
+
+    macOS'ta harita bos kalir (disk listesi bolum ofseti vermiyor); orada
+    bolum basina `diskutil` sorulur. Bu dal **test edilmedi**.
+    """
+    if info is None:
+        return
+    table = getattr(info, "mount_map", None) or {}
+    for part in partitions or []:
+        sector = part.sector_size or getattr(info, "sector_size", SECTOR) or SECTOR
+        point = table.get(part.start_lba * sector, "")
+        if not point and IS_MACOS:
+            try:
+                point = pf_mount_point(info.path, part.index)
+            except Exception:
+                point = ""
+        part.mount_point = point
+
+
 def busy_drive_letters() -> set:
     """Acik disklere ait surucu harfleri (buyuk harf, iki nokta olmadan)."""
     letters = set()
@@ -327,6 +415,11 @@ def _list_linux() -> List[DiskInfo]:
                 info.partitions.append(part)
                 if part in baglantilar:
                     info.mounted.append(f"{data} → {baglantilar[part]}")
+                    # Bolumun diskteki yeri: `/sys` bunu HER ZAMAN 512
+                    # baytlik birimle verir (sektor boyutu 4K olsa da).
+                    start = int(_read_text(
+                        os.path.join(taban, data, "start"), "0") or 0)
+                    info.mount_map[start * 512] = baglantilar[part]
                 if system_device and part == system_device:
                     info.is_system = True
         if system_device and system_device.startswith(f"/dev/{name}"):
@@ -518,7 +611,7 @@ def _win_close(handle) -> None:
         pass
 
 
-def _win_drive_letters() -> Dict[int, List[str]]:
+def _win_volume_extents() -> Tuple[Dict[int, List[str]], Dict[Tuple[int, int], str]]:
     """{disk numarasi: [surucu harfleri]} — bagli bolumleri gostermek icin.
 
     Her harf icin aygit tutamaci acilir. Ag surucusu ve CD/DVD **acilmadan**
@@ -530,6 +623,7 @@ def _win_drive_letters() -> Dict[int, List[str]]:
     import ctypes
 
     result: Dict[int, List[str]] = {}
+    extents: Dict[Tuple[int, int], str] = {}
     busy = busy_drive_letters()
     maske = ctypes.windll.kernel32.GetLogicalDrives()
     for i in range(26):
@@ -559,9 +653,22 @@ def _win_drive_letters() -> Dict[int, List[str]]:
                     if ofset + 4 <= len(ham):
                         disk_no = struct.unpack_from("<I", ham, ofset)[0]
                         result.setdefault(disk_no, []).append(f"{harf}:")
+                        # DISK_EXTENT: DiskNumber(4) + dolgu(4) +
+                        # StartingOffset(8) + ExtentLength(8). Baslangic
+                        # ofseti harfi **bolume** baglar; ayni cagriyi
+                        # zaten yapiyoruz, ek maliyeti yok.
+                        if ofset + 16 <= len(ham):
+                            offset_bytes = struct.unpack_from("<q", ham,
+                                                              ofset + 8)[0]
+                            extents[(disk_no, offset_bytes)] = f"{harf}:"
         finally:
             _win_close(handle)
-    return result
+    return result, extents
+
+
+def _win_drive_letters() -> Dict[int, List[str]]:
+    """{disk numarasi: [surucu harfleri]} — eski cagiranlar icin."""
+    return _win_volume_extents()[0]
 
 
 def _list_windows() -> List[DiskInfo]:
@@ -569,7 +676,7 @@ def _list_windows() -> List[DiskInfo]:
     acik = open_device_paths()
     try:
         system_numbers = set(_win_system_disk_numbers())
-        harfler = _win_drive_letters()
+        harfler, ofsetler = _win_volume_extents()
     except Exception:
         system_numbers, harfler = set(), {}
 
@@ -614,6 +721,8 @@ def _list_windows() -> List[DiskInfo]:
             info.removable = ayrinti.get("removable") == "1"
             info.is_system = numara in system_numbers
             info.mounted = harfler.get(numara, [])
+            info.mount_map = {off: harf for (disk_no, off), harf
+                              in ofsetler.items() if disk_no == numara}
             if info.size > 0:
                 diskler.append(info)
         finally:

@@ -36,7 +36,8 @@ Guncelleme: 2026-09-15 (v0.3.0)
 | Bolum bolme / birlestirme | ✅ | 📋 | Boyutlandirma altyapisi hazir; bolme = kucult + yeni bolum |
 | Birincil ↔ mantiksal donusumu | ✅ | 📋 | v0.4 |
 | Bolum gizleme | ✅ | 📋 | GPT gizli oznitelik biti hazir, arayuz baglanacak |
-| Surucu harfi atama | ✅ | ⛔ | Windows'a ozgu kayit defteri/mountvol islemi; tasinabilirlik disi |
+| **Bolum baglama / cikarma** | ✅ | ✅ | Platforma gore: Linux/macOS bagla-cikar, Windows surucu harfi ata/kaldir (ADR 0043). Calisan sistemin bolumu cikarilmaz |
+| Surucu harfi atama | ✅ | ✅ | Ayni islem: Windows'ta `Add-PartitionAccessPath` (macOS dali yazildi, test edilmedi) |
 | Dinamik disk → temel disk | ✅ | ⛔ | Windows LDM bicimine ozel |
 
 ## Dosya erisimi
@@ -119,7 +120,7 @@ gecersiz kildi. Bugunku olcut sudur:
 
 - **Kapsam disi:** tek bir isletim sistemine kilitli, ayricalikli ve tasinabilir
   olmayan islemler — S.M.A.R.T. (ATA/NVMe komut yolu), dinamik disk (Windows LDM),
-  UEFI NVRAM, WinPE, surucu harfi, BCD onarimi. Bunlar "harici bagimlilik yok" ve
+  UEFI NVRAM, WinPE, BCD onarimi. Bunlar "harici bagimlilik yok" ve
   "uc platformda ayni kod" ilkeleriyle bagdasmaz.
 - **Planlandi:** tasinabilir sekilde yapilabilir ama henuz yazilmamis olanlar —
   bozuk sektor taramasi, ext/NTFS okuyucusu, onaltilik duzenleyici, FS denetimi.

@@ -8,6 +8,7 @@ from PyQt5.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QHeaderView, QTableWidget,
                              QTableWidgetItem)
 
+from ...core.platform import mount_point_label
 from ...core.ptable import FreeRegion, Partition, human_size
 from ..theme import (FREE_COLOR, PLAN_COLOR, fs_color, palette_color,
                      plan_label)
@@ -17,17 +18,23 @@ from ...i18n import mark, tr
 # "Plan" sutunu yalnizca bekleyen adim varken gorunur (`set_partitions`
 # gizler/gosterir): bos bir sutunu surekli tasimak yer israfi olurdu.
 COLUMNS = [mark("Bolum"), mark("Plan"), mark("Dosya Sistemi"), mark("Etiket"),
-           mark("Boyut"), mark("Kullanilan"), mark("Bos"),
+           mark("Baglama"), mark("Boyut"), mark("Kullanilan"), mark("Bos"),
            mark("Baslangic LBA"), mark("Bitis LBA"), mark("Tur"),
            mark("Bayrak")]
 PLAN_COLUMN = 1
+# "Baglama" sutunu isletim sisteminin bolumu bagladigi yeri gosterir:
+# Linux/macOS'ta dizin, Windows'ta surucu harfi (ADR 0043). Basligi
+# platforma gore degisir (`columns()`).
+MOUNT_COLUMN = 4
 
 
 
 
 def columns() -> List[str]:
     """Sutun basliklarinin etkin dildeki hali."""
-    return [tr(name) for name in COLUMNS]
+    names = [tr(name) for name in COLUMNS]
+    names[MOUNT_COLUMN] = mount_point_label()
+    return names
 
 
 def part_label(p: Partition) -> str:
@@ -80,12 +87,13 @@ class PartitionTableWidget(QTableWidget):
         self.setColumnWidth(1, 140)
         self.setColumnWidth(2, 110)
         self.setColumnWidth(3, 120)
-        self.setColumnWidth(4, 90)
+        self.setColumnWidth(MOUNT_COLUMN, 150)
         self.setColumnWidth(5, 90)
         self.setColumnWidth(6, 90)
-        self.setColumnWidth(7, 100)
+        self.setColumnWidth(7, 90)
         self.setColumnWidth(8, 100)
-        self.setColumnWidth(9, 160)
+        self.setColumnWidth(9, 100)
+        self.setColumnWidth(10, 160)
         self.setColumnHidden(PLAN_COLUMN, True)
         self._rows: List[Tuple[str, object]] = []
         self._pending: dict = {}
@@ -191,31 +199,33 @@ class PartitionTableWidget(QTableWidget):
             plan_item.setFont(font)
         self._set(row, 2, p.fs_type or "-")
         self._set(row, 3, p.name or p.fs_label or "-")
-        self._set(row, 4, human_size(p.size), align=Qt.AlignRight)
-        self._set(row, 5, human_size(p.fs_used) if p.fs_used >= 0 else "-",
+        self._set(row, MOUNT_COLUMN, p.mount_point or "-",
+                  dim=not p.mount_point, bold=bool(p.mount_point))
+        self._set(row, 5, human_size(p.size), align=Qt.AlignRight)
+        self._set(row, 6, human_size(p.fs_used) if p.fs_used >= 0 else "-",
                   align=Qt.AlignRight)
         free = p.fs_total - p.fs_used if (p.fs_total >= 0 and p.fs_used >= 0) else -1
-        self._set(row, 6, human_size(free) if free >= 0 else "-", align=Qt.AlignRight)
-        self._set(row, 7, str(p.start_lba), align=Qt.AlignRight)
-        self._set(row, 8, str(p.end_lba), align=Qt.AlignRight)
-        self._set(row, 9, p.type_name)
+        self._set(row, 7, human_size(free) if free >= 0 else "-", align=Qt.AlignRight)
+        self._set(row, 8, str(p.start_lba), align=Qt.AlignRight)
+        self._set(row, 9, str(p.end_lba), align=Qt.AlignRight)
+        self._set(row, 10, p.type_name)
         flags = []
         if p.bootable:
             flags.append(tr("Onyukleme"))
         if p.logical:
             flags.append(tr("Mantiksal"))
-        self._set(row, 10, ", ".join(flags) or "-", dim=not flags)
+        self._set(row, 11, ", ".join(flags) or "-", dim=not flags)
 
 
     def _fill_free(self, row: int, r: FreeRegion) -> None:
         self._set(row, 0, tr("Bos alan"), icon=color_chip(QColor(FREE_COLOR)), dim=True)
-        for col in (1, 2, 3, 5, 6):
+        for col in (1, 2, 3, MOUNT_COLUMN, 6, 7):
             self._set(row, col, "-", dim=True)
-        self._set(row, 4, human_size(r.size), align=Qt.AlignRight, dim=True)
-        self._set(row, 7, str(r.start_lba), align=Qt.AlignRight, dim=True)
-        self._set(row, 8, str(r.end_lba), align=Qt.AlignRight, dim=True)
-        self._set(row, 9, tr("Bolumlenmemis"), dim=True)
-        self._set(row, 10, "-", dim=True)
+        self._set(row, 5, human_size(r.size), align=Qt.AlignRight, dim=True)
+        self._set(row, 8, str(r.start_lba), align=Qt.AlignRight, dim=True)
+        self._set(row, 9, str(r.end_lba), align=Qt.AlignRight, dim=True)
+        self._set(row, 10, tr("Bolumlenmemis"), dim=True)
+        self._set(row, 11, "-", dim=True)
 
     # -- secim ---------------------------------------------------------------
     def current_target(self) -> Optional[Tuple[str, object]]:

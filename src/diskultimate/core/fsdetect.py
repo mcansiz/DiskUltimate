@@ -5,6 +5,7 @@ import struct
 from dataclasses import dataclass
 from typing import Optional
 
+from . import diagnostics
 from .image import BlockDevice
 
 
@@ -249,8 +250,27 @@ def _ntfs(dev: BlockDevice, boot: bytes) -> FSInfo:
     spc = boot[13]
     total = struct.unpack_from("<Q", boot, 40)[0]
     serial = struct.unpack_from("<Q", boot, 72)[0]
-    return FSInfo(fs_type="NTFS", total_bytes=(total + 1) * bps,
+    info = FSInfo(fs_type="NTFS", total_bytes=(total + 1) * bps,
                   cluster_size=bps * spc, uuid=f"{serial:016X}")
+    # Doluluk ve etiket onyukleme sektorunde YOKTUR: ikisi de ustveri
+    # dosyalarindadir ($Bitmap ve $Volume). FAT/exFAT/ext'te bu bilgi hemen
+    # elde oldugu icin NTFS uzun sure "doluluk bilinmiyor" kalmisti — harita
+    # cubugu yalnizca NTFS bolumlerde cizilmiyordu.
+    #
+    # MFT'yi acmak birkac okuma, bitmap ise birim basina ~kume_sayisi/8 bayt
+    # (200 GB'de ~6 MB) okur; bu yuzden olculur ve basarisizlik olumcul
+    # sayilmaz: bilgi alinamazsa -1 ("bilinmiyor") kalir, tespit gecerlidir.
+    with diagnostics.span("fs.ntfs_meta", track=False, size=info.total_bytes):
+        try:
+            from .ntfsread import NtfsFS
+            fs = NtfsFS(dev)
+            used = fs.used_bytes()
+            if 0 <= used <= info.total_bytes:
+                info.used_bytes = used
+            info.label = fs.label
+        except Exception as exc:
+            diagnostics.debug(f"NTFS ustverisi okunamadi: {exc}")
+    return info
 
 
 def _ext(sb: bytes) -> FSInfo:

@@ -10,8 +10,8 @@ from PyQt5.QtGui import QColor, QFontDatabase, QIcon, QKeySequence
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QFileDialog,
                              QFormLayout, QHBoxLayout, QHeaderView,
                              QInputDialog, QLabel, QMainWindow, QMenu,
-                             QMessageBox, QPlainTextEdit, QPushButton,
-                             QSplitter,
+                             QMessageBox, QPlainTextEdit, QProgressDialog,
+                             QPushButton, QSplitter,
                              QScrollArea, QStackedWidget, QTabWidget, QToolBar,
                              QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
@@ -19,14 +19,17 @@ from ..core import diagnostics
 from ..core import operations as ops
 from ..core.formatter import FS_BY_KEY
 from ..core.physical import (AccessDeniedError, PhysicalDiskError,
-                             SystemDiskError, locks_volumes_on_write)
+                             SystemDiskError, locks_volumes_on_write,
+                             mount_partition as mount_physical_partition,
+                             unmount_partition as unmount_physical_partition)
 from ..core.platform import (ELEVATION_NAME, IMAGE_EXTENSIONS,  # noqa: E501
-                             elevation_name,
+                             elevation_name, mount_action_labels,
+                             mount_point_label, mount_supported,
                              PLATFORM_NAME, elevation_available, is_elevated,
                              open_folder, relaunch_elevated)
 from ..core.platform import summary as platform_summary
 from ..core.vdisk import VhdImage
-from ..paths import LOG_DIR
+from ..paths import log_root
 from ..core.clone import is_backup_file
 from ..core.image import DiskImage
 from ..core.ptable import (GPT_TYPES, MBR_EXTENDED_TYPES, MBR_TYPES,
@@ -331,6 +334,12 @@ class MainWindow(QMainWindow):
         self.act_type_part.triggered.connect(self.change_type)
         self.act_label = QAction(app_icon("label"), "", self)
         self.act_label.triggered.connect(self.change_label)
+        # Baglama/cikarma yikici DEGILDIR: kuyruga girmez, dogrudan calisir
+        # (ADR 0043). Metinleri platformun kavramindan gelir.
+        self.act_mount = QAction(app_icon("mount"), "", self)
+        self.act_mount.triggered.connect(self.mount_selected_partition)
+        self.act_unmount = QAction(app_icon("unmount"), "", self)
+        self.act_unmount.triggered.connect(self.unmount_selected_partition)
 
         # --- Donusum ve bakim ---
         self.act_to_gpt = QAction(app_icon("convert"), "", self)
@@ -470,6 +479,9 @@ class MainWindow(QMainWindow):
         m_part.addAction(self.act_delete_part)
         m_part.addSeparator()
         m_part.addAction(self.act_label)
+        m_part.addSeparator()
+        m_part.addAction(self.act_mount)
+        m_part.addAction(self.act_unmount)
         m_part.addAction(self.act_rename_part)
         m_part.addAction(self.act_type_part)
         m_part.addAction(self.act_boot)
@@ -567,6 +579,10 @@ class MainWindow(QMainWindow):
         self.act_rename_part.setText(tr("Bolum adini degistir..."))
         self.act_type_part.setText(tr("Bolum turunu degistir..."))
         self.act_label.setText(tr("Birim etiketini degistir..."))
+        # Windows'ta "bagla" kavrami yoktur; orada degisen sey surucu harfidir.
+        mount_text, unmount_text = mount_action_labels()
+        self.act_mount.setText(mount_text)
+        self.act_unmount.setText(unmount_text)
         self.act_to_gpt.setText(tr("Bolum tablosunu GPT'ye donustur"))
         self.act_to_mbr.setText(tr("Bolum tablosunu MBR'ye donustur"))
         self.act_alignment.setText(tr("Hizalama denetimi (4K)"))
@@ -714,9 +730,10 @@ class MainWindow(QMainWindow):
         # gunlugu ile sure olcumleri **tek dosyada** yan yana okunur.
         diagnostics.info(f"arayuz: {message}")
         try:
-            os.makedirs(LOG_DIR, exist_ok=True)
+            folder = log_root()
+            os.makedirs(folder, exist_ok=True)
             gun = datetime.datetime.now().strftime("%Y-%m-%d")
-            with open(os.path.join(LOG_DIR, f"app-{gun}.log"), "a", encoding="utf-8") as fh:
+            with open(os.path.join(folder, f"app-{gun}.log"), "a", encoding="utf-8") as fh:
                 fh.write(f"{datetime.datetime.now().isoformat(timespec='seconds')} {message}\n")
         except OSError:
             pass
@@ -1150,6 +1167,102 @@ class MainWindow(QMainWindow):
 
 
     # ==================================================================
+    # Baglama / surucu harfi (ADR 0043)
+    # ==================================================================
+    def _unmount_all(self, info) -> bool:
+        """Diskteki tum bolumleri cikarir; hepsi basarili ise True.
+
+        Uygula penceresindeki uyaridan cagrilir. Bir bolum cikarilamazsa
+        islem **durur**: bagli bir dosya sistemi altindan ham sektor yazmak
+        onu bozar, "cikaramadim ama devam ediyorum" demek riski gizlerdi.
+        """
+        table = self.session.table if self.session else None
+        indexes = [p.index for p in (table.partitions if table else [])]
+        if not indexes:
+            return True
+
+        def task(report):
+            failures = []
+            for sira, index in enumerate(indexes, 1):
+                report(tr("Bolum {} cikariliyor...", index),
+                       int(100 * sira / len(indexes)))
+                ok, error = unmount_physical_partition(info, index)
+                if not ok:
+                    failures.append((index, error))
+            return failures
+
+        ok, result = run_task(self, tr("Baglantilari kes"), task)
+        if not ok:
+            self.error(tr("Baglantilari kes"), str(result))
+            return False
+        if result:
+            detay = "\n".join(f"#{i}: {h}" for i, h in result)
+            self.log(tr("Cikarilamayan bolum var:") + " " + detay)
+            QMessageBox.warning(self, tr("Baglantilari kes"),
+                                tr("Bu bolumler cikarilamadi:") + f"\n\n{detay}")
+            return False
+        self.log(tr("Diskteki baglantilar kesildi"))
+        return True
+
+    def mount_selected_partition(self) -> None:
+        """Secili bolumu baglar (Windows'ta surucu harfi atar)."""
+        self._mount_or_unmount(True)
+
+    def unmount_selected_partition(self) -> None:
+        """Secili bolumun baglantisini keser / harfini kaldirir."""
+        self._mount_or_unmount(False)
+
+    def _mount_or_unmount(self, mount: bool) -> None:
+        """Baglama islemi: kuyruga girmez, dogrudan calisir.
+
+        Yikici degildir — veri yazilmaz, bolum tablosuna dokunulmaz — bu
+        yuzden bekleyen islem kuyrugunun disindadir (ADR 0025 yalnizca
+        yikici islemleri kuyruga alir).
+
+        Isletim sistemi cagrisi oldugu ve suresi ongorulemedigi icin
+        `run_task` ile is parcaciginda calisir (CLAUDE.md donma kurali):
+        `udisksctl` polkit penceresi acabilir, PowerShell saniyeler surebilir.
+        """
+        part = self._current_partition()
+        if part is None:
+            return
+        info = self.session.disk_info
+        if info is None:
+            QMessageBox.information(
+                self, tr("Desteklenmiyor"),
+                tr("Baglama yalnizca gercek disklerde anlamlidir; goruntu "
+                   "dosyasi isletim sistemine bagli degildir."))
+            return
+        mount_text, unmount_text = mount_action_labels()
+        title = mount_text if mount else unmount_text
+        index = part.index
+        label = part.fs_label or part.name
+        fs_type = part.fs_type
+
+        def task(report):
+            report(title, -1)
+            if mount:
+                return mount_physical_partition(info, index, label, fs_type)
+            return unmount_physical_partition(info, index)
+
+        ok, result = run_task(self, title, task)
+        if not ok:
+            self.error(title, str(result))
+            return
+        basarili, detay = result
+        if not basarili:
+            self.log(tr("{} basarisiz: {}", title, detay))
+            QMessageBox.warning(self, title, detay or tr("Islem basarisiz."))
+            return
+        if mount:
+            self.log(tr("Bolum {} baglandi: {}", index, detay))
+        else:
+            self.log(tr("Bolum {} cikarildi", index))
+        # Bagli bolum listesi disk taramasindan gelir; tarama zorlanir ki
+        # bilgi paneli ve agac hemen guncellensin (3 sn beklenmesin).
+        self.refresh_disks()
+
+    # ==================================================================
     # Sema donusumu ve hizalama
     # ==================================================================
     def convert_scheme(self, scheme: str) -> None:
@@ -1568,6 +1681,17 @@ class MainWindow(QMainWindow):
             self.log(tr("{} olarak yeniden baslatma reddedildi; fiziksel diskler "
                         "acilamaz", elevation_name()))
 
+    def mark_elevation_asked(self) -> None:
+        """Yetki acilista zaten istendi: ayni soru bir daha sorulmasin.
+
+        `main.py` uygulama acilmadan once yetki ister (ADR 0042). Istek
+        reddedilirse pencere acilir; disk listesi hazir olunca ayni soruyu
+        ikinci kez sormak kullaniciyi bezdirirdi. Disk **acilirken** cikan
+        yetki teklifi (`_access_denied`) bundan etkilenmez: orada kullanici
+        bir sey yapmaya calismaktadir, teklif yerindedir.
+        """
+        self._elevation_asked = True
+
     def _access_denied(self, info, message: str) -> None:
         """Disk yetki yuzunden acilamadi: cozumu de sun.
 
@@ -1611,14 +1735,62 @@ class MainWindow(QMainWindow):
         self._wait_for_scan()
         self.close_all()
         diagnostics.info(f"{ELEVATION_NAME} olarak yeniden baslatiliyor")
-        started, error = relaunch_elevated()
-        if not started:
+        launch, error = relaunch_elevated()
+        if launch is None:
             self._disk_timer.start()
             self.log(tr("Yeniden baslatilamadi: {}", error))
             QMessageBox.warning(self, tr("Yeniden baslatilamadi"), error)
             return
-        # Yeni surec basladi; bu kopya cekilir.
-        QApplication.instance().quit()
+        self._await_elevated(launch)
+
+    def _await_elevated(self, launch) -> None:
+        """Yetkili kopya acilana kadar bekler, sonra bu kopyayi kapatir.
+
+        Beklemek zorunludur: Linux'ta `pkexec` yetkilendirmeyi **kendi
+        ebeveynine** bakarak yapar. Eski kopya baslatir baslatmaz kapanirsa
+        parola penceresi hic acilmaz ve kullanici yalnizca uygulamanin
+        kapandigini gorur (ADR 0039). Bekleme arayuzu kilitlemez: sayac
+        olayla calisir, pencere olay dongusu doner.
+        """
+        box = QProgressDialog(
+            tr("Yetki penceresi bekleniyor. Parola sorulursa girin."),
+            tr("Vazgec"), 0, 0, self)
+        box.setWindowTitle(tr("{} olarak yeniden baslat", elevation_name()))
+        box.setWindowModality(Qt.WindowModal)
+        box.setMinimumDuration(0)
+        box.setAutoClose(False)
+        box.setAutoReset(False)
+        timer = QTimer(self)
+        timer.setInterval(250)
+
+        def tick() -> None:
+            state, message = launch.poll()
+            if state == launch.WAITING:
+                if box.wasCanceled():
+                    # Yetki penceresi hala acik olabilir; kullanici onu da
+                    # kapatmali. Bu kopya calismaya devam eder.
+                    timer.stop()
+                    launch.cleanup()
+                    self._disk_timer.start()
+                    self.log(tr("Yetkili kopya beklenmekten vazgecildi; acilirsa "
+                                "iki kopyadan birini kapatin."))
+                return
+            timer.stop()
+            box.close()
+            if state == launch.STARTED:
+                launch.cleanup()
+                diagnostics.info("yetkili kopya acildi; bu kopya kapaniyor")
+                QApplication.instance().quit()
+                return
+            launch.cleanup()
+            self._disk_timer.start()
+            diagnostics.warn(f"yetkili kopya baslatilamadi: {message}")
+            self.log(tr("Yeniden baslatilamadi: {}", message))
+            QMessageBox.warning(self, tr("Yeniden baslatilamadi"), message)
+
+        timer.timeout.connect(tick)
+        timer.start()
+        box.show()
 
     # ==================================================================
     # Plan onizlemesi
@@ -1953,13 +2125,27 @@ class MainWindow(QMainWindow):
                               "sistemini <b>bozabilir</b>.<br><br>"
                               "Once bu bolumleri cikarmaniz (unmount) "
                               "onerilir.")
-                if QMessageBox.warning(
-                        self, tr("Bagli bolum uyarisi"),
-                        tr("Bu diskte bagli bolumler "
-                           "var:<br><b>{}</b><br><br>{}<br><br>Devam edilsin "
-                           "mi?", ', '.join(info.mounted), note),
-                        QMessageBox.Yes | QMessageBox.No,
-                        QMessageBox.No) != QMessageBox.Yes:
+                # Uyarinin yaninda cozum de durur: kullaniciyi baska bir
+                # pencereye gonderip "once cikar" demek, ayni bilgiyle iki
+                # kez ugrasmasi demektir (ADR 0043).
+                box = QMessageBox(self)
+                box.setIcon(QMessageBox.Warning)
+                box.setWindowTitle(tr("Bagli bolum uyarisi"))
+                box.setText(tr("Bu diskte bagli bolumler "
+                               "var:<br><b>{}</b><br><br>{}<br><br>Devam "
+                               "edilsin mi?", ', '.join(info.mounted), note))
+                evet = box.addButton(QMessageBox.Yes)
+                hayir = box.addButton(QMessageBox.No)
+                kes = (box.addButton(tr("Baglantilari kes"),
+                                     QMessageBox.ActionRole)
+                       if mount_supported()[0] else None)
+                box.setDefaultButton(hayir)
+                box.exec_()
+                secilen = box.clickedButton()
+                if kes is not None and secilen is kes:
+                    if not self._unmount_all(info):
+                        return False
+                elif secilen is not evet:
                     return False
         try:
             self._wait_for_scan()
@@ -2009,7 +2195,7 @@ class MainWindow(QMainWindow):
 
     def open_log_folder(self) -> None:
         """Gunluk klasorunu isletim sisteminin dosya yoneticisinde acar."""
-        folder = diagnostics.log_dir() or LOG_DIR
+        folder = diagnostics.log_dir() or log_root()
         if not open_folder(folder):
             QMessageBox.information(self, tr("Gunluk klasoru"), folder)
 
@@ -2934,6 +3120,10 @@ class MainWindow(QMainWindow):
         for act in (self.act_format, self.act_resize_part, self.act_label,
                     self.act_rename_part, self.act_type_part, self.act_boot):
             menu.addAction(act)
+        if self.act_mount.isEnabled() or self.act_unmount.isEnabled():
+            menu.addSeparator()
+            menu.addAction(self.act_mount)
+            menu.addAction(self.act_unmount)
         menu.addSeparator()
         for act in (self.act_backup_part, self.act_restore_part,
                     self.act_scan_deleted, self.act_wipe_part):
@@ -3096,6 +3286,7 @@ class MainWindow(QMainWindow):
             (tr("Tur"), part.type_name),
             (tr("Dosya sistemi"), part.fs_type or tr("Bicimlendirilmemis")),
             (tr("Birim etiketi"), info.label or "-"),
+            (mount_point_label(), part.mount_point or tr("Bagli degil")),
             (tr("Boyut"), tr("{} ({} sektor)", human_size(part.size),
                              part.sector_count)),
             (tr("Baslangic LBA"), str(part.start_lba)),
@@ -3249,6 +3440,13 @@ class MainWindow(QMainWindow):
             act.setEnabled(yazilabilir and part_selected)
         self.act_rename_part.setEnabled(
             yazilabilir and part_selected and self.session.scheme == "gpt")
+        # Baglama isletim sistemi islemidir: kaynagin salt okunur acilmis
+        # olmasi engel degildir, ama yalnizca **gercek diskte** anlamlidir
+        # (goruntu dosyasi zaten dosya sistemine bagli degildir).
+        can_mount = (part_selected and self.session.disk_info is not None
+                     and mount_supported()[0])
+        self.act_mount.setEnabled(can_mount)
+        self.act_unmount.setEnabled(can_mount)
         # Onyukleme bayragi: metin secili bolumun durumunu yansitir. Burada
         # `_current_partition()` kullanilmaz — o islev diyalog acar ve bu islev
         # her yenilemede cagrilir.

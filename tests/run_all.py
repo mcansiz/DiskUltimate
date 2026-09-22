@@ -799,6 +799,12 @@ def t17_ntfs():
     assert bilgi["cluster_size"] in (4096, 2048, 1024)
     info = detect(PartitionView(d, 2048, d.sector_count - 2048))
     assert info.fs_type == "NTFS", info
+    # Etiket ve doluluk onyukleme sektorunde degil, ustveri dosyalarindadir
+    # ($Volume / $Bitmap). Tespit bunlari okumazsa harita cubugu ve tablodaki
+    # "Kullanilan" sutunu NTFS'te bos kalir.
+    assert info.label == "DUNTFS", info.label
+    assert info.used_bytes > 0, "NTFS doluluk olculememis"
+    assert info.used_bytes < info.total_bytes, (info.used_bytes, info.total_bytes)
 
     # --- okuyucu kendi urettigimiz birimi cozebilmeli ---
     view2 = PartitionView(d, 2048, d.sector_count - 2048)
@@ -816,7 +822,23 @@ def t17_ntfs():
     # --- yazma: kendi urettigimiz birimde indeks $INDEX_ROOT icinde durur ---
     # Ayrintili dogrulama (her adimda ntfsfix + ntfs-3g baglama)
     # tests/ntfs_write_check.py icindedir.
+    # Doluluk hesabi bagimsiz bir uygulamayla (boyutlandirmanin bitmap
+    # taramasi) ayni sonucu vermeli; hizli olan tabloyla sayar, bu bit bit.
+    from diskultimate.core.ntfsresize import _bitmap_usage
+    dolu_kume, _ = _bitmap_usage(nfs, nfs.cluster_count)
+    assert nfs.used_bytes() == dolu_kume * nfs.cluster_size, (
+        nfs.used_bytes(), dolu_kume * nfs.cluster_size)
+
     assert erisim.writable, f"NTFS yazilabilir olmali: {erisim.write_reason}"
+    # Yazilan veri dolulugu artirmali (bitmap gercekten okunuyor mu?)
+    once = NtfsFS(PartitionView(d, 2048, d.sector_count - 2048)).used_bytes()
+    erisim.write_file("/buyuk.bin", b"\xA5" * (2 * MIB))
+    erisim.flush()
+    sonra = NtfsFS(PartitionView(d, 2048, d.sector_count - 2048)).used_bytes()
+    assert sonra - once >= 2 * MIB, (once, sonra)
+    erisim.remove("/buyuk.bin")
+    erisim.flush()
+
     erisim.write_file("/deneme.txt", b"NTFS yazma\n")
     assert erisim.read("/deneme.txt") == b"NTFS yazma\n"
     erisim.mkdir("/klasor")
@@ -1218,10 +1240,62 @@ def t22_yetki_yukseltme():
         assert not uygun, "zaten yetkiliyken yukseltme sunulmamali"
         assert "zaten" in neden.lower(), neden
         # Zaten yetkiliyken cagrilsa bile hicbir sey baslatilmamali
-        baslatildi, hata = pf.relaunch_elevated()
-        assert not baslatildi and hata == neden, (baslatildi, hata)
+        tutamac, hata = pf.relaunch_elevated()
+        assert tutamac is None and hata == neden, (tutamac, hata)
     else:
         assert uygun or neden, "ya yukseltilebilmeli ya da nedeni olmali"
+
+    # -- yeni kopyanin "acildim" bildirimi --
+    #
+    # pkexec yetkilendirmeyi kendi EBEVEYNINE bakarak yapar; eski kopya
+    # baslatir baslatmaz kapanirsa parola penceresi hic acilmaz (ADR 0039).
+    # Bu yuzden eski kopya yenisinin bildirimini bekler. Burada denenen o
+    # el sikisma: gercek bir polkit/UAC penceresi ACILMAZ.
+    class SahteSurec:
+        """Popen yerine gecer: `poll()` sabit bir cikis kodu doner."""
+
+        def __init__(self, code):
+            self.code = code
+
+        def poll(self):
+            return self.code
+
+    yol = os.path.join(scratch("elevate"), f"test-ready-{os.getpid()}")
+    if os.path.exists(yol):
+        os.remove(yol)
+    eski_ortam = os.environ.get(pf.HANDOFF_ENV)
+    os.environ[pf.HANDOFF_ENV] = yol
+    try:
+        assert pf.signal_elevated_ready() == yol, "bildirim yazilmali"
+        assert os.path.isfile(yol), "bildirim dosyasi olusmali"
+        # Degisken okunurken silinir: alt surecler bildirimi devralmamali
+        assert pf.HANDOFF_ENV not in os.environ, "bildirim ortamdan silinmeli"
+        assert pf.signal_elevated_ready() == "", "bildirim yalnizca bir kez"
+
+        # Bildirim varken: yeni kopya acildi -> eski kopya kapanabilir
+        durum, mesaj = pf.ElevatedLaunch(SahteSurec(None), yol).poll()
+        assert durum == pf.ElevatedLaunch.STARTED, (durum, mesaj)
+        os.remove(yol)
+
+        # Bildirim yok, surec suruyor -> parola penceresi bekleniyor
+        durum, _ = pf.ElevatedLaunch(SahteSurec(None), yol).poll()
+        assert durum == pf.ElevatedLaunch.WAITING, durum
+
+        # Surec bildirimsiz bitti -> hata, ve nedeni kullaniciya soylenir
+        for kod in (pf.PKEXEC_DISMISSED, pf.PKEXEC_ERROR, 1):
+            durum, mesaj = pf.ElevatedLaunch(SahteSurec(kod), yol).poll()
+            assert durum == pf.ElevatedLaunch.FAILED, (kod, durum)
+            assert mesaj.strip(), f"cikis kodu {kod} icin aciklama bos"
+
+        # Windows/macOS: pencereyi isletim sistemi yonetir, beklenmez
+        assert pf.ElevatedLaunch().poll()[0] == pf.ElevatedLaunch.STARTED
+    finally:
+        if eski_ortam is None:
+            os.environ.pop(pf.HANDOFF_ENV, None)
+        else:
+            os.environ[pf.HANDOFF_ENV] = eski_ortam
+        if os.path.exists(yol):
+            os.remove(yol)
 
 
 # --------------------------------------------------------------------------
@@ -2945,6 +3019,65 @@ def t42_ntfs_isletim_sistemi_yazabilmeli():
     assert erisim.read("/kendi.txt") == b"kendi yazicimiz\n"
     erisim.flush()
     fs.dev.close()
+
+
+# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+@test
+def t43_baglama_guvenlik_katmani():
+    """Baglama: aygit yolu turetimi, platform etiketleri, kritik nokta korumasi
+
+    Gercek bir baglama YAPILMAZ (root ve gercek aygit ister). Sinanan sey
+    karar mantigidir: hangi aygit yolu uretiliyor, hangi noktalar
+    "calisan sistem" sayilip cikarilmasi reddediliyor (ADR 0043).
+    """
+    from diskultimate.core import physical as ph
+    from diskultimate.core import platform as pf
+
+    # -- aygit yolu: nvme/mmcblk 'p' ekler, sd/hd eklemez --
+    assert pf.partition_device("/dev/sdb", 3) == "/dev/sdb3"
+    assert pf.partition_device("/dev/nvme0n1", 2) == "/dev/nvme0n1p2"
+    assert pf.partition_device("/dev/mmcblk0", 1) == "/dev/mmcblk0p1"
+    assert pf.partition_device("/dev/sda", 0) == "", "0 gecerli bolum degil"
+
+    # -- etiketler platformun kavramiyla --
+    mount_text, unmount_text = pf.mount_action_labels()
+    assert mount_text and unmount_text and mount_text != unmount_text
+    if pf.IS_WINDOWS:
+        assert "harf" in mount_text.lower() or "letter" in mount_text.lower()
+
+    # -- kritik baglama noktalari --
+    if not pf.IS_WINDOWS:
+        for point in ("/", "/boot", "/boot/efi", "/usr", "/var"):
+            assert ph.is_critical_mount(point), point
+        assert not ph.is_critical_mount("/media/kullanici/DENEME")
+    assert not ph.is_critical_mount("")
+
+    # -- kok dosya sistemi cikarilmaya CALISILMAMALI --
+    #
+    # `physical` islevleri platform katmanindan ada gore aldigi icin taklit
+    # de orada yapilir; boylece gercek `umount` cagrilmadigi dogrulanir.
+    info = ph.DiskInfo(path="/dev/sahte", name="sahte")
+    eski_nokta, eski_cikar = ph.pf_mount_point, ph.pf_unmount
+
+    def patlayici(*args, **kwargs):
+        raise AssertionError("kritik bolumde cikarma denenmemeli")
+
+    try:
+        ph.pf_mount_point = lambda path, index: "/"
+        ph.pf_unmount = patlayici
+        ok, message = ph.unmount_partition(info, 1)
+        assert not ok and message, (ok, message)
+        assert "/" in message
+
+        # Kritik olmayan noktada cikarma platform katmanina INER
+        cagrildi = []
+        ph.pf_mount_point = lambda path, index: "/media/kullanici/VERI"
+        ph.pf_unmount = lambda path, index: (cagrildi.append((path, index)), (True, ""))[1]
+        ok, message = ph.unmount_partition(info, 2)
+        assert ok and cagrildi == [("/dev/sahte", 2)], (ok, cagrildi)
+    finally:
+        ph.pf_mount_point, ph.pf_unmount = eski_nokta, eski_cikar
 
 
 # --------------------------------------------------------------------------

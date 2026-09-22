@@ -4076,3 +4076,584 @@ zamanlamaya bagli, garanti degil — skill'in uyarisi yerinde.
     git commit -m "Oturum gecmisi projeye alindi"
 
 Ilk commit ~44 MB ekler. Commit yapilmadi - istenmedi.
+
+---
+
+## 2026-09-21 (3) — Oturum gecmisi tek klasorde: VS Code eklentisinde gorunur oldu (ADR 0038)
+
+**Sikayet:** depodaki `.claude/sessions/` icinde 9 oturum dokumu duruyor ama
+VS Code Claude eklentisinin gecmis listesinde gorunmuyor.
+
+### Neden gorunmuyordu
+
+Dokumler `.claude/sessions/d--pythonProjeler-DiskUltimate-DiskUltimate/`
+altindaydi; bu ad **Windows makinesinin** calisma dizininden uretilmis slug.
+Bu makinede (Linux) Claude Code kendi slug'ina bakiyor:
+`-home-pc-Belgeler-GitHub-DiskUltimate`. Yani gecmis dosya olarak gelmisti,
+adres olarak degil.
+
+Ayrica projenin daha eski Linux yolunda (`/home/pc/diskUltimate`) kalmis iki
+oturum daha vardi — ilki projenin kuruldugu oturum.
+
+### Eklenti gecmisi neye bakiyor (olculdu)
+
+Tahmin yerine eklentinin kendi kodu okundu
+(`~/.vscode/extensions/anthropic.claude-code-2.1.278-linux-x64/extension.js`):
+
+- Liste `readdir(<config>/projects/<slug>)` ile kuruluyor; `.jsonl` uzantili ve
+  **adi gecerli oturum kimligi** olan dosyalar aliniyor.
+- Ozet dosyanin bas/son parcasindan cikariliyor; dokumun icindeki `cwd`
+  yalnizca **gosteriliyor**, suzme olcutu degil. `isSidechain` olanlar eleniyor.
+
+Yani ayni klasoru birden cok makine paylasabilir; dokumun `cwd` alanini
+yeniden yazmak gerekmiyor. Ayrica arsiv kopyalari (`2026-09-19-<kimlik>.jsonl`)
+adlari kimlik olarak ayristirilamadigi icin listede cikmiyor — mukerrer kayit
+riski yok.
+
+### Yapilan
+
+- `.claude/sessions/d--pythonProjeler-...` -> `.claude/sessions/live/`
+  (`git mv`; 9 dokum, ~44 MB, blob'lar ayni kaldi).
+- `.claude/hooks/setup-sessions.py` yazildi: slug'i kendi hesaplar, mevcut
+  `<config>/projects/<slug>` icerigini `live/` ile **birlestirerek** tasir
+  (alt klasorler dahil), yerine baglanti kurar (symlink; Windows'ta olmazsa
+  `mklink /J`), `--import-legacy` ile eski yol dokumlerini alir.
+  `--check` / `--dry-run` / `--force` var. Acik oturum korumasi: son bir
+  dakikada yazilmis dokum varsa durur.
+- `CLAUDE.md`, `.gitignore` aciklamasi, `INDEX.md` basligi ve ADR 0038
+  guncellendi. `.gitignore` deseni degismedi; `git check-ignore` ile
+  dogrulandi: `live/*.jsonl` **girer**, ust dizindeki arsiv kopyalari girmez.
+
+### Dogrulandi
+
+- `.claude/hooks/setup-sessions-test.py` yazildi (sahte `CLAUDE_CONFIG_DIR` +
+  sahte depo; gercek dokumlere dokunmaz): **6/6 TAMAM** — kurulmamis durumun
+  bildirilmesi, `--dry-run`'in hicbir sey degistirmemesi, acik oturum
+  korumasi, tasima + `tool-results` birlestirme + eski yol ithali, alakasiz
+  proje klasorune dokunmama, ikinci calistirmada `TAMAM` (idempotent).
+- Gercek makinede `--check` -> `gercek klasor` (henuz baglanti yok),
+  `--dry-run --import-legacy` -> tasinacak 2 canli + 2 eski dokum.
+- `git check-ignore`: `live/*.jsonl` depoya **girer**, ust dizindeki arsiv
+  kopyalari girmez.
+
+### Simdiden gorunur olan
+
+Canli dokumleri tasima islemi **bu oturumdan yapilamadi**: Claude Code'un
+guvenlik siniflandiricisi kendi transcript'ine dokunmayi engelledi (dogru
+karar; zaten kural "Claude Code kapaliyken calistir" diyor).
+
+Bunun yerine depodaki 9 eski dokum icin `~/.claude/projects/<slug>/` altina
+**symlink** birakildi; eklenti bunlari hemen listeler. Baglantilar gecicidir:
+betik calisinca "baglanti, hedefte var" diyip siler (test bunu da kapsiyor).
+
+### Kalan adim (kullanici)
+
+    # VS Code'daki Claude oturumu kapatildiktan sonra:
+    python3 .claude/hooks/setup-sessions.py --import-legacy
+
+Sonra eklentide 13 oturum gorunur ve bu makinenin yeni oturumlari dogrudan
+depo icine yazilir.
+
+---
+
+## 2026-09-21 — Linux paketi: "Evet" deyince uygulama kapaniyor, acilmiyordu
+
+### Sikayet
+
+`dist/DiskUltimate` (PyInstaller, Linux) aciliyor, "root olarak yeniden
+baslatilsin mi?" diye soruyor, **Evet** deyince kapaniyor ve bir daha
+acilmiyor. Hicbir hata gorunmuyor.
+
+### Kok neden (olculdu)
+
+Tanilama gunlugunun son satiri "root olarak yeniden baslatiliyor" idi, yani
+uygulama `pkexec`'i baslatip **hemen** kendini kapatiyordu.
+
+`pkexec` yetkilendirmeyi **kendi ebeveynine** bakarak yapar (polkit oznesi =
+`getppid()`). Ana makinede denendi:
+
+- ebeveyn `Popen`'dan hemen sonra cikinca → pkexec root olarak **asili kaldi**,
+  parola penceresi hic acilmadi, hicbir cikti vermedi;
+- ayni komut ebeveyn yasarken → `cikis kodu 0`, program root olarak calisti.
+
+Ikinci kusur: `Popen` "baslatildi" sayildigi icin yetkilendirme reddedilse
+bile kullaniciya hicbir sey soylenmiyordu.
+
+### Yapilan
+
+- **ADR 0039** — yukseltme artik el sikismadir. `relaunch_elevated()` bir
+  `ElevatedLaunch` tutamaci dondurur (`bekliyor` / `basladi` / `hata`); yeni
+  kopya penceresi gorununce `signal_elevated_ready()` ile bildirim dosyasini
+  yazar (`DISKULTIMATE_HANDOFF`), eski kopya o ana kadar acik kalir ve
+  belirsiz ilerleme penceresi gosterir. pkexec bildirimsiz cikarsa hata
+  gosterilir (126 = iptal, 127 = polkit reddi, digerleri cikis koduyla) ve
+  yetkili kopyanin ciktisinin sonu eklenir. Windows/macOS akisi degismedi.
+- **ADR 0040** — paketlenmis kopyada `paths` artik proje dizinini `__file__`
+  uzerinden uydurmaz: gunluk ve gecici dosyalar `user_data_dir()` altina
+  gider (Linux `~/.local/state/DiskUltimate/`). Onceden hepsi sistemin gecici
+  dizinindeki `_MEIxxxx`'in yanina dusuyordu; gunlukler silinebilir bir yerde
+  duruyor ve root kopyasi yazinca sahiplik degisiyordu. `LOG_DIR` sabiti
+  yerine `log_root()`; `DISKULTIMATE_LOG_DIR` yetkili kopyaya gecirilir,
+  boylece root kopyasinin gunlugu ayni klasorde toplanir.
+- **`build_linux.sh`** eklendi (`build_exe.bat`'in Linux karsiligi):
+  PyQt5'i bulan yorumlayiciyi secer, kaynak agacini dogrular, PyInstaller
+  yoksa kurar, `strip`/`pkexec` eksikse uyarir, `dist/DiskUltimate` uretip
+  calistirma iznini verir. `--clean` onbellegi bosaltir.
+
+### Dogrulandi (ana makine — Linux Mint, KDE/Wayland, sddm)
+
+| Denetim | Sonuc |
+|---|---|
+| `tests.platform_check` | 0 bulgu |
+| `tests.i18n_check` | de/en TAMAM (5 yeni metin cevrildi) |
+| `tests.diag_check` | 13/13 |
+| `tests.ui_smoke` | tamamlandi (sozde dil: yalnizca bilinen 3 veri metni) |
+| `tests.run_all` | 40/42 · 2 atlandi (yalnizca Windows dalinda) |
+| pkexec el sikismasi (uctan uca) | `uid=0`, `DISPLAY` tasindi, bildirim yazildi, bekleyen kopya `basladi` gordu |
+| root'un ekrana erisimi | `pkexec ... xdpyinfo` → `name of display: :0` (XWayland uzerinden calisir) |
+| `./build_linux.sh` | `dist/DiskUltimate` (39M) uretti, yeniden calistirildi ve gunlugu `~/.local/state/DiskUltimate/logs/` altina yazdi |
+
+**VM'de kosulamadi:** `192.168.42.131` bu makineden erisilemiyor (baglanti
+zaman asimi; VM Windows gelistirme makinesine bagli). Bu yuzden calistiran
+testler **ana makinede** kosuldu — hicbiri fiziksel diske yazmaz. Windows ve
+macOS yollari da bu oturumda calistirilmadi; kod yolu degismedi ama
+olculmedi de.
+
+---
+
+## 2026-09-21 — NTFS bolumlerde doluluk cubugu yoktu
+
+### Sikayet
+
+Ana bilgisayarin diskinde ext4 ve FAT32 bolumlerde doluluk cubugu var, iki
+**NTFS** bolumde yok.
+
+### Kok neden
+
+`fsdetect._ntfs()` yalnizca onyukleme sektorunu okuyup donuyordu:
+`used_bytes` `-1` ("bilinmiyor") kaliyor, harita da cubugu ancak
+`fs_used >= 0` iken ciziyordu. FAT (FAT tablosu), exFAT (tahsis bitmap'i) ve
+ext (superblokta `s_free_blocks_count`) icin bu bilgi hemen elde; NTFS'te ise
+**ustveri dosyalarindadir**: doluluk `$Bitmap`, etiket `$Volume` kaydinda.
+Ayni nedenle NTFS bolumlerde etiket de bostu — haritada gorulen
+"Basic data partition" GPT bolum adiydi, birim etiketi degil.
+
+### Yapilan
+
+- `NtfsFS.used_bytes()` eklendi: `$Bitmap`'i yalnizca **kume sayisi kadar**
+  okur ve dolu bitleri sayar. Bitmap'in son baytlari birim disinda kalan
+  bitleri tasir ve Windows onlari dolu isaretler; eski `stats()` bunlari
+  sayiyor, ayrica tum bitleri `bin(b).count("1")` ile geziyordu. Sayim artik
+  256 girisli bir tabloyla `bytes.translate` uzerinden yapilir (200 GB'lik
+  birimde bitmap ~6 MB'tir). `stats()` bunu cagirir ve olcum yoksa `-1`
+  dondurur — "bilinmiyor" ile "bos" birbirine karismaz.
+- `fsdetect._ntfs()` MFT'yi acip doluluk ve etiketi doldurur. Basarisizlik
+  olumcul degildir (tespit yine gecerli); islem `diagnostics.span
+  ("fs.ntfs_meta")` ile olculur.
+
+### Dogrulandi (ana makine, SALT OKUNUR)
+
+- `t17_ntfs` genisletildi: tespit sonrasi etiket + doluluk dolu olmali;
+  deger, boyutlandirmanin bagimsiz bitmap taramasiyla (`_bitmap_usage`)
+  **birebir** ayni cikmali; 2 MiB dosya yazilinca doluluk en az 2 MiB artmali.
+- Gercek disk (`/dev/nvme0n1p4`, bagli degil): bizim olcum **164.07 GiB**;
+  `ntfscluster` bos alani 13 363 679 232 bayt diyor → dolu 176 170 622 976
+  bayt = **164.07 GiB**. Birebir tutuyor. Sure: 44-64 ms/bolum.
+- `tests.run_all` 40/42 (2 atlandi: yalnizca Windows), `platform_check` 0
+  bulgu, `i18n_check` BASARILI.
+- Not: `/dev/nvme0n1p3` icin `ntfsresize` "NTFS is inconsistent, run chkdsk"
+  diyor — o birimin kendi $Bitmap tutarsizligi (188 kume), Windows'ta
+  `chkdsk /f` ister. Bizim okumamiz etkilenmedi.
+
+---
+
+## 2026-09-21 — Doluluk cubugu yeniden cizildi (ilk tur)
+
+### Istek
+
+Doluluk renkleri daha estetik olsun.
+
+### Onceki hali
+
+Beyaz dikdortgen zemin (alpha 190) + blogun renginin koyulastirilmisi, keskin
+koseler, ortada tek renk yazi. Cubuk iki yerde **ayri ayri** ciziliyordu
+(harita blogu ve boyutlandirma seridi) ve ikisi birbirini tutmuyordu.
+
+### Yapilan
+
+`theme.draw_usage_bar()` tek cizim noktasi oldu; `disk_map` ve `resize_bar`
+onu cagiriyor.
+
+- **Bicim:** yuvarlatilmis kapsul, kenarinda blogun tonundan tureyen ince
+  cerceve, olugun ustunde 1 px ic golge (cubuk blogun uzerine yapistirilmis
+  degil, icine oyulmus durur). Dolgu ustten alta hafif degradeli.
+- **Renk:** esigin altinda blogun **kendi tonu** (daha doygun, orta
+  parlaklikta — koyulastirmak camur gibi gosteriyordu); %75'ten sonra
+  kehribar, %90'dan sonra kirmizi. Ara tonlarda karisim denendi ve
+  **birakildi**: mavi/mor/yesil bloklarda kehribar karisimi donuk bir zeytin
+  tonu veriyor, hem cirkin hem de uyari oldugu anlasilmiyordu (renk x oran
+  onizleme tablosu uretilerek goruldu).
+- **Yazi:** ayni etiket iki kez cizilir — once oluk, sonra dolu kisim
+  kirpilarak — boylece cubugun her iki yarisinda da okunur. Yazi rengi HSL
+  "lightness" ile degil **algilanan parlaklikla** secilir (`readable_text`):
+  kehribar HSL'de orta cikip koyu sayiliyor, uzerine beyaz yazi dusuyordu.
+
+Esik renkleri (`USAGE_WARN`, `USAGE_FULL`) anlamsaldir, bu yuzden sabittir
+(CLAUDE.md renk kurali: anlamsal renkler paletten gelmez).
+
+### Dogrulandi
+
+- `tests.ui_smoke` genisletildi: 5 dosya sistemi renginde esik altinda tonun
+  korundugu, esiklerde kehribar/kirmizi geldigi, yazi-zemin karsitliginin
+  her durumda 60 lightness'tan buyuk oldugu; ayrica %0, %0.4, %50, %100 ve
+  cok dar alanda cizimin patlamadigi. **TAMAM**
+- Goz denetimi: renk x oran tablosu ve gercek disk duzeninin onizlemesi
+  offscreen uretilip bakildi; boyutlandirma seridi de ayni gorunumde.
+- `platform_check` 0 bulgu, `i18n_check` BASARILI, `run_all` 40/42 (2 atlandi).
+
+---
+
+## 2026-09-21 — Harita blogu yeniden duzenlendi (ADR 0041)
+
+### Istek
+
+Ilk tur yeterli olmadi: "guzel degil — example gui resimlerini incele, benze;
+bana secenekler sun".
+
+### Yapilan
+
+`example gui/` altindaki uc arac (EaseUS, Macrorit, Acronis) incelendi;
+uculunun de ortak duzeni var: **acik blok zemini + blogun ustunde kalin
+doluluk cubugu + koyu yazi**. Bizdeki sorun renk tonu degil yerlesimdi:
+doygun renkli zemin uzerindeki kucuk cubuk zeminle yarisiyordu.
+
+Bes secenek offscreen uretilip (`.tmp/onizleme/doluluk-secenekleri.png`)
+kullaniciya sunuldu: A Macrorit tarzi, B EaseUS tarzi, C renkli blok + ust
+serit, D blogun kendisi kapasite, E renkli blok + rozet. **A secildi.**
+
+- `DiskMapWidget._draw_block` yeniden yazildi: zemin paletin `Base` rengi
+  (koyu temada kendiliginden koyu panel), 4 px sol kenar seridi dosya
+  sistemi renginde, ustte 19 px doluluk cubugu, altinda baslik/dosya
+  sistemi/boyut paletten gelen renklerle. Secim ve fare uzerindeyken zemin
+  vurgu rengine karisir.
+- `theme.draw_usage_bar` bu bicime gecti (kapsul degil, 2.5 px yuvarlatilmis
+  dikdortgen; oluk dosya sistemi renginin acik tonu; dolgu degradeli).
+  Doluluk bilinmiyorsa (MSR, bicimlendirilmemis) cubuk **taramali** cizilir.
+- Boyutlandirma seridindeki cubuk da blogun ustune tasindi; iki gorunum ayni
+  gorsel dili konusuyor.
+
+### Dogrulandi
+
+- `tests.ui_smoke`: TAMAM (doluluk cubugu renk/okunurluk denetimi dahil).
+- Goz denetimi: acik tema, koyu tema (Fusion koyu palet), secili blok, bos
+  alan blogu ve boyutlandirma seridi ayri ayri uretilip bakildi —
+  `.tmp/onizleme/sonuc-*.png`.
+- `platform_check` 0 bulgu, `i18n_check` BASARILI.
+
+---
+
+## 2026-09-21 — Acilista kosulsuz root (ADR 0042)
+
+### Istek
+
+"Uygulama acilmadan otomatik root sifresi sorup root olarak acilsa nasil olur,
+mumkun mu? Zaten root olmadan pek bir ise yaramiyor."
+
+Secenekler ve bedelleri sunuldu; kullanici **kosulsuz otomatik root** ve
+**uretilen dosyalarin sahipliginin kullaniciya geri verilmesini** secti.
+
+### Yapilan
+
+- `ui/startup.elevate_at_startup()` eklendi; `main.py` pencereyi kurmadan
+  once bunu cagirir. Yetkili kopya acilinca (ADR 0039 el sikismasi) acilis
+  kopyasi kapanir. Kod `main.py` yerine `ui/` altindadir: `main.py` cevirici
+  taramasinin disinda kaliyor, oradaki metinler hicbir zaman cevrilmezdi.
+- Yetki verilmezse uygulama acilir ve ayni oturumda bir daha sorulmaz
+  (`MainWindow.mark_elevation_asked`). Cikis kapilari: `--no-root`,
+  `DISKULTIMATE_AUTO_ROOT=0`, `DISKULTIMATE_NO_ELEVATION_PROMPT=1`.
+- `platform.invoking_user()` / `platform.restore_owner()` eklendi; root
+  kopyada uretilen dosyalarin sahipligi `PKEXEC_UID`/`SUDO_UID` ile geri
+  verilir. Cagrildigi yerler: `image`, `vdisk`, `clone`, `filesystem` (iki
+  extract), `fat`, `exfat`, `recovery` (iki yol).
+- `CLAUDE.md` yetki kurali ve ADR 0023 bu kararla degistirildi.
+
+### Dogrulandi (ana makine)
+
+| Denetim | Sonuc |
+|---|---|
+| Gercek kosum (`./dist/DiskUltimate`) | 3,5 sn'de root arayuz acildi; acilis kopyasi el sikismadan sonra kapandi; fiziksel disk salt okunur acildi |
+| Sahiplik (gercek root) | `pkexec` altinda uretilen goruntu `uid=1000 gid=1000` — root degil |
+| `tests.ui_smoke` | acilis yetkisi (basarili/basarisiz + 3 cikis kapisi), `restore_owner` yetkisizken dokunmuyor |
+| `tests.run_all` | 40/42 · 2 atlandi (yalnizca Windows) |
+| `platform_check` / `i18n_check` | 0 bulgu / BASARILI (2 yeni metin cevrildi) |
+
+Not: bu makinede polkit parola sormadan yetki verdi (yonetici grubu kurali);
+parola soran sistemlerde pencere pkexec tarafindan acilir, bekleme penceresi
+o sirada "Yetki isteniyor" der.
+
+---
+
+## 2026-09-21 — Bolum baglama / cikarma ve surucu harfi (ADR 0043)
+
+### Gecmisi
+
+Ozellik 18 Eylul oturumunda tasarlanmis, uc platformun yolu olculmus, ama
+ayni olcum sirasinda NTFS `$Secure` hatasi bulundugu icin one o alinmisti
+(ADR 0037) ve ozellik geri donulmeden kalmisti. Kullanici bu turda "simdi
+yap" dedi; tasarim kararlari o oturumdan aynen alindi.
+
+### Yapilan
+
+- `core/platform.py`: `mount_partition`, `unmount_partition`,
+  `partition_mount_point`, `partition_device`, `mount_action_labels`,
+  `mount_supported`. Linux'ta root iken `/media/<kullanici>/<etiket>`,
+  degilken `udisksctl`; Windows'ta `Add-/Remove-PartitionAccessPath`;
+  macOS'ta `diskutil` (yazildi, **test edilmedi**).
+- `core/physical.py`: guvenlik katmani — `is_critical_mount()` ve
+  sarmalayicilar. `/`, `/boot`, `/boot/efi`, `/usr`, `/var`, `/etc`,
+  `/home` (Windows'ta sistem surucusu) **cikarilamaz**.
+- `ui/main_window.py`: Bolum menusune ve sag tik menusune iki eylem; islem
+  `run_task` ile is parcaciginda (polkit penceresi/PowerShell beklenebilir).
+  Goruntu dosyasinda eylemler kapali — goruntu isletim sistemine bagli
+  degildir.
+- Uygula penceresindeki "bagli bolum var" uyarisina **Baglantilari kes**
+  dugmesi; cikarilamayan bolum varsa islem devam etmez.
+- `ui/icons.py`: `mount` / `unmount` ikonlari (asagi/yukari ok rozetli).
+- Ceviriler: 21 yeni metin EN + DE.
+
+### Yol uzerinde cikan iki gercek kusur
+
+1. **"target is busy"** — yeni baglanan birim hemen cikarilamiyor (isletim
+   sistemi yokluyor). Zorlama bayragi (`-l`/`-f`) **kullanilmadi**; sinirli
+   yeniden deneme eklendi (3 kez, artan bekleme). Ikinci deneme geciyor.
+2. **Ust uste baglama** — basarisiz bir cikarmadan kalan nokta, sonraki
+   baglamayla ust uste bindi ve alttaki dosya sistemi gorunmez oldu. Artik
+   hedef zaten baglama noktasiysa `<etiket>-2` denenir.
+
+### Dogrulandi (ana makine, loop aygiti — fiziksel diske dokunulmadi)
+
+```
+bagla -> True /media/pc/DENEME
+nokta sahibi: uid=1000 gid=1000     (root degil)
+dosya sahibi: uid=1000 gid=1000     (uid= secenegi calisti)
+cikar -> True · nokta bos · klasor kaldirildi
+```
+
+| Denetim | Sonuc |
+|---|---|
+| `tests.run_all` | **41/43** · 2 atlandi (yalnizca Windows) — yeni `t43_baglama_guvenlik_katmani` dahil |
+| `tests.ui_smoke` | TAMAM (etiketler platformdan, goruntude kapali, menude var) |
+| `tests.diag_check` | 13/13 |
+| `platform_check` / `i18n_check` | 0 bulgu / BASARILI |
+
+Windows ve macOS dallari bu oturumda **calistirilmadi**; kod yollari
+yazildi ve statik denetimden gecti, "test edildi" denmiyor.
+
+### Belgeler
+
+`diskgenius-parity.md` ve `project-overview.md` guncellendi: "surucu harfi
+atama" kapsam disi listesinden cikti (UEFI onyukleme girisi yonetimi de
+yanlislikla orada duruyordu, o da cikarildi).
+
+## 2026-09-21 — Uygulama ikonu: aday tasarimlar
+
+Uygulamanin kendi ikonu (pencere / gorev cubugu / exe) yoktu; `DiskUltimate.spec`
+bunu yorum satirinda belirtiyordu. Dokuz aday cizildi ve secim icin onizleme
+sayfalari uretildi:
+
+- Uretici: `.tmp/ikon/ikon_adaylari.py` (QPainter, `QT_QPA_PLATFORM=offscreen`)
+- Onizleme: `.tmp/ikon/adaylar-acik.png`, `adaylar-koyu.png`,
+  `adaylar-boyutlar.png` (16/24/32/48/64 px, acik ve koyu zemin)
+
+Adaylar: A Tabak, B Katmanlar, C Bolum Seridi, D Kalkan, E D Monogrami,
+F Dilim, G Disli Disk, H Bolunmus Surucu, I Tarayici.
+
+Hepsi **cizilerek** uretilir — `ui/icons.py` kuralina (SVG yok, calisma zamani
+bagimliligi yok) uyar; secilen aday dogrudan `icons.py` icine tasinabilir ve
+ayni cizimden `.ico` / `.png` / `.icns` uretilir.
+
+Not: `QGuiApplication(...)` sonucu bir degiskene atanmazsa toplaniyor ve
+islem cokuyor (olculdu: segfault). Aday uretici bu yuzden referans tutar.
+
+**Secim bekliyor** — aday secilene kadar depoya ikon dosyasi girmedi
+(`.tmp/` surum kontrolu disindadir).
+
+---
+
+## 2026-09-21 — Bolumun bagli oldugu yer gosteriliyor
+
+Istek: "partitionlar uzerinde surucu harfi veya yolunu gosterebilir miyiz?"
+
+- `Partition.mount_point` alani eklendi; kaynagi `DiskInfo.mount_map`
+  (**{bolum baslangici (bayt): nokta}**). Linux'ta `/sys/.../start` +
+  `/proc/mounts`, Windows'ta birim extent'lerinin `StartingOffset` alani —
+  o IOCTL zaten harfleri ogrenmek icin cagriliyordu, **ek maliyet yok**.
+  Bolum basina isletim sistemine sormak Windows'ta her bolum icin bir aygit
+  tutamaci demekti (ADR 0021).
+- Gosterim: bolum tablosunda yeni sutun (basligi platforma gore
+  "Baglama noktasi" / "Surucu harfi"), harita blogunda dosya sistemi adinin
+  sagina vurgu renginde (sigmiyorsa yazilmaz — kirpilmis yol yanlis okunur),
+  bolum bilgisi sekmesinde bir satir.
+- Gercek diskte olculdu (salt okunur, root):
+
+```
+bolum 1: FAT32  nokta=/boot/efi
+bolum 3: NTFS   nokta=/media/pc/Basic data partition
+bolum 4: NTFS   nokta=/run/media/pc/Data
+bolum 5: ext4   nokta=/
+```
+
+- `tests.ui_smoke`: sutun basligi platformdan geliyor mu, bagli olmayan
+  bolumde "-" yaziyor mu, **sutun kaymasi** dogru mu (tablo indisleri elle
+  tasiniyor). `tests.run_all` 41/43, `platform_check` 0, `i18n_check` TAMAM.
+- Sinir: Windows'ta uygulamanin kendi actigi diskin harfleri bolume
+  eslenemez (o diskin birimleri bilerek yoklanmaz); harf disk duzeyinde
+  gorunur. macOS dali test edilmedi.
+
+### Ayni gun — SVG kaynakli, sabit disk gorunumlu ikinci tur
+
+Kullanici "SVG kullanilabilir, daha SABIT DISK gorunumlu olsun" dedi. Ayrim
+onemli oldugu icin yaziliyor:
+
+- **Uygulama ici ikonlar** (arac cubugu, menu) SVG **olamaz** — `PyQt5.QtSvg`
+  her dagitimda kurulu degil, calisma zamani bagimliligi yasak (ADR 0025).
+- **Uygulama ikonu** farklidir: SVG yalnizca **kaynak bicimdir**, derlemede
+  `.ico` / `.png` / `.icns` uretilir. Calisma zamaninda hicbir sey gerekmez.
+  Bu makinede `QtSvg` kurulu, onizlemeler onunla rasterize edildi.
+
+Sekiz aday: `.tmp/ikon-svg/HD1..HD8.svg` (+ `.png`), onizlemeler
+`.tmp/ikon-svg/adaylar-acik.png`, `adaylar-koyu.png`, `adaylar-boyutlar.png`.
+Uretici: `.tmp/ikon-svg/hdd_svg.py` (yaylar ve izometrik yuzler hesaplanarak
+yazilir, elle koordinat girilmez).
+
+HD1 Acik Surucu · HD2 Bolumlu Plaka · HD3 Izometrik Surucu · HD4 Plaka Yigini
+HD5 Etiketli Surucu · HD6 Plaka Yakin · HD7 Surucu + Kalkan · HD8 Duz Siluet
+
+Ilk turdan sonra duzeltilenler: ses bobini miknatisi govde boslugunun disina
+tasiyordu (`clipPath` ile kirpildi); izometrik govde "acik kutu" gibi
+okunuyordu (yan yuzler koyulastirildi, etiket buyutuldu); HD5/HD7'de beyaz
+etiket baskindi, 16 pikselde "belge" gibi gorunuyordu (etiket kucultuldu,
+metal govde ve koyu serit cercevesi one alindi).
+
+**Secim bekliyor.**
+
+### Ayni gun — ucuncu tur: indirilen ozgur ikonlar taban alindi
+
+Kullanici "internetten ucretsiz ikonlar indir ve gelistir" dedi. 25 ikon
+indirildi (`.tmp/ikon-indirilen/`), sekiz aday bunlar taban alinarak
+gelistirildi (`.tmp/ikon-gelistirilmis/G1..G8.svg`). Yontem: kaynak yol verisi
+**degistirilmeden** durur, uzerine malzeme (metal govde, plaka), bolum renkleri
+ve zemin eklenir; boylece hangi parcanin kimden geldigi bellidir.
+
+**Lisans bulgusu (onemli):** Remix Icon Ocak 2026'da Apache-2.0'dan kendi
+lisansina gecmis ve **madde 3.3** ikonlarin degistirilmis olsa bile **logo veya
+uygulama ikonu** olarak kullanilmasini yasakliyor. Ilk cizilen Remix tabanli
+aday (G5) **atildi**, yerine Lucide `database` (ISC) tabanli "Plaka Yigini"
+kondu. Remix dosyalari `KULLANILMAZ-remix/` altina alindi.
+
+Ayrica Material Design Icons artik "Pictogrammers Free License" adi altinda
+dagitiliyor; metin ikonlarin **Apache-2.0** oldugunu ve setin "GPL friendly"
+oldugunu soyluyor — kullanimda sorun yok.
+
+Kullanilan setler: Lucide (ISC), MDI (Apache-2.0), Bootstrap Icons (MIT),
+Tabler (MIT). Ayrinti ve secim sonrasi yapilacaklar:
+`.tmp/ikon-gelistirilmis/LISANSLAR.md`. Lisans metinleri
+`.tmp/ikon-indirilen/lisanslar/` altinda indirildi.
+
+Adwaita (CC BY-SA 3.0) ve Breeze (LGPL) yalnizca karsilastirma icin acildi,
+turetilmedi.
+
+**Secim bekliyor** — uc turda toplam 25 aday var (9 cizim + 8 SVG + 8 turetme).
+
+## 2026-09-21 — Uygulama ikonu baglandi (favicon.ico)
+
+Kullanici depo kokune bir `favicon.ico` birakip "bunu ikon olarak kullan" dedi.
+Karar ve gerekce: `.claude/decisions/0044-uygulama-ikonu-dosyadan.md`.
+
+### Kaynak dosyada kusur bulundu
+
+`favicon.ico`'nun **alti boyutu da tamamen opakti** — saydamlik yerine dama
+deseni (128/256) ve duz `#f3f3f3` (16..64) piksel olarak gomulmus. Oldugu gibi
+kullanilsa gorev cubugunda ikonun arkasinda acik gri bir kare gorunurdu.
+Kenarlardan tasma dolgusuyla arka plan geri kazandirildi (kenara bagli olmayan
+beyazlar — "SSD" yazisi, metal parlama — korundu; sinirda kismi alfa, halo yok).
+
+### Yapilanlar
+
+| Dosya | Degisiklik |
+|---|---|
+| `assets/branding/favicon.ico` | kullanicinin ozgun dosyasi (kokten buraya tasindi) |
+| `assets/branding/uret_ikon.py` | **yeni** — `.ico` -> temiz `.ico` + 7 PNG + `.icns`, yalnizca PyQt5 |
+| `src/diskultimate/ui/resources/` | **yeni** — uretilen app-icon.ico / -<n>.png / .icns |
+| `src/diskultimate/ui/appicon.py` | **yeni** — `app_icon()`, paket-goreli yol (i18n yontemi) |
+| `main.py` | `app.setWindowIcon(app_icon())` — butun pencereler miras alir |
+| `DiskUltimate.spec` | ikon datas'a eklendi + `icon=[EXE_ICON]` (macOS'ta `.icns`) |
+| `tests/ui_smoke.py` | ikon denetimi: dosya var mi, 7 boyut tam mi, **saydam mi** |
+
+`build_linux.sh` ve `build_exe.bat` degismedi — ikisi de butun ayari spec'ten
+alir.
+
+### Olculenler
+
+```
+ozgun favicon.ico : 370.070 bayt, 6 boyut, saydam piksel 0     (opak)
+app-icon.ico      : 147.989 bayt, 7 boyut (24 px eklendi), %26-40 saydam
+uygulama ikonu    : bos degil, 7 boyut, pencere miras aliyor
+platform_check    : 0 bulgu
+i18n_check        : BASARILI
+sozdizimi         : ui_smoke / main.py / appicon.py / uret_ikon.py / spec TAMAM
+eklenen test blogu: tek basina gecti; ozgun dosyaya uygulansa KALIYOR (yani
+                    denetim gercekten kusuru yakaliyor)
+```
+
+**VM'de kosulmadi:** `tests.ui_smoke` ve `tests.run_all` tam haliyle
+calistirilmadi — Linux misafiri (192.168.42.131) bu oturumda kapaliydi
+(baglanti zaman asimi). Ana makinede yalnizca yeni eklenen ikon denetimi ve
+statik denetimler kosturuldu. **Windows tarafinda exe ikonu sinanmadi**;
+`icon=` yolu yazildi, ama "test edildi" denmiyor.
+
+### Not
+
+Uretim sirasinda iki kez ayni tuzaga dusuldu ve ikisi de araca not olarak
+yazildi: (1) `QGuiApplication` sonucu bir degiskene atanmazsa toplanip sureci
+cokertiyor, (2) `QPixmap` uzerinden PNG kaydetmek alfa kanalini dusuruyor —
+`QImage`'e cevirip `Format_ARGB32` zorlamak gerekiyor.
+
+### Kesif turunun duzelttikleri (4 ajan, paralel)
+
+Baglanti noktalari once paralel bir kesifle cikarildi; dort bulgu ilk
+uygulamayi duzeltti:
+
+1. **Test gercek kod yolunu sinamiyordu.** `tests/ui_smoke.py` kendi
+   `QApplication`'ini kurar ve `main()`'den hic gecmez — baglama yalnizca
+   `main.py` icinde yazili kalsaydi duman testi onu **asla gormezdi**.
+   Baglama `ui/appicon.apply_app_icon(app)` islevine tasindi; main.py ve
+   ui_smoke ayni islevi cagiriyor.
+2. **Saydamlik "dolu" olmanin olcusu degil.** Bastan sona saydam (bos) bir
+   goruntu de o denetimden gecerdi. Renk cesitliligi denetimi eklendi
+   (32 px'te en az 32 renk; olculen: 676).
+3. **Linux'ta PyInstaller uyarisi.** `icon=` alani Windows ve macOS disinda
+   uygulanmaz, yalnizca "Ignoring icon" uyarisi basar. Artik Linux'ta hic
+   verilmiyor (`EXE_ICON = None if IS_LINUX`), pencere ikonu orada `datas`
+   ile gelen dosyadan yukleniyor.
+4. **Windows'ta kaynaktan calistirma.** `python main.py` ile acildiginda
+   Windows pencereyi yorumlayiciya ait sayip **Python'un** ikonunu gosterir.
+   `core/platform.set_app_user_model_id()` eklendi (ctypes, Windows disinda
+   no-op), `main.py` icinde pencere yaratilmadan once cagriliyor.
+
+Ayrica: paketleme betiklerinin "kaynak agaci yerinde mi" on denetimine ikon
+eklendi, `.gitattributes` ikili dosyalari CRLF cevriminden korudu,
+`ui/icons.py` docstring'ine kapsam notu yazildi ("burasi islem ikonlari").
+
+### Acik kalan / dogrulanmayan
+
+- **Linux masaustu girdisi yok.** Projede `.desktop` dosyasi bulunmuyor;
+  paketlenmis Linux ikilisinin dosya yoneticisinde ikonu **olmaz**. Pencere ve
+  gorev cubugu ikonu calisma aninda gelir. "Linux'ta da ikon var" denmemeli.
+- **Windows'ta exe ikonu gorulmedi.** `icon=` yolu yazildi ve uc platform icin
+  mantigi benzetimle sinandi, ama exe uretilip bakilmadi (bu makine Linux).
+- **VM'de kosulmadi:** Linux misafiri kapaliydi.
+- **Ikonun kaynagi bilinmiyor.** `favicon.ico` kullanicidan geldi; hangi setten
+  turedigi ve lisansi dogrulanamadi. Ayni oturumda Remix Icon'un uygulama ikonu
+  kullanimini yasakladigi gorulmustu — bu dosya icin ayni riskin olup olmadigi
+  bilinmiyor, kullaniciya soruldu.

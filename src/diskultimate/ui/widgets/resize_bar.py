@@ -19,7 +19,8 @@ from PyQt5.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPen
 from PyQt5.QtWidgets import QSizePolicy, QWidget
 
 from ...core.ptable import human_size
-from ..theme import FREE_COLOR, darken, fs_color, lighten, palette_color
+from ..theme import (FREE_COLOR, darken, draw_usage_bar, fs_color, lighten,
+                     palette_color)
 from ...i18n import tr
 
 HANDLE_W = 7           # tutamagin piksel genisligi
@@ -129,17 +130,16 @@ class ResizeBar(QWidget):
         p.setPen(QPen(darken(renk, 150), 1))
         p.drawRect(block.adjusted(0, 0, -1, -1))
 
-        # kullanilan alan cubugu (dosya sistemi doluluk orani)
+        # kullanilan alan cubugu (dosya sistemi doluluk orani) — harita
+        # blogundakiyle ayni cizim: yuvarlak zemin, doluluk arttikca uyari
+        # tonuna kayan dolgu (bkz. theme.draw_usage_bar).
         if self.used_bytes >= 0 and self.count > 0:
             total = self.count * self.sector_size
             oran = min(1.0, self.used_bytes / max(1, total))
-            used = QRect(block.left() + 4, block.bottom() - 13,
-                         max(0, int((block.width() - 8) * oran)), 7)
-            p.fillRect(QRect(block.left() + 4, block.bottom() - 13,
-                             block.width() - 8, 7),
-                       QColor(255, 255, 255, 90))
-            if used.width() > 0:
-                p.fillRect(used, darken(renk, 165))
+            # Cubuk haritadaki gibi blogun USTUNDE durur; iki gorunum ayni
+            # gorsel dili konusmalidir (ADR 0041).
+            draw_usage_bar(p, QRect(block.left() + 5, block.top() + 5,
+                                    block.width() - 10, 13), oran, renk)
 
         # blok yazisi
         if block.width() > 56:
@@ -148,9 +148,10 @@ class ResizeBar(QWidget):
             yazi.setPointSizeF(max(7.5, yazi.pointSizeF()))
             p.setFont(yazi)
             title = self.label or (self.fs_type or tr("Bolum"))
-            p.drawText(block.adjusted(6, 5, -6, 0), Qt.AlignLeft | Qt.AlignTop,
+            # Yazi doluluk cubugunun altindan baslar.
+            p.drawText(block.adjusted(7, 25, -7, 0), Qt.AlignLeft | Qt.AlignTop,
                        title)
-            p.drawText(block.adjusted(6, 21, -6, 0), Qt.AlignLeft | Qt.AlignTop,
+            p.drawText(block.adjusted(7, 42, -7, 0), Qt.AlignLeft | Qt.AlignTop,
                        human_size(self.count * self.sector_size))
 
         # tutamaklar

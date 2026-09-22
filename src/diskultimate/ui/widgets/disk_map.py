@@ -13,7 +13,7 @@ from PyQt5.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
 from PyQt5.QtWidgets import QSizePolicy, QWidget
 
 from ...core.ptable import FreeRegion, Partition, human_size
-from ..theme import (PLAN_COLOR, darken, fs_color, lighten,
+from ..theme import (PLAN_COLOR, blend, darken, draw_usage_bar, fs_color,
                      palette_color, plan_label)
 from ...i18n import tr
 
@@ -177,41 +177,58 @@ class DiskMapWidget(QWidget):
             lower = human_size(free.size)
             tip = tr("Bolumlenmemis")
 
-        # govde
-        grad = QLinearGradient(rect.topLeft(), rect.bottomLeft())
-        if block.kind == "part":
-            grad.setColorAt(0.0, lighten(base, 145))
-            grad.setColorAt(0.35, lighten(base, 118))
-            grad.setColorAt(1.0, base)
+        # Govde: acik panel. Renk yuku doluluk cubugunda ve sol kenar
+        # seridindedir (ADR 0041) — blogun tamamini dosya sistemi rengine
+        # boyamak, uzerindeki cubukla yarisiyor ve yaziyi bogar.
+        panel = palette_color(self, "base")
+        vurgu = palette_color(self, "highlight")
+        zemin = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+        if selected:
+            zemin.setColorAt(0.0, blend(panel, vurgu, 0.10))
+            zemin.setColorAt(1.0, blend(panel, vurgu, 0.20))
         else:
-            grad.setColorAt(0.0, lighten(base, 108))
-            grad.setColorAt(1.0, base)
-        painter.fillRect(rect, QBrush(grad))
+            zemin.setColorAt(0.0, panel)
+            zemin.setColorAt(1.0, blend(panel, palette_color(self, "window"), 0.55))
+        painter.fillRect(rect, QBrush(zemin))
 
         if block.kind == "free":
             painter.save()
             painter.setClipRect(rect)
-            pen = QPen(darken(base, 115), 1)
-            painter.setPen(pen)
+            painter.setPen(QPen(blend(panel, base, 0.55), 1))
             step = 8
             for i in range(rect.left() - rect.height(), rect.right(), step):
                 painter.drawLine(i, rect.bottom(), i + rect.height(), rect.top())
             painter.restore()
 
-        # ust renk seridi (dosya sistemi rengi)
-        if block.kind == "part":
-            painter.fillRect(QRect(rect.left(), rect.top(), rect.width(), 5),
-                             darken(base, 125))
+        # Sol kenar seridi: dosya sistemi rengi. Blok listesinde hangi bolumun
+        # ne oldugu renkten okunmaya devam etsin diye durur.
+        painter.fillRect(QRect(rect.left() + 1, rect.top() + 1, 4,
+                               rect.height() - 2), base)
 
         # cerceve
-        vurgu = palette_color(self, "highlight")
         if self._hover is block and not selected:
             painter.setPen(QPen(vurgu, 1))
         elif selected:
             painter.setPen(QPen(vurgu, 2))
         else:
             painter.setPen(QPen(darken(palette_color(self, "window"), 130), 1))
+        painter.setBrush(Qt.NoBrush)
         painter.drawRect(rect.adjusted(0, 0, -1, -1))
+
+        # Doluluk cubugu blogun ustunde durur; yuzde cubugun ortasindadir.
+        cubuk = QRect(rect.left() + 9, rect.top() + 8, rect.width() - 18, 19)
+        if block.kind == "part":
+            part: Partition = block.obj
+            oran = -1.0
+            if part.fs_used >= 0 and part.fs_total > 0:
+                oran = min(1.0, part.fs_used / part.fs_total)
+            etiket = ""
+            if oran >= 0 and cubuk.width() > 52:
+                etiket = (tr("%{:.0f} dolu", oran * 100) if cubuk.width() > 108
+                          else f"%{oran * 100:.0f}")
+            f = painter.font(); f.setPointSize(8); f.setBold(True)
+            painter.setFont(f)
+            draw_usage_bar(painter, cubuk, oran, base, etiket)
 
         # Plan onizlemesi: henuz diske yazilmamis bolum kesik cerceve ve
         # kose rozetiyle isaretlenir (ADR 0031). Kullanici neyin gercek,
@@ -220,58 +237,52 @@ class DiskMapWidget(QWidget):
         rozet_genisligi = 0
         if plan:
             painter.setPen(QPen(QColor(PLAN_COLOR), 2, Qt.DashLine))
+            painter.setBrush(Qt.NoBrush)
             painter.drawRect(rect.adjusted(2, 2, -3, -3))
             f = painter.font(); f.setPointSize(7); f.setBold(True)
             painter.setFont(f)
             genislik = painter.fontMetrics().width(plan) + 10
             if rect.width() > genislik + 60:
-                rozet = QRect(rect.right() - genislik - 5, rect.top() + 8,
+                rozet = QRect(rect.right() - genislik - 6, rect.top() + 31,
                               genislik, 15)
                 painter.fillRect(rozet, QColor(PLAN_COLOR))
                 painter.setPen(QColor("#ffffff"))
                 painter.drawText(rozet, Qt.AlignCenter, plan)
                 rozet_genisligi = genislik + 8
 
-        # Metin rengi blok zeminine gore secilir: bolum bloklarinin zemini bizim
-        # dosya sistemi rengimizdir, bos alaninki paletten gelir.
-        if block.kind == "part":
-            zemin_acik = lighten(base, 118).value() > 140
-            metin_rengi = QColor("#16202b") if zemin_acik else QColor("#f2f6fa")
-        else:
-            metin_rengi = palette_color(self, "dim")
+        # Yazi paletten gelir: zemin artik acik panel, dosya sistemi rengi degil.
+        metin_rengi = palette_color(self, "text")
+        soluk_renk = palette_color(self, "dim")
+        sol = rect.left() + 12
+        genislik_yazi = rect.width() - 20
         painter.setPen(metin_rengi)
         f = painter.font(); f.setPointSize(9); f.setBold(True); painter.setFont(f)
-        metin_alani = QRect(rect.left() + 6, rect.top() + 10,
-                            rect.width() - 12 - rozet_genisligi, 16)
+        metin_alani = QRect(sol, rect.top() + 33,
+                            genislik_yazi - rozet_genisligi, 17)
         painter.drawText(metin_alani, Qt.AlignLeft | Qt.AlignVCenter,
                          self._elide(painter, title, metin_alani.width()))
 
         f.setBold(False); f.setPointSize(8); painter.setFont(f)
+        painter.setPen(soluk_renk)
+        fs_alani = QRect(sol, rect.top() + 52, genislik_yazi, 15)
+        painter.drawText(fs_alani, Qt.AlignLeft | Qt.AlignVCenter,
+                         self._elide(painter, tip, genislik_yazi))
+        # Isletim sisteminin bu bolumu bagladigi yer (Windows'ta surucu
+        # harfi). Dosya sistemi adinin sagina, arta kalan yere yazilir;
+        # sigmiyorsa hic yazilmaz — kirpilmis bir yol yanlis okunur.
+        nokta = getattr(block.obj, "mount_point", "") if block.kind == "part" else ""
+        if nokta:
+            kalan = genislik_yazi - painter.fontMetrics().width(tip) - 12
+            if kalan >= 34:
+                painter.setPen(palette_color(self, "highlight"))
+                fm = painter.fontMetrics()
+                yazi = (nokta if fm.width(nokta) <= kalan
+                        else fm.elidedText(nokta, Qt.ElideLeft, kalan))
+                painter.drawText(fs_alani, Qt.AlignRight | Qt.AlignVCenter, yazi)
         painter.setPen(metin_rengi)
-        painter.drawText(QRect(rect.left() + 6, rect.top() + 28, rect.width() - 12, 14),
+        painter.drawText(QRect(sol, rect.top() + 69, genislik_yazi, 15),
                          Qt.AlignLeft | Qt.AlignVCenter,
-                         self._elide(painter, tip, rect.width() - 12))
-        painter.drawText(QRect(rect.left() + 6, rect.top() + 43, rect.width() - 12, 14),
-                         Qt.AlignLeft | Qt.AlignVCenter, lower)
-
-        # doluluk cubugu
-        if block.kind == "part":
-            part: Partition = block.obj
-            if part.fs_used >= 0 and part.fs_total > 0:
-                oran = min(1.0, part.fs_used / part.fs_total)
-                cub = QRect(rect.left() + 6, rect.bottom() - 17, rect.width() - 12, 10)
-                painter.fillRect(cub, QColor(255, 255, 255, 190))
-                painter.setPen(QPen(darken(base, 140), 1))
-                painter.drawRect(cub)
-                used = QRect(cub.left() + 1, cub.top() + 1,
-                             int((cub.width() - 2) * oran), cub.height() - 1)
-                if used.width() > 0:
-                    painter.fillRect(used, darken(base, 135))
-                if rect.width() > 110:
-                    painter.setPen(metin_rengi)
-                    f2 = painter.font(); f2.setPointSize(7); painter.setFont(f2)
-                    painter.drawText(cub.adjusted(0, -1, 0, 0), Qt.AlignCenter,
-                                     tr("%{:.0f} dolu", oran*100))
+                         self._elide(painter, lower, genislik_yazi))
 
     @staticmethod
     def _elide(painter: QPainter, text: str, width: int) -> str:

@@ -85,6 +85,10 @@ class Partition:
     fs_label: str = ""               # dosya sistemi etiketi
     fs_used: int = -1                # kullanilan bayt (-1 = bilinmiyor)
     fs_total: int = -1               # toplam bayt (-1 = bilinmiyor)
+    # Isletim sisteminin bu bolumu bagladigi yer: Linux/macOS'ta dizin
+    # ("/media/pc/VERI"), Windows'ta surucu harfi ("E:"). Bos = bagli degil.
+    # Diskten okunmaz; fiziksel disk taramasindan gelir (ADR 0043).
+    mount_point: str = ""
     sector_size: int = 512
     # Bekleyen islem onizlemesinde bu bolumun durumu ("" = diskteki hali).
     # Degerler `planview.STATE_*`; diskten okunan bolumlerde hep bostur.

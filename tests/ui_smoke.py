@@ -31,7 +31,7 @@ os.environ["QT_QPA_PLATFORM"] = _qt_platformu()
 # Yetki yukseltme teklifi modal bir penceredir; otomatik kosumu kilitler.
 os.environ["DISKULTIMATE_NO_ELEVATION_PROMPT"] = "1"
 
-from PyQt5.QtCore import Qt  # noqa: E402
+from PyQt5.QtCore import QRect, Qt  # noqa: E402
 from PyQt5.QtWidgets import QApplication  # noqa: E402
 
 from diskultimate import i18n  # noqa: E402
@@ -260,6 +260,10 @@ def main() -> int:
     goruntu = ornek_goruntu()
     app = QApplication(sys.argv)
     apply_theme(app, os.environ.get("DISKULTIMATE_THEME", "system"))
+    # Ikon main.py ile AYNI islevden gelir: boylece test gercek kod yolunu
+    # sinar, kendi taklidini degil.
+    from diskultimate.ui.appicon import apply_app_icon
+    assert apply_app_icon(app), "uygulama ikonu ayarlanamadi"
 
     pencere = MainWindow()
     pencere.resize(1400, 860)
@@ -722,6 +726,202 @@ def main() -> int:
     # Linux'ta ayni deger cikmalidir (olculdu, ADR 0025).
     print(f"  ({len(icons.names())} ikon cizildi — "
           f"cizim ozeti {icons.digest()})")
+
+    # --- uygulama ikonu: dosyadan gelir, cizilmez (ui/appicon.py) ---
+    #
+    # Uc sey denetlenir:
+    #   1. dosya yerinde mi (paketleyici de ayni yolu kullanir),
+    #   2. butun boyutlar var mi — eksik boyut Qt'ye olcekletir, bulanir,
+    #   3. SAYDAM mi. Kaynak dosya opak geldiginde (arka plan piksel olarak
+    #      gomulu) gorev cubugunda ikonun arkasinda acik gri bir kare gorunur;
+    #      bu sessiz bir kusurdur, testle yakalanir.
+    from diskultimate.ui import appicon
+
+    assert os.path.isfile(appicon.ICON_PATH), \
+        f"uygulama ikonu yok: {appicon.ICON_PATH}"
+    uygulama_ikonu = appicon.app_icon()
+    assert not uygulama_ikonu.isNull(), "uygulama ikonu okunamadi"
+    bulunan = sorted(b.width() for b in uygulama_ikonu.availableSizes())
+    for beklenen in (16, 24, 32, 48, 64, 128, 256):
+        assert beklenen in bulunan, f"{beklenen} px ikon eksik ({bulunan})"
+    for boyut in (16, 32, 256):
+        goruntu = uygulama_ikonu.pixmap(boyut, boyut).toImage()
+        saydam = sum(1 for x in range(goruntu.width())
+                     for y in range(goruntu.height())
+                     if goruntu.pixelColor(x, y).alpha() == 0)
+        assert saydam > 0, (f"{boyut} px ikon tamamen opak — arka plan "
+                            f"piksel olarak gomulu kalmis")
+    # Saydamlik TEK BASINA "dolu" olmanin olcusu degildir: bastan sona saydam
+    # (yani bos) bir goruntu de o denetimden gecerdi. Renk cesitliligi asil
+    # olcudur — bos ya da tek renk bir ikon burada kalir.
+    goruntu = uygulama_ikonu.pixmap(32, 32).toImage()
+    renkler = {goruntu.pixelColor(x, y).rgba()
+               for x in range(32) for y in range(32)
+               if goruntu.pixelColor(x, y).alpha() > 0}
+    assert len(renkler) >= 32, f"32 px ikon neredeyse bos ({len(renkler)} renk)"
+    # Pencere ikonu uygulamadan DEVRALINIR (yukarida apply_app_icon cagrildi);
+    # burada ayrica atanmaz, devralmanin gercekten oldugu dogrulanir.
+    assert not pencere.windowIcon().isNull(), "pencere ikonu uygulamadan devralinmadi"
+    print(f"  (uygulama ikonu: {len(bulunan)} boyut {bulunan}, "
+          f"saydam, 32 px'te {len(renkler)} renk)")
+
+    # --- bagla / surucu harfi eylemleri (ADR 0043) ---
+    #
+    # Gercek bir baglama YAPILMAZ. Sinanan sey arayuz sozlesmesi: etiketler
+    # platformun kavramindan geliyor mu, eylemler goruntu dosyasinda kapali
+    # mi (goruntu isletim sistemine bagli degildir), menude duruyorlar mi.
+    from diskultimate.core.platform import mount_action_labels
+
+    mount_text, unmount_text = mount_action_labels()
+    assert pencere.act_mount.text() == mount_text, pencere.act_mount.text()
+    assert pencere.act_unmount.text() == unmount_text
+    pencere.select_partition(1)
+    assert not pencere.act_mount.isEnabled(), \
+        "goruntu dosyasinda baglama sunulmamali"
+    assert not pencere.act_unmount.isEnabled()
+    menu_metinleri = [a.text() for m, _ in pencere._menus
+                      for a in m.actions()]
+    assert mount_text in menu_metinleri and unmount_text in menu_metinleri, \
+        "bagla/cikar menude yok"
+    print(f"  (baglama: '{mount_text}' / '{unmount_text}' — goruntude kapali, "
+          f"menude var)")
+
+    # --- baglama noktasi sutunu (ADR 0043) ---
+    #
+    # Sutun basligi platformun kavramini soyler ve bagli olmayan bolumde
+    # "-" yazar. Bolum tablosu sutun indislerini elle tasidigi icin, sutun
+    # eklendiginde kaymalarin dogru oldugu da burada yakalanir.
+    from diskultimate.core.platform import mount_point_label
+    from diskultimate.i18n import tr as ceviri
+    from diskultimate.ui.widgets.partition_table import MOUNT_COLUMN, columns
+
+    basliklar = columns()
+    assert basliklar[MOUNT_COLUMN] == mount_point_label(), basliklar[MOUNT_COLUMN]
+    tablo = pencere.part_table
+    assert tablo.columnCount() == len(basliklar)
+    for sutun, baslik in enumerate(basliklar):
+        assert tablo.horizontalHeaderItem(sutun).text() == baslik, (sutun, baslik)
+    satir = next(i for i, (tur, _) in enumerate(tablo._rows) if tur == "part")
+    hucre = tablo.item(satir, MOUNT_COLUMN)
+    assert hucre is not None and hucre.text() == "-", \
+        "goruntu dosyasinda baglama noktasi olmamali"
+    # Boyut sutunu kaymayi yakalar: bir saga kaydi, degeri hala boyut olmali
+    boyut_sutunu = basliklar.index(ceviri("Boyut"))
+    assert tablo.item(satir, boyut_sutunu).text().endswith(("B", "KB", "MB", "GB")), \
+        tablo.item(satir, boyut_sutunu).text()
+    print(f"  (baglama sutunu: '{basliklar[MOUNT_COLUMN]}', "
+          f"{tablo.columnCount()} sutun hizali)")
+
+    # --- acilista otomatik yetki yukseltmesi (ADR 0042) ---
+    #
+    # Gercek bir polkit penceresi ACILMAZ: baslatma islevi taklit edilir ve
+    # `main.elevate_at_startup`in karari ile bekleme donusunun dogru calistigi
+    # sinanir. Onemli olan iki davranis: yetki alinirsa bu kopya kapanmali,
+    # alinamazsa uygulama **yine de acilmali** (goruntu dosyalari icin yetki
+    # gerekmez).
+    from diskultimate.ui import startup as giris
+
+    class SahteBaslatma:
+        WAITING, STARTED, FAILED = "bekliyor", "basladi", "hata"
+
+        def __init__(self, basarili: bool):
+            self.basarili = basarili
+            self.sayac = 0
+            self.temizlendi = False
+
+        def poll(self):
+            self.sayac += 1
+            if self.sayac < 2:
+                return self.WAITING, ""
+            return ((self.STARTED, "") if self.basarili
+                    else (self.FAILED, "yetki verilmedi"))
+
+        def cleanup(self):
+            self.temizlendi = True
+
+    eski = (giris.is_elevated, giris.elevation_available, giris.relaunch_elevated)
+    eski_ortam = os.environ.pop("DISKULTIMATE_NO_ELEVATION_PROMPT", None)
+    try:
+        giris.is_elevated = lambda: False
+        giris.elevation_available = lambda: (True, "")
+
+        for basarili in (True, False):
+            tutamac = SahteBaslatma(basarili)
+            giris.relaunch_elevated = lambda t=tutamac: (t, "")
+            assert giris.elevate_at_startup() is basarili, basarili
+            assert tutamac.temizlendi, "gecici dosyalar toplanmali"
+
+        # Cikis kapilari: bayrak, ortam degiskeni ve zaten yetkili olma hali
+        giris.relaunch_elevated = lambda: (_ for _ in ()).throw(
+            AssertionError("cikis kapisi acikken yetki istenmemeli"))
+        sys.argv.append(giris.NO_ROOT_FLAG)
+        try:
+            assert giris.elevate_at_startup() is False, "--no-root"
+        finally:
+            sys.argv.remove(giris.NO_ROOT_FLAG)
+        os.environ["DISKULTIMATE_AUTO_ROOT"] = "0"
+        try:
+            assert giris.elevate_at_startup() is False, "DISKULTIMATE_AUTO_ROOT=0"
+        finally:
+            del os.environ["DISKULTIMATE_AUTO_ROOT"]
+        giris.is_elevated = lambda: True
+        assert giris.elevate_at_startup() is False, "zaten yetkili"
+    finally:
+        giris.is_elevated, giris.elevation_available, giris.relaunch_elevated = eski
+        if eski_ortam is not None:
+            os.environ["DISKULTIMATE_NO_ELEVATION_PROMPT"] = eski_ortam
+    print("  (acilis yetkisi: basarili/basarisiz ve 3 cikis kapisi denetlendi)")
+
+    # --- yetkili kopyada dosya sahipligi (ADR 0042) ---
+    from diskultimate.core import platform as pf_yetki
+
+    if os.name == "posix" and os.geteuid() != 0:
+        # Yetkisiz kopyada hicbir sey yapilmamali: kullanicinin dosyalarina
+        # dokunan bir kod yolu, yanlis kosulda calisirsa zarar verir.
+        assert pf_yetki.invoking_user() is None
+        deneme = os.path.join(scratch("sahiplik"), "dosya.bin")
+        with open(deneme, "wb") as fh:
+            fh.write(b"x")
+        assert pf_yetki.restore_owner(deneme) is False, "yetkisizken sahiplik degismemeli"
+        assert pf_yetki.restore_owner("") is False
+        os.remove(deneme)
+        print("  (dosya sahipligi: yetkisiz kopyada dokunulmuyor)")
+
+    # --- doluluk cubugu: renk esikleri ve okunurluk ---
+    #
+    # Cubuk iki yerde cizilir (harita blogu, boyutlandirma seridi) ve tek bir
+    # yardimcidan gelir. Burada sinanan sey renk SECIMIDIR: dolu bir bolum
+    # uyari renginde olmali ve yazi her zemin uzerinde okunur kalmali.
+    from PyQt5.QtGui import QColor, QPainter, QPixmap
+    from diskultimate.ui.theme import (USAGE_FULL, USAGE_FULL_AT, USAGE_WARN,
+                                       USAGE_WARN_AT, draw_usage_bar,
+                                       fs_color, readable_text, usage_fill)
+
+    for fs_adi in ("FAT32", "exFAT", "NTFS", "ext4", "Bilinmeyen"):
+        renk = fs_color(fs_adi)
+        normal = usage_fill(renk, 0.40)
+        assert normal.hue() == renk.hue(), (
+            f"{fs_adi}: esik altinda cubuk blogun tonunda kalmali")
+        assert usage_fill(renk, USAGE_WARN_AT) == QColor(USAGE_WARN), fs_adi
+        assert usage_fill(renk, USAGE_FULL_AT) == QColor(USAGE_FULL), fs_adi
+        assert usage_fill(renk, 1.0) == QColor(USAGE_FULL), fs_adi
+        # Yazi rengi zemine gore secilir; ikisi de acik/koyu olmamali.
+        for zemin in (normal, QColor(USAGE_WARN), QColor(USAGE_FULL)):
+            yazi = readable_text(zemin)
+            fark = abs(yazi.lightness() - zemin.lightness())
+            assert fark > 60, f"{fs_adi}: yazi/zemin karsitligi zayif ({fark})"
+
+    # Cizim uc degerlerde de patlamamali (sifir, tam, cok dar alan).
+    tuval = QPixmap(200, 40)
+    tuval.fill(QColor("#ffffff"))
+    boyaci = QPainter(tuval)
+    for oran in (0.0, 0.004, 0.5, 1.0):
+        draw_usage_bar(boyaci, QRect(5, 5, 190, 11), oran,
+                       fs_color("NTFS"), "%{:.0f} dolu".format(oran * 100))
+    draw_usage_bar(boyaci, QRect(0, 0, 4, 3), 0.5, fs_color("ext4"))   # cok dar
+    boyaci.end()
+    print(f"  (doluluk cubugu: %{USAGE_WARN_AT*100:.0f} kehribar, "
+          f"%{USAGE_FULL_AT*100:.0f} kirmizi; 5 renkte okunurluk denetlendi)")
 
     # --- yedekleme/geri yukleme: TEK pencere (ADR 0032) ---
     # Eskiden yedek bilgisi ayri bir pencereydi, yedek almak ve geri yuklemek

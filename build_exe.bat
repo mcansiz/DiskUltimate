@@ -56,6 +56,7 @@ REM Kaynak agaci yerinde mi? ^(Yanlis dizinden calistirma erken yakalanir.^)
 if not exist "main.py" goto :no_source
 if not exist "src\diskultimate\i18n\catalogs\en.po" goto :no_source
 if not exist "DiskUltimate.spec" goto :no_source
+if not exist "src\diskultimate\ui\resources\app-icon.ico" goto :no_source
 
 REM ---------------------------------------------------------------------
 REM 3) PyInstaller kurulu mu? Degilse ayni yorumlayiciya kur.

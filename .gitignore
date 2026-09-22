@@ -23,11 +23,13 @@ Thumbs.db
 desktop.ini
 
 # Claude oturum kayitlari (proje icinde durur).
-#   .claude/sessions/<slug>/*.jsonl  CANLI transcript'ler. session-persistence
-#       skill'i ~/.claude/projects/<slug> klasorunu buraya tasiyip yerine junction
-#       birakir. Bunlar DEPOYA GIRER: gecmis boylece makineler arasi tasinir ve
-#       cleanupPeriodDays'ten bagimsiz kalici olur. Depo private olmalidir --
-#       transcript konusmanin tamamidir (parola, token, ic bilgi).
+#   .claude/sessions/live/*.jsonl    CANLI transcript'ler. Her makine kendi
+#       ~/.claude/projects/<slug> klasorunu buraya baglar (symlink/junction);
+#       kurulum: .claude/hooks/setup-sessions.py (ADR 0038). Tek klasor olmasi
+#       sarttir: slug makineden makineye degisir, gecmis ancak boyle her
+#       makinede gorunur. Bunlar DEPOYA GIRER: gecmis boylece makineler arasi
+#       tasinir ve cleanupPeriodDays'ten bagimsiz kalici olur. Depo private
+#       olmalidir -- transcript konusmanin tamamidir (parola, token, ic bilgi).
 #   .claude/sessions/*.jsonl         SessionEnd kancasinin ust dizine biraktigi
 #       ARSIV KOPYALARI. Ayni veri ikinci kez depoya girmesin diye yok sayilir.
 # DIKKAT: asagidaki desen tek yildizlidir ve alt dizinleri KAPSAMAZ. `**` yapmayin;

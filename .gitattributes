@@ -2,3 +2,10 @@
 # Claude Code bu dosyalara CANLI yazar; CRLF cevrimi transcript'i bozar.
 # -diff ise git log'u okunabilir tutar (transcript diff'i gurultuden ibarettir).
 .claude/sessions/** -text -diff
+
+# Ikon dosyalari ikilidir: satir sonu cevrimi bunlari bozar. Git NUL baytina
+# bakip kendiliginden ikili sayiyor, ama depo Windows'ta da kullaniliyor —
+# ucuz bir sigorta.
+*.ico -text -diff
+*.icns -text -diff
+*.png -text -diff

@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 # DiskUltimate — PyInstaller spec dosyası.
 #   Windows:  build_exe.bat  (veya: py -3.12 -m PyInstaller --noconfirm DiskUltimate.spec)
-#   Linux:    pyinstaller DiskUltimate.spec
+#   Linux:    ./build_linux.sh  (veya: python3 -m PyInstaller --noconfirm DiskUltimate.spec)
 #
 # Uygulamanın tek çalışma zamanı bağımlılığı PyQt5'tir (CLAUDE.md: çekirdek saf
 # Python). Bu yüzden collect_all kullanılmaz — PyInstaller'ın PyQt5 hook'u
@@ -29,6 +29,27 @@ datas = [
 ]
 if not datas:
     raise SystemExit('DiskUltimate.spec: src/diskultimate/i18n/catalogs/*.po bulunamadi')
+
+# Uygulama ikonu. Çalışma anında `ui.appicon` paketin yanındaki `resources/`
+# klasörüne bakar (çeviri sözlükleriyle aynı yöntem), bu yüzden pakette de aynı
+# göreli yerde durmalı. Kaynağı `assets/branding/favicon.ico`; buradaki dosya
+# ondan üretilir (assets/branding/uret_ikon.py).
+ICON_DIR = os.path.join(SRC, 'diskultimate', 'ui', 'resources')
+ICON_ICO = os.path.join(ICON_DIR, 'app-icon.ico')
+ICON_ICNS = os.path.join(ICON_DIR, 'app-icon.icns')
+if not os.path.isfile(ICON_ICO):
+    raise SystemExit('DiskUltimate.spec: %s bulunamadi — uret: '
+                     'python3 assets/branding/uret_ikon.py '
+                     'assets/branding/favicon.ico src/diskultimate/ui/resources'
+                     % ICON_ICO)
+datas.append((ICON_ICO, os.path.join('diskultimate', 'ui', 'resources')))
+
+# EXE'ye gömülecek ikon: Windows `.ico`, macOS `.icns` ister. Linux'ta
+# PyInstaller bu alanı UYGULAMAZ, yalnızca "Ignoring icon; supported only on
+# Windows and macOS!" uyarısı basar — bu yüzden orada hiç verilmez, yoksa her
+# Linux paketlemesinde kullanıcıyı tedirgin eden bir uyarı çıkar.
+# Linux'ta pencere ikonunun tek kaynağı `datas` ile pakete giren dosyadır.
+EXE_ICON = None if IS_LINUX else [ICON_ICNS if sys.platform == 'darwin' else ICON_ICO]
 
 
 a = Analysis(
@@ -136,7 +157,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # İkon yok: uygulama ikonları ui/icons.py içinde QPainter ile çizilir
-    # (ADR 0025), depoda `.ico` dosyası bulunmuyor. Bir tane eklenirse:
-    #   icon=[os.path.join(ROOT, 'windows-setup', 'DiskUltimate.ico')],
+    # Uygulamanın kendi ikonu (`ui/icons.py` içindeki çizilen işlem
+    # ikonlarından ayrıdır — gerekçe: ui/appicon.py docstring'i).
+    icon=EXE_ICON,
 )

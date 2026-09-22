@@ -260,7 +260,7 @@ class VhdImage(_BaseVirtualDisk):
         if os.path.exists(path) and not overwrite:
             raise VirtualDiskError(tr("Dosya zaten var: {}", path))
         size_bytes -= size_bytes % SECTOR
-        from .platform import make_sparse, truncate_sparse
+        from .platform import make_sparse, restore_owner, truncate_sparse
         with open(path, "wb") as fh:
             if sparse:
                 make_sparse(fh.fileno())
@@ -269,6 +269,7 @@ class VhdImage(_BaseVirtualDisk):
                 fh.truncate(size_bytes)
             fh.seek(size_bytes)
             fh.write(build_vhd_footer(size_bytes, VHD_FIXED))
+        restore_owner(path)     # yetkili kopyada dosya root'a ait kalmasin
         return VhdImage(path, readonly=False)
 
 

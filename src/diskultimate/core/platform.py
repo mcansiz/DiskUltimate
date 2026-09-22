@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from typing import Dict, List, Optional, Tuple
 
 from ..i18n import tr
@@ -207,6 +208,29 @@ def is_elevated() -> bool:
         return False
 
 
+def set_app_user_model_id(app_id: str) -> bool:
+    """Windows: gorev cubugu bu kimlige gore gruplar ve ikonu ondan alir.
+
+    Kaynaktan calistirildiginda (`python main.py`) Windows pencereyi
+    yorumlayiciya ait sayar ve **Python'un** ikonunu gosterir; kimlik
+    atandiginda uygulamanin kendi ikonu gorunur. Paketlenmis exe'de kabuk
+    ikonu zaten dosyadan gelir, orada da zararsizdir.
+
+    Basarili olduysa True doner. Windows disinda hicbir sey yapmaz: kimlik
+    kavrami oraya ozgudur.
+    """
+    if os.name != "nt":
+        return False
+    try:
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+    except Exception:
+        # Eski Windows surumleri bu cagriyi tanimayabilir. Ikon bir kolayliktir,
+        # yokluğu uygulamayi calistirmamak icin sebep degildir.
+        return False
+    return True
+
+
 def _relaunch_target() -> List[str]:
     """Uygulamayi yeniden baslatacak komut satiri.
 
@@ -248,36 +272,168 @@ def elevation_available() -> Tuple[bool, str]:
     return False, tr("Bu platformda yetki yukseltme desteklenmiyor.")
 
 
-def relaunch_elevated() -> Tuple[bool, str]:
+# Yetkili kopya "acildim" demek icin bu ortam degiskenindeki dosyayi yazar.
+HANDOFF_ENV = "DISKULTIMATE_HANDOFF"
+
+# pkexec cikis kodlari: 126 = yetki verilmedi/iptal, 127 = yetkilendirme hatasi.
+PKEXEC_DISMISSED = 126
+PKEXEC_ERROR = 127
+
+
+class ElevatedLaunch:
+    """Baslatilan yetkili kopyanin durumu.
+
+    Eski kopya, yenisi "acildim" diyene kadar **yasamak zorundadir**:
+    `pkexec` yetkilendirmeyi kendi **ebeveynine** bakarak yapar (polkit oznesi
+    = `getppid()`). Baslatir baslatmaz kapanan bir ebeveynde pkexec ya
+    "Refusing to render service to dead parents" der ya da ozne yanlis
+    cozuldugu icin parola penceresi hic acilmadan sonsuza dek bekler.
+    Kullanicinin gordugu sey, uygulamanin kapanip bir daha acilmamasidir
+    (ADR 0039).
+
+    `poll()` uc durumdan birini doner; arayuz bunu birkac yuz ms'de bir sorar
+    ve yalnizca STARTED gorunce kendini kapatir.
+    """
+
+    WAITING = "bekliyor"
+    STARTED = "basladi"
+    FAILED = "hata"
+
+    def __init__(self, process=None, handoff: str = "", log: str = "") -> None:
+        self._process = process
+        self._handoff = handoff
+        self._log = log
+
+    def poll(self) -> Tuple[str, str]:
+        """(durum, hata_metni) — durum STARTED/WAITING iken metin bostur."""
+        # Windows/macOS: yetki penceresini isletim sistemi kendi yonetir ve
+        # sonucu hemen bildirir; beklenecek bir sey yoktur.
+        if self._process is None:
+            return self.STARTED, ""
+        if self._handoff and os.path.exists(self._handoff):
+            return self.STARTED, ""
+        code = self._process.poll()
+        if code is None:
+            return self.WAITING, ""
+        return self.FAILED, self._failure(int(code))
+
+    def _failure(self, code: int) -> str:
+        """Cikis kodunu kullanicinin anlayacagi cumleye cevirir."""
+        if code == PKEXEC_DISMISSED:
+            return tr("Yetki verilmedi (parola penceresi iptal edildi).")
+        if code == PKEXEC_ERROR:
+            text = tr("Yetkilendirme reddedildi (polkit).")
+        else:
+            text = tr("Yetkili kopya baslatilamadi (cikis kodu {}).", code)
+        detail = self._log_tail()
+        return f"{text}\n\n{detail}" if detail else text
+
+    def _log_tail(self, lines: int = 6) -> str:
+        """Yetkili kopyanin hata ciktisinin sonu (yoksa bos dize).
+
+        Cikti dosyaya alinir, boruya degil: yetkili kopya saatlerce calisir ve
+        dolan bir boru onu kilitlerdi.
+        """
+        try:
+            with open(self._log, "r", encoding="utf-8", errors="replace") as fh:
+                tail = [satir.rstrip() for satir in fh if satir.strip()]
+        except OSError:
+            return ""
+        return "\n".join(tail[-lines:])
+
+    def cleanup(self) -> None:
+        """Bekleme bitince gecici dosyalari toplar (hata olumcul degildir)."""
+        for path in (self._handoff, self._log):
+            try:
+                if path and os.path.exists(path):
+                    os.remove(path)
+            except OSError:
+                pass
+
+
+def relaunch_elevated() -> Tuple[Optional["ElevatedLaunch"], str]:
     """Uygulamayi yonetici/root olarak yeniden baslatir.
 
-    Basarili donerse **cagiran surec kendini kapatmalidir**: iki kopya ayni
-    diske dokunmamalidir (bkz. `physical.py` acik aygit kutugu).
-
-    Doner: (baslatildi_mi, hata_metni)
+    Doner: (baslatma tutamaci, hata_metni). Tutamac None ise hicbir sey
+    baslatilmadi. Tutamac dondugunde cagiran surec **hemen kapanmaz**;
+    `poll()` STARTED diyene kadar bekler, sonra kendini kapatir: iki kopya
+    ayni diske dokunmamalidir (bkz. `physical.py` acik aygit kutugu).
     """
     ok, reason = elevation_available()
     if not ok:
-        return False, reason
+        return None, reason
     command = _relaunch_target()
     try:
         if IS_WINDOWS:
-            return _win_relaunch(command)
+            started, error = _win_relaunch(command)
+            return (ElevatedLaunch() if started else None), error
         if IS_MACOS:
             script = ("do shell script "
                       + _osascript_quote(subprocess.list2cmdline(command))
                       + " with administrator privileges")
             subprocess.Popen(["osascript", "-e", script])
-            return True, ""
-        # Linux: pkexec ortami temizler; grafik oturum degiskenleri elle verilir
-        env_args = [f"{k}={os.environ.get(k, '')}"
-                    for k in ("DISPLAY", "XAUTHORITY", "QT_QPA_PLATFORM",
-                              "DISKULTIMATE_QPA", "XDG_RUNTIME_DIR")
-                    if os.environ.get(k)]
-        subprocess.Popen(["pkexec", "env"] + env_args + command)
-        return True, ""
+            return ElevatedLaunch(), ""
+        return _linux_relaunch(command), ""
     except Exception as exc:
-        return False, str(exc)
+        return None, str(exc)
+
+
+def _linux_relaunch(command: List[str]) -> "ElevatedLaunch":
+    """pkexec ile yetkili kopyayi baslatir.
+
+    pkexec ortami temizler; grafik oturum degiskenleri elle tasinir, yoksa
+    yetkili kopya ekrani bulamaz ve sessizce olur. Gunluk dizini de tasinir:
+    aksi halde root kopyasinin tanilama gunlugu kendi ev dizinine dusar ve
+    olan biten gorunmez.
+    """
+    from ..paths import log_root, scratch
+
+    folder = scratch("elevate")
+    stamp = f"{os.getpid()}-{int(time.time())}"
+    handoff = os.path.join(folder, f"ready-{stamp}")
+    log = os.path.join(folder, f"stderr-{stamp}.log")
+
+    passthrough = {k: os.environ[k]
+                   for k in ("DISPLAY", "XAUTHORITY", "QT_QPA_PLATFORM",
+                             "DISKULTIMATE_QPA", "DISKULTIMATE_LANG",
+                             "DISKULTIMATE_THEME", "DISKULTIMATE_DIAG",
+                             "DISKULTIMATE_DIAG_VERBOSE", "XDG_RUNTIME_DIR")
+                   if os.environ.get(k)}
+    passthrough[HANDOFF_ENV] = handoff
+    passthrough["DISKULTIMATE_LOG_DIR"] = (os.environ.get("DISKULTIMATE_LOG_DIR")
+                                           or log_root())
+    env_args = [f"{k}={v}" for k, v in passthrough.items()]
+
+    stream = open(log, "wb")
+    try:
+        process = subprocess.Popen(["pkexec", "env"] + env_args + command,
+                                   stdout=stream, stderr=stream)
+    finally:
+        stream.close()          # tutamac cocukta acik kalir
+    return ElevatedLaunch(process, handoff, log)
+
+
+def signal_elevated_ready() -> str:
+    """Yetkili kopya, acildigini kendisini baslatan kopyaya bildirir.
+
+    Eski kopya bu dosyayi gorene kadar ayakta bekler (bkz. `ElevatedLaunch`).
+    Bildirim yazilamazsa eski kopya beklemeye devam eder ama kullanici yetkili
+    pencereyi yine de gorur; bu yuzden hata olumcul sayilmaz.
+
+    Ortam degiskeni **okunurken silinir**: bu kopyanin baslatacagi surecler
+    bildirimi devralmamalidir.
+
+    Doner: yazilan dosya yolu (bildirim istenmemisse bos dize).
+    """
+    path = os.environ.pop(HANDOFF_ENV, "")
+    if not path:
+        return ""
+    try:
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(str(os.getpid()))
+    except OSError:
+        return ""
+    return path
 
 
 def _osascript_quote(text: str) -> str:
@@ -306,6 +462,401 @@ def _win_relaunch(command: List[str]) -> Tuple[bool, str]:
     if code in (5, 1223):
         return False, tr("Yetki verilmedi (UAC penceresinde iptal edildi).")
     return False, tr("Yeniden baslatilamadi (ShellExecute hatasi {}).", code)
+
+
+# --------------------------------------------------------------------------
+# Birim baglama / surucu harfi
+# --------------------------------------------------------------------------
+# Uc platform bu isi uc ayri kavramla yapar (olculdu, ADR 0043):
+#
+#   Linux  : dosya sistemi bir dizine baglanir. Root degilken `udisksctl`
+#            (polkit) kullanilir; root iken `/media/<kullanici>/<etiket>`
+#            altina kendimiz baglariz. `runuser -u <kullanici> udisksctl`
+#            YOLU CALISMAZ: olusan surec aktif oturuma ait olmadigi icin
+#            polkit `allow_active` kuralini uygulamaz ve etkilesimli
+#            dogrulama ister.
+#   Windows: "mount" diye bir kavram yoktur; birim zaten baglidir, gorunurlugu
+#            **surucu harfi** belirler. Harf `Add-PartitionAccessPath` ile
+#            atanir, `Remove-PartitionAccessPath` ile kaldirilir.
+#   macOS  : `diskutil mount` -> /Volumes/<ad>. **Bu dal test EDILMEDI**
+#            (projede macOS kosumu yok); hata metinleri bunu soyler.
+LINUX_MOUNT_ROOT = "/media"
+
+
+def mount_action_labels() -> Tuple[str, str]:
+    """(baglama eylemi, cikarma eylemi) — platformun kendi kavramiyla.
+
+    Windows'ta "bagla" demek kullaniciyi yanlis yere goturur: orada birim
+    zaten baglidir, degisen sey harftir.
+    """
+    if IS_WINDOWS:
+        return tr("Surucu harfi ata"), tr("Surucu harfini kaldir")
+    return tr("Bagla"), tr("Cikar")
+
+
+def mount_point_label() -> str:
+    """Baglama noktasi alaninin/sutununun basligi (platformun kavramiyla)."""
+    return tr("Surucu harfi") if IS_WINDOWS else tr("Baglama noktasi")
+
+
+def mount_supported() -> Tuple[bool, str]:
+    """(Baglama yapilabilir mi, yapilamiyorsa neden)."""
+    if IS_WINDOWS:
+        return True, ""
+    if IS_LINUX:
+        if shutil.which("udisksctl") or shutil.which("mount"):
+            return True, ""
+        return False, tr("`mount` veya `udisksctl` bulunamadi.")
+    if IS_MACOS:
+        if shutil.which("diskutil"):
+            return True, ""
+        return False, tr("`diskutil` bulunamadi.")
+    return False, tr("Bu platformda baglama desteklenmiyor.")
+
+
+def partition_device(disk_path: str, index: int) -> str:
+    """Bolumun aygit yolu (Windows'ta bos: orada aygit yolu kullanilmaz).
+
+    `index` bolum tablosundaki 1 tabanli sira numarasidir.
+    """
+    if index < 1:
+        return ""
+    if IS_WINDOWS:
+        return ""
+    if IS_MACOS:
+        return f"{disk_path}s{index}"
+    # Linux: nvme0n1 -> nvme0n1p3, sdb -> sdb3 (isim rakamla bitiyorsa 'p')
+    taban = disk_path.rstrip("/")
+    ek = "p" if taban[-1:].isdigit() else ""
+    return f"{taban}{ek}{index}"
+
+
+def _win_disk_number(disk_path: str) -> int:
+    r"""`\\.\PhysicalDrive2` -> 2 (bulunamazsa -1)."""
+    rakam = "".join(ch for ch in disk_path if ch.isdigit())
+    return int(rakam) if rakam else -1
+
+
+def _powershell(script: str, timeout: int = 60):
+    """PowerShell komutu calistirir (Windows'ta her kurulumda vardir)."""
+    return run_tool(["powershell", "-NoProfile", "-NonInteractive",
+                     "-ExecutionPolicy", "Bypass", "-Command", script],
+                    timeout=timeout)
+
+
+def partition_mount_point(disk_path: str, index: int) -> str:
+    r"""Bolum su an nereye bagli? Bagli degilse bos dize.
+
+    Windows'ta surucu harfi doner (`E:\`).
+    """
+    try:
+        if IS_WINDOWS:
+            numara = _win_disk_number(disk_path)
+            if numara < 0:
+                return ""
+            result = _powershell(
+                f"(Get-Partition -DiskNumber {numara} -PartitionNumber {index}"
+                f" -ErrorAction SilentlyContinue).DriveLetter")
+            harf = (result.stdout or "").strip()
+            return f"{harf}:\\" if harf and harf != "\x00" else ""
+        device = partition_device(disk_path, index)
+        if not device:
+            return ""
+        if IS_LINUX:
+            gercek = os.path.realpath(device)
+            for satir in _read_proc_mounts():
+                parcalar = satir.split()
+                if len(parcalar) >= 2 and os.path.realpath(parcalar[0]) == gercek:
+                    return parcalar[1].replace("\\040", " ")
+            return ""
+        if IS_MACOS:
+            result = run_tool(["diskutil", "info", "-plist", device], timeout=20)
+            if result.returncode != 0:
+                return ""
+            import plistlib
+            veri = plistlib.loads(result.stdout.encode("utf-8", "replace"))
+            return str(veri.get("MountPoint") or "")
+    except Exception:
+        return ""
+    return ""
+
+
+def _read_proc_mounts() -> List[str]:
+    """`/proc/mounts` satirlari (okunamazsa bos liste)."""
+    try:
+        with open("/proc/mounts", "r", encoding="utf-8", errors="replace") as fh:
+            return fh.read().splitlines()
+    except OSError:
+        return []
+
+
+def _is_mount_point(path: str) -> bool:
+    """Bu yolun kendisi bir baglama noktasi mi?"""
+    for line in _read_proc_mounts():
+        parts = line.split()
+        if len(parts) >= 2 and parts[1].replace("\\040", " ") == path:
+            return True
+    return False
+
+
+def _linux_mount_target(label: str, device: str) -> Tuple[str, Optional[Tuple[int, int]]]:
+    """Baglama noktasi ve sahibi.
+
+    Root iken masaustu kullanicisinin bekledigi yere baglanir:
+    `/media/<kullanici>/<etiket>`. Kullanici bilinmiyorsa root'un altina
+    duser — o zaman da en azindan ongorulebilir bir yerdir.
+    """
+    owner = invoking_user()
+    name = "root"
+    if owner is not None:
+        try:
+            import pwd
+            name = pwd.getpwuid(owner[0]).pw_name
+        except Exception:
+            name = str(owner[0])
+    elif os.environ.get("USER"):
+        name = os.environ["USER"]
+    clean = "".join(ch for ch in (label or "") if ch.isalnum() or ch in "-_. ").strip()
+    if not clean:
+        clean = os.path.basename(device) or "birim"
+    return os.path.join(LINUX_MOUNT_ROOT, name, clean), owner
+
+
+# Sahiplik secenegi kabul eden dosya sistemleri: baglamadan sonra chown
+# ise yaramaz (FUSE/FAT sahipligi bagla-seceneginden alir).
+_OWNER_OPTION_FS = ("fat", "vfat", "exfat", "ntfs", "fuseblk", "msdos")
+
+
+def mount_partition(disk_path: str, index: int, label: str = "",
+                    fs_type: str = "") -> Tuple[bool, str]:
+    """Bolumu baglar (Windows'ta surucu harfi atar).
+
+    Doner: (basarili, baglama noktasi veya hata metni).
+    """
+    allowed, reason = mount_supported()
+    if not allowed:
+        return False, reason
+    mevcut = partition_mount_point(disk_path, index)
+    if mevcut:
+        return True, mevcut
+    try:
+        if IS_WINDOWS:
+            return _win_assign_letter(disk_path, index)
+        device = partition_device(disk_path, index)
+        if not device or not os.path.exists(device):
+            return False, tr("Bolum aygiti bulunamadi: {}", device or "?")
+        if IS_MACOS:
+            result = run_tool(["diskutil", "mount", device], timeout=60)
+            if result.returncode != 0:
+                return False, (result.stderr or result.stdout or "").strip()
+            return True, partition_mount_point(disk_path, index) or device
+        return _linux_mount(device, disk_path, index, label, fs_type)
+    except Exception as exc:
+        return False, str(exc)
+
+
+def _linux_mount(device: str, disk_path: str, index: int, label: str,
+                 fs_type: str) -> Tuple[bool, str]:
+    """Linux baglama: root iken elle, degilken `udisksctl`."""
+    elevated = is_elevated()
+    if not elevated:
+        arac = shutil.which("udisksctl")
+        if arac:
+            result = run_tool([arac, "mount", "-b", device], timeout=120)
+            if result.returncode != 0:
+                return False, (result.stderr or result.stdout or "").strip()
+            return True, partition_mount_point(disk_path, index) or ""
+        return False, tr("Baglamak icin root yetkisi veya `udisksctl` gerekir.")
+
+    target, owner = _linux_mount_target(label, device)
+    # Ayni etiketli ikinci bir birim (ya da basarisiz bir cikarmadan kalan
+    # nokta) varsa uzerine baglamayiz: ust uste baglama alttaki dosya
+    # sistemini gorunmez kilar ve cikarirken kullaniciyi sasirtir — bu
+    # denemede bir kez yasandi (ADR 0043).
+    if _is_mount_point(target):
+        for extra in range(2, 20):
+            candidate = f"{target}-{extra}"
+            if not _is_mount_point(candidate):
+                target = candidate
+                break
+    os.makedirs(target, exist_ok=True)
+    cmd = ["mount"]
+    if owner is not None and (fs_type or "").lower().startswith(_OWNER_OPTION_FS):
+        cmd += ["-o", f"uid={owner[0]},gid={owner[1]}"]
+    cmd += [device, target]
+    result = run_tool(cmd, timeout=120)
+    if result.returncode != 0:
+        try:
+            os.rmdir(target)
+        except OSError:
+            pass
+        return False, (result.stderr or result.stdout or "").strip()
+    if owner is not None:
+        try:                              # noktanin kendisi kullanicinin olsun
+            os.chown(target, owner[0], owner[1])
+        except OSError:
+            pass
+    return True, target
+
+
+def unmount_partition(disk_path: str, index: int) -> Tuple[bool, str]:
+    """Bolumun baglantisini keser (Windows'ta surucu harfini kaldirir)."""
+    allowed, reason = mount_supported()
+    if not allowed:
+        return False, reason
+    point = partition_mount_point(disk_path, index)
+    if not point:
+        return True, ""                   # zaten bagli degil
+    try:
+        if IS_WINDOWS:
+            return _win_remove_letter(disk_path, index, point)
+        device = partition_device(disk_path, index)
+        if IS_MACOS:
+            result = run_tool(["diskutil", "unmount", device], timeout=60)
+            return ((result.returncode == 0),
+                    (result.stderr or result.stdout or "").strip()
+                    if result.returncode else "")
+        cmd = ([shutil.which("udisksctl"), "unmount", "-b", device]
+               if (not is_elevated() and shutil.which("udisksctl"))
+               else ["umount", device])
+        # Yeni baglanan bir birimi isletim sistemi bir sure yoklar (udev
+        # kurallari, masaustu indeksleyicileri); bu sirada cikarma "target is
+        # busy" der. Olculdu: ikinci deneme geciyor. Zorlama bayragi
+        # (`-l`/`-f`) KULLANILMAZ — tembel cikarma, dosya sistemi hala
+        # yazilirken aygiti serbest birakip veriyi riske atar (ADR 0043).
+        for attempt in range(3):
+            result = run_tool(cmd, timeout=120)
+            if result.returncode == 0:
+                break
+            if attempt < 2:
+                time.sleep(0.4 * (attempt + 1))
+        if result.returncode != 0:
+            return False, (result.stderr or result.stdout or "").strip()
+        # Kendi actigimiz bos klasoru birakmayalim. Cekirdek baglantiyi
+        # birakirken klasor bir an daha mesgul gorunebilir; bir kez daha
+        # denenir, olmazsa bos bir klasor kalir (zararsiz).
+        if point.startswith(LINUX_MOUNT_ROOT + os.sep):
+            for attempt in range(2):
+                try:
+                    os.rmdir(point)
+                    break
+                except OSError:
+                    time.sleep(0.3)
+        return True, ""
+    except Exception as exc:
+        return False, str(exc)
+
+
+def _win_assign_letter(disk_path: str, index: int) -> Tuple[bool, str]:
+    """Bolume ilk bos surucu harfini atar."""
+    numara = _win_disk_number(disk_path)
+    if numara < 0:
+        return False, tr("Disk numarasi cozulemedi: {}", disk_path)
+    result = _powershell(
+        f"Add-PartitionAccessPath -DiskNumber {numara} -PartitionNumber {index}"
+        f" -AssignDriveLetter -ErrorAction Stop")
+    if result.returncode != 0:
+        return False, (result.stderr or result.stdout or "").strip()
+    return True, partition_mount_point(disk_path, index)
+
+
+def _win_remove_letter(disk_path: str, index: int, point: str) -> Tuple[bool, str]:
+    """Bolumun surucu harfini kaldirir."""
+    numara = _win_disk_number(disk_path)
+    if numara < 0:
+        return False, tr("Disk numarasi cozulemedi: {}", disk_path)
+    result = _powershell(
+        f"Remove-PartitionAccessPath -DiskNumber {numara} -PartitionNumber {index}"
+        f" -AccessPath '{point}' -ErrorAction Stop")
+    if result.returncode != 0:
+        return False, (result.stderr or result.stdout or "").strip()
+    return True, ""
+
+
+# --------------------------------------------------------------------------
+# Yetkili kopyada dosya sahipligi
+# --------------------------------------------------------------------------
+# Uygulama root olarak calistiginda urettigi her dosya root'a ait olur:
+# kullanici kendi ev dizinine aldigi yedegi sonradan silemez, acamaz. pkexec
+# ve sudo, kendilerini cagiran kullanicinin numarasini ortamda birakir; o
+# numara varken uretilen dosyalarin sahipligi kullaniciya geri verilir
+# (ADR 0042).
+INVOKER_ENV = ("PKEXEC_UID", "SUDO_UID")
+
+
+def invoking_user() -> Optional[Tuple[int, int]]:
+    """Yetkiyi veren kullanicinin (uid, gid) cifti; yoksa None.
+
+    None donmesi olagandir: uygulama zaten kullanici yetkisiyle calisiyordur
+    ya da dogrudan root oturumundan baslatilmistir.
+    """
+    if IS_WINDOWS:
+        return None
+    try:
+        if os.geteuid() != 0:
+            return None
+    except AttributeError:              # bu platformda kavram yok
+        return None
+    for name in INVOKER_ENV:
+        raw = os.environ.get(name, "")
+        if not raw.isdigit():
+            continue
+        uid = int(raw)
+        if uid == 0:
+            continue
+        try:
+            import pwd
+            return uid, pwd.getpwuid(uid).pw_gid
+        except Exception:
+            return uid, uid
+    return None
+
+
+def restore_owner(path: str, recursive: bool = False) -> bool:
+    """Uretilen dosyanin sahipligini yetkiyi veren kullaniciya cevirir.
+
+    Yetkili kopya degilsek ya da kullanici numarasi bilinmiyorsa hicbir sey
+    yapmaz. Basarisizlik olumcul degildir: dosya yazilmistir, yalnizca sahibi
+    root kalir.
+    """
+    owner = invoking_user()
+    if owner is None or not path:
+        return False
+    uid, gid = owner
+    targets = [path]
+    if recursive and os.path.isdir(path):
+        for root, dirs, files in os.walk(path):
+            targets.extend(os.path.join(root, n) for n in dirs + files)
+    changed = False
+    for target in targets:
+        try:
+            os.chown(target, uid, gid)
+            changed = True
+        except OSError:
+            pass
+    return changed
+
+
+# --------------------------------------------------------------------------
+# Kullanici dizinleri
+# --------------------------------------------------------------------------
+def user_data_dir(app: str = "DiskUltimate") -> str:
+    """Kullaniciya ait kalici veri dizini (gerekirse olusturulur).
+
+    Yalnizca **paketlenmis** kopya icin gerekir: kaynaktan calisirken uretilen
+    her sey proje dizininde kalir (CLAUDE.md). Paketlenmis kopyada proje
+    dizini yoktur, bu yuzden isletim sisteminin gosterdigi yer kullanilir.
+    """
+    home = os.path.expanduser("~")
+    if IS_WINDOWS:
+        base = os.environ.get("LOCALAPPDATA") or os.path.join(home, "AppData", "Local")
+    elif IS_MACOS:
+        base = os.path.join(home, "Library", "Application Support")
+    else:
+        base = os.environ.get("XDG_STATE_HOME") or os.path.join(home, ".local", "state")
+    path = os.path.join(base, app)
+    os.makedirs(path, exist_ok=True)
+    return path
 
 
 # --------------------------------------------------------------------------
