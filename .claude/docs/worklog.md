@@ -4657,3 +4657,22 @@ eklendi, `.gitattributes` ikili dosyalari CRLF cevriminden korudu,
   turedigi ve lisansi dogrulanamadi. Ayni oturumda Remix Icon'un uygulama ikonu
   kullanimini yasakladigi gorulmustu — bu dosya icin ayni riskin olup olmadigi
   bilinmiyor, kullaniciya soruldu.
+
+### Not — push parola sordu (cozuldu)
+
+`git push` birden parola istemeye basladi ("unable to read askpass response
+from ksshaskpass"). Sebep kimlik degil **protokol**: `gh` hesabi acik ve SSH
+anahtari GitHub'da calisiyor (`ssh -T git@github.com` -> "Hi mcansiz!"), ama
+bu deponun uzak adresi **HTTPS** idi. HTTPS SSH anahtarini hic denemez,
+parola/token sorar; pencere acamayan bir oturumda bu dogrudan hata olur.
+
+Cozum, uzak adresi SSH'a cevirmek:
+
+```
+git remote set-url origin git@github.com:mcansiz/DiskUltimate.git
+```
+
+`gh auth status` zaten "Git operations protocol: ssh" diyordu — depo klonu
+HTTPS ile alinmis oldugu icin ikisi ayrismisti. Depo baska bir makineye
+klonlanirsa ayni sey olur; `gh repo clone` kullanmak veya klondan sonra bu
+komutu bir kez calistirmak yeterli.
