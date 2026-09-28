@@ -674,12 +674,25 @@ class ResizePlan:
 
 
 def plan_resize(session, index: int, new_start_lba: int,
-                new_sector_count: int) -> ResizePlan:
-    """Istenen yerlesimi dogrular ve yapilacak islerin dokumunu dondurur."""
+                new_sector_count: int,
+                info: Optional[FsResizeInfo] = None,
+                window: Optional[ResizeWindow] = None) -> ResizePlan:
+    """Istenen yerlesimi dogrular ve yapilacak islerin dokumunu dondurur.
+
+    `info` verilirse dosya sistemi sinirlari yeniden okunmaz. Arayuz onu arka
+    planda bir kez hesaplar; NTFS'te okuma butun `$Bitmap` taramasidir ve
+    arayuz is parcaciginda tekrarlanmamalidir (ADR 0047).
+
+    `window` verilirse kapsayici alan olarak o kullanilir: arayuz kuyruktaki
+    adimlar sonrasi **planlanan** pencereyi verir (onceki adimin actigi bos
+    alana buyume). Uygulama aninda `window` verilmez; o an diskteki tabloya
+    gore yeniden dogrulanir — plan yanilirsa islem guvenle durur.
+    """
     if session.table is None:
         raise ResizeError(tr("Bolum tablosu yok"))
     part = session.table.get(index)
-    window = window_for(session.table, part)
+    if window is None:
+        window = window_for(session.table, part)
     sector_size = session.table.sector_size
 
     if new_sector_count <= 0:
@@ -692,7 +705,8 @@ def plan_resize(session, index: int, new_start_lba: int,
         raise ResizeError(
             tr("Bolum kapsayici alani asiyor (en gec LBA {})", window.end_lba))
 
-    info = fs_resize_info_for(session, part)
+    if info is None:
+        info = fs_resize_info_for(session, part)
     uyarilar: List[str] = []
 
     if new_sector_count < part.sector_count:

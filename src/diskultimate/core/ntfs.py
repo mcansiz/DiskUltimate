@@ -312,9 +312,13 @@ class NtfsLayout:
 class NtfsFormatter:
     """NTFS birimi olusturur."""
 
-    def __init__(self, dev: BlockDevice, label: str = "", cluster_size: int = 0):
+    def __init__(self, dev: BlockDevice, label: str = "", cluster_size: int = 0,
+                 partition_offset: int = 0):
         self.dev = dev
         self.label = label[:32]
+        # BPB "gizli sektor": bolumun diskteki baslangici. Windows'un NTFS
+        # onyukleme kodu bunu okur; 0 kalirsa birim baslatilamaz.
+        self.partition_offset = partition_offset
         self.sector_size = dev.sector_size
         self.cluster_size = cluster_size or self._default_cluster()
         if self.cluster_size % self.sector_size:
@@ -1062,7 +1066,8 @@ class _NtfsBuilder(NtfsFormatter):
         boot[3:11] = NTFS_OEM
         struct.pack_into("<HBHBHHBHHHII", boot, 11,
                          ss, L.cluster_size // ss, 0, 0, 0, 0,
-                         0xF8, 0, 63, 255, 0, 0)
+                         0xF8, 0, 63, 255,
+                         self.partition_offset & 0xFFFFFFFF, 0)
         struct.pack_into("<I", boot, 0x24, 0x00800080)      # kullanilmiyor
         struct.pack_into("<Q", boot, 0x28, L.total_sectors)
         struct.pack_into("<Q", boot, 0x30, L.mft_lcn)
@@ -1091,6 +1096,8 @@ class _NtfsBuilder(NtfsFormatter):
 
 
 def format_ntfs(dev: BlockDevice, label: str = "", cluster_size: int = 0,
-                progress: Optional[Callable[[str, int], None]] = None) -> Dict:
+                progress: Optional[Callable[[str, int], None]] = None,
+                partition_offset: int = 0) -> Dict:
     """Kisayol: verilen aygiti NTFS olarak bicimlendirir."""
-    return _NtfsBuilder(dev, label=label, cluster_size=cluster_size).format(progress)
+    return _NtfsBuilder(dev, label=label, cluster_size=cluster_size,
+                        partition_offset=partition_offset).format(progress)

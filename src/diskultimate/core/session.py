@@ -25,7 +25,12 @@ from .physical import (DiskInfo, PhysicalDisk, PhysicalDiskError,
 from .platform import (IS_WINDOWS, native_format_supported,
                        native_resize_supported, windows_format_volume,
                        windows_partition_size_limits, windows_resize_partition)
-from .resize import (FsResizeInfo, ResizeError, ResizePlan, ResizeWindow,
+from .layoutedit import EditableLayout
+from .restoreplan import build_layout, restore_with_layout
+from .resize import (_fs_resize as fs_resize_apply,
+                     _patch_partition_offset as patch_partition_offset,
+                     fs_resize_info,
+                     FsResizeInfo, ResizeError, ResizePlan, ResizeWindow,
                      apply_resize, fs_resize_info_for, plan_resize, window_for)
 from .ptable import (FreeRegion, Partition, PartitionTable,
                      PartitionTableError, human_size)
@@ -35,6 +40,16 @@ from ..i18n import tr
 
 class SessionError(Exception):
     pass
+
+
+def _restore_any(src_path: str, device: BlockDevice, progress,
+                 layout: Optional[EditableLayout]):
+    """Yerlesim degismediyse bayt bayt, degistiyse bolum bolum geri yukler."""
+    if layout is None or (layout.is_identity
+                          and device.sector_count == layout.source_sectors):
+        return clone_mod.restore(src_path, device, progress=progress)
+    with diagnostics.span("restore.layout", target=device.sector_count):
+        return restore_with_layout(src_path, device, layout, progress=progress)
 
 
 @dataclass
@@ -52,6 +67,9 @@ class BackupPreview:
     filesystem: Optional[FSInfo]
     # Deger None ise icerik okunamadi, [] ise bolum gercekten bos
     root_entries: Dict[int, Optional[List[str]]]
+    # Disk yedeginde bolumlerin yerlesimi ve boyut sinirlari; geri yukleme
+    # penceresi bunu hedefe gore yeniden boyutlandirir (restoreplan).
+    layout: Optional["EditableLayout"] = None
 
     @property
     def is_whole_disk(self) -> bool:
@@ -585,10 +603,18 @@ class DiskSession:
         return info
 
     def plan_resize(self, index: int, new_start_lba: int,
-                    new_sector_count: int) -> ResizePlan:
-        """Istenen yerlesimi dogrular; uygulamadan once cagrilir."""
+                    new_sector_count: int,
+                    fs_info: Optional[FsResizeInfo] = None,
+                    window: Optional[ResizeWindow] = None) -> ResizePlan:
+        """Istenen yerlesimi dogrular; uygulamadan once cagrilir.
+
+        `fs_info`: onceden (arka planda) hesaplanmis sinirlar; verilmezse
+        dosya sistemi yeniden okunur. `window`: planlanan kapsayici alan
+        (kuyruktaki adimlardan sonra); verilmezse diskteki tablo.
+        """
         self._require_table()
-        return plan_resize(self, index, new_start_lba, new_sector_count)
+        return plan_resize(self, index, new_start_lba, new_sector_count,
+                           info=fs_info, window=window)
 
     def resize_partition(self, index: int, new_start_lba: int,
                          new_sector_count: int, confirm: bool = False,
@@ -700,20 +726,54 @@ class DiskSession:
                                 fs_type=self.scheme_name, label=self.name,
                                 progress=progress, remark=remark, level=level)
 
-    def restore_partition(self, index: int, src_path: str, progress=None):
+    def restore_partition(self, index: int, src_path: str, progress=None,
+                          fill: bool = True):
+        """Bolum yedegini bu bolume yazar.
+
+        Yedek baska bir yerdeki bolumden alinmis olabilir: onyukleme
+        sektorundeki bolum konumu (gizli sektor / PartitionOffset) hedefe gore
+        duzeltilir, yoksa Windows birimi baglayamaz. `fill=True` ise bolum
+        yedekten buyukse dosya sistemi bolumu dolduracak kadar buyutulur
+        (DiskGenius davranisi).
+        """
         self._require_writable()
         part = self.table.get(index) if self.table else None
         if part is None:
             raise SessionError(tr("Bolum bulunamadi"))
         self._fs_cache.pop(index, None)
         result = clone_mod.restore(src_path, self.view(part), progress=progress)
+        backup_sectors = result.total_bytes // self.image.sector_size
+        try:
+            fs_type = detect(self.view(part)).fs_type
+        except Exception:                             # noqa: BLE001
+            fs_type = ""
+        info = fs_resize_info(self.view(part), fs_type)
+        if fill and part.sector_count > backup_sectors and \
+                info.kind in ("fat", "exfat", "ntfs"):
+            if progress:
+                progress(tr("Dosya sistemi bolumu dolduracak kadar "
+                            "buyutuluyor..."), 99)
+            count = part.sector_count
+            if info.max_sectors:
+                count = min(count, info.max_sectors)
+            fs_resize_apply(self.image, part.start_lba, count, info.kind,
+                            part.start_lba, span=part.sector_count)
+        else:
+            patch_partition_offset(self.image, part.start_lba,
+                                   part.sector_count)
+        self.image.flush()
         self.reload()
         return result
 
-    def restore_disk(self, src_path: str, progress=None):
+    def restore_disk(self, src_path: str, progress=None, layout=None):
+        """Disk yedegini bu goruntuye yazar.
+
+        `layout` verilir ve yedekteki yerlesimden farkliysa bolumler yeni
+        yerlerine/boyutlarina gore yazilir (`restoreplan`); yoksa bayt bayt.
+        """
         self._require_writable()
         self.close_filesystems()
-        result = clone_mod.restore(src_path, self.image, progress=progress)
+        result = _restore_any(src_path, self.image, progress, layout)
         self.reload()
         return result
 
@@ -766,11 +826,20 @@ class DiskSession:
                 fs_info = detect(session.image)
                 entries[-1] = DiskSession._root_names(
                     open_filesystem(session.image, fs_info))
+            layout = None
+            if partitions and session.table is not None:
+                try:
+                    layout = build_layout(session.image, session.table)
+                except Exception as exc:              # noqa: BLE001
+                    # Yerlesim yalnizca boyutlandirma icindir; okunamazsa
+                    # duz geri yukleme yine mumkundur.
+                    diagnostics.info(f"yedek yerlesimi okunamadi: {exc}")
             return BackupPreview(info=session.image.info,
                                  scheme=session.scheme,
                                  partitions=partitions,
                                  filesystem=fs_info,
-                                 root_entries=entries)
+                                 root_entries=entries,
+                                 layout=layout)
         finally:
             session.close()
 
@@ -828,7 +897,7 @@ class DiskSession:
 
     @staticmethod
     def restore_to_physical(src_path: str, disk, allow_system: bool = False,
-                            progress=None):
+                            progress=None, layout=None):
         """Yedegi **fiziksel diske** yazar.
 
         Fiziksel disk guvenlik kapilarinin tamamindan gecer: `confirm=True` ve
@@ -839,22 +908,27 @@ class DiskSession:
         device = PhysicalDisk(disk, readonly=False, confirm=True,
                               allow_system=allow_system)
         try:
-            return clone_mod.restore(src_path, device, progress=progress)
+            return _restore_any(src_path, device, progress, layout)
         finally:
             device.close()
 
     @staticmethod
-    def restore_to_new_image(src_path: str, dest_path: str, progress=None) -> str:
+    def restore_to_new_image(src_path: str, dest_path: str, progress=None,
+                             size_bytes: int = 0, layout=None) -> str:
         """Yedegi **yeni** bir goruntu dosyasina acar ve yolunu dondurur.
 
         Mevcut hicbir disk veya goruntu uzerine yazilmaz; hedef dosya yedegin
         kaydettigi boyutta olusturulur. `restore_disk`ten farki, once hedefi
         yaratmasidir — kullanici "yedegi acmak" istediginde beklenen islem budur.
+
+        `size_bytes` verilirse goruntu o boyutta olusturulur (yedekten buyuk
+        ya da -yerlesim sigiyorsa- kucuk); bolumler `layout` ile yerlesir.
         """
         info = clone_mod.read_backup_info(src_path)
-        image = DiskImage.create(dest_path, info.total_bytes, overwrite=True)
+        size = size_bytes or info.total_bytes
+        image = DiskImage.create(dest_path, size, overwrite=True)
         try:
-            clone_mod.restore(src_path, image, progress=progress)
+            _restore_any(src_path, image, progress, layout)
         finally:
             image.close()
         return dest_path

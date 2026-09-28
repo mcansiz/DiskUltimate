@@ -5,7 +5,9 @@ Tum adresleme LBA (sektor) cinsindendir; bayta cevirme yalnizca bu katmanda yapi
 """
 from __future__ import annotations
 
+import functools
 import os
+import threading
 from typing import Optional
 
 from .platform import make_sparse, restore_owner, truncate_sparse
@@ -18,10 +20,42 @@ class DiskImageError(Exception):
     """Disk goruntusu ile ilgili hatalar."""
 
 
+def _serialized(method):
+    """Aygit G/C'sini nesne basina tek is parcacigina indirir.
+
+    Dosya/aygit okumasi `seek` + `read` ciftidir; iki is parcacigi ayni
+    tutamactan okursa biri otekinin konumunu kaydirir ve **yanlis sektor**
+    okunur. Arka planda hesaplanan boyutlandirma sinirlari (ADR 0047) arayuzun
+    de okudugu ayni tutamaci kullanir; kilit bu yarisi kapatir. `RLock`:
+    `read` icinden `read_sectors` gibi ic cagrilar ayni kilidi yeniden alir.
+    """
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        lock = self.__dict__.get("_io_lock")
+        if lock is None:
+            lock = self.__dict__.setdefault("_io_lock", threading.RLock())
+        with lock:
+            return method(self, *args, **kwargs)
+    wrapper._serialized = True
+    return wrapper
+
+
 class BlockDevice:
-    """Blok aygiti arayuzu: DiskImage ve PartitionView bunu uygular."""
+    """Blok aygiti arayuzu: DiskImage ve PartitionView bunu uygular.
+
+    Alt siniflarin `read`/`write` yontemleri tanim aninda otomatik olarak
+    kilitlenir (`_serialized`); yeni bir aygit turu eklerken ayrica bir sey
+    yapmak gerekmez.
+    """
 
     sector_size: int = DEFAULT_SECTOR_SIZE
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        for name in ("read", "write"):
+            method = cls.__dict__.get(name)
+            if method is not None and not getattr(method, "_serialized", False):
+                setattr(cls, name, _serialized(method))
 
     @property
     def sector_count(self) -> int:  # pragma: no cover - arayuz

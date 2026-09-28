@@ -33,12 +33,13 @@ alinir, boylece koyu temada da gorunur.
 """
 from __future__ import annotations
 
+import math
 from typing import Dict, Optional
 
-from PyQt5.QtCore import QPointF, QRectF, Qt
-from PyQt5.QtGui import (QBrush, QColor, QIcon, QImage, QPainter,
+from PyQt5.QtCore import QPointF, QRectF, QSize, Qt
+from PyQt5.QtGui import (QBrush, QColor, QIcon, QIconEngine, QImage, QPainter,
                          QPainterPath, QPen, QPixmap, QPolygonF)
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QStyleOption
 
 # Anlamsal renkler (acik tema degerleri; koyu temada acilirlar)
 GREEN = "#2e9e4f"       # ekleme, onay
@@ -251,18 +252,41 @@ def _redo(p, u, dark):
 
 
 def _refresh(p, u, dark):
+    """Yenile oku: tek yay, ucunda yaya teget ok basi.
+
+    Onceki cizim 280 derecelik yayin ucuna **teget olmayan** bir ucgen
+    koyuyordu; ok basi yaydan kopuk ve yanlis yone bakiyordu (kullanici
+    bildirimi, 2026-09-28). Iki yayli "esitle" bicimi de denendi; 16 pikselde
+    kalabalik duruyordu. Ok basi yayin bittigi yerde, gidis yonunde
+    hesaplanir (`_arc_arrowhead`).
+    """
     color = _tone(BLUE, dark)
-    _pen(p, color, u, 1.8)
+    cx, cy, r = 8.0 * u, 8.0 * u, 5.2 * u
+    box = QRectF(cx - r, cy - r, 2 * r, 2 * r)
     p.setBrush(Qt.NoBrush)
+    _pen(p, color, u, 1.8)
     path = QPainterPath()
-    path.moveTo(13.0 * u, 8.0 * u)
-    path.arcTo(QRectF(3.0 * u, 3.0 * u, 10.0 * u, 10.0 * u), 0, 280)
+    path.arcMoveTo(box, 70.0)
+    path.arcTo(box, 70.0, 290.0)          # sag ustte bosluk birakir
     p.drawPath(path)
+    _arc_arrowhead(p, u, color, cx, cy, r, 360.0)
+    p.setBrush(Qt.NoBrush)
+
+
+def _arc_arrowhead(p, u, color, cx, cy, r, angle_deg) -> None:
+    """Yayin `angle_deg` ucuna, saat yonunun tersine giden ok basi."""
+    a = math.radians(angle_deg)
+    # Qt'de y asagi: nokta = (cx + r cos a, cy - r sin a); artan acinin
+    # yonu (teget) = (-sin a, -cos a)
+    px, py = cx + r * math.cos(a), cy - r * math.sin(a)
+    dx, dy = -math.sin(a), -math.cos(a)
+    nx, ny = math.cos(a), -math.sin(a)          # disa dogru normal
+    tip = QPointF(px + dx * 2.2 * u, py + dy * 2.2 * u)
+    outer = QPointF(px + nx * 2.1 * u, py + ny * 2.1 * u)
+    inner = QPointF(px - nx * 2.1 * u, py - ny * 2.1 * u)
     p.setPen(Qt.NoPen)
     p.setBrush(color)
-    p.drawPolygon(QPolygonF([QPointF(13.0 * u, 2.4 * u),
-                             QPointF(15.2 * u, 6.2 * u),
-                             QPointF(10.6 * u, 6.0 * u)]))
+    p.drawPolygon(QPolygonF([tip, outer, inner]))
 
 
 def _table(p, u, dark):
@@ -726,48 +750,104 @@ DRAWERS = {
 SIZES = (16, 20, 24, 32, 48)
 
 
-def draw(name: str, size: int, dark: bool = None) -> QPixmap:
-    """Tek bir ikonu istenen boyutta cizer (test ve ozel kullanim icin)."""
+def draw(name: str, size: int, dark: bool = None,
+         icon_set: str = None) -> QPixmap:
+    """Tek bir ikonu istenen boyutta ve sette cizer.
+
+    `icon_set` verilmezse etkin set kullanilir (`iconsets.current()`). Secili
+    set bu ikonu tanimiyorsa klasik cizim kullanilir; bos ikon gosterilmez.
+    """
+    from . import iconsets
+
     if dark is None:
         dark = _is_dark()
+    key = icon_set or iconsets.current()
     pix = QPixmap(size, size)
     pix.fill(Qt.transparent)
-    drawer = DRAWERS.get(name)
-    if drawer is not None:
-        p = QPainter(pix)
-        p.setRenderHint(QPainter.Antialiasing, True)
-        try:
-            drawer(p, size / 16.0, dark)
-        finally:
-            p.end()
+    p = QPainter(pix)
+    p.setRenderHint(QPainter.Antialiasing, True)
+    try:
+        done = key != "classic" and iconsets.draw(p, name, size, dark, key)
+        if not done:
+            drawer = DRAWERS.get(name)
+            if drawer is not None:
+                drawer(p, size / 16.0, dark)
+    finally:
+        p.end()
     return pix
+
+
+class _LiveIconEngine(QIconEngine):
+    """Cizimi **boyama aninda** yapan ikon motoru.
+
+    Ikon seti calisirken degisebilir (Araclar > Ikon seti). Sabit pikseller
+    tutan bir QIcon eski sette kalirdi; bu motor her istekte etkin seti okur,
+    sonucu (set, ad, boyut, tema, kip) anahtariyla onbellekte tutar. Boylece
+    `icon()` cagiran 100'e yakin yerin hicbiri degismeden set degisimi
+    butun arayuze yansir; yalnizca yeniden boyama gerekir.
+    """
+
+    def __init__(self, name: str):
+        super().__init__()
+        self.name = name
+
+    def pixmap(self, size, mode, state):
+        from . import iconsets
+
+        edge = max(1, min(size.width(), size.height()))
+        dark = _is_dark()
+        key = (iconsets.current(), self.name, edge, dark, int(mode))
+        hit = _pixmaps.get(key)
+        if hit is not None:
+            return hit
+        pix = draw(self.name, edge, dark)
+        if mode == QIcon.Disabled:
+            app = QApplication.instance()
+            if app is not None:
+                pix = app.style().generatedIconPixmap(QIcon.Disabled, pix,
+                                                      QStyleOption())
+        _pixmaps[key] = pix
+        return pix
+
+    def paint(self, painter, rect, mode, state):
+        painter.drawPixmap(rect, self.pixmap(rect.size(), mode, state))
+
+    def actualSize(self, size, mode, state):
+        edge = min(size.width(), size.height())
+        return QSize(edge, edge)
+
+    def availableSizes(self, mode=QIcon.Normal, state=QIcon.Off):
+        return [QSize(s, s) for s in SIZES]
+
+    def clone(self):
+        return _LiveIconEngine(self.name)
+
+
+_pixmaps: Dict[tuple, QPixmap] = {}
 
 
 def icon(name: str, size: int = 0) -> QIcon:
     """Adiyla ikon dondurur. Bilinmeyen ad **bos** ikon dondurur, cokmez.
 
-    Sonuc **cok boyutludur**: widget hangi boyutu isterse istesin o boyutta
-    cizilmis pixmap bulur. `size` verilirse o boyut da listeye eklenir.
+    Donen ikon **canlidir**: ikon seti degisince yeniden boyamada yeni setle
+    cizilir (`_LiveIconEngine`). `size` geriye uyumluluk icin kabul edilir;
+    motor her boyutu istek aninda cizdigi icin artik gerekmez.
     """
-    dark = _is_dark()
-    key = (name, size, dark)
-    hit = _cache.get(key)
-    if hit is not None:
-        return hit
-    result = QIcon()
-    wanted = sorted(set(SIZES) | ({size} if size else set()))
-    for each in wanted:
-        result.addPixmap(draw(name, each, dark))
-    _cache[key] = result
-    return result
+    if name not in DRAWERS:
+        return QIcon()
+    hit = _cache.get(name)
+    if hit is None:
+        hit = QIcon(_LiveIconEngine(name))
+        _cache[name] = hit
+    return hit
 
 
 def clear_cache() -> None:
-    """Tema degisince cagrilir: ikonlar yeni palete gore yeniden cizilir."""
-    _cache.clear()
+    """Tema ya da ikon seti degisince cagrilir: pikseller yeniden cizilir."""
+    _pixmaps.clear()
 
 
-def digest(sizes=(16, 24, 32, 48)) -> str:
+def digest(sizes=(16, 24, 32, 48), icon_set: str = "classic") -> str:
     """Butun ikon cizimlerinin **piksel** ozeti (sha256, ilk 32 karakter).
 
     "Ikonlar her platformda ayni" iddiasinin olcusudur: ayni deger cikiyorsa
@@ -784,7 +864,8 @@ def digest(sizes=(16, 24, 32, 48)) -> str:
     total = hashlib.sha256()
     for name in names():
         for size in sizes:
-            image = draw(name, size, dark=False).toImage().convertToFormat(
+            image = draw(name, size, dark=False,
+                         icon_set=icon_set).toImage().convertToFormat(
                 QImage.Format_ARGB32)
             total.update(image.constBits().asstring(
                 image.sizeInBytes() if hasattr(image, "sizeInBytes")

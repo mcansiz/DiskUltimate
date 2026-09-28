@@ -1,18 +1,22 @@
 """DiskUltimate ana penceresi."""
 from __future__ import annotations
 
+import dataclasses
 import datetime
+import html
 import os
 from typing import Dict, List, Optional, Tuple
 
 from PyQt5.QtCore import QSize, Qt, QTimer
 from PyQt5.QtGui import QColor, QFontDatabase, QIcon, QKeySequence
-from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QFileDialog,
-                             QFormLayout, QHBoxLayout, QHeaderView,
+from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QDialog,
+                             QDialogButtonBox, QFileDialog, QFormLayout,
+                             QHBoxLayout, QHeaderView,
                              QInputDialog, QLabel, QMainWindow, QMenu,
                              QMessageBox, QPlainTextEdit, QProgressDialog,
                              QPushButton, QSplitter,
-                             QScrollArea, QStackedWidget, QTabWidget, QToolBar,
+                             QScrollArea, QStackedWidget, QTabWidget,
+                             QTextBrowser, QToolBar,
                              QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from ..core import diagnostics
@@ -32,15 +36,21 @@ from ..core.vdisk import VhdImage
 from ..paths import log_root
 from ..core.clone import is_backup_file
 from ..core.image import DiskImage
+from ..core import disksource, queueedit
+from ..core.resize import ResizeWindow
 from ..core.ptable import (GPT_TYPES, MBR_EXTENDED_TYPES, MBR_TYPES,
                            FreeRegion, Partition, human_size, parse_size)
 from ..core.session import DiskSession, SessionError
 from .dialogs.base import exec_dialog
 from .diag import install as install_diagnostics
+from . import icons as icons_mod
+from . import iconpacks, iconsets
+from .fslimits import FsLimitsService
 from .icons import icon as app_icon
 from .disk_scan import DiskScanner, disk_signature
 from .dialogs.new_image import NewImageDialog
 from .dialogs.partition import CreatePartitionDialog, FormatDialog
+from .dialogs.partition_layout import PartitionLayoutDialog
 from .dialogs.resize import ResizePartitionDialog
 from ..core import planview
 from .dialogs.apply import run_apply
@@ -101,6 +111,12 @@ class MainWindow(QMainWindow):
         # "diskteki hali" secimiyle kapanir.
         self._plan_layout = None
         self._show_plan = True
+        # Dosya sistemi sinirlari: arka planda bir kez hesaplanir, onbellekte
+        # durur (ADR 0047). Harita, boyutlandirma ve "Bolum duzeni" ortak.
+        self.limits = FsLimitsService(self)
+        self.limits.ready.connect(lambda _key: self._on_limits_ready())
+        # Ana ekranin duzenlenebilir yerlesimi (ortak model, ADR 0049)
+        self._edit_layout = None
         # Acilistaki otomatik disk secimi bir kez yapilir (ADR 0035).
         self._auto_opened = False
         self.selected_is_planned = False
@@ -192,6 +208,12 @@ class MainWindow(QMainWindow):
             lambda i: self.tabs.setCurrentIndex(TAB_FILES))
         self.disk_map.freeActivated.connect(lambda s, n: self.create_partition())
         self.disk_map.contextMenuRequested.connect(self._map_context)
+        # Secili bolumun kenarlarinda surukleme tutamaklari (DiskGenius);
+        # birakinca boyutlandirma adimi kuyruga girer, diske yazilmaz.
+        self.disk_map.layoutCommitted.connect(
+            lambda indices: self._commit_edit(
+                self._edit_layout, indices,
+                before=self.disk_map.edit.last_before))
 
         # Oturum yokken butun diskler alt alta gosterilir (Acronis duzeni);
         # bir kaynak acilinca onun haritasina gecilir.
@@ -322,6 +344,8 @@ class MainWindow(QMainWindow):
         self.act_format.triggered.connect(self.format_partition)
         self.act_resize_part = QAction(app_icon("resize"), "", self)
         self.act_resize_part.triggered.connect(self.resize_partition)
+        self.act_edit_layout = QAction(app_icon("partition"), "", self)
+        self.act_edit_layout.triggered.connect(self.edit_partition_layout)
         self.act_delete_part = QAction(app_icon("partition-delete"), "", self)
         self.act_delete_part.triggered.connect(self.delete_partition)
         # Metin secili bolume gore `_update_actions()` icinde guncellenir;
@@ -430,6 +454,8 @@ class MainWindow(QMainWindow):
         # --- Yardim ---
         self.act_about = QAction("", self)
         self.act_about.triggered.connect(self.about)
+        self.act_licenses = QAction("", self)
+        self.act_licenses.triggered.connect(self.show_licenses)
 
         menu = self.menuBar()
         m_file = menu.addMenu(tr("&Dosya"))
@@ -476,6 +502,7 @@ class MainWindow(QMainWindow):
         m_part.addAction(self.act_create_part)
         m_part.addAction(self.act_format)
         m_part.addAction(self.act_resize_part)
+        m_part.addAction(self.act_edit_layout)
         m_part.addAction(self.act_delete_part)
         m_part.addSeparator()
         m_part.addAction(self.act_label)
@@ -505,6 +532,9 @@ class MainWindow(QMainWindow):
         # Dil secimi: ceviri dosyasi bulunan her dil kendiliginden listelenir.
         self.m_lang = m_arac.addMenu(tr("Dil"))
         self._build_language_menu()
+        # Ikon seti: sekiz set, secim saklanir ve aninda uygulanir (ADR 0046)
+        self.m_icons = m_arac.addMenu(tr("Ikon seti"))
+        self._build_icon_menu()
 
         m_tani = m_arac.addMenu(tr("Tanilama"))
         m_tani.addAction(self.act_diag_status)
@@ -516,6 +546,7 @@ class MainWindow(QMainWindow):
         m_yardim = menu.addMenu(tr("&Yardim"))
         m_yardim.addAction(self.act_diag_status)
         m_yardim.addSeparator()
+        m_yardim.addAction(self.act_licenses)
         m_yardim.addAction(self.act_about)
 
         # Arac cubugu yalnizca SECILI disk/bolum uzerinde yapilabilecek islemleri
@@ -549,6 +580,7 @@ class MainWindow(QMainWindow):
         self._menus.append((m_arac, '&Araclar'))
         self._menus.append((m_tani, 'Tanilama'))
         self._menus.append((self.m_lang, 'Dil'))
+        self._menus.append((self.m_icons, 'Ikon seti'))
         self._menus.append((m_yardim, '&Yardim'))
         self._retranslate_actions()
 
@@ -574,6 +606,10 @@ class MainWindow(QMainWindow):
         self.act_resize_part.setText(tr("Bolumu boyutlandir..."))
         self.act_resize_part.setToolTip(
             tr("Bolumu fareyle surukleyerek kucult, buyut veya tasi"))
+        self.act_edit_layout.setText(tr("Bolum duzenini degistir..."))
+        self.act_edit_layout.setToolTip(
+            tr("Butun bolumleri tek pencerede birlikte buyut, kucult ya da "
+               "tasi"))
         self.act_delete_part.setText(tr("Bolumu sil"))
         self.act_boot.setText(tr(BOOT_SET_TEXT))
         self.act_rename_part.setText(tr("Bolum adini degistir..."))
@@ -637,6 +673,7 @@ class MainWindow(QMainWindow):
         self.act_diag_dump.setToolTip(
             tr("Butun is parcaciklarinin o anki yiginini dosyaya yazar"))
         self.act_about.setText(tr("Hakkinda"))
+        self.act_licenses.setText(tr("Ucuncu taraf lisanslari..."))
 
     # ==================================================================
     # Dil
@@ -659,6 +696,72 @@ class MainWindow(QMainWindow):
                 lambda _checked, c=code: self.change_language(c))
             self._lang_group.addAction(action)
             self.m_lang.addAction(action)
+
+    # ==================================================================
+    # Ikon seti (ADR 0046)
+    # ==================================================================
+    def _build_icon_menu(self) -> None:
+        """Ikon seti menusu: her set kendi ikonuyla (o setten cizilmis) gorunur."""
+        self.m_icons.clear()
+        self._icon_group = QActionGroup(self)
+        self._icon_group.setExclusive(True)
+        current = iconsets.current()
+        for key, _text in iconsets.SETS:
+            action = QAction(iconsets.label(key), self)
+            action.setCheckable(True)
+            action.setChecked(key == current)
+            action.setData(key)
+            # Onizleme: menu satirinda o setin "disk" ikonu
+            action.setIcon(QIcon(icons_mod.draw("disk", 16, icon_set=key)))
+            action.triggered.connect(
+                lambda _checked, k=key: self.change_icon_set(k))
+            self._icon_group.addAction(action)
+            self.m_icons.addAction(action)
+
+    def change_icon_set(self, key: str) -> None:
+        """Ikon setini degistirir; arayuz yeniden baslatilmadan yenilenir."""
+        if key == iconsets.current():
+            return
+        with diagnostics.span("ui.change_icon_set", key=key):
+            iconsets.set_current(key)
+            icons_mod.clear_cache()
+            # Menu isareti de esitlenir: set menuden degil koddan (ayar,
+            # test) degistiginde eski secenek isaretli kaliyordu.
+            for action in self._icon_group.actions():
+                action.setChecked(action.data() == key)
+            for widget in QApplication.allWidgets():
+                widget.update()
+        self.log(tr("Ikon seti degistirildi: {}", iconsets.label(key)))
+
+    def show_licenses(self) -> None:
+        """Gomulu ucuncu taraf ikon paketlerinin lisanslari.
+
+        MIT/ISC/Apache lisanslari telif ve izin metninin dagitimla birlikte
+        verilmesini ister; metinler paket modullerinde durur ve burada
+        gosterilir.
+        """
+        parts = [tr("<p>Bu uygulama asagidaki ikon paketlerinden secilmis "
+                    "ikonlari gomulu olarak icerir. Isletim sistemi "
+                    "amblemleri sahiplerinin ticari markasidir; yalnizca "
+                    "diski tanitmak icin gosterilir.</p>")]
+        for info in iconpacks.notices():
+            parts.append(
+                f"<h4>{info['title']} {info['version']} — {info['license']}</h4>"
+                f"<p><a href='{info['url']}'>{info['url']}</a> · "
+                + tr("{} ikon", info["count"]) + "</p>"
+                f"<pre style='white-space:pre-wrap'>{html.escape(info['text'])}</pre>")
+        dialog = QDialog(self)
+        dialog.setWindowTitle(tr("Ucuncu taraf lisanslari"))
+        dialog.resize(720, 560)
+        layout = QVBoxLayout(dialog)
+        view = QTextBrowser()
+        view.setOpenExternalLinks(True)
+        view.setHtml("".join(parts))
+        layout.addWidget(view)
+        box = QDialogButtonBox(QDialogButtonBox.Close)
+        box.rejected.connect(dialog.reject)
+        layout.addWidget(box)
+        dialog.exec_()
 
     def change_language(self, code: str) -> None:
         """Arayuz dilini degistirir ve secimi saklar.
@@ -694,6 +797,7 @@ class MainWindow(QMainWindow):
         self.part_table.retranslate()
         self.hex_view.retranslate()
         self._build_language_menu()
+        self._build_icon_menu()
         if self.session is None:
             self.status_file.setText(tr("Disk goruntusu acik degil"))
             self.info_view.setPlainText(self._physical_summary_text())
@@ -1036,21 +1140,34 @@ class MainWindow(QMainWindow):
             cluster_bytes=v["cluster"], quick=v["quick"]))
 
     def resize_partition(self) -> None:
-        """Bolumu suruklemeli pencereyle kucultur, buyutur veya tasir."""
+        """Bolumu suruklemeli pencereyle kucultur, buyutur veya tasir.
+
+        Pencere ortak modelden beslenir (ADR 0049): sinirlar planlanan
+        yerlesime gore, dosya sistemi sinirlari ortak servisten.
+        """
         part = self._current_partition()
         if part is None:
             return
-        try:
-            window = self.session.resize_window(part.index)
-            info = self.session.resize_info(part.index)
-        except Exception as exc:                       # noqa: BLE001
-            self.error(tr("Boyutlandirma hazirlanamadi"), str(exc))
+        info = self._limits_blocking([part])
+        if info is None:
             return
+        info = info[part.index]
         if not info.resizable and not info.movable:
             QMessageBox.information(
                 self, tr("Boyutlandirilamaz"),
                 tr("Bu bolum boyutlandirilamiyor.\n\n{}", info.note))
             return
+        model = self._edit_model()
+        try:
+            slot = model.get(part.index) if model is not None else None
+        except Exception:                              # noqa: BLE001
+            slot = None
+        if slot is None or slot.locked:
+            self.error(tr("Boyutlandirma hazirlanamadi"),
+                       tr("Bu bolum bu gorunumde duzenlenemez."))
+            return
+        lower, upper = model.window(part.index)
+        window = ResizeWindow(lower, upper, part.sector_size)
 
         kullanilan = -1
         try:
@@ -1062,32 +1179,168 @@ class MainWindow(QMainWindow):
             kullanilan = -1
         self.session.close_filesystems()
 
-        dlg = ResizePartitionDialog(part, window, info,
+        before = {s.index: (s.new_start, s.new_count) for s in model.parts}
+        # Pencere sinirlari MODELDEN: ham bolumun kucultulmemesi gibi
+        # kurallar harita ve pencerede ayni olsun (ADR 0049).
+        info = dataclasses.replace(info, min_sectors=slot.min_count,
+                                   max_sectors=slot.max_count,
+                                   movable=slot.movable)
+        dlg = ResizePartitionDialog(slot.as_partition(), window, info,
                                     align_sectors=self.session.table.align_sectors,
                                     used_bytes=kullanilan, parent=self)
         if exec_dialog(dlg) != ResizePartitionDialog.Accepted:
             return
         v = dlg.values()
+        slot.new_start, slot.new_count = v["start_lba"], v["sector_count"]
+        self._commit_edit(model, [part.index], before=before,
+                          fs_infos={part.index: info})
+
+    def edit_partition_layout(self) -> None:
+        """Butun bolumleri tek pencerede duzenler (ortak pencere, ADR 0049).
+
+        Geri yuklemedeki "Bolumleri yonet" ile ayni penceredir. Sonuc
+        bekleyen islemlere boyutlandirma adimlari olarak eklenir; ayni bolumun
+        mevcut adimi yerinde guncellenir, sira uygulanabilir tutulur.
+        """
+        if not self._require_session() or self.session.table is None:
+            return
+        disk_parts = [p for p in self.session.table.partitions
+                      if not p.logical]
+        if self._limits_blocking(disk_parts) is None:
+            return
+        model = self._edit_model()
+        if model is None:
+            self.error(tr("Bolum duzeni acilamadi"),
+                       tr("Bolum tablosu kuyrukta degisiyor; once bekleyen "
+                          "islemleri uygulayin ya da kaldirin."))
+            return
+        before = {s.index: (s.new_start, s.new_count) for s in model.parts}
+        dlg = PartitionLayoutDialog(model, self.session.name, self, mode="disk")
+        if exec_dialog(dlg) != PartitionLayoutDialog.Accepted:
+            return
+        result = dlg.result_layout()
+        changed = [s.index for s in result.parts
+                   if (s.new_start, s.new_count) != before.get(s.index)]
+        if changed:
+            self._commit_edit(result, changed, before=before)
+
+    def _queue_resize(self, index: int, start_lba: int,
+                      sector_count: int) -> None:
+        """Tek bolumu verilen yere/boyuta getiren adimi kuyruga yazar."""
+        model = self._edit_model()
+        if model is None:
+            return
+        slot = model.get(index)
+        before = {s.index: (s.new_start, s.new_count) for s in model.parts}
+        slot.new_start, slot.new_count = start_lba, sector_count
+        self._commit_edit(model, [index], before=before)
+
+    # ==================================================================
+    # Ortak bolum duzenleme modeli (ADR 0049)
+    # ==================================================================
+    def _edit_model(self):
+        """Etkin oturum + kuyruktan duzenlenebilir yerlesim (yoksa None).
+
+        Dosya sistemi sinirlari **istenmez**, yalnizca hazir olanlar
+        kullanilir; hazir olmayan bolum kilitli (`pending`) gelir.
+        """
+        session = self.session
+        if session is None or session.table is None:
+            return None
+        return queueedit.build(
+            session, self.queue,
+            limits=lambda part: self.limits.get(session, part, request=False))
+
+    def _limits_blocking(self, parts):
+        """Verilen bolumlerin sinirlari; eksikse ilerleme penceresiyle
+        arka planda hesaplanir. Iptal/hata: None."""
+        session = self.session
+        missing = [p for p in parts
+                   if self.limits.get(session, p, request=False) is None]
+        if missing:
+            ok, result = run_task(
+                self, tr("Dosya sistemi sinirlari okunuyor"),
+                lambda report: [self.limits.compute_now(session, p)
+                                for p in missing])
+            if not ok:
+                self.error(tr("Boyutlandirma hazirlanamadi"), str(result))
+                return None
+        out = {}
+        for p in parts:
+            info = self.limits.get(session, p, request=False)
+            if info is not None and info.kind == "native":
+                # Windows'un kendi siniri (PowerShell): yalnizca pencere
+                # icin, gorev penceresinde sorulur.
+                ok, native = run_task(
+                    self, tr("Dosya sistemi sinirlari okunuyor"),
+                    lambda report, i=p.index: session.resize_info(i))
+                if ok:
+                    info = native
+            out[p.index] = info
+        return out
+
+    def _refresh_edit_layout(self) -> None:
+        """Haritanin tutamaklarini secime ve kuyruga gore tazeler.
+
+        Tutamak **diskteki** (planda da var olan) bolum icindir; kuyrukta
+        yeni olan bolumde, "diskteki hali" gosterilirken dolu kuyrukta ve
+        yazma moduna gecemeyen kaynakta verilmez. Secili bolum ve planlanan
+        komsularinin sinirlari arka planda istenir (sinir tutamagi iki
+        bolumu birden degistirir).
+        """
+        session = self.session
+        index = self.selected_partition
+        usable = (session is not None and session.table is not None
+                  and index is not None and not self.selected_is_planned
+                  and session.can_become_writable()[0]
+                  and (self.queue.is_empty or self._show_plan))
+        model = self._edit_model() if usable else None
+        busy = False
+        if model is not None:
+            for i in queueedit.neighbours(model, index):
+                try:
+                    disk_part = session.table.get(i)
+                except Exception:                      # noqa: BLE001
+                    continue
+                self.limits.get(session, disk_part, request=True)
+            try:
+                busy = model.get(index).pending
+            except Exception:                          # noqa: BLE001
+                busy = False
+        self._edit_layout = model
+        self.disk_map.set_edit_layout(model, focus=index, busy=busy)
+
+    def _on_limits_ready(self) -> None:
+        for exc in self.limits.errors():
+            diagnostics.info(f"bolum sinirlari okunamadi: {exc}")
+        if not self.disk_map.edit.dragging:
+            self._refresh_edit_layout()
+
+    def _commit_edit(self, model, indices, before=None, fs_infos=None) -> None:
+        """Duzenlenen bolumleri kuyruga yazar (harita, pencereler ortak)."""
+        if model is None or self.session is None:
+            return
+        infos = dict(fs_infos or {})
+        for index in indices:
+            if index not in infos:
+                try:
+                    part = self.session.table.get(index)
+                except Exception:                      # noqa: BLE001
+                    continue
+                info = self.limits.get(self.session, part, request=False)
+                if info is not None:
+                    infos[index] = info
         try:
-            plan = self.session.plan_resize(part.index, v["start_lba"],
-                                            v["sector_count"])
+            changed = queueedit.commit(self.session, self.queue, model,
+                                       indices, before=before,
+                                       fs_infos=infos)
         except Exception as exc:                       # noqa: BLE001
             self.error(tr("Yeni yerlesim gecersiz"), str(exc))
+            self.refresh(reload=False)
             return
-        if not plan.changed:
-            return
-        if self._planned_conflict(v["start_lba"], v["sector_count"],
-                                  ignore_lba=part.start_lba):
-            return
-
-        # Plan uyarilari kuyruga eklerken gosterilir; onay uygulama aninda.
-        for note in plan.warnings:
-            self.log(tr("Boyutlandirma uyarisi: {}", note))
-        operation = ops.resize_op(part.index, v["start_lba"], v["sector_count"],
-                                  self.session.image.sector_size,
-                                  at_lba=part.start_lba)
-        operation.detail = plan.summary()
-        self.enqueue(operation)
+        for operation in changed:
+            self.log(tr("Kuyruga eklendi: {}", operation))
+        self._refresh_pending()
 
     def delete_partition(self) -> None:
         part = self._current_partition()
@@ -1903,6 +2156,8 @@ class MainWindow(QMainWindow):
             self.selected_free = (match.start_lba, match.sector_count)
             self.disk_map.select_free(match.start_lba)
             self.part_table.select_free(match.start_lba)
+        # Kuyruk degisti: tutamaklar planlanan yerlesime gore yeniden
+        self._refresh_edit_layout()
         return partitions, free
 
     def _update_plan_bar(self) -> None:
@@ -2427,6 +2682,7 @@ class MainWindow(QMainWindow):
         self.disk_map.select_partition(index)
         self.part_table.select_partition(index)
         self._select_tree(("part", index))
+        self._refresh_edit_layout()      # tutamaklar (ortak model)
         self.status_sel.setText(
             tr("Secili: Bolum {} — {} ({})",
                index, part.display_name, human_size(part.size)))
@@ -2460,6 +2716,8 @@ class MainWindow(QMainWindow):
         self.disk_map.select_free(start_lba)
         self.part_table.select_free(start_lba)
         self._select_tree(("free", start_lba))
+        self._edit_layout = None
+        self.disk_map.set_edit_layout(None)
         size = sector_count * (self.session.image.sector_size if self.session else 512)
         self.status_sel.setText(tr("Secili: Bos alan — {}", human_size(size)))
         self.info_view.setPlainText(
@@ -2486,6 +2744,9 @@ class MainWindow(QMainWindow):
             self._update_actions()
             return
         if reload:
+            # Disk yeniden okundu: dosya sistemi dolulugu degismis olabilir,
+            # eski boyutlandirma sinirlari kullanilmaz.
+            self.limits.clear()
             try:
                 self.session.reload()
             except Exception as exc:
@@ -2832,8 +3093,14 @@ class MainWindow(QMainWindow):
         """
         if disks is None:
             disks = list(self._physical_cache.values())
-        diskler = disks
-        self._physical_cache = {d.path: d for d in diskler}
+        self._physical_cache = {d.path: d for d in disks}
+        # Ortak disk kaynak modeli (ADR 0049): her fiziksel disk bir kez,
+        # uygulamada acik olan (tarama listesinde olmasa bile) oturuma bagli.
+        # (Pencere kurulurken agac `_surveys` tanimlanmadan once de kurulur.)
+        _images, sources = disksource.collect(
+            self.sessions, disks, getattr(self, "_surveys", {}))
+        diskler = [src.disk for src in sources]
+        open_by_path = {src.path: src.session for src in sources}
         root = QTreeWidgetItem(self.tree, [tr("Fiziksel Diskler ({})", len(diskler))])
         root.setIcon(0, app_icon("disk"))
         root.setData(0, Qt.UserRole, ("physroot", 0))
@@ -2871,7 +3138,7 @@ class MainWindow(QMainWindow):
                                   d.path, d.risk_text, d.sector_size,
                                   d.bus or '-'))
             # Acik disk kalin yazilir: uzerinde islem yapilan kaynak odur.
-            session = self._find_open(d.path)
+            session = open_by_path.get(d.path)
             if session is not None:
                 font = item.font(0)
                 font.setBold(session is self.session)
@@ -3435,6 +3702,7 @@ class MainWindow(QMainWindow):
         self.act_clear_table.setEnabled(yazilabilir and has_table)
         self.act_resize_img.setEnabled(yazilabilir)
         self.act_create_part.setEnabled(yazilabilir)
+        self.act_edit_layout.setEnabled(yazilabilir and has_table)
         for act in (self.act_format, self.act_resize_part, self.act_delete_part,
                     self.act_boot, self.act_type_part, self.act_label):
             act.setEnabled(yazilabilir and part_selected)
@@ -3508,6 +3776,9 @@ class MainWindow(QMainWindow):
                "ister.</p>", APP_NAME, APP_VERSION))
 
     def closeEvent(self, event) -> None:
+        # Arka plandaki sinir hesaplari biter (kisa surer); yarida kalan is
+        # parcacigi kapanmis aygita ya da yikilmis pencereye ulasmasin.
+        self.limits.wait_all()
         # Yoklama zamanlayicisi once durur: kapanis sirasinda tetiklenirse
         # yikilmakta olan agaca dokunmaya calisirdi.
         timer = getattr(self, "_disk_timer", None)

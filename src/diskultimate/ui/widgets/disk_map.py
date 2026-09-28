@@ -2,6 +2,17 @@
 
 Disk boyunca bolumleri oransal genislikte renkli bloklar halinde cizer;
 her blokta dosya sistemi rengi, etiket, boyut ve doluluk cubugu bulunur.
+
+## Tutamaklar
+
+Sahibi `set_edit_layout(model, odak, mesgul)` ile ortak yerlesim modelini
+verirse **secili bolumun** kenarlarinda tutamaklar cikar. Surukleme geri
+yukleme seridiyle **ayni denetleyicidedir** (`EdgeDragController`, ADR 0049):
+sinir, hizalama ve tasinabilirlik cekirdek modelden gelir, burada hesap
+yapilmaz. Bloklar tam oransal degildir (kucuk bolume en az genislik); bu
+yuzden piksel <-> LBA donusumu **blok blok** yapilir ve denetleyiciye verilir.
+Birakinca `layoutCommitted(bolumler)` yayilir; harita hicbir sey yazmaz,
+sahibi degisikligi kuyruga koyar.
 """
 from __future__ import annotations
 
@@ -15,6 +26,7 @@ from PyQt5.QtWidgets import QSizePolicy, QWidget
 from ...core.ptable import FreeRegion, Partition, human_size
 from ..theme import (PLAN_COLOR, blend, darken, draw_usage_bar, fs_color,
                      palette_color, plan_label)
+from .edgedrag import EdgeDragController
 from ...i18n import tr
 
 MIN_BLOCK_WIDTH = 64
@@ -42,6 +54,7 @@ class DiskMapWidget(QWidget):
     partitionActivated = pyqtSignal(int)         # cift tiklama
     freeActivated = pyqtSignal(int, int)
     contextMenuRequested = pyqtSignal(object, object)  # (blok turu, nesne), global konum
+    layoutCommitted = pyqtSignal(list)           # surukleme bitti: bolumler
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -57,6 +70,11 @@ class DiskMapWidget(QWidget):
         self._selected: Optional[Tuple[str, int]] = None
         self._hover: Optional[Block] = None
         self._disk_name = ""
+        # Tutamaklar: ortak denetleyici (geri yukleme seridiyle ayni)
+        self.edit = EdgeDragController(self, self.lba_to_x, self.x_to_lba,
+                                       self._band)
+        self.edit.ghost = True
+        self.edit.committed.connect(self.layoutCommitted)
 
     # -- veri ----------------------------------------------------------------
     def set_disk(self, name: str, total_sectors: int,
@@ -77,10 +95,12 @@ class DiskMapWidget(QWidget):
 
     def select_partition(self, index: int) -> None:
         self._selected = ("part", index)
+        self.edit.focus = index
         self.update()
 
     def select_free(self, start_lba: int) -> None:
         self._selected = ("free", start_lba)
+        self.edit.focus = -1              # bos alanin tutamagi yok
         self.update()
 
     def selection(self) -> Optional[Tuple[str, int]]:
@@ -159,6 +179,7 @@ class DiskMapWidget(QWidget):
 
         for block in self._blocks:
             self._draw_block(painter, block)
+        self.edit.paint(painter)
         painter.end()
 
     def _draw_block(self, painter: QPainter, block: Block) -> None:
@@ -307,6 +328,8 @@ class DiskMapWidget(QWidget):
         return None
 
     def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton and self.edit.press(event.pos()):
+            return
         block = self._block_at(event.pos())
         if block is None:
             return
@@ -328,6 +351,10 @@ class DiskMapWidget(QWidget):
             self.freeActivated.emit(block.obj.start_lba, block.obj.sector_count)
 
     def mouseMoveEvent(self, event):
+        if self.edit.move(event.pos()):
+            return
+        if self.edit.hover(event.pos()):
+            return
         block = self._block_at(event.pos())
         if block is not self._hover:
             self._hover = block
@@ -335,9 +362,69 @@ class DiskMapWidget(QWidget):
             self.setToolTip(self._tooltip(block) if block else "")
             self.update()
 
+    def mouseReleaseEvent(self, event):
+        self.edit.release(event.pos())
+
     def leaveEvent(self, event):
         self._hover = None
+        self.edit.leave()
         self.update()
+
+    # -- tutamaklar ----------------------------------------------------------
+    def set_edit_layout(self, layout, focus: Optional[int] = None,
+                        busy: bool = False) -> None:
+        """Ortak yerlesim modelini verir (None: tutamak yok).
+
+        `focus`: yalnizca bu bolumun kenarlari gosterilir. `busy`: sinirlar
+        arka planda hesaplaniyor — tutamaklar gri, suruklenmez.
+        """
+        if self.edit.dragging:
+            return                     # surukleme sirasinda model degismez
+        self.edit.set_layout(layout, focus=focus, busy=busy)
+        self.update()
+
+    def _band(self) -> Tuple[int, int]:
+        """Tutamaklarin dikey araligi (bloklarin ust ve alt kenari)."""
+        if not self._blocks:
+            return 0, 0
+        rect = self._blocks[0].rect
+        return rect.top(), rect.bottom()
+
+    def _segments_px(self) -> List[Tuple[int, int, int, int]]:
+        """(lba_bas, lba_son_haric, x_bas, x_son) — blok blok olcek."""
+        out = []
+        for block in self._blocks:
+            obj = block.obj
+            out.append((obj.start_lba, obj.end_lba + 1, block.rect.left(),
+                        block.rect.right() + 1))
+        return out
+
+    def lba_to_x(self, lba: int) -> int:
+        segments = self._segments_px()
+        if not segments:
+            return 0
+        for lba0, lba1, x0, x1 in segments:
+            if lba <= lba1:
+                if lba <= lba0:
+                    return x0
+                return x0 + int(round((lba - lba0) / max(1, lba1 - lba0)
+                                      * (x1 - x0)))
+        return segments[-1][3]
+
+    def x_to_lba(self, x: int) -> int:
+        segments = self._segments_px()
+        if not segments:
+            return 0
+        for i, (lba0, lba1, x0, x1) in enumerate(segments):
+            nxt = segments[i + 1][2] if i + 1 < len(segments) else x1
+            if x <= x0:
+                return lba0
+            if x <= x1:
+                return lba0 + int(round((x - x0) / max(1, x1 - x0)
+                                        * (lba1 - lba0)))
+            if x < nxt:                               # bloklar arasi bosluk
+                return lba1
+        return segments[-1][1]
 
     def contextMenuEvent(self, event):
         block = self._block_at(event.pos())

@@ -4676,3 +4676,313 @@ git remote set-url origin git@github.com:mcansiz/DiskUltimate.git
 HTTPS ile alinmis oldugu icin ikisi ayrismisti. Depo baska bir makineye
 klonlanirsa ayni sey olur; `gh repo clone` kullanmak veya klondan sonra bu
 komutu bir kez calistirmak yeterli.
+
+## 2026-09-28 — Yedekleme/geri yukleme: not yalnizca yedek alirken, geri yuklemede bolum yerlesimi (ADR 0045)
+
+Kullanici DiskGenius'un yedek/geri yukle pencerelerini ornek gosterdi.
+
+- **Not:** geri yukleme kipinde not duzenleyicisi ve "Notu kaydet" kalkti; not
+  bilgi alaninda salt okunur "Aciklama" satirinda gorunur.
+- **Yeni `core/restoreplan.py`:** `RestoreLayout` (yedekteki bolumlerin
+  hedefteki yeri/boyutu + FS sinirlari), `restore_with_layout` (bolum bolum
+  yazar, FS'i kucultur/buyutur, tabloyu hedefe gore yeniden yazar).
+  `restore_disk`, `restore_to_physical`, `restore_to_new_image` `layout`
+  aliyor; yeni goruntu `size_bytes` ile istenen boyutta olusur.
+- **`restore_partition`:** bolum yedekten buyukse FS bolumu doldurur; gizli
+  sektor alani hedef bolume gore duzeltilir (onceden duzeltilmiyordu).
+- **Arayuz:** geri yuklemede harita hedefin *geri yukleme sonrasi* halini
+  gosterir; "Bolumleri yonet..." penceresi (`ui/dialogs/restore_layout.py`)
+  tabloyla birlikte surukleyerek boyutlandirma (`ResizePartitionDialog`
+  yeniden kullanildi), "Yedekteki gibi", "Son bolumu genislet", "Diske
+  orantili yay". Yeni goruntu hedefinde goruntu boyutu secilir.
+- **Testler:** `run_all.t44_geri_yuklemede_bolum_yerlesimi` (buyuk / kucuk /
+  elle tasima / sigmayan / ozdes / bolum yedeginin bolumu doldurmasi);
+  `ui_smoke` not ve yerlesim penceresini denetler.
+- Statik denetimler ana makinede: `platform_check` 0 bulgu, `i18n_check`
+  her dil TAMAM (59 yeni metin en/de).
+
+### Windows VM sonucu (VirtualBox `win10 `, Windows 10 19044, Python 3.12.8)
+
+Kullanici onayiyla VirtualBox'taki Win10 misafirinde kosuldu (kayitli VMware
+misafiri degil — bkz. hafiza `windows-test-ortami`). Kaynak yerel diske
+kopyalandi (`C:\du-test\DiskUltimate`), paylasimda kosulmadi.
+
+- `run_all`: **43/44**. `t44` geciyor. Kalan `t43_baglama_guvenlik_katmani`
+  bu degisiklikten **bagimsiz**, onceden de vardi: `partition_device("/dev/sdb", 3)`
+  Windows'ta `/dev/sdb3` dondurmuyor; test platforma gore ayrilmamis.
+- `ui_smoke`: **tamam** (36/37/38 ekran goruntuleri). Offscreen kipte font
+  yok; goruntulerde metin gorunmuyor, yerlesim gozle denetlenmedi.
+- `platform_check` 0 bulgu, `i18n_check` TAMAM.
+
+Test sirasinda bulunan, **onceden var olan** iki hata duzeltildi:
+
+1. **FAT ve NTFS bicimlendirici "gizli sektor" alanini (BPB 0x1C) 0
+   yaziyordu**; yalnizca exFAT bolum konumunu yaziyordu. Windows'un
+   onyukleme kodu bu alani okur. `t44` elle yerlesim durumunda degismeyen
+   FAT32 bolumunde yakaladi. `formatter.format_partition` artik
+   `view.start_lba`'yi FAT'a (`hidden_sectors`) ve NTFS'e
+   (`format_ntfs(partition_offset=)`) veriyor.
+2. **`ui_smoke` yedekleme bolumune hic ulasamiyordu:** uygulama ikonu
+   denetimi `goruntu` degiskenini QImage ile eziyordu; sonraki
+   `DiskSession.open(goruntu)` patliyordu. Degisken `ikon_resmi` oldu.
+
+Ayrica `t44`'un "sigmayan hedef" durumu 48 MiB'ta aslinda sigiyordu (FAT32
+~33 MB + NTFS/exFAT birkac MB); 24 MiB'a indirildi.
+
+### Misafir notlari
+- Misafirdeki Python **embeddable** dagitim: `C:\Python312\python312._pth`
+  calisma dizinini ve `PYTHONPATH`'i yok sayar; `python -m tests.x` "No
+  module named tests" verir. Kosum `runpy` + `sys.path.insert` sarmalayicisiyla
+  (`C:\du-test\kos.bat <modul>`) yapildi. `sys.argv[0]` gercek betik yolu
+  olmali, yoksa `t22` yukseltme komutu uretmez.
+- `VBoxManage guestcontrol ... run --cwd` dikkate alinmiyor; `cmd /c "cd /d ..."`
+  gerekli. SSH yonlendirmesi (2222) yanit vermiyor.
+- Linux VM'de (Mint) kosulmadi. Fiziksel diske yerlesimli geri yukleme
+  sinanmadi.
+
+## 2026-09-28 (2) — Yedek penceresi: boyut birimi, bayat icerik, "Disk sec" penceresi
+
+Kullanici geri bildirimi (ekran goruntusuyle):
+
+- **Goruntu boyutu yalnizca GB aliyordu** → yanina MB / GB / TB secimi
+  (`size_unit`). Birim degisince bayt korunur, yalnizca gosterim degisir;
+  varsayilan yedek boyutuna gore secilir (1 GB alti MB). Kutu yalnizca "Yeni
+  goruntu dosyasi" hedefinde gorunur.
+- **Yedek secilmeden icerik agacinda bolumler gorunuyordu** — yedek alma
+  kipinden kalan *kaynak* bolumleriydi. Geri yukleme kipinde yedek yoksa agac
+  "(yedek dosyasi secilmedi)" gosterir.
+- **Hedef listesi cok kucuktu** (uc satir, kaydirmak gerekiyordu) → agac ana
+  formdan cikti, **"Disk sec..."** dugmesiyle acilan genis pencereye
+  (`_TargetPicker`) tasindi; iptal onceki secimi geri getirir, cift tiklama
+  secer. Formda "Hedef: **ad** — boyut — durum" ozeti kalir; sistem diski
+  kirmizi yazilir. Harita bosalan yer sayesinde genisledi.
+- `ui_smoke` icin yeni denetimler: agac formda gorunmuyor, kip degisiminde
+  bayat icerik yok, birim degisimi boyutu korur, birim kutusu yalnizca yeni
+  goruntude.
+
+Windows VM (VirtualBox `win10 `): `ui_smoke` tamam; ekran goruntuleri bu kez
+`DISKULTIMATE_QPA=windows` ile gercek fontla alinip gozle denetlendi
+(36/37). Bu denetimde birim kutusunun her hedefte gorundugu yakalandi ve
+duzeltildi. "Disk sec" penceresinin kendisinin goruntusu alinmadi (modal).
+`i18n_check` TAMAM (9 yeni metin), `platform_check` 0 bulgu.
+
+## 2026-09-28 (3) — Geri yuklemede hedef acik secilir; serit uzerinde tutamaklar
+
+Kullanici geri bildirimi (DiskGenius ekran goruntusu, tutamaklar isaretli):
+
+- **Yedek secilmeden hedef alani pasif ve bos.** Geri yukleme kipinde hedef
+  **hicbir zaman kendiliginden secilmez**: ana pencere her acilista o anki
+  oturumu gonderiyordu, yani silinecek hedef kullaniciya sorulmadan secili
+  geliyordu. Artik yedek yuklenince "Hedef diski secin (Disk sec...)" der;
+  yedek almaya donulunce kaynak secimi geri gelir.
+- Grup adi kipe gore **"Hedef Disk / Bolum"** / **"Kaynak Disk / Bolum"**.
+- **Tutamakli serit (`ui/widgets/layout_bar.py`)**: geri yuklemede harita
+  yerine yedegin hedefteki yerlesimi cizilir; bolum kenarlari suruklenir.
+  Bitisik iki bolumun sinirinda tek tutamak vardir (biri buyur, oteki
+  kuculur). Sinir/hizalama mantigi cekirdekte: `RestoreLayout.edges()` ve
+  `move_edge()`; oynayamayan kenar (boyutu sabit ext4 siniri) listelenmez.
+  "Bolumleri yonet" penceresi de ayni seridi kullanir.
+- Testler: `t44`e surukleme denetimleri (sinir tasima, en az boyutta durma,
+  disk sonunu gecmeme, suruklenmis yerlesimle gercek geri yukleme);
+  `ui_smoke`a pasif hedef alani, kendiliginden secilmeyen hedef, seritte
+  fareyle surukleme.
+
+Windows VM (VirtualBox `win10 `): `run_all` 43/44 (kalan `t43` onceden var,
+Linux yolu), `ui_smoke` tamam, ekran goruntuleri gercek fontla gozle
+denetlendi. `i18n_check` TAMAM (7 yeni metin), `platform_check` 0 bulgu.
+Fareyle surukleme yalnizca sentetik olaylarla sinandi; elle denenmedi.
+
+## 2026-09-28 (4) — Ana haritada tutamaklar; yenile ikonu; ikon adaylari
+
+- **Ana haritada surukleme tutamaklari** (`widgets/disk_map.py`): secili
+  bolumun kenarlarinda geri yukleme seridiyle ayni tutamaklar cikar.
+  Bloklar tam oransal olmadigi icin (kucuk bolume en az genislik) piksel <->
+  LBA donusumu blok blok yapilir. Surukleme sirasinda yeni aralik kesik
+  cerceve + boyut rozetiyle gosterilir; birakinca `resizeRequested` ->
+  `MainWindow._queue_resize` -> ayni `plan_resize` dogrulamasi ve cakisma
+  denetimi -> `resize_op` **kuyruga** girer (ADR 0025; diske yazilmaz).
+  "Bolumu boyutlandir" penceresi de artik ayni `_queue_resize`dan gecer.
+  Tutamak yalnizca diskteki bolum icin: mantiksal/genisletilmis, planda yeri
+  degismis ya da yazma moduna gecemeyen kaynakta cikmaz. FS sinirlari
+  (`fs_resize_info_for`) yalnizca surukleme baslarken okunur ve olculur;
+  Windows'un PowerShell sinir sorgusu burada kullanilmaz (arayuzu dondururdu).
+- **Yenile ikonu**: ok basi yaya teget degildi. Tek yay + teget ok basi
+  (`_arc_arrowhead`). Iki yayli bicim de cizildi, 16 px'te kalabalik
+  bulundu.
+- **Ikon adaylari**: disk (5) ve Linux (5) alternatifleri cizildi —
+  `.claude/logs/ikonlar/ikon-adaylari-2026-09-28.png` (uretici:
+  `ikon_adaylari.py`). Kullanici secimi bekleniyor; henuz uygulanmadi.
+- Windows VM: `ui_smoke` tamam (yeni: haritada surukleme -> kuyrukta
+  `resize` adimi, goruntu dosyasi degismedi; `39-haritada-tutamak.png`).
+
+## 2026-09-28 (5) — Ikon envanteri ve alternatif katalogu (secim bekliyor)
+
+Envanter: `ui/icons.py` 47 islem ikonu (DRAWERS), `ui/theme.py` 3 isletim
+sistemi amblemi, `partition_table.color_chip` (FS renk karesi, 10 yerde).
+Uygulama ikonu dosyadan (ADR 0044), kapsam disi. `QStyle`/tema ikonu
+kullanilmiyor.
+
+Katalog `.claude/logs/ikonlar/`:
+- `katalog-1..6.png` — her ikon icin A mevcut / B kutucuk (renkli zemin +
+  beyaz sembol) / C cizgi (notr hat + renk vurgusu). B ve C ayni sembol
+  geometrisini paylasir (`ikon_katalogu.py`), set tutarli kalir.
+- `paket-1..6.png` — ayni satirlar + Tabler, Phosphor, Lucide, Bootstrap,
+  Material Symbols karsiliklari (`paket_katalogu.py`, jsDelivr'den).
+- `paket-os.png` — Windows, Linux, macOS + Ubuntu/Debian/Fedora/Arch/Mint:
+  Tabler, Phosphor, Bootstrap, Font Awesome, Simple Icons, Devicon.
+
+Lisans (kaynaktan okundu): Tabler MIT, Phosphor MIT, Lucide ISC, Bootstrap
+MIT, Material Apache-2.0, Devicon MIT, Simple Icons CC0, Font Awesome
+ikonlari CC BY 4.0 (atif zorunlu; marka ikonlari icin ayrica "yalnizca o
+markayi temsil etmek icin" kisiti). **Remix Icon v1.0 lisansi logo/marka
+olarak kullanimi yasakliyor** — onerilmedi. Marka logolari (Windows, Tux,
+Apple, dagitimlar) hangi paketten gelirse gelsin sahiplerinin ticari
+markasidir; paket lisansi bunu ortadan kaldirmaz.
+
+Uygulamaya alma yolu (secimden sonra, ADR gerekir): paketler SVG; QtSvg her
+dagitimda yok (ADR 0025). Secilen ikonlarin `d` yol verisi saf Python'da
+QPainterPath'e cevrilerek gomulur — calisma zamani bagimliligi dogmaz.
+Onizlemeler gelistirme makinesinde QtSvg ile uretildi (gelistirme araci).
+
+## 2026-09-28 (6) — Secilebilir ikon setleri (ADR 0046)
+
+Kullanici karari: isletim sistemi amblemi Simple Icons; ikon setleri icin
+menude secim, sekizi de.
+
+- `tools/iconpacks.py` (gelistirme araci): 5 paket x 47 ikon + Simple Icons
+  (linux, apple) -> `src/diskultimate/ui/iconpacks/*.py` (surum sabit,
+  lisans metni modulde).
+- `ui/svgpath.py`: saf Python SVG yol ayristirici. QtSvg'ye karsi 237 ikonda
+  olculdu: en kotu fark %0.3, ortalama ~0.
+- `ui/iconsets.py`: set kaydi, saklama (`icon_set`), Kutucuk/Cizgi sembolleri
+  (katalogdan tasindi).
+- `ui/icons.py`: `_LiveIconEngine` — set degisimi yeniden baslatmadan.
+- `ui/theme.os_icon`: Linux/macOS Simple Icons; Windows kendi amblemimiz.
+  **Bulgu:** Simple Icons Microsoft logolarini Microsoft'un hukuki talebiyle
+  kaldirmis (v13.0.0); katalogdaki Windows onizlemesi jsDelivr `@latest`
+  etiketinin eski surumu gostermesinden geliyordu.
+- Menu: Araclar > Ikon seti (her secenekte o setin disk ikonu); Yardim >
+  Ucuncu taraf lisanslari.
+- `ui_smoke`: 8 set x 47 ikon bos degil, paketlerde 47/47 gomulu, ayni QIcon
+  set degisince yeni setle ciziliyor, secim saklaniyor, OS amblemleri,
+  6 lisans bildirimi.
+- `i18n_check` TAMAM, `platform_check` 0 bulgu.
+- **VM'de kosulmadi:** Win10 VirtualBox misafiri kapaliydi, Linux VM'e
+  erisilemedi. Kullanici onayi beklenmeden misafir baslatilmadi.
+
+## 2026-09-28 (7) — Tutamak donmasi ve cift disk satiri (ADR 0047)
+
+Kullanici bildirimi + donma raporlari: haritadaki tutamaklar her suruklemede
+iki kez donuyordu (basinca `map.handle_limits` 1.5 sn, birakinca
+`plan_resize` ayni NTFS `$Bitmap` taramasi). Duzeltme: bayt duzeyinde bitmap
+sayimi, sinirlar secimde arka planda (`_LimitsWorker`) + onbellek, birakista
+onbellek `plan_resize(info=)`. Aygit okumasi `BlockDevice` alt siniflarinda
+otomatik `RLock` (seek+read yarisi).
+
+Hedef listesi: acik fiziksel disk artik yalnizca "Fiziksel diskler" altinda,
+oturuma bagli; ikinci tutamac acilmaz (ADR 0021). Acik oturuma geri
+yuklemede `become_writable` eksikti — eklendi.
+
+Testler: `run_all.t45` (bitmap esitligi 300+ rastgele durum, 4 is
+parcacigiyla eszamanli okuma); `ui_smoke` (tutamak once gri sonra etkin,
+acik fiziksel disk tek satir + bolumleri disk korumasi tasir).
+Statik: `i18n_check` TAMAM, `platform_check` 0. **VM'de kosulmadi** (Win10
+VirtualBox kapali, Linux VM erisilemez).
+
+## 2026-09-28 (8) — Qt standart dugmeleri Turkce; Win10 VM dogrulamasi
+
+**Sorun:** Turkce arayuzde onay kutularinda "Yes / No". Standart dugme
+metinleri Qt'den gelir (`QPlatformTheme`, `qtbase_<dil>.qm`); uygulama Qt
+cevirisini hic yuklemiyordu.
+
+**Duzeltme:** `ui/qt_i18n.py` — iki katman: (1) `qtbase_<dil>.qm` (varsa;
+dosya diyalogu, sag tik menusu gibi butun Qt metinleri), (2) yedek
+`_ButtonTranslator`: Evet/Hayir/Tamam/Iptal/Kapat... bizim `.po`
+sozluklerimizden — `.qm` olmayan kurulumlarda (dagitim paketi, exe) da
+dogru. Son kurulan once sorulur, dugmeler uygulamanin geri kalaniyla ayni
+yazimda. `main.py` yetki penceresinden once kurar; dil degisince yenilenir.
+
+**Win10 VirtualBox (kullanici onayiyla basslatildi, headless):**
+- `run_all` 44/45 — yeni `t45` (bitmap esitligi, 4 is parcacigiyla okuma) ve
+  `t44` geciyor; kalan `t43` onceden var (Linux aygit yolu Windows'ta).
+- `ui_smoke` TAMAM (gercek Windows cizimi): Qt cevirisi yuklendi, Evet/Hayir
+  tr/en/de dogru; 8 set x 47 ikon; canli set degisimi; tutamak once gri
+  sonra etkin, surukleme kuyruga; acik fiziksel disk tek satir.
+- `diag_check` 13/13.
+
+Test sirasinda bulunan iki hata duzeltildi:
+1. Ikon seti koddan degisince menudeki isaret eski sette kaliyordu —
+   `change_icon_set` isaretleri esitliyor.
+2. `ui_smoke` kullanicinin kalici ayarina yaziyordu ve yarida kalinca
+   `icon_set=tabler` birakti; sonraki kosu degisimi goremedi. Test artik
+   baslangici kendisi kurar ve `finally` ile onceki secimi geri yukler.
+   (Ayar dosyasi testlerde yalitilmiyor — ayrica ele alinmali.)
+
+## 2026-09-28 (9) — Planda acilan alana buyume (ADR 0048)
+
+Kullanici bildirimi: kucultme yapiliyor, buyutme yapilamiyor. Neden: tutamak
+penceresi, planda degismis bolumun tutamagi ve kuyruga ekleme dogrulamasi
+diskteki tabloya bakiyordu. Duzeltme: `planview.planned_window`,
+`plan_resize(window=)`, `OperationQueue.find_resize/replace`; ayni bolumun
+adimi yerinde guncellenir, geri cekilince kalkar.
+
+Win10 VM: `run_all` 45/46 (yeni `t46`: P1 kucult + P2 sola buyut/tasi,
+uygulandi, iki bolumde veri saglam, exFAT buyudu; disk penceresi reddediyor,
+planlanan kabul ediyor); `ui_smoke` TAMAM (kucultulen bolum geri buyutuldu,
+adim yerinde guncellendi, diskteki boyuta donunce kalkti).
+
+## 2026-09-28 (10) — Ortak bolum duzenleme modeli, 1. asama (ADR 0049)
+
+Kullanici karari: ana ekran ve yedek geri yukleme ayni disk islemlerini tek
+yerden beslenen bir yapiya gecsin. Plan bes asama (ADR 0049).
+
+**1. asama — cekirdek model (tamam):**
+- `core/layoutedit.py`: `EditableLayout` + `Slot` — `restoreplan`teki
+  olgun model tasindi, kaynaktan bagimsiz. Yeni: `Slot.movable` (tasinamayan
+  bolumun sol kenari ve sagindaki sinir oynamaz; `fit` reddeder),
+  `Slot.apply_limits` (tur bazli sinir kurali tek yerde).
+- `restoreplan` artik yalnizca **yedek -> hedef baglayicisi**
+  (`build_layout`, `restore_with_layout`); `RestoreLayout`/`LayoutPart`
+  geriye uyumlu adlar, `RestorePlanError` `LayoutError`dan turer.
+- Arayuz ve oturum yeni adlari kullanir.
+- Toplu ad degisiminde `RestoreLayoutDialog` da yanlislikla degismisti;
+  import denetimiyle yakalanip geri alindi.
+
+Win10 VM: `run_all` 46/47 — t44, t46 aynen geciyor, yeni t47 geciyor (kalan
+t43 onceden var). `ui_smoke` TAMAM. `i18n_check` TAMAM, `platform_check` 0.
+
+Siradaki: 2. asama — disk + kuyruk baglayicisi (ana ekran pencere ve
+dogrulamayi modelden alir; `planview.planned_window` ve
+`disk_map._continue_drag` sinir hesabi kalkar).
+
+## 2026-09-28 (11) — Ortak bolum duzenleme: 2-5. asamalar (ADR 0049)
+
+Kullanici: "tum asamalari uygula".
+
+- **2.** `core/queueedit.py` (build/commit/neighbours); `planview` artik
+  cakisma sirasi (`conflicts`) ve tasinan bolumun capasini izliyor;
+  `OperationQueue.restore`. `planview.planned_window` kaldirildi.
+- **3.** `ui/widgets/edgedrag.py` ortak surukleme denetleyicisi;
+  `PartitionEditBar` (eski `LayoutBar`) ve `DiskMapWidget` onu kullanir;
+  haritadaki kendi sinir hesabi silindi. Ana ekrana sinir tutamagi geldi.
+- **4.** `ui/fslimits.py` (`FsLimitsService`) ve `core/disksource.py`
+  (`collect`); ana agac ve "Disk sec" ayni listeden.
+- **5.** `ui/dialogs/partition_layout.py` ortak pencere; ana ekranda
+  "Bolum > Bolum duzenini degistir...".
+
+Bulunan/duzeltilen:
+- Sabit komsunun yanindaki bolum ortak sinir yuzunden kuculemiyordu — sinir
+  kayamiyorsa iki ayri kenar (t47).
+- Pencere kurulurken agac `_surveys` tanimlanmadan kuruluyor; ortak disk
+  kaynagi bunu okuyordu (ui_smoke yakaladi) — duzeltildi.
+- t46'da test hatasi: uygulama bolum nesnelerini yerinde degistirir;
+  beklenen deger once sayi olarak saklanmali.
+
+Win10 VM: `run_all` 46/47 (t43 onceden var), `ui_smoke` TAMAM (harita
+tutamagi, geri buyutme, bolum duzeni penceresi, geri yukleme, hedef
+listesi), `diag_check` 13/13. `i18n_check` TAMAM (16 yeni metin),
+`platform_check` 0. Surukleme yalnizca sentetik fare olaylariyla sinandi.
+- Son duzeltme: "Bolumu boyutlandir" penceresi sinirlari ham `FsResizeInfo`dan
+  gosteriyordu (ham bolum icin en az 1 sektor) ama model kucultmeyi
+  reddediyordu; pencere artik sinirlari modelden (`Slot`) alir. `ui_smoke`
+  yeniden TAMAM.

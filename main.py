@@ -36,6 +36,7 @@ from diskultimate.core import diagnostics  # noqa: E402
 from diskultimate.core.platform import (is_elevated,  # noqa: E402
                                         set_app_user_model_id,
                                         signal_elevated_ready)
+from diskultimate.ui import qt_i18n  # noqa: E402
 from diskultimate.ui.appicon import apply_app_icon  # noqa: E402
 from diskultimate.ui.main_window import APP_NAME, MainWindow  # noqa: E402
 from diskultimate.ui.startup import elevate_at_startup  # noqa: E402
@@ -58,6 +59,9 @@ def main() -> int:
     # penceresinden (ADR 0042) once cagrilir ki parola sorulan pencere de
     # ikonlu acilsin.
     apply_app_icon(app)
+    # Qt'nin kendi metinleri (Evet/Hayir, dosya diyalogu) de arayuz dilinde
+    # olsun; yetki penceresinden ONCE ki o da cevrili acilsin.
+    qt_i18n.install()
     # Gorunum: sistemin kendi Qt temasi. Ozel stil sayfasi uygulanmaz;
     # "Tema" bolumu eklendiginde buradan secilecek (bkz. theme.apply_theme).
     theme = apply_theme(app, os.environ.get("DISKULTIMATE_THEME", "system"))

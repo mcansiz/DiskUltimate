@@ -39,6 +39,10 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     │   ├── diagnostics.py    Gunluk, sure olcumu (span), donma yakalayici, cokme dokumu
     │   ├── operations.py     Bekleyen islem kuyrugu (planla -> Uygula)
     │   ├── planview.py       Kuyruk uygulaninca olusacak yerlesim (ana ekran onizlemesi)
+    │   ├── layoutedit.py     Ortak bolum duzenleme modeli: pencere, kenar surukleme, dogrulama (ADR 0049)
+    │   ├── queueedit.py      Disk + kuyruk baglayicisi: modeli kuyruktan kurar, adim olarak yazar (ADR 0049)
+    │   ├── disksource.py     Disk kaynak modeli: her fiziksel disk bir kez, acik disk oturuma bagli (ADR 0049)
+    │   ├── restoreplan.py    Yedek -> hedef baglayicisi: yerlesimle geri yukleme (ADR 0045)
     │   ├── bootloader.py     Onyukleme kodu tanima, bolumdeki sistemi bulma, grub.cfg cozumu
     │   ├── grub.py           GRUB kurulumu/menu uretimi/yedek/onarim (yalnizca Linux)
     │   ├── efiboot.py        UEFI yapilari: EFI_LOAD_OPTION, aygit yolu, kisayol (spec)

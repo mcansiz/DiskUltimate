@@ -86,6 +86,10 @@ kosabilir, ama sonuc VM'de de dogrulanir.
 | `t40_kuyrukta_bolum_numarasi_kaymasi` | Bolum numarasi kaysa bile adimlarin **dogru bolumu** bulmasi: iki silme adimi, ters sirada silme, silme+etiket karisimi, hedefi kaybolan adimin durmasi, capasiz eski adimlar ve onizlemenin ayni bolumu secmesi (ADR 0033) |
 | `t41_ust_uste_bolum_planlama` | Arka arkaya kuyruga alinan bolumlerin **ayni bos alani paylasmasi**: diske gore sorulan alanin degismedigi (kok neden), plana gore sorulunca her adimda kuculdugu ve uc adimin tek Uygula ile uygulandigi, `overlap_at` cakisma denetimi (ADR 0034) |
 | `t42_ntfs_isletim_sistemi_yazabilmeli` | Bicimlendirdigimiz NTFS'e **isletim sisteminin surucusu** yazabilmeli: `$MFT:$BITMAP` yerlesik olmamali, kok dizinde "." girisi olmali, `$Secure` gercek tanimlayici tasimali (karmalar dogrulanir) (ADR 0037) |
+| `t44_geri_yuklemede_bolum_yerlesimi` | Disk yedegi hedefe **yeni bolum yerlesimiyle** geri yuklenir: buyuk hedefte orantili buyutme, kucuk hedefte kucultme, elle tasima + son bolumu genisletme; dosyalar okunur, GPT yedek basligi disk sonunda, onyukleme sektorundeki bolum konumu yeni baslangicta; sigmayan yerlesim reddedilir; degismemis yerlesim bayt bayt ozdes; bolum yedegi buyuk bolumu doldurur (ADR 0045) |
+| `t45_bitmap_sayimi_ve_aygit_kilidi` | Bayt duzeyinde NTFS bitmap sayimi eski bit bit yontemle birebir ayni (300+ rastgele durum); dort is parcacigi ayni tutamaktan okurken yanlis sektor okunmaz (ADR 0047) |
+| `t46_planda_acilan_alana_buyume` | Kuyrukta kucultulen bolumun actigi alana komsu bolum buyur/tasinir: disk penceresi reddeder, planlanan pencere kabul eder; ayni bolumun adimi yerinde guncellenir; uygulama sonrasi iki bolumde veri saglam (ADR 0048) |
+| `t47_ortak_yerlesim_modeli` | Ortak model (`layoutedit`) diske dokunmadan: ortak sinir tutamagi, tasinamayan / boyutu sabit bolum, hizalama, en az boyut, cakisma, mantiksal MBR bolumlerinde EBR boslugu, eski adlarin ayni sinif olmasi (ADR 0049) |
 
 ## Ortam guvenligi (onemli)
 

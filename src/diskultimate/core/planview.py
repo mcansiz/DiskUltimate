@@ -51,6 +51,10 @@ class PlannedLayout:
     notes: Dict[int, List[str]] = field(default_factory=dict)
     disk_notes: List[str] = field(default_factory=list)
     changed: bool = False
+    # Uygulama sirasinda diger bolumlerle cakisacak adimlarin sirasi (0
+    # tabanli). Her adim **o anki** yerlesime gore denetlenir: kuyruk bu
+    # sirayla uygulanamazsa burada gorunur (ADR 0049).
+    conflicts: List[int] = field(default_factory=list)
 
     def note_for(self, index: int) -> List[str]:
         return self.notes.get(index, [])
@@ -75,6 +79,23 @@ def project(session, queue) -> PlannedLayout:
     def note(index: int, text: str) -> None:
         layout.notes.setdefault(index, []).append(text)
 
+    # Tasinan bolumun eski capasi -> yeni baslangici (uygulamadaki
+    # `OperationQueue._follow_move` karsiligi)
+    moved: Dict[int, int] = {}
+
+    def clashes(target: Partition, start: int, count: int) -> bool:
+        last = start + count - 1
+        for other in parts:
+            if other is target:
+                continue
+            if other.scheme == "mbr" and other.type_id in (0x05, 0x0F, 0x85):
+                continue                       # kapsayici
+            if other.logical != getattr(target, "logical", False):
+                continue                       # farkli katman
+            if start <= other.end_lba and last >= other.start_lba:
+                return True
+        return False
+
     def find(index: int, at_lba: int = -1) -> Optional[Partition]:
         """Adimin hedefledigi bolum.
 
@@ -83,6 +104,10 @@ def project(session, queue) -> PlannedLayout:
         uygulamanin ayni bolumu secmesi icin ikisi de ayni olcutu kullanir.
         """
         if at_lba is not None and at_lba >= 0:
+            seen = set()
+            while at_lba in moved and at_lba not in seen:
+                seen.add(at_lba)             # dongu korumasi
+                at_lba = moved[at_lba]
             for p in parts:
                 if p.start_lba == at_lba:
                     return p
@@ -95,7 +120,7 @@ def project(session, queue) -> PlannedLayout:
     def next_index() -> int:
         return max([p.index for p in parts], default=0) + 1
 
-    for op in queue:
+    for position, op in enumerate(queue):
         params = op.params
         kind = op.kind
         layout.changed = True
@@ -114,6 +139,8 @@ def project(session, queue) -> PlannedLayout:
             layout.disk_notes.append(str(op))
         elif kind == "create":
             created = _new_partition(params, scheme, sector_size, next_index())
+            if clashes(created, created.start_lba, created.sector_count):
+                layout.conflicts.append(position)
             parts.append(created)
             note(created.index, str(op))
         elif kind == "delete":
@@ -124,8 +151,14 @@ def project(session, queue) -> PlannedLayout:
         elif kind == "resize":
             p = find(index, at_lba)
             if p is not None:
-                p.start_lba = params.get("start_lba", p.start_lba)
-                p.sector_count = params.get("sector_count", p.sector_count)
+                new_start = params.get("start_lba", p.start_lba)
+                new_count = params.get("sector_count", p.sector_count)
+                if clashes(p, new_start, new_count):
+                    layout.conflicts.append(position)
+                if new_start != p.start_lba:
+                    moved[p.start_lba] = new_start
+                p.start_lba = new_start
+                p.sector_count = new_count
                 p.fs_used = -1          # doluluk orani artik bilinmiyor
                 p.fs_total = -1
                 p.plan_state = STATE_CHANGED
@@ -221,10 +254,9 @@ def _new_partition(params: dict, scheme: str, sector_size: int,
     return part
 
 
-def _free_regions(partitions: List[Partition], total_sectors: int,
-                  sector_size: int, scheme: str,
-                  table: Optional[PartitionTable]) -> List[FreeRegion]:
-    """Planlanan yerlesimdeki bos alanlar.
+def _usable_bounds(total_sectors: int, sector_size: int, scheme: str,
+                   table: Optional[PartitionTable]) -> tuple:
+    """(hiza, ilk_kullanilabilir, son_kullanilabilir) LBA.
 
     Sinirlar mumkunse gercek tablodan alinir; sema kuyrukta degistiyse
     (MBR <-> GPT) tablodan alinamaz, cunku tablo hala eski semadadir. O
@@ -232,14 +264,19 @@ def _free_regions(partitions: List[Partition], total_sectors: int,
     """
     align = getattr(table, "align_sectors", 0) or (1024 * 1024 // sector_size)
     if table is not None and table.scheme == scheme:
-        first = table.first_usable_lba()
-        last = min(table.last_usable_lba(), total_sectors - 1)
-    elif scheme == "gpt":
-        first = align
-        last = total_sectors - GPT_TAIL_SECTORS - 1
-    else:
-        first = align
-        last = total_sectors - 1
+        return (align, table.first_usable_lba(),
+                min(table.last_usable_lba(), total_sectors - 1))
+    if scheme == "gpt":
+        return align, align, total_sectors - GPT_TAIL_SECTORS - 1
+    return align, align, total_sectors - 1
+
+
+def _free_regions(partitions: List[Partition], total_sectors: int,
+                  sector_size: int, scheme: str,
+                  table: Optional[PartitionTable]) -> List[FreeRegion]:
+    """Planlanan yerlesimdeki bos alanlar."""
+    align, first, last = _usable_bounds(total_sectors, sector_size, scheme,
+                                        table)
 
     regions: List[FreeRegion] = []
     cursor = first

@@ -4,6 +4,7 @@ from __future__ import annotations
 from PyQt5.QtCore import QPointF, QRectF, Qt
 from PyQt5.QtGui import (QBrush, QColor, QIcon, QLinearGradient, QPainter,
                          QPainterPath, QPen, QPixmap, QPolygonF)
+from PyQt5.QtWidgets import QApplication
 
 from ..i18n import mark, tr
 
@@ -413,13 +414,37 @@ def os_icon(os_name: str, size: int = 16) -> QIcon:
     try:
         if os_name == "windows":
             _draw_windows(p, size)
-        elif os_name == "linux":
-            _draw_linux(p, size)
-        elif os_name == "macos":
-            _draw_macos(p, size)
+        elif not _draw_simple_icon(p, os_name, size):
+            # Gomulu veri yoksa eski cizim (paket modulu silinmis olabilir)
+            if os_name == "linux":
+                _draw_linux(p, size)
+            elif os_name == "macos":
+                _draw_macos(p, size)
     finally:
         p.end()
     return QIcon(pix)
+
+
+# Simple Icons amblemleri tek renklidir; renk burada verilir. Koyu temada
+# koyu amblem zeminde kaybolur, bu yuzden acik tona cevrilir.
+OS_INK = {"linux": "#222222", "macos": "#555555"}
+
+
+def _draw_simple_icon(p: QPainter, os_name: str, size: int) -> bool:
+    """Linux / macOS amblemi Simple Icons'tan (CC0; ADR 0046).
+
+    Windows burada **yoktur**: Simple Icons butun Microsoft logolarini
+    Microsoft hukuk ekibinin talebiyle v13.0.0'da kaldirdi
+    (simple-icons#11236). Windows icin kendi geometrik amblemimiz kalir.
+    """
+    from . import iconpacks
+
+    if os_name not in OS_INK:
+        return False
+    app = QApplication.instance()
+    dark = bool(app and app.palette().color(app.palette().Window).lightness() < 128)
+    color = QColor("#e6e8eb") if dark else QColor(OS_INK[os_name])
+    return iconpacks.draw(p, "simpleicons", os_name, size, color)
 
 
 def _draw_windows(p: QPainter, size: int) -> None:

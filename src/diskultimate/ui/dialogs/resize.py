@@ -30,8 +30,9 @@ class ResizePartitionDialog(QDialog):
 
     def __init__(self, part: Partition, window: ResizeWindow,
                  fs_info: FsResizeInfo, align_sectors: int = 2048,
-                 used_bytes: int = -1, parent=None):
+                 used_bytes: int = -1, parent=None, accept_text: str = ""):
         super().__init__(parent)
+        self.accept_text = accept_text or tr("Baslat")
         self.setWindowTitle(tr("Bolumu Boyutlandir"))
         self.setMinimumWidth(660)
         self.part = part
@@ -121,7 +122,8 @@ class ResizePartitionDialog(QDialog):
         duzen.addWidget(self.ozet)
 
         dugmeler = QDialogButtonBox()
-        self.basla = dugmeler.addButton(tr("Baslat"), QDialogButtonBox.AcceptRole)
+        self.basla = dugmeler.addButton(self.accept_text,
+                                        QDialogButtonBox.AcceptRole)
         dugmeler.addButton(tr("Iptal"), QDialogButtonBox.RejectRole)
         sifirla = QPushButton(tr("Eski haline dondur"))
         sifirla.clicked.connect(

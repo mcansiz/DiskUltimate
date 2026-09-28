@@ -167,22 +167,37 @@ def _bitmap_usage(fs: NtfsFS, cluster_count: int) -> Tuple[int, int]:
         window = fs.read_attribute_range(attr, base, length)
         if len(window) < length:
             window = window.ljust(length, b"\x00")
-        last_bit = min(cluster_count, (base + length) * 8)
-        for i, byte in enumerate(window):
-            if not byte:
-                continue
-            base_bit = (base + i) * 8
-            if base_bit >= last_bit:
-                break
-            for bit in range(8):
-                index = base_bit + bit
-                if index >= last_bit:
-                    break
-                if byte & (1 << bit):
-                    used += 1
-                    highest = index
+        count, top = bitmap_window_usage(window, cluster_count - base * 8)
+        used += count
+        if top >= 0:
+            highest = base * 8 + top
         base += length
     return used, highest
+
+
+def bitmap_window_usage(window: bytes, valid_bits: int) -> Tuple[int, int]:
+    """Bir bitmap penceresinde (dolu bit sayisi, en yuksek dolu bit).
+
+    Yalnizca ilk `valid_bits` bit sayilir (birimin son kumesinden sonrasi
+    yok sayilir). Sayim bayt duzeyinde yapilir: bit sayimi `int.bit_count`,
+    son dolu bayt `rstrip` ile — ikisi de C'de calisir.
+
+    Onceki surum her biti Python dongusunde geziyordu; 217 GB'lik bir NTFS'te
+    (~53 milyon kume) arayuzu saniyelerce donduruyordu (olculdu: donma
+    raporu `map.handle_limits` 1.5 sn, 2026-09-28).
+    """
+    if valid_bits <= 0 or not window:
+        return 0, -1
+    full, rest = divmod(min(valid_bits, len(window) * 8), 8)
+    data = bytes(window[:full])
+    if rest:
+        data += bytes([window[full] & ((1 << rest) - 1)])
+    number = int.from_bytes(data, "little")
+    if not number:
+        return 0, -1
+    count = (number.bit_count() if hasattr(number, "bit_count")
+             else bin(number).count("1"))
+    return count, number.bit_length() - 1
 
 
 # ==========================================================================

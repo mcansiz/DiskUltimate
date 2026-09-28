@@ -174,21 +174,25 @@ def format_partition(view: BlockDevice, fs_key: str, label: str = "",
     if kind.internal:
         report(tr("{} bicimlendiriliyor...", kind.label), 10)
         spc = max(1, cluster_bytes // view.sector_size) if cluster_bytes else 0
+        # Bolumun diskteki baslangici onyukleme sektorune yazilir (FAT/NTFS
+        # "gizli sektor", exFAT PartitionOffset). Eskiden yalnizca exFAT
+        # yaziyordu; FAT ve NTFS'te alan 0 kaliyordu.
+        offset = getattr(view, "start_lba", 0)
         if kind.key == "exfat":
-            offset = getattr(view, "start_lba", 0)
             ExFatFS.format(view, label=label, cluster_sectors=spc,
                            partition_offset=offset, progress=progress)
         elif kind.key == "ntfs":
             format_ntfs(view, label=label,
                         cluster_size=cluster_bytes if cluster_bytes else 0,
-                        progress=progress)
+                        progress=progress, partition_offset=offset)
         elif kind.key.startswith("ext"):
             format_ext(view, version=kind.key, label=label,
                        block_size=cluster_bytes if cluster_bytes in
                        (1024, 2048, 4096) else 0, progress=progress)
         else:
             FatFS.format(view, fat_type=int(kind.key[3:]), label=label,
-                         cluster_sectors=spc, quick=quick)
+                         cluster_sectors=spc, quick=quick,
+                         hidden_sectors=offset)
         report(tr("Tamamlandi"), 100)
         return kind.label
 

@@ -388,6 +388,44 @@ class OperationQueue:
             return None
         return self.remove(len(self._items) - 1)
 
+    def restore(self, items: List[Operation]) -> None:
+        """Kuyrugu onceki bir `items` anina dondurur (basarisiz duzenleme)."""
+        self._items = list(items)
+
+    def replace(self, index: int, operation: Operation) -> Operation:
+        """Adimi **ayni sirada** yenisiyle degistirir.
+
+        Ayni bolumun boyutlandirmasi yeniden duzenlenince kullanilir: yeni
+        adim sona eklenseydi, arada o adimin actigi alana dayanan baska bir
+        adim (komsu bolumun buyumesi) sirasini kaybederdi.
+        """
+        if not (0 <= index < len(self._items)):
+            raise OperationError(tr("Gecersiz adim numarasi"))
+        if operation.kind not in KINDS:
+            raise OperationError(tr("Bilinmeyen islem turu: {}", operation.kind))
+        old = self._items[index]
+        self._items[index] = operation
+        diagnostics.info(f"kuyrukta degistirildi ({index + 1}): {old} -> "
+                         f"{operation}")
+        return old
+
+    def find_resize(self, index: int, at_lba: int = -1) -> int:
+        """Bolumun bekleyen boyutlandirma adiminin sirasi (yoksa -1).
+
+        Capa (baslangic LBA) varsa onunla, yoksa bolum numarasiyla aranir —
+        uygulamadaki eslestirmeyle ayni olcut (ADR 0033).
+        """
+        for position, op in enumerate(self._items):
+            if op.kind != "resize":
+                continue
+            anchor = op.params.get("at_lba", -1)
+            if at_lba >= 0 and anchor is not None and anchor >= 0:
+                if anchor == at_lba:
+                    return position
+            elif op.params.get("index") == index:
+                return position
+        return -1
+
     def move(self, index: int, target: int) -> None:
         """Adimi listede tasir; sira uygulama sirasidir."""
         if not (0 <= index < len(self._items)):

@@ -3080,6 +3080,498 @@ def t43_baglama_guvenlik_katmani():
         ph.pf_mount_point, ph.pf_unmount = eski_nokta, eski_cikar
 
 
+@test
+def t44_geri_yuklemede_bolum_yerlesimi():
+    """Yedek hedef diske yeni bolum boyutlariyla geri yuklenebilmeli
+
+    DiskGenius'un "Bolumleri Yonet" davranisi: yedekten buyuk diskte bolumler
+    buyutulur, kucuk diskte (veri sigiyorsa) kucultulur. Dosyalar okunur
+    kalmali, GPT yedek basligi yeni disk sonuna gitmeli, onyukleme
+    sektorundeki bolum konumu yeni baslangici gostermeli.
+    """
+    from diskultimate.core.restoreplan import RestorePlanError
+
+    kaynak = img_path("t44.img")
+    s = DiskSession.create(kaynak, 512 * MIB, scheme="gpt", overwrite=True)
+    mevcut = {k.key for k in available_kinds()}
+    icerik = bytes(range(256)) * 4000            # ~1 MB
+    bolumler = []
+    for key, mb in (("fat32", 200), ("ntfs", 120), ("exfat", 100)):
+        if key not in mevcut:
+            continue
+        r = s.free_regions()[0]
+        p = s.create_partition(r.start_lba, mb * MIB // 512, fs_key=key,
+                               label=key.upper()[:8])
+        fs = s.filesystem(p.index)
+        fs.mkdir("/klasor")
+        fs.write_file("/klasor/veri.bin", icerik)
+        fs.flush()
+        bolumler.append((p.index, key))
+    assert len(bolumler) >= 2, bolumler
+    s.close()
+
+    dub = img_path("t44.dub")
+    s = DiskSession.open(kaynak, readonly=True)
+    backup(s.image, dub, compress=True)
+    s.close()
+
+    onizleme = DiskSession.backup_preview(dub)
+    temel = onizleme.layout
+    assert temel is not None, "disk yedeginin yerlesimi okunmadi"
+    assert len(temel.parts) == len(bolumler)
+    assert temel.is_identity
+    for lp in temel.parts:
+        assert lp.fs_resizable, (lp.index, lp.kind, lp.note)
+        assert 0 < lp.min_count < lp.old_count, (lp.index, lp.min_count)
+
+    def dogrula(yol, beklenen_sektor):
+        hedef = DiskSession.open(yol, readonly=True)
+        try:
+            assert hedef.scheme == "gpt", hedef.scheme
+            assert len(hedef.partitions) == len(bolumler)
+            son = hedef.image.read_sectors(hedef.image.sector_count - 1)
+            assert son[:8] == b"EFI PART", "GPT yedek basligi disk sonunda degil"
+            for index, key in bolumler:
+                part = hedef.table.get(index)
+                bek_start, bek_count = beklenen_sektor[index]
+                assert (part.start_lba, part.sector_count) == \
+                    (bek_start, bek_count), (index, part.start_lba,
+                                             part.sector_count, bek_start,
+                                             bek_count)
+                okunan = hedef.filesystem(index).read("/klasor/veri.bin")
+                assert okunan == icerik, f"Bolum {index} ({key}) verisi bozuk"
+                bulgu = detect(hedef.view(part))
+                assert bulgu.total_bytes > 0.9 * part.size, \
+                    (index, key, bulgu.total_bytes, part.size)
+                boot = hedef.view(part).read(0, 512)
+                if key == "exfat":
+                    ofset = struct.unpack_from("<Q", boot, 64)[0]
+                else:
+                    ofset = struct.unpack_from("<I", boot, 28)[0]
+                assert ofset == part.start_lba, (index, key, ofset)
+        finally:
+            hedef.close()
+
+    # --- buyuk hedef: bolumler diske orantili yayilir ---
+    plan = temel.copy()
+    plan.retarget(1024 * MIB // 512)
+    assert plan.is_identity is False and not plan.changed, \
+        "sigan yerlesim kendiliginden degismemeli"
+    assert plan.fit(expand=True)
+    assert not plan.validate(), plan.validate()
+    assert all(lp.grows for lp in plan.parts), [
+        (lp.index, lp.old_count, lp.new_count) for lp in plan.parts]
+    buyuk = DiskSession.restore_to_new_image(
+        dub, img_path("t44_buyuk.img"), size_bytes=1024 * MIB, layout=plan)
+    dogrula(buyuk, {lp.index: (lp.new_start, lp.new_count)
+                    for lp in plan.parts})
+
+    # --- kucuk hedef: veri sigdigi icin bolumler kucultulur ---
+    kucuk_boyut = 256 * MIB
+    plan = temel.copy()
+    plan.retarget(kucuk_boyut // 512)
+    assert not plan.validate(), plan.validate()
+    assert any(lp.shrinks for lp in plan.parts)
+    kucuk = DiskSession.restore_to_new_image(
+        dub, img_path("t44_kucuk.img"), size_bytes=kucuk_boyut, layout=plan)
+    assert os.path.getsize(kucuk) == kucuk_boyut
+    dogrula(kucuk, {lp.index: (lp.new_start, lp.new_count)
+                    for lp in plan.parts})
+
+    # --- elle: ortadaki bolum tasinir, sondaki buyutulur ---
+    plan = temel.copy()
+    plan.retarget(768 * MIB // 512)
+    sirali = plan.sorted_parts()
+    sirali[-1].new_start += 32 * MIB // 512       # once sondaki kayar,
+    if len(sirali) > 2:                           # sonra ortadaki: cakisma yok
+        sirali[-2].new_start += 16 * MIB // 512
+    for lp in sirali[1:]:
+        alt, ust = plan.window(lp.index)
+        assert alt <= lp.new_start and lp.new_end <= ust, (lp.index, alt, ust)
+    assert plan.extend_last()
+    assert not plan.validate(), plan.validate()
+    elle = DiskSession.restore_to_new_image(
+        dub, img_path("t44_elle.img"), size_bytes=768 * MIB, layout=plan)
+    dogrula(elle, {lp.index: (lp.new_start, lp.new_count)
+                   for lp in plan.parts})
+
+    # --- seritteki tutamaklar (move_edge): DiskGenius gibi surukleme ---
+    plan = temel.copy()
+    plan.retarget(768 * MIB // 512)
+    kenarlar = plan.edges()
+    sinirlar = [k for k in kenarlar if k[1] == "boundary"]
+    assert sinirlar, f"bitisik bolumler ortak tutamak almadi: {kenarlar}"
+    assert kenarlar[-1][1] == "end", "son bolumun sag tutamagi yok"
+    _lba, _tur, sol, sag = sinirlar[0]
+    a, b = plan.get(sol), plan.get(sag)
+    b_son = b.new_end
+    # sinir saga: sol bolum buyur, sag bolum kuculur, sag bolumun sonu sabit
+    assert plan.move_edge("boundary", sol, sag, a.new_end + 1 + 8 * MIB // 512)
+    assert a.grows and b.shrinks and b.new_end == b_son, \
+        (a.new_count, b.new_start, b.new_count)
+    assert a.new_count % plan.align == 0 and b.new_start % plan.align == 0
+    # asiri surukleme en az boyutta durur (veri kaybi yok)
+    plan.move_edge("boundary", sol, sag, b_son)
+    assert b.new_count == b.min_count or \
+        b.new_count - b.min_count < plan.align, (b.new_count, b.min_count)
+    assert not plan.validate(), plan.validate()
+    # son bolumun sag kenari disk sonunu gecemez
+    son = plan.sorted_parts()[-1]
+    plan.move_edge("end", son.index, -1, plan.target_sectors * 2)
+    assert son.new_end <= plan.last_usable()
+    assert not plan.validate(), plan.validate()
+    surukle = DiskSession.restore_to_new_image(
+        dub, img_path("t44_surukle.img"), size_bytes=768 * MIB, layout=plan)
+    dogrula(surukle, {lp.index: (lp.new_start, lp.new_count)
+                      for lp in plan.parts})
+
+    # --- sigmayan hedef reddedilir, yerlesim bozulmaz ---
+    # (24 MiB: FAT32 65525 kumenin altina inemez, tek basina ~33 MB ister)
+    plan = temel.copy()
+    plan.retarget(24 * MIB // 512)
+    hata = plan.validate()
+    assert hata, "sigmayan yerlesim gecerli sayildi"
+    assert plan.required_sectors() > 24 * MIB // 512
+    hedef = DiskImage.create(img_path("t44_dar.img"), 24 * MIB, overwrite=True)
+    try:
+        from diskultimate.core.restoreplan import restore_with_layout
+        try:
+            restore_with_layout(dub, hedef, plan)
+            raise AssertionError("sigmayan yerlesim yazildi")
+        except RestorePlanError:
+            pass
+    finally:
+        hedef.close()
+
+    # --- ayni boyut + degismemis yerlesim: bayt bayt yol ---
+    ayni = DiskSession.restore_to_new_image(dub, img_path("t44_ayni.img"),
+                                            layout=temel.copy())
+    with open(ayni, "rb") as a, open(kaynak, "rb") as b:
+        assert hashlib.sha1(a.read()).digest() == \
+            hashlib.sha1(b.read()).digest(), "ozdes geri yukleme farkli"
+
+    # --- bolum yedegi daha buyuk bolume: dosya sistemi bolumu doldurur ---
+    ilk_index = bolumler[0][0]
+    s = DiskSession.open(kaynak, readonly=True)
+    bolum_dub = img_path("t44_bolum.dub")
+    s.backup_partition(ilk_index, bolum_dub)
+    s.close()
+    hedef_yol = img_path("t44_bolum_hedef.img")
+    h = DiskSession.create(hedef_yol, 512 * MIB, scheme="mbr", overwrite=True)
+    r = h.free_regions()[0]
+    genis = h.create_partition(r.start_lba + 8 * MIB // 512, 300 * MIB // 512,
+                               fs_key="fat32", label="ESKI")
+    h.restore_partition(genis.index, bolum_dub)
+    part = h.table.get(genis.index)
+    assert h.filesystem(genis.index).read("/klasor/veri.bin") == icerik
+    bulgu = detect(h.view(part))
+    assert bulgu.total_bytes > 280 * MIB, \
+        f"dosya sistemi bolumu doldurmadi: {human_size(bulgu.total_bytes)}"
+    assert struct.unpack_from("<I", h.view(part).read(0, 512), 28)[0] == \
+        part.start_lba, "gizli sektor alani yeni bolume gore duzeltilmedi"
+    h.close()
+
+
+@test
+def t45_bitmap_sayimi_ve_aygit_kilidi():
+    """Hizli NTFS bitmap sayimi eskisiyle ayni; aygit okumasi is parcacigi guvenli
+
+    Haritadaki tutamaklar her suruklemede donuyordu: NTFS `$Bitmap` bit bit
+    Python dongusuyle geziliyordu (217 GB'ta 1.5 sn). Sayim bayt duzeyine
+    indi; sonuc eski yontemle **birebir** ayni olmali. Sinirlar artik arka
+    planda hesaplandigi icin ayni tutamaktan iki is parcacigi okuyabilir;
+    `seek`+`read` yarisinda yanlis sektor okunmamali.
+    """
+    import random
+    import threading
+    from diskultimate.core.ntfsresize import bitmap_window_usage
+
+    def yavas(window, valid_bits):
+        used, highest = 0, -1
+        for i, byte in enumerate(window):
+            for bit in range(8):
+                index = i * 8 + bit
+                if index >= valid_bits:
+                    return used, highest
+                if byte & (1 << bit):
+                    used += 1
+                    highest = index
+        return used, highest
+
+    rng = random.Random(44)
+    durumlar = [(b"", 0), (b"\x00" * 64, 512), (b"\xff" * 3, 24),
+                (b"\xff" * 3, 20), (b"\x80", 7), (b"\x80", 8),
+                (b"\x01" + b"\x00" * 9, 80), (b"\xff\xff", 0)]
+    for _ in range(300):
+        n = rng.randint(1, 300)
+        veri = bytes(rng.choice((0, 0, 0xFF, rng.randrange(256)))
+                     for _ in range(n))
+        durumlar.append((veri, rng.randint(0, n * 8 + 5)))
+    for veri, gecerli in durumlar:
+        assert bitmap_window_usage(veri, gecerli) == yavas(veri, gecerli), \
+            (veri[:8], gecerli)
+
+    # --- ayni tutamaktan iki is parcacigi: veri karismamali ---
+    yol = img_path("t45.img")
+    d = DiskImage.create(yol, 8 * MIB, overwrite=True)
+    for lba in range(0, 16384, 64):
+        d.write_sectors(lba, struct.pack("<I", lba).ljust(512, b"\xAB") * 64)
+    hatalar = []
+
+    def okuyucu(tohum):
+        r = random.Random(tohum)
+        for _ in range(3000):
+            lba = r.randrange(0, 16384, 64)
+            veri = d.read_sectors(lba, 1)
+            if struct.unpack_from("<I", veri)[0] != lba:
+                hatalar.append(lba)
+                return
+
+    iplikler = [threading.Thread(target=okuyucu, args=(i,)) for i in range(4)]
+    for ip in iplikler:
+        ip.start()
+    for ip in iplikler:
+        ip.join()
+    d.close()
+    assert not hatalar, f"eszamanli okumada yanlis sektor: {hatalar[:5]}"
+
+
+@test
+def t46_planda_acilan_alana_buyume():
+    """Kuyrukta kucultulen bolumun actigi alana komsu bolum buyuyebilmeli
+
+    Kullanici bildirimi (2026-09-28): ana ekranda bolum kucultuluyor, bos
+    alan gorunuyor ama hicbir bolum o alana buyutulemiyordu. Artik ana ekran
+    ortak modeli kullanir (`queueedit`, ADR 0049): pencere planlanan
+    yerlesimden gelir, ayni bolumun adimi yerinde guncellenir, sinir tutamagi
+    iki adim uretir ve **yer acan adim once** gelir; kuyruk bu sirayla
+    uygulanabilir olmali (`planview` cakisma denetimi).
+    """
+    from diskultimate.core import planview, queueedit
+    from diskultimate.core.fsdetect import detect as fs_detect
+    from diskultimate.core.layoutedit import LayoutError
+    from diskultimate.core.resize import ResizeError, fs_resize_info_for
+
+    yol = img_path("t46.img")
+    s = DiskSession.create(yol, 256 * MIB, scheme="gpt", overwrite=True)
+    r = s.free_regions()[0]
+    p1 = s.create_partition(r.start_lba, 100 * MIB // 512, fs_key="fat32",
+                            label="BIR")
+    r = s.free_regions()[0]
+    p2 = s.create_partition(r.start_lba, 60 * MIB // 512, fs_key="exfat",
+                            label="IKI")
+    icerik = bytes(range(256)) * 2000
+    for bolum in (p1, p2):
+        fs = s.filesystem(bolum.index)
+        fs.write_file("/veri.bin", icerik)
+        fs.flush()
+    s.close_filesystems()
+    p1, p2 = s.table.get(p1.index), s.table.get(p2.index)
+    sinirlar = {p.index: fs_resize_info_for(s, p) for p in (p1, p2)}
+    bak = lambda part: sinirlar.get(part.index)          # noqa: E731
+
+    kuyruk = ops.OperationQueue()
+    M = MIB // 512
+
+    # 1) P1'i kucult (tek bolum, harita tutamagi gibi)
+    model = queueedit.build(s, kuyruk, limits=bak)
+    assert not model.get(p1.index).locked
+    model.get(p1.index).new_count = 60 * M
+    queueedit.commit(s, kuyruk, model, [p1.index])
+    assert len(kuyruk) == 1
+
+    # 2) Planlanan pencere acilan alani gorur; disk penceresi gormez
+    model = queueedit.build(s, kuyruk, limits=bak)
+    alt, ust = model.window(p2.index)
+    assert alt == p1.start_lba + 60 * M, (alt, p1.start_lba + 60 * M)
+    yeni_bas = alt
+    yeni_boy = p2.end_lba - yeni_bas + 1
+    try:
+        s.plan_resize(p2.index, yeni_bas, yeni_boy)
+        raise AssertionError("disk penceresi planda acilan alani gormemeli")
+    except ResizeError:
+        pass
+    b = model.get(p2.index)
+    b.new_start, b.new_count = yeni_bas, yeni_boy
+    queueedit.commit(s, kuyruk, model, [p2.index])
+    assert len(kuyruk) == 2 and not planview.project(s, kuyruk).conflicts
+
+    # 3) Ayni bolum yeniden duzenlenir: yeni adim eklenmez, yerinde degisir
+    model = queueedit.build(s, kuyruk, limits=bak)
+    model.get(p1.index).new_count = 50 * M
+    queueedit.commit(s, kuyruk, model, [p1.index])
+    assert len(kuyruk) == 2 and kuyruk[0].params["sector_count"] == 50 * M, \
+        [op.params for op in kuyruk]
+
+    # 4) Gecersiz duzenleme: kuyruk degismeden kalir
+    once = [dict(op.params) for op in kuyruk]
+    model = queueedit.build(s, kuyruk, limits=bak)
+    model.get(p1.index).new_count = 2 * M          # FAT32 en azinin alti
+    try:
+        queueedit.commit(s, kuyruk, model, [p1.index])
+        raise AssertionError("en az boyutun alti kabul edildi")
+    except (LayoutError, ResizeError):
+        pass
+    assert [dict(op.params) for op in kuyruk] == once, "kuyruk geri donmedi"
+
+    # 5) Uygula: iki adim sirayla, veri saglam, exFAT buyudu
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, sonuc.summary()
+    s.reload()
+    a, b = s.table.get(p1.index), s.table.get(p2.index)
+    assert a.sector_count == 50 * M, a.sector_count
+    assert (b.start_lba, b.sector_count) == (yeni_bas, yeni_boy), \
+        (b.start_lba, b.sector_count, yeni_bas, yeni_boy)
+    assert s.filesystem(a.index).read("/veri.bin") == icerik
+    assert s.filesystem(b.index).read("/veri.bin") == icerik
+    assert fs_detect(s.view(b)).total_bytes > 0.9 * b.size, "exFAT buyumedi"
+    s.close_filesystems()
+
+    # 6) Sinir tutamagi. Once P1 buyutulup P2'ye bitistirilir (bir adim);
+    #    sonra ortak sinir SAGA: P1'in adimi yerinde buyur (onde kalir), P2
+    #    icin yeni adim eklenir (yer acan). Kuyruk ters sirada kalir; bu
+    #    duzenleme kendi adimini sona alarak duzeltmeli: [P2, P1].
+    a, b = s.table.get(p1.index), s.table.get(p2.index)
+    # Sayi olarak sakla: uygulama bolum nesnelerini YERINDE degistirir
+    a_bas, b_bas, b_boy = a.start_lba, b.start_lba, b.sector_count
+    sinirlar.clear()
+    sinirlar.update({p.index: fs_resize_info_for(s, p) for p in (a, b)})
+    s.close_filesystems()
+    kuyruk = ops.OperationQueue()
+    model = queueedit.build(s, kuyruk, limits=bak)
+    model.get(a.index).new_count = b.start_lba - a.start_lba
+    queueedit.commit(s, kuyruk, model, [a.index])
+    assert len(kuyruk) == 1
+    model = queueedit.build(s, kuyruk, limits=bak)
+    kenar = [k for k in model.edges() if k[1] == "boundary"]
+    assert kenar, f"bitisik bolumlerde sinir tutamagi yok: {model.edges()}"
+    once = {x.index: (x.new_start, x.new_count) for x in model.parts}
+    assert model.move_edge("boundary", a.index, b.index, b.start_lba + 8 * M)
+    degisen = [x.index for x in model.parts
+               if (x.new_start, x.new_count) != once[x.index]]
+    assert sorted(degisen) == sorted([a.index, b.index]), degisen
+    queueedit.commit(s, kuyruk, model, degisen, before=once)
+    assert [op.params["index"] for op in kuyruk] == [b.index, a.index], \
+        f"yer acan adim once gelmeli: {[op.params for op in kuyruk]}"
+    assert not planview.project(s, kuyruk).conflicts
+
+    # 7) Ters sira cakisma olarak yakalanir (uygulama aninda duracakti)
+    kuyruk.move(1, 0)
+    assert planview.project(s, kuyruk).conflicts == [0], \
+        planview.project(s, kuyruk).conflicts
+    kuyruk.move(1, 0)
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, sonuc.summary()
+    s.reload()
+    a2, b2 = s.table.get(p1.index), s.table.get(p2.index)
+    assert a2.sector_count == b_bas - a_bas + 8 * M, a2.sector_count
+    assert (b2.start_lba, b2.sector_count) == (b_bas + 8 * M, b_boy - 8 * M)
+    assert s.filesystem(a2.index).read("/veri.bin") == icerik
+    assert s.filesystem(b2.index).read("/veri.bin") == icerik
+    s.close()
+
+
+@test
+def t47_ortak_yerlesim_modeli():
+    """Ortak bolum duzenleme modeli kaynaktan bagimsiz calismali (ADR 0049)
+
+    `layoutedit.EditableLayout` ana ekran ve geri yuklemenin ortak
+    cekirdegidir. Diske dokunmadan sinanir: ortak sinir tutamagi, tasinamayan
+    ve boyutu sabit bolumler, hizalama, dogrulama, mantiksal MBR bolumlerinin
+    EBR boslugu, eski adlarin (RestoreLayout/LayoutPart) ayni sinif olmasi.
+    """
+    from diskultimate.core import layoutedit as le
+    from diskultimate.core import restoreplan
+    from diskultimate.core.ptable import Partition
+
+    assert restoreplan.RestoreLayout is le.EditableLayout
+    assert restoreplan.LayoutPart is le.Slot
+    assert issubclass(restoreplan.RestorePlanError, le.LayoutError)
+
+    M = MIB // 512
+
+    def yuva(index, start, count, kind="fat", en_az=1, en_cok=0,
+             tasinir=True, logical=False, scheme="gpt"):
+        part = Partition(index=index, start_lba=start, sector_count=count,
+                         scheme=scheme, logical=logical)
+        slot = le.Slot(part=part, old_start=start, old_count=count,
+                       new_start=start, new_count=count, fs_type=kind)
+        slot.apply_limits(kind, en_az, en_cok, "", movable=tasinir)
+        return slot
+
+    def duzen(slots, total=200 * M, scheme="gpt"):
+        return le.EditableLayout(scheme=scheme, sector_size=512,
+                                 source_sectors=total, target_sectors=total,
+                                 parts=slots)
+
+    # -- apply_limits: tur bazli sinirlar --
+    ham = yuva(9, 2048, 10 * M, kind="raw")
+    assert (ham.min_count, ham.max_count) == (10 * M, 0), "ham kucultulmemeli"
+    ext = yuva(9, 2048, 10 * M, kind="unsupported")
+    assert ext.min_count == ext.max_count == 10 * M, "ext boyutu sabit olmali"
+
+    # A (FAT) | B (NTFS) bitisik, C (ext) sabit, sonda bos alan
+    a = yuva(1, 2048, 40 * M, en_az=20 * M)
+    b = yuva(2, 2048 + 40 * M, 40 * M, kind="ntfs", en_az=10 * M)
+    c = yuva(3, 2048 + 80 * M, 20 * M, kind="unsupported")
+    d = duzen([a, b, c])
+    assert not d.validate(), d.validate()
+    kenarlar = {(k[1], k[2], k[3]) for k in d.edges()}
+    assert ("boundary", 1, 2) in kenarlar, kenarlar
+    assert not any(3 in (k[1], k[2]) for k in kenarlar), \
+        f"boyutu sabit bolumun kenari oynamamali: {kenarlar}"
+    # Sabit komsunun yanindaki bolum ortak sinir yerine TEK BASINA
+    # kuculebilmeli (bitisik ext4'un yanindaki FAT sagdan kuculebilsin)
+    assert ("end", 2, -1) in kenarlar, kenarlar
+    assert d.move_edge("end", 2, -1, b.new_end + 1 - 8 * M)
+    assert b.new_count == 32 * M and c.new_start == 2048 + 80 * M
+    d.reset()
+
+    # ortak sinir saga: A buyur, B kuculur, B'nin sonu yerinde, hizali
+    b_son = b.new_end
+    assert d.move_edge("boundary", 1, 2, a.new_end + 1 + 8 * M)
+    assert a.new_count == 48 * M and b.new_end == b_son, (a.new_count, b.new_end)
+    assert b.new_start % d.align == 0
+    # asiri surukleme en az boyutta durur
+    d.move_edge("boundary", 1, 2, b_son + 1)
+    assert b.new_count == b.min_count, (b.new_count, b.min_count)
+    assert not d.validate(), d.validate()
+    d.reset()
+
+    # tasinamayan B: A|B siniri oynamaz (B'nin baslangici kayardi)
+    b.movable = False
+    assert not any(k[1] == "boundary" and k[3] == 2 for k in d.edges())
+    assert not d.move_edge("boundary", 1, 2, a.new_end + 1 + 8 * M) or \
+        (a.new_count, b.new_start) == (40 * M, 2048 + 40 * M)
+    assert (b.new_start, b.new_count) == (2048 + 40 * M, 40 * M)
+    assert not d.fit(expand=True), "tasinamayan bolum varken fit uygulanmamali"
+    b.movable = True
+
+    # dogrulama: en az boyut ve cakisma
+    a.new_count = 5 * M
+    assert d.validate(), "en az boyutun alti gecerli sayildi"
+    d.reset()
+    b.new_start = a.new_start + 10 * M
+    assert d.validate(), "cakisma gecerli sayildi"
+    d.reset()
+
+    # -- mantiksal MBR bolumleri: EBR icin bir hiza birimi bosluk --
+    genis = Partition(index=4, start_lba=2048, sector_count=100 * M,
+                      scheme="mbr", type_id=0x0F)
+    l1 = yuva(5, 2048 + 2048, 40 * M, logical=True, scheme="mbr", en_az=M)
+    l2 = yuva(6, l1.new_end + 1 + 2048, 40 * M, logical=True, scheme="mbr",
+              en_az=M)
+    m = duzen([l1, l2], scheme="mbr")
+    m.extended = genis
+    assert not m.validate(), m.validate()
+    assert any(k[1] == "boundary" and (k[2], k[3]) == (5, 6) for k in m.edges())
+    m.move_edge("boundary", 5, 6, l1.new_end + 1 + 4 * M)
+    assert l2.new_start - l1.new_end - 1 == m.align, \
+        "mantiksal bolumler arasinda EBR boslugu korunmadi"
+    kapsayici = [p for p in m.partitions() if p.type_id == 0x0F][0]
+    assert kapsayici.start_lba == l1.new_start - m.align
+
+
 # --------------------------------------------------------------------------
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")

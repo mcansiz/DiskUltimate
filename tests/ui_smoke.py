@@ -229,8 +229,22 @@ def dil_denetimi(pencere, app, hedef: str) -> None:
     if not diller:
         print("  (ceviri dosyasi yok; dil denetimi atlandi)")
         return
+    from PyQt5.QtWidgets import QMessageBox
+
+    def dugmeler():
+        """Standart onay kutusunun Evet/Hayir yazilari (& isareti atilir)."""
+        kutu = QMessageBox(QMessageBox.Question, "t", "t",
+                           QMessageBox.Yes | QMessageBox.No)
+        metin = [kutu.button(b).text().replace("&", "")
+                 for b in (QMessageBox.Yes, QMessageBox.No)]
+        kutu.deleteLater()
+        return metin
+
+    # Kullanici bildirimi: Turkce arayuzde "Yes / No" gorunuyordu
+    assert dugmeler() == ["Evet", "Hayir"], f"Turkce dugmeler: {dugmeler()}"
     onceki_uygula = pencere.act_apply.text()
     onceki_sekme = pencere.tabs.tabText(0)
+    beklenen_dugme = {"en": ["Yes", "No"], "de": ["Ja", "Nein"]}
     for kod in diller:
         i18n.set_language(kod, remember=False)
         app.processEvents()
@@ -244,6 +258,9 @@ def dil_denetimi(pencere, app, hedef: str) -> None:
         assert all(basliklar), f"{kod}: bos menu basligi: {basliklar}"
         sutun = pencere.part_table.horizontalHeaderItem(0).text()
         assert sutun, f"{kod}: bos sutun basligi"
+        if kod in beklenen_dugme:
+            assert dugmeler() == beklenen_dugme[kod], \
+                f"{kod}: standart dugmeler {dugmeler()}"
         app.processEvents()
         pencere.grab().save(os.path.join(hedef, f"24-dil-{kod}.png"))
         print(f"  24-dil-{kod}.png")
@@ -252,6 +269,7 @@ def dil_denetimi(pencere, app, hedef: str) -> None:
     assert pencere.act_apply.text() == onceki_uygula, \
         f"kaynak dile donulunce metin geri gelmedi: {pencere.act_apply.text()}"
     assert pencere.tabs.tabText(0) == onceki_sekme, pencere.tabs.tabText(0)
+    assert dugmeler() == ["Evet", "Hayir"], f"geri donuste: {dugmeler()}"
     print(f"  (dil degisimi: {', '.join(diller)} denendi, Turkce'ye donuldu)")
 
 
@@ -264,6 +282,11 @@ def main() -> int:
     # sinar, kendi taklidini degil.
     from diskultimate.ui.appicon import apply_app_icon
     assert apply_app_icon(app), "uygulama ikonu ayarlanamadi"
+    # Qt'nin kendi metinleri (Evet/Hayir) — main.py ile ayni kurulum
+    from diskultimate.ui import qt_i18n
+    qt_durumu = qt_i18n.install()
+    print(f"  (Qt cevirisi: qtbase {'yuklendi' if qt_durumu['qtbase'] else 'yok'}"
+          f", dugmeler sozlukten)")
 
     pencere = MainWindow()
     pencere.resize(1400, 860)
@@ -583,6 +606,116 @@ def main() -> int:
     assert not isaretli, "kuyruk bosalinca isaretler kalmamali"
     print("  (bekleyen islem kuyrugu: ekleme, isaret, geri alma, iptal denetlendi)")
 
+    # --- ana haritada tutamaklar: surukle -> kuyruga boyutlandirma adimi ---
+    # Harita geri yukleme seridiyle AYNI denetleyiciyi ve ortak modeli
+    # kullanir (ADR 0049). Diske hicbir sey yazilmaz; birakinca kuyruga girer.
+    from PyQt5.QtCore import QEvent, QPoint
+    from PyQt5.QtGui import QMouseEvent
+    import time
+    harita = pencere.disk_map
+    fat_bolum = next(p for p in pencere.session.partitions
+                     if (p.fs_type or "").upper().startswith("FAT"))
+
+    def sinirlari_bekle():
+        """Sinirlar arka planda hesaplanir; arayuz bu sirada beklemez."""
+        bitis = time.time() + 20
+        while pencere.limits.pending() and time.time() < bitis:
+            app.processEvents()
+            time.sleep(0.02)
+        app.processEvents()
+        assert not pencere.limits.pending(), "sinir hesabi bitmedi"
+
+    def sag_kenar(index):
+        """Bolumun sag kenarinin x konumu (tek basina ya da ortak sinir)."""
+        for x, kenar in harita.edit.edge_positions():
+            if kenar[2] == index:
+                return x
+        return None
+
+    pencere.select_partition(fat_bolum.index)
+    app.processEvents()
+    assert pencere._edit_layout is not None, "harita ortak modeli almadi"
+    sinirlari_bekle()
+    assert not harita.edit.busy, "sinirlar hesaplandi ama tutamak etkin degil"
+    sag_x = sag_kenar(fat_bolum.index)
+    assert sag_x is not None, f"FAT bolumunun sag kenari yok: {harita.edit.edges()}"
+    ust, alt = harita._band()
+    y = (ust + alt) // 2
+    blok = next(b for b in harita._blocks if b.obj.index == fat_bolum.index)
+    genislik = max(12, blok.rect.width() // 3)
+
+    def surukle(x0, x1):
+        for tur, x in ((QEvent.MouseButtonPress, x0), (QEvent.MouseMove, x1),
+                       (QEvent.MouseButtonRelease, x1)):
+            app.sendEvent(harita, QMouseEvent(
+                tur, QPoint(x, y), Qt.LeftButton,
+                Qt.NoButton if tur == QEvent.MouseButtonRelease
+                else Qt.LeftButton, Qt.NoModifier))
+        app.processEvents()
+
+    boyut_oncesi = os.path.getsize(goruntu)
+    surukle(sag_x, sag_x - genislik)
+    assert len(pencere.queue) == 1, f"surukleme kuyruga eklenmedi: {len(pencere.queue)}"
+    adim = pencere.queue[0]
+    assert adim.kind == "resize", adim.kind
+    assert os.path.getsize(goruntu) == boyut_oncesi, "surukleme diske yazdi"
+    kaydet(pencere, "39-haritada-tutamak.png")
+
+    # Kucultulen bolum GERI BUYUTULEBILMELI; ikinci surukleme YENI adim
+    # eklemez, ayni adimi gunceller; diskteki boyutuna donunce adim kalkar.
+    pencere.select_partition(fat_bolum.index)
+    sinirlari_bekle()
+    sag_x2 = sag_kenar(fat_bolum.index)
+    assert sag_x2 is not None, "kucultulen bolumde tutamak yok"
+    surukle(sag_x2, sag_x2 + 8)
+    assert len(pencere.queue) == 1, f"ikinci adim eklendi: {len(pencere.queue)}"
+    buyuk = pencere.queue[0].params["sector_count"]
+    assert buyuk > adim.params["sector_count"], "geri buyutme olmadi"
+    pencere.select_partition(fat_bolum.index)
+    sinirlari_bekle()
+    sag_x3 = sag_kenar(fat_bolum.index)
+    surukle(sag_x3, sag_x3 + 400)
+    kalan = [op.params.get("sector_count") for op in pencere.queue]
+    assert not kalan or kalan[0] >= buyuk, kalan
+    print(f"  (geri buyutme: adim yerinde guncellendi, kuyrukta {len(kalan)})")
+    pencere.queue.clear()
+    pencere._refresh_pending()
+    app.processEvents()
+    print(f"  (haritada tutamak: surukleme kuyruga eklendi — {adim})")
+
+    # --- ortak "Bolum duzeni" penceresi ana ekranda (ADR 0049, 5. asama) ---
+    from diskultimate.ui.dialogs.partition_layout import PartitionLayoutDialog
+    from diskultimate.ui.widgets.layout_bar import PartitionEditBar
+    pencere._limits_blocking([p for p in pencere.session.table.partitions
+                              if not p.logical])
+    model = pencere._edit_model()
+    assert model is not None and model.parts
+    d_duzen = PartitionLayoutDialog(model, pencere.session.name, pencere,
+                                    mode="disk")
+    assert isinstance(d_duzen.bar, PartitionEditBar), "ortak serit kullanilmiyor"
+    d_duzen.show()
+    app.processEvents()
+    assert d_duzen.windowTitle() == "Bolum Duzeni", d_duzen.windowTitle()
+    assert d_duzen.tree.topLevelItemCount() == len(model.parts)
+    kaydet(d_duzen, "41-bolum-duzeni.png")
+    # son bolumu genislet -> sonuc kuyruga (ortak commit)
+    once = {x.index: (x.new_start, x.new_count) for x in model.parts}
+    d_duzen._extend_last()
+    sonuc = d_duzen.result_layout()
+    degisen = [x.index for x in sonuc.parts
+               if (x.new_start, x.new_count) != once[x.index]]
+    d_duzen.close()
+    if degisen:
+        pencere._commit_edit(sonuc, degisen, before=once)
+        app.processEvents()
+        assert len(pencere.queue) == len(degisen), len(pencere.queue)
+        assert all(op.kind == "resize" for op in pencere.queue)
+    print(f"  (bolum duzeni penceresi: {len(model.parts)} bolum, "
+          f"{len(degisen)} degisiklik kuyrukta)")
+    pencere.queue.clear()
+    pencere._refresh_pending()
+    app.processEvents()
+
     # --- sag tik menuleri: her islem AIT OLDUGU dugumde (ADR 0036) ---
     # "Fiziksel Diskler" bir kategori basligidir; bolum tablosu olusturma
     # orada durunca islem sag tiklanan diske degil, o sirada etkin olan
@@ -727,6 +860,71 @@ def main() -> int:
     print(f"  ({len(icons.names())} ikon cizildi — "
           f"cizim ozeti {icons.digest()})")
 
+    # --- ikon setleri (ADR 0046): 8 set, canli degisim, saklama ---
+    from diskultimate.ui import iconpacks, iconsets, svgpath
+    from diskultimate.ui.theme import os_icon
+
+    # SVG yol ayrıştırıcısı: sıkıştırılmış sayılar ve bitişik yay bayrakları
+    yol = svgpath.parse("M.54 3.87.5 3a2 2 0 0 1 2-2h3a1 1 0 00-.11.135z")
+    assert not yol.isEmpty() and yol.elementCount() > 6, yol.elementCount()
+    daire = svgpath.parse("M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0z")
+    kutu = daire.boundingRect()
+    assert abs(kutu.width() - 20) < 0.05 and abs(kutu.height() - 20) < 0.05, kutu
+
+    def _dolu(pix):
+        img = pix.toImage()
+        return any(img.pixelColor(x, y).alpha() > 0
+                   for x in range(img.width()) for y in range(img.height()))
+
+    eksikler = []
+    for anahtar, _ad in iconsets.SETS:
+        for ad in icons.names():
+            if not _dolu(icons.draw(ad, 24, dark=False, icon_set=anahtar)):
+                eksikler.append(f"{anahtar}/{ad}")
+        if anahtar in iconsets.PACK_SETS:
+            gomulu = sum(iconpacks.has(anahtar, ad) for ad in icons.names())
+            assert gomulu == len(icons.names()), \
+                f"{anahtar}: {gomulu}/{len(icons.names())} ikon gomulu"
+    assert not eksikler, f"bos cizilen ikon: {eksikler[:10]}"
+
+    # Canli degisim: AYNI QIcon nesnesi yeni setle cizilmeli. Baslangic
+    # durumu test belirler: ayar kalicidir ve yarida kalan bir kosu onu
+    # "tabler"da birakmisti (degisim gozlenemiyordu). Kullanicinin secimi
+    # her durumda geri yuklenir.
+    onceki_set = iconsets.current()
+    try:
+        pencere.change_icon_set("classic")
+        app.processEvents()
+        ikon_nesnesi = icons.icon("folder")
+        klasik = ikon_nesnesi.pixmap(24, 24).toImage()
+        pencere.change_icon_set("tabler")
+        app.processEvents()
+        assert iconsets.current() == "tabler"
+        assert ikon_nesnesi.pixmap(24, 24).toImage() != klasik, \
+            "ikon seti degisti ama mevcut ikon eski setle ciziliyor"
+        from diskultimate.core import settings as ayarlar
+        assert ayarlar.get(iconsets.SETTING_KEY) == "tabler", "secim saklanmadi"
+        secili = [a.data() for a in pencere._icon_group.actions()
+                  if a.isChecked()]
+        assert secili == ["tabler"], secili
+        assert len(pencere._icon_group.actions()) == 8
+        kaydet(pencere, "40-ikon-seti-tabler.png")
+    finally:
+        pencere.change_icon_set(onceki_set)
+        app.processEvents()
+
+    # Isletim sistemi amblemleri: Linux/macOS Simple Icons, Windows kendi
+    for isletim in ("windows", "linux", "macos"):
+        assert _dolu(os_icon(isletim, 16).pixmap(16, 16)), isletim
+    assert iconpacks.has("simpleicons", "linux")
+    assert not iconpacks.has("simpleicons", "windows"), \
+        "Simple Icons Microsoft logolarini kaldirdi; eski surumden alinmamali"
+    bildirimler = iconpacks.notices()
+    assert len(bildirimler) == 6 and all(b["text"] for b in bildirimler), \
+        [b["key"] for b in bildirimler]
+    print(f"  (ikon setleri: {len(iconsets.SETS)} set x {len(icons.names())} "
+          f"ikon cizildi, canli degisim ve saklama denetlendi)")
+
     # --- uygulama ikonu: dosyadan gelir, cizilmez (ui/appicon.py) ---
     #
     # Uc sey denetlenir:
@@ -745,19 +943,21 @@ def main() -> int:
     for beklenen in (16, 24, 32, 48, 64, 128, 256):
         assert beklenen in bulunan, f"{beklenen} px ikon eksik ({bulunan})"
     for boyut in (16, 32, 256):
-        goruntu = uygulama_ikonu.pixmap(boyut, boyut).toImage()
-        saydam = sum(1 for x in range(goruntu.width())
-                     for y in range(goruntu.height())
-                     if goruntu.pixelColor(x, y).alpha() == 0)
+        ikon_resmi = uygulama_ikonu.pixmap(boyut, boyut).toImage()
+        saydam = sum(1 for x in range(ikon_resmi.width())
+                     for y in range(ikon_resmi.height())
+                     if ikon_resmi.pixelColor(x, y).alpha() == 0)
         assert saydam > 0, (f"{boyut} px ikon tamamen opak — arka plan "
                             f"piksel olarak gomulu kalmis")
+    # (Degisken adi `goruntu` degil: o ad testin disk goruntusu yoludur ve
+    # ezilince asagidaki yedekleme bolumu QImage'i dosya yolu sanip dusuyordu.)
     # Saydamlik TEK BASINA "dolu" olmanin olcusu degildir: bastan sona saydam
     # (yani bos) bir goruntu de o denetimden gecerdi. Renk cesitliligi asil
     # olcudur — bos ya da tek renk bir ikon burada kalir.
-    goruntu = uygulama_ikonu.pixmap(32, 32).toImage()
-    renkler = {goruntu.pixelColor(x, y).rgba()
+    ikon_resmi = uygulama_ikonu.pixmap(32, 32).toImage()
+    renkler = {ikon_resmi.pixelColor(x, y).rgba()
                for x in range(32) for y in range(32)
-               if goruntu.pixelColor(x, y).alpha() > 0}
+               if ikon_resmi.pixelColor(x, y).alpha() > 0}
     assert len(renkler) >= 32, f"32 px ikon neredeyse bos ({len(renkler)} renk)"
     # Pencere ikonu uygulamadan DEVRALINIR (yukarida apply_app_icon cagrildi);
     # burada ayrica atanmaz, devralmanin gercekten oldugu dogrulanir.
@@ -947,6 +1147,25 @@ def main() -> int:
     app.processEvents()
     assert d10.current_target() is not None, "kaynak secilmedi"
     assert d10.tree.topLevelItemCount() >= 1, "hedef agaci bos"
+    # Hedef agaci ana formda degil "Disk sec" penceresinde; formda ozet satiri
+    assert not d10.tree.isVisible(), "disk agaci hala ana formda"
+    assert d10.target_label.text() not in ("", "-"), "hedef ozeti bos"
+    # Yedek alma -> geri yukleme: yedek secilmemisken icerik agacinda
+    # kaynagin bolumleri KALMAMALI (kullanici bildirimi, 2026-09-28)
+    d10.set_mode(MODE_RESTORE)
+    app.processEvents()
+    assert d10.content.topLevelItemCount() == 1 and \
+        d10.content.topLevelItem(0).isDisabled(), \
+        "yedek secilmeden icerik agacinda bolum gorunuyor"
+    # Yedek secilmeden hedef alani pasif ve hicbir hedef secili degil
+    assert not d10.target_group.isEnabled(), "yedek yokken hedef alani etkin"
+    assert d10.current_target() is None, "yedek yokken hedef secili"
+    assert d10.target_group.title() == "Hedef Disk / Bolum", \
+        d10.target_group.title()
+    d10.set_mode(MODE_BACKUP)
+    app.processEvents()
+    assert d10.current_target() is not None, "yedek alma kaynagi geri gelmedi"
+    assert d10.target_group.title() == "Kaynak Disk / Bolum"
     d10._set_path(os.path.join(scratch("ui"), "yeni-yedek.dub"))
     d10.remark.setPlainText("Ana diskin haftalik yedegi")
     d10.level_buttons["high"].setChecked(True)
@@ -982,8 +1201,83 @@ def main() -> int:
         d11._worker.wait()
     app.processEvents()
     assert d11.info is not None, "yedek basligi okunmadi"
-    assert d11.remark.toPlainText().startswith("Duman testi"), \
-        "not forma yuklenmedi"
+    # Geri yuklemede hedef kendiliginden SECILMEZ; kullanici "Disk sec" ile
+    # secer. Burada agac uzerinden ayni secim yapilir.
+    assert d11.current_target() is None, "geri yukleme hedefi kendiliginden secildi"
+    assert d11.target_group.isEnabled(), "yedek yuklendi ama hedef alani pasif"
+    assert "Hedef diski" in d11._problem(), d11._problem()
+    goruntu_dugumu = next(
+        it for it in d11.tree.findItems("*", Qt.MatchWildcard | Qt.MatchRecursive)
+        if it.data(0, Qt.UserRole) is not None
+        and d11.targets[it.data(0, Qt.UserRole)].kind == "image")
+    d11.tree.setCurrentItem(goruntu_dugumu)
+    app.processEvents()
+    # Not yalnizca yedek ALINIRKEN yazilir; geri yuklemede salt okunur
+    # "Aciklama" satirinda gorunur, duzenleyici ve "Notu kaydet" yoktur.
+    assert d11.info_labels["remark"].text().startswith("Duman testi"), \
+        "not bilgi alaninda gorunmuyor"
+    assert d11.note_box.isHidden(), "geri yuklemede not duzenleyicisi acik"
+    assert not hasattr(d11, "btn_save_remark"), "Notu kaydet hala var"
+    # Disk yedegi: hedefe uydurulmus yerlesim ve "Bolumleri yonet"
+    assert d11.plan is not None, "geri yukleme yerlesimi kurulmadi"
+    # Harita yerine tutamakli serit; kenar surukleme plani degistirir
+    assert d11.layout_bar.isVisible() and not d11.map.isVisible()
+    from PyQt5.QtCore import QPoint
+    from PyQt5.QtGui import QMouseEvent
+    from PyQt5.QtCore import QEvent
+    serit = d11.layout_bar
+    son_kenar = [k for k in serit.edit.edges() if k[1] == "end"][-1]
+    x0 = serit._x(son_kenar[0])
+    y0 = serit._track().center().y()
+    once_plan = [(p.new_start, p.new_count) for p in d11.plan.parts]
+    for tur, x in ((QEvent.MouseButtonPress, x0), (QEvent.MouseMove, x0 - 60),
+                   (QEvent.MouseButtonRelease, x0 - 60)):
+        olay = QMouseEvent(tur, QPoint(x, y0), Qt.LeftButton,
+                           Qt.LeftButton if tur != QEvent.MouseButtonRelease
+                           else Qt.NoButton, Qt.NoModifier)
+        app.sendEvent(serit, olay)
+    app.processEvents()
+    sonra_plan = [(p.new_start, p.new_count) for p in d11.plan.parts]
+    kucultulebilir = d11.plan.get(son_kenar[2]).min_count < \
+        d11.plan.get(son_kenar[2]).old_count
+    if kucultulebilir:
+        assert sonra_plan != once_plan, "seritte surukleme plani degistirmedi"
+    assert not d11.plan.validate(), d11.plan.validate()
+    d11.plan.reset()
+    d11._on_target_changed()
+    assert d11.btn_layout.isVisible(), "Bolumleri yonet dugmesi gorunmuyor"
+    onceki_hedef = d11.tree.currentItem()
+    d11.tree.setCurrentItem(d11.new_image_item)
+    app.processEvents()
+    assert d11.size_spin.isVisible(), "yeni goruntu boyutu sorulmuyor"
+    # Birim degisince boyut korunur (MB/GB/TB)
+    once = d11._new_size_bytes()
+    d11.size_unit.setCurrentIndex(0)                  # MB
+    app.processEvents()
+    assert abs(d11._new_size_bytes() - once) < 1024 * 1024, \
+        (once, d11._new_size_bytes())
+    assert d11.plan.target_sectors * 512 == d11.info.total_bytes, \
+        "birim degisimi yerlesimi degistirdi"
+    d11.size_spin.setValue(d11.size_spin.value() * 2)
+    app.processEvents()
+    assert d11.plan.target_sectors > d11.plan.source_sectors, \
+        "goruntu boyutu yerlesime yansimadi"
+    from diskultimate.ui.dialogs.restore_layout import RestoreLayoutDialog
+    d12 = RestoreLayoutDialog(d11.plan, "yeni", d11)
+    d12.show()
+    app.processEvents()
+    assert d12.tree.topLevelItemCount() == len(d11.plan.parts)
+    d12._extend_last()
+    assert d12.result_layout().changed, "son bolum genisletilmedi"
+    assert not d12.result_layout().validate(), d12.result_layout().validate()
+    kaydet(d12, "38-bolumleri-yonet.png")
+    d12.accept()
+    d11.plan = d12.result_layout()
+    d11._on_target_changed()
+    assert not d11._problem(), d11._problem()
+    d11.tree.setCurrentItem(onceki_hedef)
+    app.processEvents()
+    assert not d11.size_unit.isVisible(), "birim kutusu yeni goruntu disinda gorunuyor"
     assert d11.content.topLevelItemCount() >= 1, "yedek icerigi listelenmedi"
     # Yikici islem: onay kutusu isaretlenmeden Baslat etkin olmamali
     assert not d11.btn_start.isEnabled(), \
@@ -992,8 +1286,46 @@ def main() -> int:
     app.processEvents()
     kaydet(d11, "37-geri-yukle.png")
     print(f"  (yedek penceresi: {d11.content.topLevelItemCount()} bolum, "
-          f"not {len(d11.remark.toPlainText())} karakter)")
+          f"not {len(d11.info_labels['remark'].text())} karakter)")
     d11.close()
+
+    # --- uygulamada acik fiziksel disk hedef listesinde TEK satir ---
+    # Eskiden hem "Acik goruntuler" hem "Fiziksel diskler" altindaydi ve
+    # ikinci satir secilince ayni aygita ikinci tutamac aciliyordu (ADR 0021).
+    # Gercek disk acilmaz: oturum taklit edilir.
+    from diskultimate.core.physical import DiskInfo
+
+    sahte_disk = DiskInfo(path="/dev/sahte-du", name="SAHTE DISK",
+                          size=pencere.session.image.size)
+
+    class _SahteFizikselOturum:
+        is_physical = True
+        disk_info = sahte_disk
+        name = "sahte-du"
+        image = pencere.session.image
+        partitions = list(pencere.session.partitions)
+        scheme = pencere.session.scheme
+        readonly = True
+
+    sahte = _SahteFizikselOturum()
+    d13 = BackupDialog(pencere, mode=MODE_BACKUP,
+                       sessions=[pencere.session, sahte], disks=[sahte_disk],
+                       surveys={}, session=pencere.session)
+    satirlar = [t for t in d13.targets
+                if t.kind in ("image", "physical")
+                and (t.session is sahte or t.disk is sahte_disk)]
+    assert len(satirlar) == 1, [(t.kind, t.label) for t in satirlar]
+    assert satirlar[0].kind == "physical" and satirlar[0].session is sahte, \
+        "acik disk satiri oturuma baglanmadi (ikinci tutamac acilirdi)"
+    bolumler = [t for t in d13.targets
+                if t.kind == "partition" and t.session is sahte]
+    assert len(bolumler) == len(sahte.partitions), "acik diskin bolumleri yok"
+    assert all(t.disk is sahte_disk for t in bolumler), \
+        "bolum satirlari fiziksel disk korumalarini tasimiyor"
+    gorunen = [d13.tree.topLevelItem(i).text(0)
+               for i in range(d13.tree.topLevelItemCount())]
+    d13.close()
+    print(f"  (hedef listesi: acik fiziksel disk tek satir — {gorunen})")
 
     # --- coklu goruntu: ikinci bir imaj acilinca ilki listede kalmali ---
     ikinci = os.path.join(scratch("ui"), "ikinci.img")
