@@ -62,6 +62,11 @@ def main() -> int:
     # Qt'nin kendi metinleri (Evet/Hayir, dosya diyalogu) de arayuz dilinde
     # olsun; yetki penceresinden ONCE ki o da cevrili acilsin.
     qt_i18n.install()
+    # Ikon paketleri calisma aninda adla yuklenir; paketlenmis kopyada eksik
+    # kalirsa (PyInstaller gormezse) burada gorunur.
+    from diskultimate.ui import iconpacks
+    diagnostics.info(f"ikon paketleri: {len(iconpacks.notices())}/"
+                     f"{len(iconpacks.MODULES)} yuklendi")
     # Gorunum: sistemin kendi Qt temasi. Ozel stil sayfasi uygulanmaz;
     # "Tema" bolumu eklendiginde buradan secilecek (bkz. theme.apply_theme).
     theme = apply_theme(app, os.environ.get("DISKULTIMATE_THEME", "system"))

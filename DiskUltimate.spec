@@ -44,6 +44,30 @@ if not os.path.isfile(ICON_ICO):
                      % ICON_ICO)
 datas.append((ICON_ICO, os.path.join('diskultimate', 'ui', 'resources')))
 
+# Gömülü ikon paketleri (ADR 0046). `ui/iconpacks/__init__.py` bunları
+# çalışma anında ADIYLA yükler (`importlib.import_module`); PyInstaller'ın
+# statik çözümlemesi bunu göremez ve modülleri pakete almaz. O durumda exe'de
+# beş paket seti ve Linux/macOS amblemleri sessizce klasik çizime düşerdi.
+# Liste klasörden türetilir: `tools/iconpacks.py` yeni paket üretirse spec'e
+# dokunmak gerekmez.
+ICONPACK_MODULES = [
+    'diskultimate.ui.iconpacks.' + os.path.splitext(os.path.basename(p))[0]
+    for p in sorted(glob.glob(os.path.join(SRC, 'diskultimate', 'ui',
+                                           'iconpacks', '*.py')))
+    if os.path.basename(p) != '__init__.py'
+]
+if len(ICONPACK_MODULES) < 6:
+    raise SystemExit('DiskUltimate.spec: ui/iconpacks/*.py eksik (%d bulundu) — '
+                     'uret: python3 tools/iconpacks.py' % len(ICONPACK_MODULES))
+
+# Qt'nin kendi çevirileri: yalnızca uygulamanın dilleri (Türkçe kaynak dil +
+# `.po` sözlüğü olanlar; İngilizce Qt'nin kendi dili, dosyası boştur).
+# `ui/qt_i18n.py` bunları yükler: dosya diyaloğu, sağ tık menüsü gibi Qt
+# metinleri arayüz dilinde görünür (standart düğmeler zaten sözlüğümüzden).
+QT_LANGS = sorted({'tr'} | {
+    os.path.splitext(os.path.basename(p))[0] for p, _dest in datas
+    if p.endswith('.po')} - {'en'})
+
 # EXE'ye gömülecek ikon: Windows `.ico`, macOS `.icns` ister. Linux'ta
 # PyInstaller bu alanı UYGULAMAZ, yalnızca "Ignoring icon; supported only on
 # Windows and macOS!" uyarısı basar — bu yüzden orada hiç verilmez, yoksa her
@@ -59,7 +83,7 @@ a = Analysis(
     pathex=[SRC],
     binaries=[],
     datas=datas,
-    hiddenimports=[],
+    hiddenimports=ICONPACK_MODULES,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -123,11 +147,20 @@ _DROP = re.compile(
 )
 a.binaries = [b for b in a.binaries if not _DROP.search(b[0])]
 
-# Qt'nin kendi çevirileri (~1,6 MB) — uygulama metinlerini kendi `.po`
-# sözlüklerinden okur (ADR 0027), QTranslator kullanılmaz. `uic` widget-plugin
-# stub'ları da gerekmez: projede hiç `.ui` dosyası yok, arayüz koddan kurulur.
+# Qt'nin kendi çevirileri (~1,6 MB): uygulama metinleri kendi `.po`
+# sözlüklerinden gelir (ADR 0027), ama Qt'nin KENDİ metinleri (dosya diyaloğu,
+# sağ tık menüsü) `qtbase_<dil>.qm` ister (`ui/qt_i18n.py`). Yalnızca
+# uygulamanın dilleri tutulur (~300 KB); geri kalanı atılır. `uic`
+# widget-plugin stub'ları da gerekmez: projede hiç `.ui` dosyası yok.
 _DROP_DATA = re.compile(r'(Qt5[/\\]translations[/\\]|uic[/\\]widget-plugins[/\\])', re.I)
-a.datas = [d for d in a.datas if not _DROP_DATA.search(d[0])]
+_KEEP_QT = re.compile(r'Qt5[/\\]translations[/\\]qtbase_(%s)\.qm$'
+                      % '|'.join(QT_LANGS), re.I)
+a.datas = [d for d in a.datas
+           if _KEEP_QT.search(d[0]) or not _DROP_DATA.search(d[0])]
+_kept = [d[0] for d in a.datas if _KEEP_QT.search(d[0])]
+if len(_kept) < len(QT_LANGS):
+    print('UYARI: Qt cevirisi eksik (%s bekleniyordu, bulunan: %s) — dosya '
+          'diyalogu Ingilizce kalir' % (QT_LANGS, _kept))
 
 pyz = PYZ(a.pure)
 

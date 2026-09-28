@@ -30,6 +30,7 @@ from typing import List, Optional
 from PyQt5.QtCore import QCoreApplication, QLibraryInfo, QTranslator
 
 from .. import i18n
+from ..core import diagnostics
 from ..i18n import mark, tr
 
 # Qt kaynak metni -> bizim kaynak metnimiz (Turkce, `tr()` ile cevrilir)
@@ -121,5 +122,8 @@ def apply(code: str = None) -> dict:
 def install() -> dict:
     """Uygulama acilisinda bir kez: kurar ve dil degisimini dinler."""
     result = apply()
+    # Paketlenmis kopyada .qm'nin gercekten geldigi buradan okunur
+    diagnostics.info(f"qt cevirisi: qtbase={'var' if result['qtbase'] else 'yok'}"
+                     f" dil={result['language']}")
     i18n.add_listener(lambda code: apply(code))
     return result

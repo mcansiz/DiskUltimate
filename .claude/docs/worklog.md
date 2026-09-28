@@ -4986,3 +4986,41 @@ listesi), `diag_check` 13/13. `i18n_check` TAMAM (16 yeni metin),
   gosteriyordu (ham bolum icin en az 1 sektor) ama model kucultmeyi
   reddediyordu; pencere artik sinirlari modelden (`Slot`) alir. `ui_smoke`
   yeniden TAMAM.
+
+## 2026-09-28 (12) — Paketleme: ikon paketleri ve Qt cevirisi exe'ye
+
+Spec'te bu oturumdan kalan iki eksik:
+- **Ikon paketleri exe'ye girmiyordu.** `ui/iconpacks/*` calisma aninda
+  `importlib` ile adla yuklenir; PyInstaller gormez. Exe'de bes paket seti
+  ve Linux/macOS amblemleri sessizce klasik cizime duserdi. Spec artik
+  modulleri klasorden turetip `hiddenimports`a koyar; eksikse durur.
+- **Qt cevirileri siliniyordu** ("QTranslator kullanilmaz" gerekcesi artik
+  gecersiz, ADR 0046 sonrasi `ui/qt_i18n`). Yalnizca uygulamanin dilleri
+  (`.po`dan turetilir: tr, de) icin `qtbase_<dil>.qm` tutulur (~300 KB);
+  eksikse uyari basilir.
+- Acilis gunlugune iki satir: `qt cevirisi: qtbase=... dil=...` ve
+  `ikon paketleri: N/6 yuklendi` — paketlenmis kopyada dogrulama icin.
+
+Win10 VM'de derlendi (PyInstaller 6.22.3, 24.8 MB):
+- Arsiv icerigi: 6/6 ikon modulu, `qtbase_tr.qm` + `qtbase_de.qm` (digerleri
+  atildi), `app-icon.ico`.
+- Exe calistirildi (`--no-root`): gunlukte `qtbase=var dil=tr`,
+  `ikon paketleri: 6/6 yuklendi`, platform windows.
+- Exe'nin gomulu ikonu Windows'a cikartildi: dogru (favicon).
+Linux/macOS paketlemesi sinanmadi.
+
+## 2026-09-28 (13) — Linux dagitimi karari: AppImage + musl (ADR 0050, PLANLANDI)
+
+Kullanici sordu: Linux icin AppImage mi? musl sistemler? Karar ADR 0050'de,
+**uygulama sonraki oturuma birakildi** (kullanici istegi).
+
+- AppImage birincil bicim; Flatpak/Snap elendi (ham disk erisimi yok),
+  .deb ileride ek secenek.
+- Bulgu: gelistirme makinesi glibc 2.43, Mint 22.3 VM 2.39 — burada derlenen
+  PyInstaller ikilisi Mint'te acilmaz; derleme eski tabanda (Mint VM) olmali.
+- Bulgu: `platform.py:240-241` yetkili kopyayi `sys.executable` ile baslatir;
+  AppImage'da bu FUSE baglantisini gosterir ve root erisemez -> once
+  `$APPIMAGE` duzeltmesi (zorunlu).
+- musl: resmi ikili yok, kaynaktan calistirma desteklenir (`py3-qt5`,
+  `doas`); AppImage'in `AppRun`u musl'da anlasilir mesajla durur.
+Siradaki oturumun is listesi ve dogrulanmamis varsayimlar ADR 0050'de.
