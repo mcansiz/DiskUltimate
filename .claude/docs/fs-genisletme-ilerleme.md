@@ -86,7 +86,7 @@ Isaretler: `[ ]` bekliyor · `[~]` suruyor · `[x]` bitti · `[-]` kapsam disi (
       xfs_repair temiz; t66. Cekirdek baglamasi sinanmadi (root yok)
 - [x] XFS buyutme (ADR 0068): cevrimdisi; son AG uzatma + yeni AG (rmapbt/reflink
       dahil), gunluk temizligi denetimi, tasima; xfs_repair temiz, icerik birebir;
-      t67. Windows kosusu yapilamadi (misafir disk dolunca kapandi)
+      t67. Windows 64/67 (2026-10-01, misafir yeniden baslatildiktan sonra)
 - [ ] btrfs okuma (zlib; LZO/zstd icin durust hata → saf cozucu)
 - [ ] F2FS okuma
 
@@ -122,3 +122,5 @@ Isaretler: `[ ]` bekliyor · `[~]` suruyor · `[x]` bitti · `[-]` kapsam disi (
 - 2026-09-29 tur 8: XFS bicimlendirme (ADR 0067). Linux 64/66, Windows 63/66.
 - 2026-09-29 tur 9: XFS buyutme (ADR 0068). Linux 65/67; Windows kosulamadi
   (ana makine diski doldu, win10 misafiri 'aborted'). Dongu durduruldu.
+- 2026-10-01: kullanici diski buyuttu (68 GB bos); commit a5f9725 push edildi;
+  misafir yeniden baslatildi, Windows 64/67. Dongu kalan 4 maddeyle surer.

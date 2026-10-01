@@ -5365,3 +5365,13 @@ calismiyordu.
   goruntuler silindi, test VHD'leri misafirden ayrilip kayittan dusuldu
   (SATA 3-6 bos; SATA 2 du-test-disk.vdi yerinde). Bos alan 4,7 GB.
   Misafir yeniden baslatilmadi — kullanici karari. Windows kosusu bekliyor.
+
+## 2026-10-01 (1) — Ortam toparlandi, commit, Windows dogrulamasi
+
+- Kullanici ana makinede yer acti (disk 149 GB, 68 GB bos).
+- Commit: 95fd3c1 (archify becerisi, ADR 0051 — onceki oturumun isi) ve
+  a5f9725 (dosya sistemi genisletme, ADR 0052-0068); main'e push edildi.
+- win10 misafiri headless yeniden baslatildi (aborted durumundan sorunsuz
+  acildi). Windows run_all 64/67 (3 atlanan Linux araci istiyor); XFS
+  t65-t67 Windows'ta gecti.
+- Dongu kalan maddelerle devam: btrfs okuma, F2FS okuma, APFS, ReFS.
