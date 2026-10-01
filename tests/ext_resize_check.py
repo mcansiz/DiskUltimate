@@ -118,9 +118,40 @@ def make(img: str, mkfs: str, opts: str, size: str, src: str) -> None:
     if os.path.exists(img):
         os.remove(img)
     _run(["truncate", "-s", size, img])
+    if mkfs == "du-ext4":
+        make_own(img, opts, src)
+        return
     r = _run([_tool(mkfs), "-q", "-F", "-d", src] + opts.split() + [img])
     if r.returncode:
         raise RuntimeError(f"{mkfs} {opts}: {r.stderr}")
+
+
+def make_own(img: str, opts: str, src: str) -> None:
+    """Kendi bicimlendiricimiz + libext2fs ile (debugfs write) doldurma.
+
+    Bicimlendiricinin urettigi birimi baska bir uygulamanin (e2fsprogs)
+    yazma yolundan gecirir: extent, flex_bg ve metadata_csum dogru
+    kurulmamissa debugfs ya da sonraki e2fsck yakalar (ADR 0073).
+    """
+    from diskultimate.core.ext import format_ext
+    d = DiskImage(img)
+    try:
+        bs = 1024 if "-b 1024" in opts else 0
+        format_ext(d, "ext4", label="DUEXT4", block_size=bs)
+    finally:
+        d.close()
+    cmds = os.path.join(TMP, "cmds")
+    with open(cmds, "w") as f:
+        for d_, dirs, files in os.walk(src):
+            rel = os.path.relpath(d_, src)
+            dest = "/" if rel == "." else "/" + rel.replace(os.sep, "/")
+            for x in sorted(dirs):
+                f.write(f"mkdir {dest.rstrip('/')}/{x}\n")
+            for x in sorted(files):
+                f.write(f"write {os.path.join(d_, x)} {dest.rstrip('/')}/{x}\n")
+    r = _run([_tool("debugfs"), "-w", "-f", cmds, img])
+    if r.returncode or "rror" in r.stderr:
+        raise RuntimeError(f"debugfs write: {r.stderr[-400:]}")
 
 
 def grow_to(img: str, size: str) -> int:
@@ -196,9 +227,11 @@ def main() -> int:
         ("mkfs.ext2", "-b 1024", "16M", "300M"),
         ("mkfs.ext4", "-O meta_bg,^resize_inode", "64M", "30G"),
         ("mkfs.ext4", "", "100M", "133M"),
+        ("du-ext4", "", "64M", "5G"),
+        ("du-ext4", "-b 1024", "20M", "900M"),
     ]
     if QUICK:
-        grow_cases = [grow_cases[i] for i in (1, 2, 4, 5, 9)]
+        grow_cases = [grow_cases[i] for i in (1, 2, 4, 5, 9, 14)]
     for mk, opts, old, new in grow_cases:
         make(img, mk, opts, old, src_small)
         n = grow_to(img, new)
@@ -209,6 +242,15 @@ def main() -> int:
     for size in ("3G", "40G", "41G"):
         grow_to(img, size)
     c.verify(img, small, "ext4 ^resize_inode 32M->3G->40G->41G")
+    make(img, "du-ext4", "", "32M", src_small)
+    for size in ("3G", "40G", "41G"):
+        grow_to(img, size)
+    c.verify(img, small, "du-ext4 32M->3G->40G->41G")
+
+    print("Kucultme: kendi bicimlendiricimizin birimi")
+    make(img, "du-ext4", "", "3G", src_small)
+    n, mi, mb = shrink_min(img)
+    c.verify(img, small, "du-ext4 3G->en kucuk", f"({n} blok, {mb} blok tasindi)")
 
     print("Kucultme: gunluk tasinir")
     for mk, opts in [("mkfs.ext4", ""), ("mkfs.ext3", ""), ("mkfs.ext4", "-b 1024"),

@@ -40,6 +40,38 @@ def _serialized(method):
     return wrapper
 
 
+WRITE_PROGRESS_CHUNK = 4 * 1024 * 1024
+
+
+def _observed(method):
+    """Yazma gozlemcisi: `aygit.write_observer = f` ise her yazimdan sonra
+    `f(bayt)` cagrilir.
+
+    Dosya ekleme ilerlemesi icin: dosya sistemi yazicilari dosyayi cogu kez
+    tek parca okuyup yazar, yani "dosyanin ne kadari yazildi" bilgisini
+    disari vermez. Aygit katmaninda sayilan bayt her dosya sisteminde ayni
+    sekilde ilerleme verir. Gozlemci varken buyuk yazimlar 4 MB'lik
+    parcalara bolunur — tek bir 2 GB'lik yazim cubugu 0'dan 100'e
+    atlatirdi. Gozlemci yokken davranis degismez.
+    """
+    @functools.wraps(method)
+    def wrapper(self, offset, data):
+        observer = self.__dict__.get("write_observer")
+        if observer is None:
+            return method(self, offset, data)
+        if len(data) <= WRITE_PROGRESS_CHUNK:
+            result = method(self, offset, data)
+            observer(len(data))
+            return result
+        view = memoryview(data)
+        for i in range(0, len(data), WRITE_PROGRESS_CHUNK):
+            part = bytes(view[i:i + WRITE_PROGRESS_CHUNK])
+            method(self, offset + i, part)
+            observer(len(part))
+        return None
+    return wrapper
+
+
 class BlockDevice:
     """Blok aygiti arayuzu: DiskImage ve PartitionView bunu uygular.
 
@@ -55,6 +87,8 @@ class BlockDevice:
         for name in ("read", "write"):
             method = cls.__dict__.get(name)
             if method is not None and not getattr(method, "_serialized", False):
+                if name == "write":
+                    method = _observed(method)
                 setattr(cls, name, _serialized(method))
 
     @property

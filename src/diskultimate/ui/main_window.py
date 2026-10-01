@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QDialog,
 
 from ..core.fsregistry import fs_display
 from ..core import diagnostics
+from ..core import platform
 from ..core import operations as ops
 from ..core.formatter import FS_BY_KEY
 from ..core.physical import (AccessDeniedError, PhysicalDiskError,
@@ -861,8 +862,15 @@ class MainWindow(QMainWindow):
     # ==================================================================
     # Goruntu islemleri
     # ==================================================================
+    def _image_dir(self) -> str:
+        """Yeni goruntu/klon icin klasor: acik goruntununki, fiziksel diskte
+        kullanicinin belge klasoru (ADR 0073 — eskiden /dev oneriliyordu)."""
+        if self.session is None:
+            return platform.default_image_dir()
+        return platform.suggested_image_dir(self.session.path, self.session.is_physical)
+
     def new_image(self) -> None:
-        default = os.path.dirname(self.session.path) if self.session else ""
+        default = self._image_dir()
         dlg = NewImageDialog(self, default)
         if exec_dialog(dlg) != NewImageDialog.Accepted:
             return
@@ -1626,7 +1634,7 @@ class MainWindow(QMainWindow):
             return
         path, _ = QFileDialog.getSaveFileName(
             self, tr("Klon hedefi"),
-            os.path.join(os.path.dirname(self.session.path),
+            os.path.join(self._image_dir(),
                          f"{os.path.splitext(self.session.name)[0]}-klon.img"),
             tr("Disk goruntusu (*.img)"))
         if not path:
@@ -1835,11 +1843,10 @@ class MainWindow(QMainWindow):
     # Diger araclar
     # ==================================================================
     def new_vhd(self) -> None:
-        default = os.path.dirname(self.session.path) if self.session else ""
+        default = self._image_dir()
         dlg = NewImageDialog(self, default)
         dlg.setWindowTitle(tr("Yeni Sanal Disk (VHD)"))
-        dlg.path_edit.setText(os.path.join(default or os.path.expanduser("~"),
-                                           "yeni-disk.vhd"))
+        dlg.path_edit.setText(os.path.join(default, "yeni-disk.vhd"))
         if exec_dialog(dlg) != NewImageDialog.Accepted:
             return
         v = dlg.values()

@@ -127,6 +127,47 @@ def actual_size(path: str) -> int:
         return 0
 
 
+def allocated_in_range(path: str, offset: int, length: int) -> int:
+    """Dosyanin [offset, offset+length) araliginda diskte gercekten ayrilmis
+    bayt (seyrek dosyada delikler sayilmaz). POSIX'te SEEK_DATA/SEEK_HOLE;
+    olculemezse (Windows, eski cekirdek) `length` — yani en kotu durum."""
+    seek_data = getattr(os, "SEEK_DATA", None)
+    seek_hole = getattr(os, "SEEK_HOLE", None)
+    if seek_data is None or seek_hole is None or length <= 0:
+        return max(0, length)
+    end = offset + length
+    total = 0
+    try:
+        fd = os.open(path, os.O_RDONLY)
+    except OSError:
+        return length
+    try:
+        pos = offset
+        while pos < end:
+            try:
+                data = os.lseek(fd, pos, seek_data)
+            except OSError:                         # ENXIO: sonra veri yok
+                break
+            if data >= end:
+                break
+            hole = os.lseek(fd, data, seek_hole)
+            total += min(hole, end) - data
+            pos = hole
+    except OSError:
+        return length
+    finally:
+        os.close(fd)
+    return total
+
+
+def free_space(path: str) -> int:
+    """Yolun bulundugu dosya sisteminde bos bayt (bilinmiyorsa -1)."""
+    try:
+        return shutil.disk_usage(os.path.dirname(os.path.abspath(path))).free
+    except OSError:
+        return -1
+
+
 def supports_sparse(path: str) -> bool:
     """Hedef konumun seyrek dosya destekleyip desteklemedigini tahmin eder."""
     if IS_WINDOWS:
@@ -901,13 +942,115 @@ def open_folder(path: str) -> bool:
     return True
 
 
+def user_home() -> str:
+    """Kullanicinin ev dizini. Yetkili kopyada (pkexec/sudo) `~` /root'a
+    cikar; yetkiyi veren kullanicinin dizini dondurulur."""
+    who = invoking_user()
+    if who is not None:
+        try:
+            import pwd
+            return pwd.getpwuid(who[0]).pw_dir
+        except Exception:                              # noqa: BLE001
+            pass
+    return os.path.expanduser("~")
+
+
 def default_image_dir() -> str:
     """Yeni goruntuler icin varsayilan klasor."""
+    home = user_home()
     for name in ("Documents", "Belgeler"):
-        path = os.path.join(os.path.expanduser("~"), name)
+        path = os.path.join(home, name)
         if os.path.isdir(path):
             return path
-    return os.path.expanduser("~")
+    return home
+
+
+def is_device_path(path: str) -> bool:
+    """Yol bir aygit dugumu mu? (fiziksel disk oturumunun yolu)"""
+    if not path:
+        return False
+    if IS_WINDOWS:
+        norm = path.replace("/", "\\").lower()
+        return norm.startswith("\\\\.\\") or norm.startswith("\\\\?\\globalroot")
+    return path.startswith("/dev/")
+
+
+def suggested_image_dir(current_path: str = "", physical: bool = False) -> str:
+    """Yeni goruntu/klon icin onerilen klasor: acik **goruntunun** klasoru,
+    yoksa (fiziksel disk ya da aygit yolu) kullanicinin belge klasoru.
+    Eskiden acik fiziksel diskin klasoru (/dev) oneriliyordu (ADR 0073)."""
+    if current_path and not physical and not is_device_path(current_path):
+        folder = os.path.dirname(os.path.abspath(current_path))
+        if os.path.isdir(folder) and not image_location_problem(folder, 0)[0]:
+            return folder
+    return default_image_dir()
+
+
+# Bellekte ya da cekirdek tarafindan uretilen, dosya saklanmayan sistemler
+_PSEUDO_FS = {"devtmpfs", "devfs", "proc", "sysfs", "devpts", "securityfs",
+              "debugfs", "tracefs", "configfs", "pstore", "efivarfs", "bpf",
+              "mqueue", "hugetlbfs", "fusectl", "cgroup", "cgroup2", "autofs",
+              "binfmt_misc", "rpc_pipefs", "nsfs"}
+_RAM_FS = {"tmpfs", "ramfs"}
+
+
+def _mount_fstype(folder: str) -> str:
+    """Klasorun bagli oldugu dosya sistemi turu (Linux/macOS; bilinmiyorsa '')."""
+    if IS_WINDOWS:
+        return ""
+    folder = os.path.realpath(folder)
+    best, kind = "", ""
+    try:
+        with open("/proc/self/mounts", encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                parts = line.split()
+                if len(parts) < 3:
+                    continue
+                point = parts[1].replace("\\040", " ")
+                if (folder == point or folder.startswith(point.rstrip("/") + "/")) \
+                        and len(point) >= len(best):
+                    best, kind = point, parts[2]
+    except OSError:
+        if IS_MACOS and (folder == "/dev" or folder.startswith("/dev/")):
+            return "devfs"
+    return kind
+
+
+def image_location_problem(folder: str, size_bytes: int,
+                           sparse: bool = True) -> Tuple[str, str]:
+    """(engel, uyari) — engel bos degilse goruntu oraya **olusturulmaz**.
+
+    * Aygit/sozde dosya sistemi (/dev = devtmpfs, /proc, /sys...): engel.
+      Goruntu bellege yazilir, sistem aygit dugumu olusturamaz hale gelir
+      (2026-10-01'de yasandi: /dev doldu, tasima yarida kaldi).
+    * Bellek tabanli (tmpfs) ya da bos yer yetersiz: uyari. Seyrek goruntu
+      ilk anda yer kaplamaz ama doldukca (tasima, yedek geri yukleme) buyur.
+    """
+    if is_device_path(folder.rstrip("/\\") + "/") or folder.rstrip("/") == "/dev":
+        return tr("Aygit klasorune ({}) goruntu olusturulamaz; bu alan bellekte "
+                  "tutulur ve dolunca sistem aygit dugumu olusturamaz.", folder), ""
+    kind = _mount_fstype(folder)
+    if kind in _PSEUDO_FS:
+        return tr("{} bir sistem/aygit dosya sistemi ({}); goruntu buraya "
+                  "olusturulamaz.", folder, kind), ""
+    uyarilar = []
+    if kind in _RAM_FS:
+        uyarilar.append(tr("{} bellekte tutulan bir dosya sistemi ({}); goruntu "
+                           "RAM kullanir ve yeniden baslatmada silinir.", folder, kind))
+    try:
+        free = shutil.disk_usage(folder).free
+    except OSError:
+        free = -1
+    if size_bytes and 0 <= free < size_bytes:
+        from .ptable import human_size
+        if sparse:
+            uyarilar.append(tr("Hedefte {} bos alan var, goruntu {}. Seyrek goruntu "
+                               "doldukca yer biter ve islemler yarida kalabilir.",
+                               human_size(free), human_size(size_bytes)))
+        else:
+            return tr("Hedefte yalnizca {} bos alan var; {} goruntu sigmaz.",
+                      human_size(free), human_size(size_bytes)), ""
+    return "", "\n".join(uyarilar)
 
 
 def config_dir() -> str:

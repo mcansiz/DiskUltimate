@@ -6,6 +6,7 @@ icine baglanir; arayuz tarafinda degisiklik gerekmez.
 """
 from __future__ import annotations
 
+import contextlib
 import datetime
 import os
 from dataclasses import dataclass
@@ -45,6 +46,9 @@ class FileNode:
     readonly: bool = False
 
 
+PROGRESS_STEP = 1024 * 1024        # dosya ekleme ilerlemesi bildirim araligi
+
+
 class FileSystemAccess:
     """Bolum icerigine erisim icin ortak arayuz."""
 
@@ -77,6 +81,84 @@ class FileSystemAccess:
 
     def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
         raise NotImplementedError
+
+    # Bolumun aygiti (PartitionView); open_filesystem atar. Yazilan bayti
+    # saymak icin kullanilir (ilerleme), dosya sistemi kodu buna dokunmaz.
+    device: Optional[BlockDevice] = None
+
+    @contextlib.contextmanager
+    def _watch_writes(self, on_bytes):
+        """Bu blok boyunca aygita yazilan bayt `on_bytes(n)` ile bildirilir."""
+        dev = self.device
+        if dev is None or on_bytes is None:
+            yield
+            return
+        previous = dev.__dict__.get("write_observer")
+        dev.write_observer = on_bytes
+        try:
+            yield
+        finally:
+            if previous is None:
+                dev.__dict__.pop("write_observer", None)
+            else:
+                dev.write_observer = previous
+
+    def _import_with_progress(self, source: str, target: str, size: int,
+                              done: int, total: int, progress) -> None:
+        """Tek dosya; ilerleme dosyanin ICINDE de yurur (yazilan bayta gore).
+
+        Yazilan bayt veri + metaveridir; dosya boyunu asmamasi icin kirpilir.
+        """
+        name = os.path.basename(source)
+        if progress is None:
+            self.import_file(source, target)
+            return
+        written = [0, 0]                 # yazilan, son bildirilen (kirpilmis)
+
+        def on_bytes(n: int) -> None:
+            # FAT sektor sektor yazar (40 MB = 80 000 yazim); her birini
+            # bildirmek arayuzu sinyale bogar. ~1 MB'ta bir bildirilir.
+            # Kirpilmis deger karsilastirilir: kucuk dosyada metaveri (FAT
+            # kopyalari) dosyadan cok yazilir, ayni degeri tekrar bildirmek
+            # anlamsizdir.
+            written[0] += n
+            shown = min(written[0], size)
+            if shown - written[1] >= PROGRESS_STEP:
+                written[1] = shown
+                progress(done + shown, total, name)
+
+        progress(done, total, name)
+        with self._watch_writes(on_bytes):
+            self.import_file(source, target)
+
+    def import_files(self, paths: List[str], dest_dir: str = "/",
+                     progress=None) -> tuple:
+        """Dosyalari tek tek ekler; (eklenen, sorunlar) dondurur.
+
+        `progress(yapilan_bayt, toplam_bayt, ad)` dosya yazilirken de
+        cagrilir: tek buyuk dosyada bile cubuk ilerler ve kalan sure
+        hesaplanabilir. Bir dosyanin hatasi digerlerini durdurmaz.
+        """
+        sizes = []
+        for path in paths:
+            try:
+                sizes.append(os.path.getsize(path))
+            except OSError:
+                sizes.append(0)
+        total = sum(sizes)
+        done = copied = 0
+        problems: List[str] = []
+        for path, size in zip(paths, sizes):
+            try:
+                self._import_with_progress(path, dest_dir, size, done, total,
+                                           progress)
+                copied += 1
+            except Exception as exc:                     # noqa: BLE001
+                problems.append(f"{os.path.basename(path)}: {exc}")
+            done += size
+        if progress is not None:
+            progress(total, total, "")
+        return copied, problems
 
     def import_tree(self, local_dir: str, dest_dir: str = "/", progress=None) -> int:
         """Yerel klasoru birime kopyalar; kopyalanan dosya sayisini dondurur.
@@ -115,9 +197,8 @@ class FileSystemAccess:
             if target not in made:
                 self._ensure_dir(target)
                 made.add(target)
-            if progress is not None:
-                progress(done, total, os.path.basename(source))
-            self.import_file(source, target)
+            self._import_with_progress(source, target, size, done, total,
+                                       progress)
             done += size
             count += 1
         if not files:
@@ -895,6 +976,14 @@ def open_filesystem(view: BlockDevice,
 
     Bicimlendirilmemis bolumlerde None doner.
     """
+    access = _open_filesystem(view, info)
+    if access is not None:
+        access.device = view
+    return access
+
+
+def _open_filesystem(view: BlockDevice,
+                     info: Optional[FSInfo]) -> Optional[FileSystemAccess]:
     info = info or detect(view)
     if not info.fs_type:
         return None

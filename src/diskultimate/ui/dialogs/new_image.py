@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox,
                              QGroupBox, QHBoxLayout, QLabel, QLineEdit,
                              QMessageBox, QPushButton, QVBoxLayout)
 
+from ...core import platform
 from ...core.formatter import all_kinds
 from ...core.ptable import human_size
 from ...i18n import tr
@@ -33,7 +34,7 @@ class NewImageDialog(QDialog):
         file_group = QGroupBox(tr("Goruntu dosyasi"))
         form = QFormLayout(file_group)
         path_line = QHBoxLayout()
-        default = os.path.join(default_dir or os.path.expanduser("~"), "yeni-disk.img")
+        default = os.path.join(default_dir or platform.default_image_dir(), "yeni-disk.img")
         self.path_edit = QLineEdit(default)
         path_line.addWidget(self.path_edit, 1)
         gozat = QPushButton(tr("Gozat..."))
@@ -138,6 +139,18 @@ class NewImageDialog(QDialog):
             QMessageBox.warning(self, tr("Gecersiz konum"),
                                 tr("Klasor bulunamadi:\n{}", klasor))
             return
+        blocker, warning = platform.image_location_problem(
+            klasor, self.size_bytes(), self.sparse_check.isChecked())
+        if blocker:
+            QMessageBox.warning(self, tr("Uygun olmayan konum"), blocker)
+            return
+        if warning:
+            cevap = QMessageBox.question(
+                self, tr("Konum uyarisi"),
+                tr("{}\n\nYine de bu konumda olusturulsun mu?", warning),
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if cevap != QMessageBox.Yes:
+                return
         if os.path.exists(path):
             cevap = QMessageBox.question(
                 self, tr("Dosya var"),

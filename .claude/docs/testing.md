@@ -523,6 +523,20 @@ Not: `Get-Volume` Windows 10'da exFAT icin `FileSystemType=Unknown` doner
 (mkfs.exfat birimi de ayni); `FileSystem`/`DriveInfo.DriveFormat` "exFAT".
 Disk: saklanan goruntuler tasimadan sonra seyrek kalmaz (~600 MB/adet).
 
+## 2026-10-01 — ADR 0073 (goruntu konumu, tasima, ext4 ozellikleri, ekleme ilerlemesi)
+
+| Denetim | Linux (ana makine, goruntu) | Windows (VBox win10) |
+|---|---|---|
+| `tests.run_all` | 72/74, 2 atlandi (Windows dali) | 71/74, 3 atlandi (e2fsck/mkswap yok), 0 hata |
+| `tests.ui_smoke` | tamam (Qt metinleri + kalan sure) | tamam |
+| `tests.ext_resize_check` | 32/32 (yeni du-ext4 satirlari) | — (e2fsprogs yok) |
+| `tests.ext_write_check` | 4/4 | — |
+| `diag_check` / `i18n_check` / `platform_check` | 13/13 / BASARILI / 0 | — |
+
+Kullanici senaryosu (20 GB diskin seyrek kopyasi, ext4 7,75 -> 9,77 GB sola
+tasima): goruntu 1,0 -> 1,5 GB (eskiden 21 GB), 8,6 sn, 1963 dosya birebir,
+e2fsck temiz. Cekirdek baglamasi yapilmadi (root yok).
+
 ## Harici dogrulama (elle)
 
 ```bash

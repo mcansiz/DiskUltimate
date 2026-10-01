@@ -273,6 +273,51 @@ def dil_denetimi(pencere, app, hedef: str) -> None:
     print(f"  (dil degisimi: {', '.join(diller)} denendi, Turkce'ye donuldu)")
 
 
+def qt_metin_denetimi(qt_i18n, durum: dict) -> None:
+    """Dugme cevirmeni Qt'nin KENDI metinlerini bosaltmamali.
+
+    2026-10-01: cevirmen bilmedigi metne "" donduruyordu; PyQt bunu gecerli
+    (bos) ceviri sayip dosya penceresinin butun etiketlerini sildi ve her
+    acilista "QString::arg: Argument missing" uyarisi basti (ADR 0073).
+    """
+    from PyQt5.QtCore import QCoreApplication
+    ornekler = (("QFileDialog", "File &name:"), ("QFileDialog", "%1 File"),
+                ("QFileDialog", "Look in:"), ("QFileSystemModel", "Name"))
+    for ctx, kaynak in ornekler:
+        sonuc = QCoreApplication.translate(ctx, kaynak)
+        assert sonuc, f"Qt metni bosaldi: {ctx} {kaynak!r}"
+        if "%1" in kaynak:
+            assert "%1" in sonuc, f"yer tutucu kayip: {ctx} {kaynak!r} -> {sonuc!r}"
+    iptal = QCoreApplication.translate("QDialogButtonBox", "&Cancel")
+    assert iptal, "dugme cevirisi bos"
+    if durum["qtbase"] and durum["language"] not in ("en", "qps"):
+        assert QCoreApplication.translate("QFileDialog", "File &name:") != "File &name:", \
+            "qtbase yuklendi ama dosya penceresi cevrilmedi"
+    print("  (Qt metinleri bos degil, yer tutucular yerinde)")
+
+
+def tahmin_denetimi() -> None:
+    """Ilerleme penceresi: gecen ve kalan sure (sahte saatle)."""
+    from diskultimate.ui.dialogs.task import Estimator, clock_text
+    assert clock_text(7) == "0:07" and clock_text(760) == "12:40"
+    assert clock_text(3909) == "1:05:09"
+    saat = [100.0]
+    e = Estimator(clock=lambda: saat[0])
+    e.update(0)
+    saat[0] += 1
+    e.update(0.5)
+    assert e.remaining() is None                # erken: tahmin yok
+    saat[0] += 9
+    e.update(25)                                 # 10 sn'de %25
+    assert abs(e.remaining() - 30) < 0.01, e.remaining()
+    assert "0:30" in e.text() and "0:10" in e.text(), e.text()
+    e.update(5)                                  # yeni asama: olcum yeniden
+    assert e.remaining() is None
+    e.update(-1)                                 # belirsiz: yalnizca gecen sure
+    assert e.remaining() is None and "0:10" in e.text()
+    print("  (ilerleme penceresi: gecen/kalan sure dogru)")
+
+
 def main() -> int:
     hedef = scratch("screenshots")
     goruntu = ornek_goruntu()
@@ -287,6 +332,8 @@ def main() -> int:
     qt_durumu = qt_i18n.install()
     print(f"  (Qt cevirisi: qtbase {'yuklendi' if qt_durumu['qtbase'] else 'yok'}"
           f", dugmeler sozlukten)")
+    qt_metin_denetimi(qt_i18n, qt_durumu)
+    tahmin_denetimi()
 
     pencere = MainWindow()
     pencere.resize(1400, 860)

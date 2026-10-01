@@ -77,3 +77,5 @@ başlangıcı sola taşımak + büyütmek (7,75 GB veri kopyası).
 4. H4: Qt ileti işleyicisinde bu uyarıyı filtrele ya da qtbase çevirisinin
    dosya penceresi metnini düzelt.
 5. H5: ext4 varsayılanlarına extent (+flex_bg) ekle; e2fsck ile doğrula.
+
+**Durum (ayni gun):** bes bulgu da duzeltildi — ADR 0073.

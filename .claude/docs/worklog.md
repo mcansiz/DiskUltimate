@@ -5439,3 +5439,29 @@ calismiyordu.
   (seyreklik bozuluyor), Qt Turkce ceviri uyarilari, ext4 ozellik seti.
 - `/dev/yeni-disk.img` hala duruyor, /dev %100 dolu — kullaniciya bildirildi.
 - Duzeltmeler kullanici onayina birakildi.
+
+## 2026-10-01 (7) — Analizdeki 5 bulgu duzeltildi + dosya ekleme ilerlemesi (ADR 0073)
+
+- H1: goruntu varsayilan klasoru artik kullanicinin evi (pkexec altinda da);
+  acik oturum fiziksel aygitsa `/dev` onerilmez. `platform.image_location_problem`
+  aygit/sahte FS'i reddeder, tmpfs ve yetersiz bos yer icin uyarir (t72).
+- H2: tasima kesintisi `MoveInterrupted` — kaynak saglam mi, kac sektor;
+  "BOZUK" durumda sektor sayilari mesajda ve tanilama gunlugunde (t73).
+- H3: tasima ayni icerigi yazmaz (seyreklik korunur); seyrek goruntude
+  gereken yer on denetimi (t73). t73'un kesinti tetigi bayt sayisindan
+  konuma cevrildi (flex_bg ile yerlesim degisince bayt siniri kaynak
+  ezilmeden doluyordu).
+- H4: `_ButtonTranslator` bilmedigi metne "" yerine None donduruyor; dosya
+  penceresi metinleri geri geldi, `QString::arg` uyarisi yok (ui_smoke).
+- H5: ext4 bicimlendirici extent + flex_bg + metadata_csum (64bit ve
+  resize_inode haric); e2fsck 4 MB–20 GB temiz, ext_write_check 4/4,
+  ext_resize_check 32/32 (yeni du-ext4 satirlari libext2fs ile doldurulur).
+- Kullanici istegi: dosya eklemede ilerleme dosyanin icinde yuruyor
+  (aygit yazma gozlemcisi, `import_files`), ilerleme penceresi gecen ve
+  kalan sureyi gosteriyor (t74, ui_smoke tahmin denetimi).
+- Sonuclar: Linux run_all 72/74 (2 Windows dali atlandi), Windows 71/74
+  (3 arac yok atlandi), ui_smoke iki platformda, ext_resize_check 32/32.
+  Kullanicinin diskinin seyrek kopyasinda ayni genisletme: goruntu 1,0 ->
+  1,5 GB (eskiden 21 GB), 17,6 -> 8,6 sn, icerik birebir, e2fsck temiz.
+- t19 duzeltmesi: kucuk dosyada FAT metaverisi dosyadan cok yazildigi icin
+  ayni deger tekrar bildiriliyordu; kirpilmis deger karsilastiriliyor.

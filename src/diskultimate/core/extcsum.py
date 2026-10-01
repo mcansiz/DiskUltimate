@@ -52,6 +52,25 @@ class ExtChecksums:
         self.enabled = bool(fs.ro_compat & RO_METADATA_CSUM)
         self.seed = self._compute_seed()
 
+    @classmethod
+    def for_new(cls, uuid: bytes, inode_size: int) -> "ExtChecksums":
+        """Henuz diske yazilmamis bir birim icin (bicimlendirici).
+
+        Normal kurucu tohumu diskteki ustbloktan okur; bicimlendirme sirasinda
+        ustblok en son yazildigi icin tohum dogrudan UUID'den hesaplanir.
+        """
+        class _Geometry:
+            pass
+        fs = _Geometry()
+        fs.inode_size = inode_size
+        fs.ro_compat = RO_METADATA_CSUM
+        fs.feature_incompat = 0
+        cs = cls.__new__(cls)
+        cs.fs = fs
+        cs.enabled = True
+        cs.seed = raw_crc32c(0xFFFFFFFF, bytes(uuid))
+        return cs
+
     def _compute_seed(self) -> int:
         sb = self.fs.dev.read(1024, 1024)
         if self.fs.feature_incompat & INCOMPAT_CSUM_SEED:

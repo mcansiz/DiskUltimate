@@ -326,23 +326,16 @@ class FileBrowser(QWidget):
         dest = self.current_path
 
         def work(report):
-            done = 0
-            copied = 0
-            problems = []
-            for path, size in zip(files, sizes):
-                # Tek dosya, tek adimdir: yuzde hesaplanamaz, belirsiz cubuk
-                # gosterilir. Cok dosyada bayta gore ilerleme anlamlidir.
-                pct = -1 if len(files) == 1 else int(100 * done / total)
-                report(tr("{} yaziliyor ({})...",
-                          os.path.basename(path), human_size(size)), pct)
-                try:
-                    self.fs.import_file(path, dest)
-                    copied += 1
-                except Exception as exc:
-                    problems.append(f"{os.path.basename(path)}: {exc}")
-                done += size
-            report(tr("Tamamlaniyor..."), 100)
-            return copied, problems
+            # Ilerleme dosyanin icinde de yurur (yazilan bayt; ADR 0073):
+            # tek buyuk dosyada da cubuk ve kalan sure gorunur.
+            def on_bytes(done: int, all_bytes: int, name: str) -> None:
+                pct = 100.0 * done / all_bytes if all_bytes else 100.0
+                if name:
+                    report(tr("{} yaziliyor ({} / {})", name, human_size(done),
+                              human_size(all_bytes)), pct)
+                else:
+                    report(tr("Tamamlaniyor..."), 100)
+            return self.fs.import_files(files, dest, progress=on_bytes)
 
         ok, result = run_task(self, tr("Kopyalaniyor — {}", human_size(total)), work)
         if not ok:
@@ -368,7 +361,7 @@ class FileBrowser(QWidget):
 
         def work(report):
             def on_file(done: int, total: int, name: str) -> None:
-                pct = int(100 * done / total) if total else 100
+                pct = 100.0 * done / total if total else 100.0
                 report(tr("{} ({} / {})", name or tr("Tamamlaniyor"),
                           human_size(done), human_size(total)), pct)
             return self.fs.import_tree(folder, dest, progress=on_file)

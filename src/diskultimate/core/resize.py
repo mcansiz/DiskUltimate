@@ -26,6 +26,7 @@ Python yolundan gider.
 """
 from __future__ import annotations
 
+import os
 import struct
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional, Tuple
@@ -838,6 +839,13 @@ def apply_resize(session, plan: ResizePlan,
 
     # 2) tasima
     if plan.moves:
+        need, free = move_space_needed(image, plan.old_start, plan.new_start,
+                                       min(plan.old_count, plan.new_count))
+        if free >= 0 and need > free:
+            raise ResizeError(tr(
+                "Goruntunun bulundugu yerde yeterli bos alan yok: tasima {} "
+                "yeni alan gerektiriyor, {} bos. Hicbir sey yazilmadi.",
+                human_size(need), human_size(free)))
         report(tr("Veri tasiniyor..."), 10)
         _move_data(image, plan.old_start, plan.new_start,
                    min(plan.old_count, plan.new_count), report)
@@ -966,34 +974,91 @@ def _patch_partition_offset(image: BlockDevice, start_lba: int,
                 pass
 
 
+class MoveInterrupted(ResizeError):
+    """Tasima yarida kaldi. `source_intact`: kaynak bolum henuz ezilmedi mi."""
+
+    def __init__(self, message: str, moved_sectors: int, source_intact: bool):
+        super().__init__(message)
+        self.moved_sectors = moved_sectors
+        self.source_intact = source_intact
+
+
+def move_space_needed(image: BlockDevice, src_lba: int, dst_lba: int,
+                      sector_count: int) -> Tuple[int, int]:
+    """(gereken, bos) bayt — seyrek goruntu dosyasinda tasimanin dolduracagi
+    delikler icin. Fiziksel disk, seyrek olmayan dosya, sanal disk kapsayicisi
+    ya da olculemeyen durumda (0, -1). Tasima ayni icerigi tekrar yazmadigi
+    icin gereken, kaynaktaki **ayrilmis** veri kadardir (en kotu durum)."""
+    path = getattr(image, "path", "")
+    if not path or type(image).__name__ != "DiskImage" or not os.path.isfile(path):
+        return 0, -1
+    from .platform import actual_size, allocated_in_range, free_space
+    try:
+        apparent = os.path.getsize(path)
+    except OSError:
+        return 0, -1
+    if actual_size(path) >= apparent:
+        return 0, -1                              # seyrek degil: yeni yer gerekmez
+    ss = image.sector_size
+    # Ust sinir: kaynaktaki her ayrilmis blok en fazla bir yeni blok ayirtir.
+    # (Hedefle fark almak ortusmede yanlis kucuk sonuc veriyordu.)
+    need = allocated_in_range(path, src_lba * ss, sector_count * ss)
+    return need, free_space(path)
+
+
 def _move_data(image: BlockDevice, src_lba: int, dst_lba: int,
-               sector_count: int, report) -> None:
-    """Sektor blogunu tasir; cakisma yonune gore sirasi secilir."""
+               sector_count: int, report) -> int:
+    """Sektor blogunu tasir; cakisma yonune gore sira secilir.
+
+    * Hedefte ayni icerik zaten varsa (cogunlukla iki taraf da sifir/delik)
+      **yazilmaz**: seyrek goruntu sismez, bos alan kopyalanmaz (ADR 0073 —
+      eskiden bolumun tamami yaziliyordu; /dev doldu, tasima yarida kaldi).
+    * Hata olursa `MoveInterrupted`: kac sektor tasindigi ve kaynak bolumun
+      hala saglam olup olmadigi (ortusmede kaydirma miktarindan fazlasi
+      kopyalandiysa kaynagin basi ezilmistir).
+    Dondurulen: gercekten yazilan sektor sayisi.
+    """
     if src_lba == dst_lba or sector_count <= 0:
-        return
+        return 0
     ss = image.sector_size
     step = max(1, COPY_CHUNK // ss)
     total = sector_count
+    shift = abs(dst_lba - src_lba)
     ileri = dst_lba < src_lba        # hedef solda ise bastan kopyalamak guvenli
+    parcalar = [(p, min(step, total - p)) for p in range(0, total, step)]
+    if not ileri:
+        parcalar.reverse()           # hedef sagda: sondan kopyala
     tasinan = 0
-    if ileri:
-        pos = 0
-        while pos < total:
-            n = min(step, total - pos)
-            image.write_sectors(dst_lba + pos, image.read_sectors(src_lba + pos, n))
-            pos += n
+    yazilan = 0
+    try:
+        for pos, n in parcalar:
+            data = image.read_sectors(src_lba + pos, n)
+            if image.read_sectors(dst_lba + pos, n) != data:
+                image.write_sectors(dst_lba + pos, data)
+                yazilan += n
             tasinan += n
             report(tr("Veri tasiniyor... {}", human_size(tasinan * ss)),
                    10 + int(70 * tasinan / total))
-    else:
-        pos = total
-        while pos > 0:
-            n = min(step, pos)
-            pos -= n
-            image.write_sectors(dst_lba + pos, image.read_sectors(src_lba + pos, n))
-            tasinan += n
-            report(tr("Veri tasiniyor... {}", human_size(tasinan * ss)),
-                   10 + int(70 * tasinan / total))
-    f = getattr(image, "flush", None)
-    if f:
-        f()
+        f = getattr(image, "flush", None)
+        if f:
+            f()
+    except Exception as exc:          # noqa: BLE001
+        saglam = shift >= total or tasinan <= shift
+        from . import diagnostics
+        diagnostics.warn(f"tasima yarida kaldi: kaynak={src_lba} hedef={dst_lba} "
+                         f"adet={total} tasinan={tasinan} kaynak_saglam={saglam} "
+                         f"yon={'sol' if ileri else 'sag'} hata={exc!r}")
+        if saglam:
+            msg = tr("Veri tasinirken hata: {}. {} / {} kopyalanmisti; kaynak bolum "
+                     "henuz ezilmedi, bolum eski yerinde saglam ve tablo "
+                     "degismedi.", exc, human_size(tasinan * ss), human_size(total * ss))
+        else:
+            msg = tr("Veri tasinirken hata: {}. {} / {} kopyalanmisti ve kaynak "
+                     "bolumun basi ezildi: bolum su an BOZUK (ne eski ne yeni "
+                     "yerinde tam). Tasima: sektor {} -> {}, {} sektor, {} sektor "
+                     "tamamlandi (tanilama gunlugunde). Yedekten geri yukleyin ya "
+                     "da bos alan acip tasimayi bu sayilarla tamamlatin.",
+                     exc, human_size(tasinan * ss), human_size(total * ss),
+                     src_lba, dst_lba, total, tasinan)
+        raise MoveInterrupted(msg, tasinan, saglam) from exc
+    return yazilan

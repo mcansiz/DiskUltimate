@@ -752,9 +752,12 @@ def t16_ext_ailesi():
         assert isinstance(erisim, ExtAccess), type(erisim)
         assert erisim.readable, "ext okunabilir olmali"
         assert any(n.name == "lost+found" for n in erisim.listdir("/"))
-        # Kendi bicimlendiricimizin urettigi birimlerde metadata_csum/64bit
-        # yoktur, bu yuzden yazma desteklenmelidir. Ayrintili dogrulama
-        # (her adimda e2fsck) tests/ext_write_check.py icindedir.
+        # ext4 mkfs.ext4 varsayilanlariyla (extent, flex_bg, metadata_csum;
+        # 64bit/resize_inode haric) olusur — ADR 0073. Yazma desteklenmeli;
+        # ayrintili dogrulama (her adimda e2fsck) tests/ext_write_check.py.
+        ozellik = (fs.feature_incompat & 0x0240, bool(fs.ro_compat & 0x0400))
+        beklenen = ((0x0240, True) if surum == "ext4" else (0, False))
+        assert ozellik == beklenen, (surum, ozellik)
         assert erisim.writable, f"ext yazilabilir olmali: {erisim.write_reason}"
         erisim.write_file("/deneme.txt", b"ext yazma\n")
         assert erisim.read("/deneme.txt") == b"ext yazma\n"
@@ -767,6 +770,17 @@ def t16_ext_ailesi():
 
         d.close()
         _fsck_ext(p, 2048, surum)
+
+    # eski ozellik seti (3.18 oncesi cekirdek) hala uretilebilmeli
+    from diskultimate.core.ext import ExtFormatter
+    p = img_path("t16_ext4_eski.img")
+    d = DiskImage.create(p, 64 * MIB, overwrite=True)
+    ExtFormatter(PartitionView(d, 2048, d.sector_count - 2048), "ext4",
+                 modern=False).format()
+    fs = ExtFS(PartitionView(d, 2048, d.sector_count - 2048))
+    assert not fs.feature_incompat & 0x0240 and not fs.ro_compat & 0x0400
+    d.close()
+    _fsck_ext(p, 2048, "ext4")
 
 
 def _fsck_ext(image_path: str, skip_sectors: int, surum: str) -> None:
@@ -5580,6 +5594,211 @@ def t71_refs_yerel_bicimlendirme():
         r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command",
                             ayristir], capture_output=True, text=True, env=ortam)
         assert r.returncode == 0 and r.stdout.strip() == "0", r.stdout + r.stderr
+
+
+@test
+def t72_goruntu_konumu_guvenligi():
+    """Yeni goruntu konumu: aygit klasoru yasak, fiziksel diskte belge klasoru (ADR 0073)
+
+    2026-10-01: arayuz acik fiziksel diskin klasorunu (/dev) varsayilan yapti;
+    20 GB goruntu devtmpfs'e yazildi, /dev doldu, ext4 tasimasi ENOSPC ile
+    yarida kaldi. Artik: fiziksel disk/aygit yolunda kullanicinin belge
+    klasoru onerilir; aygit/sozde dosya sistemi engellenir; bellek tabanli
+    ya da yetersiz alanli hedef uyarilir.
+    """
+    from diskultimate.core import platform as plat
+    ev = plat.user_home()
+    assert os.path.isdir(ev)
+    belge = plat.default_image_dir()
+    assert belge.startswith(ev) and not plat.is_device_path(belge + "/")
+    if plat.IS_WINDOWS:
+        assert plat.is_device_path(r"\\.\PhysicalDrive0")
+        assert plat.suggested_image_dir(r"\\.\PhysicalDrive0", True) == belge
+    else:
+        assert plat.is_device_path("/dev/nvme0n1") and not plat.is_device_path("/home/x.img")
+        assert plat.suggested_image_dir("/dev/nvme0n1", True) == belge
+        assert plat.suggested_image_dir("/dev/sda", False) == belge   # aygit yolu
+        engel, _ = plat.image_location_problem("/dev", 20 << 30)
+        assert engel, "/dev engellenmedi"
+        if os.path.isdir("/proc"):
+            assert plat.image_location_problem("/proc", 1)[0]
+    # acik goruntunun klasoru korunur
+    klasor = os.path.dirname(img_path("t72.img"))
+    assert plat.suggested_image_dir(img_path("t72.img"), False) == os.path.abspath(klasor)
+    # yetersiz alan: seyrekte uyari, seyrek degilse engel
+    cok = 1 << 60
+    engel, uyari = plat.image_location_problem(klasor, cok, sparse=True)
+    assert not engel and uyari
+    engel, _ = plat.image_location_problem(klasor, cok, sparse=False)
+    assert engel
+    assert plat.image_location_problem(klasor, 1 << 20) == ("", "")
+
+
+@test
+def t73_tasima_kesintisi_ve_seyreklik():
+    """Bolum tasima: yarida kesinti dogru bildirilir, bos alan yazilmaz, yer on denetimi (ADR 0073)
+
+    2026-10-01: ext4 bos alana sola tasinirken /dev (devtmpfs) doldu; tasima
+    ENOSPC ile kesildi, kaynak bolumun basi ezilmisti ama arayuz yalnizca
+    "0 adim uygulandi" dedi. Artik:
+      * kesinti `MoveInterrupted` (kaynak saglam mi, kac sektor) — mesaj
+        bolumun bozuk olabilecegini soyler;
+      * hedefte ayni icerik varsa yazilmaz (seyrek goruntu sismez);
+      * seyrek goruntude gereken yer yoksa hicbir sey yazilmadan ret.
+    """
+    import errno as _errno
+    from diskultimate.core import platform as plat
+    from diskultimate.core import resize as rz
+    from diskultimate.core.operations import OperationQueue, resize_op
+
+    def hazirla(ad):
+        yol = img_path(ad)
+        s = DiskSession.create(yol, 400 * MIB, overwrite=True)
+        s.create_table("gpt")
+        s.create_partition(2048, 100 * MIB // 512, fs_key="fat32", label="A")
+        bas = 2048 + 200 * MIB // 512
+        s.create_partition(bas, 150 * MIB // 512, fs_key="ext4", label="E")
+        fs = s.filesystem(2)
+        for i in range(30):
+            fs.write_file(f"/d{i}.bin", bytes([i + 1]) * (1 << 20))
+        fs.flush()
+        s.close_filesystems()
+        return yol, s, bas
+
+    hedef = 2048 + 100 * MIB // 512
+    # Kesinti KONUMA gore tetiklenir (yazilan bayta gore degil): bayt siniri
+    # dosya sisteminin yerlesimine baglidir — flex_bg ile veri asagi kayinca
+    # 40 MB'lik sinir kaynak ezilmeden doluyordu. Bolumun 110. MB'inin
+    # otesine (kaymanin, yani 100 MB'in ardi) ilk yazim kaynagi ezer; 128.
+    # MB'teki yedek ustblok her zaman yazilacagi icin tetikleme kesindir.
+    ezen = hedef * 512 + 110 * MIB
+    for sinir, saglam_beklenen in ((0, True), (ezen, False)):
+        yol, s, bas = hazirla("t73.img")
+        img, asil = s.image, s.image.write
+
+        def kisitli(off, data):
+            if off + len(data) > sinir:
+                raise OSError(_errno.ENOSPC, "no space")
+            return asil(off, data)
+
+        img.write = kisitli
+        try:
+            s.resize_partition(2, hedef, 250 * MIB // 512, confirm=True)
+            raise AssertionError("kesinti yok")
+        except rz.MoveInterrupted as exc:
+            assert exc.source_intact is saglam_beklenen, (sinir, exc.moved_sectors)
+        img.write = asil
+        s.reload()
+        p = s.table.get(2)
+        assert p.start_lba == bas                       # tablo degismedi
+        tur = detect(s.view(p)).fs_type
+        assert (tur == "ext4") is saglam_beklenen, (sinir, tur)
+        s.close()
+
+    # kuyruk mesaji: bozulma durumunda "BOZUK" uyarisini tasir (gosterim)
+    yol, s, bas = hazirla("t73.img")
+    img, asil = s.image, s.image.write
+
+    def kisitli2(off, data):
+        if off + len(data) > ezen:
+            raise OSError(_errno.ENOSPC, "no space")
+        return asil(off, data)
+
+    img.write = kisitli2
+    q = OperationQueue()
+    q.add(resize_op(2, hedef, 250 * MIB // 512, at_lba=bas))
+    sonuc = q.apply(s)
+    img.write = asil
+    assert sonuc.failed is not None and str(hedef) in sonuc.error
+    s.close()
+
+    # seyreklik: tasima yalnizca dolu veriyi yazar
+    yol, s, bas = hazirla("t73s.img")
+    once = plat.actual_size(yol)
+    s.resize_partition(2, hedef, 250 * MIB // 512, confirm=True)
+    s.close()
+    if plat.supports_sparse(yol) and once < 400 * MIB:
+        assert plat.actual_size(yol) < once + 80 * MIB, (once, plat.actual_size(yol))
+    s = DiskSession.open(yol)
+    fs = s.filesystem(2)
+    assert fs.fs_type == "ext4"
+    for i in range(30):
+        assert fs.read(f"/d{i}.bin") == bytes([i + 1]) * (1 << 20)
+    s.close()
+
+    # yer on denetimi (yalnizca seyrek goruntu; olcum yoksa atlanir)
+    yol, s, bas = hazirla("t73y.img")
+    gereken, bos = rz.move_space_needed(s.image, bas, hedef, 150 * MIB // 512)
+    if bos >= 0:
+        assert 30 * MIB <= gereken <= 160 * MIB, gereken
+        asil_bos = plat.free_space
+        plat.free_space = lambda yol_: 1 * MIB
+        try:
+            s.resize_partition(2, hedef, 250 * MIB // 512, confirm=True)
+            raise AssertionError("yetersiz alan reddedilmedi")
+        except rz.ResizeError as exc:
+            assert not isinstance(exc, rz.MoveInterrupted)
+        finally:
+            plat.free_space = asil_bos
+        s.reload()
+        p = s.table.get(2)
+        assert p.start_lba == bas and detect(s.view(p)).fs_type == "ext4"
+    s.close()
+
+
+@test
+def t74_dosya_ekleme_ilerlemesi():
+    """Dosya ekleme ilerlemesi dosyanin icinde de yurur (yazilan bayt; ADR 0073)
+
+    2026-10-01 kullanici: "dosya yuklerken ne kadar kaldigini gormek
+    istiyorum". Tek dosyada cubuk belirsizdi, cok dosyada yalnizca dosya
+    bitince ilerliyordu; kalan sure hesaplanamiyordu.
+    """
+    from diskultimate.core import image as im
+
+    kaynak = img_path("t74_kaynak.bin")
+    veri = os.urandom(12 * MIB)
+    with open(kaynak, "wb") as f:
+        f.write(veri)
+    kucuk = img_path("t74_kucuk.txt")
+    with open(kucuk, "wb") as f:
+        f.write(b"kucuk")
+    for fs_key in ("fat32", "exfat", "ext4"):
+        yol = img_path(f"t74_{fs_key}.img")
+        s = DiskSession.create(yol, 128 * MIB, overwrite=True)
+        s.create_table("gpt")
+        s.create_partition(2048, 100 * MIB // 512, fs_key=fs_key, label="IL")
+        fs = s.filesystem(1)
+        adimlar = []
+        n, sorun = fs.import_files([kaynak, kucuk, img_path("t74_yok.bin")], "/",
+                                   progress=lambda d, t, ad: adimlar.append((d, t, ad)))
+        assert n == 2 and len(sorun) == 1 and "t74_yok.bin" in sorun[0], (n, sorun)
+        toplam = len(veri) + 5
+        assert all(t == toplam for _, t, _ in adimlar), fs_key
+        ara = [d for d, _, ad in adimlar if ad == "t74_kaynak.bin" and 0 < d < len(veri)]
+        assert len(ara) >= 8, (fs_key, len(ara))       # ~1 MB'ta bir
+        assert len(adimlar) < 200, (fs_key, len(adimlar))   # sinyal selini onle
+        degerler = [d for d, _, _ in adimlar]
+        assert degerler == sorted(degerler), fs_key
+        assert adimlar[-1] == (toplam, toplam, ""), adimlar[-1]
+        assert fs.read("/t74_kaynak.bin") == veri
+        # gozlemci islem bitince kaldirilir
+        assert "write_observer" not in fs.device.__dict__
+        s.close()
+
+    # buyuk tek yazim gozlemciyle 4 MB'lik parcalara bolunur, icerik ayni
+    d = DiskImage.create(img_path("t74_ham.img"), 32 * MIB, overwrite=True)
+    parcalar = []
+    d.write_observer = parcalar.append
+    blok = os.urandom(10 * MIB)
+    d.write(MIB, blok)
+    del d.write_observer
+    assert parcalar == [4 * MIB, 4 * MIB, 2 * MIB], parcalar
+    assert d.read(MIB, len(blok)) == blok
+    d.write(0, b"x" * 512)                     # gozlemcisiz: davranis ayni
+    assert parcalar == [4 * MIB, 4 * MIB, 2 * MIB]
+    assert im.WRITE_PROGRESS_CHUNK == 4 * MIB
+    d.close()
 
 
 def main() -> int:

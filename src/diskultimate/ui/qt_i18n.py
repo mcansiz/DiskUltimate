@@ -68,7 +68,12 @@ class _ButtonTranslator(QTranslator):
             # Ingilizce dahil her dil bizim sozlugumuzden: `tr` kaynak dilde
             # Turkceyi, `en`de en.po'daki karsiligi dondurur.
             return tr(BUTTONS[source])
-        return ""                      # bos = "bende yok", Qt siradakine bakar
+        # None = "bende yok" (null QString): Qt siradaki cevirmene, sonra kaynak
+        # metne bakar. "" DONDURULMEZ: PyQt onu bos ama gecerli bir ceviri
+        # olarak iletir ve Qt'nin butun metinleri (dosya penceresi etiketleri,
+        # sutun basliklari, "%1 File") bos kalir — 2026-10-01'de gunlukteki
+        # "QString::arg: Argument missing: , dub" uyarilari buydu (ADR 0073).
+        return None
 
     def isEmpty(self):
         return False
