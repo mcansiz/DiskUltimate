@@ -5870,6 +5870,106 @@ def t75_ntfs_kume_boyutlari_ve_onarim():
     d.close()
 
 
+@test
+def t76_diskten_diske_klon():
+    """Diskten diske klon: birebir icerik, GPT yedek basligi hedefin sonunda, ret yollari
+
+    Fiziksel hedef ana makinede sinanmaz (CLAUDE.md); ayni kod yolu acik bir
+    goruntu oturumuyla (`clone_to_session`) sinanir. Uygunluk kurali ve
+    `clone_to_physical`in on denetimleri sahte disk bilgisiyle sinanir.
+    """
+    from types import SimpleNamespace
+    from diskultimate.core.disksource import clone_target_problem
+    from diskultimate.core.gpt import GPTTable
+    from diskultimate.core.session import SessionError
+
+    kaynak_yol = img_path("t76_kaynak.img")
+    s = DiskSession.create(kaynak_yol, 96 * MIB, scheme="gpt", overwrite=True)
+    s.create_partition(2048, 40 * MIB // 512, fs_key="fat32", label="KLON")
+    fs = s.filesystem(1)
+    fs.write_file("/belge.txt", b"klon icerigi\n" * 1000)
+    fs.flush()
+    s.close_filesystems()
+    s.close()
+    kaynak = DiskSession.open(kaynak_yol, readonly=True)
+
+    # hedef daha buyuk ve icinde eski veri var: hepsi ezilmeli
+    hedef_yol = img_path("t76_hedef.img")
+    h = DiskSession.create(hedef_yol, 160 * MIB, scheme="gpt", overwrite=True)
+    h.image.write(150 * MIB, b"ESKI" * 128)
+    h.close()
+    hedef = DiskSession.open(hedef_yol, readonly=True)
+    kopya = kaynak.clone_to_session(hedef)
+    assert kopya == 96 * MIB, kopya
+    assert not hedef.readonly                      # yazma moduna gecti
+    assert hedef.scheme == "gpt" and len(hedef.partitions) == 1
+    assert hedef.filesystem(1).read("/belge.txt") == b"klon icerigi\n" * 1000
+    tablo = hedef.table
+    assert isinstance(tablo, GPTTable)
+    assert tablo.backup_header_lba == hedef.image.sector_count - 1, \
+        (tablo.backup_header_lba, hedef.image.sector_count)
+    # bolum verisi birebir (tablo sektorleri buyuk diske gore yeniden yazilir:
+    # koruyucu MBR boyutu, birincil baslikta yedek konumu)
+    for ofset in (2048 * 512, 20 * MIB, 40 * MIB):
+        assert hedef.image.read(ofset, 4096) == kaynak.image.read(ofset, 4096)
+    assert hedef.free_regions()[-1].sector_count * 512 > 60 * MIB, \
+        "buyuk hedefin fazlasi bos alan olarak kullanilamiyor"
+    # Kaynak boyunun otesi kopyalanmaz (ayrilmamis alan olur; DiskGenius da
+    # boyle). Eski veri orada fiziksel olarak kalir — pencere bunu soyler.
+    assert hedef.image.read(150 * MIB, 4) == b"ESKI"
+    hedef.close()
+
+    # MBR kaynak, onceden GPT olan buyuk hedef: eski yedek GPT silinmeli
+    mbr_yol = img_path("t76_mbr.img")
+    m = DiskSession.create(mbr_yol, 64 * MIB, scheme="mbr", overwrite=True)
+    m.create_partition(2048, 40 * MIB // 512, fs_key="fat32", label="MBRK")
+    m.close()
+    hedef2 = DiskSession.create(img_path("t76_hedef2.img"), 128 * MIB,
+                                scheme="gpt", overwrite=True)
+    son = hedef2.image.sector_count - 1
+    assert hedef2.image.read(son * 512, 8) == b"EFI PART"
+    mbr = DiskSession.open(mbr_yol, readonly=True)
+    mbr.clone_to_session(hedef2)
+    assert hedef2.scheme == "mbr", hedef2.scheme
+    assert hedef2.image.read(son * 512, 8) != b"EFI PART", "eski yedek GPT kaldi"
+    hedef2.close()
+    mbr.close()
+
+    # ret: kendine, kucuk hedefe
+    try:
+        kaynak.clone_to_session(kaynak)
+        raise AssertionError("kendine klon reddedilmedi")
+    except SessionError:
+        pass
+    kucuk = DiskSession.create(img_path("t76_kucuk.img"), 64 * MIB, overwrite=True)
+    try:
+        kaynak.clone_to_session(kucuk)
+        raise AssertionError("kucuk hedef reddedilmedi")
+    except SessionError:
+        pass
+    kucuk.close()
+    try:
+        kaynak.clone_to_physical(SimpleNamespace(path="/dev/sahte", size=1 * MIB))
+        raise AssertionError("kucuk fiziksel hedef aygit acilmadan reddedilmeli")
+    except SessionError:
+        pass
+
+    # uygunluk kurali (arayuzdeki gri satirlar)
+    def disk(**kw):
+        base = dict(path="/dev/sdx", size=200 * MIB, info_complete=True,
+                    readonly=False, is_system=False, mounted=[])
+        base.update(kw)
+        return SimpleNamespace(**base)
+    assert clone_target_problem("/dev/sda", 96 * MIB, disk()) == ""
+    assert clone_target_problem("/dev/sdx", 96 * MIB, disk())          # kendisi
+    assert clone_target_problem("", 96 * MIB, disk(info_complete=False))
+    assert clone_target_problem("", 96 * MIB, disk(readonly=True))
+    assert clone_target_problem("", 96 * MIB, disk(size=10 * MIB))
+    # sistem diski ve bagli bolum ENGEL degil (onay penceresi ele alir)
+    assert clone_target_problem("", 96 * MIB, disk(is_system=True, mounted=["/"])) == ""
+    kaynak.close()
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

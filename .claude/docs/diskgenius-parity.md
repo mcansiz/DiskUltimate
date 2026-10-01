@@ -83,7 +83,8 @@ Guncelleme: 2026-09-15 (v0.3.0)
 | Disk yedegi | ✅ | ✅ | |
 | Yedekten geri yukleme | ✅ | ✅ | Hedef: acik oturum, yeni goruntu dosyasi veya **fiziksel disk** |
 | **Yedek icerigini geri yuklemeden gezme** | 🟡 | ✅ | `.dub` salt okunur disk gibi acilir; bolumler ve dosyalar gorunur |
-| Disk klonlama | ✅ | ✅ | Seyrekligi koruyarak |
+| Disk klonlama (goruntu dosyasina) | ✅ | ✅ | Seyrekligi koruyarak |
+| Diskten diske klonlama | ✅ | ✅ | ADR 0076 — buyuk hedefte GPT yedegi sona tasinir; gercek fiziksel hedef yonetici exe ile sinanacak |
 | Bolumden bolume klonlama | ✅ | ✅ | `clone_partition_to` |
 | Sektor sektor kopyalama | ✅ | ✅ | Klonlamanin varsayilani |
 | Windows'u SSD'ye tasima | ✅ | ⛔ | Klonlama var; onyukleyici/BCD onarimi Windows'a ozgu, kapsam disi |

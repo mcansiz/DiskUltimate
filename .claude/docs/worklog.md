@@ -5515,3 +5515,20 @@ calismiyordu.
   eski exe .tmp/DiskUltimate-2215-eski.exe. Windows run_all 72/75 (0 hata).
 - Ayrica: 567 MB ext4'e eklemede 7,7 sn donma — `ExtAccess.import_file`
   dosyayi tek parca okuyor (ADR 0073'te bilinen sinir); ayri is.
+
+## 2026-10-01 (11) — Diskten diske klonlama (ADR 0076)
+
+- "Diski klonla" hedef turunu soruyor: goruntu dosyasi / baska disk.
+  `DiskSession.clone_to_physical` (butun fiziksel disk kapilari) ve
+  `clone_to_session` (hedef acik oturumsa onun tutamaci). Buyuk hedefte GPT
+  yedegi sona; GPT olmayan kaynakta hedefin eski yedek GPT'si silinir.
+- `CloneTargetDialog` + `disksource.clone_target_problem`: uygunsuz disk gri
+  + neden, silme onayi ve sistem diski adi zorunlu, bagli bolum / bekleyen
+  adim uyarisi, kaynaktan buyuk kismin ayrilmamis kalacagi yaziyor.
+- Klon/yedek/geri yukleme ilerleme metinleri tr() ile sarildi (30 yeni metin
+  en/de).
+- t76 (sfdisk --verify temiz), ui_smoke klon hedefi. Linux 74/76, Windows
+  73/76 (0 hata). Yeni exe dist/ (23:11).
+- Sinanmayan: gercek fiziksel hedef (yonetici gerekir). VBox misafirinde
+  yalnizca 2 disk var (disk 0 = sistem); sinamak icin ucuncu bir sanal disk
+  eklenmeli.

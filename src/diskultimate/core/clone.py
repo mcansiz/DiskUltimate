@@ -120,7 +120,7 @@ def backup(device: BlockDevice, dest_path: str, compress: bool = True,
         os.makedirs(klasor, exist_ok=True)
 
     index = bytearray(index_bytes)
-    _report(progress, "Yedekleme baslatiliyor...", 0)
+    _report(progress, tr("Yedekleme baslatiliyor..."), 0)
     with open(dest_path, "wb") as fh:
         fh.seek(veri_baslangici)
         yazilan = 0
@@ -146,7 +146,8 @@ def backup(device: BlockDevice, dest_path: str, compress: bool = True,
                 yazilan += len(paket)
             if progress and (i % 8 == 0 or i == block_count - 1):
                 _report(progress,
-                        f"Yedekleniyor... {human_size(ofset + length)} / {human_size(total)}",
+                        tr("Yedekleniyor... {} / {}", human_size(ofset + length),
+                           human_size(total)),
                         int(98 * (i + 1) / block_count))
 
         simdi = datetime.datetime.now()
@@ -164,7 +165,7 @@ def backup(device: BlockDevice, dest_path: str, compress: bool = True,
         fh.write(bytes(index))
 
     restore_owner(dest_path)    # yetkili kopyada dosya root'a ait kalmasin
-    _report(progress, "Tamamlandi", 100)
+    _report(progress, tr("Tamamlandi"), 100)
     return read_backup_info(dest_path)
 
 
@@ -355,7 +356,7 @@ def restore(src_path: str, device: BlockDevice, progress: Progress = None,
     if info.total_bytes < device.size and not allow_smaller_source:
         raise CloneError(tr("Yedek hedeften kucuk"))
 
-    _report(progress, "Geri yukleme baslatiliyor...", 0)
+    _report(progress, tr("Geri yukleme baslatiliyor..."), 0)
     with open(src_path, "rb") as fh:
         index = fh.read(HEADER_SIZE + info.block_count * INDEX_ENTRY)[HEADER_SIZE:]
         for i in range(info.block_count):
@@ -376,13 +377,14 @@ def restore(src_path: str, device: BlockDevice, progress: Progress = None,
                 device.write(ofset, ham[:target_length])
             if progress and (i % 8 == 0 or i == info.block_count - 1):
                 _report(progress,
-                        f"Geri yukleniyor... {human_size(ofset + target_length)} / "
-                        f"{human_size(info.total_bytes)}",
+                        tr("Geri yukleniyor... {} / {}",
+                           human_size(ofset + target_length),
+                           human_size(info.total_bytes)),
                         int(98 * (i + 1) / info.block_count))
     f = getattr(device, "flush", None)
     if f:
         f()
-    _report(progress, "Tamamlandi", 100)
+    _report(progress, tr("Tamamlandi"), 100)
     return info
 
 
@@ -400,7 +402,7 @@ def clone(src: BlockDevice, dst: BlockDevice, block_size: int = DEFAULT_BLOCK,
         raise CloneError(tr("Hedef salt okunur"))
     total = src.size
     kopyalanan = 0
-    _report(progress, "Klonlama baslatiliyor...", 0)
+    _report(progress, tr("Klonlama baslatiliyor..."), 0)
     while kopyalanan < total:
         length = min(block_size, total - kopyalanan)
         block = src.read(kopyalanan, length)
@@ -410,12 +412,13 @@ def clone(src: BlockDevice, dst: BlockDevice, block_size: int = DEFAULT_BLOCK,
             dst.write(kopyalanan, b"\x00" * length)
         kopyalanan += length
         _report(progress,
-                f"Klonlaniyor... {human_size(kopyalanan)} / {human_size(total)}",
+                tr("Klonlaniyor... {} / {}", human_size(kopyalanan),
+                   human_size(total)),
                 int(99 * kopyalanan / total))
     f = getattr(dst, "flush", None)
     if f:
         f()
-    _report(progress, "Tamamlandi", 100)
+    _report(progress, tr("Tamamlandi"), 100)
     return kopyalanan
 
 

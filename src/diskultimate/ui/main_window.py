@@ -1672,10 +1672,80 @@ class MainWindow(QMainWindow):
         self.open_backup_dialog(MODE_RESTORE)
 
     def clone_disk(self) -> None:
+        """Diski klonlar: yeni bir goruntu dosyasina ya da baska bir diske."""
         if self.session is None:
             QMessageBox.information(self, tr("Goruntu yok"), tr("Once bir "
                                                              "goruntu acin."))
             return
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Question)
+        box.setWindowTitle(tr("Diski klonla"))
+        box.setText(tr("<b>{}</b> nereye klonlansin?", self.session.name))
+        to_file = box.addButton(tr("Goruntu dosyasina..."), QMessageBox.AcceptRole)
+        to_disk = box.addButton(tr("Baska bir diske..."), QMessageBox.AcceptRole)
+        box.addButton(QMessageBox.Cancel)
+        box.setDefaultButton(to_file)
+        box.exec_()
+        if box.clickedButton() is to_disk:
+            self._clone_to_disk()
+        elif box.clickedButton() is to_file:
+            self._clone_to_file()
+
+    def _clone_to_disk(self) -> None:
+        """Baska bir fiziksel diske birebir klon (hedef tamamen silinir).
+
+        Kuyruga girmez — geri yukleme gibi baska bir aygita yazar; onay
+        hedef secim penceresinde alinir (silme kutusu, sistem diskinde ad).
+        Hedef uygulamada aciksa o oturumun tutamaci kullanilir (ADR 0021).
+        """
+        from .dialogs.clone_target import CloneTargetDialog
+        session = self.session
+        _images, sources = disksource.collect(
+            self.sessions, list(getattr(self, "_physical_cache", {}).values()),
+            getattr(self, "_surveys", {}))
+        if not sources:
+            QMessageBox.information(
+                self, tr("Hedef disk yok"),
+                tr("Listede fiziksel disk yok. Diskleri yenileyin; Linux'ta "
+                   "ve Windows'ta disk listesi yonetici yetkisi ister."))
+            return
+        source_path = (session.disk_info.path if session.is_physical
+                       and session.disk_info is not None else session.path or "")
+        dlg = CloneTargetDialog(self, session.name, source_path,
+                                session.image.size, sources,
+                                pending_steps=len(self.queue))
+        if exec_dialog(dlg) != CloneTargetDialog.Accepted or dlg.problem():
+            return
+        target = dlg.selected()
+        allow_system = dlg.allow_system
+        if target.session is not None:
+            work = (lambda progress: session.clone_to_session(
+                target.session, allow_system=allow_system, progress=progress))
+        else:
+            disk = target.disk
+            # Arka plan disk taramasi hedefe dokunmasin (ADR 0021)
+            self._wait_for_scan()
+            work = (lambda progress: session.clone_to_physical(
+                disk, allow_system=allow_system, progress=progress))
+        ok, result = run_task(self, tr("Disk klonlaniyor — {}", target.disk.name),
+                              work)
+        if not ok:
+            self.error(tr("Klonlama basarisiz"), str(result))
+            self.refresh_disks()
+            return
+        self.log(tr("Disk klonlandi: {} -> {} ({})", session.name,
+                    target.disk.name, human_size(result)))
+        self.refresh_disks()
+        if target.session is not None:
+            self.refresh()
+        QMessageBox.information(
+            self, tr("Klon hazir"),
+            tr("{} diskine klonlandi ({}).\n\nIki disk ayni bilgisayarda "
+               "takili kalirsa ayni disk kimligini tasidiklari icin isletim "
+               "sistemi birini cevrimdisi yapabilir.", target.disk.name,
+               human_size(result)))
+
+    def _clone_to_file(self) -> None:
         path, _ = QFileDialog.getSaveFileName(
             self, tr("Klon hedefi"),
             os.path.join(self._image_dir(),

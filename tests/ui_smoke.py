@@ -318,6 +318,43 @@ def tahmin_denetimi() -> None:
     print("  (ilerleme penceresi: gecen/kalan sure dogru)")
 
 
+def klon_hedefi_denetimi() -> None:
+    """Diskten diske klon penceresi: uygunsuz disk secilemez, onaylar zorunlu."""
+    from types import SimpleNamespace
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import QDialogButtonBox
+    from diskultimate.core.disksource import DiskSource
+    from diskultimate.ui.dialogs.clone_target import CloneTargetDialog
+
+    def disk(name, size, **kw):
+        base = dict(path=f"/dev/{name}", name=name, size=size, model="TEST",
+                    info_complete=True, readonly=False, is_system=False, mounted=[])
+        base.update(kw)
+        return DiskSource(kind="physical", path=base["path"], label=name,
+                          size=size, disk=SimpleNamespace(**base))
+    kaynak = disk("sda", 100 * MIB)
+    hedefler = [kaynak, disk("sdb", 50 * MIB), disk("sdc", 200 * MIB, info_complete=False),
+                disk("sdd", 200 * MIB, is_system=True, mounted=["/"]),
+                disk("sde", 300 * MIB, mounted=["/mnt/x"])]
+    d = CloneTargetDialog(None, "sda", "/dev/sda", 100 * MIB, hedefler, pending_steps=2)
+    tamam = d.buttons.button(QDialogButtonBox.Ok)
+    etkin = [bool(d.list.item(i).flags() & Qt.ItemIsEnabled) for i in range(d.list.count())]
+    assert etkin == [False, False, False, True, True], etkin
+    assert not tamam.isEnabled()
+    d.list.setCurrentRow(4)                      # sde: bagli bolum, buyuk
+    assert not tamam.isEnabled(), "silme onayi olmadan etkin"
+    assert "/mnt/x" in d.warn.text() and "200.00 MB" in d.warn.text(), d.warn.text()
+    d.confirm.setChecked(True)
+    assert tamam.isEnabled() and not d.allow_system
+    d.list.setCurrentRow(3)                      # sdd: sistem diski
+    assert not tamam.isEnabled(), "sistem diski adi yazilmadan etkin"
+    d.name_edit.setText("sdd")
+    assert tamam.isEnabled() and d.allow_system
+    assert d.selected().disk.name == "sdd"
+    d.close()
+    print("  (klon hedefi: uygunsuz diskler gri, silme onayi ve sistem diski adi zorunlu)")
+
+
 def main() -> int:
     hedef = scratch("screenshots")
     goruntu = ornek_goruntu()
@@ -334,6 +371,7 @@ def main() -> int:
           f", dugmeler sozlukten)")
     qt_metin_denetimi(qt_i18n, qt_durumu)
     tahmin_denetimi()
+    klon_hedefi_denetimi()
 
     pencere = MainWindow()
     pencere.resize(1400, 860)

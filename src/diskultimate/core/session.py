@@ -842,6 +842,76 @@ class DiskSession:
         return clone_mod.clone_to_new_image(self.image, dest_path,
                                             size_bytes=size_bytes, progress=progress)
 
+    def clone_to_physical(self, disk, allow_system: bool = False,
+                          progress=None) -> int:
+        """Tum diski **baska bir fiziksel diske** birebir kopyalar.
+
+        Hedefteki her sey silinir. Fiziksel disk guvenlik kapilarinin
+        tamamindan gecer (ADR 0014): `confirm=True`, sistem diskinde ayrica
+        `allow_system=True`, bilgisi eksik diske yazilmaz. Hedef bu uygulamada
+        acik bir oturumsa bu islev KULLANILMAZ — `clone_to_session` o oturumun
+        tutamacini kullanir (ayni aygita ikinci tutamac acilmaz, ADR 0021).
+        """
+        self._check_clone_target(getattr(disk, "path", ""),
+                                 int(getattr(disk, "size", 0) or 0))
+        device = PhysicalDisk(disk, readonly=False, confirm=True,
+                              allow_system=allow_system)
+        try:
+            copied = clone_mod.clone(self.image, device, progress=progress)
+            self._finish_clone_table(device)
+            return copied
+        finally:
+            device.close()
+
+    def clone_to_session(self, target: "DiskSession", allow_system: bool = False,
+                         progress=None) -> int:
+        """Tum diski uygulamada **acik** baska bir diske/goruntuye kopyalar."""
+        if target is self:
+            raise SessionError(tr("Kaynak ve hedef ayni disk"))
+        self._check_clone_target(getattr(target, "path", ""), target.image.size)
+        target.close_filesystems()
+        if target.readonly:
+            target.become_writable(confirm=True, allow_system=allow_system)
+        copied = clone_mod.clone(self.image, target.image, progress=progress)
+        self._finish_clone_table(target.image)
+        target.reload()
+        return copied
+
+    def _check_clone_target(self, target_path: str, target_size: int) -> None:
+        if target_path and self.path and \
+                os.path.normcase(target_path) == os.path.normcase(self.path):
+            raise SessionError(tr("Kaynak ve hedef ayni disk"))
+        if target_size and target_size < self.image.size:
+            raise SessionError(
+                tr("Hedef disk kaynaktan kucuk: kaynak {}, hedef {}",
+                   human_size(self.image.size), human_size(target_size)))
+
+    def _finish_clone_table(self, device) -> None:
+        """Hedef buyukse GPT yedek basligi hedefin SONUNA tasinir.
+
+        Birebir kopyada yedek baslik kaynagin son sektorunde kalir; daha buyuk
+        hedefte bu "yedek GPT yanlis yerde" hatasi verir (Windows/Linux
+        uyarir, bazi bellenimler diski reddeder). `write()` yedegi aygitin
+        gercek sonuna yazar — `resize_image` ile ayni yol.
+        """
+        if device.size <= self.image.size:
+            return
+        if self.scheme == "gpt":
+            table = read_partition_table(device)
+            if table is not None and table.scheme == "gpt":
+                table.write()
+        else:
+            # Kaynak GPT degil ama hedef onceden GPT olabilir: eski yedek GPT
+            # (son 33 sektor) kopyanin disinda kalir. Bazi araclar onu gorup
+            # MBR diski "GPT'den onarmayi" onerir — tabloyu ezerdi. Silinir.
+            ss = device.sector_size
+            tail = min(33, device.sector_count - self.image.sector_count)
+            if tail > 0:
+                device.write((device.sector_count - tail) * ss, b"\x00" * (tail * ss))
+        flush = getattr(device, "flush", None)
+        if flush:
+            flush()
+
     def clone_partition_to(self, index: int, target_index: int, progress=None) -> int:
         """Bir bolumu ayni goruntudeki baska bir bolume kopyalar."""
         self._require_writable()

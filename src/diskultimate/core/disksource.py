@@ -17,8 +17,12 @@ Arayuz import etmez; hicbir aygita dokunmaz (listeler zaten toplanmistir).
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
+
+from .ptable import human_size
+from ..i18n import tr
 
 
 @dataclass
@@ -88,3 +92,26 @@ def collect(sessions, disks, surveys: Optional[Dict] = None
             label=getattr(disk, "display_name", disk.path), size=size,
             session=session, disk=disk, partitions=parts, scheme=scheme))
     return images, physical
+
+
+def clone_target_problem(source_path: str, source_size: int, disk) -> str:
+    """Disk, klon hedefi olabilir mi? Olamazsa nedeni (bos dize = uygun).
+
+    Fiziksel disk guvenlik kurallari (CLAUDE.md, ADR 0014) burada da gecerli:
+    bilgisi eksik diske yazilmaz ("bilinmiyor" asla "risk yok" sayilmaz),
+    donanimsal yazma korumali disk ve kaynagin kendisi hedef olamaz. Sistem
+    diski ve bagli bolum ENGEL degildir; onay penceresi bunlar icin ayrica
+    disk adini yazdirir / uyarir.
+    """
+    path = getattr(disk, "path", "")
+    if source_path and path and os.path.normcase(path) == os.path.normcase(source_path):
+        return tr("kaynak diskin kendisi")
+    if not getattr(disk, "info_complete", True):
+        return tr("disk bilgisi okunamadi (yetki yok)")
+    if getattr(disk, "readonly", False):
+        return tr("donanimsal yazma korumali")
+    size = int(getattr(disk, "size", 0) or 0)
+    if size < source_size:
+        return tr("kaynaktan kucuk ({} < {})", human_size(size),
+                  human_size(source_size))
+    return ""
