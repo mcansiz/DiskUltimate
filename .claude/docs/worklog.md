@@ -5424,3 +5424,18 @@ calismiyordu.
 - diskgenius-parity.md dosya erisimi tablosu guncellendi (yeni dosya
   sistemleri; NTFS yazma tam).
 - **fs-genisletme-ilerleme.md listesi tamamlandi; dongu durduruldu.**
+
+## 2026-10-01 (6) — Kullanici gorevi: ext4'e dosya yaz + onundeki bos alana genislet
+
+- Masaustu `yeni-disk.img` (20 GB GPT: FAT32, NTFS, NTFS, ext4). ExtAccess ile
+  1963 dosya yazildi (e2fsck temiz); kuyruk yoluyla ext4 sola tasinip
+  7,75 -> 9,77 GB buyutuldu: hatasiz, e2fsck temiz, icerik birebir, diger
+  bolumler degismedi, sfdisk --verify temiz.
+- Kullanicinin arayuz oturumundaki gercek hata analiz edildi
+  (`.claude/logs/2026-10-01-ext4-genisletme-analizi.md`): goruntu `/dev`
+  (devtmpfs) icinde olusturulmus (varsayilan klasor = acik fiziksel diskin
+  klasoru), tasima ENOSPC ile yarida kaldi, ext4 bozuldu ama mesaj
+  "0 adim uygulandi" dedi (yeniden uretildi). Ek: bos alan da kopyalaniyor
+  (seyreklik bozuluyor), Qt Turkce ceviri uyarilari, ext4 ozellik seti.
+- `/dev/yeni-disk.img` hala duruyor, /dev %100 dolu — kullaniciya bildirildi.
+- Duzeltmeler kullanici onayina birakildi.
