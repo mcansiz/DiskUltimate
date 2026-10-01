@@ -57,6 +57,7 @@ MFT_ATTRDEF = 4
 MFT_ROOT = 5
 MFT_BITMAP = 6
 MFT_BOOT = 7
+BOOT_BYTES = 8192              # $Boot: onyukleme sektoru + onyukleme kodu
 MFT_BADCLUS = 8
 MFT_SECURE = 9
 MFT_UPCASE = 10
@@ -378,12 +379,14 @@ class NtfsLayout:
     upcase_lcn: int
     upcase_clusters: int
     attrdef_lcn: int
+    attrdef_clusters: int
     bitmap_lcn: int
     bitmap_clusters: int
     root_index_lcn: int
     secure_lcn: int
     secure_clusters: int = 1
     mft_bitmap_lcn: int = 0
+    boot_clusters: int = 2
 
 
 class NtfsFormatter:
@@ -442,7 +445,14 @@ class NtfsFormatter:
         bitmap_bytes = (total_clusters + 7) // 8
         bitmap_cluster = clusters(bitmap_bytes)
 
-        imlec = 4                                    # $Boot 0-1, 2-3 bos birakilir
+        # $Boot 8 KiB'tir: 4 KiB kumede 2, 1 KiB'te 8 kume. Eskiden kume 0-3
+        # sabit "dolu" isaretlenip $MFT 4'ten baslatiliyordu: 4 KiB'te 2-3
+        # sahipsiz doluydu (ntfsresize "extra cluster in $Bitmap" deyip
+        # reddediyordu), 1 KiB ve altinda $Boot ile $MFT ayni kumeleri
+        # paylasiyordu (ADR 0074). Bitmap'te yalnizca $Boot'un kumeleri
+        # isaretlenir; $MFT ondan once baslamaz (4 KiB'te yerlesim ayni).
+        boot_clusters = clusters(BOOT_BYTES)
+        imlec = max(4, boot_clusters)
         mft_lcn = imlec
         imlec += mft_cluster
         logfile_lcn = imlec
@@ -477,9 +487,11 @@ class NtfsFormatter:
             logfile_lcn=logfile_lcn,
             logfile_clusters=logfile_cluster, upcase_lcn=upcase_lcn,
             upcase_clusters=upcase_cluster, attrdef_lcn=attrdef_lcn,
+            attrdef_clusters=attrdef_cluster,
             bitmap_lcn=bitmap_lcn, bitmap_clusters=bitmap_cluster,
             root_index_lcn=root_index_lcn, secure_lcn=secure_lcn,
-            secure_clusters=secure_cluster, mft_bitmap_lcn=mft_bitmap_lcn)
+            secure_clusters=secure_cluster, mft_bitmap_lcn=mft_bitmap_lcn,
+            boot_clusters=boot_clusters)
 
     # ---- dusuk seviye yardimcilar ----------------------------------------
     def _write_clusters(self, lcn: int, veri: bytes) -> None:
@@ -860,11 +872,11 @@ class _NtfsBuilder(NtfsFormatter):
         """Metaverinin kapladigi (lcn, adet) araliklari."""
         L = self.layout
         return [
-            (0, 4),                                   # $Boot + hizalama
+            (0, L.boot_clusters),                     # $Boot (8 KiB)
             (L.mft_lcn, L.mft_clusters),
             (L.logfile_lcn, L.logfile_clusters),
             (L.upcase_lcn, L.upcase_clusters),
-            (L.attrdef_lcn, 1),
+            (L.attrdef_lcn, L.attrdef_clusters),
             (L.bitmap_lcn, L.bitmap_clusters),
             (L.root_index_lcn, max(1, INDEX_RECORD_SIZE // L.cluster_size)),
             (L.secure_lcn, L.secure_clusters),
@@ -954,8 +966,12 @@ class _NtfsBuilder(NtfsFormatter):
         records.append(self._make_record(MFT_ATTRDEF, MFT_FLAG_IN_USE, [
             self._attr_resident(AT_STANDARD_INFORMATION,
                                 self._std_info(security_id=SECURITY_ID_SYSTEM)),
-            system_file(MFT_ATTRDEF, "$AttrDef", len(attrdef), cs),
-            self._attr_nonresident(AT_DATA, [(L.attrdef_lcn, 1)], len(attrdef),
+            # 2560 bayt: 4 KiB altindaki kumelerde birden cok kume (eskiden
+            # tek kume yaziliyordu, ntfs-3g "unexpected length" diyordu).
+            system_file(MFT_ATTRDEF, "$AttrDef", len(attrdef),
+                        L.attrdef_clusters * cs),
+            self._attr_nonresident(AT_DATA, [(L.attrdef_lcn, L.attrdef_clusters)],
+                                   len(attrdef),
                                    attr_id=1),
         ]))
 
@@ -979,8 +995,8 @@ class _NtfsBuilder(NtfsFormatter):
         records.append(self._make_record(MFT_BOOT, MFT_FLAG_IN_USE, [
             self._attr_resident(AT_STANDARD_INFORMATION,
                                 self._std_info(security_id=SECURITY_ID_SYSTEM)),
-            system_file(MFT_BOOT, "$Boot", 8192, 4 * cs),
-            self._attr_nonresident(AT_DATA, [(0, max(1, 8192 // cs))], 8192,
+            system_file(MFT_BOOT, "$Boot", BOOT_BYTES, L.boot_clusters * cs),
+            self._attr_nonresident(AT_DATA, [(0, L.boot_clusters)], BOOT_BYTES,
                                    attr_id=1),
         ]))
 
@@ -1232,8 +1248,14 @@ class _NtfsBuilder(NtfsFormatter):
         else:
             struct.pack_into("<b", boot, 0x40,
                              -(MFT_RECORD_SIZE.bit_length() - 1))
-        struct.pack_into("<b", boot, 0x44,
-                         1 if L.cluster_size <= INDEX_RECORD_SIZE else -12)
+        # Ayni kural dizin kaydi icin: 4 KiB alti kumede 4096 // kume (512
+        # baytta 8). Eskiden her zaman 1 yaziliyordu; okuyucu dizin kaydini
+        # kume boyunda (512/1024/2048) saniyor ve dizinleri okuyamiyordu.
+        if INDEX_RECORD_SIZE >= L.cluster_size:
+            struct.pack_into("<b", boot, 0x44, INDEX_RECORD_SIZE // L.cluster_size)
+        else:
+            struct.pack_into("<b", boot, 0x44,
+                             -(INDEX_RECORD_SIZE.bit_length() - 1))
         struct.pack_into("<Q", boot, 0x48, self.serial)
         struct.pack_into("<H", boot, ss - 2, 0xAA55)
         return bytes(boot)

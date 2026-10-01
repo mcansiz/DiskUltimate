@@ -1341,6 +1341,9 @@ class MainWindow(QMainWindow):
         """Duzenlenen bolumleri kuyruga yazar (harita, pencereler ortak)."""
         if model is None or self.session is None:
             return
+        if not self._recheck_shrink(model, indices):
+            self.refresh(reload=False)
+            return
         infos = dict(fs_infos or {})
         for index in indices:
             if index not in infos:
@@ -1362,6 +1365,47 @@ class MainWindow(QMainWindow):
         for operation in changed:
             self.log(tr("Kuyruga eklendi: {}", operation))
         self._refresh_pending()
+
+    def _recheck_shrink(self, model, indices) -> bool:
+        """Kuculen bolumun en az boyutunu kuyruga yazmadan once DISKTEN olcer.
+
+        Onbellekteki sinir eskimis olabilir (dosya baska yoldan eklendi, ayni
+        aygit baska programca degisti). Uygula aninda cekirdek zaten reddeder;
+        bu denetim imkansiz adimin kuyruga hic girmemesi icindir. Yalnizca
+        kuculen ve sinirini dosya sistemi veren bolumler olculur.
+        """
+        session = self.session
+        targets = []
+        for index in indices:
+            try:
+                slot = model.get(index)
+                part = session.table.get(index)
+            except Exception:                          # noqa: BLE001
+                continue
+            if slot is not None and slot.shrinks and slot.fs_resizable:
+                targets.append((slot, part))
+        if not targets:
+            return True
+        for _slot, part in targets:
+            self.limits.forget(session, part.index)
+        fresh = self._limits_blocking([part for _slot, part in targets])
+        if fresh is None:
+            return False
+        for slot, part in targets:
+            info = fresh.get(part.index)
+            if info is None or slot.new_count >= info.min_sectors:
+                continue
+            used = part.fs_used if part.fs_used and part.fs_used > 0 else 0
+            self.error(
+                tr("Bolum bu kadar kuculemez"),
+                tr("Bolum {} en az {} olabilir (dolu: {}); istenen {}.\n\n"
+                   "Sinir az once diskten yeniden olculdu; adim kuyruga "
+                   "eklenmedi.", part.index,
+                   human_size(info.min_sectors * part.sector_size),
+                   human_size(used) if used else tr("bilinmiyor"),
+                   human_size(slot.new_count * part.sector_size)))
+            return False
+        return True
 
     def delete_partition(self) -> None:
         part = self._current_partition()
@@ -2849,9 +2893,12 @@ class MainWindow(QMainWindow):
         index = self.selected_partition
         if index is None or not self.session:
             return
+        # Doluluk degisti: en az boyut yeniden hesaplanmali (ADR 0074)
+        self.limits.forget(self.session, index)
         try:
             self.session._fs_info.pop(index, None)
             part = self.session.table.get(index)
+            self.limits.get(self.session, part)          # arka planda yeniden
             info = self.session.detect_fs(part)
             part.fs_used, part.fs_total = info.used_bytes, info.total_bytes
             self.disk_map.set_disk(

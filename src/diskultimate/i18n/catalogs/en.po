@@ -11,7 +11,7 @@ msgstr ""
 "X-Generator: tests/i18n_check.py\n"
 
 #: src/diskultimate/ui/dialogs/apply.py:198
-#: src/diskultimate/ui/main_window.py:2249
+#: src/diskultimate/ui/main_window.py:2293
 msgid ""
 "\n"
 "(Bu adim veri kaybettirebilir)"
@@ -19,11 +19,11 @@ msgstr ""
 "\n"
 "(This step may cause data loss)"
 
-#: src/diskultimate/ui/main_window.py:3566
+#: src/diskultimate/ui/main_window.py:3613
 msgid "  (bolum yok)"
 msgstr "  (no partitions)"
 
-#: src/diskultimate/ui/main_window.py:2605
+#: src/diskultimate/ui/main_window.py:2649
 msgid "  (disk bulunamadi)"
 msgstr "  (no disks found)"
 
@@ -56,11 +56,11 @@ msgstr " or "
 msgid " · EFI"
 msgstr " · EFI"
 
-#: src/diskultimate/core/ntfsresize.py:654
+#: src/diskultimate/core/ntfsresize.py:737
 msgid "$BadClus guncelleniyor..."
 msgstr "Updating $BadClus..."
 
-#: src/diskultimate/core/ntfsresize.py:154
+#: src/diskultimate/core/ntfsresize.py:156
 #: src/diskultimate/core/ntfswrite.py:111
 msgid "$Bitmap okunamadi"
 msgstr "Could not read $Bitmap"
@@ -163,25 +163,25 @@ msgstr "(no partition table, or it could not be read)"
 msgid "(bolum yok)"
 msgstr "(no partitions)"
 
-#: src/diskultimate/ui/main_window.py:3210
+#: src/diskultimate/ui/main_window.py:3257
 #: src/diskultimate/ui/widgets/disk_overview.py:155
 msgid "(bolumler okunamadi: {})"
 msgstr "(partitions could not be read: {})"
 
-#: src/diskultimate/ui/main_window.py:3206
+#: src/diskultimate/ui/main_window.py:3253
 msgid "(bolumler okunuyor...)"
 msgstr "(reading partitions...)"
 
 #: src/diskultimate/ui/dialogs/backup.py:760
-#: src/diskultimate/ui/main_window.py:2466
+#: src/diskultimate/ui/main_window.py:2510
 msgid "(bos)"
 msgstr "(idle)"
 
-#: src/diskultimate/ui/main_window.py:3389
+#: src/diskultimate/ui/main_window.py:3436
 msgid "(degistirilemez — neden?)"
 msgstr "(not modifiable — why?)"
 
-#: src/diskultimate/ui/main_window.py:3173
+#: src/diskultimate/ui/main_window.py:3220
 msgid "(disk bulunamadi)"
 msgstr "(no disks found)"
 
@@ -205,7 +205,7 @@ msgstr "(known once the backup is taken)"
 msgid "(yedek dosyasi secilmedi)"
 msgstr "(no backup file selected)"
 
-#: src/diskultimate/ui/main_window.py:2464
+#: src/diskultimate/ui/main_window.py:2508
 msgid "(yok)"
 msgstr "(none)"
 
@@ -240,7 +240,7 @@ msgstr "7-Zip archive"
 msgid "< Onceki"
 msgstr "< Previous"
 
-#: src/diskultimate/ui/main_window.py:2001
+#: src/diskultimate/ui/main_window.py:2045
 msgid "<b>Acik disk/goruntu kapatilacak.</b><br><br>"
 msgstr "<b>The open disk/image will be closed.</b><br><br>"
 
@@ -252,16 +252,16 @@ msgstr "<b>Partition {}</b> — {}<br>Current file system: {}"
 msgid "<b>Bos alan</b><br>Boyut: {}"
 msgstr "<b>Free space</b><br>Size: {}"
 
-#: src/diskultimate/ui/dialogs/resize.py:246
-msgid "<b>Dikkat:</b> yeni boyut kullanilan alandan kucuk"
-msgstr "<b>Warning:</b> the new size is smaller than the used space"
-
-#: src/diskultimate/ui/main_window.py:2202
+#: src/diskultimate/ui/main_window.py:2246
 msgid ""
 "<b>Diskteki hali</b> gosteriliyor — {} bekleyen adim listede bekliyor."
 msgstr ""
 "Showing the <b>current on-disk layout</b> — {} pending steps are waiting "
 "in the list."
+
+#: src/diskultimate/ui/dialogs/resize.py:167
+msgid "<b>Dolu:</b> {}"
+msgstr "<b>Used:</b> {}"
 
 #: src/diskultimate/ui/dialogs/apply.py:317
 msgid ""
@@ -279,7 +279,7 @@ msgstr "<b>Target:</b> {} — {}"
 msgid "<b>Onyukleme duzeni okunamadi.</b> {}"
 msgstr "<b>Boot configuration could not be read.</b> {}"
 
-#: src/diskultimate/ui/main_window.py:2196
+#: src/diskultimate/ui/main_window.py:2240
 msgid ""
 "<b>Planlanan yerlesim</b> gosteriliyor — {} bekleyen adim uygulandiginda "
 "disk boyle olacak ({}). Diske henuz yazilmadi."
@@ -287,7 +287,7 @@ msgstr ""
 "Showing the <b>planned layout</b> — this is how the disk will look once "
 "the {} pending steps are applied ({}). Nothing has been written yet."
 
-#: src/diskultimate/ui/dialogs/resize.py:162
+#: src/diskultimate/ui/dialogs/resize.py:168
 msgid "<b>Sinirlar:</b> en az {}"
 msgstr "<b>Limits:</b> at least {}"
 
@@ -309,7 +309,7 @@ msgid ""
 msgstr ""
 "<b>{} steps may destroy data</b> and cannot be undone once applied."
 
-#: src/diskultimate/ui/main_window.py:2280
+#: src/diskultimate/ui/main_window.py:2324
 msgid ""
 "<b>{} bekleyen adim</b> henuz uygulanmadi ve kaynak kapatilinca "
 "kaybolacak.<br><br>Diskte hicbir degisiklik yapilmadi.<br><br>Yine de "
@@ -319,7 +319,7 @@ msgstr ""
 "the source is closed.<br><br>Nothing on the disk has been "
 "changed.<br><br>Close anyway?"
 
-#: src/diskultimate/ui/main_window.py:1946
+#: src/diskultimate/ui/main_window.py:1990
 msgid ""
 "<b>{} fiziksel diskin</b> bilgisi okunamadi ({}).<br><br>Fiziksel disklere "
 "erismek icin {} yetkisi gerekir. Uygulama simdi yetkili olarak yeniden "
@@ -397,7 +397,7 @@ msgstr ""
 "<b>{}</b> is the operating system disk. Type the disk name to confirm: "
 "<b>{}</b>"
 
-#: src/diskultimate/ui/main_window.py:3697
+#: src/diskultimate/ui/main_window.py:3744
 msgid ""
 "<b>{}</b> salt okunur acik — bu <b>normaldir</b>.<br><br>Yaptiginiz "
 "degisiklikler bekleyen islem olarak birikir ve diske ancak <b>Uygula</b> "
@@ -407,7 +407,7 @@ msgstr ""
 "are collected as pending operations and are written to the disk only when "
 "you choose <b>Apply</b>."
 
-#: src/diskultimate/ui/main_window.py:3666
+#: src/diskultimate/ui/main_window.py:3713
 msgid ""
 "<b>{}</b> salt okunur acildi; bu dosyada degisiklik "
 "yapilamaz.<br><br><b>Neden:</b> {}<br><b>Yol:</b> {}<br><b>Bicim:</b> {}"
@@ -423,7 +423,7 @@ msgstr ""
 "<b>{}</b> deleted entries found — <b>{}</b> of them appear to be fully "
 "recoverable."
 
-#: src/diskultimate/ui/main_window.py:3704
+#: src/diskultimate/ui/main_window.py:3751
 msgid "<b>{}</b> uzerinde degisiklik yapilamaz.<br><br>{}"
 msgstr "<b>{}</b> cannot be modified.<br><br>{}"
 
@@ -443,7 +443,7 @@ msgstr "<b>{}</b> — {} &nbsp;·&nbsp; backed-up disk {}"
 msgid "<b>{}</b> — {} (ilk {} gosteriliyor)"
 msgstr "<b>{}</b> — {} (showing the first {})"
 
-#: src/diskultimate/ui/main_window.py:3671
+#: src/diskultimate/ui/main_window.py:3718
 msgid ""
 "<br><br>Dosyayi kullanan diger programi (baska bir disk araci, yedekleme "
 "yazilimi vb.) kapatip <b>Yeniden dene</b>ye basin."
@@ -451,7 +451,7 @@ msgstr ""
 "<br><br>Close the other program using the file (another disk tool, backup "
 "software, etc.) and press <b>Retry</b>."
 
-#: src/diskultimate/ui/main_window.py:3788
+#: src/diskultimate/ui/main_window.py:3835
 msgid ""
 "<h3>{} {}</h3><p>Disk goruntusu, sanal disk ve <b>sistemdeki gercek "
 "diskler</b> uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma "
@@ -540,7 +540,7 @@ msgstr "APFS object not found in the object map: {}"
 msgid "APFS sikistirma ozniteligi bozuk"
 msgstr "APFS compression attribute is corrupt"
 
-#: src/diskultimate/core/filesystem.py:813
+#: src/diskultimate/core/filesystem.py:817
 msgid "APFS yazma desteklenmiyor; birim salt okunur acildi."
 msgstr ""
 "Writing to APFS is not supported; the volume was opened read-only."
@@ -565,7 +565,7 @@ msgid ""
 msgstr ""
 "Writes the open .dub backup to a new image file or to a physical disk"
 
-#: src/diskultimate/ui/main_window.py:1914
+#: src/diskultimate/ui/main_window.py:1958
 msgid "Acik dosya bicimi"
 msgstr "Open file format"
 
@@ -587,7 +587,7 @@ msgid "Acmak icin tiklayin (salt okunur)"
 msgstr "Click to open (read-only)"
 
 #: src/diskultimate/ui/dialogs/backup.py:326
-#: src/diskultimate/ui/main_window.py:3574
+#: src/diskultimate/ui/main_window.py:3621
 #: src/diskultimate/ui/widgets/file_browser.py:122
 msgid "Ad"
 msgstr "Name"
@@ -636,8 +636,8 @@ msgstr "No applicable order was found for the steps"
 msgid "Ag arabirimi (MAC)"
 msgstr "Network interface (MAC)"
 
-#: src/diskultimate/ui/main_window.py:2575
-#: src/diskultimate/ui/main_window.py:2649
+#: src/diskultimate/ui/main_window.py:2619
+#: src/diskultimate/ui/main_window.py:2693
 msgid "Agactan bir fiziksel disk secin."
 msgstr "Select a physical disk from the tree."
 
@@ -645,7 +645,7 @@ msgstr "Select a physical disk from the tree."
 msgid "Apple HFS+"
 msgstr "Apple HFS+"
 
-#: src/diskultimate/ui/main_window.py:2469
+#: src/diskultimate/ui/main_window.py:2513
 msgid ""
 "Arayuz bir saniyeden uzun yanit vermezse butun is parcaciklarinin yigini "
 "kendiliginden rapor dosyasina yazilir. Raporlar gunluk klasorundeki "
@@ -655,15 +655,15 @@ msgstr ""
 "all threads are written to a report file automatically. Reports are under "
 "freeze/ in the log folder."
 
-#: src/diskultimate/ui/main_window.py:1910
+#: src/diskultimate/ui/main_window.py:1954
 msgid "Arayuz dili"
 msgstr "Interface language"
 
-#: src/diskultimate/ui/main_window.py:1912
+#: src/diskultimate/ui/main_window.py:1956
 msgid "Arayuz stili"
 msgstr "Interface style"
 
-#: src/diskultimate/ui/main_window.py:2494
+#: src/diskultimate/ui/main_window.py:2538
 msgid ""
 "Arayuzun takildigi andaki yigin. En ustteki 'O an acik islem' satiri hangi "
 "islemin bekledigini soyler."
@@ -683,7 +683,7 @@ msgstr "Free Space After:"
 msgid "Asagi"
 msgstr "Down"
 
-#: src/diskultimate/ui/main_window.py:2295
+#: src/diskultimate/ui/main_window.py:2339
 msgid "Asagi tasi"
 msgstr "Move down"
 
@@ -721,7 +721,7 @@ msgstr "Back up settings"
 msgid "Aygit"
 msgstr "Device"
 
-#: src/diskultimate/ui/main_window.py:2982
+#: src/diskultimate/ui/main_window.py:3029
 msgid "Aygit cikarildi: {}"
 msgstr "Device removed: {}"
 
@@ -745,7 +745,7 @@ msgstr ""
 msgid "Aygit salt okunur"
 msgstr "The device is read-only"
 
-#: src/diskultimate/ui/main_window.py:2978
+#: src/diskultimate/ui/main_window.py:3025
 msgid "Aygit takildi: {} — {} ({})"
 msgstr "Device inserted: {} — {} ({})"
 
@@ -845,15 +845,15 @@ msgstr ""
 msgid "BIOS onyukleme aygiti"
 msgstr "BIOS boot device"
 
-#: src/diskultimate/ui/main_window.py:2581
+#: src/diskultimate/ui/main_window.py:2625
 msgid "BOLUM AYGITLARI"
 msgstr "PARTITION DEVICES"
 
-#: src/diskultimate/ui/main_window.py:3572
+#: src/diskultimate/ui/main_window.py:3619
 msgid "BOLUM {}"
 msgstr "PARTITION {}"
 
-#: src/diskultimate/ui/main_window.py:3558
+#: src/diskultimate/ui/main_window.py:3605
 msgid "BOLUMLER"
 msgstr "PARTITIONS"
 
@@ -869,7 +869,7 @@ msgstr "Mount"
 msgid "Baglama noktasi"
 msgstr "Mount point"
 
-#: src/diskultimate/ui/main_window.py:1507
+#: src/diskultimate/ui/main_window.py:1551
 msgid ""
 "Baglama yalnizca gercek disklerde anlamlidir; goruntu dosyasi isletim "
 "sistemine bagli degildir."
@@ -885,14 +885,14 @@ msgstr "Mounting requires root privileges or `udisksctl`."
 msgid "Baglanti"
 msgstr "Bus"
 
-#: src/diskultimate/ui/main_window.py:1468
-#: src/diskultimate/ui/main_window.py:1470
-#: src/diskultimate/ui/main_window.py:1475
-#: src/diskultimate/ui/main_window.py:2417
+#: src/diskultimate/ui/main_window.py:1512
+#: src/diskultimate/ui/main_window.py:1514
+#: src/diskultimate/ui/main_window.py:1519
+#: src/diskultimate/ui/main_window.py:2461
 msgid "Baglantilari kes"
 msgstr "Unmount all"
 
-#: src/diskultimate/ui/main_window.py:2411
+#: src/diskultimate/ui/main_window.py:2455
 msgid "Bagli bolum uyarisi"
 msgstr "Mounted partition warning"
 
@@ -908,7 +908,7 @@ msgstr "No mounted partitions"
 msgid "Bagli bolumler"
 msgstr "Mounted partitions"
 
-#: src/diskultimate/ui/main_window.py:3579
+#: src/diskultimate/ui/main_window.py:3626
 msgid "Bagli degil"
 msgstr "Not mounted"
 
@@ -929,7 +929,7 @@ msgid "Baslangic Kesimi:"
 msgstr "Start Sector:"
 
 #: src/diskultimate/ui/dialogs/tools.py:182
-#: src/diskultimate/ui/main_window.py:3582
+#: src/diskultimate/ui/main_window.py:3629
 #: src/diskultimate/ui/widgets/partition_table.py:23
 msgid "Baslangic LBA"
 msgstr "Start LBA"
@@ -955,7 +955,7 @@ msgstr "Start"
 msgid "Bayrak"
 msgstr "Flags"
 
-#: src/diskultimate/ui/main_window.py:3584
+#: src/diskultimate/ui/main_window.py:3631
 msgid "Bayt ofseti"
 msgstr "Byte offset"
 
@@ -967,11 +967,11 @@ msgstr "Some steps failed; details are in the log below."
 msgid "Beklenmeyen cikti"
 msgstr "Unexpected output"
 
-#: src/diskultimate/ui/main_window.py:2137
+#: src/diskultimate/ui/main_window.py:2181
 msgid "Bekleyen adimla cakisiyor"
 msgstr "Conflicts with a pending step"
 
-#: src/diskultimate/ui/main_window.py:2266
+#: src/diskultimate/ui/main_window.py:2310
 msgid "Bekleyen islem yok"
 msgstr "No pending operations"
 
@@ -979,15 +979,15 @@ msgstr "No pending operations"
 msgid "Bekleyen islemler"
 msgstr "Pending operations"
 
-#: src/diskultimate/ui/main_window.py:2265
+#: src/diskultimate/ui/main_window.py:2309
 msgid "Bekleyen islemler ({})"
 msgstr "Pending operations ({})"
 
-#: src/diskultimate/ui/main_window.py:2279
+#: src/diskultimate/ui/main_window.py:2323
 msgid "Bekleyen islemler var"
 msgstr "There are pending operations"
 
-#: src/diskultimate/ui/main_window.py:3082
+#: src/diskultimate/ui/main_window.py:3129
 #: src/diskultimate/ui/widgets/partition_table.py:140
 msgid "Bekleyen islemler:"
 msgstr "Pending operations:"
@@ -1000,7 +1000,7 @@ msgstr "Comes from pending operations: {}"
 msgid "Bekleyen islemlere eklendi: onyukleme kodunu kaldir"
 msgstr "Added to pending operations: remove boot code"
 
-#: src/diskultimate/ui/main_window.py:2327
+#: src/diskultimate/ui/main_window.py:2371
 msgid "Bekleyen islemleri iptal et"
 msgstr "Discard pending operations"
 
@@ -1081,9 +1081,9 @@ msgstr "Format"
 msgid "Bicimlendir..."
 msgstr "Format..."
 
-#: src/diskultimate/ui/main_window.py:3079
-#: src/diskultimate/ui/main_window.py:3228
-#: src/diskultimate/ui/main_window.py:3577
+#: src/diskultimate/ui/main_window.py:3126
+#: src/diskultimate/ui/main_window.py:3275
+#: src/diskultimate/ui/main_window.py:3624
 #: src/diskultimate/ui/widgets/disk_map.py:194
 #: src/diskultimate/ui/widgets/disk_overview.py:240
 msgid "Bicimlendirilmemis"
@@ -1176,7 +1176,7 @@ msgstr "Unknown"
 msgid "Bilinmiyor (yapilandirma okunamadi)"
 msgstr "Unknown (configuration could not be read)"
 
-#: src/diskultimate/ui/main_window.py:2606
+#: src/diskultimate/ui/main_window.py:2650
 msgid "Bir diski acmak icin uzerine cift tiklayin."
 msgstr "Double-click a disk to open it."
 
@@ -1184,7 +1184,8 @@ msgstr "Double-click a disk to open it."
 msgid "Bir dosya yolu girin."
 msgstr "Enter a file path."
 
-#: src/diskultimate/core/ntfsresize.py:633
+#: src/diskultimate/core/ntfsresize.py:422
+#: src/diskultimate/core/ntfsresize.py:711
 msgid ""
 "Birim 'kirli' isaretli. Once Windows'ta chkdsk, Linux'ta ntfsfix "
 "calistirin; kirli bir birimi boyutlandirmak veri kaybettirebilir."
@@ -1192,7 +1193,7 @@ msgstr ""
 "The volume is marked dirty. Run chkdsk on Windows or ntfsfix on Linux "
 "first; resizing a dirty volume can destroy data."
 
-#: src/diskultimate/core/ntfsresize.py:126
+#: src/diskultimate/core/ntfsresize.py:128
 msgid "Birim 'kirli' isaretli; once chkdsk / ntfsfix calistirilmali"
 msgstr "The volume is marked dirty; run chkdsk / ntfsfix first"
 
@@ -1213,8 +1214,8 @@ msgid "Birim XFS gunlugu icin cok kucuk"
 msgstr "The volume is too small for the XFS log"
 
 #: src/diskultimate/core/operations.py:81
-#: src/diskultimate/ui/main_window.py:1435
-#: src/diskultimate/ui/main_window.py:3578
+#: src/diskultimate/ui/main_window.py:1479
+#: src/diskultimate/ui/main_window.py:3625
 msgid "Birim etiketi"
 msgstr "Volume label"
 
@@ -1272,7 +1273,7 @@ msgstr "Primary partition"
 msgid "Bitis Kesimi:"
 msgstr "End Sector:"
 
-#: src/diskultimate/ui/main_window.py:3583
+#: src/diskultimate/ui/main_window.py:3630
 #: src/diskultimate/ui/widgets/partition_table.py:23
 msgid "Bitis LBA"
 msgstr "End LBA"
@@ -1302,20 +1303,27 @@ msgstr "Block size mismatch"
 msgid "Bolum"
 msgstr "Partition"
 
-#: src/diskultimate/ui/dialogs/resize.py:236
+#: src/diskultimate/ui/dialogs/resize.py:242
 msgid "Bolum <b>{} buyuyecek</b>"
 msgstr "The partition will <b>grow by {}</b>"
 
-#: src/diskultimate/ui/dialogs/resize.py:238
+#: src/diskultimate/ui/dialogs/resize.py:253
+msgid ""
+"Bolum <b>{} geri tasinacak</b> ({} veri kopyalanir — uzun surebilir)"
+msgstr ""
+"The partition will be <b>moved back by {}</b> ({} of data is copied — this "
+"may take a while)"
+
+#: src/diskultimate/ui/dialogs/resize.py:249
+msgid ""
+"Bolum <b>{} ileri tasinacak</b> ({} veri kopyalanir — uzun surebilir)"
+msgstr ""
+"The partition will be <b>moved forward by {}</b> ({} of data is copied — "
+"this may take a while)"
+
+#: src/diskultimate/ui/dialogs/resize.py:244
 msgid "Bolum <b>{} kuculecek</b>"
 msgstr "The partition will <b>shrink by {}</b>"
-
-#: src/diskultimate/ui/dialogs/resize.py:243
-msgid ""
-"Bolum <b>{} {} tasinacak</b> ({} veri kopyalanir — uzun surebilir)"
-msgstr ""
-"The partition will <b>move {} {}</b> ({} of data is copied — this may take "
-"a while)"
 
 #: src/diskultimate/ui/main_window.py:276
 #: src/diskultimate/ui/main_window.py:794
@@ -1334,20 +1342,20 @@ msgstr "The partition is too small for FAT"
 msgid "Bolum FAT{} icin cok kucuk (kume sayisi {})"
 msgstr "The partition is too small for FAT{} (cluster count {})"
 
-#: src/diskultimate/ui/main_window.py:3593
+#: src/diskultimate/ui/main_window.py:3640
 msgid "Bolum GUID"
 msgstr "Partition GUID"
 
-#: src/diskultimate/core/ntfs.py:430
+#: src/diskultimate/core/ntfs.py:433
 msgid "Bolum NTFS icin cok kucuk"
 msgstr "The partition is too small for NTFS"
 
-#: src/diskultimate/core/ntfs.py:468
+#: src/diskultimate/core/ntfs.py:478
 msgid "Bolum NTFS metaverisi icin yetersiz"
 msgstr "The partition is too small for NTFS metadata"
 
 #: src/diskultimate/core/operations.py:82
-#: src/diskultimate/ui/main_window.py:1390
+#: src/diskultimate/ui/main_window.py:1434
 msgid "Bolum adi"
 msgstr "Partition name"
 
@@ -1355,7 +1363,7 @@ msgstr "Partition name"
 msgid "Bolum adi yalnizca GPT semasinda desteklenir"
 msgstr "Partition names are only supported in the GPT scheme"
 
-#: src/diskultimate/ui/main_window.py:1387
+#: src/diskultimate/ui/main_window.py:1431
 msgid ""
 "Bolum adi yalnizca GPT semasinda saklanir.\n"
 "MBR icin birim etiketini degistirin."
@@ -1383,6 +1391,10 @@ msgstr "Partition device not found: {}"
 #: src/diskultimate/core/resize.py:742
 msgid "Bolum boyutu sifir olamaz"
 msgstr "The partition size cannot be zero"
+
+#: src/diskultimate/ui/main_window.py:1400
+msgid "Bolum bu kadar kuculemez"
+msgstr "The partition cannot shrink this much"
 
 #: src/diskultimate/core/session.py:1006
 #: src/diskultimate/core/session.py:778
@@ -1442,7 +1454,7 @@ msgstr "The partition is too small for ext"
 msgid "Bolum kapsayici alani asiyor (en gec LBA {})"
 msgstr "The partition goes past the surrounding area (latest LBA {})"
 
-#: src/diskultimate/ui/main_window.py:1866
+#: src/diskultimate/ui/main_window.py:1910
 #: src/diskultimate/ui/main_window.py:884
 msgid "Bolum olusturuluyor..."
 msgstr "Creating the partition..."
@@ -1455,7 +1467,7 @@ msgstr "The partition changed after the plan was prepared; refresh"
 msgid "Bolum sayisi"
 msgstr "Partition count"
 
-#: src/diskultimate/ui/main_window.py:3630
+#: src/diskultimate/ui/main_window.py:3677
 msgid "Bolum secili degil"
 msgstr "No partition selected"
 
@@ -1513,7 +1525,7 @@ msgstr ""
 "<b>{}</b> file systems that are not in the partition table were detected. "
 "Select the one you want to add to the table."
 
-#: src/diskultimate/ui/main_window.py:1767
+#: src/diskultimate/ui/main_window.py:1811
 msgid "Bolum tablosunda olmayan bir dosya sistemi bulunamadi."
 msgstr "No file system outside the partition table was found."
 
@@ -1540,8 +1552,8 @@ msgid "Bolum tablosunu {} yap"
 msgstr "Convert partition table to {}"
 
 #: src/diskultimate/core/operations.py:83
-#: src/diskultimate/ui/main_window.py:1404
-#: src/diskultimate/ui/main_window.py:1416
+#: src/diskultimate/ui/main_window.py:1448
+#: src/diskultimate/ui/main_window.py:1460
 msgid "Bolum turu"
 msgstr "Partition type"
 
@@ -1557,7 +1569,7 @@ msgstr "Change partition type..."
 msgid "Bolum verisi korunur"
 msgstr "Partition data is preserved"
 
-#: src/diskultimate/ui/main_window.py:1557
+#: src/diskultimate/ui/main_window.py:1601
 msgid "Bolum yok"
 msgstr "No partitions"
 
@@ -1578,16 +1590,16 @@ msgstr "No partitions"
 #: src/diskultimate/ui/dialogs/bootloader.py:201
 #: src/diskultimate/ui/dialogs/bootloader.py:234
 #: src/diskultimate/ui/dialogs/partition_layout.py:164
-#: src/diskultimate/ui/main_window.py:1793
+#: src/diskultimate/ui/main_window.py:1837
 #: src/diskultimate/ui/widgets/disk_overview.py:177
 #: src/diskultimate/ui/widgets/layout_bar.py:131
 #: src/diskultimate/ui/widgets/partition_table.py:47
 msgid "Bolum {}"
 msgstr "Partition {}"
 
-#: src/diskultimate/ui/main_window.py:1569
-#: src/diskultimate/ui/main_window.py:1674
-#: src/diskultimate/ui/main_window.py:2729
+#: src/diskultimate/ui/main_window.py:1613
+#: src/diskultimate/ui/main_window.py:1718
+#: src/diskultimate/ui/main_window.py:2773
 msgid "Bolum {} ({})"
 msgstr "Partition {} ({})"
 
@@ -1605,7 +1617,7 @@ msgstr "Format Partition {}"
 msgid "Bolum {} adi"
 msgstr "Partition {} name"
 
-#: src/diskultimate/ui/main_window.py:1532
+#: src/diskultimate/ui/main_window.py:1576
 msgid "Bolum {} baglandi: {}"
 msgstr "Partition {} mounted at {}"
 
@@ -1621,13 +1633,24 @@ msgstr "Erase free space of partition {}"
 msgid "Bolum {} boyutlandir"
 msgstr "Resize partition {}"
 
-#: src/diskultimate/ui/main_window.py:1534
+#: src/diskultimate/ui/main_window.py:1578
 msgid "Bolum {} cikarildi"
 msgstr "Partition {} unmounted"
 
-#: src/diskultimate/ui/main_window.py:1461
+#: src/diskultimate/ui/main_window.py:1505
 msgid "Bolum {} cikariliyor..."
 msgstr "Unmounting partition {}..."
+
+#: src/diskultimate/ui/main_window.py:1401
+msgid ""
+"Bolum {} en az {} olabilir (dolu: {}); istenen {}.\n"
+"\n"
+"Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi."
+msgstr ""
+"Partition {} can be no smaller than {} (used: {}); requested {}.\n"
+"\n"
+"The limit was just measured again from the disk; the step was not added to "
+"the queue."
 
 #: src/diskultimate/core/operations.py:724
 msgid "Bolum {} etiketi"
@@ -1667,12 +1690,12 @@ msgstr "Delete partition {}"
 msgid "Bolum {} turu"
 msgstr "Partition {} type"
 
-#: src/diskultimate/ui/main_window.py:1715
+#: src/diskultimate/ui/main_window.py:1759
 msgid "Bolum {} — Silinmis Dosyalar"
 msgstr "Partition {} — Deleted Files"
 
 #: src/diskultimate/ui/dialogs/backup.py:563
-#: src/diskultimate/ui/main_window.py:2731
+#: src/diskultimate/ui/main_window.py:2775
 msgid "Bolum {} — {}"
 msgstr "Partition {} — {}"
 
@@ -1696,11 +1719,11 @@ msgstr "Partition {}: shrinking file system..."
 msgid "Bolum {}: yeri degisiyor"
 msgstr "Partition {}: position changes"
 
-#: src/diskultimate/ui/main_window.py:3073
+#: src/diskultimate/ui/main_window.py:3120
 msgid "Bolum {}: {}"
 msgstr "Partition {}: {}"
 
-#: src/diskultimate/ui/main_window.py:3220
+#: src/diskultimate/ui/main_window.py:3267
 msgid "Bolum {}: {} ({})"
 msgstr "Partition {}: {} ({})"
 
@@ -1716,7 +1739,7 @@ msgstr "Partition {}: cannot go below {} (data would be lost)"
 msgid "Bolum {}: {} boyutlandirilamaz"
 msgstr "Partition {}: {} cannot be resized"
 
-#: src/diskultimate/ui/main_window.py:1714
+#: src/diskultimate/ui/main_window.py:1758
 msgid "Bolum {}: {} silinmis giris bulundu"
 msgstr "Partition {}: {} deleted entries found"
 
@@ -1742,7 +1765,7 @@ msgstr "Writing to the partition..."
 msgid "Bolumlenmemis"
 msgstr "Unpartitioned"
 
-#: src/diskultimate/ui/main_window.py:2747
+#: src/diskultimate/ui/main_window.py:2791
 msgid ""
 "Bolumlenmemis alan\n"
 "{}\n"
@@ -1833,7 +1856,7 @@ msgstr "Back up partition..."
 
 #: src/diskultimate/core/ptable.py:22
 #: src/diskultimate/core/ptable.py:53
-#: src/diskultimate/ui/main_window.py:3603
+#: src/diskultimate/ui/main_window.py:3650
 #: src/diskultimate/ui/widgets/partition_table.py:22
 msgid "Bos"
 msgstr "Free"
@@ -1851,7 +1874,7 @@ msgstr "No free MFT record and the $MFT could not be grown"
 msgid "Bos alan"
 msgstr "Free space"
 
-#: src/diskultimate/ui/main_window.py:3086
+#: src/diskultimate/ui/main_window.py:3133
 msgid "Bos alan ({})"
 msgstr "Free space ({})"
 
@@ -1905,7 +1928,7 @@ msgstr "Empty command"
 #: src/diskultimate/ui/dialogs/tools.py:123
 #: src/diskultimate/ui/dialogs/tools.py:182
 #: src/diskultimate/ui/dialogs/tools.py:283
-#: src/diskultimate/ui/main_window.py:3580
+#: src/diskultimate/ui/main_window.py:3627
 #: src/diskultimate/ui/widgets/file_browser.py:122
 #: src/diskultimate/ui/widgets/file_browser.py:93
 #: src/diskultimate/ui/widgets/partition_table.py:22
@@ -1958,11 +1981,11 @@ msgstr ""
 "This Windows edition ({}) cannot create ReFS; Enterprise, Pro for "
 "Workstations or Server is required"
 
-#: src/diskultimate/ui/main_window.py:2291
+#: src/diskultimate/ui/main_window.py:2335
 msgid "Bu adimi kaldir"
 msgstr "Remove this step"
 
-#: src/diskultimate/ui/main_window.py:2138
+#: src/diskultimate/ui/main_window.py:2182
 msgid ""
 "Bu alan <b>{}</b> ile cakisiyor. O bolum henuz diske yazilmadi ama "
 "bekleyen islemler arasinda ve bu alani tutuyor.<br><br>Once bekleyen adimi "
@@ -2003,7 +2026,7 @@ msgstr ""
 msgid "Bu bolum yazilabilir degil"
 msgstr "This partition is not writable"
 
-#: src/diskultimate/ui/main_window.py:1712
+#: src/diskultimate/ui/main_window.py:1756
 msgid "Bu bolumde silinmis dosya girisi bulunamadi."
 msgstr "No deleted file entries were found on this partition."
 
@@ -2018,7 +2041,7 @@ msgstr ""
 msgid "Bu bolume yazilamiyor."
 msgstr "This partition cannot be written to."
 
-#: src/diskultimate/ui/main_window.py:2401
+#: src/diskultimate/ui/main_window.py:2445
 msgid ""
 "Bu bolumler <b>hala bagli</b>. Isletim sistemi onlari kullanirken ham "
 "sektorlere yazmak dosya sistemini <b>bozabilir</b>.<br><br>Once bu "
@@ -2028,7 +2051,7 @@ msgstr ""
 "operating system uses them may <b>corrupt</b> the file system.<br><br>It "
 "is recommended to unmount these partitions first."
 
-#: src/diskultimate/ui/main_window.py:1476
+#: src/diskultimate/ui/main_window.py:1520
 msgid "Bu bolumler cikarilamadi:"
 msgstr "These partitions could not be unmounted:"
 
@@ -2040,7 +2063,7 @@ msgstr ""
 "This btrfs feature (extent-tree-v2 / raid-stripe-tree) cannot be read in "
 "this version"
 
-#: src/diskultimate/ui/main_window.py:3504
+#: src/diskultimate/ui/main_window.py:3551
 msgid "Bu diski kapat"
 msgstr "Close this disk"
 
@@ -2051,7 +2074,7 @@ msgstr ""
 "This disk has mounted partitions: {} — unmounting them before writing is "
 "recommended."
 
-#: src/diskultimate/ui/main_window.py:2412
+#: src/diskultimate/ui/main_window.py:2456
 msgid ""
 "Bu diskte bagli bolumler var:<br><b>{}</b><br><br>{}<br><br>Devam edilsin "
 "mi?"
@@ -2098,7 +2121,7 @@ msgstr "This file system cannot be moved — {}"
 msgid "Bu dosya sistemi {} altina inemez (veri kaybi olurdu)"
 msgstr "This file system cannot go below {} (data would be lost)"
 
-#: src/diskultimate/ui/main_window.py:1432
+#: src/diskultimate/ui/main_window.py:1476
 msgid ""
 "Bu dosya sisteminde etiket degistirme desteklenmiyor.\n"
 "Bolumu yeniden bicimlendirerek etiket verebilirsiniz."
@@ -2130,7 +2153,7 @@ msgstr "This entry has no recoverable data"
 msgid "Bu goruntude bolum tablosu yok. Simdi GPT olusturulsun mu?"
 msgstr "This image has no partition table. Create a GPT one now?"
 
-#: src/diskultimate/ui/main_window.py:3526
+#: src/diskultimate/ui/main_window.py:3573
 msgid "Bu goruntuyu kapat"
 msgstr "Close this image"
 
@@ -2142,7 +2165,7 @@ msgstr "This operation requires {} rights."
 msgid "Bu kapsam turu yazmada desteklenmiyor: {}"
 msgstr "This allocation descriptor type is not supported for writing: {}"
 
-#: src/diskultimate/ui/main_window.py:3654
+#: src/diskultimate/ui/main_window.py:3701
 msgid "Bu kaynak degistirilemez"
 msgstr "This source cannot be modified"
 
@@ -2150,7 +2173,7 @@ msgstr "This source cannot be modified"
 msgid "Bu makine su an bu giristen acildi"
 msgstr "This machine was started from this entry"
 
-#: src/diskultimate/ui/main_window.py:2486
+#: src/diskultimate/ui/main_window.py:2530
 msgid ""
 "Bu makinede kayitli donma raporu bulunamadi.\n"
 "\n"
@@ -2254,7 +2277,7 @@ msgstr "Running machine"
 msgid "Calisiyor..."
 msgstr "Running..."
 
-#: src/diskultimate/ui/main_window.py:2465
+#: src/diskultimate/ui/main_window.py:2509
 msgid "Calisma suresi"
 msgstr "Uptime"
 
@@ -2275,15 +2298,15 @@ msgstr "Unmount"
 msgid "Cikarilabilir"
 msgstr "Removable"
 
-#: src/diskultimate/ui/main_window.py:1474
+#: src/diskultimate/ui/main_window.py:1518
 msgid "Cikarilamayan bolum var:"
 msgstr "Some partitions could not be unmounted:"
 
-#: src/diskultimate/ui/main_window.py:1827
+#: src/diskultimate/ui/main_window.py:1871
 msgid "Cikariliyor: {}"
 msgstr "Extracting: {}"
 
-#: src/diskultimate/ui/main_window.py:1820
+#: src/diskultimate/ui/main_window.py:1864
 msgid "Cikarma hedefi"
 msgstr "Extraction target"
 
@@ -2295,7 +2318,7 @@ msgstr "Quit"
 msgid "Cizgi"
 msgstr "Line"
 
-#: src/diskultimate/ui/main_window.py:2459
+#: src/diskultimate/ui/main_window.py:2503
 msgid "Cokme gunlugu"
 msgstr "Crash log"
 
@@ -2307,7 +2330,7 @@ msgstr "D&isk"
 msgid "DEGISECEK"
 msgstr "TO CHANGE"
 
-#: src/diskultimate/ui/main_window.py:2797
+#: src/diskultimate/ui/main_window.py:2841
 msgid "DEGISTIRILEMEZ"
 msgstr "NOT MODIFIABLE"
 
@@ -2323,7 +2346,7 @@ msgstr ""
 "WARNING: shrinking erases the data at the end (you will be asked again on "
 "apply)"
 
-#: src/diskultimate/ui/main_window.py:3662
+#: src/diskultimate/ui/main_window.py:3709
 msgid "DIKKAT: salt okunur acildi — {}"
 msgstr "WARNING: opened read-only — {}"
 
@@ -2332,11 +2355,11 @@ msgid "DIKKAT: yeni tablo mevcut {} bolumun tanimini siler"
 msgstr ""
 "WARNING: a new table erases the definition of the existing {} partitions"
 
-#: src/diskultimate/ui/main_window.py:2369
+#: src/diskultimate/ui/main_window.py:2413
 msgid "DIKKAT: {}"
 msgstr "WARNING: {}"
 
-#: src/diskultimate/ui/main_window.py:3554
+#: src/diskultimate/ui/main_window.py:3601
 msgid "DISK GORUNTUSU"
 msgstr "DISK IMAGE"
 
@@ -2357,7 +2380,7 @@ msgid "Degisiklik"
 msgstr "Change"
 
 #: src/diskultimate/ui/dialogs/efiboot.py:437
-#: src/diskultimate/ui/dialogs/resize.py:248
+#: src/diskultimate/ui/dialogs/resize.py:263
 msgid "Degisiklik yok"
 msgstr "No change"
 
@@ -2365,7 +2388,7 @@ msgstr "No change"
 msgid "Degisiklikler <b>yazana kadar</b> uygulanmaz."
 msgstr "Changes are not applied <b>until they are written</b>."
 
-#: src/diskultimate/ui/main_window.py:2801
+#: src/diskultimate/ui/main_window.py:2845
 msgid ""
 "Degisiklikler bekleyen islem olarak birikir; diske ancak Uygula ile "
 "yazilir."
@@ -2373,7 +2396,7 @@ msgstr ""
 "Changes are collected as pending operations; they are written to the disk "
 "only with Apply."
 
-#: src/diskultimate/ui/main_window.py:3696
+#: src/diskultimate/ui/main_window.py:3743
 msgid "Degisiklikler bekliyor"
 msgstr "Changes are pending"
 
@@ -2393,7 +2416,7 @@ msgstr "Variables cannot be read; root rights are required."
 msgid "Degistirilemedi"
 msgstr "Could not be changed"
 
-#: src/diskultimate/ui/main_window.py:3703
+#: src/diskultimate/ui/main_window.py:3750
 msgid "Degistirilemez kaynak"
 msgstr "Source cannot be modified"
 
@@ -2410,7 +2433,7 @@ msgstr "Modified"
 msgid "Degistirmek icin root yetkisi gerekir."
 msgstr "Root rights are required to change this."
 
-#: src/diskultimate/ui/main_window.py:1754
+#: src/diskultimate/ui/main_window.py:1798
 msgid ""
 "Derin tarama (64 KB adim) yapilsin mi?\n"
 "\n"
@@ -2442,9 +2465,9 @@ msgstr ""
 "Unsupported HFS+ compression (type {}): {} — LZVN/LZFSE cannot be opened "
 "in this version."
 
-#: src/diskultimate/ui/main_window.py:1386
-#: src/diskultimate/ui/main_window.py:1431
-#: src/diskultimate/ui/main_window.py:1506
+#: src/diskultimate/ui/main_window.py:1430
+#: src/diskultimate/ui/main_window.py:1475
+#: src/diskultimate/ui/main_window.py:1550
 msgid "Desteklenmiyor"
 msgstr "Not supported"
 
@@ -2504,16 +2527,16 @@ msgstr "Disk"
 msgid "Disk GPT icin cok kucuk"
 msgstr "The disk is too small for GPT"
 
-#: src/diskultimate/ui/main_window.py:1890
+#: src/diskultimate/ui/main_window.py:1934
 msgid "Disk acik degil"
 msgstr "No disk is open"
 
-#: src/diskultimate/ui/main_window.py:2670
-#: src/diskultimate/ui/main_window.py:2673
+#: src/diskultimate/ui/main_window.py:2714
+#: src/diskultimate/ui/main_window.py:2717
 msgid "Disk acilamadi"
 msgstr "The disk could not be opened"
 
-#: src/diskultimate/ui/main_window.py:1977
+#: src/diskultimate/ui/main_window.py:2021
 msgid "Disk acilamadi (yetki): {}"
 msgstr "The disk could not be opened (privileges): {}"
 
@@ -2567,7 +2590,7 @@ msgstr "Disk image"
 msgid "Disk goruntusu (*.img *.raw *.dd);;Tum dosyalar (*)"
 msgstr "Disk image (*.img *.raw *.dd);;All files (*)"
 
-#: src/diskultimate/ui/main_window.py:1639
+#: src/diskultimate/ui/main_window.py:1683
 msgid "Disk goruntusu (*.img)"
 msgstr "Disk image (*.img)"
 
@@ -2590,11 +2613,11 @@ msgstr "No disk image is open"
 msgid "Disk guvenli sil"
 msgstr "Securely erase disk"
 
-#: src/diskultimate/ui/main_window.py:1650
+#: src/diskultimate/ui/main_window.py:1694
 msgid "Disk klonlandi: {}"
 msgstr "Disk cloned: {}"
 
-#: src/diskultimate/ui/main_window.py:1645
+#: src/diskultimate/ui/main_window.py:1689
 msgid "Disk klonlaniyor"
 msgstr "Cloning the disk"
 
@@ -2603,7 +2626,7 @@ msgstr "Cloning the disk"
 msgid "Disk konumlandirilamadi"
 msgstr "Could not seek on the disk"
 
-#: src/diskultimate/ui/main_window.py:2926
+#: src/diskultimate/ui/main_window.py:2973
 msgid "Disk listesi alinamadi: {}"
 msgstr "The disk list could not be obtained: {}"
 
@@ -2636,8 +2659,8 @@ msgstr ""
 msgid "Disk sec..."
 msgstr "Select disk..."
 
-#: src/diskultimate/ui/main_window.py:2574
-#: src/diskultimate/ui/main_window.py:2648
+#: src/diskultimate/ui/main_window.py:2618
+#: src/diskultimate/ui/main_window.py:2692
 msgid "Disk secili degil"
 msgstr "No disk selected"
 
@@ -2694,7 +2717,7 @@ msgstr "Back up disk..."
 msgid "Diskin sonundaki bos alan son bolume eklenir"
 msgstr "Free space at the end of the disk is added to the last partition"
 
-#: src/diskultimate/ui/main_window.py:2607
+#: src/diskultimate/ui/main_window.py:2651
 msgid "Diskler varsayilan olarak SALT OKUNUR acilir."
 msgstr "Disks are opened READ-ONLY by default."
 
@@ -2706,7 +2729,7 @@ msgstr "On disk"
 msgid "Diskte yeterli bos kume yok"
 msgstr "Not enough free clusters on the disk"
 
-#: src/diskultimate/ui/main_window.py:1478
+#: src/diskultimate/ui/main_window.py:1522
 msgid "Diskteki baglantilar kesildi"
 msgstr "All partitions on the disk were unmounted"
 
@@ -2714,7 +2737,7 @@ msgstr "All partitions on the disk were unmounted"
 msgid "Diskteki gibi"
 msgstr "As on disk"
 
-#: src/diskultimate/ui/main_window.py:2199
+#: src/diskultimate/ui/main_window.py:2243
 msgid "Diskteki hali goster"
 msgstr "Show on-disk layout"
 
@@ -2829,19 +2852,19 @@ msgstr "DoD 5220.22-M ECE (7 passes)"
 msgid "Dogrulaniyor... {}"
 msgstr "Verifying... {}"
 
-#: src/diskultimate/ui/main_window.py:2460
+#: src/diskultimate/ui/main_window.py:2504
 msgid "Donma esigi"
 msgstr "Freeze threshold"
 
-#: src/diskultimate/ui/main_window.py:2485
+#: src/diskultimate/ui/main_window.py:2529
 msgid "Donma raporu yok"
 msgstr "No freeze report"
 
-#: src/diskultimate/ui/main_window.py:2493
+#: src/diskultimate/ui/main_window.py:2537
 msgid "Donma raporu — {}"
 msgstr "Freeze report — {}"
 
-#: src/diskultimate/ui/main_window.py:1551
+#: src/diskultimate/ui/main_window.py:1595
 msgid ""
 "Donusumde bolum verileri yerinde kalir; kesinti tabloyu bozabilir, onemli "
 "veriler icin once yedek alin"
@@ -2902,7 +2925,7 @@ msgstr "Add file"
 msgid "Dosya ekle..."
 msgstr "Add file..."
 
-#: src/diskultimate/ui/main_window.py:3405
+#: src/diskultimate/ui/main_window.py:3452
 msgid "Dosya gezgininde ac"
 msgstr "Open in the file browser"
 
@@ -2913,15 +2936,15 @@ msgstr "The file is marked read-only (attribute/permission)"
 #: src/diskultimate/core/clone.py:79
 #: src/diskultimate/ui/dialogs/bootloader.py:76
 #: src/diskultimate/ui/dialogs/tools.py:182
-#: src/diskultimate/ui/main_window.py:3577
+#: src/diskultimate/ui/main_window.py:3624
 msgid "Dosya sistemi"
 msgstr "File system"
 
-#: src/diskultimate/ui/main_window.py:2844
+#: src/diskultimate/ui/main_window.py:2888
 msgid "Dosya sistemi acilamadi"
 msgstr "The file system could not be opened"
 
-#: src/diskultimate/ui/main_window.py:2727
+#: src/diskultimate/ui/main_window.py:2771
 msgid "Dosya sistemi acilamadi: {}"
 msgstr "The file system could not be opened: {}"
 
@@ -2996,11 +3019,11 @@ msgstr "File path"
 msgid "Dosya zaten var: {}"
 msgstr "The file already exists: {}"
 
-#: src/diskultimate/ui/main_window.py:1836
+#: src/diskultimate/ui/main_window.py:1880
 msgid "Dosyalar cikariliyor"
 msgstr "Extracting files"
 
-#: src/diskultimate/ui/main_window.py:1739
+#: src/diskultimate/ui/main_window.py:1783
 msgid "Dosyalar kurtariliyor"
 msgstr "Recovering files"
 
@@ -3075,11 +3098,11 @@ msgstr "Complete"
 msgid "En az 64 KB olmalidir."
 msgstr "It must be at least 64 KB."
 
-#: src/diskultimate/ui/main_window.py:1799
+#: src/diskultimate/ui/main_window.py:1843
 msgid "En az bir dosya turu secin."
 msgstr "Select at least one file type."
 
-#: src/diskultimate/ui/main_window.py:2463
+#: src/diskultimate/ui/main_window.py:2507
 msgid "En uzun donma"
 msgstr "Longest freeze"
 
@@ -3104,7 +3127,7 @@ msgstr "Label:"
 
 #: src/diskultimate/core/physical.py:127
 #: src/diskultimate/core/physical.py:128
-#: src/diskultimate/ui/main_window.py:3586
+#: src/diskultimate/ui/main_window.py:3633
 #: src/diskultimate/ui/qt_i18n.py:42
 msgid "Evet"
 msgstr "Yes"
@@ -3129,7 +3152,7 @@ msgstr "F2FS node not found: {}"
 msgid "F2FS ustblogu bulunamadi"
 msgstr "F2FS superblock not found"
 
-#: src/diskultimate/core/filesystem.py:770
+#: src/diskultimate/core/filesystem.py:774
 msgid "F2FS yazma bu surumde yok; birim salt okunur acildi."
 msgstr ""
 "Writing to F2FS is not available in this version; the volume was opened "
@@ -3147,7 +3170,7 @@ msgstr "The FAT boot sector signature is missing"
 msgid "FAT12"
 msgstr "FAT12"
 
-#: src/diskultimate/ui/main_window.py:1916
+#: src/diskultimate/ui/main_window.py:1960
 msgid ""
 "FAT12/16/32 ve exFAT saf Python ile desteklenir ve her platformda calisir. "
 "NTFS ve ext2/3/4 bicimlendirmesi sistemdeki mkfs araclarini gerektirir."
@@ -3192,7 +3215,7 @@ msgstr "No FILE signature"
 msgid "FILE imzasi yok: kayit {}"
 msgstr "No FILE signature: record {}"
 
-#: src/diskultimate/ui/main_window.py:2577
+#: src/diskultimate/ui/main_window.py:2621
 msgid "FIZIKSEL DISK — {}"
 msgstr "PHYSICAL DISK — {}"
 
@@ -3204,12 +3227,12 @@ msgstr "Differencing VHDs are not supported"
 msgid "Fixup imzasi tutmuyor (kayit bozuk)"
 msgstr "The fixup signature does not match (the record is corrupt)"
 
-#: src/diskultimate/ui/main_window.py:3127
+#: src/diskultimate/ui/main_window.py:3174
 msgid "Fiziksel Diskler ({})"
 msgstr "Physical Disks ({})"
 
-#: src/diskultimate/ui/main_window.py:2675
-#: src/diskultimate/ui/main_window.py:3038
+#: src/diskultimate/ui/main_window.py:2719
+#: src/diskultimate/ui/main_window.py:3085
 msgid "Fiziksel disk acildi (salt okunur): {} — {}, {}"
 msgstr "Physical disk opened (read-only): {} — {}, {}"
 
@@ -3227,11 +3250,11 @@ msgstr "Physical disk access requires {}. Disk menu > 'Restart as {}'"
 msgid "Fiziksel disk gerekli"
 msgstr "A physical disk is required"
 
-#: src/diskultimate/ui/main_window.py:2988
+#: src/diskultimate/ui/main_window.py:3035
 msgid "Fiziksel disk listesi hazir: {} disk"
 msgstr "Physical disk list ready: {} disks"
 
-#: src/diskultimate/ui/main_window.py:2556
+#: src/diskultimate/ui/main_window.py:2600
 msgid "Fiziksel disk listesi taraniyor..."
 msgstr "Scanning the physical disk list..."
 
@@ -3576,7 +3599,7 @@ msgstr "XFS with a realtime subvolume cannot be grown"
 msgid "Geri al"
 msgstr "Undo"
 
-#: src/diskultimate/ui/main_window.py:2320
+#: src/diskultimate/ui/main_window.py:2364
 msgid "Geri alindi: {}"
 msgstr "Undone: {}"
 
@@ -3727,10 +3750,10 @@ msgstr "Image created: {} ({})"
 msgid "Goruntu salt okunur acildi"
 msgstr "The image was opened read-only"
 
-#: src/diskultimate/ui/main_window.py:1632
-#: src/diskultimate/ui/main_window.py:1749
-#: src/diskultimate/ui/main_window.py:1789
-#: src/diskultimate/ui/main_window.py:3648
+#: src/diskultimate/ui/main_window.py:1676
+#: src/diskultimate/ui/main_window.py:1793
+#: src/diskultimate/ui/main_window.py:1833
+#: src/diskultimate/ui/main_window.py:3695
 msgid "Goruntu yok"
 msgstr "No image"
 
@@ -3795,7 +3818,7 @@ msgstr "Preparing the journal area..."
 msgid "Gunluk dosyasi"
 msgstr "Log file"
 
-#: src/diskultimate/ui/main_window.py:2478
+#: src/diskultimate/ui/main_window.py:2522
 msgid "Gunluk klasoru"
 msgstr "Log folder"
 
@@ -3823,7 +3846,7 @@ msgstr "Secure Erase"
 msgid "Guvenli onyukleme"
 msgstr "Secure Boot"
 
-#: src/diskultimate/core/ntfs.py:732
+#: src/diskultimate/core/ntfs.py:744
 msgid "Guvenlik tanimlayicilari yaziliyor ($Secure)..."
 msgstr "Writing security descriptors ($Secure)..."
 
@@ -3911,7 +3934,7 @@ msgstr "Error: {}"
 #: src/diskultimate/core/physical.py:127
 #: src/diskultimate/core/physical.py:128
 #: src/diskultimate/core/physical.py:130
-#: src/diskultimate/ui/main_window.py:3586
+#: src/diskultimate/ui/main_window.py:3633
 #: src/diskultimate/ui/qt_i18n.py:44
 msgid "Hayir"
 msgstr "No"
@@ -3924,7 +3947,7 @@ msgstr "Preparing..."
 #: src/diskultimate/ui/dialogs/backup.py:419
 #: src/diskultimate/ui/dialogs/backup.py:637
 #: src/diskultimate/ui/main_window.py:183
-#: src/diskultimate/ui/main_window.py:2266
+#: src/diskultimate/ui/main_window.py:2310
 msgid "Hedef"
 msgstr "Target"
 
@@ -4019,11 +4042,11 @@ msgstr "No file type was selected"
 msgid "Hicbir sey calistirilmadi; diske dokunulmadi."
 msgstr "Nothing has run yet; the disk has not been touched."
 
-#: src/diskultimate/ui/main_window.py:1562
+#: src/diskultimate/ui/main_window.py:1606
 msgid "Hizalama"
 msgstr "Alignment"
 
-#: src/diskultimate/ui/main_window.py:1572
+#: src/diskultimate/ui/main_window.py:1616
 msgid "Hizalama Denetimi"
 msgstr "Alignment Check"
 
@@ -4069,7 +4092,7 @@ msgstr "OPERATING SYSTEM DISK — writing makes the machine unusable"
 msgid "ISO 9660 birincil birim tanimlayicisi yok"
 msgstr "ISO 9660 primary volume descriptor not found"
 
-#: src/diskultimate/core/filesystem.py:553
+#: src/diskultimate/core/filesystem.py:557
 msgid "ISO 9660 salt okunur bir bicimdir; yazilmaz, bastan uretilir."
 msgstr ""
 "ISO 9660 is a read-only format; it is not written to but created from "
@@ -4127,11 +4150,11 @@ msgstr "Signature-Based File Recovery"
 msgid "Imza tabanli dosya kurtarma..."
 msgstr "Signature-based file recovery..."
 
-#: src/diskultimate/ui/main_window.py:1803
+#: src/diskultimate/ui/main_window.py:1847
 msgid "Imza taramasi"
 msgstr "Signature scan"
 
-#: src/diskultimate/ui/main_window.py:1813
+#: src/diskultimate/ui/main_window.py:1857
 msgid "Imza taramasi ({}): {} dosya bulundu"
 msgstr "Signature scan ({}): {} files found"
 
@@ -4183,15 +4206,15 @@ msgstr "Operation Log"
 msgid "Islem basarisiz"
 msgstr "Operation failed"
 
-#: src/diskultimate/ui/main_window.py:1529
+#: src/diskultimate/ui/main_window.py:1573
 msgid "Islem basarisiz."
 msgstr "The operation failed."
 
-#: src/diskultimate/core/ntfs.py:726
+#: src/diskultimate/core/ntfs.py:738
 msgid "Islem gunlugu ($LogFile) hazirlaniyor..."
 msgstr "Preparing the transaction log ($LogFile)..."
 
-#: src/diskultimate/core/ntfsresize.py:656
+#: src/diskultimate/core/ntfsresize.py:739
 msgid "Islem gunlugu sifirlaniyor..."
 msgstr "Resetting the journal..."
 
@@ -4283,11 +4306,11 @@ msgstr "Don't Save"
 msgid "Kayip Bolum Tarama Sonuclari"
 msgstr "Lost Partition Scan Results"
 
-#: src/diskultimate/ui/main_window.py:1769
+#: src/diskultimate/ui/main_window.py:1813
 msgid "Kayip bolum taramasi: {} aday bulundu"
 msgstr "Lost partition scan: {} candidates found"
 
-#: src/diskultimate/ui/main_window.py:1759
+#: src/diskultimate/ui/main_window.py:1803
 msgid "Kayip bolumler taraniyor"
 msgstr "Scanning for lost partitions"
 
@@ -4349,8 +4372,8 @@ msgstr "Select source disk"
 msgid "Kaynak salt okunur acildi."
 msgstr "The source was opened read-only."
 
-#: src/diskultimate/core/filesystem.py:290
-#: src/diskultimate/core/filesystem.py:352
+#: src/diskultimate/core/filesystem.py:294
+#: src/diskultimate/core/filesystem.py:356
 msgid ""
 "Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda acarsaniz bu "
 "bolume yazabilirsiniz."
@@ -4380,7 +4403,7 @@ msgid ""
 msgstr ""
 "The source is only read; nothing is written except the backup file."
 
-#: src/diskultimate/ui/main_window.py:1599
+#: src/diskultimate/ui/main_window.py:1643
 msgid "Kaynak yok"
 msgstr "No source"
 
@@ -4498,15 +4521,15 @@ msgstr "The folder could not be created"
 msgid "Klasorler"
 msgstr "Folders"
 
-#: src/diskultimate/ui/main_window.py:1652
+#: src/diskultimate/ui/main_window.py:1696
 msgid "Klon hazir"
 msgstr "Clone ready"
 
-#: src/diskultimate/ui/main_window.py:1636
+#: src/diskultimate/ui/main_window.py:1680
 msgid "Klon hedefi"
 msgstr "Clone target"
 
-#: src/diskultimate/ui/main_window.py:1652
+#: src/diskultimate/ui/main_window.py:1696
 msgid ""
 "Klon olusturuldu:\n"
 "{}\n"
@@ -4518,7 +4541,7 @@ msgstr ""
 "\n"
 "Open it now?"
 
-#: src/diskultimate/ui/main_window.py:1648
+#: src/diskultimate/ui/main_window.py:1692
 msgid "Klonlama basarisiz"
 msgstr "Cloning failed"
 
@@ -4531,7 +4554,7 @@ msgid "Kok dizin dolu (FAT16 giris siniri)"
 msgstr "The root directory is full (FAT16 entry limit)"
 
 #: src/diskultimate/core/exfat.py:1019
-#: src/diskultimate/core/ntfs.py:729
+#: src/diskultimate/core/ntfs.py:741
 msgid "Kok dizin olusturuluyor..."
 msgstr "Creating the root directory..."
 
@@ -4549,7 +4572,7 @@ msgstr "The root directory cannot be operated on"
 msgid "Kok dosya sistemi degil ({} yok)"
 msgstr "Not a root file system (no {})"
 
-#: src/diskultimate/ui/main_window.py:3589
+#: src/diskultimate/ui/main_window.py:3636
 msgid "Konum"
 msgstr "Location"
 
@@ -4602,7 +4625,7 @@ msgstr "Available"
 msgid "Kullanilamaz"
 msgstr "Not available"
 
-#: src/diskultimate/ui/main_window.py:3601
+#: src/diskultimate/ui/main_window.py:3648
 #: src/diskultimate/ui/widgets/partition_table.py:22
 msgid "Kullanilan"
 msgstr "Used"
@@ -4615,11 +4638,11 @@ msgstr "Scanning used inodes..."
 msgid "Kullanilan: {} / {}"
 msgstr "Used: {} / {}"
 
-#: src/diskultimate/core/ntfs.py:736
+#: src/diskultimate/core/ntfs.py:748
 msgid "Kume bitmap'i yaziliyor..."
 msgstr "Writing the cluster bitmap..."
 
-#: src/diskultimate/core/ntfs.py:402
+#: src/diskultimate/core/ntfs.py:405
 msgid "Kume boyutu sektor boyutunun kati olmalidir"
 msgstr "The cluster size must be a multiple of the sector size"
 
@@ -4627,15 +4650,15 @@ msgstr "The cluster size must be a multiple of the sector size"
 msgid "Kume boyutu:"
 msgstr "Cluster size:"
 
-#: src/diskultimate/core/ntfsresize.py:652
+#: src/diskultimate/core/ntfsresize.py:735
 msgid "Kume haritasi guncelleniyor..."
 msgstr "Updating the cluster map..."
 
-#: src/diskultimate/core/ntfsresize.py:644
+#: src/diskultimate/core/ntfsresize.py:727
 msgid "Kume haritasi inceleniyor..."
 msgstr "Examining the cluster map..."
 
-#: src/diskultimate/ui/main_window.py:3596
+#: src/diskultimate/ui/main_window.py:3643
 msgid "Kume/blok boyutu"
 msgstr "Cluster/block size"
 
@@ -4643,11 +4666,11 @@ msgstr "Cluster/block size"
 msgid "Kurtarilabilirlik"
 msgstr "Recoverability"
 
-#: src/diskultimate/ui/main_window.py:1729
+#: src/diskultimate/ui/main_window.py:1773
 msgid "Kurtariliyor: {}"
 msgstr "Recovering: {}"
 
-#: src/diskultimate/ui/main_window.py:1741
+#: src/diskultimate/ui/main_window.py:1785
 msgid "Kurtarma basarisiz"
 msgstr "Recovery failed"
 
@@ -4655,11 +4678,11 @@ msgstr "Recovery failed"
 msgid "Kurtarma desteklenmiyor"
 msgstr "Recovery is not supported"
 
-#: src/diskultimate/ui/main_window.py:1722
+#: src/diskultimate/ui/main_window.py:1766
 msgid "Kurtarma hedefi"
 msgstr "Recovery target"
 
-#: src/diskultimate/ui/main_window.py:1744
+#: src/diskultimate/ui/main_window.py:1788
 msgid "Kurtarma tamamlandi"
 msgstr "Recovery complete"
 
@@ -4667,12 +4690,12 @@ msgstr "Recovery complete"
 msgid "Kutucuk"
 msgstr "Tile"
 
-#: src/diskultimate/ui/main_window.py:1363
-#: src/diskultimate/ui/main_window.py:2235
+#: src/diskultimate/ui/main_window.py:1366
+#: src/diskultimate/ui/main_window.py:2279
 msgid "Kuyruga eklendi: {}"
 msgstr "Added to the queue: {}"
 
-#: src/diskultimate/ui/main_window.py:2306
+#: src/diskultimate/ui/main_window.py:2350
 msgid "Kuyruktan cikarildi: {}"
 msgstr "Removed from the queue: {}"
 
@@ -4685,7 +4708,7 @@ msgstr "LBA {}"
 msgid "LBA {} - {}"
 msgstr "LBA {} - {}"
 
-#: src/diskultimate/ui/main_window.py:1570
+#: src/diskultimate/ui/main_window.py:1614
 msgid "LBA {} — {}"
 msgstr "LBA {} — {}"
 
@@ -4787,7 +4810,7 @@ msgstr ""
 "To add more partitions, create logical partitions inside an extended "
 "partition."
 
-#: src/diskultimate/core/ntfs.py:1202
+#: src/diskultimate/core/ntfs.py:1218
 msgid "MFT alani yetersiz"
 msgstr "Not enough MFT space"
 
@@ -4799,19 +4822,20 @@ msgstr "The MFT record was not found on the disk: {}"
 msgid "MFT kaydi okunamadi: {}"
 msgstr "The MFT record could not be read: {}"
 
-#: src/diskultimate/core/ntfs.py:642
+#: src/diskultimate/core/ntfs.py:654
 msgid "MFT kaydi {} tasti"
 msgstr "MFT record {} overflowed"
 
-#: src/diskultimate/core/ntfs.py:739
+#: src/diskultimate/core/ntfs.py:751
 msgid "MFT kayitlari olusturuluyor..."
 msgstr "Creating MFT records..."
 
-#: src/diskultimate/core/ntfsresize.py:464
+#: src/diskultimate/core/ntfsresize.py:406
+#: src/diskultimate/core/ntfsresize.py:542
 msgid "MFT taraniyor... {}/{} kayit"
 msgstr "Scanning the MFT... {}/{} records"
 
-#: src/diskultimate/core/ntfs.py:743
+#: src/diskultimate/core/ntfs.py:755
 msgid "MFT yedegi yaziliyor..."
 msgstr "Writing the MFT mirror..."
 
@@ -4838,7 +4862,7 @@ msgstr ""
 msgid "Mantiksal"
 msgstr "Logical"
 
-#: src/diskultimate/ui/main_window.py:3590
+#: src/diskultimate/ui/main_window.py:3637
 msgid "Mantiksal (EBR: LBA {})"
 msgstr "Logical (EBR: LBA {})"
 
@@ -4936,7 +4960,7 @@ msgstr "Model"
 msgid "NTFS / exFAT"
 msgstr "NTFS / exFAT"
 
-#: src/diskultimate/core/ntfsresize.py:630
+#: src/diskultimate/core/ntfsresize.py:708
 msgid "NTFS en fazla {} kume adresler"
 msgstr "NTFS addresses at most {} clusters"
 
@@ -4944,15 +4968,15 @@ msgstr "NTFS addresses at most {} clusters"
 msgid "NTFS imzasi yok"
 msgstr "No NTFS signature"
 
-#: src/diskultimate/core/ntfsresize.py:589
+#: src/diskultimate/core/ntfsresize.py:667
 msgid "NTFS onyukleme sektoru taninmadi"
 msgstr "NTFS boot sector not recognised"
 
-#: src/diskultimate/core/ntfsresize.py:448
+#: src/diskultimate/core/ntfsresize.py:526
 msgid "NTFS verisi tasiniyor... {}/{} kume"
 msgstr "Moving NTFS data... {}/{} clusters"
 
-#: src/diskultimate/core/ntfs.py:721
+#: src/diskultimate/core/ntfs.py:733
 msgid "NTFS yerlesimi hazirlaniyor..."
 msgstr "Preparing the NTFS layout..."
 
@@ -5095,7 +5119,7 @@ msgstr "Automatic, before repair"
 msgid "Onarim tamamlandi"
 msgstr "Repair complete"
 
-#: src/diskultimate/ui/main_window.py:1557
+#: src/diskultimate/ui/main_window.py:1601
 msgid "Once bir bolum tablosu acin."
 msgstr "Open a partition table first."
 
@@ -5107,13 +5131,13 @@ msgstr "Create a partition table first"
 msgid "Once bir bolum tablosu olusturun (MBR veya GPT)"
 msgstr "Create a partition table first (MBR or GPT)"
 
-#: src/diskultimate/ui/main_window.py:3649
+#: src/diskultimate/ui/main_window.py:3696
 msgid "Once bir disk goruntusu acin veya olusturun."
 msgstr "Open or create a disk image first."
 
-#: src/diskultimate/ui/main_window.py:1632
-#: src/diskultimate/ui/main_window.py:1749
-#: src/diskultimate/ui/main_window.py:1789
+#: src/diskultimate/ui/main_window.py:1676
+#: src/diskultimate/ui/main_window.py:1793
+#: src/diskultimate/ui/main_window.py:1833
 msgid "Once bir goruntu acin."
 msgstr "Open an image first."
 
@@ -5121,7 +5145,7 @@ msgstr "Open an image first."
 msgid "Once bir kaynak secin."
 msgstr "Select a source first."
 
-#: src/diskultimate/ui/main_window.py:3631
+#: src/diskultimate/ui/main_window.py:3678
 msgid "Once listeden veya haritadan bir bolum secin."
 msgstr "Select a partition from the list or the map first."
 
@@ -5171,7 +5195,7 @@ msgstr "Boot status"
 msgid "Onyukleme durumu inceleniyor"
 msgstr "Examining boot status"
 
-#: src/diskultimate/ui/main_window.py:1891
+#: src/diskultimate/ui/main_window.py:1935
 msgid ""
 "Onyukleme durumunu incelemek icin once bir disk ya da goruntu acin."
 msgstr "Open a disk or image first to examine the boot status."
@@ -5248,17 +5272,17 @@ msgstr "Regenerate boot menu"
 msgid "Onyukleme sektoru degerleri tutarsiz"
 msgstr "The boot sector values are inconsistent"
 
-#: src/diskultimate/core/ntfsresize.py:638
-#: src/diskultimate/core/ntfsresize.py:658
+#: src/diskultimate/core/ntfsresize.py:720
+#: src/diskultimate/core/ntfsresize.py:741
 #: src/diskultimate/core/resize.py:882
 msgid "Onyukleme sektoru guncelleniyor..."
 msgstr "Updating the boot sector..."
 
-#: src/diskultimate/core/ntfs.py:746
+#: src/diskultimate/core/ntfs.py:758
 msgid "Onyukleme sektoru yaziliyor..."
 msgstr "Writing the boot sector..."
 
-#: src/diskultimate/ui/main_window.py:3586
+#: src/diskultimate/ui/main_window.py:3633
 msgid "Onyuklenebilir"
 msgstr "Bootable"
 
@@ -5274,7 +5298,7 @@ msgstr "Boot Loader Manager"
 msgid "Onyukleyici yoneticisi..."
 msgstr "Boot loader manager..."
 
-#: src/diskultimate/ui/main_window.py:2458
+#: src/diskultimate/ui/main_window.py:2502
 msgid "Oturum gunlugu"
 msgstr "Session log"
 
@@ -5284,7 +5308,7 @@ msgstr "Session log"
 msgid "Oznitelik"
 msgstr "Attributes"
 
-#: src/diskultimate/core/ntfsresize.py:319
+#: src/diskultimate/core/ntfsresize.py:321
 msgid "Oznitelik kayboldu (kayit {})"
 msgstr "Attribute disappeared (record {})"
 
@@ -5292,7 +5316,7 @@ msgstr "Attribute disappeared (record {})"
 msgid "Oznitelik kayitta bulunamadi"
 msgstr "The attribute was not found in the record"
 
-#: src/diskultimate/ui/main_window.py:3594
+#: src/diskultimate/ui/main_window.py:3641
 msgid "Oznitelikler"
 msgstr "Attributes"
 
@@ -5322,7 +5346,7 @@ msgstr "Package updates are only possible on apt-based distributions."
 msgid "Plan"
 msgstr "Plan"
 
-#: src/diskultimate/ui/main_window.py:2204
+#: src/diskultimate/ui/main_window.py:2248
 msgid "Planlanani goster"
 msgstr "Show planned layout"
 
@@ -5346,7 +5370,7 @@ msgstr "Unsupported QCOW version: {}"
 msgid "QCOW2 imzasi bulunamadi"
 msgstr "No QCOW2 signature found"
 
-#: src/diskultimate/ui/main_window.py:1911
+#: src/diskultimate/ui/main_window.py:1955
 msgid "Qt platformu"
 msgstr "Qt platform"
 
@@ -5381,7 +5405,7 @@ msgstr "TO WIPE"
 msgid "SISTEM DISKI"
 msgstr "SYSTEM DISK"
 
-#: src/diskultimate/ui/main_window.py:2594
+#: src/diskultimate/ui/main_window.py:2638
 msgid "SISTEMDEKI DISKLER"
 msgstr "DISKS ON THIS SYSTEM"
 
@@ -5401,16 +5425,16 @@ msgstr "Hard-linked files cannot be deleted in this version: {}"
 msgid "Sabit bagli dosya bu surumde tasinamiyor: {}"
 msgstr "Hard-linked files cannot be moved in this version: {}"
 
-#: src/diskultimate/core/ntfs.py:722
+#: src/diskultimate/core/ntfs.py:734
 msgid "Sabit tablolar yaziliyor ($UpCase, $AttrDef)..."
 msgstr "Writing the fixed tables ($UpCase, $AttrDef)..."
 
-#: src/diskultimate/ui/main_window.py:3674
-#: src/diskultimate/ui/main_window.py:3683
+#: src/diskultimate/ui/main_window.py:3721
+#: src/diskultimate/ui/main_window.py:3730
 msgid "Salt okunur acildi"
 msgstr "Opened read-only"
 
-#: src/diskultimate/ui/main_window.py:3677
+#: src/diskultimate/ui/main_window.py:3724
 msgid "Salt okunur devam et"
 msgstr "Continue read-only"
 
@@ -5418,15 +5442,15 @@ msgstr "Continue read-only"
 msgid "Salt okunur — degisiklikler Uygula ile yazilir"
 msgstr "Read-only — changes are written with Apply"
 
-#: src/diskultimate/ui/main_window.py:1878
+#: src/diskultimate/ui/main_window.py:1922
 msgid "Sanal disk olusturulamadi"
 msgstr "The virtual disk could not be created"
 
-#: src/diskultimate/ui/main_window.py:1876
+#: src/diskultimate/ui/main_window.py:1920
 msgid "Sanal disk olusturuluyor"
 msgstr "Creating the virtual disk"
 
-#: src/diskultimate/ui/main_window.py:1858
+#: src/diskultimate/ui/main_window.py:1902
 msgid "Sanal disk olusturuluyor..."
 msgstr "Creating the virtual disk..."
 
@@ -5442,7 +5466,7 @@ msgstr "Select..."
 msgid "Secenekler"
 msgstr "Options"
 
-#: src/diskultimate/ui/main_window.py:1811
+#: src/diskultimate/ui/main_window.py:1855
 msgid "Secilen turlerde dosya imzasi bulunamadi."
 msgstr "No file signature of the selected types was found."
 
@@ -5462,23 +5486,23 @@ msgstr "Open selected disk"
 msgid "Secili giris"
 msgstr "Selected entry"
 
-#: src/diskultimate/ui/main_window.py:2710
+#: src/diskultimate/ui/main_window.py:2754
 msgid "Secili: Bolum {} — {} ({})"
 msgstr "Selected: Partition {} — {} ({})"
 
-#: src/diskultimate/ui/main_window.py:2719
+#: src/diskultimate/ui/main_window.py:2763
 msgid "Secili: Bolum {} — {} ({}) — planlanan, henuz olusturulmadi"
 msgstr "Selected: Partition {} — {} ({}) — planned, not created yet"
 
-#: src/diskultimate/ui/main_window.py:2745
+#: src/diskultimate/ui/main_window.py:2789
 msgid "Secili: Bos alan — {}"
 msgstr "Selected: Free space — {}"
 
-#: src/diskultimate/ui/main_window.py:2589
+#: src/diskultimate/ui/main_window.py:2633
 msgid "Secili: {} ({})"
 msgstr "Selected: {} ({})"
 
-#: src/diskultimate/ui/main_window.py:1799
+#: src/diskultimate/ui/main_window.py:1843
 msgid "Secim yok"
 msgstr "Nothing selected"
 
@@ -5503,7 +5527,7 @@ msgstr "Sector sizes differ: backup {}, target {}"
 msgid "Sektor sinirina hizalanmamis yazma islemi"
 msgstr "A write that is not aligned to the sector boundary"
 
-#: src/diskultimate/ui/main_window.py:3575
+#: src/diskultimate/ui/main_window.py:3622
 msgid "Sema"
 msgstr "Scheme"
 
@@ -5593,7 +5617,7 @@ msgstr "Compressed QCOW2 clusters are not supported"
 msgid "Sikistirilmis arsiv"
 msgstr "Compressed archive"
 
-#: src/diskultimate/core/ntfsresize.py:380
+#: src/diskultimate/core/ntfsresize.py:458
 msgid "Sikistirilmis/sifrelenmis akis tasinamaz (kayit {})"
 msgstr "Compressed/encrypted stream cannot be moved (record {})"
 
@@ -5621,7 +5645,7 @@ msgstr "Delete"
 msgid "Silinmis Dosyalar"
 msgstr "Deleted Files"
 
-#: src/diskultimate/ui/main_window.py:1705
+#: src/diskultimate/ui/main_window.py:1749
 msgid "Silinmis dosyalar taraniyor"
 msgstr "Scanning for deleted files"
 
@@ -5689,11 +5713,11 @@ msgstr ""
 "reinstalled on disk <b>{}</b><br>4. The boot menu is regenerated<br><br>No "
 "other disk is touched. Continue?"
 
-#: src/diskultimate/core/filesystem.py:516
+#: src/diskultimate/core/filesystem.py:520
 msgid "Sis"
 msgstr "Sys"
 
-#: src/diskultimate/ui/main_window.py:1915
+#: src/diskultimate/ui/main_window.py:1959
 msgid "Sistem Bilgisi"
 msgstr "System Information"
 
@@ -5705,15 +5729,15 @@ msgstr "System information"
 msgid "Sistem diski"
 msgstr "System disk"
 
-#: src/diskultimate/ui/main_window.py:2664
+#: src/diskultimate/ui/main_window.py:2708
 msgid "Sistem diski korumasi"
 msgstr "System disk protection"
 
-#: src/diskultimate/ui/main_window.py:2383
+#: src/diskultimate/ui/main_window.py:2427
 msgid "Sistem diski onayi"
 msgstr "System disk confirmation"
 
-#: src/diskultimate/ui/main_window.py:2389
+#: src/diskultimate/ui/main_window.py:2433
 msgid "Sistem diski onayi verilmedi, uygulama iptal"
 msgstr "System disk confirmation was not given, apply cancelled"
 
@@ -5757,7 +5781,7 @@ msgstr "Removes the most recently added pending step"
 msgid "Son grup metaveri icin cok kucuk"
 msgstr "The last group is too small for its metadata"
 
-#: src/diskultimate/ui/main_window.py:2464
+#: src/diskultimate/ui/main_window.py:2508
 msgid "Son rapor"
 msgstr "Last report"
 
@@ -5782,9 +5806,9 @@ msgstr "Next boot:"
 msgid "Sonraki acilis: Boot{}"
 msgstr "Next boot: Boot{}"
 
-#: src/diskultimate/ui/main_window.py:1711
-#: src/diskultimate/ui/main_window.py:1766
+#: src/diskultimate/ui/main_window.py:1755
 #: src/diskultimate/ui/main_window.py:1810
+#: src/diskultimate/ui/main_window.py:1854
 msgid "Sonuc yok"
 msgstr "No results"
 
@@ -5792,7 +5816,7 @@ msgstr "No results"
 msgid "Su an acilan"
 msgstr "Currently booted"
 
-#: src/diskultimate/ui/main_window.py:2466
+#: src/diskultimate/ui/main_window.py:2510
 msgid "Su an calisan"
 msgstr "Running right now"
 
@@ -5859,7 +5883,7 @@ msgstr "N&o to All"
 msgid "Tablo zaten {} biciminde"
 msgstr "The table is already in {} format"
 
-#: src/diskultimate/ui/main_window.py:1562
+#: src/diskultimate/ui/main_window.py:1606
 msgid "Tabloda bolum yok."
 msgstr "The table has no partitions."
 
@@ -5900,9 +5924,9 @@ msgstr "OK"
 #: src/diskultimate/core/formatter.py:285
 #: src/diskultimate/core/grub.py:517
 #: src/diskultimate/core/hfsformat.py:294
-#: src/diskultimate/core/ntfs.py:752
-#: src/diskultimate/core/ntfsresize.py:640
-#: src/diskultimate/core/ntfsresize.py:662
+#: src/diskultimate/core/ntfs.py:764
+#: src/diskultimate/core/ntfsresize.py:723
+#: src/diskultimate/core/ntfsresize.py:745
 #: src/diskultimate/core/operations.py:611
 #: src/diskultimate/core/resize.py:887
 #: src/diskultimate/core/restoreplan.py:316
@@ -5913,7 +5937,7 @@ msgstr "OK"
 #: src/diskultimate/core/xfsformat.py:325
 #: src/diskultimate/core/xfsgrow.py:398
 #: src/diskultimate/ui/dialogs/apply.py:226
-#: src/diskultimate/ui/main_window.py:1839
+#: src/diskultimate/ui/main_window.py:1883
 msgid "Tamamlandi"
 msgstr "Done"
 
@@ -5929,12 +5953,12 @@ msgstr "Finishing"
 msgid "Tamamlaniyor..."
 msgstr "Finishing..."
 
-#: src/diskultimate/ui/main_window.py:2468
+#: src/diskultimate/ui/main_window.py:2512
 #: src/diskultimate/ui/main_window.py:541
 msgid "Tanilama"
 msgstr "Diagnostics"
 
-#: src/diskultimate/ui/main_window.py:2453
+#: src/diskultimate/ui/main_window.py:2497
 msgid "Tanilama DISKULTIMATE_DIAG=0 ile kapatilmis."
 msgstr "Diagnostics are turned off with DISKULTIMATE_DIAG=0."
 
@@ -5946,7 +5970,7 @@ msgstr "Diagnostics status..."
 msgid "Tanilama gunlugu: {}"
 msgstr "Diagnostics log: {}"
 
-#: src/diskultimate/ui/main_window.py:2452
+#: src/diskultimate/ui/main_window.py:2496
 msgid "Tanilama kapali"
 msgstr "Diagnostics off"
 
@@ -5954,9 +5978,9 @@ msgstr "Diagnostics off"
 msgid "Taninmayan onyukleme kodu"
 msgstr "Unrecognised boot code"
 
-#: src/diskultimate/ui/main_window.py:1708
-#: src/diskultimate/ui/main_window.py:1762
-#: src/diskultimate/ui/main_window.py:1807
+#: src/diskultimate/ui/main_window.py:1752
+#: src/diskultimate/ui/main_window.py:1806
+#: src/diskultimate/ui/main_window.py:1851
 msgid "Tarama basarisiz"
 msgstr "The scan failed"
 
@@ -5968,7 +5992,7 @@ msgstr "Scan finished: {} candidate partitions"
 msgid "Tarama bitti: {} dosya"
 msgstr "Scan finished: {} files"
 
-#: src/diskultimate/ui/main_window.py:1753
+#: src/diskultimate/ui/main_window.py:1797
 msgid "Tarama derinligi"
 msgstr "Scan depth"
 
@@ -6012,7 +6036,7 @@ msgstr ""
 msgid "Tum alani sil (icindeki her sey yok olur)"
 msgstr "Erase the whole area (everything in it is destroyed)"
 
-#: src/diskultimate/ui/main_window.py:1573
+#: src/diskultimate/ui/main_window.py:1617
 msgid "Tum bolumler 4K sinirinda hizali."
 msgstr "All partitions are aligned to the 4K boundary."
 
@@ -6020,15 +6044,15 @@ msgstr "All partitions are aligned to the 4K boundary."
 msgid "Tum bolumler kaybolur"
 msgstr "All partitions will be lost"
 
-#: src/diskultimate/ui/main_window.py:1665
+#: src/diskultimate/ui/main_window.py:1709
 msgid "Tum disk ({})"
 msgstr "Whole disk ({})"
 
-#: src/diskultimate/ui/main_window.py:1793
-#: src/diskultimate/ui/main_window.py:2717
-#: src/diskultimate/ui/main_window.py:2753
-#: src/diskultimate/ui/main_window.py:2816
-#: src/diskultimate/ui/main_window.py:3372
+#: src/diskultimate/ui/main_window.py:1837
+#: src/diskultimate/ui/main_window.py:2761
+#: src/diskultimate/ui/main_window.py:2797
+#: src/diskultimate/ui/main_window.py:2860
+#: src/diskultimate/ui/main_window.py:3419
 msgid "Tum goruntu"
 msgstr "Whole image"
 
@@ -6051,19 +6075,19 @@ msgid "Tumunu sec"
 msgstr "Select all"
 
 #: src/diskultimate/ui/dialogs/tools.py:283
-#: src/diskultimate/ui/main_window.py:3576
+#: src/diskultimate/ui/main_window.py:3623
 #: src/diskultimate/ui/widgets/file_browser.py:122
 #: src/diskultimate/ui/widgets/file_browser.py:93
 #: src/diskultimate/ui/widgets/partition_table.py:23
 msgid "Tur"
 msgstr "Type"
 
-#: src/diskultimate/ui/main_window.py:3592
+#: src/diskultimate/ui/main_window.py:3639
 msgid "Tur GUID"
 msgstr "Type GUID"
 
-#: src/diskultimate/ui/main_window.py:1404
-#: src/diskultimate/ui/main_window.py:1416
+#: src/diskultimate/ui/main_window.py:1448
+#: src/diskultimate/ui/main_window.py:1460
 msgid "Tur:"
 msgstr "Type:"
 
@@ -6190,11 +6214,11 @@ msgstr "URI address"
 msgid "USB aygiti"
 msgstr "USB device"
 
-#: src/diskultimate/ui/main_window.py:3598
+#: src/diskultimate/ui/main_window.py:3645
 msgid "UUID / Seri no"
 msgstr "UUID / Serial no"
 
-#: src/diskultimate/ui/main_window.py:2585
+#: src/diskultimate/ui/main_window.py:2629
 msgid ""
 "UYARI: Uygulama yonetici/root yetkisi olmadan calisiyor; disk icerigi "
 "okunamayabilir."
@@ -6236,13 +6260,13 @@ msgid "Uyari:"
 msgstr "Warning:"
 
 #: src/diskultimate/ui/dialogs/apply.py:166
-#: src/diskultimate/ui/main_window.py:2268
+#: src/diskultimate/ui/main_window.py:2312
 #: src/diskultimate/ui/main_window.py:654
 #: src/diskultimate/ui/qt_i18n.py:51
 msgid "Uygula"
 msgstr "Apply"
 
-#: src/diskultimate/ui/main_window.py:2267
+#: src/diskultimate/ui/main_window.py:2311
 msgid "Uygula ({})"
 msgstr "Apply ({})"
 
@@ -6250,7 +6274,7 @@ msgstr "Apply ({})"
 msgid "Uygulama"
 msgstr "Application"
 
-#: src/diskultimate/ui/main_window.py:2359
+#: src/diskultimate/ui/main_window.py:2403
 msgid "Uygulama basarisiz: {}"
 msgstr "Apply failed: {}"
 
@@ -6258,7 +6282,7 @@ msgstr "Apply failed: {}"
 msgid "Uygulama baslatilmadi."
 msgstr "Apply was not started."
 
-#: src/diskultimate/ui/main_window.py:1997
+#: src/diskultimate/ui/main_window.py:2041
 msgid ""
 "Uygulama kapatilip <b>{} yetkisiyle</b> yeniden baslatilacak.<br><br>Devam "
 "edilsin mi?"
@@ -6281,7 +6305,7 @@ msgid "Uygulamanin yeniden baslatilacagi betik yolu belirlenemedi."
 msgstr ""
 "The script path to restart the application could not be determined."
 
-#: src/diskultimate/ui/main_window.py:2365
+#: src/diskultimate/ui/main_window.py:2409
 msgid "Uygulandi: {}"
 msgstr "Applied: {}"
 
@@ -6297,7 +6321,7 @@ msgstr "A suitable FAT layout could not be computed"
 msgid "Uygun olmayan konum"
 msgstr "Unsuitable location"
 
-#: src/diskultimate/ui/main_window.py:2596
+#: src/diskultimate/ui/main_window.py:2640
 msgid "VAR"
 msgstr "YES"
 
@@ -6321,7 +6345,7 @@ msgstr "The VHD file is too small"
 msgid "VHD imzasi bulunamadi"
 msgstr "No VHD signature found"
 
-#: src/diskultimate/ui/main_window.py:1881
+#: src/diskultimate/ui/main_window.py:1925
 msgid "VHD olusturuldu: {} ({})"
 msgstr "VHD created: {} ({})"
 
@@ -6350,17 +6374,17 @@ msgid "Varsayilanlara don"
 msgstr "Restore Defaults"
 
 #: src/diskultimate/ui/dialogs/apply.py:169
-#: src/diskultimate/ui/main_window.py:2033
+#: src/diskultimate/ui/main_window.py:2077
 #: src/diskultimate/ui/main_window.py:660
 #: src/diskultimate/ui/qt_i18n.py:50
 msgid "Vazgec"
 msgstr "Discard"
 
-#: src/diskultimate/core/ntfsresize.py:290
+#: src/diskultimate/core/ntfsresize.py:292
 msgid "Veri kosullari FILE kaydina sigmadi (kayit {})"
 msgstr "Data runs did not fit into the FILE record (record {})"
 
-#: src/diskultimate/core/ntfsresize.py:215
+#: src/diskultimate/core/ntfsresize.py:217
 #: src/diskultimate/core/ntfswrite.py:1100
 msgid "Veri kosulu degeri cok buyuk"
 msgstr "The data run value is too large"
@@ -6399,7 +6423,7 @@ msgstr "Moving data... {}"
 msgid "Veri tasiniyor... {} / {}"
 msgstr "Moving data... {} / {}"
 
-#: src/diskultimate/core/ntfsresize.py:648
+#: src/diskultimate/core/ntfsresize.py:731
 msgid "Veri yeni boyuta sigmiyor: {} kume dolu, yeni boyut {} kume"
 msgstr ""
 "Data does not fit the new size: {} clusters in use, new size is {} "
@@ -6527,7 +6551,7 @@ msgstr "XFS superblock not found"
 msgid "XFS v4 birimleri bu surumde buyutulemiyor"
 msgstr "XFS v4 volumes cannot be grown in this version"
 
-#: src/diskultimate/core/filesystem.py:677
+#: src/diskultimate/core/filesystem.py:681
 msgid "XFS yazma bu surumde yok; birim salt okunur acildi."
 msgstr ""
 "Writing to XFS is not available in this version; the volume was opened "
@@ -6541,11 +6565,11 @@ msgstr "NEW"
 msgid "YENI BIRIM"
 msgstr "NEW VOLUME"
 
-#: src/diskultimate/ui/main_window.py:2597
+#: src/diskultimate/ui/main_window.py:2641
 msgid "YOK"
 msgstr "NO"
 
-#: src/diskultimate/ui/main_window.py:2462
+#: src/diskultimate/ui/main_window.py:2506
 msgid "Yakalanan donma"
 msgstr "Freezes caught"
 
@@ -6584,8 +6608,8 @@ msgstr "There is no change to write."
 msgid "Yazilamadi"
 msgstr "Could not be written"
 
-#: src/diskultimate/ui/main_window.py:2351
-#: src/diskultimate/ui/main_window.py:2835
+#: src/diskultimate/ui/main_window.py:2395
+#: src/diskultimate/ui/main_window.py:2879
 msgid "Yazilamaz kaynak"
 msgstr "Source is not writable"
 
@@ -6639,11 +6663,11 @@ msgstr "Write protected"
 msgid "Yazma modu acikca onaylanmalidir (confirm=True)"
 msgstr "Write mode must be confirmed explicitly (confirm=True)"
 
-#: src/diskultimate/ui/main_window.py:2439
+#: src/diskultimate/ui/main_window.py:2483
 msgid "Yazma modu acilamadi"
 msgstr "Write mode could not be enabled"
 
-#: src/diskultimate/ui/main_window.py:2441
+#: src/diskultimate/ui/main_window.py:2485
 msgid "Yazma modu acildi: {}"
 msgstr "Write mode enabled: {}"
 
@@ -6651,7 +6675,7 @@ msgstr "Write mode enabled: {}"
 msgid "Yazma sanal disk sinirini asiyor"
 msgstr "The write goes past the virtual disk boundary"
 
-#: src/diskultimate/ui/main_window.py:2398
+#: src/diskultimate/ui/main_window.py:2442
 msgid ""
 "Yazma sirasinda bu birimler <b>gecici olarak cikarilacak</b> (kilitlenip "
 "ayrilir)."
@@ -6853,7 +6877,7 @@ msgstr "No backup"
 msgid "Yedekleme ve Geri Yukleme"
 msgstr "Backup and Restore"
 
-#: src/diskultimate/ui/main_window.py:1600
+#: src/diskultimate/ui/main_window.py:1644
 msgid ""
 "Yedeklenecek bir goruntu veya disk bulunamadi.\n"
 "\n"
@@ -6905,7 +6929,7 @@ msgstr "New Disk Image"
 msgid "Yeni Kapasite:"
 msgstr "New Capacity:"
 
-#: src/diskultimate/ui/main_window.py:1848
+#: src/diskultimate/ui/main_window.py:1892
 msgid "Yeni Sanal Disk (VHD)"
 msgstr "New Virtual Disk (VHD)"
 
@@ -6918,7 +6942,7 @@ msgstr "The new XFS allocation group is too small"
 msgid "Yeni ad yol icermemeli"
 msgstr "The new name must not contain a path"
 
-#: src/diskultimate/ui/main_window.py:1390
+#: src/diskultimate/ui/main_window.py:1434
 #: src/diskultimate/ui/widgets/file_browser.py:397
 msgid "Yeni ad:"
 msgstr "New name:"
@@ -6958,7 +6982,7 @@ msgid "Yeni boyut FAT{} icin cok kucuk (en az {} kume gerekir)"
 msgstr ""
 "The new size is too small for FAT{} (at least {} clusters are required)"
 
-#: src/diskultimate/core/ntfsresize.py:628
+#: src/diskultimate/core/ntfsresize.py:706
 msgid "Yeni boyut NTFS icin cok kucuk"
 msgstr "New size is too small for NTFS"
 
@@ -6974,11 +6998,19 @@ msgstr "The new size is smaller than the exFAT metadata"
 msgid "Yeni boyut exFAT yerlesimi icin cok kucuk"
 msgstr "The new size is too small for the exFAT layout"
 
+#: src/diskultimate/ui/dialogs/resize.py:259
+msgid ""
+"Yeni boyut simdiki doluluktan kucuk; dosya sisteminin yonetim alani da "
+"kuculecegi icin veri sigar"
+msgstr ""
+"The new size is smaller than the current usage; the data still fits "
+"because the file system's own management area shrinks as well"
+
 #: src/diskultimate/ui/main_window.py:894
 msgid "Yeni disk goruntusu"
 msgstr "New disk image"
 
-#: src/diskultimate/ui/main_window.py:1435
+#: src/diskultimate/ui/main_window.py:1479
 msgid "Yeni etiket:"
 msgstr "New label:"
 
@@ -7009,7 +7041,7 @@ msgstr "New folder"
 msgid "Yeni sanal disk (VHD)..."
 msgstr "New virtual disk (VHD)..."
 
-#: src/diskultimate/ui/main_window.py:1359
+#: src/diskultimate/ui/main_window.py:1362
 msgid "Yeni yerlesim gecersiz"
 msgstr "The new layout is invalid"
 
@@ -7028,8 +7060,8 @@ msgstr "Rename"
 msgid "Yeniden adlandirilamadi"
 msgstr "Could not rename"
 
-#: src/diskultimate/ui/main_window.py:2018
-#: src/diskultimate/ui/main_window.py:2065
+#: src/diskultimate/ui/main_window.py:2062
+#: src/diskultimate/ui/main_window.py:2109
 msgid "Yeniden baslatilamadi"
 msgstr "Could not restart"
 
@@ -7037,8 +7069,8 @@ msgstr "Could not restart"
 msgid "Yeniden baslatilamadi (ShellExecute hatasi {})."
 msgstr "Could not restart (ShellExecute error {})."
 
-#: src/diskultimate/ui/main_window.py:2017
-#: src/diskultimate/ui/main_window.py:2064
+#: src/diskultimate/ui/main_window.py:2061
+#: src/diskultimate/ui/main_window.py:2108
 msgid "Yeniden baslatilamadi: {}"
 msgstr "Could not restart: {}"
 
@@ -7046,7 +7078,7 @@ msgstr "Could not restart: {}"
 msgid "Yeniden boyutlandirma icin onay gerekli (confirm=True)"
 msgstr "Resizing requires confirmation (confirm=True)"
 
-#: src/diskultimate/ui/main_window.py:3676
+#: src/diskultimate/ui/main_window.py:3723
 #: src/diskultimate/ui/qt_i18n.py:46
 msgid "Yeniden dene"
 msgstr "Retry"
@@ -7059,7 +7091,7 @@ msgstr "Retry"
 msgid "Yenile"
 msgstr "Refresh"
 
-#: src/diskultimate/ui/main_window.py:2776
+#: src/diskultimate/ui/main_window.py:2820
 msgid "Yenileme hatasi"
 msgstr "Refresh error"
 
@@ -7092,11 +7124,11 @@ msgstr "Not enough free space: {} blocks required, {} free"
 msgid "Yetki"
 msgstr "Privileges"
 
-#: src/diskultimate/ui/main_window.py:1942
+#: src/diskultimate/ui/main_window.py:1986
 msgid "Yetki eksik ({}) — yukseltme yapilamiyor: {}"
 msgstr "Missing privileges ({}) — cannot elevate: {}"
 
-#: src/diskultimate/ui/main_window.py:2032
+#: src/diskultimate/ui/main_window.py:2076
 msgid "Yetki penceresi bekleniyor. Parola sorulursa girin."
 msgstr ""
 "Waiting for the authorization dialog. Enter your password if asked."
@@ -7109,13 +7141,13 @@ msgstr "Permission was not granted (cancelled in the UAC prompt)."
 msgid "Yetki verilmedi (parola penceresi iptal edildi)."
 msgstr "Permission was not granted (the password dialog was cancelled)."
 
-#: src/diskultimate/ui/main_window.py:1980
-#: src/diskultimate/ui/main_window.py:1983
-#: src/diskultimate/ui/main_window.py:2436
+#: src/diskultimate/ui/main_window.py:2024
+#: src/diskultimate/ui/main_window.py:2027
+#: src/diskultimate/ui/main_window.py:2480
 msgid "Yetki yetersiz"
 msgstr "Insufficient privileges"
 
-#: src/diskultimate/ui/main_window.py:2990
+#: src/diskultimate/ui/main_window.py:3037
 msgid "Yetki: normal kullanici — fiziksel disk icin {} gerekir"
 msgstr "Privileges: standard user — physical disks require {}"
 
@@ -7127,7 +7159,7 @@ msgstr "Authorization was refused (polkit)."
 msgid "Yetkili kopya baslatilamadi (cikis kodu {})."
 msgstr "The elevated copy could not be started (exit code {})."
 
-#: src/diskultimate/ui/main_window.py:2051
+#: src/diskultimate/ui/main_window.py:2095
 msgid ""
 "Yetkili kopya beklenmekten vazgecildi; acilirsa iki kopyadan birini "
 "kapatin."
@@ -7139,11 +7171,11 @@ msgstr ""
 msgid "Yetkisiz devam et"
 msgstr "Continue without privileges"
 
-#: src/diskultimate/ui/main_window.py:2501
+#: src/diskultimate/ui/main_window.py:2545
 msgid "Yigin dokumu"
 msgstr "Stack dump"
 
-#: src/diskultimate/ui/main_window.py:2500
+#: src/diskultimate/ui/main_window.py:2544
 msgid "Yigin dokumu yazildi: {}"
 msgstr "Stack dump written: {}"
 
@@ -7177,7 +7209,7 @@ msgstr "Path:"
 msgid "Yonetici"
 msgstr "Administrator"
 
-#: src/diskultimate/ui/main_window.py:2595
+#: src/diskultimate/ui/main_window.py:2639
 msgid "Yonetici/root yetkisi: {}"
 msgstr "Administrator/root privileges: {}"
 
@@ -7189,7 +7221,7 @@ msgstr "Method"
 msgid "Yukari"
 msgstr "Up"
 
-#: src/diskultimate/ui/main_window.py:2294
+#: src/diskultimate/ui/main_window.py:2338
 msgid "Yukari tasi"
 msgstr "Move up"
 
@@ -7226,19 +7258,19 @@ msgstr "An extended partition already exists"
 msgid "Zaten var: {}"
 msgstr "Already exists: {}"
 
-#: src/diskultimate/ui/main_window.py:3144
+#: src/diskultimate/ui/main_window.py:3191
 msgid "[SISTEM DISKI]"
 msgstr "[SYSTEM DISK]"
 
-#: src/diskultimate/ui/main_window.py:3152
+#: src/diskultimate/ui/main_window.py:3199
 msgid "[bagli bolum var]"
 msgstr "[has mounted partitions]"
 
-#: src/diskultimate/ui/main_window.py:3051
+#: src/diskultimate/ui/main_window.py:3098
 msgid "[degistirilemez]"
 msgstr "[not modifiable]"
 
-#: src/diskultimate/ui/main_window.py:3141
+#: src/diskultimate/ui/main_window.py:3188
 msgid "[{} SISTEM DISKI]"
 msgstr "[{} SYSTEM DISK]"
 
@@ -7278,7 +7310,7 @@ msgstr ""
 msgid "`{}` okunamadi."
 msgstr "`{}` could not be read."
 
-#: src/diskultimate/core/filesystem.py:729
+#: src/diskultimate/core/filesystem.py:733
 msgid "alt hacim"
 msgstr "subvolume"
 
@@ -7290,11 +7322,11 @@ msgstr "{} after ▶"
 msgid "ayri gunluk aygiti"
 msgstr "external journal device"
 
-#: src/diskultimate/core/filesystem.py:395
+#: src/diskultimate/core/filesystem.py:399
 msgid "bag"
 msgstr "link"
 
-#: src/diskultimate/ui/dialogs/resize.py:168
+#: src/diskultimate/ui/dialogs/resize.py:174
 msgid "baslangic degistirilemez"
 msgstr "the start cannot be changed"
 
@@ -7312,10 +7344,11 @@ msgid "bilinmeyen"
 msgstr "unknown"
 
 #: src/diskultimate/core/platform.py:1195
+#: src/diskultimate/ui/main_window.py:1405
 msgid "bilinmiyor"
 msgstr "unknown"
 
-#: src/diskultimate/core/filesystem.py:821
+#: src/diskultimate/core/filesystem.py:825
 msgid "birim"
 msgstr "volume"
 
@@ -7361,7 +7394,7 @@ msgstr ""
 "Part of the btrfs data is on another device; it cannot be read with a "
 "single device"
 
-#: src/diskultimate/core/filesystem.py:721
+#: src/diskultimate/core/filesystem.py:725
 msgid "btrfs yazma bu surumde yok; birim salt okunur acildi."
 msgstr ""
 "Writing to btrfs is not available in this version; the volume was opened "
@@ -7408,7 +7441,7 @@ msgstr "at least {} is required"
 
 #: src/diskultimate/core/resize.py:141
 #: src/diskultimate/ui/dialogs/partition_layout.py:146
-#: src/diskultimate/ui/dialogs/resize.py:164
+#: src/diskultimate/ui/dialogs/resize.py:170
 msgid "en cok {}"
 msgstr "at most {}"
 
@@ -7463,7 +7496,7 @@ msgstr "physical disk"
 msgid "gerekli arac: {}"
 msgstr "required tool: {}"
 
-#: src/diskultimate/core/filesystem.py:397
+#: src/diskultimate/core/filesystem.py:401
 #: src/diskultimate/ui/dialogs/efiboot.py:275
 msgid "gizli"
 msgstr "hidden"
@@ -7473,8 +7506,8 @@ msgid "goruntu dosyasi"
 msgstr "image file"
 
 #: src/diskultimate/ui/dialogs/backup.py:564
-#: src/diskultimate/ui/main_window.py:2729
-#: src/diskultimate/ui/main_window.py:3221
+#: src/diskultimate/ui/main_window.py:2773
+#: src/diskultimate/ui/main_window.py:3268
 #: src/diskultimate/ui/widgets/disk_overview.py:184
 msgid "ham"
 msgstr "raw"
@@ -7532,7 +7565,7 @@ msgstr "os-prober disabled"
 msgid "resize inode'un cift dolayli blogu yok"
 msgstr "The resize inode has no double-indirect block"
 
-#: src/diskultimate/core/filesystem.py:823
+#: src/diskultimate/core/filesystem.py:827
 msgid "sifreli"
 msgstr "encrypted"
 
@@ -7712,7 +7745,7 @@ msgstr ""
 "\n"
 "Create it in this location anyway?"
 
-#: src/diskultimate/ui/main_window.py:3160
+#: src/diskultimate/ui/main_window.py:3207
 msgid ""
 "{}\n"
 "{}\n"
@@ -7750,7 +7783,7 @@ msgstr "{} ({} / {})"
 msgid "{} ({} gecis)"
 msgstr "{} ({} passes)"
 
-#: src/diskultimate/ui/main_window.py:3580
+#: src/diskultimate/ui/main_window.py:3627
 msgid "{} ({} sektor)"
 msgstr "{} ({} sectors)"
 
@@ -7758,7 +7791,7 @@ msgstr "{} ({} sectors)"
 msgid "{} / {} bayt"
 msgstr "{} / {} bytes"
 
-#: src/diskultimate/ui/main_window.py:2384
+#: src/diskultimate/ui/main_window.py:2428
 msgid ""
 "{} ISLETIM SISTEMI DISKIDIR.\n"
 "\n"
@@ -7816,7 +7849,7 @@ msgstr "{} steps applied, stopped at step '{}': {}"
 msgid "{} bagli"
 msgstr "{} mounted"
 
-#: src/diskultimate/ui/main_window.py:1528
+#: src/diskultimate/ui/main_window.py:1572
 msgid "{} basarisiz: {}"
 msgstr "{} failed: {}"
 
@@ -7824,13 +7857,13 @@ msgstr "{} failed: {}"
 msgid "{} bayt"
 msgstr "{} bytes"
 
-#: src/diskultimate/ui/main_window.py:2335
+#: src/diskultimate/ui/main_window.py:2379
 msgid "{} bekleyen adim iptal edildi"
 msgid_plural "{} bekleyen adim iptal edildi"
 msgstr[0] "{} pending step was discarded"
 msgstr[1] "{} pending steps were discarded"
 
-#: src/diskultimate/ui/main_window.py:2328
+#: src/diskultimate/ui/main_window.py:2372
 msgid ""
 "{} bekleyen adim silinecek.<br><br>Diskte hicbir degisiklik yapilmadigi "
 "icin bu islem <b>zararsizdir</b>.<br><br>Devam edilsin mi?"
@@ -7858,7 +7891,7 @@ msgstr ""
 "The information of {} could not be read (no privileges); whether it is the "
 "system disk is unknown. Writing to an unknown disk was rejected."
 
-#: src/diskultimate/core/filesystem.py:946
+#: src/diskultimate/core/filesystem.py:950
 msgid "{} bir kapsayicidir; icindeki birimler bu surumde acilamiyor."
 msgstr ""
 "{} is a container; the volumes inside it cannot be opened in this version."
@@ -7869,7 +7902,7 @@ msgid ""
 msgstr ""
 "{} is a system/device file system ({}); an image cannot be created here."
 
-#: src/diskultimate/ui/main_window.py:1574
+#: src/diskultimate/ui/main_window.py:1618
 msgid ""
 "{} bolum 4K sinirinda hizali degil; SSD ve ileri bicim disklerde basarim "
 "dusebilir."
@@ -7931,23 +7964,23 @@ msgstr "{} changed: {}"
 msgid "{} disa aktariliyor..."
 msgstr "Exporting {}..."
 
-#: src/diskultimate/ui/main_window.py:2465
+#: src/diskultimate/ui/main_window.py:2509
 msgid "{} dk"
 msgstr "{} min"
 
-#: src/diskultimate/ui/main_window.py:1550
+#: src/diskultimate/ui/main_window.py:1594
 msgid "{} donusumu kuyruga alindi: {}"
 msgstr "{} conversion queued: {}"
 
-#: src/diskultimate/ui/main_window.py:1548
+#: src/diskultimate/ui/main_window.py:1592
 msgid "{} donusumu yapilamaz"
 msgstr "{} conversion is not possible"
 
-#: src/diskultimate/ui/main_window.py:1838
+#: src/diskultimate/ui/main_window.py:1882
 msgid "{} dosya cikarildi -> {}"
 msgstr "{} files extracted -> {}"
 
-#: src/diskultimate/ui/main_window.py:1840
+#: src/diskultimate/ui/main_window.py:1884
 msgid ""
 "{} dosya cikarildi:\n"
 "{}"
@@ -7961,7 +7994,7 @@ msgid_plural "{} dosya eklendi ({})"
 msgstr[0] "{} file added ({})"
 msgstr[1] "{} files added ({})"
 
-#: src/diskultimate/ui/main_window.py:1745
+#: src/diskultimate/ui/main_window.py:1789
 msgid ""
 "{} dosya kurtarildi:\n"
 "{}"
@@ -7981,7 +8014,7 @@ msgstr "{} file"
 msgid "{} guncellendi: {}"
 msgstr "{} updated: {}"
 
-#: src/diskultimate/ui/main_window.py:3787
+#: src/diskultimate/ui/main_window.py:3834
 msgid "{} hakkinda"
 msgstr "About {}"
 
@@ -7993,7 +8026,7 @@ msgstr ""
 "{} reported an error:\n"
 "{}"
 
-#: src/diskultimate/core/filesystem.py:949
+#: src/diskultimate/core/filesystem.py:953
 msgid ""
 "{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya sistemleri: "
 "FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, APFS, UDF, XFS, btrfs, F2FS, ISO "
@@ -8069,8 +8102,8 @@ msgstr ""
 msgid "{} okunuyor..."
 msgstr "Reading {}..."
 
-#: src/diskultimate/ui/main_window.py:2004
-#: src/diskultimate/ui/main_window.py:2034
+#: src/diskultimate/ui/main_window.py:2048
+#: src/diskultimate/ui/main_window.py:2078
 msgid "{} olarak yeniden baslat"
 msgstr "Restart as {}"
 
@@ -8078,7 +8111,7 @@ msgstr "Restart as {}"
 msgid "{} olarak yeniden baslat..."
 msgstr "Restart as {}..."
 
-#: src/diskultimate/ui/main_window.py:1957
+#: src/diskultimate/ui/main_window.py:2001
 msgid "{} olarak yeniden baslatma reddedildi; fiziksel diskler acilamaz"
 msgstr "Restarting as {} was declined; physical disks cannot be opened"
 
@@ -8094,7 +8127,7 @@ msgstr "Creating {} ({})..."
 msgid "{} saniye"
 msgstr "{} seconds"
 
-#: src/diskultimate/core/filesystem.py:943
+#: src/diskultimate/core/filesystem.py:947
 msgid "{} sifreli bir birimdir; icerigi anahtar olmadan okunamaz."
 msgstr ""
 "{} is an encrypted volume; its contents cannot be read without the key."
@@ -8108,8 +8141,8 @@ msgstr "{} deleted: {}"
 msgid "{} silinmis giris bulundu"
 msgstr "{} deleted entries found"
 
-#: src/diskultimate/ui/main_window.py:2460
-#: src/diskultimate/ui/main_window.py:2463
+#: src/diskultimate/ui/main_window.py:2504
+#: src/diskultimate/ui/main_window.py:2507
 msgid "{} sn"
 msgstr "{} s"
 
@@ -8152,11 +8185,11 @@ msgstr "{} new partitions"
 msgid "{} yerlesimi hazirlaniyor..."
 msgstr "Preparing the {} layout..."
 
-#: src/diskultimate/ui/main_window.py:1994
+#: src/diskultimate/ui/main_window.py:2038
 msgid "{} yetkisi"
 msgstr "{} privileges"
 
-#: src/diskultimate/ui/main_window.py:1945
+#: src/diskultimate/ui/main_window.py:1989
 msgid "{} yetkisi gerekiyor"
 msgstr "{} privileges are required"
 
@@ -8172,11 +8205,11 @@ msgstr "{} {} started"
 msgid "{} {} tasinacak ({} veri kopyalanir)"
 msgstr "will move {} {} ({} of data is copied)"
 
-#: src/diskultimate/ui/main_window.py:2790
+#: src/diskultimate/ui/main_window.py:2834
 msgid "{} | {} | {} bolum"
 msgstr "{} | {} | {} partitions"
 
-#: src/diskultimate/ui/main_window.py:3149
+#: src/diskultimate/ui/main_window.py:3196
 msgid "{} — (yetki yok, bilgi okunamadi)"
 msgstr "{} — (no privileges, information could not be read)"
 
@@ -8188,11 +8221,11 @@ msgstr "{} — Partition {}"
 msgid "{} — ilk 440 bayt sifirlanir"
 msgstr "{} — the first 440 bytes are zeroed"
 
-#: src/diskultimate/ui/main_window.py:3079
+#: src/diskultimate/ui/main_window.py:3126
 msgid "{} — {}"
 msgstr "{} — {}"
 
-#: src/diskultimate/ui/main_window.py:3226
+#: src/diskultimate/ui/main_window.py:3273
 msgid ""
 "{} — {}\n"
 "LBA {} - {}\n"
@@ -8227,7 +8260,7 @@ msgstr "{}, {}"
 msgid "{}, {} — veri korunur"
 msgstr "{}, {} — data is kept"
 
-#: src/diskultimate/ui/main_window.py:1743
+#: src/diskultimate/ui/main_window.py:1787
 msgid "{}/{} dosya kurtarildi -> {}"
 msgstr "{}/{} files recovered -> {}"
 
@@ -8244,7 +8277,7 @@ msgstr "{}: there is no medium in the device"
 msgid "{}: icerik goruntuleme desteklenmiyor"
 msgstr "{}: content display is not supported"
 
-#: src/diskultimate/ui/main_window.py:1984
+#: src/diskultimate/ui/main_window.py:2028
 msgid "{}<br><br>Uygulama <b>{} yetkisiyle</b> yeniden baslatilsin mi?"
 msgstr "{}<br><br>Restart the application <b>with {} privileges</b>?"
 
@@ -8735,3 +8768,14 @@ msgstr "◀ {} before"
 #: src/diskultimate/ui/widgets/file_browser.py:336
 #~ msgid "{} yaziliyor ({})..."
 #~ msgstr "Writing {} ({})..."
+
+#: src/diskultimate/ui/dialogs/resize.py:246
+#~ msgid "<b>Dikkat:</b> yeni boyut kullanilan alandan kucuk"
+#~ msgstr "<b>Warning:</b> the new size is smaller than the used space"
+
+#: src/diskultimate/ui/dialogs/resize.py:243
+#~ msgid ""
+#~ "Bolum <b>{} {} tasinacak</b> ({} veri kopyalanir — uzun surebilir)"
+#~ msgstr ""
+#~ "The partition will <b>move {} {}</b> ({} of data is copied — this may take "
+#~ "a while)"

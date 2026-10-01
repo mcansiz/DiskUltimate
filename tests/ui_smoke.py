@@ -773,6 +773,58 @@ def main() -> int:
     pencere._refresh_pending()
     app.processEvents()
 
+    # --- eskimis en az boyut: dosya eklenince sinir yeniden olculur (ADR 0074) ---
+    # 2026-10-01: sinir onbellegi (aygit, no, baslangic, boyut) anahtarliydi;
+    # dosya eklemek anahtari degistirmedigi icin pencere dosyalar eklenmeden
+    # onceki en az boyutu kullandi ve 3,27 GB dolu NTFS 3,33 GB'a planlandi.
+    # NTFS: en az boyutu dogrudan dolu kumelerden gelir (kullanicinin durumu)
+    ntfs_bolum = next(p for p in pencere.session.partitions
+                      if (p.fs_type or "").upper() == "NTFS")
+    pencere.select_partition(ntfs_bolum.index)
+    sinirlari_bekle()
+    disk_bolum = pencere.session.table.get(ntfs_bolum.index)
+    eski = pencere.limits.get(pencere.session, disk_bolum, request=False)
+    assert eski is not None, "NTFS siniri hesaplanmadi"
+    # 1) gezgin disindan yazim (onbellek habersiz): kuyruga yazma ani olcer
+    fs_dis = pencere.session.filesystem(ntfs_bolum.index)
+    dolgu = min(disk_bolum.size // 2, 64 * MIB)
+    fs_dis.write_file("/dolgu.bin", b"\xA5" * dolgu)
+    fs_dis.flush()
+    pencere.session.close_filesystems()
+    model = pencere._edit_model()
+    slot = model.get(ntfs_bolum.index)
+    assert slot.min_count == eski.min_sectors, "onbellek beklenmedik sekilde tazelendi"
+    once = {x.index: (x.new_start, x.new_count) for x in model.parts}
+    slot.new_count = eski.min_sectors              # eski siniri tam kullan
+    hatalar = []
+    asil_error = pencere.error
+    pencere.error = lambda baslik, mesaj: hatalar.append((baslik, mesaj))
+    try:
+        pencere._commit_edit(model, [ntfs_bolum.index], before=once)
+        app.processEvents()
+    finally:
+        pencere.error = asil_error
+    taze = pencere.limits.get(pencere.session, disk_bolum, request=False)
+    assert taze is not None and taze.min_sectors > eski.min_sectors, (eski, taze)
+    assert hatalar and not len(pencere.queue), (hatalar, list(pencere.queue))
+    # 2) gezgin yolu: contentChanged sinirlari unutur ve yeniden hesaplatir
+    pencere.limits.compute_now(pencere.session, disk_bolum)
+    pencere.browser.contentChanged.emit()
+    assert pencere.limits.get(pencere.session, disk_bolum, request=False) is None \
+        or pencere.limits.pending(), "gezgin degisikligi sinirlari unutmadi"
+    sinirlari_bekle()
+    assert pencere.limits.get(pencere.session, disk_bolum, request=False) is not None
+    fs_dis = pencere.session.filesystem(ntfs_bolum.index)
+    fs_dis.remove("/dolgu.bin")
+    fs_dis.flush()
+    pencere.session.close_filesystems()
+    pencere.limits.forget(pencere.session)
+    pencere.queue.clear()
+    pencere._refresh_pending()
+    app.processEvents()
+    print(f"  (eskimis sinir: kuyruga yazarken yeniden olculdu — "
+          f"{eski.min_sectors} -> {taze.min_sectors} sektor, {len(hatalar)} ret)")
+
     # --- sag tik menuleri: her islem AIT OLDUGU dugumde (ADR 0036) ---
     # "Fiziksel Diskler" bir kategori basligidir; bolum tablosu olusturma
     # orada durunca islem sag tiklanan diske degil, o sirada etkin olan

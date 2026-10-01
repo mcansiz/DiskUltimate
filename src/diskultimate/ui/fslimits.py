@@ -51,6 +51,8 @@ class FsLimitsService(QObject):
         super().__init__(parent)
         self._results: Dict[tuple, object] = {}
         self._workers: Dict[tuple, _Worker] = {}
+        # unutulmus anahtarlar icin suren hesaplar: sonuclari atilir
+        self._stale: List[_Worker] = []
 
     @staticmethod
     def key(session, part) -> tuple:
@@ -99,11 +101,32 @@ class FsLimitsService(QObject):
         worker.start()
 
     def _on_done(self, key, result) -> None:
+        sender = self.sender()
+        if sender in self._stale:
+            # Hesap baslarken dosya sistemi farkliydi (forget): sonuc eskidir.
+            self._stale.remove(sender)
+            sender.wait()
+            return
         worker = self._workers.pop(key, None)
         if worker is not None:
             worker.wait()
         self._results[key] = result
         self.ready.emit(key)
+
+    def forget(self, session, index: Optional[int] = None) -> None:
+        """Bolumun (ya da oturumun) sinirlarini unutur.
+
+        Anahtar (aygit, no, baslangic, boyut) dosya eklenince/silinince
+        DEGISMEZ; unutulmazsa en az boyut dosyalar eklenmeden onceki dolulukla
+        kalir ve pencere dolu alanin altina inmeye izin verir (2026-10-01:
+        3,27 GB dolu NTFS 3,33 GB'a planlanabildi, gercek en az 3,44 GB).
+        """
+        def matches(key) -> bool:
+            return key[0] is session.image and (index is None or key[1] == index)
+        for key in [k for k in self._results if matches(k)]:
+            del self._results[key]
+        for key in [k for k in self._workers if matches(k)]:
+            self._stale.append(self._workers.pop(key))
 
     def clear(self) -> None:
         """Disk yeniden okundu: dosya sistemi dolulugu degismis olabilir."""
@@ -111,13 +134,14 @@ class FsLimitsService(QObject):
 
     def wait_all(self, timeout_ms: int = 5000) -> None:
         """Kapanista: suren hesaplar biter, sinyaller kopar."""
-        for worker in list(self._workers.values()):
+        for worker in list(self._workers.values()) + self._stale:
             try:
                 worker.done.disconnect()
             except TypeError:
                 pass
             worker.wait(timeout_ms)
         self._workers.clear()
+        self._stale.clear()
 
     def errors(self) -> List[Exception]:
         return [r for r in self._results.values() if isinstance(r, Exception)]

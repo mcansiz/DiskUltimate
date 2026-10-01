@@ -5465,3 +5465,37 @@ calismiyordu.
   1,5 GB (eskiden 21 GB), 17,6 -> 8,6 sn, icerik birebir, e2fsck temiz.
 - t19 duzeltmesi: kucuk dosyada FAT metaverisi dosyadan cok yazildigi icin
   ayni deger tekrar bildiriliyordu; kirpilmis deger karsilastiriliyor.
+
+## 2026-10-01 (8) — Analiz: kucultmede dolu alanin altina inilebilmesi
+
+- Kullanici: bolum 3 (NTFS, 3,27 GB dolu) icin pencere 3,33 GB'a izin verdi;
+  gercek en az 3,44 GB. Neden: `FsLimitsService` anahtari (aygit, no,
+  baslangic, boyut) dosya ekleyince degismiyor; `_content_changed` sinirlari
+  tazelemiyor -> dosyalar eklenmeden once hesaplanan en az kullaniliyor.
+- Veri riski yok: Uygula aninda cekirdek siniri yeniden hesaplayip reddediyor
+  ("3.44 GB altina inemez") — kullanicinin diskinin kopyasinda denendi.
+- Ayrica: kendi NTFS bicimlendiricimiz $Bitmap'te 2-3. kumeleri sahipsiz
+  dolu isaretliyor (ntfsresize "extra cluster in $Bitmap" -> calismayi
+  reddediyor; chkdsk duzeltir). Taze birimlerde de var.
+- Duzeltme onerisi kullaniciya sunuldu; kullanici "hepsini yap" dedi.
+
+## 2026-10-01 (9) — Eskimis boyut siniri + NTFS bicim hatalari duzeltildi (ADR 0074)
+
+- `FsLimitsService.forget`; gezgin degisikliginde sinir unutulup yeniden
+  hesaplaniyor. Kuculen bolumun siniri kuyruga yazmadan once diskten
+  yeniden olculuyor (`_recheck_shrink`). Pencere "Dolu / en az / en cok"
+  gosteriyor; ext'te dolu > en az aciklamasi. ui_smoke: eskimis sinir
+  senaryosu (18 385 -> 156 009 sektor, adim reddedildi).
+- NTFS bicimlendirici: bitmap'te yalnizca $Boot kumeleri; $MFT $Boot'la
+  cakismiyor; $AttrDef dogru kume sayisi; onyukleme 0x44 dizin kaydi boyu
+  dogru. 512 B / 1 KB / 2 KB kume daha once HIC calismiyordu (arayuzde
+  secilebiliyordu); simdi 512 B–64 KiB ntfsresize temiz, ntfs-3g ile iki
+  yonlu okuma/yazma (t75).
+- Dar onarim `repair_orphan_low_clusters` (MFT taranir, sahipsizler
+  bosaltilir), `ntfs_resize` icinde de calisir. Kullanicinin diskinin
+  kopyasinda bolum 2 ve 3: 2'ser kume, tek sektor, icerik birebir.
+  Gercek dosyaya yazilmadi: uygulama (root) goruntuyu acik tutuyor.
+- fs_matrix: XFS icin 320 MB (eskiden 128 MB ile hep HATA veriyordu).
+- Linux run_all 73/75 (0 hata), ntfs_write_check 2/2, resize_matrix 16/16,
+  fs_matrix 12/13 (ReFS Linux'ta beklenen), diag 13/13, i18n, platform 0.
+- Windows (VBox win10): run_all 72/75 (0 hata, 3 arac yok), ui_smoke tamam.

@@ -40,6 +40,7 @@ START_LBA = 2048
 BOYUTLAR = {
     "fat12": 32, "fat16": 64, "fat32": 128, "exfat": 128,
     "ntfs": 128, "ext2": 64, "ext3": 128, "ext4": 128,
+    "xfs": 320,                 # XFS en az 300 MB (ADR 0067)
 }
 
 # Harici dogrulayicilar: (bicim -> [(arac, argumanlar)])

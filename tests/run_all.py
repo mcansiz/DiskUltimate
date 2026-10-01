@@ -5801,6 +5801,75 @@ def t74_dosya_ekleme_ilerlemesi():
     d.close()
 
 
+@test
+def t75_ntfs_kume_boyutlari_ve_onarim():
+    """NTFS: her kume boyutunda tutarli bicim; eski bicimin sahipsiz kumeleri onarilir (ADR 0074)
+
+    Eski bicimlendirici kume 0-3'u sabit dolu isaretliyordu ($Boot 4 KiB
+    kumede 2 kume): ntfsresize "extra cluster in $Bitmap" deyip calismiyordu.
+    4 KiB alti kumede $Boot ile $MFT cakisiyor, $AttrDef kisa kaliyor ve
+    onyukleme sektorundeki dizin kaydi boyu yanlis yaziliyordu — birim hic
+    okunamiyordu (arayuzde 512 bayt / 1 / 2 KB secilebiliyordu).
+    """
+    import struct as _st
+    from diskultimate.core.ntfs import format_ntfs
+    from diskultimate.core.ntfsread import NtfsFS
+    from diskultimate.core.ntfsresize import ntfs_repair, ntfs_size_info
+    ntfsresize = shutil.which("ntfsresize") or shutil.which(
+        "ntfsresize", path="/sbin:/usr/sbin")
+
+    def bitmap0(dev):
+        fs = NtfsFS(dev)
+        attr = fs.record(6).find(0x80)
+        return fs.read_attribute_range(attr, 0, 1)[0]
+
+    for cs in (512, 1024, 2048, 4096, 65536):
+        yol = img_path(f"t75_{cs}.img")
+        d = DiskImage.create(yol, 200 * MIB, overwrite=True)
+        format_ntfs(d, label="KUME", cluster_size=cs)
+        fs = NtfsFS(d)
+        assert fs.cluster_size == cs and fs.index_size == 4096, (cs, fs.index_size)
+        boot_kume = max(1, 8192 // cs)
+        beklenen = (1 << min(boot_kume, 8)) - 1
+        assert bitmap0(d) & 0x0F == beklenen & 0x0F, (cs, bin(bitmap0(d)))
+        erisim = open_filesystem(d)
+        erisim.mkdir("/k")
+        for i in range(120):                     # dizin kaydi (INDX) zorlanir
+            erisim.write_file(f"/k/dosya_{i:03d}_uzun_ad.txt", b"z" * i)
+        erisim.flush()
+        erisim = open_filesystem(d)
+        assert len([n for n in erisim.listdir("/k")]) == 120, cs
+        assert erisim.read("/k/dosya_077_uzun_ad.txt") == b"z" * 77
+        d.close()
+        if ntfsresize:
+            r = subprocess.run([ntfsresize, "--info", "--force", "--no-action", yol],
+                               capture_output=True, text=True)
+            assert r.returncode == 0 and "nconsistent" not in r.stdout + r.stderr, \
+                (cs, (r.stdout + r.stderr)[-300:])
+
+    # eski bicimin izi: 4 KiB kumede 2-3 sahipsiz dolu -> onarim yalnizca onlari bosaltir
+    yol = img_path("t75_eski.img")
+    d = DiskImage.create(yol, 200 * MIB, overwrite=True)
+    format_ntfs(d, label="ESKI")
+    erisim = open_filesystem(d)
+    erisim.write_file("/veri.bin", b"V" * 300000)
+    erisim.flush()
+    fs = NtfsFS(d)
+    attr = fs.record(6).find(0x80)
+    ilk = bytearray(fs.read_attribute_range(attr, 0, 1))
+    assert ilk[0] & 0x0F == 0x03
+    ilk[0] |= 0x0C                               # eski bicimlendiricinin yazdigi
+    lcn = attr.runs[0][0]
+    d.write(lcn * fs.cluster_size, bytes(ilk))
+    once = ntfs_size_info(d).used_clusters
+    assert ntfs_repair(d) == 2
+    assert bitmap0(d) & 0x0F == 0x03
+    assert ntfs_size_info(d).used_clusters == once - 2
+    assert ntfs_repair(d) == 0                   # ikinci kez: dokunmaz
+    assert open_filesystem(d).read("/veri.bin") == b"V" * 300000
+    d.close()
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

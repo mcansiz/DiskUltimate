@@ -159,9 +159,15 @@ class ResizePartitionDialog(QDialog):
         return kutu
 
     def _limits_text(self) -> str:
-        parcalar = [tr("<b>Sinirlar:</b> en az {}",
-                       human_size(self.min_count * self.ss)),
-                    tr("en cok {}", human_size(self.max_count * self.ss))]
+        parcalar = []
+        if self.used_bytes >= 0:
+            # Dolu alan ve en az boyut yan yana: kullanici neden daha fazla
+            # kuculemedigini (ya da ext'te neden dolunun altina inebildigini)
+            # gorur (ADR 0074).
+            parcalar.append(tr("<b>Dolu:</b> {}", human_size(self.used_bytes)))
+        parcalar += [tr("<b>Sinirlar:</b> en az {}",
+                        human_size(self.min_count * self.ss)),
+                     tr("en cok {}", human_size(self.max_count * self.ss))]
         if self.fs.note:
             parcalar.append(self.fs.note)
         if not self.fs.movable:
@@ -237,13 +243,22 @@ class ResizePartitionDialog(QDialog):
         elif delta < 0:
             lines.append(tr("Bolum <b>{} kuculecek</b>", human_size(-delta)))
         if tasima:
-            yon = "ileri" if tasima > 0 else "geri"
             kopya = min(count, self.part.sector_count) * self.ss
-            lines.append(
-                tr("Bolum <b>{} {} tasinacak</b> ({} veri kopyalanir — uzun "
-                   "surebilir)", human_size(abs(tasima)), yon, human_size(kopya)))
+            if tasima > 0:
+                lines.append(
+                    tr("Bolum <b>{} ileri tasinacak</b> ({} veri kopyalanir — "
+                       "uzun surebilir)", human_size(tasima), human_size(kopya)))
+            else:
+                lines.append(
+                    tr("Bolum <b>{} geri tasinacak</b> ({} veri kopyalanir — "
+                       "uzun surebilir)", human_size(-tasima), human_size(kopya)))
         if self.used_bytes >= 0 and count * self.ss < self.used_bytes:
-            lines.append(tr("<b>Dikkat:</b> yeni boyut kullanilan alandan kucuk"))
+            # Pencere en az boyutun altina inmez; buraya yalnizca en az <
+            # dolu olan dosya sistemlerinde (ext) gelinir: dolu alanin bir
+            # kismi her grubun kendi yonetim alanidir ve kuculunce azalir.
+            lines.append(tr("Yeni boyut simdiki doluluktan kucuk; dosya "
+                            "sisteminin yonetim alani da kuculecegi icin "
+                            "veri sigar"))
         if not lines:
             lines.append(tr("Degisiklik yok"))
         self.ozet.setText(" · ".join(lines))

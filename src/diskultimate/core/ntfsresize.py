@@ -65,7 +65,9 @@ from ..i18n import tr
 MFT_RECORD = 0                 # $MFT
 LOGFILE_RECORD = 2             # $LogFile
 VOLUME_RECORD = 3              # $Volume
+BOOT_RECORD = 7                # $Boot
 BADCLUS_RECORD = 8             # $BadClus
+LOW_CLUSTERS = 4               # eski bicimlendiricinin sabit isaretledigi alan
 AT_VOLUME_INFORMATION = 0x70
 
 VOLUME_DIRTY = 0x0001          # $VOLUME_INFORMATION bayraklari
@@ -348,6 +350,82 @@ def _mark_range(writer: NtfsWriter, first: int, last: int, value: bool) -> None:
                 block[local >> 3] &= ~(1 << (local & 7)) & 0xFF
         writer._write_attr_range(attr, bytes(block), base)
         base += length
+
+
+# ==========================================================================
+# Onarim: eski bicimlendiricinin sahipsiz kumeleri
+# ==========================================================================
+def _owned_in(fs: NtfsFS, rec_no: int, lo: int, hi: int) -> set:
+    """Kaydin kendi yerlesik olmayan ozniteliklerinin [lo, hi) icindeki kumeleri."""
+    out = set()
+    try:
+        rec = fs.record(rec_no)
+    except NtfsError:
+        return out
+    if not rec.in_use:
+        return out
+    for attr in rec.attributes:
+        if attr.resident or not attr.runs:
+            continue
+        for lcn, count in attr.runs:
+            if lcn is None or lcn < 0:
+                continue
+            out.update(range(max(lo, lcn), min(hi, lcn + count)))
+    return out
+
+
+def repair_orphan_low_clusters(writer: NtfsWriter, progress: Progress = None) -> int:
+    """Kume 0-3'te dolu isaretli ama hicbir dosyanin olmayan kumeleri bosaltir.
+
+    Bu surumden onceki bicimlendirici (ADR 0074) `$Boot` 2 kume iken 0-3'u
+    dolu isaretliyordu. Veri kaybi yoktur ama `ntfsresize` birimi "tutarsiz"
+    sayip calismaz, chkdsk duzeltmek ister. Onarim dar tutulur:
+
+    * yalnizca kume 0-3'e bakilir; `$Boot`'un kumeleri asla bosaltilmaz,
+    * aday varsa **butun MFT** taranir; herhangi bir kaydin sahiplendigi kume
+      bosaltilmaz (sahiplik bilinmeden bit silmek veri bozar),
+    * aday yoksa (Windows'un ya da yeni bicimlendiricinin birimi) MFT
+      taranmaz, hicbir sey yazilmaz.
+
+    Bosaltilan kume sayisini dondurur.
+    """
+    fs = writer.fs
+    attr = _bitmap_attr(fs)
+    first = fs.read_attribute_range(attr, 0, 1)
+    if not first:
+        return 0
+    marked = {c for c in range(LOW_CLUSTERS) if first[0] >> c & 1}
+    candidates = marked - _owned_in(fs, BOOT_RECORD, 0, LOW_CLUSTERS)
+    if not candidates:
+        return 0
+    record_count = max(1, fs.mft_size // fs.record_size)
+    for rec_no in range(record_count):
+        if rec_no % 4096 == 0:
+            fs._cache.clear()
+            if progress:
+                progress(tr("MFT taraniyor... {}/{} kayit", rec_no, record_count), -1)
+        candidates -= _owned_in(fs, rec_no, 0, LOW_CLUSTERS)
+        if not candidates:
+            return 0
+    for cluster in sorted(candidates):
+        _mark_range(writer, cluster, cluster + 1, False)
+    return len(candidates)
+
+
+def ntfs_repair(view: BlockDevice, progress: Progress = None) -> int:
+    """Birimi acip `repair_orphan_low_clusters` uygular ve yazar."""
+    fs = NtfsFS(view)
+    writer = NtfsWriter(fs)
+    writer._require_writable()
+    if _is_dirty(fs):
+        raise NtfsResizeError(
+            tr("Birim 'kirli' isaretli. Once Windows'ta chkdsk, Linux'ta "
+               "ntfsfix calistirin; kirli bir birimi boyutlandirmak veri "
+               "kaybettirebilir."))
+    count = repair_orphan_low_clusters(writer, progress)
+    if count:
+        writer.flush()
+    return count
 
 
 # ==========================================================================
@@ -634,9 +712,14 @@ def ntfs_resize(view: BlockDevice, new_sector_count: int,
                "ntfsfix calistirin; kirli bir birimi boyutlandirmak veri "
                "kaybettirebilir."))
 
+    # Eski bicimlendiricinin sahipsiz kumeleri (ADR 0074): boyutlandirma
+    # zaten yaziyor, birim tutarli birakilir.
+    repair_orphan_low_clusters(writer, progress)
+
     if new_clusters == old_clusters:
         report(tr("Onyukleme sektoru guncelleniyor..."), 90)
         _write_boot(view, fs, new_sector_count, partition_offset)
+        writer.flush()
         report(tr("Tamamlandi"), 100)
         return
 
