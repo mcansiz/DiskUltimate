@@ -5397,3 +5397,15 @@ calismiyordu.
   kalinti fsck.f2fs etkilesimli soruda bekledi — PID ile kapatildi.
   (`pkill -f` kendi kabugunu esledigi icin kullanilmadi.)
 - Linux run_all 67/69, Windows 66/69. i18n 10 yeni metin, platform 0, ui_smoke.
+
+## 2026-10-01 (4) — APFS salt okuma (ADR 0071)
+
+- Yeni `core/apfs.py` (ApfsFS) + `ApfsAccess`.
+- Test verisi: log2timeline/dfvfs'ten macOS uretimi `apfs.raw` ve
+  `apfs_encrypted.dmg` (Apache 2.0, `tests/fixtures/KAYNAKLAR.md`) +
+  apfsprogs mkapfs. Bagimsiz dogrulayici libfsapfs (pyfsapfs, sistem
+  Python 3.14 ile kullanici alaninda).
+- 10 giris birebir, xattr/kaynak catali, sifreli birim reddi
+  (AttributeError cikiyordu — duzeltildi). t70.
+- Linux run_all 68/70, Windows 67/70. i18n 17 yeni metin, platform 0, ui_smoke.
+- Sinirlar ADR'de: test verisi kucuk.

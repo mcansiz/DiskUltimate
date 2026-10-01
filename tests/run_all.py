@@ -5429,6 +5429,89 @@ def t69_f2fs_okuma():
             assert bytes(cikti) == veri
 
 
+@test
+def t70_apfs_okuma():
+    """APFS salt okuma: macOS'un urettigi kapsayici, sifreli birim reddi, mkapfs (ADR 0071)
+
+    `apfs_dfvfs.raw.gz` macOS'ta olusturulmus (log2timeline/dfvfs, Apache 2.0;
+    kaynaklar tests/fixtures/KAYNAKLAR.md). Beklenen degerler bagimsiz okuyucu
+    libfsapfs (pyfsapfs 20240429) ile alindi: kip, boyut, SHA-1, bag hedefi.
+    `apfs_dfvfs_sifreli.dmg.gz`: GPT icinde sifreli birim — acik ret.
+    `apfs_mkapfs.img.gz`: apfsprogs mkapfs (baska bir uygulama), bos birim.
+    """
+    import gzip
+    import hashlib
+    from diskultimate.core.apfs import ApfsError, fletcher64
+    from diskultimate.core.filesystem import ApfsAccess, open_filesystem
+
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+
+    def ac(ad, hedef):
+        with gzip.open(os.path.join(fixtures, ad), "rb") as a, open(hedef, "wb") as b:
+            b.write(a.read())
+        return hedef
+
+    # libfsapfs ile alinan beklenen degerler
+    beklenen = {
+        "/passwords.txt": (0o100644, 116, "677bc4ec72665fabac0bc91cd4e423a535a0cae4"),
+        "/a_link": (0o120755, 0, "->a_directory/another_file"),
+        "/a_directory": (0o040755, 0, None),
+        "/a_directory/a_resourcefork": (0o100644, 0, "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
+        "/a_directory/another_file": (0o100644, 22, "4bdb40dfd6ec75cb730e678b5d7786e30170c5fb"),
+        "/a_directory/a_file": (0o100644, 53, "2f5fe1248105fbad54b76b361adbb49322386f8c"),
+        "/.fseventsd": (0o040700, 0, None),
+        "/.fseventsd/fseventsd-uuid": (0o100600, 36, "3067098ecf586c9dd2a87923960f1fa947b07ae2"),
+        "/.fseventsd/000000001714941a": (0o100600, 164, "fe2e4aac31ed1cdabd903697389a96797e50dce9"),
+        "/.fseventsd/000000001714941b": (0o100600, 72, "019f7ff228039b8f7a30a8996948122533de518d"),
+    }
+    d = DiskImage(ac("apfs_dfvfs.raw.gz", img_path("t70.raw")), readonly=True)
+    blok0 = d.read(0, 4096)
+    assert struct.unpack_from("<Q", blok0, 0)[0] == fletcher64(blok0)
+    erisim = open_filesystem(d)
+    assert isinstance(erisim, ApfsAccess) and erisim.label == "apfs_test"
+    assert not erisim.writable and erisim.write_reason
+    fs = erisim.fs
+    goruldu = {}
+
+    def gez(yol):
+        for e in fs.listdir(yol or "/"):
+            p = yol + "/" + e.name
+            if e.symlink:
+                goruldu[p] = (e.mode, e.size, "->" + e.symlink)
+            elif e.is_dir:
+                goruldu[p] = (e.mode, e.size, None)
+                gez(p)
+            else:
+                goruldu[p] = (e.mode, e.size, hashlib.sha1(fs.read_file(p)).hexdigest())
+
+    gez("")
+    assert goruldu == beklenen, set(goruldu.items()) ^ set(beklenen.items())
+    birim = fs.volumes[0]
+    assert birim.case_insensitive
+    assert fs.read_file("/A_DIRECTORY/Another_File") == fs.read_file("/a_directory/another_file")
+    assert birim.xattr(fs.resolve("/a_directory/a_file").ino, "myxattr") == b"My extended attribute"
+    assert len(birim.xattr(fs.resolve("/a_directory/a_resourcefork").ino,
+                           "com.apple.ResourceFork")) == 17
+    d.close()
+
+    s = DiskSession.open(ac("apfs_dfvfs_sifreli.dmg.gz", img_path("t70.dmg")), readonly=True)
+    assert s.table.scheme == "gpt"
+    erisim = s.filesystem(1)
+    assert isinstance(erisim, ApfsAccess) and erisim.fs.volumes[0].encrypted
+    try:
+        erisim.listdir("/")
+        raise AssertionError("sifreli APFS birimi okundu")
+    except ApfsError:
+        pass
+    s.close()
+
+    d = DiskImage(ac("apfs_mkapfs.img.gz", img_path("t70_mk.img")), readonly=True)
+    erisim = open_filesystem(d)
+    assert isinstance(erisim, ApfsAccess) and erisim.label == "Türkçe Birim"
+    assert erisim.listdir("/") == []
+    d.close()
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

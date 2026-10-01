@@ -27,6 +27,7 @@ from .udf import UdfEntry, UdfError, UdfFS
 from .xfs import XfsEntry, XfsError, XfsFS
 from .btrfs import BtrfsEntry, BtrfsError, BtrfsFS
 from .f2fs import F2fsEntry, F2fsError, F2fsFS
+from .apfs import ApfsEntry, ApfsError, ApfsFS
 from .compress import DecompressError
 from .udfwrite import UdfWriter
 from ..i18n import tr
@@ -718,6 +719,55 @@ class F2fsAccess(FileSystemAccess):
         return self.fs.stats()
 
 
+class ApfsAccess(FileSystemAccess):
+    """APFS kapsayicisina salt okunur erisim (ADR 0071). Tek birimde kok
+    birimin kokudur; cok birimde kokte birimler klasor olarak gorunur."""
+
+    readable = True
+    writable = False
+
+    def __init__(self, view: BlockDevice):
+        self.fs = ApfsFS(view)
+        self.fs_type = "APFS"
+        self.label = self.fs.label
+
+    @property
+    def write_reason(self) -> str:
+        return tr("APFS yazma desteklenmiyor; birim salt okunur acildi.")
+
+    @staticmethod
+    def _node(entry: ApfsEntry, parent: str) -> FileNode:
+        path = (parent.rstrip("/") + "/" + entry.name) if parent not in ("", "/") \
+            else "/" + entry.name
+        attrs = []
+        if entry.is_volume:
+            attrs.append(tr("birim"))
+            if entry.volume is not None and entry.volume.encrypted:
+                attrs.append(tr("sifreli"))
+        if entry.symlink:
+            attrs.append("-> " + entry.symlink)
+        return FileNode(name=entry.name, path=path, is_dir=entry.is_dir,
+                        size=0 if entry.is_dir else entry.size, mtime=entry.mtime,
+                        attr_text=" ".join(attrs), hidden=entry.hidden,
+                        readonly=True)
+
+    def listdir(self, path: str = "/") -> List[FileNode]:
+        out = [self._node(e, path) for e in self.fs.listdir(path)]
+        out.sort(key=lambda n: (not n.is_dir, n.name.lower()))
+        return out
+
+    def read(self, path: str, max_bytes: int = -1) -> bytes:
+        return self.fs.read_file(path, max_bytes)
+
+    def extract(self, path: str, dest: str) -> str:
+        self.fs.extract(path, dest)
+        restore_owner(dest)
+        return dest
+
+    def stats(self) -> Dict[str, int]:
+        return self.fs.stats()
+
+
 class HfsAccess(FileSystemAccess):
     """HFS+ / HFSX okuma ve yazma (ADR 0060, 0062)."""
 
@@ -820,7 +870,8 @@ class UnsupportedAccess(FileSystemAccess):
                               "surumde acilamiyor.", self.fs_type))
         raise FatError(
             tr("{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya "
-               "sistemleri: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, btrfs, F2FS, "
+               "sistemleri: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, APFS, UDF, XFS, btrfs, "
+               "F2FS, "
                "ISO 9660.",
                self.fs_type))
 
@@ -874,6 +925,11 @@ def open_filesystem(view: BlockDevice,
         try:
             return IsoAccess(view)
         except (IsoError, Exception):         # noqa: BLE001
+            return UnsupportedAccess(info)
+    if info.fs_type == "APFS":
+        try:
+            return ApfsAccess(view)
+        except ApfsError:
             return UnsupportedAccess(info)
     if info.fs_type == "F2FS":
         try:

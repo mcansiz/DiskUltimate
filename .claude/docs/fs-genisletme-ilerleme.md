@@ -93,7 +93,9 @@ Isaretler: `[ ]` bekliyor · `[~]` suruyor · `[x]` bitti · `[-]` kapsam disi (
       saf LZ4; 5036 dosya birebir; t69. F2FS sikistirmasi sinanmadi (uretici yok)
 
 ## Asama 4
-- [ ] APFS salt okuma
+- [x] APFS salt okuma (ADR 0071): macOS uretimi kapsayici (dfvfs, Apache 2.0) libfsapfs
+      ile birebir; sifreli birim reddi; mkapfs; t70. Kucuk test verisi — cok duzeyli
+      agac, cok birim, decmpfs sinanmadi
 - [ ] ReFS: Windows yerel araciyla bicimlendirme, digerlerinde gri + neden
 
 ## Tur kaydi
@@ -128,3 +130,4 @@ Isaretler: `[ ]` bekliyor · `[~]` suruyor · `[x]` bitti · `[-]` kapsam disi (
   misafir yeniden baslatildi, Windows 64/67. Dongu kalan 4 maddeyle surer.
 - 2026-10-01 tur 10: btrfs okuma + saf LZO/zstd (ADR 0069). Linux 66/68, Windows 65/68.
 - 2026-10-01 tur 11: F2FS okuma (ADR 0070). Linux 67/69, Windows 66/69. Asama 3 bitti.
+- 2026-10-01 tur 12: APFS salt okuma (ADR 0071). Linux 68/70, Windows 67/70.

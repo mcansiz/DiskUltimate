@@ -504,6 +504,47 @@ msgstr ""
 msgid "ACPI aygiti"
 msgstr "ACPI device"
 
+#: src/diskultimate/core/apfs.py:134
+msgid "APFS B-agaci cok derin"
+msgstr "APFS B-tree is too deep"
+
+#: src/diskultimate/core/apfs.py:110
+msgid "APFS B-agaci dugumu bozuk: {}"
+msgstr "APFS B-tree node is corrupt: {}"
+
+#: src/diskultimate/core/apfs.py:187
+msgid "APFS birim ustblogu bulunamadi"
+msgstr "APFS volume superblock not found"
+
+#: src/diskultimate/core/apfs.py:221
+msgid "APFS inode bulunamadi: {}"
+msgstr "APFS inode not found: {}"
+
+#: src/diskultimate/core/apfs.py:343
+msgid "APFS kapsayici ustblogu bulunamadi"
+msgstr "APFS container superblock not found"
+
+#: src/diskultimate/core/apfs.py:359
+msgid "APFS kapsayicisinda birim yok"
+msgstr "The APFS container has no volumes"
+
+#: src/diskultimate/core/apfs.py:155
+msgid "APFS nesne haritasi bozuk"
+msgstr "APFS object map is corrupt"
+
+#: src/diskultimate/core/apfs.py:172
+msgid "APFS nesnesi haritada yok: {}"
+msgstr "APFS object not found in the object map: {}"
+
+#: src/diskultimate/core/apfs.py:268
+msgid "APFS sikistirma ozniteligi bozuk"
+msgstr "APFS compression attribute is corrupt"
+
+#: src/diskultimate/core/filesystem.py:736
+msgid "APFS yazma desteklenmiyor; birim salt okunur acildi."
+msgstr ""
+"Writing to APFS is not supported; the volume was opened read-only."
+
 #: src/diskultimate/core/efiboot.py:339
 msgid "ATA/ATAPI diski"
 msgstr "ATA/ATAPI drive"
@@ -1955,7 +1996,7 @@ msgstr ""
 "Deleted file scanning is not supported on this partition (FAT and exFAT "
 "only)"
 
-#: src/diskultimate/core/filesystem.py:63
+#: src/diskultimate/core/filesystem.py:64
 msgid "Bu bolume yazilamiyor."
 msgstr "This partition cannot be written to."
 
@@ -2128,6 +2169,7 @@ msgstr ""
 msgid "Bu yedegin ne oldugunu yazin — dosyanin icinde saklanir"
 msgstr "Describe this backup — the note is stored inside the file"
 
+#: src/diskultimate/core/apfs.py:405
 #: src/diskultimate/core/btrfs.py:263
 #: src/diskultimate/core/exfat.py:557
 #: src/diskultimate/core/extread.py:369
@@ -2361,6 +2403,14 @@ msgstr ""
 "\n"
 "No: fast scan (1 MB step) — enough in most cases.\n"
 "Yes: slow, but it also finds unaligned partitions."
+
+#: src/diskultimate/core/apfs.py:287
+msgid ""
+"Desteklenmeyen APFS sikistirmasi (tur {}) — LZVN/LZFSE bu surumde "
+"acilamiyor."
+msgstr ""
+"Unsupported APFS compression (type {}) — LZVN/LZFSE cannot be opened in "
+"this version."
 
 #: src/diskultimate/core/f2fs.py:342
 msgid "Desteklenmeyen F2FS sikistirmasi: {}"
@@ -2679,6 +2729,8 @@ msgstr "Directory is too large"
 msgid "Dizin degil"
 msgstr "Not a directory"
 
+#: src/diskultimate/core/apfs.py:398
+#: src/diskultimate/core/apfs.py:412
 #: src/diskultimate/core/btrfs.py:260
 #: src/diskultimate/core/btrfs.py:270
 #: src/diskultimate/core/exfat.py:536
@@ -2737,6 +2789,7 @@ msgid "Dizin kaydi doldu: oznitelik kayda sigmiyor"
 msgstr ""
 "Directory record is full: the attribute does not fit into the record"
 
+#: src/diskultimate/core/apfs.py:420
 #: src/diskultimate/core/btrfs.py:315
 #: src/diskultimate/core/f2fs.py:423
 #: src/diskultimate/core/hfsplus.py:565
@@ -3058,7 +3111,7 @@ msgstr "F2FS node not found: {}"
 msgid "F2FS ustblogu bulunamadi"
 msgstr "F2FS superblock not found"
 
-#: src/diskultimate/core/filesystem.py:692
+#: src/diskultimate/core/filesystem.py:693
 msgid "F2FS yazma bu surumde yok; birim salt okunur acildi."
 msgstr ""
 "Writing to F2FS is not available in this version; the volume was opened "
@@ -3345,6 +3398,10 @@ msgstr "A GUID needs 16 bytes, {} available"
 msgid "GZIP arsivi"
 msgstr "GZIP archive"
 
+#: src/diskultimate/core/apfs.py:382
+msgid "Gecerli APFS checkpoint bulunamadi"
+msgstr "No valid APFS checkpoint found"
+
 #: src/diskultimate/core/f2fs.py:164
 msgid "Gecerli F2FS checkpoint bulunamadi"
 msgstr "No valid F2FS checkpoint found"
@@ -3361,6 +3418,10 @@ msgstr "No valid MBR signature found"
 #: src/diskultimate/core/clone.py:229
 msgid "Gecerli bir DiskUltimate yedek dosyasi degil"
 msgstr "Not a valid DiskUltimate backup file"
+
+#: src/diskultimate/core/apfs.py:346
+msgid "Gecersiz APFS blok boyu: {}"
+msgstr "Invalid APFS block size: {}"
 
 #: src/diskultimate/core/hfsplus.py:147
 msgid "Gecersiz B-agaci dugum boyutu: {}"
@@ -3954,7 +4015,7 @@ msgstr "OPERATING SYSTEM DISK — writing makes the machine unusable"
 msgid "ISO 9660 birincil birim tanimlayicisi yok"
 msgstr "ISO 9660 primary volume descriptor not found"
 
-#: src/diskultimate/core/filesystem.py:475
+#: src/diskultimate/core/filesystem.py:476
 msgid "ISO 9660 salt okunur bir bicimdir; yazilmaz, bastan uretilir."
 msgstr ""
 "ISO 9660 is a read-only format; it is not written to but created from "
@@ -4234,8 +4295,8 @@ msgstr "Select source disk"
 msgid "Kaynak salt okunur acildi."
 msgstr "The source was opened read-only."
 
-#: src/diskultimate/core/filesystem.py:212
-#: src/diskultimate/core/filesystem.py:274
+#: src/diskultimate/core/filesystem.py:213
+#: src/diskultimate/core/filesystem.py:275
 msgid ""
 "Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda acarsaniz bu "
 "bolume yazabilirsiniz."
@@ -5439,6 +5500,10 @@ msgstr "Reset"
 msgid "Sifirla (1 gecis)"
 msgstr "Zero fill (1 pass)"
 
+#: src/diskultimate/core/apfs.py:209
+msgid "Sifreli APFS birimi ({}); anahtar olmadan okunamaz."
+msgstr "Encrypted APFS volume ({}); it cannot be read without the key."
+
 #: src/diskultimate/core/f2fs.py:276
 msgid "Sifreli F2FS dosyasi okunamiyor"
 msgstr "Encrypted F2FS file cannot be read"
@@ -5560,7 +5625,7 @@ msgstr ""
 "reinstalled on disk <b>{}</b><br>4. The boot menu is regenerated<br><br>No "
 "other disk is touched. Continue?"
 
-#: src/diskultimate/core/filesystem.py:438
+#: src/diskultimate/core/filesystem.py:439
 msgid "Sis"
 msgstr "Sys"
 
@@ -6369,7 +6434,7 @@ msgstr "XFS superblock not found"
 msgid "XFS v4 birimleri bu surumde buyutulemiyor"
 msgstr "XFS v4 volumes cannot be grown in this version"
 
-#: src/diskultimate/core/filesystem.py:599
+#: src/diskultimate/core/filesystem.py:600
 msgid "XFS yazma bu surumde yok; birim salt okunur acildi."
 msgstr ""
 "Writing to XFS is not available in this version; the volume was opened "
@@ -7120,7 +7185,7 @@ msgstr ""
 msgid "`{}` okunamadi."
 msgstr "`{}` could not be read."
 
-#: src/diskultimate/core/filesystem.py:651
+#: src/diskultimate/core/filesystem.py:652
 msgid "alt hacim"
 msgstr "subvolume"
 
@@ -7132,7 +7197,7 @@ msgstr "{} after ▶"
 msgid "ayri gunluk aygiti"
 msgstr "external journal device"
 
-#: src/diskultimate/core/filesystem.py:317
+#: src/diskultimate/core/filesystem.py:318
 msgid "bag"
 msgstr "link"
 
@@ -7152,6 +7217,10 @@ msgstr "information incomplete"
 #: src/diskultimate/ui/dialogs/partition_layout.py:160
 msgid "bilinmeyen"
 msgstr "unknown"
+
+#: src/diskultimate/core/filesystem.py:744
+msgid "birim"
+msgstr "volume"
 
 #: src/diskultimate/ui/widgets/resize_bar.py:179
 msgid "bolum kapsayici alanin tamamini kapliyor"
@@ -7195,7 +7264,7 @@ msgstr ""
 "Part of the btrfs data is on another device; it cannot be read with a "
 "single device"
 
-#: src/diskultimate/core/filesystem.py:643
+#: src/diskultimate/core/filesystem.py:644
 msgid "btrfs yazma bu surumde yok; birim salt okunur acildi."
 msgstr ""
 "Writing to btrfs is not available in this version; the volume was opened "
@@ -7297,7 +7366,7 @@ msgstr "physical disk"
 msgid "gerekli arac: {}"
 msgstr "required tool: {}"
 
-#: src/diskultimate/core/filesystem.py:319
+#: src/diskultimate/core/filesystem.py:320
 #: src/diskultimate/ui/dialogs/efiboot.py:275
 msgid "gizli"
 msgstr "hidden"
@@ -7365,6 +7434,10 @@ msgstr "os-prober disabled"
 #: src/diskultimate/core/extresize.py:511
 msgid "resize inode'un cift dolayli blogu yok"
 msgstr "The resize inode has no double-indirect block"
+
+#: src/diskultimate/core/filesystem.py:746
+msgid "sifreli"
+msgstr "encrypted"
 
 #: src/diskultimate/core/planview.py:340
 msgid "toplam {}"
@@ -7670,7 +7743,7 @@ msgstr ""
 "The information of {} could not be read (no privileges); whether it is the "
 "system disk is unknown. Writing to an unknown disk was rejected."
 
-#: src/diskultimate/core/filesystem.py:819
+#: src/diskultimate/core/filesystem.py:869
 msgid "{} bir kapsayicidir; icindeki birimler bu surumde acilamiyor."
 msgstr ""
 "{} is a container; the volumes inside it cannot be opened in this version."
@@ -7799,14 +7872,15 @@ msgstr ""
 "{} reported an error:\n"
 "{}"
 
-#: src/diskultimate/core/filesystem.py:822
+#: src/diskultimate/core/filesystem.py:872
 msgid ""
 "{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya sistemleri: "
-"FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, btrfs, F2FS, ISO 9660."
+"FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, APFS, UDF, XFS, btrfs, F2FS, ISO "
+"9660."
 msgstr ""
 "The contents of {} cannot be displayed in this version. Readable file "
-"systems: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, btrfs, F2FS, "
-"ISO 9660."
+"systems: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, APFS, UDF, XFS, btrfs, "
+"F2FS, ISO 9660."
 
 #: src/diskultimate/core/formatter.py:185
 msgid "{} icin en az {} gerekir"
@@ -7899,7 +7973,7 @@ msgstr "Creating {} ({})..."
 msgid "{} saniye"
 msgstr "{} seconds"
 
-#: src/diskultimate/core/filesystem.py:816
+#: src/diskultimate/core/filesystem.py:866
 msgid "{} sifreli bir birimdir; icerigi anahtar olmadan okunamaz."
 msgstr ""
 "{} is an encrypted volume; its contents cannot be read without the key."
@@ -8518,3 +8592,12 @@ msgstr "◀ {} before"
 #~ "The contents of {} cannot be displayed in this version. Readable file "
 #~ "systems: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, btrfs, ISO "
 #~ "9660."
+
+#: src/diskultimate/core/filesystem.py:822
+#~ msgid ""
+#~ "{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya sistemleri: "
+#~ "FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, btrfs, F2FS, ISO 9660."
+#~ msgstr ""
+#~ "The contents of {} cannot be displayed in this version. Readable file "
+#~ "systems: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, btrfs, F2FS, "
+#~ "ISO 9660."
