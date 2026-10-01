@@ -455,6 +455,16 @@ class DiskSession:
         kendi araci olusturur. Basarisiz olursa None doner ve dahili (saf Python)
         yol devreye girer.
         """
+        native_only = bool(getattr(FS_BY_KEY.get(fs_key.lower()), "native_only", False))
+        if native_only:
+            # ReFS'in saf Python yolu yok: kosullar saglanmazsa acik hata
+            kind = FS_BY_KEY[fs_key.lower()]
+            if kind.reason_for():
+                raise SessionError(kind.reason_for())
+            if not self.is_physical:
+                raise SessionError(tr("{} yalnizca fiziksel diskte, Windows'un kendi "
+                                      "araciyla olusturulabilir; goruntu dosyasinda "
+                                      "kullanilamaz.", kind.label))
         if not (self.is_physical and IS_WINDOWS and native_format_supported(fs_key)):
             return None
         numaralar = "".join(ch for ch in self.image.info.name if ch.isdigit())
@@ -470,11 +480,13 @@ class DiskSession:
         ok, message = windows_format_volume(int(numaralar), index, fs_key, label,
                                           cluster_bytes)
         if not ok:
+            if native_only:
+                raise SessionError(tr("Windows bicimlendiricisi hata verdi: {}", message))
             return None
         if progress:
             progress(message, 100)
         return {"ntfs": "NTFS", "exfat": "exFAT", "fat32": "FAT32",
-                "fat16": "FAT16"}.get(fs_key, fs_key.upper())
+                "fat16": "FAT16", "refs": "ReFS"}.get(fs_key, fs_key.upper())
 
     def format_partition(self, index: int, fs_key: str, label: str = "",
                          cluster_bytes: int = 0, quick: bool = True,

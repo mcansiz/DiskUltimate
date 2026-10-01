@@ -5512,6 +5512,76 @@ def t70_apfs_okuma():
     d.close()
 
 
+@test
+def t71_refs_yerel_bicimlendirme():
+    """ReFS: yalnizca Windows'un kendi araci, uygun surum ve fiziksel disk; digerlerinde gri + neden (ADR 0072)
+
+    * Surum kurali (EditionID / InstallationType): Enterprise, Pro for
+      Workstations, Server evet; Pro, Home (Core), Education, bilinmeyen hayir.
+    * Format-Volume komutu: ReFS, disk/bolum numarasi tamsayi, etiketten
+      tirnak/$/` temizlenir. Windows'ta PowerShell ayristiricisiyla
+      **calistirilmadan** sozdizimi denetlenir.
+    * Goruntu dosyasinda ve uygun olmayan sistemde ret; bolum eklenmez.
+    * Windows'ta: gercek kayit defterinden surum okunur; test misafiri
+      Windows 10 Pro oldugu icin ReFS gri olmali.
+    """
+    from diskultimate.core import platform as plat
+    from diskultimate.core.formatter import FS_BY_KEY, FormatError, all_kinds, format_partition
+    from diskultimate.core.session import SessionError
+
+    tablo = {("Enterprise", "Client"): True, ("EnterpriseN", "Client"): True,
+             ("EnterpriseS", "Client"): True, ("ProfessionalWorkstation", "Client"): True,
+             ("ServerStandard", "Server"): True, ("ServerDatacenter", ""): True,
+             ("Professional", "Client"): False, ("Core", "Client"): False,
+             ("Education", "Client"): False, ("", ""): False}
+    for (surum, tur), beklenen in tablo.items():
+        assert plat.refs_edition_allows(surum, tur) is beklenen, (surum, tur)
+
+    komut = plat.format_volume_command(2, 3, "refs", 'Veri"$x`')
+    assert "-FileSystem ReFS" in komut and "-DiskNumber 2" in komut
+    assert "-PartitionNumber 3" in komut and '"Verix"' in komut
+
+    tur = FS_BY_KEY["refs"]
+    neden = dict((k.key, r) for k, r in all_kinds(1 << 30))["refs"]
+    destek, destek_nedeni = plat.refs_format_support()
+    assert tur.native_only and not tur.internal
+    if destek:
+        assert neden == "" and tur.available
+    else:
+        assert neden and neden == destek_nedeni and not tur.available
+
+    yol = img_path("t71.img")
+    d = DiskImage.create(yol, 64 * MIB, overwrite=True)
+    try:
+        format_partition(d, "refs", label="R")
+        raise AssertionError("ReFS goruntu dosyasina bicimlendirildi")
+    except FormatError:
+        pass
+    d.close()
+    s = DiskSession.create(yol, 64 * MIB, overwrite=True)
+    s.create_table("gpt")
+    try:
+        s.create_partition(2048, 100000, fs_key="refs", label="R")
+        raise AssertionError("ReFS goruntu dosyasinda kabul edildi")
+    except (SessionError, FormatError):
+        pass
+    assert len(s.table.partitions) == 0, "basarisiz bicimlendirmede bolum kaldi"
+    s.close()
+
+    if plat.IS_WINDOWS:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                            r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as key:
+            surum = str(winreg.QueryValueEx(key, "EditionID")[0])
+        assert surum in destek_nedeni or destek, (surum, destek_nedeni)
+        ayristir = ("$e=$null; [void][System.Management.Automation.Language.Parser]::"
+                    "ParseInput($env:DU_KOMUT, [ref]$null, [ref]$e); $e.Count")
+        ortam = dict(os.environ, DU_KOMUT=komut)
+        r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command",
+                            ayristir], capture_output=True, text=True, env=ortam)
+        assert r.returncode == 0 and r.stdout.strip() == "0", r.stdout + r.stderr
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

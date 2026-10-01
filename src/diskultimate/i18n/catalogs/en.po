@@ -47,8 +47,8 @@ msgstr " [DESTRUCTIVE]"
 msgid " saniye"
 msgstr " seconds"
 
-#: src/diskultimate/core/formatter.py:60
-#: src/diskultimate/core/formatter.py:75
+#: src/diskultimate/core/formatter.py:68
+#: src/diskultimate/core/formatter.py:83
 msgid " veya "
 msgstr " or "
 
@@ -717,7 +717,7 @@ msgid "Ayarlari yedekle"
 msgstr "Back up settings"
 
 #: src/diskultimate/core/physical.py:119
-#: src/diskultimate/core/session.py:1083
+#: src/diskultimate/core/session.py:1095
 msgid "Aygit"
 msgstr "Device"
 
@@ -955,7 +955,7 @@ msgstr "Byte offset"
 msgid "Bazi adimlar basarisiz oldu; ayrintilar asagidaki gunlukte."
 msgstr "Some steps failed; details are in the log below."
 
-#: src/diskultimate/core/platform.py:1083
+#: src/diskultimate/core/platform.py:1141
 msgid "Beklenmeyen cikti"
 msgstr "Unexpected output"
 
@@ -1019,11 +1019,11 @@ msgstr "Waiting"
 msgid "Bellenim"
 msgstr "Firmware"
 
-#: src/diskultimate/core/platform.py:1405
+#: src/diskultimate/core/platform.py:1463
 msgid "Bellenim ayricaligi bulunamadi."
 msgstr "The firmware privilege was not found."
 
-#: src/diskultimate/core/platform.py:1416
+#: src/diskultimate/core/platform.py:1474
 msgid "Bellenim ayricaligi verilmedi ({} yetkisi gerekir)."
 msgstr "The firmware privilege was not granted ({} rights required)."
 
@@ -1031,16 +1031,16 @@ msgstr "The firmware privilege was not granted ({} rights required)."
 msgid "Bellenim birimi dosyasi"
 msgstr "Firmware volume file"
 
-#: src/diskultimate/core/platform.py:1292
+#: src/diskultimate/core/platform.py:1350
 msgid "Bellenim degiskenleri icin {} yetkisi gerekiyor."
 msgstr "Firmware variables require {} rights."
 
 #: src/diskultimate/core/efistore.py:467
-#: src/diskultimate/core/platform.py:1544
+#: src/diskultimate/core/platform.py:1602
 msgid "Bellenim degiskenleri yazilamiyor."
 msgstr "Firmware variables cannot be written."
 
-#: src/diskultimate/core/platform.py:1290
+#: src/diskultimate/core/platform.py:1348
 msgid "Bellenim turu belirlenemedi."
 msgstr "The firmware type could not be determined."
 
@@ -1060,7 +1060,7 @@ msgstr "Write to firmware..."
 msgid "Bellenime yaziliyor"
 msgstr "Writing to firmware"
 
-#: src/diskultimate/core/session.py:1073
+#: src/diskultimate/core/session.py:1085
 msgid "Bicim"
 msgstr "Format"
 
@@ -1131,7 +1131,7 @@ msgstr "Unknown btrfs compression: {}"
 msgid "Bilinmeyen disk bicimi: {}"
 msgstr "Unknown disk format: {}"
 
-#: src/diskultimate/core/formatter.py:180
+#: src/diskultimate/core/formatter.py:191
 msgid "Bilinmeyen dosya sistemi: {}"
 msgstr "Unknown file system: {}"
 
@@ -1145,8 +1145,8 @@ msgid "Bilinmeyen islem turu: {}"
 msgstr "Unknown operation type: {}"
 
 #: src/diskultimate/core/session.py:374
-#: src/diskultimate/core/session.py:736
 #: src/diskultimate/core/session.py:748
+#: src/diskultimate/core/session.py:760
 msgid "Bilinmeyen sema: {}"
 msgstr "Unknown scheme: {}"
 
@@ -1343,7 +1343,7 @@ msgstr "The partition is too small for NTFS metadata"
 msgid "Bolum adi"
 msgstr "Partition name"
 
-#: src/diskultimate/core/session.py:526
+#: src/diskultimate/core/session.py:538
 msgid "Bolum adi yalnizca GPT semasinda desteklenir"
 msgstr "Partition names are only supported in the GPT scheme"
 
@@ -1376,9 +1376,9 @@ msgstr "Partition device not found: {}"
 msgid "Bolum boyutu sifir olamaz"
 msgstr "The partition size cannot be zero"
 
-#: src/diskultimate/core/session.py:766
-#: src/diskultimate/core/session.py:790
-#: src/diskultimate/core/session.py:994
+#: src/diskultimate/core/session.py:1006
+#: src/diskultimate/core/session.py:778
+#: src/diskultimate/core/session.py:802
 msgid "Bolum bulunamadi"
 msgstr "Partition not found"
 
@@ -1441,7 +1441,7 @@ msgstr "Creating the partition..."
 msgid "Bolum plan hazirlandiktan sonra degismis; yenileyin"
 msgstr "The partition changed after the plan was prepared; refresh"
 
-#: src/diskultimate/core/session.py:1077
+#: src/diskultimate/core/session.py:1089
 msgid "Bolum sayisi"
 msgstr "Partition count"
 
@@ -1449,7 +1449,7 @@ msgstr "Partition count"
 msgid "Bolum secili degil"
 msgstr "No partition selected"
 
-#: src/diskultimate/core/session.py:1076
+#: src/diskultimate/core/session.py:1088
 msgid "Bolum tablosu"
 msgstr "Partition table"
 
@@ -1714,7 +1714,7 @@ msgstr "Partition {}: {} deleted entries found"
 msgid "Bolumde etiket yazilabilir bir dosya sistemi yok"
 msgstr "The partition has no file system that supports writing a label"
 
-#: src/diskultimate/core/session.py:1010
+#: src/diskultimate/core/session.py:1022
 msgid "Bolumde okunabilir dosya sistemi yok"
 msgstr "The partition has no readable file system"
 
@@ -1722,8 +1722,8 @@ msgstr "The partition has no readable file system"
 msgid "Bolume geri yukle..."
 msgstr "Restore to partition..."
 
-#: src/diskultimate/core/formatter.py:265
-#: src/diskultimate/core/formatter.py:322
+#: src/diskultimate/core/formatter.py:283
+#: src/diskultimate/core/formatter.py:340
 msgid "Bolume yaziliyor..."
 msgstr "Writing to the partition..."
 
@@ -1750,7 +1750,7 @@ msgstr ""
 "\n"
 "You can create a new partition in this area (Partition > New partition)."
 
-#: src/diskultimate/core/session.py:1078
+#: src/diskultimate/core/session.py:1090
 msgid "Bolumlenmis"
 msgstr "Partitioned"
 
@@ -1882,12 +1882,12 @@ msgstr "No free entry number left"
 msgid "Bos inode kalmadi"
 msgstr "No free inodes left"
 
-#: src/diskultimate/core/platform.py:1193
+#: src/diskultimate/core/platform.py:1251
 msgid "Bos komut"
 msgstr "Empty command"
 
 #: src/diskultimate/core/physical.py:124
-#: src/diskultimate/core/session.py:1074
+#: src/diskultimate/core/session.py:1086
 #: src/diskultimate/ui/dialogs/backup.py:326
 #: src/diskultimate/ui/dialogs/backup.py:419
 #: src/diskultimate/ui/dialogs/backup.py:637
@@ -1940,6 +1940,14 @@ msgstr ""
 "This UDF volume (sparable, virtual or metadata partition) is opened "
 "read-only in this version."
 
+#: src/diskultimate/core/platform.py:1050
+msgid ""
+"Bu Windows surumu ({}) ReFS olusturamiyor; Enterprise, Pro for "
+"Workstations ya da Server gerekir"
+msgstr ""
+"This Windows edition ({}) cannot create ReFS; Enterprise, Pro for "
+"Workstations or Server is required"
+
 #: src/diskultimate/ui/main_window.py:2284
 msgid "Bu adimi kaldir"
 msgstr "Remove this step"
@@ -1989,7 +1997,7 @@ msgstr "This partition is not writable"
 msgid "Bu bolumde silinmis dosya girisi bulunamadi."
 msgstr "No deleted file entries were found on this partition."
 
-#: src/diskultimate/core/session.py:1023
+#: src/diskultimate/core/session.py:1035
 msgid ""
 "Bu bolumde silinmis dosya taramasi desteklenmiyor (yalnizca FAT ve exFAT)"
 msgstr ""
@@ -2064,7 +2072,7 @@ msgstr ""
 "This directory is encrypted (fscrypt); names cannot be written without the "
 "key."
 
-#: src/diskultimate/core/session.py:864
+#: src/diskultimate/core/session.py:876
 msgid "Bu dosya bir DiskUltimate yedegi degil"
 msgstr "This file is not a DiskUltimate backup"
 
@@ -2116,7 +2124,7 @@ msgstr "This image has no partition table. Create a GPT one now?"
 msgid "Bu goruntuyu kapat"
 msgstr "Close this image"
 
-#: src/diskultimate/core/platform.py:1204
+#: src/diskultimate/core/platform.py:1262
 msgid "Bu islem {} yetkisi gerektiriyor."
 msgstr "This operation requires {} rights."
 
@@ -2147,11 +2155,11 @@ msgstr ""
 msgid "Bu platformda baglama desteklenmiyor."
 msgstr "Mounting is not supported on this platform."
 
-#: src/diskultimate/core/platform.py:1578
+#: src/diskultimate/core/platform.py:1636
 msgid "Bu platformda bellenim degiskeni yazilamiyor."
 msgstr "Firmware variables cannot be written on this platform."
 
-#: src/diskultimate/core/platform.py:1299
+#: src/diskultimate/core/platform.py:1357
 msgid "Bu platformda bellenim degiskenleri okunamiyor."
 msgstr "Firmware variables cannot be read on this platform."
 
@@ -2367,7 +2375,7 @@ msgstr "Discard changes"
 msgid "Degisken"
 msgstr "Variable"
 
-#: src/diskultimate/core/platform.py:1284
+#: src/diskultimate/core/platform.py:1342
 msgid "Degiskenler okunamiyor; root yetkisi gerekiyor."
 msgstr "Variables cannot be read; root rights are required."
 
@@ -2379,7 +2387,7 @@ msgstr "Could not be changed"
 msgid "Degistirilemez kaynak"
 msgstr "Source cannot be modified"
 
-#: src/diskultimate/core/session.py:1169
+#: src/diskultimate/core/session.py:1181
 msgid "Degistirilemez — {}"
 msgstr "Not modifiable — {}"
 
@@ -2388,7 +2396,7 @@ msgstr "Not modifiable — {}"
 msgid "Degistirme"
 msgstr "Modified"
 
-#: src/diskultimate/core/platform.py:1287
+#: src/diskultimate/core/platform.py:1345
 msgid "Degistirmek icin root yetkisi gerekir."
 msgstr "Root rights are required to change this."
 
@@ -2589,7 +2597,7 @@ msgstr "Could not seek on the disk"
 msgid "Disk listesi alinamadi: {}"
 msgstr "The disk list could not be obtained: {}"
 
-#: src/diskultimate/core/session.py:695
+#: src/diskultimate/core/session.py:707
 msgid "Disk numarasi bilinmiyor"
 msgstr "The disk number is unknown"
 
@@ -2831,7 +2839,7 @@ msgstr ""
 "Partition data stays in place during conversion; an interruption may "
 "corrupt the table, so back up important data first"
 
-#: src/diskultimate/core/session.py:1072
+#: src/diskultimate/core/session.py:1084
 #: src/diskultimate/ui/dialogs/efiboot.py:279
 #: src/diskultimate/ui/widgets/file_browser.py:243
 msgid "Dosya"
@@ -2907,7 +2915,7 @@ msgstr "The file system could not be opened"
 msgid "Dosya sistemi acilamadi: {}"
 msgstr "The file system could not be opened: {}"
 
-#: src/diskultimate/core/session.py:802
+#: src/diskultimate/core/session.py:814
 msgid "Dosya sistemi bolumu dolduracak kadar buyutuluyor..."
 msgstr "Growing the file system to fill the partition..."
 
@@ -2990,7 +2998,7 @@ msgstr "Recovering files"
 msgid "Durdur"
 msgstr "Abort"
 
-#: src/diskultimate/core/session.py:1084
+#: src/diskultimate/core/session.py:1096
 #: src/diskultimate/ui/dialogs/apply.py:121
 #: src/diskultimate/ui/dialogs/backup.py:419
 #: src/diskultimate/ui/dialogs/backup.py:637
@@ -3065,7 +3073,7 @@ msgstr "Select at least one file type."
 msgid "En uzun donma"
 msgstr "Longest freeze"
 
-#: src/diskultimate/core/session.py:1079
+#: src/diskultimate/core/session.py:1091
 msgid "Erisim"
 msgstr "Access"
 
@@ -3225,7 +3233,7 @@ msgstr "Physical disk — {}"
 msgid "Fiziksel disk: islem oncesi yedek alin"
 msgstr "Physical disk: make a backup before the operation"
 
-#: src/diskultimate/core/session.py:617
+#: src/diskultimate/core/session.py:629
 msgid "Fiziksel diskin boyutu degistirilemez"
 msgstr "A physical disk cannot be resized"
 
@@ -3318,7 +3326,7 @@ msgstr "Install GRUB"
 msgid "GRUB kuruldu: {}"
 msgstr "GRUB installed: {}"
 
-#: src/diskultimate/core/platform.py:1173
+#: src/diskultimate/core/platform.py:1231
 msgid ""
 "GRUB kurulumu yalnizca Linux'ta yapilabilir; bu sistemde ({}) yalnizca "
 "inceleme yapilir."
@@ -3510,7 +3518,7 @@ msgstr "Invalid page size: {}"
 msgid "Gecersiz sektor boyutu"
 msgstr "Invalid sector size"
 
-#: src/diskultimate/core/formatter.py:252
+#: src/diskultimate/core/formatter.py:270
 msgid "Gecici birim hazirlaniyor..."
 msgstr "Preparing the temporary volume..."
 
@@ -3688,8 +3696,8 @@ msgstr "The image could not be created"
 msgid "Goruntu olusturuldu: {} ({})"
 msgstr "Image created: {} ({})"
 
-#: src/diskultimate/core/formatter.py:160
-#: src/diskultimate/core/formatter.py:182
+#: src/diskultimate/core/formatter.py:171
+#: src/diskultimate/core/formatter.py:193
 #: src/diskultimate/core/hfswrite.py:449
 #: src/diskultimate/core/image.py:208
 #: src/diskultimate/core/image.py:226
@@ -3716,7 +3724,7 @@ msgstr "Close image"
 msgid "Gozat..."
 msgstr "Browse..."
 
-#: src/diskultimate/core/platform.py:1199
+#: src/diskultimate/core/platform.py:1257
 msgid "Grafik yetki penceresi icin `pkexec` gerekiyor (polkit paketi)."
 msgstr ""
 "A graphical authorisation prompt requires `pkexec` (polkit package)."
@@ -4316,7 +4324,7 @@ msgstr "The source table is not GPT"
 msgid "Kaynak tablo MBR degil"
 msgstr "The source table is not MBR"
 
-#: src/diskultimate/core/session.py:839
+#: src/diskultimate/core/session.py:851
 msgid "Kaynak ve hedef ayni bolum"
 msgstr "The source and the target are the same partition"
 
@@ -4593,7 +4601,7 @@ msgstr "Recovering: {}"
 msgid "Kurtarma basarisiz"
 msgstr "Recovery failed"
 
-#: src/diskultimate/core/session.py:1030
+#: src/diskultimate/core/session.py:1042
 msgid "Kurtarma desteklenmiyor"
 msgstr "Recovery is not supported"
 
@@ -4687,7 +4695,7 @@ msgstr "Linux LVM"
 msgid "Linux RAID"
 msgstr "Linux RAID"
 
-#: src/diskultimate/core/formatter.py:112
+#: src/diskultimate/core/formatter.py:123
 #: src/diskultimate/core/fsregistry.py:72
 #: src/diskultimate/core/ptable.py:38
 #: src/diskultimate/core/ptable.py:59
@@ -4769,7 +4777,7 @@ msgstr "MP4 video"
 msgid "Mac OS X HFS+"
 msgstr "Mac OS X HFS+"
 
-#: src/diskultimate/core/platform.py:1277
+#: src/diskultimate/core/platform.py:1335
 msgid ""
 "Makine BIOS (eski) kipinde acilmis; UEFI onyukleme degiskenleri yok."
 msgstr ""
@@ -4974,7 +4982,7 @@ msgstr "Read error: {}"
 msgid "Okuma sanal disk sinirini asiyor"
 msgstr "The read goes past the virtual disk boundary"
 
-#: src/diskultimate/core/session.py:1165
+#: src/diskultimate/core/session.py:1177
 msgid "Okuma/Yazma (acik)"
 msgstr "Read/Write (open)"
 
@@ -5041,11 +5049,11 @@ msgstr "Repair complete"
 msgid "Once bir bolum tablosu acin."
 msgstr "Open a partition table first."
 
-#: src/diskultimate/core/session.py:726
+#: src/diskultimate/core/session.py:738
 msgid "Once bir bolum tablosu olusturun"
 msgstr "Create a partition table first"
 
-#: src/diskultimate/core/session.py:1156
+#: src/diskultimate/core/session.py:1168
 msgid "Once bir bolum tablosu olusturun (MBR veya GPT)"
 msgstr "Create a partition table first (MBR or GPT)"
 
@@ -5300,6 +5308,12 @@ msgstr "RAR archive"
 msgid "Rastgele (1 gecis)"
 msgstr "Random (1 pass)"
 
+#: src/diskultimate/core/platform.py:1032
+msgid ""
+"ReFS yalnizca Windows'un kendi araciyla olusturulabilir; {} uzerinde arac "
+"yok"
+msgstr "ReFS can only be created with Windows' own tool; no tool on {}"
+
 #: src/diskultimate/core/efiboot.py:345
 msgid "SATA diski"
 msgstr "SATA drive"
@@ -5350,7 +5364,7 @@ msgstr "Opened read-only"
 msgid "Salt okunur devam et"
 msgstr "Continue read-only"
 
-#: src/diskultimate/core/session.py:1168
+#: src/diskultimate/core/session.py:1180
 msgid "Salt okunur — degisiklikler Uygula ile yazilir"
 msgstr "Read-only — changes are written with Apply"
 
@@ -5418,7 +5432,7 @@ msgstr "Selected: {} ({})"
 msgid "Secim yok"
 msgstr "Nothing selected"
 
-#: src/diskultimate/core/session.py:1075
+#: src/diskultimate/core/session.py:1087
 msgid "Sektor"
 msgstr "Sectors"
 
@@ -5471,7 +5485,7 @@ msgstr ""
 msgid "Seritli btrfs (RAID0/10/5/6) bu surumde okunamiyor"
 msgstr "Striped btrfs (RAID0/10/5/6) cannot be read in this version"
 
-#: src/diskultimate/core/session.py:1110
+#: src/diskultimate/core/session.py:1122
 msgid "Seyrek (sparse) VMDK bu surumde salt okunur."
 msgstr "Sparse VMDK is read-only in this version."
 
@@ -5758,7 +5772,7 @@ msgstr ""
 msgid "Superbloklar yaziliyor..."
 msgstr "Writing superblocks..."
 
-#: src/diskultimate/core/platform.py:1399
+#: src/diskultimate/core/platform.py:1457
 msgid "Surec belirteci acilamadi."
 msgstr "The process token could not be opened."
 
@@ -5791,7 +5805,7 @@ msgstr "Version"
 msgid "T&umune hayir"
 msgstr "N&o to All"
 
-#: src/diskultimate/core/session.py:731
+#: src/diskultimate/core/session.py:743
 msgid "Tablo zaten {} biciminde"
 msgstr "The table is already in {} format"
 
@@ -5803,7 +5817,7 @@ msgstr "The table has no partitions."
 msgid "Tablosuz disk"
 msgstr "Disk without partition table"
 
-#: src/diskultimate/core/session.py:728
+#: src/diskultimate/core/session.py:740
 msgid "Tablosuz disk donusturulemez; dosya sistemi tum diski kapliyor"
 msgstr ""
 "A disk without a partition table cannot be converted; the file system "
@@ -5832,8 +5846,8 @@ msgstr "OK"
 #: src/diskultimate/core/efistore.py:490
 #: src/diskultimate/core/exfat.py:1043
 #: src/diskultimate/core/ext.py:362
-#: src/diskultimate/core/formatter.py:236
-#: src/diskultimate/core/formatter.py:267
+#: src/diskultimate/core/formatter.py:254
+#: src/diskultimate/core/formatter.py:285
 #: src/diskultimate/core/grub.py:517
 #: src/diskultimate/core/hfsformat.py:294
 #: src/diskultimate/core/ntfs.py:752
@@ -5842,7 +5856,7 @@ msgstr "OK"
 #: src/diskultimate/core/operations.py:611
 #: src/diskultimate/core/resize.py:879
 #: src/diskultimate/core/restoreplan.py:316
-#: src/diskultimate/core/session.py:717
+#: src/diskultimate/core/session.py:729
 #: src/diskultimate/core/udfformat.py:358
 #: src/diskultimate/core/wipe.py:157
 #: src/diskultimate/core/wipe.py:96
@@ -6325,23 +6339,27 @@ msgstr "Windows Dynamic"
 msgid "Windows Kurtarma"
 msgstr "Windows Recovery"
 
-#: src/diskultimate/core/session.py:464
+#: src/diskultimate/core/session.py:474
 msgid "Windows bicimlendiricisi cagriliyor..."
 msgstr "Calling the Windows formatter..."
 
-#: src/diskultimate/core/platform.py:1048
+#: src/diskultimate/core/session.py:484
+msgid "Windows bicimlendiricisi hata verdi: {}"
+msgstr "The Windows formatter reported an error: {}"
+
+#: src/diskultimate/core/platform.py:1106
 msgid "Windows bicimlendiricisi kullanildi"
 msgstr "The Windows formatter was used"
 
-#: src/diskultimate/core/session.py:712
+#: src/diskultimate/core/session.py:724
 msgid "Windows boyutlandiricisi basarisiz: {}"
 msgstr "The Windows resizer failed: {}"
 
-#: src/diskultimate/core/session.py:708
+#: src/diskultimate/core/session.py:720
 msgid "Windows boyutlandiricisi calisiyor..."
 msgstr "The Windows resizer is running..."
 
-#: src/diskultimate/core/platform.py:1104
+#: src/diskultimate/core/platform.py:1162
 msgid "Windows boyutlandiricisi kullanildi"
 msgstr "The Windows resizer was used"
 
@@ -6349,7 +6367,7 @@ msgstr "The Windows resizer was used"
 msgid "Windows calistirilabilir"
 msgstr "Windows executable"
 
-#: src/diskultimate/core/platform.py:1575
+#: src/diskultimate/core/platform.py:1633
 msgid "Windows hata kodu {}"
 msgstr "Windows error code {}"
 
@@ -6456,9 +6474,9 @@ msgstr "NO"
 msgid "Yakalanan donma"
 msgstr "Freezes caught"
 
-#: src/diskultimate/core/platform.py:1028
-#: src/diskultimate/core/platform.py:1067
-#: src/diskultimate/core/platform.py:1093
+#: src/diskultimate/core/platform.py:1095
+#: src/diskultimate/core/platform.py:1125
+#: src/diskultimate/core/platform.py:1151
 msgid "Yalnizca Windows"
 msgstr "Windows only"
 
@@ -6672,7 +6690,7 @@ msgstr "Backup file"
 msgid "Yedek dosyasi (.dub)"
 msgstr "Backup file (.dub)"
 
-#: src/diskultimate/core/session.py:1100
+#: src/diskultimate/core/session.py:1112
 msgid ""
 "Yedek dosyasi (.dub) bir arsivdir; uzerine yazilamaz. Yedegi bir diske "
 "veya yeni bir goruntuye yazin."
@@ -6949,7 +6967,7 @@ msgstr "Could not restart (ShellExecute error {})."
 msgid "Yeniden baslatilamadi: {}"
 msgstr "Could not restart: {}"
 
-#: src/diskultimate/core/session.py:677
+#: src/diskultimate/core/session.py:689
 msgid "Yeniden boyutlandirma icin onay gerekli (confirm=True)"
 msgstr "Resizing requires confirmation (confirm=True)"
 
@@ -6971,11 +6989,11 @@ msgid "Yenileme hatasi"
 msgstr "Refresh error"
 
 #: src/diskultimate/core/resize.py:877
-#: src/diskultimate/core/session.py:714
+#: src/diskultimate/core/session.py:726
 msgid "Yenileniyor..."
 msgstr "Refreshing..."
 
-#: src/diskultimate/core/session.py:691
+#: src/diskultimate/core/session.py:703
 msgid "Yerel boyutlandirici yok"
 msgstr "No native resizer"
 
@@ -7157,7 +7175,7 @@ msgstr "`diskutil` was not found."
 msgid "`grub-install` basarisiz oldu."
 msgstr "`grub-install` failed."
 
-#: src/diskultimate/core/platform.py:1177
+#: src/diskultimate/core/platform.py:1235
 msgid ""
 "`grub-install` bulunamadi (grub-pc ya da grub-efi paketi kurulu degil)."
 msgstr ""
@@ -7176,7 +7194,7 @@ msgstr "`osascript` was not found."
 msgid "`update-grub` ya da `grub-mkconfig` bulunamadi."
 msgstr "Neither `update-grub` nor `grub-mkconfig` was found."
 
-#: src/diskultimate/core/platform.py:1281
+#: src/diskultimate/core/platform.py:1339
 msgid "`{}` bagli degil; `efivarfs` cekirdek modulu yuklu olmayabilir."
 msgstr ""
 "`{}` is not mounted; the `efivarfs` kernel module may not be loaded."
@@ -7216,6 +7234,10 @@ msgstr "information incomplete"
 
 #: src/diskultimate/ui/dialogs/partition_layout.py:160
 msgid "bilinmeyen"
+msgstr "unknown"
+
+#: src/diskultimate/core/platform.py:1052
+msgid "bilinmiyor"
 msgstr "unknown"
 
 #: src/diskultimate/core/filesystem.py:744
@@ -7305,7 +7327,7 @@ msgstr "added space stays unused"
 msgid "en az {}"
 msgstr "at least {}"
 
-#: src/diskultimate/core/formatter.py:64
+#: src/diskultimate/core/formatter.py:72
 msgid "en az {} gerekir"
 msgstr "at least {} is required"
 
@@ -7315,7 +7337,7 @@ msgstr "at least {} is required"
 msgid "en cok {}"
 msgstr "at most {}"
 
-#: src/diskultimate/core/formatter.py:66
+#: src/diskultimate/core/formatter.py:74
 msgid "en fazla {} destekler"
 msgstr "supports at most {}"
 
@@ -7362,7 +7384,7 @@ msgstr "Calculating ext layout..."
 msgid "fiziksel disk"
 msgstr "physical disk"
 
-#: src/diskultimate/core/formatter.py:75
+#: src/diskultimate/core/formatter.py:83
 msgid "gerekli arac: {}"
 msgstr "required tool: {}"
 
@@ -7406,7 +7428,7 @@ msgstr "locked"
 msgid "kurtarilan_{:012X}.{}"
 msgstr "recovered_{:012X}.{}"
 
-#: src/diskultimate/core/platform.py:1297
+#: src/diskultimate/core/platform.py:1355
 msgid "macOS bellenim degiskenlerine erisim vermiyor."
 msgstr "macOS does not grant access to firmware variables."
 
@@ -7667,7 +7689,7 @@ msgstr ""
 msgid "{} KB blok"
 msgstr "{} KB block"
 
-#: src/diskultimate/core/platform.py:1032
+#: src/diskultimate/core/platform.py:1097
 msgid "{} Windows araciyla olusturulamaz"
 msgstr "{} cannot be created with the Windows tool"
 
@@ -7731,7 +7753,7 @@ msgstr ""
 "{} pending steps will be removed.<br><br>Since nothing on the disk has "
 "been changed, this is <b>harmless</b>.<br><br>Continue?"
 
-#: src/diskultimate/core/formatter.py:195
+#: src/diskultimate/core/formatter.py:213
 msgid "{} bicimlendiriliyor..."
 msgstr "Formatting {}..."
 
@@ -7768,7 +7790,7 @@ msgstr "{} partitions can be moved to MBR"
 msgid "{} bolum tablosu olustur"
 msgstr "Create {} partition table"
 
-#: src/diskultimate/core/formatter.py:248
+#: src/diskultimate/core/formatter.py:266
 msgid "{} bu sistemde bicimlendirilemiyor ({})"
 msgstr "{} cannot be formatted on this system ({})"
 
@@ -7780,7 +7802,7 @@ msgstr "{} cannot be resized in this version; it can only be moved"
 msgid "{} bu surumde salt okunur acilir"
 msgstr "{} is opened read-only in this version"
 
-#: src/diskultimate/core/session.py:1107
+#: src/diskultimate/core/session.py:1119
 #: src/diskultimate/core/session.py:305
 msgid "{} bu surumde yalnizca okunabilir; yazma destegi yol haritasinda."
 msgstr ""
@@ -7848,7 +7870,7 @@ msgstr ""
 "{} files recovered:\n"
 "{}"
 
-#: src/diskultimate/core/session.py:620
+#: src/diskultimate/core/session.py:632
 msgid "{} dosyalarinin boyutu bu surumde degistirilemez"
 msgstr "The size of {} files cannot be changed in this version"
 
@@ -7864,7 +7886,7 @@ msgstr "{} updated: {}"
 msgid "{} hakkinda"
 msgstr "About {}"
 
-#: src/diskultimate/core/formatter.py:261
+#: src/diskultimate/core/formatter.py:279
 msgid ""
 "{} hata verdi:\n"
 "{}"
@@ -7882,7 +7904,7 @@ msgstr ""
 "systems: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, APFS, UDF, XFS, btrfs, "
 "F2FS, ISO 9660."
 
-#: src/diskultimate/core/formatter.py:185
+#: src/diskultimate/core/formatter.py:196
 msgid "{} icin en az {} gerekir"
 msgstr "{} requires at least {}"
 
@@ -7906,7 +7928,7 @@ msgstr "{} folders, {} files — {}"
 msgid "{} kuculecek"
 msgstr "shrinks by {}"
 
-#: src/diskultimate/core/formatter.py:60
+#: src/diskultimate/core/formatter.py:68
 msgid "{} kurulu degil"
 msgstr "{} is not installed"
 
@@ -7965,7 +7987,7 @@ msgstr "Restarting as {} was declined; physical disks cannot be opened"
 msgid "{} olusturuldu: {}"
 msgstr "{} created: {}"
 
-#: src/diskultimate/core/formatter.py:257
+#: src/diskultimate/core/formatter.py:275
 msgid "{} olusturuluyor ({})..."
 msgstr "Creating {} ({})..."
 
@@ -7992,11 +8014,11 @@ msgstr "{} deleted entries found"
 msgid "{} sn"
 msgstr "{} s"
 
-#: src/diskultimate/core/formatter.py:59
+#: src/diskultimate/core/formatter.py:67
 msgid "{} uzerinde bu bicim icin arac yok"
 msgstr "There is no tool for this format on {}"
 
-#: src/diskultimate/core/formatter.py:73
+#: src/diskultimate/core/formatter.py:81
 msgid "{} uzerinde {} icin harici arac yok"
 msgstr "There is no external tool for {} on {}"
 
@@ -8005,6 +8027,15 @@ msgid "{} veri kopyalanacak; islem yarida kesilirse bolum bozulur"
 msgstr ""
 "{} of data will be copied; if the operation is interrupted the partition "
 "will be corrupted"
+
+#: src/diskultimate/core/formatter.py:206
+#: src/diskultimate/core/session.py:465
+msgid ""
+"{} yalnizca fiziksel diskte, Windows'un kendi araciyla olusturulabilir; "
+"goruntu dosyasinda kullanilamaz."
+msgstr ""
+"{} can only be created on a physical disk with Windows' own tool; it "
+"cannot be used on an image file."
 
 #: src/diskultimate/ui/widgets/file_browser.py:336
 msgid "{} yaziliyor ({})..."

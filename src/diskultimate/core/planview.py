@@ -232,7 +232,7 @@ def _fs_name(fs_key: str) -> str:
     names = {"fat12": "FAT12", "fat16": "FAT16", "fat32": "FAT32",
              "exfat": "exFAT", "ntfs": "NTFS", "ext2": "ext2",
              "ext3": "ext3", "ext4": "ext4", "swap": fsregistry.SWAP,
-             "hfsplus": "HFS+", "udf": "UDF", "xfs": "XFS"}
+             "hfsplus": "HFS+", "udf": "UDF", "xfs": "XFS", "refs": "ReFS"}
     return names.get((fs_key or "").lower(), fs_key.upper() if fs_key else "")
 
 

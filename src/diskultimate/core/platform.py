@@ -1005,15 +1005,82 @@ def summary() -> dict:
 # --------------------------------------------------------------------------
 # Isletim sisteminin kendi bicimlendiricisi
 # --------------------------------------------------------------------------
+def refs_edition_allows(edition_id: str, installation_type: str) -> bool:
+    """Windows surumu ReFS olusturabilir mi? (ADR 0072)
+
+    Windows 10 1709'dan beri ReFS **olusturma** yalnizca Enterprise ve Pro
+    for Workstations istemci surumlerinde ve Server'da vardir (Home/Pro/
+    Education okuyabilir ama bicimlendiremez). Bilinmeyen surum reddedilir
+    (yanlis "var" demektense secenek gri kalir).
+    """
+    edition = (edition_id or "").lower()
+    if (installation_type or "").lower() == "server" or edition.startswith("server"):
+        return True
+    return edition.startswith("enterprise") or edition.startswith("professionalworkstation")
+
+
+_REFS_SUPPORT: Optional[Tuple[bool, str]] = None
+
+
+def refs_format_support() -> Tuple[bool, str]:
+    """(olusturulabilir_mi, neden). Kayit defterinden okunur — alt surec yok,
+    arayuz is parcaciginda guvenle cagrilir; sonuc onbellege alinir."""
+    global _REFS_SUPPORT
+    if _REFS_SUPPORT is not None:
+        return _REFS_SUPPORT
+    if not IS_WINDOWS:
+        _REFS_SUPPORT = (False, tr("ReFS yalnizca Windows'un kendi araciyla "
+                                   "olusturulabilir; {} uzerinde arac yok", PLATFORM_NAME))
+        return _REFS_SUPPORT
+    edition, kind = "", ""
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                            r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as key:
+            edition = str(winreg.QueryValueEx(key, "EditionID")[0])
+            try:
+                kind = str(winreg.QueryValueEx(key, "InstallationType")[0])
+            except OSError:
+                kind = ""
+    except Exception:                                  # noqa: BLE001
+        edition = ""
+    if refs_edition_allows(edition, kind):
+        _REFS_SUPPORT = (True, "")
+    else:
+        _REFS_SUPPORT = (False, tr("Bu Windows surumu ({}) ReFS olusturamiyor; "
+                                   "Enterprise, Pro for Workstations ya da Server "
+                                   "gerekir", edition or tr("bilinmiyor")))
+    return _REFS_SUPPORT
+
+
 def native_format_supported(fs_key: str) -> bool:
     """Isletim sistemi bu bicimi kendi araciyla olusturabiliyor mu?
 
     Windows'ta NTFS/FAT/exFAT icin `Format-Volume` her kurulumda bulunur; bu,
-    ntfs-3g'nin Windows'ta olmamasinin pratik karsiligidir.
+    ntfs-3g'nin Windows'ta olmamasinin pratik karsiligidir. ReFS surume
+    baglidir (`refs_format_support`).
     """
     if IS_WINDOWS:
+        if fs_key == "refs":
+            return refs_format_support()[0]
         return fs_key in ("ntfs", "exfat", "fat32", "fat16")
     return False
+
+
+def format_volume_command(disk_number: int, partition_number: int, fs_key: str,
+                          label: str = "", cluster_size: int = 0) -> str:
+    """`Format-Volume` komutu (saf islev — test edilebilir)."""
+    fs_name = {"ntfs": "NTFS", "exfat": "exFAT", "fat32": "FAT32", "fat16": "FAT",
+               "refs": "ReFS"}[fs_key]
+    etiket = (label or "").replace('"', "").replace("`", "").replace("$", "")
+    komut = (f"$ErrorActionPreference='Stop'; "
+             f"$p = Get-Partition -DiskNumber {int(disk_number)} "
+             f"-PartitionNumber {int(partition_number)}; "
+             f"$p | Format-Volume -FileSystem {fs_name} "
+             f"-NewFileSystemLabel \"{etiket}\" -Confirm:$false -Force")
+    if cluster_size:
+        komut += f" -AllocationUnitSize {int(cluster_size)}"
+    return komut + " | Out-Null; 'TAMAM'"
 
 
 def windows_format_volume(disk_number: int, partition_number: int,
@@ -1026,19 +1093,10 @@ def windows_format_volume(disk_number: int, partition_number: int,
     """
     if not IS_WINDOWS:
         return False, tr("Yalnizca Windows")
-    fs_name = {"ntfs": "NTFS", "exfat": "exFAT",
-              "fat32": "FAT32", "fat16": "FAT"}.get(fs_key)
-    if not fs_name:
+    if fs_key not in ("ntfs", "exfat", "fat32", "fat16", "refs"):
         return False, tr("{} Windows araciyla olusturulamaz", fs_key)
-    etiket = (label or "").replace('"', "")
-    komut = (f"$ErrorActionPreference='Stop'; "
-             f"$p = Get-Partition -DiskNumber {disk_number} "
-             f"-PartitionNumber {partition_number}; "
-             f"$p | Format-Volume -FileSystem {fs_name} "
-             f"-NewFileSystemLabel \"{etiket}\" -Confirm:$false -Force")
-    if cluster_size:
-        komut += f" -AllocationUnitSize {cluster_size}"
-    komut += " | Out-Null; 'TAMAM'"
+    komut = format_volume_command(disk_number, partition_number, fs_key, label,
+                                  cluster_size)
     try:
         result = run_tool(["powershell", "-NoProfile", "-NonInteractive",
                           "-Command", komut], timeout=600)

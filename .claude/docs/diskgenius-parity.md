@@ -46,14 +46,21 @@ Guncelleme: 2026-09-15 (v0.3.0)
 |---|---|---|---|
 | Dosya gezgini (listele/ac) | ✅ | ✅ | Klasor agaci + dosya listesi |
 | Dosya disa aktarma | ✅ | ✅ | Tekil ve klasor agaci |
-| Dosya ice aktarma / silme / yeniden adlandirma | ✅ | ✅ | FAT ve exFAT'te tam |
+| Dosya ice aktarma / silme / yeniden adlandirma | ✅ | ✅ | FAT, exFAT, NTFS, ext, HFS+, UDF |
 | Uzun dosya adi (LFN / Unicode) | ✅ | ✅ | FAT LFN + exFAT UTF-16 |
 | FAT12/16/32 okuma-yazma | ✅ | ✅ | Saf Python, `fsck.vfat` ile dogrulandi |
 | **exFAT okuma-yazma** | ✅ | ✅ | Saf Python, `fsck.exfat` ile dogrulandi |
 | NTFS okuma | ✅ | ✅ | Saf Python: MFT, fixup, veri kosullari, `$ATTRIBUTE_LIST`, B+ indeks; `ntfs-3g` ciktisiyla karsilastirildi |
-| NTFS yazma | ✅ | 🟡 | Dosya/klasor olusturma, silme, yeniden adlandirma; `ntfsfix` temiz ve `ntfs-3g` ile baglanip okundu. B+ dugum **bolme** yok |
+| NTFS yazma | ✅ | ✅ | B+ agaci (bolme/silme), guvenlik tanimlayicilari; Windows'un kendi surucusuyle dogrulandi (ADR 0058, 0059) |
 | ext2/3/4 okuma | ✅ | ✅ | Saf Python; extent + dolayli blok, sembolik bag izleme |
-| **ext2/3/4 yazma** | ✅ | 🟡 | Dosya/klasor olusturma, silme, yeniden adlandirma; `metadata_csum` dahil — her adim `e2fsck` ile dogrulandi. Extent agaci **buyutme** ve `bigalloc`/`inline_data` desteklenmez |
+| **ext2/3/4 yazma** | ✅ | 🟡 | htree ve extent agaci buyutme dahil, `e2fsck` ile dogrulandi (ADR 0057). `bigalloc`/`inline_data` desteklenmez |
+| HFS+ / HFSX okuma-yazma-bicimlendirme | ✅ | ✅ | Saf Python, `fsck.hfsplus` temiz (ADR 0060-0062) |
+| APFS okuma | ✅ | ✅ | Salt okuma; libfsapfs ile karsilastirildi, sifreli birim reddedilir (ADR 0071) |
+| UDF okuma-yazma-bicimlendirme | ❌ | ✅ | Windows ile iki yonlu dogrulandi (ADR 0063-0065) |
+| XFS okuma, bicimlendirme, buyutme | ✅ | ✅ | `xfs_repair` temiz (ADR 0066-0068) |
+| btrfs okuma (zlib/LZO/zstd) | ✅ | ✅ | Saf cozuculer (ADR 0069) |
+| F2FS okuma | ❌ | ✅ | Salt okuma (ADR 0070) |
+| ISO 9660 okuma | ✅ | ✅ | Joliet + Rock Ridge (ADR 0055) |
 | Dosya onizleme | ✅ | ✅ | Metin + onaltilik onizleme |
 
 ## Veri kurtarma
@@ -107,11 +114,11 @@ Sayilar belgedeki tablolardan otomatik sayildi (2026-09-15).
 |---|---|---|---|---|
 | Disk erisimi | 7 | 0 | 0 | 0 |
 | Bolum yonetimi | 9 | 0 | 3 | 2 |
-| Dosya erisimi | 7 | 0 | 2 | 0 |
+| Dosya erisimi (2026-10-01) | 17 | 1 | 0 | 0 |
 | Veri kurtarma | 5 | 1 | 0 | 1 |
 | Klonlama/yedekleme | 6 | 0 | 0 | 1 |
 | Bakim ve ileri araclar | 4 | 2 | 2 | 3 |
-| **Toplam** | **38** | **3** | **7** | **7** |
+| **Toplam** | **48** | **4** | **5** | **7** |
 
 **"Kapsam disi" olcutu v0.3 ile degisti.** Onceki surumlerde bu maddeler
 "fiziksel diske erisim gerektiriyor" diye disarida birakiliyordu; fiziksel disk

@@ -5409,3 +5409,18 @@ calismiyordu.
   (AttributeError cikiyordu — duzeltildi). t70.
 - Linux run_all 68/70, Windows 67/70. i18n 17 yeni metin, platform 0, ui_smoke.
 - Sinirlar ADR'de: test verisi kucuk.
+
+## 2026-10-01 (5) — ReFS yerel bicimlendirme (ADR 0072) — liste bitti
+
+- `formatter.FS_KINDS` "refs" (`native_only`): Windows Format-Volume,
+  yalnizca fiziksel disk + uygun surum (EditionID kayit defterinden:
+  Enterprise / Pro for Workstations / Server). Diger platform ve surumlerde
+  gri + neden; goruntu dosyasinda acik ret; yerel arac hatasinda saf Python
+  yola dusulmez. `platform.format_volume_command` saf ve temizleyici.
+- t71: surum tablosu, komut, ret yollari; Windows'ta gercek kayit defteri
+  (Professional -> gri) ve PowerShell ayristiricisiyla sozdizimi.
+  Linux 69/71, Windows 68/71.
+- Sinanmayan: gercek ReFS bicimlendirme (misafir Win10 Pro, yonetici yok).
+- diskgenius-parity.md dosya erisimi tablosu guncellendi (yeni dosya
+  sistemleri; NTFS yazma tam).
+- **fs-genisletme-ilerleme.md listesi tamamlandi; dongu durduruldu.**

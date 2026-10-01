@@ -96,7 +96,9 @@ Isaretler: `[ ]` bekliyor · `[~]` suruyor · `[x]` bitti · `[-]` kapsam disi (
 - [x] APFS salt okuma (ADR 0071): macOS uretimi kapsayici (dfvfs, Apache 2.0) libfsapfs
       ile birebir; sifreli birim reddi; mkapfs; t70. Kucuk test verisi — cok duzeyli
       agac, cok birim, decmpfs sinanmadi
-- [ ] ReFS: Windows yerel araciyla bicimlendirme, digerlerinde gri + neden
+- [x] ReFS (ADR 0072): Windows Format-Volume, yalnizca fiziksel disk ve uygun surum
+      (Enterprise / Pro for Workstations / Server); digerlerinde gri + neden; t71.
+      Gercek ReFS bicimlendirme sinanmadi (misafir Win10 Pro, yonetici yok)
 
 ## Tur kaydi
 (her tur bir satir: tarih, madde, sonuc)
@@ -131,3 +133,5 @@ Isaretler: `[ ]` bekliyor · `[~]` suruyor · `[x]` bitti · `[-]` kapsam disi (
 - 2026-10-01 tur 10: btrfs okuma + saf LZO/zstd (ADR 0069). Linux 66/68, Windows 65/68.
 - 2026-10-01 tur 11: F2FS okuma (ADR 0070). Linux 67/69, Windows 66/69. Asama 3 bitti.
 - 2026-10-01 tur 12: APFS salt okuma (ADR 0071). Linux 68/70, Windows 67/70.
+- 2026-10-01 tur 13: ReFS yerel bicimlendirme (ADR 0072). Linux 69/71, Windows 68/71.
+  **Liste bitti; dongu durduruldu.**

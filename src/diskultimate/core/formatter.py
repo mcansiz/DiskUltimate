@@ -42,8 +42,13 @@ class FsKind:
     mbr_type: int = 0x83
     gpt_type: str = "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7"
 
+    native_only: bool = False   # yalnizca isletim sisteminin araci (ReFS)
+
     @property
     def available(self) -> bool:
+        if self.native_only:
+            from .platform import native_format_supported
+            return native_format_supported(self.key)
         return self.internal or bool(find_tool(self.key))
 
     def reason_for(self, size_bytes: int = 0) -> str:
@@ -53,6 +58,9 @@ class FsKind:
         gri gosterilir. Boylece kullanici "secenek yok" yerine "neden yok"
         bilgisini gorur.
         """
+        if self.native_only and not self.available:
+            from .platform import refs_format_support
+            return refs_format_support()[1]
         if not self.available:
             adaylar = tool_names(self.key)
             if not adaylar:
@@ -104,6 +112,9 @@ FS_KINDS: List[FsKind] = [
     # XFS v5 (crc, ftype, finobt, bigtime, inobtcount; ADR 0067)
     FsKind("xfs", "XFS", True, min_bytes=300 * 1024 * 1024,
            mbr_type=0x83, gpt_type=LINUXFS),
+    # ReFS: yalnizca Windows'un kendi Format-Volume'u, yalnizca fiziksel disk
+    # (ADR 0072). Diger platformlarda ve uygun olmayan surumlerde gri + neden.
+    FsKind("refs", "ReFS", False, mbr_type=0x07, gpt_type=MSBASIC, native_only=True),
     # UDF 2.01, sabit disk yerlesimi (ADR 0064): Windows/macOS/Linux ortak
     FsKind("udf", "UDF", True, min_bytes=1024 * 1024,
            mbr_type=0x07, gpt_type=MSBASIC),
@@ -188,6 +199,13 @@ def format_partition(view: BlockDevice, fs_key: str, label: str = "",
     def report(msg: str, pct: int) -> None:
         if progress:
             progress(msg, pct)
+
+    if kind.native_only:
+        # ReFS: saf Python ya da harici mkfs yolu yok; oturum fiziksel diskte
+        # Windows'un Format-Volume'unu cagirir (session._try_native_format).
+        raise FormatError(kind.reason_for() or tr(
+            "{} yalnizca fiziksel diskte, Windows'un kendi araciyla "
+            "olusturulabilir; goruntu dosyasinda kullanilamaz.", kind.label))
 
     wipe_signatures(view)
 
