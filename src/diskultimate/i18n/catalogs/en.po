@@ -1082,6 +1082,10 @@ msgstr "Unknown VHD type: {}"
 msgid "Bilinmeyen XFS ozelligi (0x{:x}); bu surumde okunamiyor"
 msgstr "Unknown XFS feature (0x{:x}); cannot be read in this version"
 
+#: src/diskultimate/core/btrfs.py:282
+msgid "Bilinmeyen btrfs sikistirmasi: {}"
+msgstr "Unknown btrfs compression: {}"
+
 #: src/diskultimate/core/vdisk.py:564
 msgid "Bilinmeyen disk bicimi: {}"
 msgstr "Unknown disk format: {}"
@@ -1951,7 +1955,7 @@ msgstr ""
 "Deleted file scanning is not supported on this partition (FAT and exFAT "
 "only)"
 
-#: src/diskultimate/core/filesystem.py:60
+#: src/diskultimate/core/filesystem.py:62
 msgid "Bu bolume yazilamiyor."
 msgstr "This partition cannot be written to."
 
@@ -1968,6 +1972,14 @@ msgstr ""
 #: src/diskultimate/ui/main_window.py:1468
 msgid "Bu bolumler cikarilamadi:"
 msgstr "These partitions could not be unmounted:"
+
+#: src/diskultimate/core/btrfs.py:101
+msgid ""
+"Bu btrfs ozelligi (extent-tree-v2 / raid-stripe-tree) bu surumde "
+"okunamiyor"
+msgstr ""
+"This btrfs feature (extent-tree-v2 / raid-stripe-tree) cannot be read in "
+"this version"
 
 #: src/diskultimate/ui/main_window.py:3497
 msgid "Bu diski kapat"
@@ -2116,6 +2128,7 @@ msgstr ""
 msgid "Bu yedegin ne oldugunu yazin — dosyanin icinde saklanir"
 msgstr "Describe this backup — the note is stored inside the file"
 
+#: src/diskultimate/core/btrfs.py:263
 #: src/diskultimate/core/exfat.py:557
 #: src/diskultimate/core/extread.py:369
 #: src/diskultimate/core/extwrite.py:1232
@@ -2661,6 +2674,8 @@ msgstr "Directory is too large"
 msgid "Dizin degil"
 msgstr "Not a directory"
 
+#: src/diskultimate/core/btrfs.py:260
+#: src/diskultimate/core/btrfs.py:270
 #: src/diskultimate/core/exfat.py:536
 #: src/diskultimate/core/extread.py:363
 #: src/diskultimate/core/extwrite.py:1146
@@ -2715,6 +2730,7 @@ msgid "Dizin kaydi doldu: oznitelik kayda sigmiyor"
 msgstr ""
 "Directory record is full: the attribute does not fit into the record"
 
+#: src/diskultimate/core/btrfs.py:315
 #: src/diskultimate/core/hfsplus.py:565
 #: src/diskultimate/core/iso9660.py:252
 #: src/diskultimate/core/udf.py:443
@@ -3904,7 +3920,7 @@ msgstr "OPERATING SYSTEM DISK — writing makes the machine unusable"
 msgid "ISO 9660 birincil birim tanimlayicisi yok"
 msgstr "ISO 9660 primary volume descriptor not found"
 
-#: src/diskultimate/core/filesystem.py:472
+#: src/diskultimate/core/filesystem.py:474
 msgid "ISO 9660 salt okunur bir bicimdir; yazilmaz, bastan uretilir."
 msgstr ""
 "ISO 9660 is a read-only format; it is not written to but created from "
@@ -4184,8 +4200,8 @@ msgstr "Select source disk"
 msgid "Kaynak salt okunur acildi."
 msgstr "The source was opened read-only."
 
-#: src/diskultimate/core/filesystem.py:209
-#: src/diskultimate/core/filesystem.py:271
+#: src/diskultimate/core/filesystem.py:211
+#: src/diskultimate/core/filesystem.py:273
 msgid ""
 "Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda acarsaniz bu "
 "bolume yazabilirsiniz."
@@ -4528,6 +4544,23 @@ msgstr "LBA: {} - {}"
 #: src/diskultimate/core/bootloader.py:50
 msgid "LILO"
 msgstr "LILO"
+
+#: src/diskultimate/core/compress.py:136
+msgid "LZO: cerceve cok kisa"
+msgstr "LZO: frame too short"
+
+#: src/diskultimate/core/compress.py:125
+msgid "LZO: cikti siniri asildi"
+msgstr "LZO: output limit exceeded"
+
+#: src/diskultimate/core/compress.py:37
+msgid "LZO: gecersiz geri basvuru"
+msgstr "LZO: invalid back-reference"
+
+#: src/diskultimate/core/compress.py:127
+#: src/diskultimate/core/compress.py:129
+msgid "LZO: girdi beklenmedik bicimde bitti"
+msgstr "LZO: input ended unexpectedly"
 
 #: src/diskultimate/core/bootloader.py:233
 #: src/diskultimate/core/ptable.py:39
@@ -5335,6 +5368,10 @@ msgstr ""
 "Drag the handles on the bar left or right with the mouse. The arrow keys "
 "fine-tune (hold Shift for faster steps)."
 
+#: src/diskultimate/core/btrfs.py:136
+msgid "Seritli btrfs (RAID0/10/5/6) bu surumde okunamiyor"
+msgstr "Striped btrfs (RAID0/10/5/6) cannot be read in this version"
+
 #: src/diskultimate/core/session.py:1110
 msgid "Seyrek (sparse) VMDK bu surumde salt okunur."
 msgstr "Sparse VMDK is read-only in this version."
@@ -5367,6 +5404,10 @@ msgstr "Zero fill (1 pass)"
 #: src/diskultimate/core/vdisk.py:467
 msgid "Sifreli QCOW2 desteklenmiyor"
 msgstr "Encrypted QCOW2 is not supported"
+
+#: src/diskultimate/core/btrfs.py:295
+msgid "Sifreli btrfs verisi okunamiyor"
+msgstr "Encrypted btrfs data cannot be read"
 
 #: src/diskultimate/core/ntfsread.py:375
 #: src/diskultimate/core/ntfsread.py:392
@@ -5477,7 +5518,7 @@ msgstr ""
 "reinstalled on disk <b>{}</b><br>4. The boot menu is regenerated<br><br>No "
 "other disk is touched. Continue?"
 
-#: src/diskultimate/core/filesystem.py:435
+#: src/diskultimate/core/filesystem.py:437
 msgid "Sis"
 msgstr "Sys"
 
@@ -6286,7 +6327,7 @@ msgstr "XFS superblock not found"
 msgid "XFS v4 birimleri bu surumde buyutulemiyor"
 msgstr "XFS v4 volumes cannot be grown in this version"
 
-#: src/diskultimate/core/filesystem.py:596
+#: src/diskultimate/core/filesystem.py:598
 msgid "XFS yazma bu surumde yok; birim salt okunur acildi."
 msgstr ""
 "Writing to XFS is not available in this version; the volume was opened "
@@ -7037,6 +7078,10 @@ msgstr ""
 msgid "`{}` okunamadi."
 msgstr "`{}` could not be read."
 
+#: src/diskultimate/core/filesystem.py:650
+msgid "alt hacim"
+msgstr "subvolume"
+
 #: src/diskultimate/ui/widgets/resize_bar.py:175
 msgid "arkasinda {} ▶"
 msgstr "{} after ▶"
@@ -7045,7 +7090,7 @@ msgstr "{} after ▶"
 msgid "ayri gunluk aygiti"
 msgstr "external journal device"
 
-#: src/diskultimate/core/filesystem.py:314
+#: src/diskultimate/core/filesystem.py:316
 msgid "bag"
 msgstr "link"
 
@@ -7077,6 +7122,42 @@ msgstr "free space {}"
 #: src/diskultimate/ui/dialogs/partition_layout.py:159
 msgid "boyut sabit ({})"
 msgstr "fixed size ({})"
+
+#: src/diskultimate/core/btrfs.py:175
+msgid "btrfs agac dugumu bozuk: {}"
+msgstr "btrfs tree node is corrupt: {}"
+
+#: src/diskultimate/core/btrfs.py:181
+msgid "btrfs agaci cok derin"
+msgstr "btrfs tree is too deep"
+
+#: src/diskultimate/core/btrfs.py:116
+msgid "btrfs dosya agaci bulunamadi"
+msgstr "btrfs file tree not found"
+
+#: src/diskultimate/core/btrfs.py:213
+msgid "btrfs inode bulunamadi: {}"
+msgstr "btrfs inode not found: {}"
+
+#: src/diskultimate/core/btrfs.py:156
+msgid "btrfs mantiksal adres eslenemedi: {}"
+msgstr "btrfs logical address could not be mapped: {}"
+
+#: src/diskultimate/core/btrfs.py:88
+msgid "btrfs ustblogu bulunamadi"
+msgstr "btrfs superblock not found"
+
+#: src/diskultimate/core/btrfs.py:143
+msgid "btrfs verisinin bir kismi baska aygitta; tek aygitla okunamiyor"
+msgstr ""
+"Part of the btrfs data is on another device; it cannot be read with a "
+"single device"
+
+#: src/diskultimate/core/filesystem.py:642
+msgid "btrfs yazma bu surumde yok; birim salt okunur acildi."
+msgstr ""
+"Writing to btrfs is not available in this version; the volume was opened "
+"read-only."
 
 #: src/diskultimate/core/layoutedit.py:234
 msgid "bu dosya sistemi"
@@ -7174,7 +7255,7 @@ msgstr "physical disk"
 msgid "gerekli arac: {}"
 msgstr "required tool: {}"
 
-#: src/diskultimate/core/filesystem.py:316
+#: src/diskultimate/core/filesystem.py:318
 #: src/diskultimate/ui/dialogs/efiboot.py:275
 msgid "gizli"
 msgstr "hidden"
@@ -7282,6 +7363,74 @@ msgstr "moves"
 #: src/diskultimate/ui/widgets/disk_map.py:450
 msgid "yok"
 msgstr "no"
+
+#: src/diskultimate/core/compress.py:228
+msgid "zstd: FSE dogruluk logu cok buyuk"
+msgstr "zstd: FSE accuracy log too large"
+
+#: src/diskultimate/core/compress.py:263
+msgid "zstd: FSE tablosu bozuk"
+msgstr "zstd: FSE table is corrupt"
+
+#: src/diskultimate/core/compress.py:307
+msgid "zstd: Huffman agirliklari bos"
+msgstr "zstd: Huffman weights are empty"
+
+#: src/diskultimate/core/compress.py:375
+msgid "zstd: Huffman agirliklari cok uzun"
+msgstr "zstd: Huffman weights are too long"
+
+#: src/diskultimate/core/compress.py:311
+msgid "zstd: Huffman agirliklari gecersiz"
+msgstr "zstd: Huffman weights are invalid"
+
+#: src/diskultimate/core/compress.py:341
+msgid "zstd: Huffman akisi tutarsiz"
+msgstr "zstd: Huffman stream is inconsistent"
+
+#: src/diskultimate/core/compress.py:555
+msgid "zstd: ayrilmis blok turu"
+msgstr "zstd: reserved block type"
+
+#: src/diskultimate/core/compress.py:184
+msgid "zstd: bit akisi bozuk"
+msgstr "zstd: bitstream is corrupt"
+
+#: src/diskultimate/core/compress.py:527
+msgid "zstd: cerceve imzasi yok"
+msgstr "zstd: frame magic missing"
+
+#: src/diskultimate/core/compress.py:511
+msgid "zstd: dizi akisi tutarsiz"
+msgstr "zstd: sequence stream is inconsistent"
+
+#: src/diskultimate/core/compress.py:473
+msgid "zstd: gecersiz dizi kodu"
+msgstr "zstd: invalid sequence code"
+
+#: src/diskultimate/core/compress.py:493
+msgid "zstd: gecersiz tekrar ofseti"
+msgstr "zstd: invalid repeat offset"
+
+#: src/diskultimate/core/compress.py:577
+msgid "zstd: girdi beklenmedik bicimde bitti"
+msgstr "zstd: input ended unexpectedly"
+
+#: src/diskultimate/core/compress.py:499
+msgid "zstd: ofset ciktinin disinda"
+msgstr "zstd: offset outside the output"
+
+#: src/diskultimate/core/compress.py:536
+msgid "zstd: sozluklu cerceve desteklenmiyor"
+msgstr "zstd: frames with a dictionary are not supported"
+
+#: src/diskultimate/core/compress.py:440
+msgid "zstd: tekrar FSE tablosu yok"
+msgstr "zstd: no FSE table to repeat"
+
+#: src/diskultimate/core/compress.py:414
+msgid "zstd: tekrar Huffman tablosu yok"
+msgstr "zstd: no Huffman table to repeat"
 
 #: src/diskultimate/core/operations.py:697
 #: src/diskultimate/core/operations.py:705
@@ -7479,7 +7628,7 @@ msgstr ""
 "The information of {} could not be read (no privileges); whether it is the "
 "system disk is unknown. Writing to an unknown disk was rejected."
 
-#: src/diskultimate/core/filesystem.py:725
+#: src/diskultimate/core/filesystem.py:776
 msgid "{} bir kapsayicidir; icindeki birimler bu surumde acilamiyor."
 msgstr ""
 "{} is a container; the volumes inside it cannot be opened in this version."
@@ -7608,13 +7757,14 @@ msgstr ""
 "{} reported an error:\n"
 "{}"
 
-#: src/diskultimate/core/filesystem.py:728
+#: src/diskultimate/core/filesystem.py:779
 msgid ""
 "{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya sistemleri: "
-"FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, ISO 9660."
+"FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, btrfs, ISO 9660."
 msgstr ""
 "The contents of {} cannot be displayed in this version. Readable file "
-"systems: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, ISO 9660."
+"systems: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, btrfs, ISO "
+"9660."
 
 #: src/diskultimate/core/formatter.py:185
 msgid "{} icin en az {} gerekir"
@@ -7707,7 +7857,7 @@ msgstr "Creating {} ({})..."
 msgid "{} saniye"
 msgstr "{} seconds"
 
-#: src/diskultimate/core/filesystem.py:722
+#: src/diskultimate/core/filesystem.py:773
 msgid "{} sifreli bir birimdir; icerigi anahtar olmadan okunamaz."
 msgstr ""
 "{} is an encrypted volume; its contents cannot be read without the key."
@@ -8309,3 +8459,11 @@ msgstr "◀ {} before"
 #~ msgstr ""
 #~ "The contents of {} cannot be displayed in this version. Readable file "
 #~ "systems: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, ISO 9660."
+
+#: src/diskultimate/core/filesystem.py:728
+#~ msgid ""
+#~ "{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya sistemleri: "
+#~ "FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, ISO 9660."
+#~ msgstr ""
+#~ "The contents of {} cannot be displayed in this version. Readable file "
+#~ "systems: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, ISO 9660."

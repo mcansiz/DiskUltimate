@@ -25,6 +25,8 @@ from .hfswrite import HfsWriter
 from .iso9660 import IsoEntry, IsoError, IsoFS
 from .udf import UdfEntry, UdfError, UdfFS
 from .xfs import XfsEntry, XfsError, XfsFS
+from .btrfs import BtrfsEntry, BtrfsError, BtrfsFS
+from .compress import DecompressError
 from .udfwrite import UdfWriter
 from ..i18n import tr
 
@@ -624,6 +626,55 @@ class XfsAccess(FileSystemAccess):
         return self.fs.stats()
 
 
+class BtrfsAccess(FileSystemAccess):
+    """btrfs icerigine salt okunur erisim; zlib/LZO/zstd (ADR 0069)."""
+
+    readable = True
+    writable = False
+
+    def __init__(self, view: BlockDevice):
+        self.fs = BtrfsFS(view)
+        self.fs_type = "btrfs"
+        self.label = self.fs.label
+
+    @property
+    def write_reason(self) -> str:
+        return tr("btrfs yazma bu surumde yok; birim salt okunur acildi.")
+
+    @staticmethod
+    def _node(entry: BtrfsEntry, parent: str) -> FileNode:
+        path = (parent.rstrip("/") + "/" + entry.name) if parent not in ("", "/") \
+            else "/" + entry.name
+        attrs = []
+        if entry.subvolume:
+            attrs.append(tr("alt hacim"))
+        if entry.symlink:
+            attrs.append("-> " + entry.symlink)
+        return FileNode(name=entry.name, path=path, is_dir=entry.is_dir,
+                        size=0 if entry.is_dir else entry.size, mtime=entry.mtime,
+                        attr_text=" ".join(attrs), hidden=entry.hidden,
+                        readonly=True)
+
+    def listdir(self, path: str = "/") -> List[FileNode]:
+        out = [self._node(e, path) for e in self.fs.listdir(path)]
+        out.sort(key=lambda n: (not n.is_dir, n.name.lower()))
+        return out
+
+    def read(self, path: str, max_bytes: int = -1) -> bytes:
+        try:
+            return self.fs.read_file(path, max_bytes)
+        except DecompressError as exc:
+            raise BtrfsError(str(exc)) from exc
+
+    def extract(self, path: str, dest: str) -> str:
+        self.fs.extract(path, dest)
+        restore_owner(dest)
+        return dest
+
+    def stats(self) -> Dict[str, int]:
+        return self.fs.stats()
+
+
 class HfsAccess(FileSystemAccess):
     """HFS+ / HFSX okuma ve yazma (ADR 0060, 0062)."""
 
@@ -726,7 +777,8 @@ class UnsupportedAccess(FileSystemAccess):
                               "surumde acilamiyor.", self.fs_type))
         raise FatError(
             tr("{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya "
-               "sistemleri: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, ISO 9660.",
+               "sistemleri: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, btrfs, "
+               "ISO 9660.",
                self.fs_type))
 
     def stats(self) -> Dict[str, int]:
@@ -779,6 +831,11 @@ def open_filesystem(view: BlockDevice,
         try:
             return IsoAccess(view)
         except (IsoError, Exception):         # noqa: BLE001
+            return UnsupportedAccess(info)
+    if info.fs_type == "btrfs":
+        try:
+            return BtrfsAccess(view)
+        except BtrfsError:
             return UnsupportedAccess(info)
     if info.fs_type == "XFS":
         try:

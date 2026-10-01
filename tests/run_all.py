@@ -5220,6 +5220,111 @@ def t67_xfs_buyutme():
     d.close()
 
 
+def _btrfs_kaynak(kok: str) -> dict:
+    """t68 btrfs agaci: {yol: veri}; `kok` verilirse diske de yazar."""
+    beklenen = {"/a.txt": b"merhaba\n",
+                "/Türkçe ğüşİı dosya.txt": "içerik\n".encode("utf-8"),
+                "/metin.txt": "".join(f"Lorem ipsum dolor sit amet, satir {i}\n"
+                                      for i in range(8000)).encode(),
+                "/desen.bin": bytes(range(256)) * 1500,
+                "/alt_hacim/ic.txt": b"alt hacim icerigi\n"}
+    for i in range(300):
+        beklenen[f"/klasor/alt/f_{i:03d}.dat"] = bytes([i % 256]) * (i * 7)
+    seyrek = bytearray(9 * 262144 + 5000)
+    for i in range(10):
+        seyrek[i * 262144:i * 262144 + 5000] = b"y" * 5000
+    beklenen["/seyrek.bin"] = bytes(seyrek)
+    if kok:
+        for yol, veri in beklenen.items():
+            hedef = os.path.join(kok, yol.lstrip("/"))
+            os.makedirs(os.path.dirname(hedef), exist_ok=True)
+            with open(hedef, "wb") as fh:
+                if yol == "/seyrek.bin":
+                    for i in range(10):
+                        fh.seek(i * 262144)
+                        fh.write(b"y" * 5000)
+                else:
+                    fh.write(veri)
+        os.makedirs(os.path.join(kok, "bos"), exist_ok=True)
+        os.symlink("a.txt", os.path.join(kok, "bag"))
+    return beklenen
+
+
+@test
+def t68_btrfs_okuma():
+    """btrfs salt okuma: zlib / LZO / zstd (saf cozuculer), alt hacim, seyrek (ADR 0069)
+
+    Fixture'lar mkfs.btrfs 6.17 `--rootdir --subvol --compress` ile uretildi
+    (satir ici ve diskteki kapsamlar sikistirilmis). LZO1X ve zstd cozuculeri
+    saf Python; zstd ayrica zstd CLI ciktisiyla (varsa) sinanir. mkfs.btrfs
+    varsa 4 KiB dugum (derin agac) + DUP ve karisik blok grubu varyantlari.
+    """
+    import gzip
+    import random
+    from diskultimate.core.btrfs import BtrfsFS
+    from diskultimate.core.compress import _zstd_pure, lzo1x_decompress
+    from diskultimate.core.filesystem import BtrfsAccess, open_filesystem
+
+    beklenen = _btrfs_kaynak("")
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+
+    def denetle(yol, etiket):
+        d = DiskImage(yol, readonly=True)
+        erisim = open_filesystem(d)
+        assert isinstance(erisim, BtrfsAccess) and erisim.label == etiket, erisim
+        assert not erisim.writable and erisim.write_reason
+        for p, veri in beklenen.items():
+            assert erisim.read(p) == veri, (etiket, p)
+        fs = erisim.fs
+        assert fs.resolve("/bag").symlink == "a.txt"
+        assert fs.resolve("/alt_hacim").subvolume
+        assert sorted(n.name for n in erisim.listdir("/")) == sorted(
+            ["a.txt", "Türkçe ğüşİı dosya.txt", "metin.txt", "desen.bin", "klasor",
+             "alt_hacim", "seyrek.bin", "bos", "bag"])
+        sikistirilmis = sum(1 for k, v in fs._walk(fs._roots[5], (0, 0, 0))
+                            if k[1] == 108 and v[16])
+        d.close()
+        return sikistirilmis
+
+    for tur in ("zlib", "lzo", "zstd"):
+        yol = img_path(f"t68_{tur}.img")
+        with gzip.open(os.path.join(fixtures, f"btrfs_{tur}.img.gz"), "rb") as a, \
+                open(yol, "wb") as b:
+            b.write(a.read())
+        assert denetle(yol, "FX" + tur) > 100, tur
+
+    # LZO1X: elle kurulmus kucuk akislar (literal + eslesme + son isaret)
+    assert lzo1x_decompress(bytes([17 + 5]) + b"abcde" + bytes([0x11, 0, 0])) == b"abcde"
+
+    zstd = shutil.which("zstd")
+    if zstd:
+        r = random.Random(7)
+        veri = beklenen["/metin.txt"] + r.randbytes(50000) + bytes(100000)
+        for seviye in ("-1", "-19", "--fast=3"):
+            sik = subprocess.run([zstd, "-q", "-c", *seviye.split()], input=veri,
+                                 capture_output=True).stdout
+            assert _zstd_pure(sik) == veri, seviye
+
+    mkfs = shutil.which("mkfs.btrfs") or shutil.which("mkfs.btrfs", path="/sbin:/usr/sbin")
+    if not mkfs:
+        return
+    kok = img_path("t68_kaynak")
+    shutil.rmtree(kok, ignore_errors=True)
+    _btrfs_kaynak(kok)
+    for secenek in (["-n", "4096", "--compress", "zstd", "-m", "dup"],
+                    ["--mixed", "--compress", "lzo"]):
+        yol = img_path("t68_v.img")
+        if os.path.exists(yol):
+            os.unlink(yol)
+        with open(yol, "wb") as fh:
+            fh.truncate(200 * MIB)
+        r = subprocess.run([mkfs, "-q", "-f", "-L", "VARYANT", "--rootdir", kok,
+                            "--subvol", "rw:alt_hacim", *secenek, yol],
+                           capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+        denetle(yol, "VARYANT")
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

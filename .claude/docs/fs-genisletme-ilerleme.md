@@ -87,7 +87,8 @@ Isaretler: `[ ]` bekliyor · `[~]` suruyor · `[x]` bitti · `[-]` kapsam disi (
 - [x] XFS buyutme (ADR 0068): cevrimdisi; son AG uzatma + yeni AG (rmapbt/reflink
       dahil), gunluk temizligi denetimi, tasima; xfs_repair temiz, icerik birebir;
       t67. Windows 64/67 (2026-10-01, misafir yeniden baslatildiktan sonra)
-- [ ] btrfs okuma (zlib; LZO/zstd icin durust hata → saf cozucu)
+- [x] btrfs okuma (ADR 0069): zlib + saf LZO1X + saf zstd (RFC 8878), alt hacim,
+      DUP/karisik/4K-64K dugum; 1507 dosya birebir, zstd CLI ile capraz; t68
 - [ ] F2FS okuma
 
 ## Asama 4
@@ -124,3 +125,4 @@ Isaretler: `[ ]` bekliyor · `[~]` suruyor · `[x]` bitti · `[-]` kapsam disi (
   (ana makine diski doldu, win10 misafiri 'aborted'). Dongu durduruldu.
 - 2026-10-01: kullanici diski buyuttu (68 GB bos); commit a5f9725 push edildi;
   misafir yeniden baslatildi, Windows 64/67. Dongu kalan 4 maddeyle surer.
+- 2026-10-01 tur 10: btrfs okuma + saf LZO/zstd (ADR 0069). Linux 66/68, Windows 65/68.

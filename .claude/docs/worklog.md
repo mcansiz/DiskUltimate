@@ -5375,3 +5375,12 @@ calismiyordu.
   acildi). Windows run_all 64/67 (3 atlanan Linux araci istiyor); XFS
   t65-t67 Windows'ta gecti.
 - Dongu kalan maddelerle devam: btrfs okuma, F2FS okuma, APFS, ReFS.
+
+## 2026-10-01 (2) — btrfs salt okuma; saf LZO1X ve zstd (ADR 0069)
+
+- Yeni `core/btrfs.py` (BtrfsFS) + `filesystem.BtrfsAccess`; yeni
+  `core/compress.py`: saf LZO1X (btrfs cercevesiyle) ve saf zstd (RFC 8878).
+- Dogrulama: zstd 9 veri x 6 seviye CLI ciktisi birebir; btrfs 1507 dosya
+  sikistirmasiz/zlib/LZO/zstd + 4 varyant birebir, btrfs check temiz.
+  Fixture'lar btrfs_{zlib,lzo,zstd}.img.gz (~200 KB). t68.
+- Linux run_all 66/68, Windows 65/68. i18n 35 yeni metin, platform 0, ui_smoke.
