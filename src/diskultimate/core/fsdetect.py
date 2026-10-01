@@ -17,6 +17,11 @@ class FSInfo:
     used_bytes: int = -1
     cluster_size: int = -1
     uuid: str = ""
+    # Guvenlik bayraklari (CLAUDE.md: "bilinmiyor" asla "risk yok" gibi
+    # sunulmaz; karar metinden degil bayraktan verilir).
+    encrypted: bool = False      # icerik sifreli (BitLocker, LUKS, ...)
+    container: bool = False      # icinde baska birimler var (LVM, RAID, ZFS, APFS)
+    maybe_encrypted: bool = False  # imza yok ama ilk bloklar rastgele gorunuyor
 
     @property
     def free_bytes(self) -> int:
@@ -48,6 +53,10 @@ def detect(dev: BlockDevice) -> FSInfo:
     if len(boot) < 512:
         return FSInfo(fs_type="")
 
+    # --- sifreli / kapsayici (dosya sistemi imzalarindan once) ---
+    special = _container_or_encrypted(dev, boot)
+    if special is not None:
+        return special
     # --- exFAT ---
     if boot[3:11] == b"EXFAT   ":
         return _exfat(dev, boot)
@@ -67,22 +76,322 @@ def detect(dev: BlockDevice) -> FSInfo:
         return _swap(dev)
     # --- btrfs ---
     if _safe_read(dev, 0x10000 + 0x40, 8) == b"_BHRfS_M":
-        label = _clean(_safe_read(dev, 0x10000 + 0x12B, 256))
-        return FSInfo(fs_type="btrfs", label=label, total_bytes=dev.size)
+        return _btrfs(dev)
     # --- XFS ---
     if boot[:4] == b"XFSB":
-        return FSInfo(fs_type="XFS", label=_clean(boot[0x6C:0x7C]), total_bytes=dev.size)
+        return _xfs(boot, dev)
+    # --- HFS+ / HFSX / HFS ---
+    hfs = _safe_read(dev, 1024, 512)
+    if hfs[:2] in (b"H+", b"HX") and struct.unpack_from(">H", hfs, 2)[0] in (4, 5):
+        return _hfsplus(dev, hfs)
+    if hfs[:2] == b"BD" and hfs[0x7C:0x7E] in (b"H+", b"HX"):
+        # Eski HFS sarmalayicisina gomulu HFS+ (klasik Mac OS diskleri)
+        try:
+            from .hfsplus import HfsPlusFS
+            inner = HfsPlusFS._embedded(dev, hfs)
+            return _hfsplus(inner, _safe_read(inner, 1024, 512))
+        except Exception:                      # noqa: BLE001
+            pass
+    if hfs[:2] == b"BD":
+        return FSInfo(fs_type="HFS", label=_pascal(hfs[36:64]), total_bytes=dev.size)
+    # --- UDF (ISO9660 koprusu olabilir; UDF oncelikli) ---
+    udf = _udf(dev)
+    if udf is not None:
+        return udf
     # --- ISO9660 ---
     if _safe_read(dev, 32769, 5) == b"CD001":
         return FSInfo(fs_type="ISO9660", label=_clean(_safe_read(dev, 32808, 32)),
                       total_bytes=dev.size)
     # --- F2FS ---
     if _safe_read(dev, 1024, 4) == b"\x10\x20\xF5\xF2":
-        return FSInfo(fs_type="F2FS", total_bytes=dev.size)
+        return _f2fs(dev)
+    # --- JFS ---
+    jfs = _safe_read(dev, 32768, 256)
+    if jfs[:4] == b"JFS1":
+        return FSInfo(fs_type="JFS", label=_clean(jfs[0x98:0xA8]) or _clean(jfs[0x65:0x70]),  # s_label; eski: s_fpack
+                      total_bytes=dev.size)
+    # --- ReiserFS ---
+    for base in (0x10000, 0x2000):
+        magic = _safe_read(dev, base + 52, 10)
+        if magic.startswith((b"ReIsErFs", b"ReIsEr2Fs", b"ReIsEr3Fs")):
+            return FSInfo(fs_type="ReiserFS", label=_clean(_safe_read(dev, base + 100, 16)),
+                          total_bytes=dev.size)
+    # --- bcachefs / bcache ---
+    bc = _safe_read(dev, 4096 + 24, 16)
+    if bc == BCACHEFS_MAGIC:
+        return FSInfo(fs_type="bcachefs", total_bytes=dev.size)
+    if bc == BCACHE_MAGIC:
+        return FSInfo(fs_type="bcache", total_bytes=dev.size, container=True)
+    # --- NILFS2 / EROFS / Minix / SquashFS ---
+    sb2 = _safe_read(dev, 1024, 32)
+    if len(sb2) == 32 and struct.unpack_from("<H", sb2, 6)[0] == 0x3434:
+        return FSInfo(fs_type="NILFS2", total_bytes=dev.size)
+    if len(sb2) == 32 and struct.unpack_from("<I", sb2, 0)[0] == 0xE0F5E1E2:
+        return FSInfo(fs_type="EROFS", total_bytes=dev.size)
+    if len(sb2) == 32 and (struct.unpack_from("<H", sb2, 16)[0] in
+                           (0x137F, 0x138F, 0x2468, 0x2478)
+                           or struct.unpack_from("<H", sb2, 24)[0] == 0x4D5A):
+        return FSInfo(fs_type="Minix", total_bytes=dev.size)
+    if boot[:4] == b"hsqs":
+        return FSInfo(fs_type="SquashFS", total_bytes=dev.size,
+                      used_bytes=min(dev.size, struct.unpack_from("<Q", boot, 40)[0]))
+    # --- ZFS ---
+    if _zfs(dev):
+        return FSInfo(fs_type="ZFS", total_bytes=dev.size, container=True)
 
     if boot == b"\x00" * 512:
         return FSInfo(fs_type="")  # bicimlendirilmemis
-    return FSInfo(fs_type="Bilinmeyen")
+    info = FSInfo(fs_type="Bilinmeyen")
+    # Imzasi olmayan sifreli birimler (VeraCrypt/TrueCrypt, duz dm-crypt)
+    # rastgele veriye benzer. Kesin degildir; yalnizca uyari icin kullanilir.
+    info.maybe_encrypted = _looks_random(_safe_read(dev, 0, 4096))
+    return info
+
+
+# ----------------------------------------------------------------------
+# Sifreli birimler ve kapsayicilar (ADR 0053)
+# ----------------------------------------------------------------------
+BCACHE_MAGIC = bytes.fromhex("c68573f64e1a45ca8265f57f48ba6d81")
+BCACHEFS_MAGIC = bytes.fromhex("c68573f666ce90a9d96a60cf803df7ef")
+MD_MAGIC = 0xA92B4EFC
+# BitLocker (Vista / To Go) meta veri GUID'i 4967D63B-2E29-4AD8-8399-F6A339E3D001
+FVE_GUID = bytes.fromhex("3bd66749292ed84a8399f6a339e3d001")
+
+
+def _container_or_encrypted(dev: BlockDevice, boot: bytes) -> Optional[FSInfo]:
+    """Dosya sisteminden ONCE bakilir: sifreli/kapsayici birimin icinde
+    (veya yaninda) gecerli gorunen bir dosya sistemi imzasi bulunabilir —
+    ornegin ucta RAID ustverisi olan bir RAID1 uyesi ext4 gibi gorunur.
+    Onu "ext4" diye gostermek, bicimlendirmeye davet etmektir."""
+    # LUKS1 / LUKS2
+    if boot[:6] == b"LUKS\xba\xbe":
+        version = struct.unpack_from(">H", boot, 6)[0]
+        label = _clean(boot[24:72]) if version >= 2 else ""
+        return FSInfo(fs_type="LUKS" + (str(version) if version in (1, 2) else ""),
+                      label=label, uuid=_clean(boot[168:208]),
+                      total_bytes=dev.size, encrypted=True)
+    # BitLocker
+    if boot[3:11] == b"-FVE-FS-" or FVE_GUID in boot:
+        return FSInfo(fs_type="BitLocker", total_bytes=dev.size, encrypted=True)
+    # LVM2 fiziksel birim: etiket ilk 4 sektorden birinde
+    head = _safe_read(dev, 0, 2048)
+    for sector in range(4):
+        blk = head[sector * 512:(sector + 1) * 512]
+        if blk[:8] == b"LABELONE" and blk[24:32] == b"LVM2 001":
+            return FSInfo(fs_type="LVM2", uuid=_clean(blk[32:64]),
+                          total_bytes=dev.size, container=True)
+    # Linux yazilim RAID (md): 1.1 basta, 1.2 4 KiB'de, 1.0 ve 0.90 sonda
+    size = dev.size
+    spots = [0, 4096]
+    if size >= 16384:
+        spots.append(((size // 512 - 16) & ~7) * 512)            # 1.0
+    if size >= 131072:
+        spots.append((size & ~(65536 - 1)) - 65536)              # 0.90
+    for off in spots:
+        raw = _safe_read(dev, off, 64)
+        if len(raw) >= 64 and struct.unpack_from("<I", raw, 0)[0] == MD_MAGIC:
+            major, minor = struct.unpack_from("<II", raw, 4)
+            v1 = major == 1 and off in (0, 4096) or (major == 1 and off > 4096
+                                                        and off % 4096 == 0)
+            v090 = major == 0 and minor == 90
+            if not (v1 or v090):
+                continue          # sihirli sayi tek basina yetmez (artik veri)
+            name = _clean(raw[32:64]) if major == 1 else ""
+            return FSInfo(fs_type="Linux RAID", label=name, total_bytes=size,
+                          container=True)
+    # APFS kapsayicisi
+    if boot[32:36] == b"NXSB":
+        bs = struct.unpack_from("<I", boot, 36)[0]
+        count = struct.unpack_from("<Q", boot, 40)[0]
+        total = bs * count if 4096 <= bs <= 65536 else size
+        return FSInfo(fs_type="APFS", total_bytes=min(total, size) or size,
+                      cluster_size=bs, container=True)
+    # Apple CoreStorage (FileVault 2 / Fusion, macOS 10.7-10.12)
+    if boot[88:90] == b"CS" and struct.unpack_from("<H", boot, 90)[0] == 1:
+        return FSInfo(fs_type="CoreStorage", total_bytes=size, container=True,
+                      encrypted=True)
+    # ReFS
+    if boot[3:11] == b"ReFS\x00\x00\x00\x00" and boot[16:20] == b"FSRS":
+        return FSInfo(fs_type="ReFS", total_bytes=size)
+    return None
+
+
+def _looks_random(data: bytes) -> bool:
+    """Shannon entropisi 7.5 bit/bayt ustu mu (4 KiB ornekte)."""
+    if len(data) < 4096 or not data.strip(b"\x00"):
+        return False
+    import math
+    counts = [0] * 256
+    for b in data:
+        counts[b] += 1
+    n = len(data)
+    entropy = -sum(c / n * math.log2(c / n) for c in counts if c)
+    return entropy > 7.5
+
+
+def _pascal(raw: bytes) -> str:
+    n = raw[0] if raw else 0
+    return raw[1:1 + n].decode("mac_roman", "ignore")
+
+
+def _btrfs(dev: BlockDevice) -> FSInfo:
+    sb = _safe_read(dev, 0x10000, 0x1000)
+    total = struct.unpack_from("<Q", sb, 0x70)[0]
+    used = struct.unpack_from("<Q", sb, 0x78)[0]
+    info = FSInfo(fs_type="btrfs", label=_clean(sb[0x12B:0x12B + 256]),
+                  total_bytes=total or dev.size,
+                  cluster_size=struct.unpack_from("<I", sb, 0x90)[0])
+    if 0 <= used <= info.total_bytes:
+        info.used_bytes = used
+    try:
+        import uuid as _uuid
+        info.uuid = str(_uuid.UUID(bytes=sb[0x20:0x30]))
+    except Exception:
+        pass
+    return info
+
+
+def _xfs(boot: bytes, dev: BlockDevice) -> FSInfo:
+    bs = struct.unpack_from(">I", boot, 4)[0]
+    dblocks = struct.unpack_from(">Q", boot, 8)[0]
+    free = struct.unpack_from(">Q", boot, 0x90)[0]
+    info = FSInfo(fs_type="XFS", label=_clean(boot[0x6C:0x78]),
+                  total_bytes=bs * dblocks or dev.size, cluster_size=bs)
+    if free <= dblocks:
+        # sb_fdblocks tembel sayaclarla yaklasiktir; gosterim icin yeterli
+        info.used_bytes = (dblocks - free) * bs
+    try:
+        import uuid as _uuid
+        info.uuid = str(_uuid.UUID(bytes=boot[32:48]))
+    except Exception:
+        pass
+    return info
+
+
+def _hfsplus(dev: BlockDevice, hdr: bytes) -> FSInfo:
+    bs = struct.unpack_from(">I", hdr, 40)[0]
+    total = struct.unpack_from(">I", hdr, 44)[0]
+    free = struct.unpack_from(">I", hdr, 48)[0]
+    fs_type = "HFSX" if hdr[:2] == b"HX" else "HFS+"
+    info = FSInfo(fs_type=fs_type, total_bytes=bs * total or dev.size,
+                  used_bytes=(total - free) * bs if free <= total else -1,
+                  cluster_size=bs)
+    info.label = _hfsplus_label(dev, hdr, bs)
+    return info
+
+
+def _hfsplus_label(dev: BlockDevice, hdr: bytes, bs: int) -> str:
+    """Birim adi katalog B-agacinin ilk yaprak kaydinin anahtarindadir.
+
+    Katalog kayitlari (ust_kimlik, ad) sirasiyla dizilir; en kucuk anahtar
+    kok klasorun kaydidir: ust kimlik 1, ad = birim adi.
+    """
+    try:
+        # catalogFile fork verisi: ofset 0x110; ilk extent 0x110+16
+        start = struct.unpack_from(">I", hdr, 0x110 + 16)[0]
+        header_node = _safe_read(dev, start * bs, 512)
+        node_size = struct.unpack_from(">H", header_node, 14 + 18)[0]
+        first_leaf = struct.unpack_from(">I", header_node, 14 + 10)[0]
+        if not node_size or not first_leaf:
+            return ""
+        node = _safe_read(dev, start * bs + first_leaf * node_size, node_size)
+        rec = struct.unpack_from(">H", node, node_size - 2)[0]
+        parent = struct.unpack_from(">I", node, rec + 2)[0]
+        if parent != 1:
+            return ""
+        length = struct.unpack_from(">H", node, rec + 6)[0]
+        return node[rec + 8:rec + 8 + 2 * length].decode("utf-16-be", "ignore")
+    except Exception:
+        return ""
+
+
+def _udf(dev: BlockDevice) -> Optional[FSInfo]:
+    """ECMA-167 birim tanima dizisi: 32 KiB'den itibaren BEA01 ... NSR02/03."""
+    found_bea = False
+    for step in (2048, 4096, 512):
+        found_bea = False
+        for k in range(32):
+            off = 32768 + k * step
+            ident = _safe_read(dev, off + 1, 5)
+            if ident == b"BEA01":
+                found_bea = True
+            elif ident in (b"NSR02", b"NSR03") and found_bea:
+                info = FSInfo(fs_type="UDF", total_bytes=dev.size)
+                info.label = _udf_label(dev)
+                return info
+            elif ident == b"TEA01" or (not ident.strip(b"\x00") and k > 2):
+                break
+    return None
+
+
+def _udf_label(dev: BlockDevice) -> str:
+    """Mantiksal birim tanimlayicisindan (LVD, etiket 6) birim adi."""
+    for bs in (2048, 4096, 512):
+        avdp = _safe_read(dev, 256 * bs, 32)
+        if len(avdp) < 32 or struct.unpack_from("<H", avdp, 0)[0] != 2:
+            continue
+        length, loc = struct.unpack_from("<II", avdp, 16)
+        for i in range(min(64, max(1, length // bs))):
+            d = _safe_read(dev, (loc + i) * bs, 512)
+            if len(d) < 512:
+                break
+            tag = struct.unpack_from("<H", d, 0)[0]
+            if tag == 6:
+                return _dstring(d[84:84 + 128])
+            if tag == 8:
+                break
+        return ""
+    return ""
+
+
+def _dstring(raw: bytes) -> str:
+    """OSTA CS0 d-string: ilk bayt 8 (Latin-1) veya 16 (UTF-16BE), son bayt uzunluk."""
+    if not raw:
+        return ""
+    n = raw[-1]
+    if n == 0:
+        return ""
+    body = raw[1:n]
+    if raw[0] == 16:
+        return body.decode("utf-16-be", "ignore")
+    return body.decode("latin-1", "ignore")
+
+
+def _f2fs(dev: BlockDevice) -> FSInfo:
+    sb = _safe_read(dev, 1024, 3072)
+    bs = 1 << struct.unpack_from("<I", sb, 16)[0]
+    count = struct.unpack_from("<Q", sb, 36)[0]
+    label = sb[0x7C:0x7C + 1024].decode("utf-16-le", "ignore").split("\x00")[0]
+    info = FSInfo(fs_type="F2FS", label=label, total_bytes=count * bs or dev.size,
+                  cluster_size=bs)
+    # Dolu blok sayisi guncel kontrol noktasindadir (iki kopyadan yenisi).
+    try:
+        cp_addr = struct.unpack_from("<I", sb, 0x4C)[0]
+        per_seg = 1 << struct.unpack_from("<I", sb, 20)[0]
+        best = None
+        for addr in (cp_addr, cp_addr + per_seg):
+            cp = _safe_read(dev, addr * bs, 32)
+            if len(cp) < 32:
+                continue
+            ver, _user, valid = struct.unpack_from("<QQQ", cp, 0)
+            if best is None or ver > best[0]:
+                best = (ver, valid)
+        if best and best[1] <= count:
+            info.used_bytes = best[1] * bs
+    except Exception:
+        pass
+    return info
+
+
+def _zfs(dev: BlockDevice) -> bool:
+    """vdev etiketinin uberblock halkasinda 0x00bab10c (iki bayt sirasi)."""
+    for label in (0, 256 * 1024):
+        for k in range(4):
+            raw = _safe_read(dev, label + 128 * 1024 + k * 1024, 8)
+            if len(raw) == 8 and 0x00BAB10C in (struct.unpack("<Q", raw)[0],
+                                                  struct.unpack(">Q", raw)[0]):
+                return True
+    return False
 
 
 def _fat(dev: BlockDevice, boot: bytes) -> Optional[FSInfo]:
@@ -290,7 +599,13 @@ def _ext(sb: bytes) -> FSInfo:
     else:
         fs_type = "ext2"
     blocks_hi = struct.unpack_from("<I", sb, 0x150)[0] if len(sb) > 0x154 else 0
+    if not feat_incompat & 0x0080:                    # 64bit yoksa ust yari anlamsiz
+        blocks_hi = 0
     total_blocks = blocks | (blocks_hi << 32)
+    if feat_incompat & 0x0080 and len(sb) > 0x15C:
+        # 64bit birimde bos blok sayisinin ust yarisi 0x158'dedir; okunmayinca
+        # 16 TiB ustu birimde doluluk yanlis cikiyordu.
+        free |= struct.unpack_from("<I", sb, 0x158)[0] << 32
     try:
         fs_uuid = str(_uuid.UUID(bytes=sb[104:120]))
     except Exception:

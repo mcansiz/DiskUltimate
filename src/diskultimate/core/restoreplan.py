@@ -112,7 +112,9 @@ def build_layout(image: BlockDevice, table: PartitionTable) -> EditableLayout:
 def _read_table(device: BlockDevice) -> Optional[PartitionTable]:
     if GPTTable.is_present(device):
         return GPTTable.read(device)
-    if MBRTable.is_present(device):
+    # Onyukleme sektoru de 0x55AA ile biter: tek bolum yedeginin (FAT/NTFS)
+    # onyukleme kodu bolum girisi diye okunmasin.
+    if MBRTable.is_present(device) and MBRTable.entries_plausible(device):
         return MBRTable.read(device)
     return None
 

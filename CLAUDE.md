@@ -89,27 +89,31 @@ gevşetilmez (gerekçe: `.claude/decisions/0014-fiziksel-disk-destegi.md`):
 > disk** üzerinde yapılır.
 
 ## Test Ortamı Kuralı (ZORUNLU)
-**Testler sanal makinede çalıştırılır, ana makinede değil.** Ana makine
-geliştirme içindir; test hedefi VM'dir.
+**Fiziksel diske, önyükleyiciye veya bellenime yazan testler sanal makinede
+çalıştırılır, ana makinede değil.** Linux VM 2026-09-29'dan beri yoktur;
+kullanıcı kararıyla Linux tarafı ana makinede **yalnızca disk görüntüsü
+dosyaları** üzerinde sınanır.
 
 | | |
 |---|---|
-| Linux misafiri | Linux Mint 22.3 — `ssh pc@192.168.42.131` (parola `1234`) |
-| Windows misafiri | VMware Win10 — bkz. `.claude/memory/windows-test-ortami.md` |
+| Linux | Ana makine, **yalnızca görüntü dosyası** (`.tmp/tests/`) — bkz. `.claude/memory/linux-test-ortami.md` |
+| Windows misafiri (yerel) | VirtualBox `"win10 "` — bkz. `.claude/memory/virtualbox-win10-test.md` |
+| Windows misafiri (uzak) | VMware Win10 — bkz. `.claude/memory/windows-test-ortami.md` |
 
 Gerekçe: bu proje **diske yazan** bir araçtır. Fiziksel disk, önyükleyici ve
 bellenim (UEFI değişkeni) işlemleri yanlış gittiğinde makineyi açılmaz
-bırakabilir; ana makine bu riski taşımamalıdır. Ayrıca çapraz platform iddiası
-ancak hedef sistemde ölçülerek doğrulanır.
+bırakabilir; ana makine bu riski taşımamalıdır. Görüntü dosyası bu riski
+taşımaz. Çapraz platform iddiası ancak hedef sistemde ölçülerek doğrulanır.
 
 Uygulaması:
-- `tests.run_all`, `tests.diag_check`, `tests.physical_write_test` gibi
-  **çalıştıran** testler VM'de koşar.
-- `tests.platform_check`, `tests.i18n_check` gibi **statik** denetimler
-  kaynağı okur, disk açmaz; ana makinede koşabilir, ama sonuç VM'de de
-  doğrulanır.
-- Ana makinede yalnızca **salt okunur** inceleme yapılabilir (disk listeleme,
-  bellenim değişkeni okuma). Ana makineye **yazan** hiçbir deneme yapılmaz.
+- `tests.run_all`, `tests.diag_check` gibi yalnızca görüntü dosyası kullanan
+  testler ana makinede koşabilir; Windows sonucu VirtualBox misafirinde alınır.
+- `tests.physical_*` ve fiziksel disk/önyükleyici/UEFI denemeleri **ana
+  makinede koşmaz**; VirtualBox misafirinin ikinci diskinde (`du-test-disk.vdi`)
+  koşar.
+- Ana makinede root yoktur: çekirdek bağlaması yapılamaz. Doğrulama kullanıcı
+  alanı araçlarıyla (`e2fsck -fn`, `xfs_repair -n`, `btrfs check`,
+  `fsck.vfat`) yapılır; "çekirdek bağladı" denmez.
 - Bir yetenek VM'de sınanamıyorsa (örneğin misafir BIOS kipinde açıldığı için
   UEFI değişkeni yazılamıyor) bu **açıkça yazılır**, "test edildi" denmez.
 

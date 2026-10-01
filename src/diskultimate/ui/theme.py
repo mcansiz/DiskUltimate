@@ -6,6 +6,7 @@ from PyQt5.QtGui import (QBrush, QColor, QIcon, QLinearGradient, QPainter,
                          QPainterPath, QPen, QPixmap, QPolygonF)
 from PyQt5.QtWidgets import QApplication
 
+from ..core import fsregistry
 from ..i18n import mark, tr
 
 # Ana palet (DiskGenius'a yakin, acik tema)
@@ -19,24 +20,8 @@ ACCENT_LIGHT = "#e3eefb"
 HEADER_TOP = "#fbfcfe"
 HEADER_BOTTOM = "#e7ecf3"
 
-# Dosya sistemine gore bolum renkleri
-FS_COLORS = {
-    "FAT12": "#7fb069",
-    "FAT16": "#5a9e4b",
-    "FAT32": "#3d7fd6",
-    "exFAT": "#2f9e9e",
-    "NTFS": "#7a5bd6",
-    "ext2": "#d98324",
-    "ext3": "#d9731f",
-    "ext4": "#d4621a",
-    "btrfs": "#c04a3f",
-    "XFS": "#b0543e",
-    "F2FS": "#a0522d",
-    "Linux Takas": "#8e8e93",
-    "ISO9660": "#6a7fa0",
-    "Bilinmeyen": "#9aa5b1",
-    "": "#b6bfc9",          # bicimlendirilmemis
-}
+# Dosya sistemine gore bolum renkleri — tek kaynak `core/fsregistry` (ADR 0056)
+FS_COLORS = fsregistry.colors()
 # Plan onizlemesi (ADR 0031): henuz diske yazilmamis bolumler bu renkle
 # isaretlenir. Anlamsal bir renktir — "bu gercek degil, planlanan" demek icin
 # kullanilir, bu yuzden paletten gelmez (CLAUDE.md renk kurali).
@@ -62,7 +47,7 @@ SELECTED = "#1769c7"
 
 
 def fs_color(fs_type: str) -> QColor:
-    return QColor(FS_COLORS.get(fs_type or "", FS_COLORS[""]))
+    return QColor(fsregistry.fs_color(fs_type))
 
 
 def lighten(color: QColor, factor: int = 150) -> QColor:

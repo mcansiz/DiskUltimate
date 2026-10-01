@@ -30,6 +30,7 @@ from .platform import IS_LINUX, IS_MACOS, IS_WINDOWS, run_tool
 from .platform import mount_partition as pf_mount
 from .platform import partition_mount_point as pf_mount_point
 from .platform import unmount_partition as pf_unmount
+from . import fsregistry
 from ..i18n import tr
 
 SECTOR = 512
@@ -164,12 +165,13 @@ def guess_os_from_partitions(partitions) -> str:
 
     if MSR in turler or KURTARMA in turler or 0x27 in tip_baytlari:
         return "windows"
-    if HFS in turler or APFS in turler or 0xAF in tip_baytlari:
+    if HFS in turler or APFS in turler or 0xAF in tip_baytlari or \
+            fsler & fsregistry.family_keys("macos"):
         return "macos"
-    if fsler & {"ext2", "ext3", "ext4", "btrfs", "xfs", "f2fs"} or \
-            "linux takas" in fsler or 0x83 in tip_baytlari or 0x82 in tip_baytlari:
+    if fsler & fsregistry.family_keys("linux") or \
+            0x83 in tip_baytlari or 0x82 in tip_baytlari:
         return "linux"
-    if "ntfs" in fsler:
+    if fsler & fsregistry.family_keys("windows"):
         return "windows"
     return ""
 

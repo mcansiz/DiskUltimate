@@ -24,7 +24,7 @@ from typing import List, Optional
 from .ptable import ALIGN_BYTES, FreeRegion, Partition, human_size
 from ..i18n import tr
 
-FS_KINDS = ("fat", "exfat", "ntfs")      # saf Python'da boyutlandirilabilenler
+FS_KINDS = ("fat", "exfat", "ntfs", "ext", "xfs")   # saf Python'da boyutlandirilabilenler
 # Boyutu degisebilen turler: yukaridakiler + isletim sisteminin kendi
 # boyutlandiricisi (Windows fiziksel disk, `FsResizeInfo.kind == "native"`).
 RESIZABLE_KINDS = FS_KINDS + ("native",)

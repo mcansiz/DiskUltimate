@@ -13,6 +13,7 @@ from .image import BlockDevice
 from .mbr import MAX_MBR_SECTORS, MBRTable
 from .ptable import (GPT_UNUSED, MBR_EXTENDED_TYPES, Partition, PartitionTable,
                      PartitionTableError, human_size)
+from . import fsregistry
 from ..i18n import tr
 
 MSBASIC = "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7"
@@ -48,19 +49,10 @@ GPT_TO_MBR = {
     "516E7CB4-6ECF-11D6-8FF8-00022D09712B": 0xA5,
 }
 
-# Dosya sistemine gore MBR tip bayti (tur GUID'i taninmadiginda kullanilir)
-FS_TO_MBR = {
-    "FAT12": 0x01, "FAT16": 0x0E, "FAT32": 0x0C, "exFAT": 0x07, "NTFS": 0x07,
-    "ext2": 0x83, "ext3": 0x83, "ext4": 0x83, "btrfs": 0x83, "XFS": 0x83,
-    "Linux Takas": 0x82,
-}
-FS_TO_GPT = {
-    "FAT12": MSBASIC, "FAT16": MSBASIC, "FAT32": MSBASIC,
-    "exFAT": MSBASIC, "NTFS": MSBASIC,
-    "ext2": LINUXFS, "ext3": LINUXFS, "ext4": LINUXFS,
-    "btrfs": LINUXFS, "XFS": LINUXFS,
-    "Linux Takas": "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F",
-}
+# Dosya sistemine gore MBR tip bayti / GPT tur GUID'i (tur taninmadiginda
+# kullanilir). Tek kaynak: `fsregistry` (ADR 0056).
+FS_TO_MBR = fsregistry.mbr_types()
+FS_TO_GPT = fsregistry.gpt_types()
 
 GPT_RESERVED_HEAD = 34      # koruyucu MBR + baslik + 128 giris
 GPT_RESERVED_TAIL = 33      # yedek giris dizisi + yedek baslik

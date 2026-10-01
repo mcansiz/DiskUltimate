@@ -24,6 +24,7 @@ from diskultimate.core.exfat import (ExFatFS, UPCASE_STANDARD_CHECKSUM,  # noqa:
                                      standard_upcase_table, table_checksum)
 from diskultimate.core.ext import format_ext  # noqa: E402
 from diskultimate.core.extread import ExtFS  # noqa: E402
+from diskultimate.core.extwrite import ExtWriter  # noqa: E402
 from diskultimate.core.filesystem import (ExtAccess,  # noqa: E402
                                           NtfsAccess, open_filesystem)
 from diskultimate.core.ntfsread import NtfsError, NtfsFS  # noqa: E402
@@ -378,7 +379,8 @@ def t08_hata_geri_alma():
         s.create_partition(bos.start_lba, 4 * MIB // 512, fs_key="fat32")
         raise AssertionError("cok kucuk FAT32 bolumu engellenmedi")
     except Exception as exc:
-        assert "33 MB" in str(exc), exc
+        from diskultimate.core.formatter import FS_BY_KEY
+        assert human_size(FS_BY_KEY["fat32"].min_bytes) in str(exc), exc
     assert len(s.partitions) == 0, "basarisiz islemden hayalet bolum kaldi"
     # ayni alanda gecerli bir bolum olusturulabilmeli
     part = s.create_partition(bos.start_lba, 64 * MIB // 512, fs_key="fat32",
@@ -2952,19 +2954,12 @@ def t42_ntfs_isletim_sistemi_yazabilmeli():
         f"MFT bitmap'inde bos kayit kalmamis: {dolu}/{kapasite}"
 
     # 2) Kok dizin kendi girisini ("." -> kayit 5) tasimali.
-    #    Okuyucumuz "." girisini listelemez, bu yuzden ham cozumlenir.
-    kok = fs.record(5).find(0x90, "$I30")
-    deger = kok.value
-    baslangic, uzunluk = _struct.unpack_from("<II", deger, 0x10)
-    pos, adlar = 0x10 + baslangic, []
-    while pos + 0x10 <= 0x10 + uzunluk:
-        ref, boy, anahtar, bayrak = _struct.unpack_from("<QHHH", deger, pos)
-        if boy < 0x10 or bayrak & 0x02:
-            break
-        n = deger[pos + 0x50]
-        adlar.append((deger[pos + 0x52:pos + 0x52 + n * 2].decode("utf-16-le"),
-                      ref & 0xFFFFFFFFFFFF))
-        pos += boy
+    #    Okuyucumuz "." girisini listelemez; indeks agaci dogrudan gezilir
+    #    (kok 1 KiB kayitta INDX'li buyuk dizindir, ADR 0058).
+    from diskultimate.core.ntfsindex import DirIndex
+    from diskultimate.core.ntfswrite import NtfsWriter as _W
+    adlar = [(e.name, e.ref & 0xFFFFFFFFFFFF)
+             for e in DirIndex(_W(fs), 5).all_entries()]
     assert (".", 5) in adlar, f"kok dizinde '.' girisi yok: {adlar}"
     assert ("$MFT", 0) in adlar and ("$Secure", 9) in adlar, adlar
     # Kullaniciya gosterilen listede "." gorunmemeli
@@ -2973,11 +2968,13 @@ def t42_ntfs_isletim_sistemi_yazabilmeli():
     # 3) $Secure gercek icerik tasimali
     secure = fs.record(9)
     sds = fs.read_attribute(secure.find(0x80, "$SDS"))
-    assert len(sds) == 0x400FC, f"$SDS boyutu {len(sds):#x}, 0x400fc bekleniyor"
-    assert sds[:0xFC] == sds[0x40000:0x40000 + 0xFC], "$SDS aynasi tutmuyor"
+    # Iki mkntfs tanimlayicisi + kok tanimlayicisi (0x102, ADR 0058)
+    kullanilan = len(sds) - 0x40000
+    assert kullanilan > 0xFC, f"$SDS boyutu {len(sds):#x}"
+    assert sds[:kullanilan] == sds[0x40000:], "$SDS aynasi tutmuyor"
     kimlikler = {}
     pos = 0
-    while pos + 20 <= 0xFC:
+    while pos + 20 <= kullanilan:
         karma, kimlik, ofset, boy = _struct.unpack_from("<IIQI", sds, pos)
         if boy == 0:
             break
@@ -2986,8 +2983,10 @@ def t42_ntfs_isletim_sistemi_yazabilmeli():
         assert ofset == pos, (ofset, pos)
         kimlikler[kimlik] = tanim
         pos = (pos + boy + 15) & ~15
-    assert set(kimlikler) == {SECURITY_ID_SYSTEM, SECURITY_ID_FULL}, \
-        list(map(hex, kimlikler))
+    from diskultimate.core.ntfs import SECURITY_ID_ROOT, root_security_descriptor
+    assert set(kimlikler) == {SECURITY_ID_SYSTEM, SECURITY_ID_FULL,
+                              SECURITY_ID_ROOT}, list(map(hex, kimlikler))
+    assert kimlikler[SECURITY_ID_ROOT] == root_security_descriptor()
     assert kimlikler[SECURITY_ID_SYSTEM] == security_descriptor(0x00120089)
     assert kimlikler[SECURITY_ID_FULL] == security_descriptor(0x0012019F)
 
@@ -3006,7 +3005,7 @@ def t42_ntfs_isletim_sistemi_yazabilmeli():
             assert anahtar == anahtar_boyu, (ad, anahtar)
             sayi += 1
             pos += giris_boyu
-        assert sayi == 2, f"{ad} icinde {sayi} giris var, 2 bekleniyor"
+        assert sayi == 3, f"{ad} icinde {sayi} giris var, 3 bekleniyor"
 
     # Sistem dosyalari gecerli bir kimlik gostermeli
     std = fs.record(0).find(0x10)
@@ -3035,9 +3034,17 @@ def t43_baglama_guvenlik_katmani():
     from diskultimate.core import platform as pf
 
     # -- aygit yolu: nvme/mmcblk 'p' ekler, sd/hd eklemez --
-    assert pf.partition_device("/dev/sdb", 3) == "/dev/sdb3"
-    assert pf.partition_device("/dev/nvme0n1", 2) == "/dev/nvme0n1p2"
-    assert pf.partition_device("/dev/mmcblk0", 1) == "/dev/mmcblk0p1"
+    # Windows'ta bolum aygit yolu kavrami yoktur (bos doner); macOS "s" ekler.
+    # Bu test ilk yazildiginda yalnizca Linux'ta kosmustu ve Windows'ta
+    # yanlis beklentiyle basarisiz oluyordu.
+    if pf.IS_WINDOWS:
+        assert pf.partition_device("/dev/sdb", 3) == ""
+    elif pf.IS_MACOS:
+        assert pf.partition_device("/dev/disk2", 3) == "/dev/disk2s3"
+    else:
+        assert pf.partition_device("/dev/sdb", 3) == "/dev/sdb3"
+        assert pf.partition_device("/dev/nvme0n1", 2) == "/dev/nvme0n1p2"
+        assert pf.partition_device("/dev/mmcblk0", 1) == "/dev/mmcblk0p1"
     assert pf.partition_device("/dev/sda", 0) == "", "0 gecerli bolum degil"
 
     # -- etiketler platformun kavramiyla --
@@ -3063,16 +3070,24 @@ def t43_baglama_guvenlik_katmani():
     def patlayici(*args, **kwargs):
         raise AssertionError("kritik bolumde cikarma denenmemeli")
 
+    # Kritik nokta platforma gore degisir: Linux/macOS'ta "/", Windows'ta
+    # sistem surucusu. Test ilk yazildiginda "/" sabitti ve Windows'ta
+    # (orada "/" kritik degildir) yanlis beklentiyle basarisiz oluyordu.
+    if pf.IS_WINDOWS:
+        kok = (os.environ.get("SystemRoot") or "C:\\")[:2] + "\\"
+        siradan = "Q:\\"
+    else:
+        kok, siradan = "/", "/media/kullanici/VERI"
     try:
-        ph.pf_mount_point = lambda path, index: "/"
+        ph.pf_mount_point = lambda path, index: kok
         ph.pf_unmount = patlayici
         ok, message = ph.unmount_partition(info, 1)
         assert not ok and message, (ok, message)
-        assert "/" in message
+        assert kok in message
 
         # Kritik olmayan noktada cikarma platform katmanina INER
         cagrildi = []
-        ph.pf_mount_point = lambda path, index: "/media/kullanici/VERI"
+        ph.pf_mount_point = lambda path, index: siradan
         ph.pf_unmount = lambda path, index: (cagrildi.append((path, index)), (True, ""))[1]
         ok, message = ph.unmount_partition(info, 2)
         assert ok and cagrildi == [("/dev/sahte", 2)], (ok, cagrildi)
@@ -3573,6 +3588,1638 @@ def t47_ortak_yerlesim_modeli():
 
 
 # --------------------------------------------------------------------------
+@test
+def t48_ext_boyutlandirma():
+    """ext2/3/4 saf Python buyutme, kucultme ve tasima (ADR 0052)
+
+    Eskiden ext boyutlandirmasi yalnizca Windows'un `Resize-Partition`
+    aracina yonlendiriliyordu ve o arac ext'i tanimadigi icin **hicbir
+    platformda** calismiyordu. Burada ayni islemler saf Python ile yapilir;
+    varsa `e2fsck -fn` her adimdan sonra birimi denetler.
+    """
+    from diskultimate.core.resize import ResizeError
+    e2fsck = shutil.which("e2fsck") or shutil.which("e2fsck", path="/sbin:/usr/sbin")
+
+    def bolum_denetle(img_yol: str, etiket: str) -> None:
+        if not e2fsck:
+            return
+        with open(img_yol, "rb") as kaynak:
+            mbr = kaynak.read(512)
+            bas, adet = struct.unpack_from("<II", mbr, 446 + 8)
+            parca = img_yol + ".part"
+            kaynak.seek(bas * 512)
+            with open(parca, "wb") as cikti:
+                kalan = adet * 512
+                while kalan > 0:
+                    blok = kaynak.read(min(4 * MIB, kalan))
+                    if not blok:
+                        break
+                    cikti.write(blok)
+                    kalan -= len(blok)
+        try:
+            r = subprocess.run([e2fsck, "-fn", parca], capture_output=True,
+                               text=True)
+            assert r.returncode == 0, f"{etiket}: e2fsck\n{r.stdout[-1500:]}"
+        finally:
+            os.unlink(parca)
+
+    veri = {f"/dosya{i}.bin": os.urandom(37_000 * (i + 1)) for i in range(12)}
+
+    def icerik(oturum, etiket):
+        oturum.close_filesystems()
+        fs = oturum.filesystem(1)
+        for ad, beklenen in veri.items():
+            assert fs.read(ad) == beklenen, f"{etiket}: {ad}"
+        assert fs.read("/klasor/not.txt") == b"ext" * 999, etiket
+        oturum.close_filesystems()
+
+    for surum in ("ext4", "ext3", "ext2"):
+        yol = img_path(f"t48_{surum}.img")
+        s = DiskSession.create(yol, 1200 * MIB, overwrite=True)
+        s.create_table("mbr")
+        s.create_partition(2048, 160 * MIB // 512, fs_key=surum, label="EXTRZ")
+        fs = s.filesystem(1)
+        for ad, icerik_ in veri.items():
+            fs.write_file(ad, icerik_)
+        fs.mkdir("/klasor")
+        fs.write_file("/klasor/not.txt", b"ext" * 999)
+        fs.flush()
+        s.close_filesystems()
+
+        bilgi = s.resize_info(1)
+        assert bilgi.kind == "ext" and bilgi.movable, bilgi
+        assert bilgi.min_sectors < 160 * MIB // 512, bilgi
+
+        # buyut -> kucult (asgariye yakin) -> tasi
+        s.resize_partition(1, 2048, 900 * MIB // 512, confirm=True)
+        assert s.table.get(1).size == 900 * MIB
+        icerik(s, f"{surum} buyut")
+        s.close()
+        bolum_denetle(yol, f"{surum} buyut")
+        s = DiskSession.open(yol, readonly=False)
+
+        bilgi = s.resize_info(1)
+        try:
+            s.plan_resize(1, 2048, max(1, bilgi.min_sectors - 4096))
+            raise AssertionError("ext asgari siniri denetlenmedi")
+        except ResizeError:
+            pass
+        hedef = bilgi.min_sectors + 2048
+        s.resize_partition(1, 2048, hedef, confirm=True)
+        icerik(s, f"{surum} kucult")
+        s.close()
+        bolum_denetle(yol, f"{surum} kucult")
+        s = DiskSession.open(yol, readonly=False)
+
+        s.resize_partition(1, 2048 + 300 * MIB // 512, 400 * MIB // 512,
+                           confirm=True)
+        assert s.table.get(1).start_lba == 2048 + 300 * MIB // 512
+        icerik(s, f"{surum} tasi+buyut")
+        s.close()
+        bolum_denetle(yol, f"{surum} tasi+buyut")
+    if not e2fsck:
+        raise Atlandi("e2fsck yok: islemler calisti, harici denetim yapilamadi")
+
+
+@test
+def t49_sifreli_ve_kapsayici_taninma():
+    """Sifreli / kapsayici bolumler adiyla taninir ve Uygula uyarir (ADR 0053)
+
+    BitLocker, LUKS, LVM, RAID bolumleri eskiden "Bilinmeyen" gorunuyordu;
+    kullanici bunlari bos sanip bicimlendirebilirdi. Imzalar belgelenmis
+    yerlesime gore kurulur (gercek araclar her platformda yok); tespit
+    bayraklari ve `operations.risk_notes` uyarilari sinanir.
+    """
+    import uuid as _uuid
+    from diskultimate.core import operations as ops_mod
+
+    def yaz(view, ofset, veri):
+        view.write(ofset, veri)
+
+    yol = img_path("t49.img")
+    s = DiskSession.create(yol, 200 * MIB, overwrite=True)
+    s.create_table("gpt")
+    bolumler = []
+    for i in range(6):
+        bolumler.append(s.create_partition(2048 + i * 30 * MIB // 512,
+                                           28 * MIB // 512))
+    s.create_partition(2048 + 6 * 30 * MIB // 512, 10 * MIB // 512,
+                       fs_key="fat16", label="SAGLAM")
+    p = [s.view(b) for b in s.table.partitions]
+
+    luks = bytearray(512)
+    luks[0:6] = b"LUKS\xba\xbe"
+    struct.pack_into(">H", luks, 6, 2)
+    luks[24:31] = b"GIZLI01"
+    yaz(p[0], 0, bytes(luks))
+
+    bl = bytearray(512)
+    bl[0:3] = b"\xeb\x58\x90"
+    bl[3:11] = b"-FVE-FS-"
+    bl[510:512] = b"\x55\xaa"
+    yaz(p[1], 0, bytes(bl))
+
+    lvm = bytearray(512)
+    lvm[0:8] = b"LABELONE"
+    lvm[24:32] = b"LVM2 001"
+    yaz(p[2], 512, bytes(lvm))
+
+    md = bytearray(64)
+    struct.pack_into("<III", md, 0, 0xA92B4EFC, 1, 0)
+    md[32:40] = b"host:md0"
+    yaz(p[3], 4096, bytes(md))
+
+    yaz(p[4], 0, os.urandom(8192))                      # imzasiz, rastgele
+
+    # Sihirli sayi tek basina RAID yapmamali (artik veri): surum alani 7
+    artik = bytearray(64)
+    struct.pack_into("<III", artik, 0, 0xA92B4EFC, 7, 0)
+    son = p[6].size
+    yaz(p[6], (son & ~(65536 - 1)) - 65536, bytes(artik))
+    s.reload()
+
+    beklenen = [("LUKS2", "encrypted", "GIZLI01"), ("BitLocker", "encrypted", ""),
+                ("LVM2", "container", ""), ("Linux RAID", "container", "host:md0"),
+                ("Bilinmeyen", "maybe_encrypted", "")]
+    parts = s.table.partitions
+    for part, (tur, bayrak, etiket) in zip(parts, beklenen):
+        info = s.detect_fs(part)
+        assert info.fs_type == tur, (part.index, info.fs_type, tur)
+        assert getattr(info, bayrak), (tur, bayrak)
+        if etiket:
+            assert info.label == etiket, (tur, info.label)
+    saglam = s.detect_fs(parts[6])
+    assert saglam.fs_type == "FAT16" and not (saglam.encrypted or saglam.container
+                                              or saglam.maybe_encrypted), saglam
+    assert s.detect_fs(parts[5]).fs_type == "" and not \
+        s.detect_fs(parts[5]).maybe_encrypted, "sifir bolum bicimsiz sayilmali"
+
+    kuyruk = ops_mod.OperationQueue()
+    for part in parts[:5]:
+        kuyruk.add(ops_mod.format_op(part.index, "fat32", at_lba=part.start_lba))
+    kuyruk.add(ops_mod.format_op(parts[6].index, "fat32", at_lba=parts[6].start_lba))
+    notlar = ops_mod.risk_notes(s, kuyruk)
+    assert len(notlar) == 5, notlar
+    kuyruk2 = ops_mod.OperationQueue()
+    kuyruk2.add(ops_mod.Operation("clear_table"))
+    assert len(ops_mod.risk_notes(s, kuyruk2)) == 5, "tablo silme hepsini soylemeli"
+    s.close()
+
+
+@test
+def t50_takas_bicimlendirme():
+    """Linux takas alani saf Python ile bicimlendirilir (mkswap ile bayt bayt ayni)
+
+    Takas bicimi eskiden listede yoktu (`planview` adini biliyordu ama
+    `FS_KINDS`te yoktu). Baslik sayfasi `mkswap -L -U` ciktisiyla birebir
+    ayni olmali; bolum turu GPT'de takas GUID'i, MBR'de 0x82 olmali.
+    """
+    import uuid as _uuid
+    from diskultimate.core.formatter import FS_BY_KEY
+    from diskultimate.core.swap import format_swap
+
+    assert "swap" in {k.key for k in available_kinds(64 * MIB)}
+    for sema, tur in (("gpt", "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F"), ("mbr", 0x82)):
+        yol = img_path(f"t50_{sema}.img")
+        s = DiskSession.create(yol, 100 * MIB, overwrite=True)
+        s.create_table(sema)
+        part = s.create_partition(2048, 64 * MIB // 512, fs_key="swap",
+                                  label="TAKAS")
+        info = s.detect_fs(part)
+        assert info.fs_type == FS_BY_KEY["swap"].label, info.fs_type
+        assert info.label == "TAKAS" and info.uuid, info
+        if sema == "gpt":
+            assert part.type_guid.upper() == tur, part.type_guid
+        else:
+            assert part.type_id == tur, hex(part.type_id)
+        s.close()
+
+    # mkswap ile karsilastirma (arac varsa)
+    mkswap = shutil.which("mkswap") or shutil.which("mkswap", path="/sbin:/usr/sbin")
+    kimlik = _uuid.UUID("12345678-1234-5678-9abc-def012345678")
+    bizim = img_path("t50_bizim.swap")
+    with open(bizim, "wb") as f:
+        f.truncate(16 * MIB)
+    d = DiskImage(bizim)
+    format_swap(d, "ETIKET", uuid=kimlik)
+    d.close()
+    if not mkswap:
+        raise Atlandi("mkswap yok: bicimlendirme calisti, baytlar karsilastirilamadi")
+    ref = img_path("t50_ref.swap")
+    with open(ref, "wb") as f:
+        f.truncate(16 * MIB)
+    subprocess.run([mkswap, "-q", "-L", "ETIKET", "-U", str(kimlik), ref],
+                   capture_output=True)
+    with open(ref, "rb") as a, open(bizim, "rb") as b:
+        assert a.read(4096) == b.read(4096), "mkswap baslik sayfasi farkli"
+
+
+@test
+def t51_kayip_bolum_yeni_imzalar():
+    """Kayip bolum taramasi ext/takas/NTFS'i bulur, yedek ustbloklari yinelemez
+
+    Tarama eskiden yalnizca FAT/exFAT/NTFS ariyordu. Artik ext2/3/4, XFS,
+    btrfs, HFS+, APFS, F2FS, takas ve ReFS de boyutuyla bulunur. Derin
+    taramada ext'in yedek ustbloklari ayri aday uretmemeli; tabloya geri
+    eklenen bolumun turu dosya sistemine uymali (eskiden MBR'de hep 0x83).
+    """
+    yol = img_path("t51.img")
+    s = DiskSession.create(yol, 700 * MIB, overwrite=True)
+    s.create_table("mbr")
+    yerlesim = [(2048, 300, "ext4", "KAYIPEXT", 0x83),
+                (2048 + 310 * MIB // 512, 64, "swap", "KAYIPSW", 0x82),
+                (2048 + 380 * MIB // 512, 100, "ntfs", "KAYIPNT", 0x07)]
+    for bas, boy, fs_key, etiket, _tur in yerlesim:
+        s.create_partition(bas, boy * MIB // 512, fs_key=fs_key, label=etiket)
+    for part in list(s.table.partitions)[::-1]:
+        s.table.delete_partition(part.index)
+    s.table.write()
+    s.reload()
+    assert not s.table.partitions
+
+    for derin in (False, True):
+        adaylar = s.scan_lost_partitions(deep=derin)
+        ozet = [(a.start_lba, a.sector_count, a.label) for a in adaylar]
+        beklenen = [(bas, boy * MIB // 512, etiket)
+                    for bas, boy, _f, etiket, _t in yerlesim]   # NTFS etiketi $Volume'dan
+        assert ozet == beklenen, (derin, ozet)
+    # Iki yol da veriyi korumali: dogrudan `adopt_lost_partition` ve
+    # arayuzun kullandigi kuyruk adimi (`create_op(keep_data=True)`).
+    # Eskiden ikisi de bolumun ilk/son 2 MB'ini siliyordu.
+    from diskultimate.core import operations as ops_mod
+    part = s.adopt_lost_partition(adaylar[0])
+    assert part.type_id == yerlesim[0][4], hex(part.type_id)
+    kuyruk = ops_mod.OperationQueue()
+    for aday in adaylar[1:]:
+        kuyruk.add(ops_mod.create_op(aday.start_lba, aday.sector_count, 512,
+                                     name=aday.label, keep_data=True,
+                                     found_fs=aday.fs_type))
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, sonuc.error
+    s.reload()
+    parts = s.table.partitions
+    assert [p.type_id for p in parts] == [t for *_x, t in yerlesim], \
+        [hex(p.type_id) for p in parts]
+    turler = [s.detect_fs(p).fs_type for p in parts]
+    assert turler == ["ext4", "Linux Takas", "NTFS"], turler
+    assert [s.detect_fs(p).label for p in parts] == ["KAYIPEXT", "KAYIPSW", "KAYIPNT"]
+    s.close()
+
+
+@test
+def t52_iso9660_okuma():
+    """ISO 9660 salt okuma: Rock Ridge, Joliet ve duz adlar (ADR 0055)
+
+    Test verisi `tests/fixtures/*.iso.gz` (xorriso/genisoimage ciktisi) —
+    ISO ureticisi her platformda olmadigi icin depoda durur. 4 GiB ustu cok
+    parcali dosya burada sinanmaz (4 GB veri); gelistirme sirasinda olculdu.
+    """
+    import gzip
+    from diskultimate.core.filesystem import IsoAccess
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+    ikili = bytes(range(256)) * 1000
+
+    def gez(fs, yol="/"):
+        out = {}
+        for n in fs.listdir(yol):
+            if n.is_dir:
+                out.update(gez(fs, n.path))
+            else:
+                out[n.path] = n
+        return out
+
+    for ad, etiket, rr, joliet in (("fx_rr", "ETIKETRR", True, False),
+                                   ("fx_j", "ETIKETJ", False, True),
+                                   ("fx_plain", "DUZ", False, False)):
+        yol = img_path(f"t52_{ad}.iso")
+        with gzip.open(os.path.join(fixtures, ad + ".iso.gz"), "rb") as kaynak, \
+                open(yol, "wb") as hedef:
+            hedef.write(kaynak.read())
+        d = DiskImage(yol, readonly=True)
+        info = detect(d)
+        assert info.fs_type == "ISO9660", info.fs_type
+        fs = open_filesystem(d, info)
+        assert isinstance(fs, IsoAccess) and fs.readable and not fs.writable
+        assert fs.label == etiket, fs.label
+        assert fs.fs.rock_ridge == rr and fs.fs.joliet == joliet, ad
+        dosyalar = gez(fs)
+        ikili_yol = next(p for p in dosyalar if p.lower().endswith(".bin"))
+        assert fs.read(ikili_yol) == ikili, ad
+        if rr or joliet:
+            assert "/Klasör/türkçe ğüşiöç.txt" in dosyalar, sorted(dosyalar)
+            assert fs.read("/Klasör/türkçe ğüşiöç.txt") == "türkçe".encode()
+            assert fs.read("/BuyukHarf_UzunAd_dosyasi.txt").startswith(b"merhaba iso")
+        else:
+            assert all(";" not in p for p in dosyalar), "surum eki atilmali"
+        if rr:
+            assert dosyalar["/Klasör/bag"].attr_text.endswith(
+                "../BuyukHarf_UzunAd_dosyasi.txt"), dosyalar["/Klasör/bag"]
+        hedef = img_path(f"t52_{ad}.out")
+        fs.extract(ikili_yol, hedef)
+        with open(hedef, "rb") as f:
+            assert f.read() == ikili
+        d.close()
+
+
+@test
+def t53_tablosuz_disk():
+    """Tablosuz disk (duz .iso, super disket FAT, ext4.img) tek bolum gorunur
+
+    Bolum tablosu olmayan goruntu eskiden "bolum tablosu yok, GPT
+    olusturulsun mu?" diye karsilaniyordu; icindeki dosya sistemi
+    gorunmuyordu. 0x55AA'li FAT onyukleme sektoru MBR sanilip onyukleme
+    kodu bolum girisi diye okunuyordu. Bos MBR'nin arkasindaki eski ext4
+    kalintisi ise tablosuz sayilmamali.
+    """
+    import gzip
+    from diskultimate.core.ext import format_ext
+    from diskultimate.core.ptable import PartitionTableError
+    from diskultimate.core.session import SessionError
+
+    # 1) duz ISO
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+    iso = img_path("t53.iso")
+    with gzip.open(os.path.join(fixtures, "fx_rr.iso.gz"), "rb") as a, \
+            open(iso, "wb") as b:
+        b.write(a.read())
+    s = DiskSession.open(iso, readonly=True)
+    assert s.scheme == "none" and len(s.partitions) == 1, s.partitions
+    assert s.partitions[0].fs_type == "ISO9660" and s.partitions[0].start_lba == 0
+    assert s.filesystem(1).read("/Klasör/türkçe ğüşiöç.txt") == "türkçe".encode()
+    s.close()
+
+    # 2) super disket FAT: onyukleme sektoru 0x55AA ile biter
+    yol = img_path("t53_fat.img")
+    d = DiskImage.create(yol, 64 * MIB, overwrite=True)
+    FatFS.format(d, fat_type=16, label="USBBELLEK")
+    d.close()
+    s = DiskSession.open(yol, readonly=False)
+    assert s.scheme == "none", s.scheme
+    assert [(p.fs_type, p.fs_label) for p in s.partitions] == [("FAT16", "USBBELLEK")]
+    fs = s.filesystem(1)
+    fs.write_file("/not.txt", b"tablosuz")
+    fs.flush()
+    s.close_filesystems()
+    for islem in (lambda: s.create_partition(2048, 2048),
+                  lambda: s.delete_partition(1)):
+        try:
+            islem()
+            raise AssertionError("tablosuz diskte tablo degisti")
+        except (PartitionTableError, SessionError):
+            pass
+    assert s.resize_info(1).kind == "unsupported"
+    assert not s.can_convert_to("gpt")[0]
+    assert s.filesystem(1).read("/not.txt") == b"tablosuz"
+    s.close()
+
+    # 3) ext4.img (tablosuz, ustblok 1024'te, 0x55AA yok)
+    yol = img_path("t53_ext.img")
+    d = DiskImage.create(yol, 32 * MIB, overwrite=True)
+    format_ext(d, "ext4", label="HAMEXT")
+    d.close()
+    s = DiskSession.open(yol, readonly=True)
+    assert s.scheme == "none" and s.partitions[0].fs_type == "ext4", s.partitions
+    s.close()
+
+    # 4) ayni goruntuye bos MBR: eski ext4 kalintisi tablosuz sayilmamali
+    s = DiskSession.open(yol, readonly=False)
+    s.create_table("mbr")
+    s.close()
+    s = DiskSession.open(yol, readonly=True)
+    assert s.scheme == "mbr" and not s.partitions, (s.scheme, s.partitions)
+    s.close()
+
+
+@test
+def t54_dosya_sistemi_kutugu():
+    """Her dosya sistemi tek kutukte; gorunen ad cevrilir, veri cevrilmez (ADR 0056)
+
+    Yeni bir dosya sistemi 13 yere dokunmayi gerektiriyordu ve biri
+    unutulunca yarim gorunuyordu. "Bilinmeyen" ve "Linux Takas" cevrilmeden
+    gosteriliyordu. Bu test: `fsdetect`in uretebilecegi her ad ve her
+    bicimlendirme turu kutukte; renk/tur tablolari kutukten turuyor;
+    gorunen ad dil degisince degisir ama `fs_type` verisi degismez.
+    """
+    import re
+    from diskultimate import i18n
+    from diskultimate.core import convert, fsregistry
+    from diskultimate.core.formatter import FS_KINDS
+
+    kaynak = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
+        __file__))), "src", "diskultimate", "core", "fsdetect.py"),
+        encoding="utf-8").read()
+    uretilen = set(re.findall(r'fs_type="([^"]+)"', kaynak))
+    uretilen |= {"FAT12", "FAT16", "FAT32", "ext2", "ext3", "ext4", "HFS+",
+                 "HFSX", "LUKS1", "LUKS2", "Linux Takas"}  # hesaplanan adlar
+    eksik = sorted(u for u in uretilen if u not in fsregistry.BY_KEY)
+    assert not eksik, f"kutukte olmayan dosya sistemi: {eksik}"
+    for kind in FS_KINDS:
+        assert kind.label in fsregistry.BY_KEY, kind.label
+
+    assert convert.FS_TO_MBR == fsregistry.mbr_types()
+    assert convert.FS_TO_GPT == fsregistry.gpt_types()
+    assert convert.FS_TO_MBR["NTFS"] == 0x07 and convert.FS_TO_MBR["Linux Takas"] == 0x82
+
+    onceki = i18n.current_language()
+    try:
+        i18n.set_language("en", remember=False)
+        assert fsregistry.fs_display("Linux Takas") == "Linux Swap"
+        assert fsregistry.fs_display("Bilinmeyen") == "Unknown"
+        assert fsregistry.fs_display("ext4") == "ext4"
+        assert fsregistry.fs_display("") == ""
+        assert fsregistry.fs_display("YeniFS") == "YeniFS", "bilinmeyen anahtar aynen"
+        # renk veriden gelir; dil degisince degismez
+        assert fsregistry.fs_color("Linux Takas") == fsregistry.BY_KEY["Linux Takas"].color
+    finally:
+        i18n.set_language(onceki, remember=False)
+
+
+@test
+def t55_ext_htree_ve_extent_yazma():
+    """ext yazma: htree dizinine ekleme, dizin buyumesi, extent'li dosyalar
+
+    Eskiden yazici indeksli (htree) dizine duz sirayla yaziyor ve dx_root
+    indeksini eziyordu (e2fsck: "HTREE directory ... invalid"); extent'li
+    dizin dolunca yazma reddediliyor, dolayli dizin 12 blokta duruyordu;
+    baslatilmamis gruplar hic kullanilmiyordu. Test verisi
+    `tests/fixtures/ext4_htree.img.gz` (mkfs.ext4 + e2fsck -D, 300 girisli
+    indeksli /d). Her girisin kendi karmasinin yapraginda durdugu platformdan
+    bagimsiz denetlenir; e2fsck varsa birim ayrica denetlenir.
+    """
+    import gzip
+    from diskultimate.core.extwrite import INDEX_FL
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+    yol = img_path("t55.img")
+    with gzip.open(os.path.join(fixtures, "ext4_htree.img.gz"), "rb") as a, \
+            open(yol, "wb") as b:
+        b.write(a.read())
+    d = DiskImage(yol)
+    w = ExtWriter(ExtFS(d))
+    yeni = {f"/d/eklenen_{i:04d}_türkçe_ad.txt": bytes([i % 251]) * (i % 900)
+            for i in range(800)}
+    for ad, veri in yeni.items():
+        w.write_file(ad, veri)
+    w.mkdir("/buyuk")
+    for i in range(2000):
+        w.write_file(f"/buyuk/uzun_bir_dosya_adi_ornegi_{i:05d}.dat", b"")
+    buyuk_veri = os.urandom(3 * MIB)
+    w.write_file("/veri.bin", buyuk_veri)
+    w.flush()
+    d.close()
+
+    d = DiskImage(yol)
+    fs = ExtFS(d)
+    w = ExtWriter(fs)
+    dizin = fs.resolve("/d")
+    assert dizin.flags & INDEX_FL, "dizin indeksli kalmali"
+    for ad, veri in yeni.items():
+        assert fs.read_data(fs.resolve(ad)) == veri, ad
+        # giris, kendi karmasinin indekste gosterdigi yaprakta olmali
+        yaprak = w.htree_leaf_for(dizin.number, ad.rsplit("/", 1)[1])
+        assert ad.rsplit("/", 1)[1].encode() in d.read(yaprak * fs.block_size,
+                                                        fs.block_size), ad
+    for i in range(1, 301):
+        yaprak = w.htree_leaf_for(dizin.number, f"dosya_{i}.txt")
+        assert f"dosya_{i}.txt".encode() in d.read(yaprak * fs.block_size,
+                                                   fs.block_size)
+    buyuk = fs.resolve("/buyuk")
+    assert buyuk.size > 12 * fs.block_size, "dizin 12 blogu asmali"
+    assert len([e for e in fs.read_dir(buyuk) if e.name not in (".", "..")]) == 2000
+    veri_inode = fs.resolve("/veri.bin")
+    assert veri_inode.uses_extents and fs.read_data(veri_inode) == buyuk_veri
+    d.close()
+
+    e2fsck = shutil.which("e2fsck") or shutil.which("e2fsck", path="/sbin:/usr/sbin")
+    if not e2fsck:
+        raise Atlandi("e2fsck yok: yaprak tutarliligi denetlendi, birim denetimi yapilamadi")
+    r = subprocess.run([e2fsck, "-fn", yol], capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout[-1500:]
+
+
+@test
+def t56_ntfs_b_agaci_ve_windows_yapilari():
+    """NTFS B+ agaci: Windows'un yazdigi birimde silme/ekleme/adlandirma (ADR 0058)
+
+    Test verisi `tests/fixtures/ntfs_windows.img.gz`: Windows 10'un kendi
+    surucusuyle olusturdugu dizinler (uzun ad + 8.3 kisa ad ciftleri, iki
+    seviyeli INDX agaci). Her adimda `ntfsindex.verify_tree` (sira, yaprak
+    derinligi, sahipsiz giris, $BITMAP, INDX basligi) temiz olmali — bu
+    kurallarin ihlalini ntfs-3g gormez, Windows "dosya bozuk" der (olculdu).
+    """
+    import gzip
+    from diskultimate.core.ntfsindex import verify_tree
+    from diskultimate.core.ntfsread import NtfsFS as _NtfsFS
+    from diskultimate.core.ntfswrite import NtfsWriter
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+    yol = img_path("t56.img")
+    with gzip.open(os.path.join(fixtures, "ntfs_windows.img.gz"), "rb") as a, \
+            open(yol, "wb") as b:
+        b.write(a.read())
+
+    def denetle(etiket):
+        d = DiskImage(yol, readonly=True)
+        fs = _NtfsFS(d)
+        w = NtfsWriter(fs)
+        for dizin in ("/", "/wbig", "/wref"):
+            sorun = verify_tree(w, fs.resolve(dizin).number)
+            assert not sorun, f"{etiket} {dizin}: {sorun[:3]}"
+        d.close()
+
+    # Kosu uzunlugu isaretli okunur (ntfs-3g, Windows): 128-255 kume gibi
+    # degerler tek baytta 0x80+ yazilirsa negatif sayilir (eski hata).
+    from diskultimate.core.ntfswrite import _encode_runs
+    for uzunluk in (127, 128, 138, 255, 256, 32768, 40000, 65535):
+        kod = _encode_runs([(1000, uzunluk)])
+        n = kod[0] & 0x0F
+        assert int.from_bytes(kod[1:1 + n], "little", signed=True) == uzunluk, uzunluk
+
+    denetle("baslangic")
+    d = DiskImage(yol)
+    w = NtfsWriter(_NtfsFS(d))
+    for i in range(1, 401):                       # uzun + kisa ad ciftleri
+        w.remove(f"/wbig/dosya_{i:05d}_c.txt")
+    w.rename("/wref/kucuk.txt", "yeniden adlandirildi.txt")
+    w.mkdir("/wref/bizim")
+    yeni = {f"/wbig/eklenen_{i:04d}_ğüş.txt": bytes([i % 251]) * (i % 700)
+            for i in range(1500)}
+    for ad, veri in yeni.items():
+        w.write_file(ad, veri)
+    w.flush()
+    d.close()
+    denetle("islemler sonrasi")
+    d = DiskImage(yol, readonly=True)
+    fs = _NtfsFS(d)
+    adlar = {e.name for e in fs.listdir("/wbig")}
+    assert len(adlar) == 200 + 1500, len(adlar)
+    for ad, veri in list(yeni.items())[::97]:
+        assert fs.read_file(ad) == veri, ad
+    assert fs.read_file("/wref/yeniden adlandirildi.txt").startswith(b"merhaba")
+    d.close()
+
+    # Kendi bicimlendiricimizin biriminde yogun ekleme/silme
+    yol2 = img_path("t56b.img")
+    d = DiskImage.create(yol2, 120 * MIB, overwrite=True)
+    format_ntfs(d, label="T56")
+    d.close()
+    d = DiskImage(yol2)
+    w = NtfsWriter(_NtfsFS(d))
+    w.mkdir("/k")
+    for i in range(1200):
+        w.write_file(f"/k/f{i:05d}.bin", bytes([i % 256]) * (i % 900))
+    for i in range(0, 1200, 3):
+        w.remove(f"/k/f{i:05d}.bin")
+    for i in range(0, 1200, 7):
+        if i % 3:
+            w.rename(f"/k/f{i:05d}.bin", f"ad_{i:05d}.bin")
+    w.flush()
+    fs = w.fs
+    sorun = verify_tree(w, fs.resolve("/k").number)
+    assert not sorun, sorun[:3]
+    assert len(fs.listdir("/k")) == 800, len(fs.listdir("/k"))
+    d.close()
+
+
+@test
+def t57_ntfs_bicimlendirici_windows_yapilari():
+    """Saf Python NTFS bicimlendirici Windows'un bekledigi yapilari uretir (ADR 0059)
+
+    Windows eksik yapida birimi "Unknown" ya da "bozuk" (olay 55) sayiyordu;
+    mkntfs ile karsilastirilip duzeltildi ve VirtualBox win10'da Healthy
+    olculdu. Burada o yapilar her platformda denetlenir:
+      1. MFT kaydi 1 KiB (512 bayt sektorde Windows boyle bekler).
+      2. `$Extend` altinda $Quota(24) $ObjId(25) $Reparse(26); gorunum
+         indeksleri ve kota girisleri; MFT bitmap'inde dolu.
+      3. Her sistem dosyasinin $STANDARD_INFORMATION'i 72 bayt ve gecerli
+         guvenlik kimligi tasir; 12-15'in bag sayisi 0.
+      4. Kok dizin INDX'li; yazici ilk kullanici kaydini 27'den sonra alir.
+    """
+    import struct as _struct
+    from diskultimate.core import ntfs as _n
+    from diskultimate.core.ntfsread import NtfsFS as _NtfsFS
+    from diskultimate.core.ntfswrite import NtfsWriter
+
+    yol = img_path("t57.img")
+    d = DiskImage.create(yol, 64 * MIB, overwrite=True)
+    format_ntfs(d, label="T57")
+    d.close()
+    d = DiskImage(yol)
+    fs = _NtfsFS(d)
+    assert fs.record_size == 1024, fs.record_size
+    gecerli = {_n.SECURITY_ID_SYSTEM, _n.SECURITY_ID_FULL, _n.SECURITY_ID_ROOT}
+    for no in list(range(16)) + [24, 25, 26]:
+        kayit = fs.record(no)
+        assert kayit.in_use, no
+        si = kayit.find(0x10)
+        assert len(si.value) == 72, (no, len(si.value))
+        kimlik = _struct.unpack_from("<I", si.value, 0x34)[0]
+        assert kimlik in gecerli, (no, hex(kimlik))
+        bag = _struct.unpack_from("<H", kayit.raw, 0x12)[0]
+        assert bag == (0 if 12 <= no <= 15 else 1), (no, bag)
+
+    beklenen = {24: ("$Quota", {"$O": 0x11, "$Q": 0x10}),
+                25: ("$ObjId", {"$O": 0x13}), 26: ("$Reparse", {"$R": 0x13})}
+    extend = fs.record(11)
+    for no, (ad, indeksler) in beklenen.items():
+        giris = fs.lookup(extend, ad)
+        assert giris is not None and giris.mft_ref & 0xFFFFFFFFFFFF == no, ad
+        kayit = fs.record(no)
+        bayrak = _struct.unpack_from("<H", kayit.raw, 0x16)[0]
+        assert bayrak == 0x0D, (ad, hex(bayrak))
+        for iad, siralama in indeksler.items():
+            kok = kayit.find(0x90, iad)
+            assert kok is not None, (ad, iad)
+            assert _struct.unpack_from("<I", kok.value, 4)[0] == siralama, (ad, iad)
+    q = fs.record(24).find(0x90, "$Q").value
+    assert _struct.unpack_from("<I", q, 0x20 + 0x10)[0] == 1   # ilk anahtar: sahip 1
+    mft = fs.record(0)
+    bitmap = fs.read_attribute(mft.find(0xB0))
+    for no in list(range(16)) + [24, 25, 26]:
+        assert bitmap[no >> 3] & (1 << (no & 7)), no
+
+    w = NtfsWriter(fs)
+    w.write_file("/ilk.txt", b"ilk")
+    w.flush()
+    kayit = w.fs.resolve("/ilk.txt")
+    assert kayit.number >= 27, kayit.number
+    d.close()
+
+    # ntfs-3g varsa onun gozunde de temiz ve $Extend alt dosyalari listelenir
+    ntfsfix, ntfsls = shutil.which("ntfsfix"), shutil.which("ntfsls")
+    if ntfsfix and ntfsls:
+        r = subprocess.run([ntfsfix, "-n", yol], capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr
+        r = subprocess.run([ntfsls, "-a", "-p", "/$Extend", yol],
+                           capture_output=True, text=True)
+        for ad in ("$Quota", "$ObjId", "$Reparse"):
+            assert ad in r.stdout, r.stdout
+
+
+@test
+def t58_fat_exfat_alt_dizin_buyumesi():
+    """FAT/exFAT: alt dizin yeni kumeyle buyurken giris kaybolmaz (matris testi)
+
+    Hata: dizin sonunda yetersiz bos yuva kalinca yeni kume ekleniyor ama
+    giris yeni kumenin basina yaziliyordu; aradaki 0x00 ("dizin sonu") yuvasi
+    okuyucuyu durdurdugu icin yazilan dosya "Bulunamadi" oluyordu. exFAT'ta
+    ayrica ust girisin DataLength'i buyumuyordu ve bos dosya NoFatChain
+    bayragiyla yaziliyordu (fsck.exfat: "empty, but has no Fat chain").
+    """
+    for anahtar in ("fat16", "fat32", "exfat"):
+        yol = img_path(f"t58_{anahtar}.img")
+        s = DiskSession.create(yol, 200 * MIB, overwrite=True)
+        s.create_table("mbr")
+        s.create_partition(2048, 160 * MIB // 512, fs_key=anahtar, label="T58")
+        fs = s.filesystem(1)
+        fs.mkdir("/k")
+        adlar = [f"/k/dosya_{i:03d}.dat" for i in range(150)]
+        for i, ad in enumerate(adlar):
+            fs.write_file(ad, bytes([i % 251]) * (i * 7))
+        fs.flush()
+        s.close_filesystems()
+        fs = s.filesystem(1)
+        for i, ad in enumerate(adlar):
+            assert fs.read(ad) == bytes([i % 251]) * (i * 7), (anahtar, ad)
+        s.close()
+        arac = shutil.which("fsck.exfat" if anahtar == "exfat" else "fsck.vfat")
+        if arac:
+            parca = yol + ".part"
+            with open(yol, "rb") as kaynak, open(parca, "wb") as hedef:
+                kaynak.seek(2048 * 512)
+                hedef.write(kaynak.read(160 * MIB))
+            try:
+                r = subprocess.run([arac, "-n", parca], capture_output=True,
+                                   text=True)
+                assert r.returncode == 0, f"{anahtar}: {r.stdout}{r.stderr}"
+            finally:
+                os.unlink(parca)
+
+
+@test
+def t59_hfsplus_okuma():
+    """HFS+ / HFSX salt okuma: katalog B-agaci, bag, Turkce ad, gunluk, sarmalayici
+
+    Test verisi baska uygulamalarin urettigi birimlerdir (ana makinede
+    HFS+ baglanamaz, macOS yok):
+      * `hfs_xorriso.iso.gz` — libisofs (xorriso -hfsplus) HFS+ agaci:
+        1504 dosya, 3 duzeyli katalog, sembolik bag, Turkce ad. Icerik
+        asagidaki uretecle birebir yeniden uretilir.
+      * `hfs_journal.img.gz` / `hfsx_bos.img.gz` — mkfs.hfsplus (hfsprogs)
+        gunluklu HFS+ ve buyuk/kucuk harf duyarli HFSX.
+    """
+    import gzip
+    from diskultimate.core.hfsplus import HfsPlusFS
+    from diskultimate.core.filesystem import HfsAccess
+    from diskultimate.core.fsregistry import APPLE_HFS
+
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+
+    def ac(ad, hedef):
+        with gzip.open(os.path.join(fixtures, ad), "rb") as a, open(hedef, "wb") as b:
+            b.write(a.read())
+        return hedef
+
+    beklenen = {"/a.txt": b"merhaba\n",
+                "/klasor/desen.bin": bytes(range(256)) * 800,
+                "/klasor/çğüşöı ÇĞÜŞÖİ.txt": "Türkçe içerik\n".encode("utf-8")}
+    for d in range(6):
+        for i in range(250):
+            beklenen[f"/cok/d{d}/dosya_{i:04d}_ğüş.txt"] = \
+                (f"{d}-{i}\n" * (i % 7)).encode("utf-8")
+
+    # --- 1. xorriso birimi: APM bolumunden dogrudan ---------------------
+    iso = ac("hfs_xorriso.iso.gz", img_path("t59.iso"))
+    with open(iso, "rb") as fh:
+        apm = fh.read(4 * 512)[3 * 512:]
+    assert apm[:2] == b"PM" and apm[48:57] == b"Apple_HFS"
+    bas, adet = struct.unpack_from(">II", apm, 8)
+    d = DiskImage(iso, readonly=True)
+    fs = HfsPlusFS(PartitionView(d, bas, adet))
+    assert fs.fs_type == "HFS+" and fs.label == "FXHFS", (fs.fs_type, fs.label)
+    assert fs.catalog.depth >= 2, fs.catalog.depth          # ara dugumler de sinanir
+    for yol, veri in beklenen.items():
+        assert fs.read_file(yol) == veri, yol
+    assert sorted(e.name for e in fs.listdir("/")) == ["a.txt", "bos", "cok", "klasor"]
+    assert fs.listdir("/bos") == []
+    bag = next(e for e in fs.listdir("/klasor") if e.name == "bag")
+    assert bag.symlink == "../a.txt", bag.symlink
+    # HFS+ buyuk/kucuk harf duyarsiz; ad NFD saklanir, NFC sorguyla bulunur.
+    # Noktasiz ı ile I ayri harftir (Apple katlama tablosu da eslemez).
+    assert fs.read_file("/KLASOR/ÇĞÜŞÖı çğüşöİ.TXT") == \
+        beklenen["/klasor/çğüşöı ÇĞÜŞÖİ.txt"]
+    assert fs.resolve("/COK/D3/DOSYA_0100_ĞÜŞ.TXT").size == len(
+        beklenen["/cok/d3/dosya_0100_ğüş.txt"])
+    d.close()
+
+    # --- 2. uctan uca: GPT bolumunde HFS+ -> DiskSession / HfsAccess ----
+    yol = img_path("t59_gpt.img")
+    s = DiskSession.create(yol, 16 * MIB, overwrite=True)
+    s.create_table("gpt")
+    s.create_partition(2048, adet, type_guid=APPLE_HFS)
+    with open(iso, "rb") as kaynak:
+        kaynak.seek(bas * 512)
+        s.image.write(2048 * 512, kaynak.read(adet * 512))
+    s.close()
+    s = DiskSession.open(yol)
+    erisim = s.filesystem(1)
+    assert isinstance(erisim, HfsAccess), type(erisim)
+    assert erisim.readable and not erisim.writable and erisim.write_reason
+    adlar = {n.name for n in erisim.listdir("/klasor")}
+    assert adlar == {"alt", "bag", "desen.bin", "çğüşöı ÇĞÜŞÖİ.txt"}, adlar
+    assert erisim.read("/klasor/desen.bin") == beklenen["/klasor/desen.bin"]
+    hedef = img_path("t59_cikti")
+    shutil.rmtree(hedef, ignore_errors=True)
+    erisim.extract("/cok/d5", hedef)
+    assert len(os.listdir(hedef)) == 250
+    s.close()
+
+    # --- 3. gunluklu HFS+ ve HFSX ------------------------------------------
+    d = DiskImage(ac("hfs_journal.img.gz", img_path("t59_j.img")), readonly=True)
+    fs = HfsPlusFS(d)
+    assert (fs.fs_type, fs.label, fs.journal_dirty) == ("HFS+", "GUNLUK", False)
+    gizli = {e.name: e.hidden for e in fs.listdir("/")}
+    assert gizli == {".journal": True, ".journal_info_block": True}, gizli
+    assert detect(d).fs_type == "HFS+"
+    d.close()
+    d = DiskImage(ac("hfsx_bos.img.gz", img_path("t59_x.img")), readonly=True)
+    fs = HfsPlusFS(d)
+    assert (fs.fs_type, fs.label, fs.case_sensitive) == ("HFSX", "Buyuk", True)
+    d.close()
+
+    # --- 4. eski HFS sarmalayicisi icine gomulu HFS+ (sentetik MDB) ------
+    yol = img_path("t59_w.img")
+    with open(img_path("t59_j.img"), "rb") as fh:
+        ic = fh.read()
+    with open(yol, "wb") as fh:
+        mdb = bytearray(512)
+        mdb[0:2] = b"BD"
+        struct.pack_into(">I", mdb, 0x14, 4096)          # ayirma blogu
+        struct.pack_into(">H", mdb, 0x1C, 16)            # ilk ayirma sektoru
+        mdb[0x7C:0x7E] = b"H+"
+        struct.pack_into(">HH", mdb, 0x7E, 2, len(ic) // 4096)
+        fh.write(bytes(1024) + bytes(mdb))
+        fh.seek(16 * 512 + 2 * 4096)
+        fh.write(ic)
+    d = DiskImage(yol, readonly=True)
+    bilgi = detect(d)
+    assert (bilgi.fs_type, bilgi.label) == ("HFS+", "GUNLUK"), bilgi
+    assert HfsPlusFS(d).label == "GUNLUK"
+    d.close()
+
+
+def _dev_tool(name: str):
+    """(yol, ortam) — PATH'te ya da kullanici alanina acilmis paketlerde
+    (`.tmp/tools/root`, bkz. fs-genisletme-ilerleme.md) gelistirme araci."""
+    yol = shutil.which(name) or shutil.which(name, path="/sbin:/usr/sbin")
+    if yol:
+        return yol, None
+    kok = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       ".tmp", "tools", "root")
+    for alt in ("usr/sbin", "usr/bin", "sbin"):
+        aday = os.path.join(kok, alt, name)
+        if os.path.isfile(aday):
+            ortam = dict(os.environ)
+            ortam["LD_LIBRARY_PATH"] = os.path.join(kok, "usr/lib/x86_64-linux-gnu")
+            return aday, ortam
+    return None, None
+
+
+@test
+def t60_hfsplus_bicimlendirme():
+    """HFS+ bicimlendirme (saf Python, gunluksuz): mkfs.hfsplus ile ayni yerlesim (ADR 0061)
+
+    Yerlesim mkfs.hfsplus (hfsprogs) ciktisi olculerek cikarildi; bos blok
+    sayilari birebir ayni olmali (8M 1997, 64M 15997, 1G 259062, 40G
+    10449854). fsck.hfsplus varsa her birim onun gozunde temiz olmali.
+    Bolum GPT'de Apple HFS GUID'i, MBR'de 0xAF almali; birim okuyucumuzla
+    acilmali. HFSX (buyuk/kucuk harf duyarli) API ile uretilebilir.
+    """
+    from diskultimate.core.hfsformat import format_hfsplus, plan_layout
+    from diskultimate.core.hfsplus import HfsPlusFS
+    from diskultimate.core.filesystem import HfsAccess
+    from diskultimate.core.fsregistry import APPLE_HFS
+
+    GIB = 1024 * MIB
+    for boyut, bos in ((8 * MIB, 1997), (64 * MIB, 15997), (GIB, 259062),
+                       (40 * GIB, 10449854)):
+        L = plan_layout(boyut)
+        kullanilan = (1 + L["alloc_blocks"] + L["ext_blocks"] + L["attr_blocks"]
+                      + L["cat_blocks"] + 1)
+        assert L["total"] - kullanilan == bos, (boyut, L["total"] - kullanilan)
+
+    fsck, ortam = _dev_tool("fsck.hfsplus")
+    for boyut, etiket, duyarli in ((2 * MIB, "Küçük", False),
+                                   (13333333, "Tuhaf boy", False),
+                                   (GIB, "Büyük ğüşİı", False),
+                                   (64 * MIB, "HFSX", True)):
+        yol = img_path("t60.img")
+        if os.path.exists(yol):
+            os.unlink(yol)
+        with open(yol, "wb") as fh:
+            fh.truncate(boyut)                         # seyrek
+        d = DiskImage(yol)
+        format_hfsplus(d, label=etiket, case_sensitive=duyarli)
+        d.close()
+        d = DiskImage(yol, readonly=True)
+        fs = HfsPlusFS(d)
+        assert (fs.label, fs.case_sensitive) == (etiket, duyarli), (fs.label, etiket)
+        assert fs.fs_type == ("HFSX" if duyarli else "HFS+")
+        assert fs.listdir("/") == []
+        # yedek baslik aygitin (tam sektorlerin) sonundan 1024 bayt once
+        assert d.read(d.size - 1024, 512) == d.read(1024, 512), "yedek baslik farkli"
+        d.close()
+        if fsck:
+            r = subprocess.run([fsck, "-f", "-n", yol], capture_output=True,
+                               text=True, env=ortam)
+            assert r.returncode == 0 and "appears to be OK" in r.stdout, \
+                f"{boyut}: {r.stdout}{r.stderr}"
+
+    # uctan uca: DiskSession ile GPT ve MBR bolumu
+    for sema, beklenen_tur in (("gpt", APPLE_HFS), ("mbr", 0xAF)):
+        yol = img_path(f"t60_{sema}.img")
+        s = DiskSession.create(yol, 48 * MIB, overwrite=True)
+        s.create_table(sema)
+        s.create_partition(2048, 40 * MIB // 512, fs_key="hfsplus", label="MacDisk")
+        bolum = s.table.get(1)
+        tur = bolum.type_guid if sema == "gpt" else bolum.type_id
+        assert str(tur).upper() == str(beklenen_tur).upper(), (sema, tur)
+        erisim = s.filesystem(1)
+        assert isinstance(erisim, HfsAccess) and erisim.label == "MacDisk"
+        assert erisim.stats()["total_bytes"] == 40 * MIB
+        s.close()
+
+
+@test
+def t61_hfsplus_yazma():
+    """HFS+ / HFSX yazma: B-agaci bolme/silme, kapsam tasmasi, katalog buyumesi (ADR 0062)
+
+    Apple katlama tablosu kendi kuralimizla uretilir; ozeti fsck_hfs'in
+    tablosundan uretilenle ayni olmali (65 536 giris). Yazma senaryosu:
+    Turkce/Unicode/':' adlar, 3 duzeyli katalog, katalog dosyasinin
+    buyumesi, dolu birimde geri alma, parcali alanda 8+ kapsam, klasorler
+    arasi tasima, ozyinelemeli silme. Her asamada okuyucu ile birebir; fsck.hfsplus
+    varsa "appears to be OK". Kirli/kilitli birime yazma reddedilir.
+    """
+    import hashlib
+    import random
+    from diskultimate.core.hfsformat import format_hfsplus
+    from diskultimate.core.hfsplus import HfsPlusFS
+    from diskultimate.core.hfsunicode import compare_names, fold_table, hfs_nfd
+    from diskultimate.core.hfswrite import HfsWriteError, HfsWriter
+    from diskultimate.core.filesystem import HfsAccess
+
+    tablo = struct.pack(">65536H", *fold_table())
+    assert hashlib.sha1(tablo).hexdigest() == "084766d190993d68c129bf80ec1db385cddde73c"
+    assert compare_names("a", "B") < 0
+    assert compare_names(hfs_nfd("İ"), "i̇") == 0     # diskteki ad NFD'dir
+    assert compare_names("ı", "I") != 0 and compare_names("a", "B", True) > 0
+
+    fsck, ortam = _dev_tool("fsck.hfsplus")
+
+    def denetle(yol, beklenen, etiket):
+        d = DiskImage(yol, readonly=True)
+        fs = HfsPlusFS(d)
+        for p, veri in beklenen.items():
+            assert fs.read_file(p) == veri, (etiket, p)
+        d.close()
+        if fsck:
+            r = subprocess.run([fsck, "-f", "-n", yol], capture_output=True,
+                               text=True, env=ortam)
+            assert r.returncode == 0 and "appears to be OK" in r.stdout, \
+                f"{etiket}: {r.stdout}"
+
+    adlar = ["dosya", "Dosya", "çğüş", "İstanbul", "ısık", "ÉLAN", "émile",
+             "a:b", "Ω", "Straße", "日本語"]
+    for boyut, duyarli, tohum in ((20_000_000, False, 5), (12_000_000, True, 6)):
+        yol = img_path("t61.img")
+        if os.path.exists(yol):
+            os.unlink(yol)
+        with open(yol, "wb") as fh:
+            fh.truncate(boyut)
+        d = DiskImage(yol)
+        format_hfsplus(d, label="Yazma", case_sensitive=duyarli)
+        d.close()
+        r = random.Random(tohum)
+        beklenen, klasorler, dolu = {}, ["/"], 0
+        d = DiskImage(yol)
+        w = HfsWriter(HfsPlusFS(d))
+        for i in range(1500):
+            op = r.random()
+            if op < 0.1 and len(klasorler) < 40:
+                p = r.choice(klasorler).rstrip("/") + f"/k{i}_{r.choice(adlar)}"
+                w.mkdir(p)
+                klasorler.append(p)
+            elif op < 0.78 or not beklenen:
+                p = r.choice(klasorler).rstrip("/") + f"/{r.choice(adlar)}_{i:05d}"
+                veri = r.randbytes(r.choice([0, 1, 4096, 5000, 70000, 300000]))
+                try:
+                    w.write_file(p, veri)
+                    beklenen[p] = veri
+                except HfsWriteError:
+                    dolu += 1                           # birim doldu: geri alindi
+                    for q in r.sample(sorted(beklenen), min(5, len(beklenen))):
+                        w.remove(q)
+                        del beklenen[q]
+            elif op < 0.9:
+                p = r.choice(sorted(beklenen))
+                w.remove(p)
+                del beklenen[p]
+            else:
+                p = r.choice(sorted(beklenen))
+                yeni = r.choice(klasorler).rstrip("/") + f"/tasindi_{i}"
+                w.rename(p, yeni)
+                beklenen[yeni] = beklenen.pop(p)
+        w.flush()
+        fs = w.fs
+        parcali = sum(1 for p in beklenen
+                      if len(fs.fork_runs(fs.resolve(p).data, fs.resolve(p).cnid)) > 8)
+        assert dolu and parcali, (dolu, parcali)                # senaryolar sinandi
+        assert fs.catalog.depth >= 2
+        d.close()
+        denetle(yol, beklenen, f"yazma {boyut}")
+
+        d = DiskImage(yol)
+        w = HfsWriter(HfsPlusFS(d))
+        for e in list(w.fs.listdir("/")):
+            w.remove("/" + e.name, recursive=True)
+        w.flush()
+        assert w.fs.listdir("/") == [] and (w.fs.file_count, w.fs.folder_count) == (0, 0)
+        d.close()
+        denetle(yol, {}, f"hepsi silindi {boyut}")
+
+    # arayuz yolu + reddetme
+    yol = img_path("t61_gpt.img")
+    s = DiskSession.create(yol, 40 * MIB, overwrite=True)
+    s.create_table("gpt")
+    s.create_partition(2048, 32 * MIB // 512, fs_key="hfsplus", label="Mac")
+    erisim = s.filesystem(1)
+    assert isinstance(erisim, HfsAccess) and erisim.writable, erisim.write_reason
+    erisim.mkdir("/Belgeler")
+    erisim.write_file("/Belgeler/not.txt", "Türkçe not\n".encode("utf-8"))
+    erisim.rename("/Belgeler/not.txt", "Not (yeni).txt")
+    assert erisim.read("/belgeler/NOT (YENİ).TXT".replace("İ", "I")) == \
+        "Türkçe not\n".encode("utf-8")
+    s.close()
+    with open(yol, "r+b") as fh:                       # "temiz kapatildi" bitini sil
+        fh.seek(2048 * 512 + 1024 + 4)
+        attrs = struct.unpack(">I", fh.read(4))[0]
+        fh.seek(2048 * 512 + 1024 + 4)
+        fh.write(struct.pack(">I", attrs & ~0x100))
+    s = DiskSession.open(yol)
+    erisim = s.filesystem(1)
+    assert not erisim.writable and erisim.write_reason
+    s.close()
+
+
+@test
+def t62_udf_okuma():
+    """UDF salt okuma: Windows'un yazdigi 2.01, genisoimage 1.02 koprusu, yedekli CD-RW (ADR 0063)
+
+    * `udf_windows.img.gz` — mkudffs (UDF 2.01, 512 bayt blok, MBR) birimine
+      **Windows 10'un kendi UDF surucusu** 402 dosya yazdi (EFE, kisa ve
+      gomulu kapsam, 32 KB'lik dizin, Turkce adlar). SHA-1 listesi Windows'ta
+      alindi (`udf_windows.sha1.txt`).
+    * `udf_genisoimage.iso.gz` — UDF 1.02 + ISO koprusu (FE); icerik asagidaki
+      uretecle birebir.
+    * `udf_cdrw_bos.img.gz` — mkudffs CD-RW: yedekli (sparable) bolum haritasi.
+    """
+    import gzip
+    import hashlib
+    from diskultimate.core.udf import UdfFS
+    from diskultimate.core.filesystem import UdfAccess, open_filesystem
+
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+
+    def ac(ad, hedef):
+        with gzip.open(os.path.join(fixtures, ad), "rb") as a, open(hedef, "wb") as b:
+            b.write(a.read())
+        return hedef
+
+    # --- 1. Windows'un yazdigi UDF 2.01 (MBR bolumu) ---------------------
+    yol = ac("udf_windows.img.gz", img_path("t62_win.img"))
+    s = DiskSession.open(yol, readonly=True)
+    erisim = s.filesystem(1)
+    assert isinstance(erisim, UdfAccess) and erisim.label == "WinUDF", erisim
+    assert not erisim.writable and erisim.write_reason
+    with open(os.path.join(fixtures, "udf_windows.sha1.txt"), encoding="utf-8") as fh:
+        satirlar = fh.read().splitlines()
+    assert len(satirlar) == 402
+    for satir in satirlar:
+        ozet, p = satir.split(" ", 1)
+        assert hashlib.sha1(erisim.read(p)).hexdigest() == ozet, p
+    assert {n.name for n in erisim.listdir("/")} >= {"Boş", "Klasör", "kök.txt"}
+    assert len(erisim.listdir("/KLASÖR")) == 401               # buyuk/kucuk harf duyarsiz
+    hedef = img_path("t62_cikti")
+    shutil.rmtree(hedef, ignore_errors=True)
+    erisim.extract("/Klasör/Alt Klasör ğüşİı", hedef)
+    assert os.path.getsize(os.path.join(hedef, "büyük dosya.bin")) == 400000
+    st = erisim.stats()
+    assert 0 < st["used_bytes"] < st["total_bytes"], st
+    s.close()
+
+    # --- 2. genisoimage UDF 1.02 koprusu: UDF agaci ISO'ya tercih edilir ---
+    yol = ac("udf_genisoimage.iso.gz", img_path("t62_g.iso"))
+    beklenen = {"/a.txt": b"merhaba\n",
+                "/klasor/desen.bin": bytes(range(256)) * 3000,
+                "/klasor/Türkçe ğüşİı dosya adı uzun.txt": "içerik\n".encode("utf-8")}
+    for i in range(300):
+        beklenen[f"/klasor/alt/f_{i:03d}.dat"] = bytes([i % 256]) * (i * 37)
+    d = DiskImage(yol, readonly=True)
+    erisim = open_filesystem(d)
+    assert isinstance(erisim, UdfAccess) and erisim.label == "UDFKOPRU"
+    for p, veri in beklenen.items():
+        assert erisim.read(p) == veri, p
+    assert erisim.fs.revision == 0x102
+    assert sorted(n.name for n in erisim.listdir("/")) == ["a.txt", "bos", "klasor"]
+    d.close()
+
+    # --- 3. yedekli (sparable) bolum haritasi -----------------------------
+    d = DiskImage(ac("udf_cdrw_bos.img.gz", img_path("t62_cd.img")), readonly=True)
+    fs = UdfFS(d)
+    assert fs.label == "YedekliCD" and fs.partitions[0].kind == "sparable"
+    assert fs.partitions[0].packet == 32 and fs.listdir("/") == []
+    assert detect(d).fs_type == "UDF"
+    d.close()
+
+
+@test
+def t63_udf_bicimlendirme():
+    """UDF 2.01 bicimlendirme (saf Python): mkudffs yerlesimi, etiket CRC'leri (ADR 0064)
+
+    Yerlesim mkudffs -m hd -r 2.01 ile olculdu; 16M/512'de kullanilan 11,
+    bos 32237 blok birebir. Her tanimlayicinin etiket saglamasi, CRC-16'si
+    ve etiket konumu dogrulanir (Windows/udf surucusu yanlis etiketli
+    tanimlayiciyi yok sayar). Windows 10 bu birimleri (MBR ve GPT) UDF
+    olarak baglayip 301 dosya yazdi, birim Healthy kaldi (olculdu, bkz. ADR).
+    udfinfo varsa onun gozunde de ayni sayilar.
+    """
+    from diskultimate.core.udf import UdfFS
+    from diskultimate.core.udfformat import crc16, format_udf
+    from diskultimate.core.filesystem import UdfAccess
+
+    def etiket_dogru(blok: bytes, konum: int) -> int:
+        kimlik, _surum, saglama, _r, _seri, crc, crc_boy, yer = \
+            struct.unpack_from("<HHBBHHHI", blok, 0)
+        assert saglama == sum(blok[i] for i in range(16) if i != 4) & 0xFF, kimlik
+        assert crc == crc16(blok[16:16 + crc_boy]), kimlik
+        assert yer == konum, (kimlik, yer, konum)
+        return kimlik
+
+    udfinfo, ortam = _dev_tool("udfinfo")
+    for boyut, bs, kullanilan, bos in ((16 * MIB, 512, 11, 32237),
+                                       (64 * MIB, 4096, 4, 15860),
+                                       (5_000_000, 512, 6, 9239)):
+        yol = img_path("t63.img")
+        if os.path.exists(yol):
+            os.unlink(yol)
+        with open(yol, "wb") as fh:
+            fh.truncate(boyut)
+        d = DiskImage(yol)
+        sonuc = format_udf(d, label="Türkçe ğüşİı UDF", block_size=bs)
+        d.close()
+        assert sonuc["free_blocks"] == bos, (boyut, sonuc)
+        n = boyut // bs
+        with open(yol, "rb") as fh:
+            veri = fh.read()
+        blok = lambda b: veri[b * bs:b * bs + 512]           # noqa: E731
+        assert [veri[32768 + i * max(2048, bs) + 1:32768 + i * max(2048, bs) + 6]
+                for i in range(3)] == [b"BEA01", b"NSR03", b"TEA01"]
+        for capa in (256, n - 257, n - 1):
+            assert etiket_dogru(blok(capa), capa) == 2
+        for taban in (96, n - 160):
+            kimlikler = [etiket_dogru(blok(taban + i), taban + i) for i in range(6)]
+            assert kimlikler == [1, 6, 5, 7, 4, 8], kimlikler
+        assert etiket_dogru(blok(128), 128) == 9
+        # bolum: alan bitmap'i (0), ardindan FSD, akis dizini, kok (bolume gore konum)
+        assert etiket_dogru(blok(257), 0) == 264
+        sbd = (24 + (sonuc["partition_blocks"] + 7) // 8 + bs - 1) // bs
+        for goreli, beklenen in ((sbd, 256), (sbd + 1, 266), (sbd + 2, 266)):
+            assert etiket_dogru(blok(257 + goreli), goreli) == beklenen
+        d = DiskImage(yol, readonly=True)
+        fs = UdfFS(d)
+        assert fs.label == "Türkçe ğüşİı UDF" and fs.listdir("/") == []
+        assert fs.revision == 0x201 and fs.block_size == bs
+        d.close()
+        if udfinfo:
+            r = subprocess.run([udfinfo, yol], capture_output=True, text=True, env=ortam)
+            alanlar = dict(s.split("=", 1) for s in r.stdout.splitlines() if "=" in s)
+            assert (alanlar.get("usedblocks"), alanlar.get("freeblocks"),
+                    alanlar.get("integrity"), alanlar.get("udfrev")) == \
+                (str(kullanilan), str(bos), "closed", "2.01"), alanlar
+
+    for sema in ("mbr", "gpt"):
+        yol = img_path(f"t63_{sema}.img")
+        s = DiskSession.create(yol, 32 * MIB, overwrite=True)
+        s.create_table(sema)
+        s.create_partition(2048, 28 * MIB // 512, fs_key="udf", label="Ortak")
+        erisim = s.filesystem(1)
+        assert isinstance(erisim, UdfAccess) and erisim.label == "Ortak"
+        if sema == "mbr":
+            assert s.table.get(1).type_id == 0x07
+        s.close()
+
+
+def _udf_denetle(dev) -> tuple:
+    """UDF tutarlilik denetimi (Linux'ta udf fsck yok): her giris/FID/AED
+    etiketinin saglamasi, CRC'si ve konumu; kokten ulasilan bloklar bitmap'teki
+    dolu bloklarla **birebir** (sizinti ya da cifte kullanim yok); dizin bag
+    sayisi = 1 + alt dizin; LVID kapali, bos alan ve dosya/dizin sayilari
+    tutarli. (dosya, dizin) dondurur."""
+    from diskultimate.core.udf import UdfFS
+    from diskultimate.core.udfformat import crc16
+    from diskultimate.core.udfwrite import UdfWriter
+
+    def etiket(b, yer):
+        kimlik, _v, sag, _r, _s, crc, boy, konum = struct.unpack_from("<HHBBHHHI", b, 0)
+        assert sag == sum(b[i] for i in range(16) if i != 4) & 0xFF, ("saglama", kimlik)
+        assert crc == crc16(bytes(b[16:16 + boy])), ("crc", kimlik, yer)
+        assert konum == yer, ("konum", kimlik, konum, yer)
+        return kimlik
+
+    fs = UdfFS(dev)
+    w = UdfWriter(fs)
+    bs = fs.block_size
+    dolu = set()
+    boy, yer = fs.pd_detail[fs.partitions[0].number]["space_bitmap"]
+    dolu.update(range(yer, yer + (boy + bs - 1) // bs))
+    sayac = [0, 0]
+
+    def giris(blk):
+        ham = fs._read_logical(blk, 0)
+        etiket(ham, blk)
+        assert blk not in dolu, ("cift", blk)
+        dolu.add(blk)
+        veri, aed = w._split_runs(ham)
+        for s0, c in veri + aed:
+            for b in range(s0, s0 + c):
+                assert b not in dolu, ("cift kullanim", b)
+                dolu.add(b)
+        for s0, _c in aed:
+            assert etiket(fs._read_logical(s0, 0), s0) == 258
+        return ham, [s0 + i for s0, c in veri for i in range(c)]
+
+    def gez(blk, ust):
+        ham, bloklar = giris(blk)
+        veri = fs._read_entry(fs._file_entry(blk, 0))
+        pos, alt, ust_var = 0, 0, False
+        while pos + 38 <= len(veri):
+            l_fi = veri[pos + 19]
+            l_iu = struct.unpack_from("<H", veri, pos + 36)[0]
+            n = (38 + l_iu + l_fi + 3) & ~3
+            fid = veri[pos:pos + n]
+            etiket(fid, bloklar[pos // bs] if bloklar else blk)
+            ozellik, cblk = fid[18], struct.unpack_from("<I", fid, 24)[0]
+            if ozellik & 4:
+                pass                                     # silinmis FID
+            elif ozellik & 8:
+                assert cblk == ust
+                ust_var = True
+            elif ozellik & 2:
+                alt += 1
+                sayac[1] += 1
+                gez(cblk, blk)
+            else:
+                sayac[0] += 1
+                giris(cblk)
+            pos += n
+        assert ust_var and struct.unpack_from("<H", ham, 48)[0] == 1 + alt, blk
+
+    for b in range(fs.root_icb[0]):                      # FSD, akis dizini
+        ham = fs._read_logical(b, 0)
+        if struct.unpack_from("<H", ham, 0)[0] in (256, 266):
+            dolu.add(b)
+    gez(fs.root_icb[0], fs.root_icb[0])
+    w._load_bitmap()
+    bitmap_dolu = {b for b in range(w._bits) if not w._is_free(b)}
+    assert bitmap_dolu == dolu, (sorted(bitmap_dolu - dolu)[:5], sorted(dolu - bitmap_dolu)[:5])
+    lvid = w._lvid()
+    n = struct.unpack_from("<I", lvid, 72)[0]
+    assert struct.unpack_from("<I", lvid, 28)[0] == 1                   # kapali
+    assert struct.unpack_from("<I", lvid, 80)[0] == w._bits - len(dolu)
+    assert struct.unpack_from("<II", lvid, 80 + 8 * n + 32) == (sayac[0], sayac[1] + 1)
+    return tuple(sayac)
+
+
+@test
+def t64_udf_yazma():
+    """UDF yazma: mkdir/yaz/sil/adlandir/tasi, AED zinciri, dolu birim, Windows birimi (ADR 0065)
+
+    Denetim `_udf_denetle` ile (bitmap birebir, etiket/CRC, bag, LVID).
+    Olculen: Windows 10 yazicimizin urettigi 2499 dosyayi (AED'liler dahil)
+    birebir okudu, ustune yazdi (Healthy); Windows'un degistirdigi birime
+    bizim yazmamiz da denetimden gecti ve Windows tekrar birebir okudu.
+    """
+    import gzip
+    import random
+    from diskultimate.core.udf import UdfFS
+    from diskultimate.core.udfformat import format_udf
+    from diskultimate.core.udfwrite import UdfWriteError, UdfWriter
+
+    adlar = ["dosya", "Dosya", "çğüş", "İstanbul", "ısık", "Ω", "日本語", "uzun " * 20]
+    for boyut, bs, tohum in ((6_000_000, 512, 5), (20_000_000, 4096, 4)):
+        yol = img_path("t64.img")
+        if os.path.exists(yol):
+            os.unlink(yol)
+        with open(yol, "wb") as fh:
+            fh.truncate(boyut)
+        d = DiskImage(yol)
+        format_udf(d, label="Yazma", block_size=bs)
+        d.close()
+        r = random.Random(tohum)
+        beklenen, klasorler, dolu, aedli = {}, ["/"], 0, 0
+        d = DiskImage(yol)
+        w = UdfWriter(UdfFS(d))
+        for i in range(1500):
+            op = r.random()
+            if op < 0.1 and len(klasorler) < 30:
+                p = r.choice(klasorler).rstrip("/") + f"/k{i}_{r.choice(adlar)[:30]}"
+                w.mkdir(p)
+                klasorler.append(p)
+            elif op < 0.76 or not beklenen:
+                p = r.choice(klasorler).rstrip("/") + f"/{r.choice(adlar)[:40]}_{i:05d}"
+                veri = r.randbytes(r.choice([0, 1, 296, 297, 5000, 70000, 300000]))
+                try:
+                    w.write_file(p, veri)
+                    beklenen[p] = veri
+                except UdfWriteError:
+                    dolu += 1
+                    for q in r.sample(sorted(beklenen), min(5, len(beklenen))):
+                        w.remove(q)
+                        del beklenen[q]
+            elif op < 0.88:
+                p = r.choice(sorted(beklenen))
+                w.remove(p)
+                del beklenen[p]
+            else:
+                p = r.choice(sorted(beklenen))
+                yeni = r.choice(klasorler).rstrip("/") + f"/tasindi_{i}"
+                w.rename(p, yeni)
+                beklenen[yeni] = beklenen.pop(p)
+            if i % 100 == 99:
+                w.flush()
+        w.flush()
+        fs = w.fs
+        for p, veri in beklenen.items():
+            e = fs.resolve(p)
+            assert fs._read_entry(e) == veri, p
+            aedli += len(e.extents) > (bs - 216) // 8
+        assert dolu, "dolu birim senaryosu sinanmadi"
+        if bs == 512:
+            assert aedli, "AED zinciri sinanmadi"
+        d.close()
+        d = DiskImage(yol, readonly=True)
+        assert _udf_denetle(d) == (len(beklenen), len(klasorler) - 1)
+        d.close()
+        d = DiskImage(yol)
+        w = UdfWriter(UdfFS(d))
+        for e in w.fs.listdir("/"):
+            w.remove("/" + e.name, recursive=True)
+        w.flush()
+        d.close()
+        d = DiskImage(yol, readonly=True)
+        assert _udf_denetle(d) == (0, 0)
+        d.close()
+
+    # Windows'un yazdigi birime (silinmis FID'ler iceriyor) yazma
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+    yol = img_path("t64_win.img")
+    with gzip.open(os.path.join(fixtures, "udf_windows.img.gz"), "rb") as a, \
+            open(yol, "wb") as b:
+        b.write(a.read())
+    s = DiskSession.open(yol)
+    erisim = s.filesystem(1)
+    assert erisim.writable, erisim.write_reason
+    erisim.mkdir("/Klasör/Bizim")
+    erisim.write_file("/Klasör/Bizim/not.txt", "Türkçe\n".encode("utf-8"))
+    erisim.remove("/Klasör/dosya_050_ğüşİı.bin")
+    erisim.rename("/kök.txt", "/Klasör/Bizim/taşınan kök.txt")
+    assert erisim.read("/klasör/bizim/taşınan KÖK.TXT") == \
+        "Türkçe kök dosyası\r\n".encode("utf-8")
+    bas = s.table.get(1).start_lba
+    adet = s.table.get(1).sector_count
+    s.close()
+    d = DiskImage(yol, readonly=True)
+    dosya, dizin = _udf_denetle(PartitionView(d, bas, adet))
+    assert dosya >= 400 and dizin >= 4, (dosya, dizin)
+    d.close()
+
+
+def _xfs_kaynak(kok: str) -> dict:
+    """t65'in XFS test agaci: kisa bicim / dugum dizini, B-agacli seyrek dosya,
+    yerel ve uzak sembolik bag, Turkce ad. {yol: veri} (bag icin "->hedef")."""
+    beklenen = {"/a.txt": b"merhaba\n",
+                "/Türkçe ğüşİı dosya.txt": "içerik\n".encode("utf-8"),
+                "/desen.bin": bytes(range(256)) * 4000}
+    for i in range(3):
+        beklenen[f"/kisa/k{i}.txt"] = str(i).encode()
+    for i in range(2000):
+        beklenen[f"/node/uzun_bir_dosya_adi_{i:05d}.txt"] = bytes([i % 256]) * (i % 50)
+    seyrek = bytearray((299 * 3 + 1) * 4096)
+    for i in range(300):
+        seyrek[i * 3 * 4096:(i * 3 + 1) * 4096] = bytes([i % 251]) * 4096
+    beklenen["/seyrek.bin"] = bytes(seyrek)
+    if kok:
+        for yol, veri in beklenen.items():
+            hedef = os.path.join(kok, yol.lstrip("/"))
+            os.makedirs(os.path.dirname(hedef), exist_ok=True)
+            with open(hedef, "wb") as fh:
+                if yol == "/seyrek.bin":
+                    for i in range(300):
+                        fh.seek(i * 3 * 4096)
+                        fh.write(bytes([i % 251]) * 4096)
+                else:
+                    fh.write(veri)
+        os.symlink("a.txt", os.path.join(kok, "kisa_bag"))
+        os.symlink("/" + "uzun_hedef/" * 40 + "son", os.path.join(kok, "uzun_bag"))
+    return beklenen
+
+
+@test
+def t65_xfs_okuma():
+    """XFS salt okuma (v4/v5): kisa bicim/blok/dugum dizin, B-agacli catal, bag (ADR 0066)
+
+    `xfs_v5.img.gz`: mkfs.xfs 6.18 `-p dizin` ile uretildi (v5, FTYPE, bigtime,
+    NREXT64, seyrek inode). 2000 girdilik dizin ve 300 kapsamli seyrek dosya
+    B-agacli; uzun sembolik bag uzak blokta. mkfs.xfs varsa v4, 1 KiB blok ve
+    16 KiB dizin blogu varyantlari da uretilip sinanir.
+    """
+    import gzip
+    from diskultimate.core.xfs import XfsFS
+    from diskultimate.core.filesystem import XfsAccess, open_filesystem
+
+    beklenen = _xfs_kaynak("")
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+
+    def denetle(yol, etiket):
+        d = DiskImage(yol, readonly=True)
+        erisim = open_filesystem(d)
+        assert isinstance(erisim, XfsAccess) and erisim.label == etiket, erisim
+        assert not erisim.writable and erisim.write_reason
+        for p, veri in beklenen.items():
+            assert erisim.read(p) == veri, (etiket, p)
+        fs = erisim.fs
+        assert fs.resolve("/kisa_bag").symlink == "a.txt"
+        assert fs.resolve("/uzun_bag").symlink == "/" + "uzun_hedef/" * 40 + "son"
+        assert len(fs.listdir("/node")) == 2000
+        assert sorted(n.name for n in erisim.listdir("/kisa")) == ["k0.txt", "k1.txt", "k2.txt"]
+        assert fs.inode(fs.resolve("/seyrek.bin").ino)[5] == 3        # B-agaci
+        st = erisim.stats()
+        assert 0 < st["used_bytes"] < st["total_bytes"]
+        d.close()
+        return fs
+
+    yol = img_path("t65.img")
+    with gzip.open(os.path.join(fixtures, "xfs_v5.img.gz"), "rb") as a, open(yol, "wb") as b:
+        b.write(a.read())
+    fs = denetle(yol, "XFSFIX")
+    assert fs.version == 5 and fs.ftype
+
+    mkfs = shutil.which("mkfs.xfs") or shutil.which("mkfs.xfs", path="/sbin:/usr/sbin")
+    if not mkfs:
+        return
+    kok = img_path("t65_kaynak")
+    shutil.rmtree(kok, ignore_errors=True)
+    _xfs_kaynak(kok)
+    for secenek in (["-m", "crc=0"], ["-b", "size=1024"], ["-n", "size=16384"]):
+        yol = img_path("t65_v.img")
+        if os.path.exists(yol):
+            os.unlink(yol)
+        with open(yol, "wb") as fh:
+            fh.truncate(320 * MIB)
+        r = subprocess.run([mkfs, "-q", *secenek, "-L", "VARYANT", "-p", kok, yol],
+                           capture_output=True, text=True)
+        if r.returncode:
+            if "crc=0" in secenek:                # v4 derleme disi olabilir
+                continue
+            raise AssertionError(r.stderr)
+        denetle(yol, "VARYANT")
+
+
+@test
+def t66_xfs_bicimlendirme():
+    """XFS v5 bicimlendirme (saf Python): mkfs.xfs ile bayt bayt ayni, xfs_repair temiz (ADR 0067)
+
+    Geometri kurallari mkfs.xfs 6.18 -N ciktisindan (asagidaki tablo, arac
+    gerekmeden her platformda). mkfs.xfs varsa ayni UUID/etiketle uretilen
+    birim inode obegi (zaman/nesil/CRC) disinda birebir olmali; xfs_repair
+    -n temiz. Bicimlendirilen birim okuyucumuzla acilmali.
+    """
+    import uuid as _uuid
+    from diskultimate.core.xfsformat import Geometry, XfsFormatter
+    from diskultimate.core.xfs import XfsFS
+
+    # boyut (bayt) -> (agcount, agsize, dblocks, logblocks, imaxpct)  [mkfs -N]
+    olculen = {
+        300 * MIB: (4, 19200, 76800, 16384, 25),
+        333333333: (4, 20345, 81380, 16384, 25),
+        7777777777: (4, 474718, 1898871, 16384, 25),
+        512 << 30: (4, 33554432, 134217728, 65536, 25),
+        1 << 40: (4, 67108864, 268435456, 131072, 5),
+        1100000000000: (4, 67138672, 268554687, 131130, 5),
+        4400000000000: (5, 268435455, 1074218750, 521728, 5),
+        5 << 40: (5, 268435455, 1342177275, 521728, 5),
+    }
+    for boyut, beklenen in olculen.items():
+        g = Geometry(boyut)
+        assert (g.agcount, g.agsize, g.dblocks, g.logblocks, g.imax_pct) == beklenen, \
+            (boyut, g.agcount, g.agsize, g.dblocks, g.logblocks, g.imax_pct)
+
+    yol = img_path("t66.img")
+    kimlik = _uuid.UUID("92e5fb8e-1c8f-44e0-9dc0-0319d5cb83b2")
+    for boyut in (320 * MIB, 333333333):
+        if os.path.exists(yol):
+            os.unlink(yol)
+        with open(yol, "wb") as fh:
+            fh.truncate(boyut)
+        d = DiskImage(yol)
+        XfsFormatter(d, label="REF", uuid=kimlik.bytes).format()
+        d.close()
+        d = DiskImage(yol, readonly=True)
+        fs = XfsFS(d)
+        assert (fs.label, fs.version, fs.listdir("/")) == ("REF", 5, [])
+        assert fs.stats()["free_bytes"] > 0
+        d.close()
+        mkfs = shutil.which("mkfs.xfs") or shutil.which("mkfs.xfs", path="/sbin:/usr/sbin")
+        repair = shutil.which("xfs_repair") or shutil.which("xfs_repair", path="/sbin:/usr/sbin")
+        if repair:
+            r = subprocess.run([repair, "-n", yol], capture_output=True, text=True)
+            assert r.returncode == 0, r.stderr[-500:]
+        if mkfs:
+            ref = img_path("t66_ref.img")
+            if os.path.exists(ref):
+                os.unlink(ref)
+            with open(ref, "wb") as fh:
+                fh.truncate(boyut)
+            r = subprocess.run([mkfs, "-q", "-m", "crc=1,finobt=1,rmapbt=0,reflink=0,"
+                                "bigtime=1,inobtcount=1,metadir=0", "-i",
+                                "sparse=0,nrext64=0,exchange=0", "-n", "ftype=1,parent=0",
+                                "-m", f"uuid={kimlik}", "-L", "REF", ref],
+                               capture_output=True, text=True)
+            if r.returncode == 0:
+                with open(ref, "rb") as a, open(yol, "rb") as b:
+                    blok = 0
+                    while True:
+                        x, y = a.read(4096 * 64), b.read(4096 * 64)
+                        if not x:
+                            break
+                        if x != y:
+                            for k in range(0, len(x), 4096):
+                                if x[k:k + 4096] != y[k:k + 4096]:
+                                    assert 12 <= blok + k // 4096 < 20, \
+                                        (boyut, "fark blogu", blok + k // 4096)
+                        blok += 64
+
+    s = DiskSession.create(img_path("t66_gpt.img"), 340 * MIB, overwrite=True)
+    s.create_table("gpt")
+    s.create_partition(2048, (340 * MIB - 2 * MIB) // 512, fs_key="xfs", label="LinuxVeri")
+    erisim = s.filesystem(1)
+    assert erisim.fs_type == "XFS" and erisim.label == "LinuxVeri"
+    s.close()
+
+
+@test
+def t67_xfs_buyutme():
+    """XFS buyutme (saf Python): son AG uzatma + yeni AG, rmap/reflink, tasima (ADR 0068)
+
+    DiskSession uzerinden: buyut, saga tasi, sola tasi + buyut; kucultme
+    reddedilir. Her adimda icerik (okuyucumuz) ve varsa xfs_repair -n.
+    mkfs.xfs varsa varsayilan ozellikli (rmapbt+reflink+sparse+nrext64),
+    icerikli ve son AG'si kisa bir birim de buyutulur. Kirli gunluklu birim
+    reddedilir.
+    """
+    from diskultimate.core.resize import ResizeError
+    from diskultimate.core.xfsgrow import XfsGrowError, xfs_grow
+
+    repair = shutil.which("xfs_repair") or shutil.which("xfs_repair", path="/sbin:/usr/sbin")
+    mkfs = shutil.which("mkfs.xfs") or shutil.which("mkfs.xfs", path="/sbin:/usr/sbin")
+
+    def onar(yol, bas, adet):
+        if not repair:
+            return
+        parca = yol + ".part"
+        with open(yol, "rb") as a, open(parca, "wb") as b:
+            a.seek(bas * 512)
+            kalan = adet * 512
+            while kalan:
+                blok = a.read(min(8 * MIB, kalan))
+                b.write(blok)
+                kalan -= len(blok)
+        try:
+            r = subprocess.run([repair, "-n", parca], capture_output=True, text=True)
+            assert r.returncode == 0, r.stdout[-600:] + r.stderr[-300:]
+        finally:
+            os.unlink(parca)
+
+    yol = img_path("t67.img")
+    s = DiskSession.create(yol, 1400 * MIB, overwrite=True)
+    s.create_table("gpt")
+    s.create_partition(2048, 320 * MIB // 512, fs_key="xfs", label="BUYU")
+    bilgi = s.resize_info(1)
+    assert bilgi.kind == "xfs" and bilgi.min_sectors == 320 * MIB // 512, bilgi
+    try:
+        s.resize_partition(1, 2048, 300 * MIB // 512, confirm=True)
+        raise AssertionError("XFS kucultuldu")
+    except (ResizeError, Exception) as exc:
+        assert not isinstance(exc, AssertionError), exc
+    adimlar = [(2048, 500), (2048 + 400 * MIB // 512, 500), (2048 + 100 * MIB // 512, 1100)]
+    for bas, mib in adimlar:
+        s.resize_partition(1, bas, mib * MIB // 512, confirm=True)
+        s.close_filesystems()
+        erisim = s.filesystem(1)
+        assert erisim.fs_type == "XFS" and erisim.label == "BUYU"
+        st = erisim.stats()
+        assert st["total_bytes"] > (mib - 20) * MIB, (mib, st)
+        s.close_filesystems()
+        onar(yol, bas, mib * MIB // 512)
+    s.close()
+
+    if not mkfs:
+        return
+    kok = img_path("t67_kaynak")
+    shutil.rmtree(kok, ignore_errors=True)
+    beklenen = _xfs_kaynak(kok)
+    from diskultimate.core.xfs import XfsFS
+    yol = img_path("t67_mkfs.img")
+    if os.path.exists(yol):
+        os.unlink(yol)
+    with open(yol, "wb") as fh:
+        fh.truncate(320 * MIB)
+    subprocess.run([mkfs, "-q", "-d", "agsize=24000b", "-p", kok, yol], check=True)
+    with open(yol, "r+b") as fh:
+        fh.truncate(900 * MIB)
+    d = DiskImage(yol)
+    plan = xfs_grow(d, 900 * MIB)
+    d.close()
+    assert plan["new_agcount"] > plan["old_agcount"]
+    d = DiskImage(yol, readonly=True)
+    fs = XfsFS(d)
+    for p, veri in beklenen.items():
+        assert fs.read_file(p) == veri, p
+    d.close()
+    onar(yol, 0, 900 * MIB // 512)
+
+    # kirli gunluk: son kaydin "unmount" bayragi silinir
+    if os.path.exists(yol):
+        os.unlink(yol)
+    with open(yol, "wb") as fh:
+        fh.truncate(320 * MIB)
+    subprocess.run([mkfs, "-q", yol], check=True)
+    with open(yol, "r+b") as fh:
+        sb = fh.read(512)
+        agb = struct.unpack_from(">I", sb, 84)[0]
+        ls = struct.unpack_from(">Q", sb, 48)[0]
+        agl = sb[124]
+        fh.seek(((ls >> agl) * agb + (ls & ((1 << agl) - 1))) * 4096 + 512 + 9)
+        fh.write(b"\x00")
+        fh.truncate(400 * MIB)
+    d = DiskImage(yol)
+    try:
+        xfs_grow(d, 400 * MIB)
+        raise AssertionError("kirli gunluklu XFS buyutuldu")
+    except XfsGrowError:
+        pass
+    d.close()
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

@@ -183,7 +183,8 @@ def _run_create(session, p, progress):
         label=p.get("label", ""), name=p.get("name", ""),
         bootable=p.get("bootable", False),
         type_id=p.get("type_id", 0), type_guid=p.get("type_guid", ""),
-        logical=p.get("logical"), progress=progress)
+        logical=p.get("logical"), progress=progress,
+        wipe=not p.get("keep_data", False))
 
 
 def _run_format(session, p, progress):
@@ -302,6 +303,60 @@ def resolve_target(session, operation: "Operation") -> None:
     raise OperationError(
         tr("Hedef bolum bulunamadi (LBA {}); yerlesim degismis olabilir",
            anchor))
+
+
+# Hedefi bir bolum olan yikici adimlar ve tum tabloyu etkileyenler
+_PARTITION_RISK_KINDS = ("format", "delete", "wipe_partition", "resize")
+_TABLE_RISK_KINDS = ("create_table", "clear_table", "convert_table")
+
+
+def risk_notes(session, queue: "OperationQueue") -> List[str]:
+    """Yikici adimlarin sifreli / kapsayici bolumlere dokunup dokunmadigi.
+
+    CLAUDE.md: "bilinmiyor" asla "risk yok" gibi sunulmaz. Sifreli bir
+    birimin icerigini goremeyiz; "bos gorunuyor" demek yanlis olur. Karar
+    `FSInfo` bayraklarindan verilir, gorunen addan degil (metin cevrilir).
+    Tespit onbellekten okunur (`session.detect_fs`); ana ekran bolumleri
+    zaten gostermis oldugu icin aygita yeniden gidilmez.
+    """
+    notes: List[str] = []
+    parts = list(getattr(session, "partitions", []) or [])
+
+    def describe(step: int, part) -> Optional[str]:
+        try:
+            info = session.detect_fs(part)
+        except Exception:                     # noqa: BLE001
+            return None
+        if info.encrypted:
+            return tr("Adim {}: bolum {} sifreli ({}). Icerigi gorulemez; bu "
+                      "islem sifreli veriyi kalici olarak yok eder.",
+                      step, part.index, info.fs_type)
+        if info.container:
+            return tr("Adim {}: bolum {} bir kapsayici ({}); icindeki tum "
+                      "birimler de kaybolur.", step, part.index, info.fs_type)
+        if info.maybe_encrypted:
+            return tr("Adim {}: bolum {} imzasiz ve rastgele veri iceriyor; "
+                      "sifreli bir birim (VeraCrypt vb.) olabilir.",
+                      step, part.index)
+        return None
+
+    for step, op in enumerate(list(queue), 1):
+        if op.kind in _PARTITION_RISK_KINDS:
+            anchor = target_lba(op)
+            index = op.params.get("index")
+            for part in parts:
+                if (anchor >= 0 and part.start_lba == anchor) or \
+                        (anchor < 0 and part.index == index):
+                    note = describe(step, part)
+                    if note:
+                        notes.append(note)
+                    break
+        elif op.kind in _TABLE_RISK_KINDS:
+            for part in parts:
+                note = describe(step, part)
+                if note:
+                    notes.append(note)
+    return notes
 
 
 # ==========================================================================
@@ -597,10 +652,24 @@ def convert_table_op(scheme: str) -> Operation:
 def create_op(start_lba: int, sector_count: int, sector_size: int = 512,
               fs_key: str = "", label: str = "", name: str = "",
               **extra) -> Operation:
+    """Yeni bolum adimi. `keep_data=True` + `found_fs=<tur>`: kayip bolumu
+    tabloya geri ekler — alan silinmez, tur dosya sistemine gore secilir."""
     size = human_size(sector_count * sector_size)
     params = {"start_lba": start_lba, "sector_count": sector_count,
               "fs_key": fs_key, "label": label, "name": name}
     params.update(extra)
+    if params.get("keep_data"):
+        # Kayip bolum geri ekleniyor: tur bulunan dosya sisteminden secilir
+        from .convert import FS_TO_GPT, FS_TO_MBR
+        found = params.get("found_fs", "")
+        params.setdefault("type_id", FS_TO_MBR.get(found, 0))
+        params.setdefault("type_guid", FS_TO_GPT.get(found, ""))
+        operation = Operation("create", title_text=mark("Kayip bolumu geri ekle"),
+                              target_text=mark("LBA {}"),
+                              target_args=(start_lba,), params=params,
+                              detail_text=mark("{}, {} — veri korunur"),
+                              detail_args=(size, found or "?"))
+        return operation
     operation = Operation("create", title_text=mark("Yeni bolum olustur"),
                           target_text=mark("LBA {}"),
                           target_args=(start_lba,), params=params)

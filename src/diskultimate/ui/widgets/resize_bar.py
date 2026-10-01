@@ -18,6 +18,7 @@ from PyQt5.QtCore import QRect, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPen
 from PyQt5.QtWidgets import QSizePolicy, QWidget
 
+from ...core.fsregistry import fs_display
 from ...core.ptable import human_size
 from ..theme import (FREE_COLOR, darken, draw_usage_bar, fs_color, lighten,
                      palette_color)
@@ -147,7 +148,7 @@ class ResizeBar(QWidget):
             yazi = QFont(self.font())
             yazi.setPointSizeF(max(7.5, yazi.pointSizeF()))
             p.setFont(yazi)
-            title = self.label or (self.fs_type or tr("Bolum"))
+            title = self.label or (fs_display(self.fs_type) or tr("Bolum"))
             # Yazi doluluk cubugunun altindan baslar.
             p.drawText(block.adjusted(7, 25, -7, 0), Qt.AlignLeft | Qt.AlignTop,
                        title)

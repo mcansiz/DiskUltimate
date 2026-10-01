@@ -32,7 +32,7 @@ from .resize import (_fs_resize as fs_resize_apply,
                      fs_resize_info,
                      FsResizeInfo, ResizeError, ResizePlan, ResizeWindow,
                      apply_resize, fs_resize_info_for, plan_resize, window_for)
-from .ptable import (FreeRegion, Partition, PartitionTable,
+from .ptable import (FreeRegion, Partition, PartitionTable, WholeDiskTable,
                      PartitionTableError, human_size)
 from .vdisk import detect_format, format_label, open_disk
 from ..i18n import tr
@@ -81,6 +81,50 @@ class BackupPreview:
         olan gercekten bolum bulunup bulunmadigidir.
         """
         return bool(self.partitions)
+
+
+# Ilk sektoru kendisi onyukleme sektoru olan dosya sistemleri
+_VBR_FS = ("FAT12", "FAT16", "FAT32", "exFAT", "NTFS", "ReFS", "BitLocker")
+
+
+def read_partition_table(device: BlockDevice) -> Optional[PartitionTable]:
+    """GPT, MBR, tablosuz disk ya da hicbiri (None).
+
+    * GPT varsa GPT.
+    * 0x55AA ve **gecerli** MBR girisleri varsa MBR.
+    * 0x55AA var ama girisler gecersiz/bos: ilk sektor bir onyukleme
+      sektoru ise (FAT/NTFS/exFAT tablosuz USB) **tablosuz disk**
+      (`WholeDiskTable`); degilse bos MBR. Ayrim onemli: yeni kurulmus bos
+      MBR'nin arkasinda eski bir ext4 ustblogu (1024. bayt) kalabilir; onu
+      "tablosuz ext4" gostermek kullanicinin kurdugu tabloyu yok saymaktir.
+    * 0x55AA yok: diskin basinda taninan dosya sistemi varsa tablosuz disk
+      (duz .iso, ext4.img, XFS, btrfs...), yoksa None.
+
+    Eskiden 0x55AA gorulen her sektor MBR sayiliyordu: FAT onyukleme
+    sektorunun kodu bolum girisi diye okunuyordu.
+    """
+    try:
+        if GPTTable.is_present(device):
+            return GPTTable.read(device)
+        mbr = MBRTable.is_present(device)
+        if mbr and MBRTable.entries_plausible(device):
+            return MBRTable.read(device)
+    except PartitionTableError:
+        return None
+    try:
+        whole = detect(device)
+    except Exception:                            # noqa: BLE001
+        whole = FSInfo()
+    if mbr:
+        if whole.fs_type in _VBR_FS:
+            return WholeDiskTable(device)
+        try:
+            return MBRTable.read(device)
+        except PartitionTableError:
+            return None
+    if whole.known:
+        return WholeDiskTable(device)
+    return None
 
 
 @dataclass
@@ -164,11 +208,7 @@ class DiskSession:
             device = None
             try:
                 device = PhysicalDisk(info, readonly=True)
-                table = None
-                if GPTTable.is_present(device):
-                    table = GPTTable.read(device)
-                elif MBRTable.is_present(device):
-                    table = MBRTable.read(device)
+                table = read_partition_table(device)
                 if table is None:
                     return DiskSurvey(path=path)
                 parts = table.sorted_partitions()
@@ -309,14 +349,7 @@ class DiskSession:
     def reload(self) -> None:
         """Bolum tablosunu ve dosya sistemi bilgilerini diskten yeniden okur."""
         self.close_filesystems()
-        self.table = None
-        try:
-            if GPTTable.is_present(self.image):
-                self.table = GPTTable.read(self.image)
-            elif MBRTable.is_present(self.image):
-                self.table = MBRTable.read(self.image)
-        except PartitionTableError:
-            self.table = None
+        self.table = read_partition_table(self.image)
         self._fs_info.clear()
         if self.table:
             for part in self.table.partitions:
@@ -325,7 +358,7 @@ class DiskSession:
                 part.fs_label = info.label
                 part.fs_used = info.used_bytes
                 part.fs_total = info.total_bytes
-        if self.is_physical and self.table:
+        if self.is_physical and self.table and self.table.scheme != "none":
             fill_mount_points(self.disk_info, self.table.partitions)
 
     def create_table(self, scheme: str) -> PartitionTable:
@@ -358,8 +391,14 @@ class DiskSession:
                          name: str = "", bootable: bool = False,
                          type_id: int = 0, type_guid: str = "",
                          logical: Optional[bool] = None,
-                         progress: Optional[Callable[[str, int], None]] = None) -> Partition:
-        """Bolum olusturur ve istege bagli olarak bicimlendirir."""
+                         progress: Optional[Callable[[str, int], None]] = None,
+                         wipe: bool = True) -> Partition:
+        """Bolum olusturur ve istege bagli olarak bicimlendirir.
+
+        `wipe=False`: bolum alanindaki veri **korunur** (kayip bolumu tabloya
+        geri eklemek). Varsayilan yeni bolumun basini/sonunu siler ki eski
+        dosya sistemi imzasi yeni bolumde "hayalet" olarak gorunmesin.
+        """
         self._require_table()
         self._require_writable()
         kind = FS_BY_KEY.get(fs_key.lower()) if fs_key else None
@@ -386,13 +425,18 @@ class DiskSession:
                     pass
                 raise
         else:
-            wipe_partition(self.view(part))
+            if wipe:
+                wipe_partition(self.view(part))
             self.reload()
         return self.table.get(part.index) if self.table else part
 
     def delete_partition(self, index: int, wipe: bool = True) -> None:
         self._require_table()
         self._require_writable()
+        if self.table.scheme == "none":
+            # Once reddet, sonra sil: silme adimi tablodan once calistigi
+            # icin tablosuz diskte ret geldiginde veri coktan gitmis olurdu.
+            self.table.delete_partition(index)
         part = self.table.get(index)
         self._fs_cache.pop(index, None)
         if wipe:
@@ -623,8 +667,9 @@ class DiskSession:
         """Bolumu yeniden boyutlandirir ve/veya tasir.
 
         Yikici bir islemdir: `confirm=True` verilmeden calismaz. Fiziksel
-        disklerde once isletim sisteminin kendi boyutlandiricisi denenir
-        (NTFS/ext saf Python'da boyutlandirilamadigi icin).
+        disklerde NTFS icin once isletim sisteminin kendi boyutlandiricisi
+        denenir (bagli birimi kendisi cozer). ext her platformda saf Python
+        ile boyutlandirilir (ADR 0052).
         """
         self._require_table()
         self._require_writable()
@@ -679,6 +724,9 @@ class DiskSession:
         """Hedef semaya donusum yapilabilir mi? (uygun_mu, aciklama)"""
         if not self.table:
             return False, tr("Once bir bolum tablosu olusturun")
+        if self.table.scheme == "none":
+            return False, tr("Tablosuz disk donusturulemez; dosya sistemi tum "
+                             "diski kapliyor")
         if self.table.scheme == scheme:
             return False, tr("Tablo zaten {} biciminde", scheme.upper())
         if scheme == "gpt":
@@ -749,7 +797,7 @@ class DiskSession:
             fs_type = ""
         info = fs_resize_info(self.view(part), fs_type)
         if fill and part.sector_count > backup_sectors and \
-                info.kind in ("fat", "exfat", "ntfs"):
+                info.kind in ("fat", "exfat", "ntfs", "ext", "xfs"):
             if progress:
                 progress(tr("Dosya sistemi bolumu dolduracak kadar "
                             "buyutuluyor..."), 99)
@@ -814,7 +862,10 @@ class DiskSession:
         try:
             if not session.is_backup:
                 raise SessionError(tr("Bu dosya bir DiskUltimate yedegi degil"))
-            partitions = list(session.partitions)
+            # Tablosuz goruntu (sema "none") bolum YEDEGIDIR: tek bolumun
+            # dosya sistemi goruntunun basindadir. Oturum onu artik sanal tek
+            # bolum olarak gosterir (WholeDiskTable); burada bolum sayilmaz.
+            partitions = [] if session.scheme == "none" else list(session.partitions)
             entries: Dict[int, Optional[List[str]]] = {}
             for part in partitions:
                 entries[part.index] = DiskSession._root_names(
@@ -989,8 +1040,21 @@ class DiskSession:
         """Taramada bulunan bir bolumu tabloya ekler (bicimlendirmeden)."""
         self._require_table()
         self._require_writable()
+        # Bolum turu bulunan dosya sistemine gore secilir. Eskiden hep
+        # varsayilan (MBR 0x83 / GPT temel veri) kullaniliyordu: kurtarilan
+        # bir NTFS bolumu MBR'de "Linux" turuyle ekleniyor, Windows onu
+        # baglamiyordu.
+        #
+        # `wipe=False` sart: eskiden `create_partition` fs belirtilmeyen yeni
+        # bolumun ilk ve son 2 MB'ini siliyordu — kurtarilan dosya sisteminin
+        # onyukleme sektoru/ustblogu (ve NTFS'in sondaki yedegi) tabloya
+        # eklenirken yok ediliyordu.
+        from .convert import FS_TO_GPT, FS_TO_MBR
         return self.create_partition(lost.start_lba, lost.sector_count,
-                                     fs_key="", name=lost.label or "")
+                                     fs_key="", name=lost.label or "",
+                                     type_id=FS_TO_MBR.get(lost.fs_type, 0),
+                                     type_guid=FS_TO_GPT.get(lost.fs_type, ""),
+                                     wipe=False)
 
     def carve_files(self, index: int = -1, keys=None, progress=None):
         """Imza tabanli dosya kurtarma; index<0 ise tum goruntu taranir."""

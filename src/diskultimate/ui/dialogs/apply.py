@@ -29,6 +29,7 @@ donusturulur, boylece arayuz nesnelerine yalnizca arayuz parcacigi dokunur.
 """
 from __future__ import annotations
 
+import html
 from typing import Callable, Optional
 
 from PyQt5.QtCore import QSize, Qt, QThread, pyqtSignal
@@ -182,6 +183,10 @@ class ApplyDialog(QDialog):
                 COLOR_FAILED,
                 tr("<b>{} adim veri kaybettirebilir</b> ve uygulandiktan "
                    "sonra geri alinamaz.", risky))
+        # Sifreli / kapsayici bolum hedefleniyorsa ayrica soylenir (ADR 0053).
+        for note in ops.risk_notes(self.session, self.queue):
+            text += "<br><span style='color:%s'>&#9888; %s</span>" % (
+                COLOR_FAILED, html.escape(note))
         return text
 
     def _fill_row(self, row: int, operation) -> None:

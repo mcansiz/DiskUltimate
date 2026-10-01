@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAction, QFileDialog,
                              QToolBar, QTreeWidget, QTreeWidgetItem,
                              QVBoxLayout, QWidget)
 
+from ...core.fsregistry import fs_display
 from ...core.filesystem import FileNode, FileSystemAccess
 from ...core.ptable import human_size
 from ..dialogs.task import run_task
@@ -124,7 +125,7 @@ class FileBrowser(QWidget):
             self.info_label.setText(tr("Bicimlendirilmemis bolum"))
         elif not self.fs.readable:
             self.info_label.setText(
-                tr("{}: icerik goruntuleme desteklenmiyor", self.fs.fs_type))
+                tr("{}: icerik goruntuleme desteklenmiyor", fs_display(self.fs.fs_type)))
         else:
             # Sessiz: dil degisimi kozmetiktir, hata penceresi dogurmamalidir.
             self.navigate(self.current_path, quiet=True)
@@ -144,7 +145,7 @@ class FileBrowser(QWidget):
             return
         if not fs.readable:
             self.info_label.setText(tr("{}: icerik goruntuleme desteklenmiyor",
-                                       fs.fs_type))
+                                       fs_display(fs.fs_type)))
             self._update_actions()
             return
         root = QTreeWidgetItem(self.tree, [title or "/"])

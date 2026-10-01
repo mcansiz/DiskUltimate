@@ -56,6 +56,7 @@ from PyQt5.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog,
                              QPushButton, QRadioButton, QSplitter, QTreeWidget,
                              QTreeWidgetItem, QVBoxLayout, QWidget)
 
+from ...core.fsregistry import fs_display
 from ...core import clone as clone_mod
 from ...core import disksource
 from ...core.ptable import human_size
@@ -514,7 +515,7 @@ class BackupDialog(QDialog):
                     disk=item_session.disk_info)
                 child = self._add_row(node, part_target,
                                       color_chip(fs_color(part.fs_type)),
-                                      extra=part.fs_type or "-")
+                                      extra=fs_display(part.fs_type) or "-")
                 if item_session is session and part.index == partition_index:
                     selected_item = child
 
@@ -560,7 +561,7 @@ class BackupDialog(QDialog):
                 else:
                     for part in parts:
                         QTreeWidgetItem(node, [tr("Bolum {} — {}", part.index,
-                                                  part.fs_type or tr("ham")),
+                                                  fs_display(part.fs_type) or tr("ham")),
                                                human_size(part.size), ""])
                 node.setExpanded(bool(parts))
 
@@ -734,17 +735,17 @@ class BackupDialog(QDialog):
         if preview.partitions:
             for part in preview.partitions:
                 node = QTreeWidgetItem(self.content, [
-                    tr("Bolum {}", part.index), part.fs_type or "-",
+                    tr("Bolum {}", part.index), fs_display(part.fs_type) or "-",
                     part.name or part.fs_label or "-", human_size(part.size)])
                 node.setIcon(0, color_chip(fs_color(part.fs_type), 12))
                 self._add_entries(node, preview.root_entries.get(part.index),
-                                  part.fs_type)
+                                  fs_display(part.fs_type))
                 node.setExpanded(True)
         else:
             fs_type = (getattr(preview.filesystem, "fs_type", "")
                        or preview.info.fs_type)
             node = QTreeWidgetItem(self.content, [
-                tr("Tek bolum yedegi"), fs_type or "-",
+                tr("Tek bolum yedegi"), fs_display(fs_type) or "-",
                 preview.info.label or "-", human_size(preview.info.total_bytes)])
             node.setIcon(0, color_chip(fs_color(fs_type), 12))
             self._add_entries(node, preview.root_entries.get(-1), fs_type)
@@ -774,7 +775,7 @@ class BackupDialog(QDialog):
                 info.created.strftime("%Y-%m-%d %H:%M") if info.created else "-")
             self.info_labels["compress"].setText(
                 "zlib" if info.compressed else tr("yok"))
-            self.info_labels["fs"].setText(info.fs_type or "-")
+            self.info_labels["fs"].setText(fs_display(info.fs_type) or "-")
             self.info_labels["remark"].setText(info.remark or "-")
             return
         target = self.current_target()
@@ -1038,7 +1039,7 @@ class BackupDialog(QDialog):
             return
         for part in target.partitions:
             node = QTreeWidgetItem(self.content, [
-                tr("Bolum {}", part.index), part.fs_type or "-",
+                tr("Bolum {}", part.index), fs_display(part.fs_type) or "-",
                 part.name or part.fs_label or "-", human_size(part.size)])
             node.setIcon(0, color_chip(fs_color(part.fs_type), 12))
         if not target.partitions and target.size:

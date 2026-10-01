@@ -14,5 +14,8 @@
       }
     ]
   },
-  "cleanupPeriodDays": 36500
+  "cleanupPeriodDays": 36500,
+  "env": {
+    "ARCHIFY_UPDATE_CACHE_DIRECTORY": ".claude/cache/archify"
+  }
 }

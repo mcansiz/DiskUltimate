@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QDoubleSpinBox,
                              QLayout, QMessageBox, QPushButton, QSpinBox,
                              QVBoxLayout, QWidget)
 
+from ...core.fsregistry import fs_display
 from ...core.ptable import Partition, human_size
 from ...core.resize import FsResizeInfo, ResizeError, ResizeWindow
 from ..widgets.resize_bar import ResizeBar
@@ -60,7 +61,7 @@ class ResizePartitionDialog(QDialog):
             tr("<b>{}</b> &nbsp; {} &nbsp; {} &nbsp; {} &nbsp;—&nbsp; "
                "kapsayici alan <b>{}</b>",
                self.part.display_name, self.part.type_name,
-               self.fs.fs_type or 'bicimlendirilmemis',
+               fs_display(self.fs.fs_type) or tr('bicimlendirilmemis'),
                human_size(self.part.size), human_size(self.win.size)))
         duzen.addWidget(title)
 

@@ -20,6 +20,12 @@ from .ntfswrite import NtfsWriter
 from .fat import ATTR_DIRECTORY, DirEntry, FatError, FatFS
 from .fsdetect import FSInfo, detect
 from .image import BlockDevice
+from .hfsplus import HfsEntry, HfsError, HfsPlusFS
+from .hfswrite import HfsWriter
+from .iso9660 import IsoEntry, IsoError, IsoFS
+from .udf import UdfEntry, UdfError, UdfFS
+from .xfs import XfsEntry, XfsError, XfsFS
+from .udfwrite import UdfWriter
 from ..i18n import tr
 
 
@@ -450,6 +456,257 @@ class NtfsAccess(FileSystemAccess):
         return self.fs.stats()
 
 
+class IsoAccess(FileSystemAccess):
+    """ISO 9660 (Joliet / Rock Ridge) icerigine salt okunur erisim."""
+
+    readable = True
+    writable = False
+
+    def __init__(self, view: BlockDevice):
+        self.fs = IsoFS(view)
+        self.fs_type = "ISO9660"
+        self.label = self.fs.label
+
+    @property
+    def write_reason(self) -> str:
+        return tr("ISO 9660 salt okunur bir bicimdir; yazilmaz, bastan uretilir.")
+
+    @staticmethod
+    def _node(entry: IsoEntry, parent: str) -> FileNode:
+        path = (parent.rstrip("/") + "/" + entry.name) if parent not in ("", "/") \
+            else "/" + entry.name
+        attrs = []
+        if entry.hidden:
+            attrs.append("G")
+        if entry.symlink:
+            attrs.append("-> " + entry.symlink)
+        return FileNode(name=entry.name, path=path, is_dir=entry.is_dir,
+                        size=0 if entry.is_dir else entry.size, mtime=entry.mtime,
+                        attr_text=" ".join(attrs), hidden=entry.hidden,
+                        readonly=True)
+
+    def listdir(self, path: str = "/") -> List[FileNode]:
+        out = [self._node(e, path) for e in self.fs.listdir(path)]
+        out.sort(key=lambda n: (not n.is_dir, n.name.lower()))
+        return out
+
+    def read(self, path: str, max_bytes: int = -1) -> bytes:
+        return self.fs.read_file(path, max_bytes)
+
+    def extract(self, path: str, dest: str) -> str:
+        self.fs.extract(path, dest)
+        restore_owner(dest)
+        return dest
+
+    def stats(self) -> Dict[str, int]:
+        return self.fs.stats()
+
+
+class UdfAccess(FileSystemAccess):
+    """UDF okuma (1.02-2.60) ve yazma (fiziksel bolum + alan bitmap'i; ADR 0063, 0065)."""
+
+    readable = True
+
+    def __init__(self, view: BlockDevice):
+        self.fs = UdfFS(view)
+        self.fs_type = "UDF"
+        self.label = self.fs.label
+        self.writer = UdfWriter(self.fs)
+        self.writable, self._write_reason = self.writer.write_support()
+
+    @property
+    def write_reason(self) -> str:
+        return "" if self.writable else self._write_reason
+
+    # Her islemden sonra flush: LVID "kapali" ve bitmap guncel kalsin
+    # (dosya gezgini flush'i yalnizca oturum kapanirken cagirir).
+    def write_file(self, path: str, data: bytes) -> FileNode:
+        self.writer.write_file(path, data)
+        self.writer.flush()
+        name = path.replace("\\", "/").rstrip("/").split("/")[-1]
+        return FileNode(name=name, path=path, is_dir=False, size=len(data),
+                        mtime=datetime.datetime.now())
+
+    def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
+        with open(local_path, "rb") as fh:
+            data = fh.read()
+        name = os.path.basename(local_path)
+        target = (dest_dir.rstrip("/") + "/" + name) if dest_dir != "/" else "/" + name
+        return self.write_file(target, data)
+
+    def mkdir(self, path: str) -> None:
+        self.writer.mkdir(path)
+        self.writer.flush()
+
+    def remove(self, path: str, recursive: bool = True) -> None:
+        self.writer.remove(path, recursive=recursive)
+        self.writer.flush()
+
+    def rename(self, path: str, new_name: str) -> None:
+        self.writer.rename(path, new_name)
+        self.writer.flush()
+
+    def flush(self) -> None:
+        self.writer.flush()
+
+    @staticmethod
+    def _node(entry: UdfEntry, parent: str) -> FileNode:
+        path = (parent.rstrip("/") + "/" + entry.name) if parent not in ("", "/") \
+            else "/" + entry.name
+        attrs = []
+        if entry.hidden:
+            attrs.append("G")
+        if entry.symlink:
+            attrs.append("-> " + entry.symlink)
+        return FileNode(name=entry.name, path=path, is_dir=entry.is_dir,
+                        size=0 if entry.is_dir else entry.size, mtime=entry.mtime,
+                        attr_text=" ".join(attrs), hidden=entry.hidden,
+                        readonly=True)
+
+    def listdir(self, path: str = "/") -> List[FileNode]:
+        out = [self._node(e, path) for e in self.fs.listdir(path)]
+        out.sort(key=lambda n: (not n.is_dir, n.name.lower()))
+        return out
+
+    def read(self, path: str, max_bytes: int = -1) -> bytes:
+        return self.fs.read_file(path, max_bytes)
+
+    def extract(self, path: str, dest: str) -> str:
+        self.fs.extract(path, dest)
+        restore_owner(dest)
+        return dest
+
+    def stats(self) -> Dict[str, int]:
+        return self.fs.stats()
+
+
+class XfsAccess(FileSystemAccess):
+    """XFS (v4/v5) icerigine salt okunur erisim (ADR 0066)."""
+
+    readable = True
+    writable = False
+
+    def __init__(self, view: BlockDevice):
+        self.fs = XfsFS(view)
+        self.fs_type = "XFS"
+        self.label = self.fs.label
+
+    @property
+    def write_reason(self) -> str:
+        return tr("XFS yazma bu surumde yok; birim salt okunur acildi.")
+
+    @staticmethod
+    def _node(entry: XfsEntry, parent: str) -> FileNode:
+        path = (parent.rstrip("/") + "/" + entry.name) if parent not in ("", "/") \
+            else "/" + entry.name
+        attrs = []
+        if entry.symlink:
+            attrs.append("-> " + entry.symlink)
+        return FileNode(name=entry.name, path=path, is_dir=entry.is_dir,
+                        size=0 if entry.is_dir else entry.size, mtime=entry.mtime,
+                        attr_text=" ".join(attrs), hidden=entry.hidden,
+                        readonly=True)
+
+    def listdir(self, path: str = "/") -> List[FileNode]:
+        out = [self._node(e, path) for e in self.fs.listdir(path)]
+        out.sort(key=lambda n: (not n.is_dir, n.name.lower()))
+        return out
+
+    def read(self, path: str, max_bytes: int = -1) -> bytes:
+        return self.fs.read_file(path, max_bytes)
+
+    def extract(self, path: str, dest: str) -> str:
+        self.fs.extract(path, dest)
+        restore_owner(dest)
+        return dest
+
+    def stats(self) -> Dict[str, int]:
+        return self.fs.stats()
+
+
+class HfsAccess(FileSystemAccess):
+    """HFS+ / HFSX okuma ve yazma (ADR 0060, 0062)."""
+
+    readable = True
+
+    def __init__(self, view: BlockDevice):
+        self.fs = HfsPlusFS(view)
+        self.fs_type = self.fs.fs_type
+        self.label = self.fs.label
+        self.writer = HfsWriter(self.fs)
+        self.writable, self._write_reason = self.writer.write_support()
+
+    @property
+    def write_reason(self) -> str:
+        return "" if self.writable else self._write_reason
+
+    # Her islem sonunda bitmap ve birim basligi yazilir: dosya gezgini
+    # flush'i yalnizca oturum kapanirken cagirir; arada birim "temiz
+    # kapatilmadi" bitiyle ve eski bitmap'le kalmamali.
+    def write_file(self, path: str, data: bytes) -> FileNode:
+        self.writer.write_file(path, data)
+        self.writer.flush()
+        name = path.replace("\\", "/").rstrip("/").split("/")[-1]
+        return FileNode(name=name, path=path, is_dir=False, size=len(data),
+                        mtime=datetime.datetime.now())
+
+    def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
+        with open(local_path, "rb") as fh:
+            data = fh.read()
+        name = os.path.basename(local_path)
+        target = (dest_dir.rstrip("/") + "/" + name) if dest_dir != "/" else "/" + name
+        return self.write_file(target, data)
+
+    def mkdir(self, path: str) -> None:
+        self.writer.mkdir(path)
+        self.writer.flush()
+
+    def remove(self, path: str, recursive: bool = True) -> None:
+        self.writer.remove(path, recursive=recursive)
+        self.writer.flush()
+
+    def rename(self, path: str, new_name: str) -> None:
+        self.writer.rename(path, new_name)
+        self.writer.flush()
+
+    def flush(self) -> None:
+        self.writer.flush()
+
+    @staticmethod
+    def _node(entry: HfsEntry, parent: str) -> FileNode:
+        path = (parent.rstrip("/") + "/" + entry.name) if parent not in ("", "/") \
+            else "/" + entry.name
+        attrs = []
+        if entry.hidden:
+            attrs.append("G")
+        if entry.compressed:
+            attrs.append("C")
+        if entry.hardlink:
+            attrs.append("L")
+        if entry.symlink:
+            attrs.append("-> " + entry.symlink)
+        return FileNode(name=entry.name, path=path, is_dir=entry.is_dir,
+                        size=0 if entry.is_dir else entry.size, mtime=entry.mtime,
+                        attr_text=" ".join(attrs), hidden=entry.hidden,
+                        readonly=True)
+
+    def listdir(self, path: str = "/") -> List[FileNode]:
+        out = [self._node(e, path) for e in self.fs.listdir(path)]
+        out.sort(key=lambda n: (not n.is_dir, n.name.lower()))
+        return out
+
+    def read(self, path: str, max_bytes: int = -1) -> bytes:
+        return self.fs.read_file(path, max_bytes)
+
+    def extract(self, path: str, dest: str) -> str:
+        self.fs.extract(path, dest)
+        restore_owner(dest)
+        return dest
+
+    def stats(self) -> Dict[str, int]:
+        return self.fs.stats()
+
+
 class UnsupportedAccess(FileSystemAccess):
     """Tanindi ama icerik okuma destegi henuz yok."""
 
@@ -461,16 +718,29 @@ class UnsupportedAccess(FileSystemAccess):
         self.writable = False
 
     def listdir(self, path: str = "/") -> List[FileNode]:
+        if self.info.encrypted:
+            raise FatError(tr("{} sifreli bir birimdir; icerigi anahtar "
+                              "olmadan okunamaz.", self.fs_type))
+        if self.info.container:
+            raise FatError(tr("{} bir kapsayicidir; icindeki birimler bu "
+                              "surumde acilamiyor.", self.fs_type))
         raise FatError(
             tr("{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya "
-               "sistemleri: FAT12/16/32, exFAT, ext2/3/4. NTFS okuyucusu yol "
-               "haritasindadir.", self.fs_type))
+               "sistemleri: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, UDF, XFS, ISO 9660.",
+               self.fs_type))
 
     def stats(self) -> Dict[str, int]:
         return {"total_bytes": self.info.total_bytes,
                 "used_bytes": self.info.used_bytes,
                 "free_bytes": self.info.free_bytes,
                 "cluster_size": self.info.cluster_size}
+
+
+def _has_iso(view: BlockDevice) -> bool:
+    try:
+        return view.read(32769, 5) == b"CD001"
+    except Exception:                          # noqa: BLE001
+        return False
 
 
 def open_filesystem(view: BlockDevice,
@@ -496,6 +766,29 @@ def open_filesystem(view: BlockDevice,
         try:
             return NtfsAccess(view)
         except NtfsError:
+            return UnsupportedAccess(info)
+    if info.fs_type == "UDF":
+        # UDF oncelikli (uzun Unicode adlar); okunamazsa (VAT vb.) ISO
+        # koprusu varsa ISO agaci okunur.
+        try:
+            return UdfAccess(view)
+        except (UdfError, Exception):          # noqa: BLE001
+            if not _has_iso(view):
+                return UnsupportedAccess(info)
+    if info.fs_type == "ISO9660" or (info.fs_type == "UDF" and _has_iso(view)):
+        try:
+            return IsoAccess(view)
+        except (IsoError, Exception):         # noqa: BLE001
+            return UnsupportedAccess(info)
+    if info.fs_type == "XFS":
+        try:
+            return XfsAccess(view)
+        except XfsError:
+            return UnsupportedAccess(info)
+    if info.fs_type in ("HFS+", "HFSX"):
+        try:
+            return HfsAccess(view)
+        except HfsError:
             return UnsupportedAccess(info)
     if info.fs_type.startswith("ext"):
         try:

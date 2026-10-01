@@ -5024,3 +5024,344 @@ Kullanici sordu: Linux icin AppImage mi? musl sistemler? Karar ADR 0050'de,
 - musl: resmi ikili yok, kaynaktan calistirma desteklenir (`py3-qt5`,
   `doas`); AppImage'in `AppRun`u musl'da anlasilir mesajla durur.
 Siradaki oturumun is listesi ve dogrulanmamis varsayimlar ADR 0050'de.
+
+## 2026-09-28 (14) — Archify becerisi kuruldu (ADR 0051)
+
+Kullanici istegi: github.com/tt-a1i/archify becerisini edinmek.
+
+- Surum paketi (`archify.zip`, v3.0.1, commit `0e4949f`) `.claude/skills/archify/`
+  altina acildi. Resmi `npx skills add -g` global dizine yazdigi icin
+  kullanilmadi (CLAUDE.md kayit kurali).
+- Guncelleme denetimi onbellegi `~/.cache` yerine `.claude/cache/archify`
+  (`.claude/settings.json` -> `env`). `.gitignore`: `.archify/`, `.claude/cache/`.
+- **Sinanmadi:** gelistirme makinesinde Node.js yok; beceri Node >= 18 ister.
+
+## 2026-09-28 (15) — Archify ile core/ui katman diyagrami
+
+`.archify/architecture-core-ui-katmanlari-20260928-213912/core-ui-katmanlari.html`
+(depoya girmez). Kaynak kanitli (commit `3d8afac`, SSH uzak -> `local-only`
+baglanti): 13 dugum, 15 baglanti, ui/ ve core/ bolgeleri, 4 kart.
+- `finalize`: validate / deliver / check **gecti**; browser-check **atlandi**
+  (Chrome yok, ADR 0051).
+- Gorsel denetim headless Firefox ekran goruntusuyle yapildi; ilk surumde iki
+  kenar ust uste biniyordu, 4 baglantinin kenari sabitlenerek giderildi.
+- Viewer dugmeleri Ingilizce kaldi (Archify'da Turkce katalog yok; icerik Turkce).
+
+## 2026-09-28 (16) — Archify: ayrintili modul mimarisi
+
+`.archify/architecture-ayrintili-mimari-20260928-215252/ayrintili-mimari.html`
+(depoya girmez). 25 dugum, 31 baglanti, 5 odak gorunumu (okuma yolu, yikici
+islem kuyrugu, dosya sistemleri, fiziksel disk ve platform, onyukleme), 5 kart.
+Katmanlar yukaridan asagi: ui -> orkestrasyon (DiskSession, OperationQueue,
+duzenleme modeli) -> servisler -> FS motorlari -> BlockDevice -> aygitlar ->
+platform.
+- Kaynaktan cikan bulgu (diyagramda istisna olarak isaretli): onyukleyici ve
+  UEFI diyaloglari `core.grub` / `core.efistore`'u DiskSession'i atlayarak
+  dogrudan cagiriyor (`ui/dialogs/bootloader.py:29-31`, `efiboot.py:29`).
+- Archify sinirlari: showcase kalitesinde viewBox en fazla 1240 px (1540 px
+  ilk surum `composition/desktop-readability` ile reddedildi); `via` noktalari
+  kenar portunu tasiyamaz (port kenarin ortasinda kalir).
+- finalize: validate / deliver / check gecti; browser-check atlandi (Chrome
+  yok). Headless Firefox ile 4 tur gorsel denetim; son surumde kesisme yok.
+
+## 2026-09-28 (17) — Analiz: yeni dosya sistemleri (capraz platform)
+
+Kullanici sordu: daha fazla dosya sistemi eklenebilir mi, tum platformlarda.
+Kod degismedi; yalnizca analiz. Rapor: `.claude/docs/dosya-sistemi-genisletme.md`.
+
+Koddan olculen bulgular:
+- btrfs/XFS/F2FS/ISO9660 taniniyor ama kullanilan alan okunmuyor.
+- `planview._fs_name` "swap" tasiyor, `FS_KINDS` icinde takas yok (yarim baglanti).
+- BitLocker/LUKS/LVM/mdraid "Bilinmeyen" gorunuyor — guvenlik acisindan en
+  onemli eksik.
+- Kayip bolum taramasi ext'i bile aramiyor.
+- Yeni bir dosya sistemi bugun 13 noktaya dokunmayi gerektiriyor; tek bir
+  `FsSpec` kutugu onerildi.
+
+Oneri: Asama 1 (taninma + takas + kayip bolum imzalari + ISO9660 okuma),
+sonra HFS+ ve UDF 2.01, sonra XFS/btrfs/F2FS okuma, en son APFS salt okuma.
+Engeller: stdlib'de LZO/LZ4/zstd/LZFSE yok; macOS test ortami yok.
+Kullanici karari bekleniyor.
+
+## 2026-09-29 (1) — ext2/3/4 saf Python boyutlandirma (ADR 0052)
+
+Kullanici: "Linux'ta ext4 buyutme calismiyor, kabul edilemez; uc platformda
+tum islemler." Kok neden: ext boyutlandirmasi yalnizca Windows
+`Resize-Partition`'a yonleniyordu (o da ext'i tanimaz) → hicbir yerde
+calismiyordu.
+
+- Yeni: `core/extlayout.py` (ortak geometri, meta_bg, crc16), `core/extresize.py`
+  (buyutme), `core/extmove.py` (kucultme: blok + inode tasima, htree,
+  saglamalar). `resize.py`, `layoutedit.py`, geri yukleme "doldur" yolu ext'i
+  taniyor.
+- Duzeltilen eski hatalar: `extwrite` bigalloc bayragi (0x0100 = quota idi),
+  kota artik acikca reddedilir, crc16 (uninit_bg) grup saglamasi, okuyucu ve
+  yazici meta_bg bilmiyordu; t43 Windows'ta Linux beklentisiyle kosuyordu.
+- Dogrulama: `tests/ext_resize_check.py` 28/28 (e2fsck + rdump birebir),
+  `run_all` 46/48 (2 Windows'a ozgu atlandi), `platform_check` 0,
+  `i18n_check` BASARILI (27 yeni metin en/de). Windows misafiri: t48 calisti;
+  ana makinede hazirlanan 3 goruntu Windows'ta buyutup kucultuldu, Linux'ta
+  e2fsck temiz. macOS kosulmadi.
+- Test ortami degisti: Linux VM yok; Linux testleri ana makinede yalnizca
+  goruntu dosyasiyla (CLAUDE.md + hafiza guncellendi). Dogrulama araclari
+  (fsck.hfsplus, fsck.f2fs, mkudffs) `apt download` ile `.tmp/tools/root`a acildi.
+
+## 2026-09-29 (2) — Sifreli/kapsayici birim taninmasi, genis imza kumesi (ADR 0053)
+
+- `fsdetect`: LUKS1/2, BitLocker, CoreStorage, LVM2, Linux RAID (surum alani
+  denetimli), APFS, ZFS, bcache, HFS+/HFSX/HFS (etiket + doluluk), UDF (etiket),
+  ReFS, JFS, ReiserFS, bcachefs, NILFS2, EROFS, Minix, SquashFS; btrfs/XFS/F2FS
+  dolulugu. `FSInfo.encrypted/container/maybe_encrypted` bayraklari.
+- `operations.risk_notes` + Uygula penceresi: yikici adim sifreli/kapsayici
+  bolume dokunuyorsa kirmizi uyari (ekran goruntusuyle denetlendi).
+- Olcumle duzeltilen: JFS etiketi 0x98'de (0x88 UUID); ext 64bit bos blok
+  ust yarisi okunmuyordu.
+- Testler: t49 yeni (Linux + Windows gecti); `ui_smoke` surukleme senaryosu
+  ext artik boyutlandirilabildigi icin iki adim (ortak sinir) bekleyecek
+  sekilde uyarlandi; t43'teki iki Windows beklenti hatasi (aygit yolu,
+  kritik baglama noktasi) duzeltildi. Linux 47/49 (+2 Windows'a ozgu atlandi),
+  Windows: t48 e2fsck yok diye atlandi, digerleri gecti.
+- Not: arayuz `fs_type`i cevirmeden gosteriyor ("Bilinmeyen", "Linux Takas"
+  en/de'de Turkce) — FsSpec maddesine eklendi.
+
+## 2026-09-29 (3) — Takas bicimlendirme, kayip bolum imzalari, geri ekleme hatasi (ADR 0054)
+
+- `core/swap.py`: saf Python takas; `mkswap -L -U` ile ilk sayfa bayt bayt ayni.
+  `FS_KINDS`e `swap` (MBR 0x82 / GPT takas GUID). Bicim listesi ve plan
+  onizlemesi adi cevirir (`tr(kind.label)`).
+- Kayip bolum taramasi: 68 KiB pencere; ext2/3/4, XFS, btrfs, HFS+/HFSX,
+  APFS, F2FS, takas, ReFS. Bulunmus bolumun icindeki aday atlanir (yedek
+  ustbloklar). NTFS/HFS+ etiketi bulunan aday icin okunur.
+- **HATA (eski):** kayip bolumu tabloya geri eklemek bolumun ilk/son 2 MB'ini
+  siliyordu (`create_partition` yeni bolum davranisi) → kurtarilan dosya
+  sistemi yok oluyordu; tur da secilmiyordu (NTFS MBR'de 0x83). Duzeltildi:
+  `create_partition(wipe=False)`, `create_op(keep_data=True, found_fs=...)`.
+- Testler: t50, t51 yeni; t08 metin denetimi `human_size`a uyarlandi.
+  Linux 49/51, Windows 49/51, ui_smoke, diag 13/13, i18n, platform temiz.
+
+## 2026-09-29 (4) — ISO 9660 salt okuma, tablosuz disk (ADR 0055)
+
+- `core/iso9660.py` + `IsoAccess`: Rock Ridge > Joliet > duz ad; sembolik bag;
+  4 GiB ustu cok parcali dosya (4,1 GB SHA-1 dogrulandi); parcali disa aktarma.
+  Test verisi `tests/fixtures/*.iso.gz`.
+- `ptable.WholeDiskTable` + `session.read_partition_table`: tablosuz diskler
+  (duz .iso, super disket USB, ext4.img) tek sanal bolum. 0x55AA'li FAT
+  onyukleme sektoru artik MBR sanilmiyor (MBR giris gecerlilik denetimi);
+  fiziksel disk yoklamasi ve geri yukleme plani da ayni kurali kullaniyor.
+- Hatalar: tablosuz diskte silme reddi silmeden SONRA geliyordu (duzeltildi);
+  yedek onizleme bolum sayisina gore karar veriyordu (sema oldu).
+- Ana makinede disk doldu (4,4 GB test ISO'su + kopya) — `.tmp` temizlendi;
+  buyuk test dosyalari artik diske kopyalanmadan ozetle dogrulaniyor.
+- Linux 51/53, Windows 51/53, ui_smoke, diag 13/13, i18n, platform temiz.
+
+## 2026-09-29 (5) — Dosya sistemi kutugu (ADR 0056) — Asama 1 tamam
+
+- `core/fsregistry.py`: her dosya sistemi tek `FsSpec` (anahtar, gorunen ad,
+  renk, MBR/GPT turu, OS ailesi). `theme.FS_COLORS`, `convert.FS_TO_MBR/GPT`,
+  `physical` OS tahmini buradan turuyor.
+- Arayuz ~30 yerde `fs_display()` kullaniyor: "Bilinmeyen"/"Linux Takas" artik
+  en/de'de cevriliyor. Veri (`fs_type`) cevrilmez — plan onizlemesindeki
+  `tr("Linux Takas")` (renk aramasini bozardi) ve otomatik degisiklikte
+  baglama islevine giden ad geri alindi. 'ham'/'yok'/'Bicimlendirilmemis'
+  yedek metinleri `tr()` ile sarildi.
+- t54: `fsdetect`in urettigi her ad kutukte mi — ilk kosumda eksik "LUKS"
+  kaydini buldu.
+- Linux 52/54, Windows 52/54, ui_smoke (normal + qps), i18n, platform temiz.
+
+## 2026-09-29 (6) — ext yazma: htree, extent agaci, dizin buyumesi (ADR 0057)
+
+- **HATA (veri butunlugu):** yazici indeksli (htree) dizine duz sirayla yaziyor,
+  dx_root indeksini eziyordu — gercek ext4'te kalabalik klasore kopyalama
+  dizini bozuyordu. `core/exthtree.py` (e2fsprogs ile birebir karma; debugfs
+  dx_hash ile 420/420) + yaprak bolme; indeks dolarsa guvenli dogrusal cevrim.
+- Dizin buyumesi (extent agaci yeniden kurulur; dolayli cift kata), ext4'te
+  yeni dosyalar extent, silmede extent dugumleri birakilir (sizinti vardi),
+  baslatilmamis gruplar ilk kullanimda baslatilir ("Bos inode kalmadi"),
+  yer on denetimi + inode geri verme (disk dolunca birim bozuluyordu).
+- Test verisi `tests/fixtures/ext4_htree.img.gz` (23 KB); t55 yeni.
+- Linux 53/55, Windows 52/55; Windows'ta yazilan htree goruntusu Linux'ta
+  e2fsck temiz.
+
+## 2026-09-29 (7) — NTFS yazma: B+ agaci, guvenlik, Windows uyumu (ADR 0058)
+
+- `core/ntfsindex.py` (genel B+ agaci: $I30/$SII/$SDH; bolme, reparent, ara
+  dugumden silme, dengeli yeniden kurulum, `verify_tree`), `core/ntfssecure.py`
+  (Windows kurallariyla devralinan tanimlayici, $Secure'a ekleme/yeniden
+  kullanma), `NtfsFS.lookup` (O(log n), birimin $UpCase'i).
+- Windows'ta ilk kez gercek surucuyle sinandi: goruntu VHD olarak misafirin
+  SATA'sina takildi (yonetici yok -> chkdsk yok), olay gunlugu okundu. Bulunan
+  ve duzeltilen: kayit no 0x2C, guvenlik kimligi 0, rename $FILE_NAME'i
+  degistirmiyordu, Win32 ad alani (POSIX olmali), 8.3 esi/sabit bag silme,
+  bos yaprak rebuild sahipsiz giris, bicimsiz yeni MFT kayitlari, sira no,
+  16-23 kayitlari, dizin indeksinin tek blok buyumesi, **kosu uzunlugunun
+  isaretsiz kodlanmasi** (512 KB-1 MB araligindaki dosyalar ntfs-3g/Windows'ta
+  bozuk gorunebiliyordu), UTC zaman, $MFT/$MFT:$BITMAP buyumesi, bitisik kume.
+- Hiz: 10.600 islem 6 dk 50 sn -> 21,7 sn.
+- Kullanici istegiyle Windows denetimi donmaya karsi: betik `guestcontrol
+  start` ile bagimsiz, 20 sn'lik zaman asimli yoklama; 3 dk ilerleme yoksa durur.
+- Test: t56 + `tests/fixtures/ntfs_windows.img.gz`. Linux 54/56, ui_smoke,
+  diag 13/13, i18n, platform temiz. Windows son tur temiz.
+- Yeni oncelikli madde: saf Python NTFS bicimlendirici Windows'ta tanınmiyor.
+
+## 2026-09-29 (8) — NTFS bicimlendirici Windows'ta taniniyor (ADR 0059)
+
+- Sorun: `format_ntfs` birimi Windows'ta `Unknown`; 1. tur duzeltmelerden
+  sonra NTFS taninip olay 55 (bozulma) + saglik Warning.
+- mkntfs birimiyle kayit kayit karsilastirma (`.tmp/win/dump.py`):
+  - 1. tur: MFT kaydi 4096 -> 1024, 16-23 bicimli, kok INDX'li
+    ($INDEX_ALLOCATION + $BITMAP), kok guvenlik kimligi 0x102 (mkntfs kok DACL).
+  - 2. tur: `$Extend\$Quota`(24, $O + $Q) / `$ObjId`(25) / `$Reparse`(26)
+    eklendi (degerler mkntfs ile zaman damgasi disinda birebir); tum sistem
+    dosyalarinda 72 baytlik SI + guvenlik kimligi; 12-15 bag sayisi 0.
+- Windows (VBox win10, VHD): iki birim **Healthy**, olay 98 "saglam";
+  bizim yazdigimiz 301 dosyanin SHA-1'i birebir; Windows 500 + 200 dosya
+  yazdi, 100 sildi.
+- Test: yeni t57. Linux run_all 55/57 (2 yalnizca-Windows), Windows 54/57
+  (3 Linux araci yok), ntfs_write_check 2/2, i18n BASARILI, platform 0 bulgu.
+- `tests/run_all.py` t42: $SDS/$SII/$SDH 3 tanimlayici (kok eklendi).
+- Not: VM'de SATA 5/6'da f1b_v.vhd / f2b_v.vhd takili (3/4'te w6/c8).
+
+## 2026-09-29 (9) — Boyutlandirma matrisi; FAT/exFAT dizin hatalari
+
+- Yeni `tests/resize_matrix.py`: 8 dosya sistemi x MBR/GPT x 5 adim
+  (kucult, buyut, saga tasi, sola tasi+kucult, sola tasi+buyut); icerik
+  SHA-1, adim sonrasi yazma, harici fsck.
+- Matrisin buldugu hatalar (hepsi duzeltildi, t58):
+  - **FAT ve exFAT:** dizin sonunda yetersiz bos yuva kalinca giris yeni
+    kumenin basina yaziliyordu; aradaki 0x00 yuvasi okuyucuyu durdurdugu icin
+    dosya "Bulunamadi" (FAT32 512 B kumede 4. dosyada!). Arama yeni kumeyle
+    birlikte tekrarlanir.
+  - **exFAT:** buyuyen alt dizinin ust girisindeki DataLength guncellenmiyordu.
+  - **exFAT:** bos dosya NoFatChain bayragiyla yaziliyordu (fsck.exfat bozuk).
+- Sonuc: Linux 16/16 (her adimda fsck temiz), Windows 16/16; sonuc
+  birimleri Windows'un surucusunde Healthy, 128/128 dosya ozeti. macOS yok.
+- FAT16 400 MB'ye buyutulunce FS 256 MB'de kalir (4K kume siniri) — plan
+  bunu uyariyla bildiriyor; tasarim geregi.
+- run_all 56/58 (Linux; 2 yalnizca-Windows).
+- VM: SATA 3/4'te xb_v/xm_v (exFAT karsilastirma), 5/6'da m_exfat/m_ntfs.
+
+## 2026-09-29 (10) — HFS+ / HFSX salt okuma (ADR 0060)
+
+- Yeni `core/hfsplus.py` (TN1150): birim basligi, catal + kapsam tasmasi,
+  katalog B-agaci; listeleme (kimlik, "") anahtarindan yaprak zinciriyle,
+  ad aramasi NFD + casefold (HFSX duyarli); sabit/sembolik bag, decmpfs
+  zlib, gomulu HFS+ (sarmalayici), kirli gunluk bayragi.
+- `filesystem.HfsAccess` (salt okunur) + `open_filesystem` dali;
+  fsdetect "BD" icindeki "H+"yi HFS+ bildirir.
+- Test verisi: xorriso `-hfsplus` (libisofs) ve mkfs.hfsplus (hfsprogs);
+  libhfsp hpmount modern birimde takildi, elendi (ADR'de). Fixture:
+  `hfs_xorriso.iso.gz` (64 KB, 1504 dosya, 3 duzey), `hfs_journal.img.gz`,
+  `hfsx_bos.img.gz`.
+- Dogrulama: 6000 dosyalik birim kaynakla birebir (1,4 sn); t59. Linux
+  run_all 57/59, Windows (VBox) 56/59 (3 Linux araci yok). i18n (13 yeni
+  metin en/de), platform 0 bulgu, ui_smoke.
+- Ayrica: exfat.py'deki yeni yerel adlar Ingilizcelestirildi (platform_check).
+- macOS'ta sinanmadi; APM okunmuyor.
+
+## 2026-09-29 (11) — HFS+ bicimlendirme, saf Python (ADR 0061)
+
+- Yeni `core/hfsformat.py::format_hfsplus` (gunluksuz HFS+, istege bagli
+  HFSX); `formatter.FS_KINDS` "hfsplus" (MBR 0xAF / GPT Apple HFS),
+  planview adi. B-agaci dugum/harita dugumu ureticisi yazicida da
+  kullanilacak.
+- Yerlesim mkfs.hfsplus ciktisi 11 boyutta olculerek cikarildi (kume
+  tablosu, 10 x kume boslugu, dugum boylari); 64M'de bayt bayt ayni
+  (tarih + birim kimligi disinda), bos blok sayilari birebir.
+- Dogrulama: fsck.hfsplus 1M-40G + tuhaf boy + HFSX temiz; okuyucumuz; 7z.
+  t60. Linux run_all 58/60, Windows 57/60 (fsck.hfsplus Windows'ta yok ->
+  orada yapisal denetim). i18n 8 yeni metin, platform 0 bulgu, ui_smoke.
+- Hata (benim): t60 eklerken `def main()` basligini silmistim; t60 tum
+  testleri kosturuyordu, fark edilip duzeltildi.
+
+## 2026-09-29 (12) — HFS+ / HFSX yazma (ADR 0062)
+
+- Yeni `core/hfswrite.py` (HfsWriter + genel B-agaci yazicisi) ve
+  `core/hfsunicode.py` (Apple FastUnicodeCompare tablosu kuralla uretilir;
+  fsck_hfs'in tablosuyla 65 536 girisin tamami ayni — tablo kopyalanmadi).
+  Okuyucu ve bicimlendirici ayni ad kurallarina (Unicode 3.2 NFD) gecti.
+- `HfsAccess` yazilabilir; arayuz yolunda islem basina flush.
+- Bulunan hatalar: bicimlendirici blok kati olmayan birimde son blogu bos
+  birakiyordu (fsck "Invalid extent entry"); `rename(p, "/x")` kok hedefini
+  ad sayiyordu. Ikisi de duzeltildi.
+- Dogrulama: stres 3000-6000 islem (HFS+/HFSX, 12M-300M, dolu birim,
+  8+ parcali dosyalar, katalog tasmasi, tasima, ozyinelemeli silme) —
+  fsck.hfsplus her asamada temiz; gunluklu mkfs birimine yazilan 400 dosya
+  7z ile birebir. t61. Linux run_all 59/61, Windows 58/61. i18n 18 yeni
+  metin, platform 0 bulgu, ui_smoke.
+- macOS/Linux cekirdegi ile sinanmadi (ana makinede baglama yok).
+
+## 2026-09-29 (13) — UDF salt okuma (ADR 0063)
+
+- Yeni `core/udf.py` (UdfFS) + `filesystem.UdfAccess`; UDF+ISO koprusunde
+  UDF agaci tercih edilir.
+- Test verisi Windows misafirinde uretildi: mkudffs UDF 2.01 (512 B blok,
+  MBR) VHD'sine Windows'un surucusu 402 dosya yazdi; SHA-1'ler birebir.
+  Not: PowerShell 5.1 BOM'suz betigi ANSI okuyor (ilk turda Turkce adlar
+  Windows'ta bozuk olusturuldu) — betikler artik UTF-8 BOM'lu.
+- genisoimage `-udf` (1.02 koprusu) ve mkudffs CD-RW (yedekli harita)
+  fixture'lari. t62. Linux run_all 60/62, Windows 59/62. i18n 16 yeni metin,
+  platform 0 bulgu ("AD_*" adlari "ad" Turkce sayildigi icin ALLOC_*), ui_smoke.
+- Sinanmadi: metadata bolumu (2.50+), VAT.
+- VM: SATA 3 bos, 5/6'da m_exfat/m_ntfs; test VHD'leri .tmp/udf ve .tmp/win.
+
+## 2026-09-29 (14) — UDF 2.01 bicimlendirme (ADR 0064)
+
+- Yeni `core/udfformat.py::format_udf`; `FS_KINDS` "udf" (MBR 0x07, GPT
+  temel veri), planview adi. Yerlesim mkudffs -m hd -r 2.01 ciktisindan
+  (512/1024/2048/4096 blok) — kullanilan/bos blok sayilari birebir.
+- Windows 10 (VBox): bizim bicimlendirdigimiz MBR ve GPT birimlerini UDF
+  olarak bagladi, 300 dosya yazdi/sildi/adlandirdi, Healthy; geri okunan
+  301 dosya SHA-1 birebir, udfinfo integrity=closed.
+- t63 (etiket saglama/CRC/konum her tanimlayicida). Linux run_all 61/63,
+  Windows 60/63. i18n 5 yeni metin, platform 0, ui_smoke.
+
+## 2026-09-29 (15) — UDF yazma (ADR 0065) — Asama 2 tamam
+
+- Yeni `core/udfwrite.py` (UdfWriter); `UdfAccess` yazilabilir. Okuyucuya
+  bolum basligi (bitmap, erisim turu) ve alan bayraklari eklendi.
+- Bulunan/duzeltilen: kendi actigim LVID'i sonraki islemde "temiz
+  kapatilmamis" sayma; parcali birimde dizin 37 kapsami asiyordu (bitisik
+  tasima + AED); O(n^2) dizin yazimi ve bit bit CRC (5000 dosyada dakikalar)
+  -> artimli ekleme + tablo CRC (3x); Windows'un "silindi" bayrakli FID'leri
+  denetleyicide/yazicida izleniyordu.
+- Dogrulama: `_udf_denetle` (bitmap birebir, etiket/CRC, bag, LVID) stres
+  ve t64'te; Windows 10 iki yonlu tur (2499 -> 2551 -> 2303 dosya, hep
+  birebir, Healthy). 7z AED'li dosyalari okuyamiyor (7z siniri).
+- Linux run_all 62/64, Windows 61/64. i18n 11 yeni metin, platform 0, ui_smoke.
+
+## 2026-09-29 (16) — XFS salt okuma (ADR 0066)
+
+- Yeni `core/xfs.py` + `filesystem.XfsAccess`. Test verisi mkfs.xfs 6.18
+  `-p dizin` ile (cekirdek baglamasi gerekmeden icerikli birim); fixture
+  `xfs_v5.img.gz` (460 KB). 5067 dosyalik agac v5/v4 ve 1K blok, 16K dizin
+  blogu, nrext64/bigtime kapali varyantlarda birebir. t65.
+- Linux run_all 63/65, Windows 62/65. i18n 8 yeni metin, platform 0, ui_smoke.
+
+## 2026-09-29 (17) — XFS v5 bicimlendirme (ADR 0067)
+
+- Yeni `core/xfsformat.py::format_xfs`; `FS_KINDS` "xfs" (>= 300 MB),
+  planview adi. Ozellik kumesi sabit ve sade (crc, ftype, finobt, bigtime,
+  inobtcount).
+- mkfs.xfs 6.18 ile ayni UUID/etiket: 4 boyutta inode obegi disinda bayt
+  bayt ayni; xfs_repair -n temiz. Ikincil ustbloklardaki mkfs tuhafligi
+  (rootino yalnizca son ve (AG-1)/2'de) birebir uygulandi.
+- t66 geometri tablosunda 4 AG ustu kural hatasini yakaladi (AG esit
+  bolunuyordu; mkfs azami boy tutuyor) — duzeltildi.
+- Linux run_all 64/66, Windows 63/66. i18n 5 yeni metin, platform 0, ui_smoke.
+- Cekirdek baglamasi sinanmadi (ana makinede root yok).
+
+## 2026-09-29 (18) — XFS buyutme (ADR 0068); disk doldu, dongu durdu
+
+- Yeni `core/xfsgrow.py::xfs_grow` (cevrimdisi xfs_growfs): son AG uzatma,
+  yeni AG'ler (rmapbt/reflink/finobt/inobtcount duzenleri mkfs'ten olculdu),
+  gunluk temizligi denetimi. `resize.py` kind "xfs" (en az = mevcut boy,
+  tasinabilir), layoutedit/geri yukleme/Uygula bagli.
+- Dogrulama: 11 senaryo xfs_repair -n temiz, icerikli birimlerde icerik
+  birebir; kirli gunluk reddi. t67. Linux run_all 65/67. i18n 14 yeni metin,
+  platform 0, ui_smoke.
+- **Ortam sorunu:** ana makine diski %100 doldu (test goruntuleri); run_all
+  "yetersiz disk alani" ile durdu ve **win10 misafiri 'aborted' oldu**
+  (dinamik VDI buyuyemedi). Temizlik: .tmp altindaki yeniden uretilebilir
+  goruntuler silindi, test VHD'leri misafirden ayrilip kayittan dusuldu
+  (SATA 3-6 bos; SATA 2 du-test-disk.vdi yerinde). Bos alan 4,7 GB.
+  Misafir yeniden baslatilmadi — kullanici karari. Windows kosusu bekliyor.

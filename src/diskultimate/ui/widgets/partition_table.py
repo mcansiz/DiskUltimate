@@ -8,6 +8,7 @@ from PyQt5.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPixmap
 from PyQt5.QtWidgets import (QAbstractItemView, QHeaderView, QTableWidget,
                              QTableWidgetItem)
 
+from ...core.fsregistry import fs_display
 from ...core.platform import mount_point_label
 from ...core.ptable import FreeRegion, Partition, human_size
 from ..theme import (FREE_COLOR, PLAN_COLOR, fs_color, palette_color,
@@ -197,7 +198,7 @@ class PartitionTableWidget(QTableWidget):
             font = plan_item.font()
             font.setBold(True)
             plan_item.setFont(font)
-        self._set(row, 2, p.fs_type or "-")
+        self._set(row, 2, fs_display(p.fs_type) or "-")
         self._set(row, 3, p.name or p.fs_label or "-")
         self._set(row, MOUNT_COLUMN, p.mount_point or "-",
                   dim=not p.mount_point, bold=bool(p.mount_point))

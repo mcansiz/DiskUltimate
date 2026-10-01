@@ -170,7 +170,7 @@ def verify_volume(fs, max_inodes: int = 400,
     # --- grup tanimlayicilari ---
     good = bad = 0
     for g in range(fs.group_count):
-        off = fs.gdt_block * bs + g * fs.desc_size
+        off = fs.descriptor_offset(g)
         desc = dev.read(off, fs.desc_size)
         stored = struct.unpack_from("<H", desc, GD_CHECKSUM_OFFSET)[0]
         if cs.group_desc(g, desc) == stored:
@@ -184,7 +184,7 @@ def verify_volume(fs, max_inodes: int = 400,
     block_bytes = fs.blocks_per_group // 8
     inode_bytes = (fs.inodes_per_group + 7) // 8
     for g in range(fs.group_count):
-        off = fs.gdt_block * bs + g * fs.desc_size
+        off = fs.descriptor_offset(g)
         desc = dev.read(off, fs.desc_size)
         flags = struct.unpack_from("<H", desc, 0x12)[0]
         for field_lo, block_field, size, uninit in ((0x18, 0x00, block_bytes, 0x0002),

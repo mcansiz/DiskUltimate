@@ -82,6 +82,38 @@ class MBRTable(PartitionTable):
         return struct.unpack_from("<H", sector, 510)[0] == MBR_SIGNATURE
 
     @classmethod
+    def entries_plausible(cls, device: BlockDevice) -> bool:
+        """0x55AA imzali ilk sektor gercekten bir MBR mi?
+
+        FAT/NTFS/exFAT onyukleme sektoru de 0x55AA ile biter; tablosuz
+        ("super disket") bir USB bellekte ya da tek bolum goruntusunde MBR
+        girisi yerinde onyukleme KODU vardir. Linux cekirdeginin msdos
+        ayristiricisi ile ayni olcut: durum bayti 0x00/0x80, girisler disk
+        icinde ve birbiriyle cakismiyor; en az bir giris dolu.
+        """
+        try:
+            sector = device.read_sectors(0)
+        except Exception:
+            return False
+        ranges = []
+        for i in range(MAX_PRIMARY):
+            raw = sector[ENTRY_OFFSET + i * ENTRY_SIZE:
+                         ENTRY_OFFSET + (i + 1) * ENTRY_SIZE]
+            status, type_id, lba, count = _unpack_entry(raw)
+            if status not in (0x00, 0x80):
+                return False
+            if type_id == 0 or count == 0:
+                continue
+            if lba == 0 or lba + count > device.sector_count + 1:
+                return False
+            ranges.append((lba, lba + count))
+        ranges.sort()
+        for (a0, a1), (b0, _b1) in zip(ranges, ranges[1:]):
+            if b0 < a1:
+                return False
+        return bool(ranges)
+
+    @classmethod
     def read(cls, device: BlockDevice) -> "MBRTable":
         table = cls(device)
         sector = device.read_sectors(0)

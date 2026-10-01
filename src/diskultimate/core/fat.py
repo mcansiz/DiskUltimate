@@ -642,8 +642,12 @@ class FatFS:
         if pos < 0:
             if cluster is None:
                 raise FatError(tr("Kok dizin dolu"))
-            pos = len(data)
-            data += bytearray(self.cluster_bytes)
+            # Yeni kume sona eklenir ve bos yuva aramasi TEKRARLANIR: sondaki
+            # bos yuvalar yeni kumeyle birlesir. Giris dogrudan yeni kumenin
+            # basina yazilirsa aradaki 0x00 ("dizin sonu") yuvasi okuyucuyu
+            # orada durdurur ve giris hic gorunmez (matris testinde olculdu).
+            data += bytearray(self.cluster_bytes * ((need * 32) // self.cluster_bytes + 1))
+            pos = self._find_free_slots(data, need)
         data[pos:pos + len(blob)] = blob
         end = pos + len(blob)
         if end < len(data) and data[end] not in (END_OF_DIR, FREE_ENTRY):

@@ -452,7 +452,10 @@ class NtfsFS:
         return out
 
     def _index_block(self, alloc: Attribute, vcn: int) -> Optional[bytearray]:
-        offset = vcn * self.cluster_size
+        # Indeks blogu kumeden kucukse (orn. 64K kume, 4K indeks) VCN 512
+        # baytlik birimle sayilir; eskiden hep kume boyutuyla carpiliyordu.
+        unit = self.cluster_size if self.index_size >= self.cluster_size else 512
+        offset = vcn * unit
         raw = bytearray(self._run_read(alloc.runs, offset, self.index_size))
         if len(raw) < self.index_size or raw[:4] != INDX_MAGIC:
             return None
@@ -506,16 +509,97 @@ class NtfsFS:
     # ------------------------------------------------------------------
     # Yol cozumleme ve okuma
     # ------------------------------------------------------------------
+    # --- siralama: birimin kendi $UpCase tablosu ----------------------
+    @property
+    def upcase(self) -> bytes:
+        """Birimin `$UpCase` tablosu (kayit 10). Okunamazsa standart tablo.
+
+        Dizin indeksi bu tabloya gore siralidir; eski Windows surumlerinin
+        tablosu bazi Unicode karakterlerde standarttan farklidir. Uretilmis
+        tabloyla siralamak o birimlerde yanlis yaprak/yanlis sira demektir.
+        """
+        if getattr(self, "_upcase_cache", None) is None:
+            table = b""
+            try:
+                attr = self.record(10).find(AT_DATA, "")
+                if attr is not None:
+                    table = bytes(self.read_attribute(attr))
+            except NtfsError:
+                table = b""
+            if len(table) < 2 * 0x10000:
+                from .ntfs import upcase_table
+                table = upcase_table()
+            self._upcase_cache = table
+        return self._upcase_cache
+
+    def collation_key(self, name: str) -> List[int]:
+        table = self.upcase
+        out = []
+        for ch in name:
+            code = ord(ch)
+            if code < 0x10000:
+                out.append(struct.unpack_from("<H", table, code * 2)[0])
+            else:                               # vekil cift: iki birim
+                v = code - 0x10000
+                out.extend((0xD800 + (v >> 10), 0xDC00 + (v & 0x3FF)))
+        return out
+
+    def lookup(self, rec: MftRecord, name: str) -> Optional[NtfsEntry]:
+        """Dizinde adi B+ agaci uzerinden arar — O(log n).
+
+        Eskiden her yol bileseni icin dizinin TAMAMI listeleniyordu; buyuk
+        dizine dosya yazmak dosya basina ~15 ms'ye cikiyordu (olculdu).
+        """
+        root = rec.find(AT_INDEX_ROOT, "$I30")
+        if root is None:
+            return None
+        want = self.collation_key(name)
+        alloc = rec.find(AT_INDEX_ALLOCATION, "$I30")
+        buf, base = root.value, 0x10
+        for _guard in range(64):
+            e_off, e_len = struct.unpack_from("<II", buf, base)
+            pos, end = base + e_off, base + e_len
+            child = None
+            while pos + 0x10 <= min(end, len(buf)):
+                mft_ref, length, key_len, flags = struct.unpack_from("<QHHH", buf, pos)
+                if length < 0x10:
+                    return None
+                child = struct.unpack_from("<Q", buf, pos + length - 8)[0] \
+                    if flags & INDEX_ENTRY_NODE else None
+                if flags & INDEX_ENTRY_END:
+                    break
+                n = buf[pos + 0x10 + 0x40]
+                key_name = _utf16(buf[pos + 0x10 + 0x42:pos + 0x10 + 0x42 + n * 2])
+                have = self.collation_key(key_name)
+                if want == have:
+                    entry = self._entry_from_key(buf, pos + 0x10, mft_ref)
+                    if entry is None:        # 8.3 DOS adi: uzun adli kardesini ara
+                        return self._lookup_linear(rec, name)
+                    return entry
+                if want < have:
+                    break
+                pos += length
+            if child is None or alloc is None:
+                return None
+            block = self._index_block(alloc, child)
+            if block is None:
+                return self._lookup_linear(rec, name)
+            buf, base = block, 0x18
+        return self._lookup_linear(rec, name)
+
+    def _lookup_linear(self, rec: MftRecord, name: str) -> Optional[NtfsEntry]:
+        want = self.collation_key(name)
+        for e in self.listdir_record(rec):
+            if self.collation_key(e.name) == want:
+                return e
+        return None
+
     def resolve(self, path: str) -> MftRecord:
         rec = self.record(MFT_RECORD_ROOT)
         for part in [p for p in path.replace("\\", "/").split("/") if p]:
             if not rec.is_dir:
                 raise NtfsError(tr("Dizin degil: {}", part))
-            target = None
-            for e in self.listdir_record(rec):
-                if e.name.lower() == part.lower():
-                    target = e
-                    break
+            target = self.lookup(rec, part)
             if target is None:
                 raise NtfsError(tr("Bulunamadi: {}", path))
             rec = self.record(target.mft_ref)

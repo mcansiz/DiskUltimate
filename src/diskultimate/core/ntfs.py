@@ -28,7 +28,10 @@ from ..i18n import tr
 NTFS_OEM = b"NTFS    "
 FILE_MAGIC = b"FILE"
 INDX_MAGIC = b"INDX"
-MFT_RECORD_SIZE = 4096
+# 1024 bayt: Windows, 512 bayt sektorlu diskte 4 KiB MFT kaydini TANIMAZ
+# (Get-Volume "FileSystemType: Unknown"; olculdu 2026-09-29). 4 KiB kayit
+# yalnizca 4K yerel sektorlu disklerde gecerlidir.
+MFT_RECORD_SIZE = 1024
 INDEX_RECORD_SIZE = 4096
 
 # --- oznitelik turleri ---
@@ -59,6 +62,13 @@ MFT_SECURE = 9
 MFT_UPCASE = 10
 MFT_EXTEND = 11
 MFT_RESERVED_COUNT = 16          # 0..15 sistem icin ayrilir
+# $Extend alt dosyalari. Windows birimi baglarken bunlari acar; yoksa birimi
+# "yapisi bozuk" sayar (olay 55, ADR 0059). Yerlesim mkntfs ile aynidir.
+MFT_QUOTA = 24
+MFT_OBJID = 25
+MFT_REPARSE = 26
+EXTEND_FILES = ((MFT_QUOTA, "$Quota"), (MFT_OBJID, "$ObjId"),
+                (MFT_REPARSE, "$Reparse"))
 
 # --- dosya oznitelikleri ---
 FILE_ATTR_READONLY = 0x0001
@@ -66,9 +76,12 @@ FILE_ATTR_HIDDEN = 0x0002
 FILE_ATTR_SYSTEM = 0x0004
 FILE_ATTR_ARCHIVE = 0x0020
 FILE_ATTR_DIRECTORY = 0x10000000   # $FILE_NAME icinde kullanilan bayrak
+FILE_ATTR_VIEW_INDEX = 0x20000000  # kayit gorunum indeksi tasir
 
 MFT_FLAG_IN_USE = 0x0001
 MFT_FLAG_DIRECTORY = 0x0002
+MFT_FLAG_EXTEND = 0x0004           # $Extend icindeki sistem dosyasi
+MFT_FLAG_VIEW_INDEX = 0x0008       # $I30 disinda indeks ($SDH, $O, $Q ...)
 
 FNAME_POSIX, FNAME_WIN32, FNAME_DOS, FNAME_WIN32_DOS = 0, 1, 2, 3
 
@@ -147,6 +160,10 @@ ACCESS_READ = 0x00120089
 ACCESS_MODIFY = 0x0012019F
 COLLATION_ULONG = 0x10          # $SII: kimlige gore
 COLLATION_SECURITY_HASH = 0x12  # $SDH: karmaya gore
+COLLATION_SID = 0x11            # $Quota:$O — SID'e gore
+COLLATION_ULONGS = 0x13         # $ObjId:$O, $Reparse:$R — ULONG dizisi
+QUOTA_DEFAULT_OWNER = 1         # varsayilan kota girisi
+QUOTA_ADMINS_OWNER = 0x100      # Administrators kota girisi
 INDEX_ENTRY_END = 0x02
 
 
@@ -191,13 +208,40 @@ def security_hash(descriptor: bytes) -> int:
     return value
 
 
+SECURITY_ID_ROOT = 0x102        # kok dizin: mkntfs kokuyle ayni (devralmali)
+SID_AUTH_USERS = _sid(5, 11)           # S-1-5-11  Authenticated Users
+SID_USERS = _sid(5, 32, 545)           # S-1-5-32-545  BUILTIN\Users
+
+
+def root_security_descriptor() -> bytes:
+    """Kok dizin tanimlayicisi — mkntfs'in koke koydugunun aynisi (olculdu).
+
+    Yoneticiler/SYSTEM tam, kimligi dogrulanmis kullanicilar degistirme,
+    Kullanicilar okuma/calistirma; her biri icin devralinacak (OI|CI|IO)
+    genel hak kopyasi. Kokte tanimlayici olmazsa Windows'ta yeni ogeler
+    erisilemez olur (ADR 0058).
+    """
+    aces = b""
+    for flags, mask, sid in ((0x00, 0x1F01FF, SID_ADMINS), (0x0B, 0x10000000, SID_ADMINS),
+                             (0x00, 0x1F01FF, SID_SYSTEM), (0x0B, 0x10000000, SID_SYSTEM),
+                             (0x00, 0x1301BF, SID_AUTH_USERS),
+                             (0x0B, 0xE0010000, SID_AUTH_USERS),
+                             (0x00, 0x1200A9, SID_USERS), (0x0B, 0xA0000000, SID_USERS)):
+        aces += struct.pack("<BBHI", 0, flags, 8 + len(sid), mask) + sid
+    acl = struct.pack("<BBHHH", 2, 0, 8 + len(aces), 8, 0) + aces
+    owner_offset = 0x14 + len(acl)
+    group_offset = owner_offset + len(SID_SYSTEM)
+    head = struct.pack("<BBHIIII", 1, 0, 0x8004, owner_offset, group_offset, 0, 0x14)
+    return head + acl + SID_SYSTEM + SID_SYSTEM
+
+
 def _sds_entries() -> List[Tuple[int, int, int, bytes]]:
     """(kimlik, karma, ofset, tanimlayici) — $SDS icindeki sirayla."""
     out = []
     offset = 0
-    for sec_id, mask in ((SECURITY_ID_SYSTEM, ACCESS_READ),
-                         (SECURITY_ID_FULL, ACCESS_MODIFY)):
-        descriptor = security_descriptor(mask)
+    for sec_id, descriptor in ((SECURITY_ID_SYSTEM, security_descriptor(ACCESS_READ)),
+                               (SECURITY_ID_FULL, security_descriptor(ACCESS_MODIFY)),
+                               (SECURITY_ID_ROOT, root_security_descriptor())):
         out.append((sec_id, security_hash(descriptor), offset, descriptor))
         offset = (offset + 20 + len(descriptor) + 15) & ~15
     return out
@@ -286,6 +330,39 @@ def sii_index_root(index_size: int, cluster_size: int) -> bytes:
     return _view_index_root(COLLATION_ULONG, entries, index_size, cluster_size)
 
 
+def _view_entry(key: bytes, data: bytes) -> bytes:
+    """Gorunum indeksi girisi: veri anahtarin hemen ardinda, giris 8'e hizali."""
+    data_offset = 0x10 + len(key)
+    length = (data_offset + len(data) + 7) & ~7
+    entry = bytearray(length)
+    struct.pack_into("<HHIHHHH", entry, 0, data_offset, len(data), 0,
+                     length, len(key), 0, 0)
+    entry[0x10:0x10 + len(key)] = key
+    entry[data_offset:data_offset + len(data)] = data
+    return bytes(entry)
+
+
+def quota_o_root(index_size: int, cluster_size: int) -> bytes:
+    """`$Quota:$O`: SID -> kota sahibi kimligi (mkntfs: Administrators)."""
+    entry = _view_entry(SID_ADMINS, struct.pack("<I", QUOTA_ADMINS_OWNER))
+    return _view_index_root(COLLATION_SID, [entry], index_size, cluster_size)
+
+
+def quota_q_root(index_size: int, cluster_size: int, now: int) -> bytes:
+    """`$Quota:$Q`: sahip kimligi -> QUOTA_CONTROL_ENTRY.
+
+    Surum 2, bayrak 1 (varsayilan sinirlar), kullanilan 0, esik ve sinir -1
+    (sinirsiz). Administrators girisi sonunda SID'i tasir.
+    """
+    def control(sid: bytes = b"") -> bytes:
+        return struct.pack("<IIQQqqQ", 2, 1, 0, now, -1, -1, 0) + sid
+    entries = [
+        _view_entry(struct.pack("<I", QUOTA_DEFAULT_OWNER), control()),
+        _view_entry(struct.pack("<I", QUOTA_ADMINS_OWNER), control(SID_ADMINS)),
+    ]
+    return _view_index_root(COLLATION_ULONG, entries, index_size, cluster_size)
+
+
 @dataclass
 class NtfsLayout:
     cluster_size: int
@@ -355,7 +432,7 @@ class NtfsFormatter:
         def clusters(nbytes: int) -> int:
             return max(1, (nbytes + cs - 1) // cs)
 
-        mft_record_count = 32                       # 16 sistem + yedek alan
+        mft_record_count = 64                       # 16 sistem + 16-23 ayrilmis + bos
         mft_cluster = clusters(mft_record_count * MFT_RECORD_SIZE)
         logfile_bytes = max(2 * 1024 * 1024, min(64 * 1024 * 1024,
                                                 self.dev.size // 100))
@@ -537,12 +614,13 @@ class NtfsFormatter:
 
     @staticmethod
     def _sequence(rec_no: int) -> int:
-        """Sistem kayitlarinda sira numarasi kayit numarasina esittir (0 -> 1).
+        """0-23 kayitlarinda sira numarasi kayit numarasina esittir; 0 ve
+        24'ten sonrakiler 1 (mkntfs ile ayni).
 
         MFT basvurulari (mref) sira numarasini ust 16 bitte tasir; yanlis sira
         numarasi `ntfs_inode_open` tarafindan "dosya yok" olarak reddedilir.
         """
-        return rec_no if rec_no else 1
+        return rec_no if 0 < rec_no < MFT_QUOTA else 1
 
     def _mref(self, rec_no: int) -> int:
         return (rec_no & 0xFFFFFFFFFFFF) | (self._sequence(rec_no) << 48)
@@ -690,7 +768,7 @@ class _NtfsBuilder(NtfsFormatter):
                       // MFT_RECORD_SIZE)
         size = max(8, ((records + 63) // 64) * 8)
         bitmap = bytearray(size)
-        for i in range(MFT_RESERVED_COUNT):
+        for i in list(range(MFT_RESERVED_COUNT)) + [no for no, _ in EXTEND_FILES]:
             bitmap[i >> 3] |= 1 << (i & 7)
         return bytes(bitmap)
 
@@ -859,7 +937,8 @@ class _NtfsBuilder(NtfsFormatter):
         # 3: $Volume
         volume_info = struct.pack("<QBBH", 0, 3, 1, 0)   # NTFS 3.1, bayrak yok
         volume_attrs = [
-            self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(security_id=SECURITY_ID_SYSTEM)),
             system_file(MFT_VOLUME, "$Volume"),
         ]
         if self.label:
@@ -873,7 +952,8 @@ class _NtfsBuilder(NtfsFormatter):
         # 4: $AttrDef
         attrdef = attrdef_table()
         records.append(self._make_record(MFT_ATTRDEF, MFT_FLAG_IN_USE, [
-            self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(security_id=SECURITY_ID_SYSTEM)),
             system_file(MFT_ATTRDEF, "$AttrDef", len(attrdef), cs),
             self._attr_nonresident(AT_DATA, [(L.attrdef_lcn, 1)], len(attrdef),
                                    attr_id=1),
@@ -897,7 +977,8 @@ class _NtfsBuilder(NtfsFormatter):
 
         # 7: $Boot
         records.append(self._make_record(MFT_BOOT, MFT_FLAG_IN_USE, [
-            self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(security_id=SECURITY_ID_SYSTEM)),
             system_file(MFT_BOOT, "$Boot", 8192, 4 * cs),
             self._attr_nonresident(AT_DATA, [(0, max(1, 8192 // cs))], 8192,
                                    attr_id=1),
@@ -935,32 +1016,97 @@ class _NtfsBuilder(NtfsFormatter):
         # 10: $UpCase
         upcase_size = 128 * 1024
         records.append(self._make_record(MFT_UPCASE, MFT_FLAG_IN_USE, [
-            self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(security_id=SECURITY_ID_SYSTEM)),
             system_file(MFT_UPCASE, "$UpCase", upcase_size,
                       L.upcase_clusters * cs),
             self._attr_nonresident(AT_DATA, [(L.upcase_lcn, L.upcase_clusters)],
                                    upcase_size, attr_id=1),
         ]))
 
-        # 11: $Extend (bos dizin)
-        free_index = self._small_index_root()
+        # 11: $Extend — $Quota/$ObjId/$Reparse dizini
         records.append(self._make_record(MFT_EXTEND,
                                           MFT_FLAG_IN_USE | MFT_FLAG_DIRECTORY, [
             self._attr_resident(AT_STANDARD_INFORMATION,
-                                self._std_info(FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM)),
+                                self._std_info(FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM,
+                                               security_id=SECURITY_ID_FULL)),
             system_file(MFT_EXTEND, "$Extend", is_dir=True),
-            self._attr_resident(AT_INDEX_ROOT, free_index, name="$I30", attr_id=1),
+            self._attr_resident(AT_INDEX_ROOT, self._extend_index_root(),
+                                name="$I30", attr_id=1),
         ]))
 
         # 12..15: ayrilmis kayitlar.
         # Bunlarda $FILE_NAME BULUNMAZ — kok dizinde listelenmezler. Ad eklemek
         # `chkdsk` tarafindan "Attribute record (30) is corrupt" olarak bildirilir.
         for no in range(12, MFT_RESERVED_COUNT):
+            # Bag sayisi 0: hicbir dizinde adlari yok (mkntfs/Windows ayni)
             records.append(self._make_record(no, MFT_FLAG_IN_USE, [
-                self._attr_resident(AT_STANDARD_INFORMATION, self._std_info()),
+                self._attr_resident(AT_STANDARD_INFORMATION,
+                                    self._std_info(security_id=SECURITY_ID_SYSTEM)),
                 self._attr_resident(AT_DATA, b"", attr_id=1),
-            ]))
+            ], baglanti=0))
+        # 16..: bos (kullanimda olmayan) FILE kayitlari. mkntfs ve Windows
+        # MFT'deki her kaydi bicimli yazar; sifir kayit Windows'ta "bozuk
+        # kayit" sayilir (ADR 0058).
+        total = L.mft_clusters * cs // MFT_RECORD_SIZE
+        extend = self._extend_records()
+        for no in range(MFT_RESERVED_COUNT, total):
+            records.append(extend.get(no) or self._make_record(no, 0, [], baglanti=0))
         return records
+
+    def _extend_file_attrs(self, rec_no: int, name: str) -> List[bytes]:
+        """$Extend alt dosyasinin $STANDARD_INFORMATION + $FILE_NAME'i."""
+        feature = (FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM | FILE_ATTR_ARCHIVE
+                   | FILE_ATTR_VIEW_INDEX)
+        return [
+            self._attr_resident(AT_STANDARD_INFORMATION,
+                                self._std_info(feature,
+                                               security_id=SECURITY_ID_FULL)),
+            self._attr_resident(AT_FILE_NAME,
+                                self._file_name(MFT_EXTEND, name, feature),
+                                indexed=1),
+        ]
+
+    def _extend_records(self) -> Dict[int, bytes]:
+        """24-26: $Quota ($O, $Q), $ObjId ($O), $Reparse ($R) — bos gorunum
+        indeksleri (kota girisleri mkntfs'in varsayilanlari)."""
+        cs = self.layout.cluster_size
+        bayrak = MFT_FLAG_IN_USE | MFT_FLAG_EXTEND | MFT_FLAG_VIEW_INDEX
+        indeksler = {
+            MFT_QUOTA: [("$O", quota_o_root(INDEX_RECORD_SIZE, cs)),
+                        ("$Q", quota_q_root(INDEX_RECORD_SIZE, cs, self.now))],
+            MFT_OBJID: [("$O", _view_index_root(COLLATION_ULONGS, [],
+                                                 INDEX_RECORD_SIZE, cs))],
+            MFT_REPARSE: [("$R", _view_index_root(COLLATION_ULONGS, [],
+                                                   INDEX_RECORD_SIZE, cs))],
+        }
+        out: Dict[int, bytes] = {}
+        for rec_no, name in EXTEND_FILES:
+            attrs = self._extend_file_attrs(rec_no, name)
+            for i, (index_name, value) in enumerate(indeksler[rec_no], 1):
+                attrs.append(self._attr_resident(AT_INDEX_ROOT, value,
+                                                 name=index_name, attr_id=i))
+            out[rec_no] = self._make_record(rec_no, bayrak, attrs)
+        return out
+
+    def _extend_index_root(self) -> bytes:
+        """$Extend:$I30 — alt dosyalarin girisleri, ada gore sirali."""
+        girisler = bytearray()
+        feature = (FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM | FILE_ATTR_ARCHIVE
+                   | FILE_ATTR_VIEW_INDEX)
+        for rec_no, name in sorted(EXTEND_FILES,
+                                   key=lambda oge: self._collation_key(oge[1])):
+            key = self._file_name(MFT_EXTEND, name, feature)
+            girisler += _index_entry(rec_no, key, sira=self._sequence(rec_no))
+        girisler += _index_end_entry()
+        value = bytearray(0x20 + len(girisler))
+        struct.pack_into("<IIIBBBB", value, 0, AT_FILE_NAME, 1, INDEX_RECORD_SIZE,
+                         max(1, INDEX_RECORD_SIZE // self.layout.cluster_size),
+                         0, 0, 0)
+        struct.pack_into("<IIII", value, 0x10, 0x10, 0x10 + len(girisler),
+                         0x10 + len(girisler), 0)
+        value[0x20:] = girisler
+        return bytes(value)
 
     def _bad_stream(self, volume_size: int) -> bytes:
         """$BadClus:$Bad — birim boyutunda, hic kume ayrilmamis akis.
@@ -1010,25 +1156,27 @@ class _NtfsBuilder(NtfsFormatter):
         return bytes(value)
 
     def _root_attrs(self) -> List[bytes]:
-        """Kok dizinin oznitelikleri.
+        """Kok dizinin oznitelikleri — mkntfs gibi INDX'li ("buyuk") dizin.
 
-        Tum girisler $INDEX_ROOT icine sigdigi surece ayri bir INDX kaydi
-        (index allocation) olusturulmaz — bu, dizin yapisini belirgin sekilde
-        basitlestirir ve NTFS icin gecerli bir bicimdir ("kucuk dizin").
+        1 KiB MFT kaydina sistem dosyalarinin girisleri sigmaz; kok, girisleri
+        `root_index_lcn`deki INDX blogunda tasir: $INDEX_ROOT yalnizca o bloga
+        isaret eden END girisi, yaninda $INDEX_ALLOCATION ve $BITMAP:$I30.
+        Guvenlik kimligi SECURITY_ID_ROOT (Windows'ta erisim icin sart).
         """
         L = self.layout
-        girisler = self._root_index_entries()
+        girisler = _index_end_entry(child_vcn=0)
         root_value = bytearray(0x20 + len(girisler))
         struct.pack_into("<IIIBBBB", root_value, 0, AT_FILE_NAME, 1,
                          INDEX_RECORD_SIZE,
                          max(1, INDEX_RECORD_SIZE // L.cluster_size), 0, 0, 0)
         struct.pack_into("<IIII", root_value, 0x10, 0x10, 0x10 + len(girisler),
-                         0x10 + len(girisler), 0)     # bayrak 0 = kucuk dizin
+                         0x10 + len(girisler), 1)     # bayrak 1 = alt dugum var
         root_value[0x20:] = girisler
-
+        index_clusters = max(1, INDEX_RECORD_SIZE // L.cluster_size)
         return [
             self._attr_resident(AT_STANDARD_INFORMATION,
-                                self._std_info(FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM)),
+                                self._std_info(FILE_ATTR_HIDDEN | FILE_ATTR_SYSTEM,
+                                               security_id=SECURITY_ID_ROOT)),
             self._attr_resident(
                 AT_FILE_NAME,
                 self._file_name(MFT_ROOT, ".",
@@ -1037,6 +1185,12 @@ class _NtfsBuilder(NtfsFormatter):
                 indexed=1),
             self._attr_resident(AT_INDEX_ROOT, bytes(root_value), name="$I30",
                                 attr_id=1),
+            self._attr_nonresident(AT_INDEX_ALLOCATION,
+                                   [(L.root_index_lcn, index_clusters)],
+                                   index_clusters * L.cluster_size, name="$I30",
+                                   attr_id=2),
+            self._attr_resident(AT_BITMAP, b"\x01" + bytes(7), name="$I30",
+                                attr_id=3),
         ]
 
     def _write_mft(self, records: List[bytes]) -> None:

@@ -49,3 +49,10 @@ desktop.ini
 # PyInstaller paketleme ciktilari (build_exe.bat / DiskUltimate.spec)
 build/
 dist/
+
+# Archify becerisi (.claude/skills/archify, ADR 0051) ciktilari.
+#   .archify/               uretilen diyagram klasorleri (candidate.json + html)
+#   .claude/cache/archify/  guncelleme denetimi onbellegi (varsayilan ~/.cache
+#       yerine proje icinde; .claude/settings.json -> env)
+.archify/
+.claude/cache/

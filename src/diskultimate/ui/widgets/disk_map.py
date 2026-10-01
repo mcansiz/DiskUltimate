@@ -23,6 +23,7 @@ from PyQt5.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
                          QPen, QPixmap)
 from PyQt5.QtWidgets import QSizePolicy, QWidget
 
+from ...core.fsregistry import fs_display
 from ...core.ptable import FreeRegion, Partition, human_size
 from ..theme import (PLAN_COLOR, blend, darken, draw_usage_bar, fs_color,
                      palette_color, plan_label)
@@ -190,7 +191,7 @@ class DiskMapWidget(QWidget):
             base = fs_color(part.fs_type)
             title = part.display_name
             lower = human_size(part.size)
-            tip = part.fs_type or tr("Bicimlendirilmemis")
+            tip = fs_display(part.fs_type) or tr("Bicimlendirilmemis")
         else:
             free: FreeRegion = block.obj
             base = palette_color(self, "window")
@@ -446,7 +447,7 @@ class DiskMapWidget(QWidget):
             p: Partition = block.obj
             satir = [f"<b>{p.display_name}</b>",
                      tr("Tur: {}", p.type_name),
-                     tr("Dosya sistemi: {}", p.fs_type or tr("yok")),
+                     tr("Dosya sistemi: {}", fs_display(p.fs_type) or tr("yok")),
                      tr("Boyut: {}", human_size(p.size)),
                      tr("LBA: {} - {}", p.start_lba, p.end_lba)]
             if p.fs_used >= 0 and p.fs_total > 0:

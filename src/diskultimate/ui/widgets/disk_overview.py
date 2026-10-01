@@ -15,6 +15,7 @@ from PyQt5.QtCore import QRect, Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QFont, QPainter, QPen
 from PyQt5.QtWidgets import QSizePolicy, QWidget
 
+from ...core.fsregistry import fs_display
 from ...core.ptable import human_size
 from ..theme import FREE_COLOR, fs_color, palette_color
 from ...i18n import tr
@@ -180,7 +181,7 @@ class DiskOverviewWidget(QWidget):
             painter.setFont(small)
             painter.drawText(rect.adjusted(6, 24, -4, 0),
                              Qt.AlignLeft | Qt.AlignTop,
-                             _elide(painter, part.fs_type or "ham",
+                             _elide(painter, fs_display(part.fs_type) or tr("ham"),
                                     rect.width() - 10))
             painter.drawText(rect.adjusted(6, 40, -4, 0),
                              Qt.AlignLeft | Qt.AlignTop,
@@ -236,7 +237,7 @@ class DiskOverviewWidget(QWidget):
         if part is None:
             return ""
         return (tr("{} — Bolum {}", path, part.index) + "\n"
-                + (part.fs_type or tr("Bicimlendirilmemis"))
+                + (fs_display(part.fs_type) or tr("Bicimlendirilmemis"))
                 + (f" — {part.fs_label}" if part.fs_label else "")
                 + f"\n{human_size(part.size)}\n"
                 + tr("LBA {} - {}", part.start_lba, part.end_lba)

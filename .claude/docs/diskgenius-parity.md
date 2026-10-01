@@ -32,7 +32,7 @@ Guncelleme: 2026-09-15 (v0.3.0)
 | Onyukleme (aktif) bayragi | ✅ | ✅ | MBR bayragi, GPT legacy-BIOS oznitelik biti |
 | Gorsel bolum haritasi | ✅ | ✅ | Renkli oransal bloklar + doluluk cubugu |
 | **4K hizalama denetimi** | ✅ | ✅ | Araclar > Hizalama denetimi |
-| **Bolum boyutlandirma / tasima** | ✅ | ✅ | Suruklemeli serit; FAT12/16/32 + exFAT veri koruyarak, NTFS/ext Windows'ta yerel arac |
+| **Bolum boyutlandirma / tasima** | ✅ | ✅ | Suruklemeli serit; FAT12/16/32, exFAT, NTFS ve **ext2/3/4** saf Python, uc platformda (ext: ADR 0052 — buyutme, inode/blok tasiyan kucultme, tasima) |
 | Bolum bolme / birlestirme | ✅ | 📋 | Boyutlandirma altyapisi hazir; bolme = kucult + yeni bolum |
 | Birincil ↔ mantiksal donusumu | ✅ | 📋 | v0.4 |
 | Bolum gizleme | ✅ | 📋 | GPT gizli oznitelik biti hazir, arayuz baglanacak |
@@ -62,8 +62,8 @@ Guncelleme: 2026-09-15 (v0.3.0)
 |---|---|---|---|
 | **Silinmis dosya kurtarma** | ✅ | ✅ | FAT (silinmis LFN adlari dahil) ve exFAT |
 | Kurtarilabilirlik degerlendirmesi | ✅ | ✅ | Kume uzerine yazilmis mi denetimi, yuzde tahmini |
-| **Kayip bolum tarama** | ✅ | ✅ | FAT/exFAT/NTFS imzalari, boyut ve etiket okuma, hizli/derin mod |
-| Bulunan bolumu tabloya ekleme | ✅ | ✅ | Araclar > Kayip bolumleri tara |
+| **Kayip bolum tarama** | ✅ | ✅ | FAT/exFAT/NTFS, ext2/3/4, XFS, btrfs, HFS+, APFS, F2FS, takas, ReFS; boyut ve etiket, hizli/derin mod (ADR 0054) |
+| Bulunan bolumu tabloya ekleme | ✅ | ✅ | Araclar > Kayip bolumleri tara. 2026-09-29'a kadar ekleme bolumun ilk/son 2 MB'ini siliyordu — duzeltildi (ADR 0054) |
 | **Dosya turune gore kurtarma (carving)** | ✅ | ✅ | 13 imza: JPEG, PNG, GIF, PDF, ZIP, RAR, 7z, GZIP, MP3, MP4, EXE, ELF, SQLite |
 | Bicimlendirilmis bolumden kurtarma | ✅ | 🟡 | Carving calisir; dizin yapisi yeniden kurma yok |
 | RAID dizisinden kurtarma | ✅ | ⛔ | Kapsam disi |

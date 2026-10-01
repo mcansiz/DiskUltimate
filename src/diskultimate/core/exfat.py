@@ -639,6 +639,10 @@ class ExFatFS:
         struct.pack_into("<I", file_entry, 12, zaman)   # degistirme
         struct.pack_into("<I", file_entry, 16, zaman)   # erisim
 
+        if not cluster:
+            # Bos dosyada NoFatChain bayragi olmaz (fsck.exfat: "empty, but
+            # has no Fat chain" -> bozuk).
+            contiguous = False
         stream = bytearray(ENTRY_SIZE)
         stream[0] = E_STREAM
         stream[1] = 0x01 | (0x02 if contiguous else 0x00)   # AllocationPossible|NoFatChain
@@ -666,13 +670,41 @@ class ExFatFS:
     def _insert_entry(self, dir_path: str, blob: bytes) -> None:
         cluster = self._dir_cluster(dir_path)
         veri = self._read_chain_data(cluster)
+        old_size = len(veri)
         gereken = len(blob) // ENTRY_SIZE
         pos = self._find_free_slots(veri, gereken)
         if pos < 0:
-            pos = len(veri)
-            veri += bytearray(self.cluster_bytes)
+            # Sondaki bos yuvalar yeni kumeyle birlesir; arama tekrarlanir.
+            # Giris dogrudan yeni kumenin basina yazilirsa aradaki 0x00
+            # ("dizin sonu") girisi okuyucuyu durdurur (matris testinde olculdu).
+            veri += bytearray(self.cluster_bytes * ((len(blob) // self.cluster_bytes) + 1))
+            pos = self._find_free_slots(veri, gereken)
         veri[pos:pos + len(blob)] = blob
         self._write_dir(cluster, veri)
+        if len(veri) > old_size:
+            self._set_dir_size(dir_path, len(veri))
+
+    def _set_dir_size(self, dir_path: str, size: int) -> None:
+        """Buyuyen alt dizinin ust girisindeki DataLength/ValidDataLength.
+
+        exFAT'ta dizinin boyutu ust dizindeki akis girisinde durur; zincir
+        buyuyup boyut eski kalirsa fsck.exfat ve Windows dizini tutarsiz
+        sayar. Kok dizinin boyut girisi yoktur.
+        """
+        parcalar = _norm(dir_path)
+        if not parcalar:
+            return
+        upper = "/" + "/".join(parcalar[:-1])
+        entry = self.find(dir_path)
+        parent_cluster = self._dir_cluster(upper)
+        veri = self._read_chain_data(parent_cluster)
+        bas = entry.slot_offset
+        stream = bas + ENTRY_SIZE
+        struct.pack_into("<Q", veri, stream + 8, size)     # ValidDataLength
+        struct.pack_into("<Q", veri, stream + 24, size)    # DataLength
+        end = bas + entry.slot_count * ENTRY_SIZE
+        struct.pack_into("<H", veri, bas + 2, entry_set_checksum(bytes(veri[bas:end])))
+        self._write_dir(parent_cluster, veri)
 
     @staticmethod
     def _find_free_slots(veri: bytearray, gereken: int) -> int:

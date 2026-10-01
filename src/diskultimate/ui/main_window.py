@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QDialog,
                              QTextBrowser, QToolBar,
                              QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
+from ..core.fsregistry import fs_display
 from ..core import diagnostics
 from ..core import operations as ops
 from ..core.formatter import FS_BY_KEY
@@ -1054,11 +1055,23 @@ class MainWindow(QMainWindow):
     def create_partition(self) -> None:
         if not self._require_session():
             return
-        if not self.session.table:
-            cevap = QMessageBox.question(
-                self, tr("Bolum tablosu yok"),
-                tr("Bu goruntude bolum tablosu yok. Simdi GPT olusturulsun mu?"),
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        tablosuz = bool(self.session.table) and self.session.table.scheme == "none"
+        if not self.session.table or tablosuz:
+            if tablosuz:
+                # Tum disk tek dosya sistemi (tablosuz USB, .iso, ext4.img):
+                # tablo kurmak o dosya sistemini siler; varsayilan "Hayir".
+                cevap = QMessageBox.question(
+                    self, tr("Tablosuz disk"),
+                    tr("Bu diskte bolum tablosu yok; dosya sistemi ({}) tum "
+                       "diski kapliyor. GPT olusturmak bu dosya sistemini "
+                       "siler. Devam edilsin mi?",
+                       fs_display(self.session.partitions[0].fs_type) or "?"),
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            else:
+                cevap = QMessageBox.question(
+                    self, tr("Bolum tablosu yok"),
+                    tr("Bu goruntude bolum tablosu yok. Simdi GPT olusturulsun mu?"),
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
             if cevap != QMessageBox.Yes:
                 return
             self.create_table("gpt")
@@ -1136,7 +1149,7 @@ class MainWindow(QMainWindow):
         # kaydirabilir (ADR 0033).
         self.enqueue(ops.format_op(
             part.index, v["fs"], label=v["label"],
-            fs_name=FS_BY_KEY[v["fs"]].label, at_lba=part.start_lba,
+            fs_name=tr(FS_BY_KEY[v["fs"]].label), at_lba=part.start_lba,
             cluster_bytes=v["cluster"], quick=v["quick"]))
 
     def resize_partition(self) -> None:
@@ -1490,7 +1503,7 @@ class MainWindow(QMainWindow):
         title = mount_text if mount else unmount_text
         index = part.index
         label = part.fs_label or part.name
-        fs_type = part.fs_type
+        fs_type = part.fs_type          # veri: baglama secenekleri buna gore
 
         def task(report):
             report(title, -1)
@@ -1756,9 +1769,12 @@ class MainWindow(QMainWindow):
             return
         # Bulunan bolumu tabloya eklemek bir kuyruk adimidir: hemen yazmak
         # yerine digerleriyle birlikte Uygula ile islenir.
+        # keep_data: alan silinmez (eskiden yeni bolum gibi ilk/son 2 MB
+        # siliniyor, kurtarilan dosya sistemi yok ediliyordu).
         self.enqueue(ops.create_op(
             selected.start_lba, selected.sector_count,
-            self.session.image.sector_size, name=selected.label or ""))
+            self.session.image.sector_size, name=selected.label or "",
+            keep_data=True, found_fs=selected.fs_type))
 
     def carve_files(self) -> None:
         if self.session is None:
@@ -2703,7 +2719,7 @@ class MainWindow(QMainWindow):
         except Exception as exc:
             self.log(tr("Dosya sistemi acilamadi: {}", exc))
         self.browser.set_filesystem(
-            fs, tr("Bolum {} ({})", index, part.fs_type or tr("ham")))
+            fs, tr("Bolum {} ({})", index, fs_display(part.fs_type) or tr("ham")))
         self.hex_view.set_device(self.session.view(part),
                                  tr("Bolum {} — {}", index, part.display_name))
         self._update_actions()
@@ -3053,7 +3069,7 @@ class MainWindow(QMainWindow):
             item = QTreeWidgetItem(parent, [metin])
             item.setIcon(0, color_chip(fs_color(p.fs_type), 12))
             item.setData(0, Qt.UserRole, ("part", (id(session), p.index)))
-            tip = tr("{} — {}", p.fs_type or tr("Bicimlendirilmemis"),
+            tip = tr("{} — {}", fs_display(p.fs_type) or tr("Bicimlendirilmemis"),
                      human_size(p.size))
             if p.index in marks:
                 tip += ("\n\n" + tr("Bekleyen islemler:") + "\n• "
@@ -3195,14 +3211,14 @@ class MainWindow(QMainWindow):
         for part in survey.partitions:
             label = part.fs_label or part.name or ""
             text = tr("Bolum {}: {} ({})", part.index,
-                      label or part.fs_type or tr("ham"),
+                      label or fs_display(part.fs_type) or tr("ham"),
                       human_size(part.size))
             node = QTreeWidgetItem(parent, [text])
             node.setIcon(0, color_chip(fs_color(part.fs_type), 12))
             node.setData(0, Qt.UserRole, ("physpart", (info.path, part.index)))
             node.setToolTip(0, tr("{} — {}\nLBA {} - {}\nAcmak icin tiklayin "
                                   "(salt okunur)",
-                                  part.fs_type or 'Bicimlendirilmemis',
+                                  fs_display(part.fs_type) or tr('Bicimlendirilmemis'),
                                   human_size(part.size), part.start_lba,
                                   part.end_lba))
         parent.setExpanded(True)
@@ -3537,7 +3553,7 @@ class MainWindow(QMainWindow):
         for p in self.session.partitions:
             satirlar.append(
                 f"  {p.index:>2}. {p.display_name:<22} "
-                f"{p.fs_type or '-':<8} {human_size(p.size):>10}  "
+                f"{fs_display(p.fs_type) or '-':<8} {human_size(p.size):>10}  "
                 f"LBA {p.start_lba}-{p.end_lba}")
         if not self.session.partitions:
             satirlar.append(tr("  (bolum yok)"))
@@ -3551,7 +3567,7 @@ class MainWindow(QMainWindow):
             (tr("Ad"), part.display_name),
             (tr("Sema"), s.scheme_name),
             (tr("Tur"), part.type_name),
-            (tr("Dosya sistemi"), part.fs_type or tr("Bicimlendirilmemis")),
+            (tr("Dosya sistemi"), fs_display(part.fs_type) or tr("Bicimlendirilmemis")),
             (tr("Birim etiketi"), info.label or "-"),
             (mount_point_label(), part.mount_point or tr("Bagli degil")),
             (tr("Boyut"), tr("{} ({} sektor)", human_size(part.size),

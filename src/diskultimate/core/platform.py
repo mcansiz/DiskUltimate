@@ -1054,8 +1054,9 @@ def native_resize_supported() -> bool:
     """Isletim sistemi bir bolumu kendi araciyla yeniden boyutlandirabiliyor mu?
 
     Windows'ta `Resize-Partition` NTFS'i (ve destekledigi digerlerini) dosya
-    sistemiyle birlikte buyutup kucultur; saf Python'da NTFS/ext boyutlandirmasi
-    olmadigi icin fiziksel disklerde bu yol tercih edilir.
+    sistemiyle birlikte buyutup kucultur; fiziksel disklerde NTFS icin bu yol
+    tercih edilir. ext'i tanimaz — ext saf Python yolundan gider
+    (`resize.fs_resize_info`, ADR 0052).
     """
     return IS_WINDOWS
 

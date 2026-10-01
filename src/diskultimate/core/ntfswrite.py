@@ -12,10 +12,9 @@ indeksi bozuk sayar ve dosya "yok" gorunur.
 
 Bu surumun kapsami bilincli olarak dar tutuldu:
 
-  * Yalnizca indeksi **`$INDEX_ROOT` icinde duran** (yani `$INDEX_ALLOCATION`
-    tasimayan) dizinlere yazilir. Buyuk dizinlerde islem **reddedilir**.
-  * Yeni girisin sigmasi icin ust dizinin FILE kaydinda yer olmalidir; yoksa
-    reddedilir (indeksi tasimak ayri bir istir).
+  * Dizin indeksi tam bir B+ agacidir (`ntfsindex.py`): kok tasinca
+    `$INDEX_ALLOCATION`a tasinir, dugumler bolunur, ara dugumdeki giris
+    silinebilir (ADR 0058).
   * Sikistirilmis/sifrelenmis akislar desteklenmez.
 
 Reddetme sessiz degildir: nedeni metinle dondurulur. **Yanlis yazip bozmaktansa
@@ -30,13 +29,13 @@ import datetime
 import struct
 from typing import List, Optional, Tuple
 
-from .ntfs import upcase_table
 from .ntfsread import (AT_BITMAP, AT_DATA, AT_END, AT_FILE_NAME,
                        AT_INDEX_ALLOCATION, AT_INDEX_ROOT,
                        AT_STANDARD_INFORMATION, FILE_ATTR_DIRECTORY,
                        FILE_MAGIC, INDEX_ENTRY_END, INDEX_ENTRY_NODE,
                        MFT_FLAG_DIRECTORY, MFT_FLAG_IN_USE, MFT_RECORD_ROOT,
                        Attribute, MftRecord, NtfsError, NtfsFS)
+from .ntfsindex import DirIndex, Entry
 from ..i18n import tr
 
 # $Bitmap pencere boyutu: bir kerede okunup taranan bayt. 64 KB, 4 KB
@@ -48,10 +47,12 @@ MFT_BITMAP_RECORD = 0          # $MFT kaydi; kendi $BITMAP'i kayit tahsisini tut
 BITMAP_RECORD = 6              # $Bitmap: kume tahsisi
 MFTMIRR_RECORD = 1
 
-# 0-15 sistem dosyalarinin kayitlaridir. 16-23 "ileride kullanilmak uzere"
-# ayrilmis sayilir ama `$MFT` bitmap'inde **bos** isaretlidir; asil yetkili
-# bitmap oldugu icin oradan da tahsis edilir.
-FIRST_USER_RECORD = 16
+# 0-15 sistem dosyalarinin kayitlaridir. 16-23 `$MFT`in kendi ek kayitlari
+# (oznitelik listesi gerekince) icin ayrilmistir; bitmap'te bos gorunseler de
+# Windows ve ntfs-3g kullanici dosyasini oraya koymaz. Eskiden 16'dan
+# tahsis ediliyordu; Windows birimi "MFT bozuk kayit iceriyor" diye
+# isaretledi (olay 55, $MFT'yi gosteren basvuru; olculdu 2026-09-29).
+FIRST_USER_RECORD = 24
 MFT_GROW_RECORDS = 32          # MFT dolunca bir seferde eklenecek kayit sayisi
 
 STD_INFO_SIZE = 0x48           # NTFS 3.1 $STANDARD_INFORMATION
@@ -59,8 +60,12 @@ INDEX_ENTRY_HEADER = 0x10
 
 
 def _now_filetime() -> int:
-    """Simdiki zamani Windows FILETIME olarak dondurur."""
-    delta = datetime.datetime.now() - datetime.datetime(1601, 1, 1)
+    """Simdiki zamani Windows FILETIME (UTC) olarak dondurur.
+
+    NTFS zamanlari UTC'dir; eskiden yerel saat yaziliyordu ve Windows
+    dosyalari saat dilimi kadar kaymis gosteriyordu (olculdu: +3 saat).
+    """
+    delta = datetime.datetime.utcnow() - datetime.datetime(1601, 1, 1)
     return int(delta.total_seconds() * 10_000_000)
 
 
@@ -75,7 +80,7 @@ class NtfsWriter:
         self.fs = fs
         self.dev = fs.dev
         self.cs = fs.cluster_size
-        self._upcase = upcase_table()
+        self.secure = None
 
     # ------------------------------------------------------------------
     # Destek denetimi
@@ -94,15 +99,8 @@ class NtfsWriter:
     # Siralama (collation) — NTFS dizin girisleri sirali olmak zorundadir
     # ------------------------------------------------------------------
     def collation_key(self, name: str) -> List[int]:
-        """`$UpCase` ile buyuk harfe cevrilmis kod birimleri."""
-        out = []
-        for ch in name:
-            code = ord(ch)
-            if code * 2 + 2 <= len(self._upcase):
-                out.append(struct.unpack_from("<H", self._upcase, code * 2)[0])
-            else:
-                out.append(code)
-        return out
+        """Birimin kendi `$UpCase` tablosuyla buyuk harfe cevrilmis kod birimleri."""
+        return self.fs.collation_key(name)
 
     # ------------------------------------------------------------------
     # Bitmap tahsisi ($Bitmap ve $MFT'nin $BITMAP'i)
@@ -183,6 +181,15 @@ class NtfsWriter:
         size, limit = self._bitmap_limits(attr)
         byte_limit = (limit + 7) // 8
 
+        # Once yeterince uzun BITISIK bir bosluk aranir. Eskiden ilk bos
+        # kumeler aliniyordu; parcali bir birimde 3 MB'lik dosya onlarca
+        # parcaya bolunuyor, veri kosullari tek MFT kaydina sigmiyordu
+        # ($ATTRIBUTE_LIST bu surumde yok).
+        start = self._find_contiguous(attr, limit, byte_limit, count) if count > 1 else -1
+        if start >= 0:
+            self._mark_clusters(attr, start, count, True)
+            return [(start, count)]
+
         runs: List[Tuple[int, int]] = []
         remaining = count
         base = 0                                    # pencerenin bayt ofseti
@@ -225,6 +232,64 @@ class NtfsWriter:
                 self.free_clusters(runs)
             raise NtfsError(tr("Diskte yeterli bos kume yok"))
         return runs
+
+    def alloc_clusters_near(self, goal: int, count: int) -> List[Tuple[int, int]]:
+        """Once `goal`dan baslayan `count` kume denenir (onceki parcanin hemen
+        ardi — oznitelik yeni parca kazanmaz), olmazsa normal tahsis."""
+        attr = self._bitmap_attr()
+        size, limit = self._bitmap_limits(attr)
+        if goal >= 0 and goal + count <= limit:
+            lo, hi = self._align_range(goal >> 3, ((goal + count - 1) >> 3) + 1, size)
+            block = self.fs.read_attribute_range(attr, lo, hi - lo)
+            if all(not self._bit(block, bit - lo * 8)
+                   for bit in range(goal, goal + count)):
+                self._mark_clusters(attr, goal, count, True)
+                return [(goal, count)]
+        return self.alloc_clusters(count)
+
+    def _find_contiguous(self, attr: Attribute, limit: int, byte_limit: int,
+                         count: int) -> int:
+        """`count` bitisik bos kumenin ilk kume numarasi; yoksa -1."""
+        run_start, run_len = -1, 0
+        base = 0
+        while base < byte_limit:
+            length = min(BITMAP_WINDOW, byte_limit - base)
+            window = self.fs.read_attribute_range(attr, base, length)
+            for j, byte in enumerate(window):
+                bit0 = (base + j) * 8
+                if byte == 0 and bit0 + 8 <= limit:
+                    if run_len == 0:
+                        run_start = bit0
+                    run_len += 8
+                    if run_len >= count:
+                        return run_start
+                    continue
+                if byte == 0xFF:
+                    run_len = 0
+                    continue
+                for k in range(8):
+                    bit = bit0 + k
+                    if bit >= limit:
+                        return -1
+                    if byte & (1 << k):
+                        run_len = 0
+                    else:
+                        if run_len == 0:
+                            run_start = bit
+                        run_len += 1
+                        if run_len >= count:
+                            return run_start
+            base += length
+        return -1
+
+    def _mark_clusters(self, attr: Attribute, start: int, count: int,
+                       used: bool) -> None:
+        size, _limit = self._bitmap_limits(attr)
+        lo, hi = self._align_range(start >> 3, ((start + count - 1) >> 3) + 1, size)
+        block = bytearray(self.fs.read_attribute_range(attr, lo, hi - lo))
+        for bit in range(start, start + count):
+            self._set_bit(block, bit - lo * 8, used)
+        self._write_attr_range(attr, bytes(block), lo)
 
     def free_clusters(self, runs: List[Tuple[int, int]]) -> None:
         """Verilen kumeleri serbest birakir.
@@ -273,35 +338,63 @@ class NtfsWriter:
 
     def alloc_record(self) -> int:
         """Bos bir MFT kaydi tahsis eder; gerekirse `$MFT`'yi buyutur."""
-        for attempt in (0, 1):
+        for _attempt in range(3):
             attr = self._mft_bitmap()
             bmp = bytearray(self.fs.read_attribute(attr))
-            limit = min(len(bmp) * 8, self.fs.mft_size // self.fs.record_size)
+            records = self.fs.mft_size // self.fs.record_size
+            limit = min(len(bmp) * 8, records)
             for i in range(FIRST_USER_RECORD, limit):
                 if not self._bit(bmp, i):
                     self._set_bit(bmp, i, True)
                     self._flush_mft_bitmap(attr, bmp, i)
                     return i
-            if attempt == 0:
+            if len(bmp) * 8 < records:
+                self._grow_mft_bitmap(records)   # MFT'de yer var, bitmap kisa
+            else:
                 self._extend_mft()
         raise NtfsError(tr("Bos MFT kaydi yok ve $MFT buyutulemedi"))
 
     def _extend_mft(self) -> None:
-        """`$MFT`'yi birkac kayit kadar buyutur.
+        """`$MFT`'yi ve bitmap'ini buyutur.
 
-        Yeni kayitlar icin kume tahsis edilir, `$MFT`'nin kendi `$DATA`
-        oznitelugunun veri kosullari yeniden kodlanir ve boyut alanlari
-        guncellenir. Yeni alan sifirlanir: NTFS sifir kaydi "kullanilmiyor"
-        sayar.
+        Iki eski sinir vardi (2026-09-29 olculdu):
+          * Buyutme 32 kayitlik yeni bir parca ekliyordu; parca onceki
+            parcanin bitisigine dusmeyince veri kosullari `$MFT` kaydindaki
+            **sabit uzunluklu** `$DATA` oznitelugune sigmiyor, birim birkac
+            buyutmeden sonra "buyutulemedi" diyordu. Artik oznitelik kayit
+            icinde yeniden boyutlanir ve pay buyuktur (en az 256 kayit ya da
+            MFT'nin 1/8'i).
+          * `$MFT:$BITMAP`in veri boyutu hic buyumuyordu; bizim
+            bicimlendiricinin birimi 64 kayitta (48 kullanici dosyasi)
+            takiliyordu.
         """
         rec0 = self.fs.record(MFT_BITMAP_RECORD)
         data = rec0.find(AT_DATA)
         if data is None or data.resident:
             raise NtfsError(tr("$MFT veri oznitelugu okunamadi"))
 
-        grow_bytes = MFT_GROW_RECORDS * self.fs.record_size
+        records_now = data.data_size // self.fs.record_size
+        grow_records = max(256, records_now // 8)
+        grow_bytes = grow_records * self.fs.record_size
         grow_clusters = max(1, (grow_bytes + self.cs - 1) // self.cs)
-        new_runs = self.alloc_clusters(grow_clusters)
+        last = data.runs[-1] if data.runs else (-1, 0)
+        new_runs = self.alloc_clusters_near(last[0] + last[1] if last[0] >= 0 else -1,
+                                            grow_clusters)
+        # Yeni kayitlar bos FILE kaydi olarak BICIMLENDIRILIR (mkntfs, ntfs-3g
+        # ve Windows boyle yapar). Eskiden yalnizca sifirlaniyordu; Windows bu
+        # kayitlardan birini ayirinca "MFT bozuk dosya kaydi iceriyor" (olay
+        # 55) yaziyordu (olculdu 2026-09-29).
+        first_new = data.data_size // self.fs.record_size
+        per_cluster = max(1, self.cs // self.fs.record_size)
+        number = first_new
+        for lcn, count in new_runs:
+            buf = bytearray()
+            for _k in range(count * per_cluster):
+                rec = self._build_record(number, 1, 0, [])
+                self._apply_fixup_out(rec, 1)
+                buf += rec
+                number += 1
+            self.dev.write(lcn * self.cs, bytes(buf))
 
         runs = list(data.runs)
         for lcn, count in new_runs:
@@ -309,34 +402,44 @@ class NtfsWriter:
                 runs[-1] = (runs[-1][0], runs[-1][1] + count)   # bitisikse birlestir
             else:
                 runs.append((lcn, count))
-
         new_size = data.data_size + grow_clusters * self.cs
-        raw = self._raw_record(MFT_BITMAP_RECORD)
-        pos = self._find_attr_offset(raw, data)
-        attr_len = struct.unpack_from("<I", raw, pos + 4)[0]
-        mapping_off = struct.unpack_from("<H", raw, pos + 0x20)[0]
-        pairs = _encode_runs(runs)
-        if mapping_off + len(pairs) > attr_len:
-            raise NtfsError(
-                tr("$MFT buyutulemedi: veri kosullari kayda sigmiyor "
-                "(bu surumde $MFT kaydi genisletilemez)."))
-
-        total_clusters = sum(c for _l, c in runs)
-        struct.pack_into("<Q", raw, pos + 0x18, max(0, total_clusters - 1))
-        struct.pack_into("<QQQ", raw, pos + 0x28,
-                         total_clusters * self.cs, new_size, new_size)
-        for i in range(mapping_off, attr_len):
-            raw[pos + i] = 0
-        raw[pos + mapping_off:pos + mapping_off + len(pairs)] = pairs
-        self.write_record(MFT_BITMAP_RECORD, raw)
-
-        # Yeni alani sifirla, sonra okuyucunun kume zincirini tazele
-        for lcn, count in new_runs:
-            zero_block = b"\x00" * self.cs
-            for k in range(count):
-                self.dev.write((lcn + k) * self.cs, zero_block)
+        attr = self._nonresident_attr(AT_DATA, runs, new_size)
+        try:
+            self._set_record_attr(MFT_BITMAP_RECORD, AT_DATA, "", attr)
+        except NtfsError:
+            self.free_clusters(new_runs)
+            raise NtfsError(tr("$MFT buyutulemedi: kayit dolu"))
         self.fs._cache.clear()
         self.fs._load_mft()
+        self._grow_mft_bitmap(new_size // self.fs.record_size)
+
+    def _grow_mft_bitmap(self, records: int) -> None:
+        """`$MFT:$BITMAP` en az `records` biti kapsasin (8 baytin kati)."""
+        attr = self._mft_bitmap()
+        need = ((records + 63) // 64) * 8
+        size = self.fs.attribute_size(attr)
+        if size >= need:
+            return
+        if attr.resident:
+            value = bytes(self.fs.read_attribute(attr)).ljust(need, b"\x00")
+            self._set_record_attr(MFT_BITMAP_RECORD, AT_BITMAP, "",
+                                  self._resident_attr(AT_BITMAP, value))
+            self.fs._cache.clear()
+            return
+        runs = list(attr.runs)
+        allocated = sum(c for _l, c in runs) * self.cs
+        if need > allocated:
+            extra = (need - allocated + self.cs - 1) // self.cs
+            more = self.alloc_clusters(extra)
+            for lcn, count in more:
+                self.dev.write(lcn * self.cs, b"\x00" * (count * self.cs))
+                runs.append((lcn, count))
+        else:
+            # ayrilmis alanda kalan kisim sifirlanir (eski veri bit sanilmasin)
+            self._write_attr_range(attr, b"\x00" * (need - size), size)
+        new_attr = self._nonresident_attr(AT_BITMAP, runs, need)
+        self._set_record_attr(MFT_BITMAP_RECORD, AT_BITMAP, "", new_attr)
+        self.fs._cache.clear()
 
     def free_record(self, number: int) -> None:
         attr = self._mft_bitmap()
@@ -509,12 +612,31 @@ class NtfsWriter:
         attr[mapping_off:mapping_off + len(pairs)] = pairs
         return bytes(attr)
 
-    def _std_info(self, file_attr: int) -> bytes:
+    def _std_info(self, file_attr: int, security_id: int = 0) -> bytes:
+        """NTFS 3.x $STANDARD_INFORMATION.
+
+        * Dizin biti (0x10000000) yalnizca $FILE_NAME'de durur; Windows'un
+          kendi dizinlerinde SI oznitelik alani 0'dir.
+        * Guvenlik kimligi `$Secure`da var olan bir tanimlayiciyi gostermeli;
+          0 gecersizdir (Windows'ta erisim/bozukluk hatasi).
+        """
         now = _now_filetime()
         value = bytearray(STD_INFO_SIZE)
         struct.pack_into("<QQQQ", value, 0, now, now, now, now)
-        struct.pack_into("<I", value, 0x20, file_attr)
+        struct.pack_into("<I", value, 0x20, file_attr & ~FILE_ATTR_DIRECTORY)
+        struct.pack_into("<I", value, 0x34, security_id)
         return bytes(value)
+
+    def _security_id_for(self, dir_no: int, is_dir: bool = False) -> int:
+        """Yeni oge icin guvenlik kimligi: ust dizinden devralinan tanimlayici
+        `$Secure`da aranir, yoksa eklenir (`ntfssecure`). `$Secure` yoksa
+        (NTFS 1.x) 0 doner."""
+        if self.secure is None:
+            from .ntfssecure import SecureStore
+            self.secure = SecureStore(self)
+        if not self.secure.available():
+            return 0
+        return self.secure.id_for_new(dir_no, is_dir)
 
     def _file_name_value(self, parent_ref: int, name: str,
                          file_attr: int, size: int = 0,
@@ -527,7 +649,12 @@ class NtfsWriter:
         struct.pack_into("<QQ", value, 0x28, allocated, size)
         struct.pack_into("<I", value, 0x38, file_attr)
         value[0x40] = len(name)
-        value[0x41] = 1                       # Win32 ad turu
+        # Ad alani POSIX (0): kisa (8.3) adi olmayan uzun ad. Eskiden Win32 (1)
+        # yaziliyordu; Windows Win32 adin bir DOS adiyla esli olmasini bekler
+        # ve ilk erisimde kaydi "onariyordu" (Ntfs olay 130: "DOS dosya adi
+        # ozniteligi yok ... isaretleri 0x1 iken 0x0 yapin"). ntfs-3g de yeni
+        # dosyalari POSIX ad alaniyla olusturur.
+        value[0x41] = 0
         value[0x42:] = raw_name
         return bytes(value)
 
@@ -541,11 +668,15 @@ class NtfsWriter:
         raw[0:4] = FILE_MAGIC
         struct.pack_into("<HH", raw, 4, usa_off, usa_count)
         struct.pack_into("<HHHH", raw, 0x10, sequence, 1, attrs_off, flags)
+        # NTFS 3.1: kayit kendi numarasini tasir; Windows bunu dogrular. Eskiden
+        # 0 kaliyordu ve Windows dizini "bozuk ve okunamaz" sayiyordu (olculdu).
+        struct.pack_into("<I", raw, 0x2C, number)
         pos = attrs_off
         for a in attrs:
             if pos + len(a) + 8 > size:
                 raise NtfsError(
-                    tr("Kayit dolu: bu surumde oznitelikler tek FILE kaydina sigmali"))
+                    tr("Dosya cok parcali: veri kosullari tek MFT kaydina "
+                       "sigmiyor ($ATTRIBUTE_LIST bu surumde yok)"))
             raw[pos:pos + len(a)] = a
             pos += len(a)
         struct.pack_into("<I", raw, pos, AT_END)
@@ -564,136 +695,6 @@ class NtfsWriter:
         return root
 
     # --- $INDEX_ALLOCATION (INDX bloklari) ------------------------------
-    @staticmethod
-    def _node_has_children(value: bytes) -> bool:
-        return bool(struct.unpack_from("<B", value, 0x1C)[0] & 1)
-
-    def _leaf_vcn(self, rec: MftRecord, key_name: str) -> Optional[int]:
-        """Anahtarin ait oldugu yaprak dugumun VCN'ini bulur.
-
-        Kok dugumden baslayip, anahtardan **buyuk** ilk girisin alt dugumune
-        iner. Yaprakta alt dugum yoktur; o zaman `None` doner ve giris kokun
-        kendisine yazilir.
-        """
-        alloc = rec.find(AT_INDEX_ALLOCATION, "$I30")
-        if alloc is None:
-            return None
-        root = self._index_root(rec)
-        if not self._node_has_children(root.value):
-            return None
-        wanted = self.collation_key(key_name)
-        buf, base, end = root.value, 0x10, None
-        vcn: Optional[int] = None
-        guard = 0
-        while guard < 64:
-            guard += 1
-            entries_off, index_len = struct.unpack_from("<II", buf, base)
-            pos = base + entries_off
-            limit = base + index_len
-            child: Optional[int] = None
-            while pos + INDEX_ENTRY_HEADER <= min(limit, len(buf)):
-                entry_len, key_len, flags = struct.unpack_from("<HHH", buf, pos + 8)
-                if entry_len < INDEX_ENTRY_HEADER:
-                    break
-                child = (struct.unpack_from("<Q", buf, pos + entry_len - 8)[0]
-                         if flags & INDEX_ENTRY_NODE else None)
-                if flags & INDEX_ENTRY_END:
-                    child = child
-                    break
-                entry_label = self._entry_name(bytes(buf[pos:pos + entry_len]))
-                if wanted <= self.collation_key(entry_label):
-                    child = child
-                    break
-                pos += entry_len
-            if child is None:
-                return vcn                    # yaprak: daha asagi inilmez
-            vcn = child
-            block = self.fs._index_block(alloc, vcn)
-            if block is None:
-                raise NtfsError(tr("INDX blogu okunamadi (VCN {})", vcn))
-            buf, base = block, 0x18
-
-    def _write_indx(self, alloc: Attribute, vcn: int, buf: bytearray) -> None:
-        """INDX blogunu fixup kurarak yerine yazar."""
-        usa_off = struct.unpack_from("<H", buf, 4)[0]
-        usn = (struct.unpack_from("<H", buf, usa_off)[0] + 1) & 0xFFFF
-        if usn in (0, 0xFFFF):
-            usn = 1
-        self._apply_fixup_out(buf, usn)
-        target = vcn * self.cs
-        pos = 0
-        for lcn, count in alloc.runs:
-            span = count * self.cs
-            if target < pos + span and lcn >= 0:
-                self.dev.write(lcn * self.cs + (target - pos), bytes(buf))
-                return
-            pos += span
-        raise NtfsError(tr("INDX blogu diskte bulunamadi (VCN {})", vcn))
-
-    def _indx_entries(self, block: bytes) -> Tuple[List[bytes], bytes]:
-        """INDX govdesindeki girisler ve son (END) giris."""
-        entries_off, index_len = struct.unpack_from("<II", block, 0x18)
-        pos = 0x18 + entries_off
-        limit = 0x18 + index_len
-        out: List[bytes] = []
-        tail = b""
-        while pos + INDEX_ENTRY_HEADER <= min(limit, len(block)):
-            entry_len, _key_len, flags = struct.unpack_from("<HHH", block, pos + 8)
-            if entry_len < INDEX_ENTRY_HEADER:
-                break
-            chunk = bytes(block[pos:pos + entry_len])
-            if flags & INDEX_ENTRY_END:
-                tail = chunk
-                break
-            out.append(chunk)
-            pos += entry_len
-        return out, tail
-
-    def _rewrite_indx(self, alloc: Attribute, vcn: int,
-                      entries: List[bytes], tail: bytes) -> None:
-        """Girisleri sirali yazarak INDX blogunu yeniden kurar."""
-        block = self.fs._index_block(alloc, vcn)
-        if block is None:
-            raise NtfsError(tr("INDX blogu okunamadi (VCN {})", vcn))
-        entries = sorted(entries, key=lambda e: self.collation_key(
-            self._entry_name(e)))
-        body = b"".join(entries) + tail
-
-        # `entries_offset` **korunur**. INDX blogunda guncelleme dizisi (USA)
-        # INDEX_HEADER ile girisler arasinda durur; ofseti 0x10'a zorlamak o
-        # diziyi ezer ve blok bozulur (ilk yazimda bu yapildi: ntfsfix
-        # "File name overflow from index entry" dedi).
-        entries_off, _old_len, allocated_size = struct.unpack_from(
-            "<III", block, 0x18)
-        if len(body) > allocated_size - entries_off:
-            raise NtfsError(
-                tr("Dizin indeks blogu doldu; bu surumde B+ dugumu bolunemez. "
-                "Daha az giris deneyin."))
-        new_block = bytearray(block)
-        struct.pack_into("<I", new_block, 0x18 + 4, entries_off + len(body))
-        start = 0x18 + entries_off
-        new_block[start:start + len(body)] = body
-        for i in range(start + len(body), len(new_block)):
-            new_block[i] = 0
-        self._write_indx(alloc, vcn, new_block)
-
-    def _parse_index_entries(self, value: bytes) -> List[bytes]:
-        """Indeks govdesindeki girisleri (son giris haric) listeler."""
-        entries_off, index_len = struct.unpack_from("<II", value, 0x10)
-        pos = 0x10 + entries_off
-        end = 0x10 + index_len
-        out: List[bytes] = []
-        while pos + INDEX_ENTRY_HEADER <= min(end, len(value)):
-            entry_len, _key_len, flags = struct.unpack_from("<HHH", value, pos + 8)
-            if entry_len < INDEX_ENTRY_HEADER:
-                break
-            if flags & INDEX_ENTRY_END:
-                break
-            out.append(bytes(value[pos:pos + entry_len]))
-            pos += entry_len
-        return out
-
-    @staticmethod
     def _entry_name(entry: bytes) -> str:
         name_len = entry[INDEX_ENTRY_HEADER + 0x40]
         start = INDEX_ENTRY_HEADER + 0x42
@@ -752,69 +753,100 @@ class NtfsWriter:
         struct.pack_into("<I", new_raw, 0x18, _align8(end))
         self.write_record(dir_no, new_raw)
 
+    def _record_attrs(self, rec_no: int):
+        """Kayittaki oznitelikler: [(tur, ad, ham bayt)] ve ham kayit."""
+        raw = self._raw_record(rec_no)
+        attrs_off = struct.unpack_from("<H", raw, 0x14)[0]
+        items = []
+        pos = attrs_off
+        while pos + 8 <= len(raw):
+            a_kind = struct.unpack_from("<I", raw, pos)[0]
+            if a_kind == AT_END:
+                break
+            length = struct.unpack_from("<I", raw, pos + 4)[0]
+            if length < 16:
+                break
+            n_len, n_off = raw[pos + 9], struct.unpack_from("<H", raw, pos + 0x0A)[0]
+            a_name = raw[pos + n_off:pos + n_off + n_len * 2].decode("utf-16-le", "replace")
+            items.append([a_kind, a_name, bytearray(raw[pos:pos + length])])
+            pos += length
+        return items, raw
+
+    def _write_record_attrs(self, rec_no: int, raw: bytearray, items,
+                            links: Optional[int] = None) -> None:
+        attrs_off = struct.unpack_from("<H", raw, 0x14)[0]
+        items.sort(key=lambda it: (it[0], it[1].upper()))
+        body = b"".join(bytes(it[2]) for it in items)
+        if attrs_off + len(body) + 8 > self.fs.record_size:
+            raise NtfsError(tr("Dizin kaydi doldu: oznitelik kayda sigmiyor"))
+        new_raw = bytearray(raw[:attrs_off]) + bytearray(self.fs.record_size - attrs_off)
+        new_raw[attrs_off:attrs_off + len(body)] = body
+        end = attrs_off + len(body)
+        struct.pack_into("<I", new_raw, end, AT_END)
+        struct.pack_into("<I", new_raw, 0x18, _align8(end + 8))
+        if links is not None:
+            struct.pack_into("<H", new_raw, 0x12, links)
+        self.write_record(rec_no, new_raw)
+        self.fs._cache.pop(rec_no, None)
+
+    @staticmethod
+    def _fn_info(attr: bytes) -> Tuple[int, str, int]:
+        """$FILE_NAME ozniteligi -> (ust dizin no, ad, ad alani)."""
+        voff = struct.unpack_from("<H", attr, 0x14)[0]
+        v = attr[voff:]
+        parent = struct.unpack_from("<Q", v, 0)[0] & 0xFFFFFFFFFFFF
+        n = v[0x40]
+        return parent, bytes(v[0x42:0x42 + 2 * n]).decode("utf-16-le", "replace"), v[0x41]
+
+    def _set_record_attr(self, rec_no: int, kind: int, name: str,
+                         new_attr: Optional[bytes]) -> None:
+        """Kayittaki (tur, ad) oznitelugunu degistirir, ekler ya da siler.
+
+        Oznitelikler kayitta tur (sonra ad) sirasiyla durmak zorundadir;
+        yeni oznitelik dogru yere konur, kimligi kaydin `next_attr_id`
+        sayacindan alinir. Degisen oznitelik kimligini korur.
+        """
+        items, raw = self._record_attrs(rec_no)
+        next_id = struct.unpack_from("<H", raw, 0x28)[0]
+        replaced = False
+        for item in items:
+            if item[0] == kind and item[1] == name:
+                if new_attr is None:
+                    items.remove(item)
+                else:
+                    attr = bytearray(new_attr)
+                    attr[0x0E:0x10] = item[2][0x0E:0x10]
+                    item[2] = attr
+                replaced = True
+                break
+        if not replaced and new_attr is not None:
+            attr = bytearray(new_attr)
+            struct.pack_into("<H", attr, 0x0E, next_id)
+            next_id += 1
+            items.append([kind, name, attr])
+        struct.pack_into("<H", raw, 0x28, next_id)
+        self._write_record_attrs(rec_no, raw, items)
+
     def index_add(self, dir_no: int, name: str, mft_ref: int, sequence: int,
                   file_attr: int, size: int, allocated: int) -> None:
-        """Dizin indeksine yeni giris ekler.
+        """Dizin indeksine yeni giris ekler (B+ agaci; gerekirse dugum bolunur).
 
-        Indeks `$INDEX_ROOT` icinde duruyorsa oraya, B+ agacina tasmissa
-        anahtarin ait oldugu **yaprak INDX blogu** icine eklenir. Dugum
-        bolunmesi gerekiyorsa islem reddedilir.
+        Eskiden kok ya da yaprak dolunca yazma reddediliyordu (`ntfsindex`).
         """
         rec = self.fs.record(dir_no)
-        if any(e.name.lower() == name.lower()
-               for e in self.fs.listdir_record(rec)):
-            raise NtfsError(tr("Zaten var: {}", name))
         key = self._file_name_value(
             (rec.sequence << 48) | dir_no, name, file_attr, size, allocated)
-        entry = self._make_index_entry(mft_ref, sequence, key)
+        DirIndex(self, dir_no).insert(Entry((sequence << 48) | mft_ref, key))
+        self.fs._cache.pop(dir_no, None)
 
-        vcn = self._leaf_vcn(rec, name)
-        if vcn is None:
-            entries = self._parse_index_entries(self._index_root(rec).value)
-            entries.append(entry)
-            self._replace_index_root(dir_no, self._rebuild_index_root(entries))
-            return
-        alloc = rec.find(AT_INDEX_ALLOCATION, "$I30")
-        block = self.fs._index_block(alloc, vcn)
-        if block is None:
-            raise NtfsError(tr("INDX blogu okunamadi (VCN {})", vcn))
-        entries, tail = self._indx_entries(block)
-        entries.append(entry)
-        self._rewrite_indx(alloc, vcn, entries, tail)
+    def index_contains(self, dir_no: int, name: str) -> bool:
+        return DirIndex(self, dir_no).contains(name)
 
     def index_remove(self, dir_no: int, name: str) -> int:
-        """Girisi siler ve hedefin MFT numarasini dondurur."""
-        rec = self.fs.record(dir_no)
-        vcn = self._leaf_vcn(rec, name)
-
-        if vcn is None:
-            entries = self._parse_index_entries(self._index_root(rec).value)
-            remaining, target = [], None
-            for e in entries:
-                if self._entry_name(e).lower() == name.lower() and target is None:
-                    target = struct.unpack_from("<Q", e, 0)[0] & 0xFFFFFFFFFFFF
-                else:
-                    remaining.append(e)
-            if target is None:
-                raise NtfsError(tr("Bulunamadi: {}", name))
-            self._replace_index_root(dir_no, self._rebuild_index_root(remaining))
-            return target
-
-        alloc = rec.find(AT_INDEX_ALLOCATION, "$I30")
-        block = self.fs._index_block(alloc, vcn)
-        if block is None:
-            raise NtfsError(tr("INDX blogu okunamadi (VCN {})", vcn))
-        entries, tail = self._indx_entries(block)
-        remaining, target = [], None
-        for e in entries:
-            if self._entry_name(e).lower() == name.lower() and target is None:
-                target = struct.unpack_from("<Q", e, 0)[0] & 0xFFFFFFFFFFFF
-            else:
-                remaining.append(e)
-        if target is None:
-            raise NtfsError(tr("Bulunamadi: {}", name))
-        self._rewrite_indx(alloc, vcn, remaining, tail)
-        return target
+        """Girisi siler ve hedefin MFT numarasini dondurur (ara dugumde de)."""
+        ref = DirIndex(self, dir_no).remove(name)
+        self.fs._cache.pop(dir_no, None)
+        return ref
 
     # ------------------------------------------------------------------
     # Ust duzey islemler
@@ -844,17 +876,46 @@ class NtfsWriter:
             pass
 
         rec_no = self.alloc_record()
-        sequence = 1
+        runs: List[Tuple[int, int]] = []
+        try:
+            self._write_file_body(rec_no, dir_no, name, data, runs)
+        except Exception:
+            # Yarida kalan yazma birimi bozmasin: kayit ve kumeler geri verilir
+            if runs:
+                self.free_clusters(runs)
+            self.free_record(rec_no)
+            self.fs._cache.clear()
+            raise
+
+    def _next_sequence(self, rec_no: int) -> int:
+        """Yeniden kullanilan kaydin sira numarasi (silmede artirilmisti).
+
+        Sira numarasi eski basvurulari gecersiz kilmak icin ileri gider; hep 1
+        yazmak onu geri sariyordu. Bicimsiz/bos kayitta 1.
+        """
+        try:
+            raw = self.fs._run_read(self.fs._mft_runs, rec_no * self.fs.record_size,
+                                    self.fs.record_size)
+        except Exception:                          # noqa: BLE001
+            return 1
+        if raw[:4] != FILE_MAGIC:
+            return 1
+        seq = struct.unpack_from("<H", raw, 0x10)[0]
+        return seq if seq else 1
+
+    def _write_file_body(self, rec_no: int, dir_no: int, name: str,
+                         data: bytes, runs: List[Tuple[int, int]]) -> None:
+        sequence = self._next_sequence(rec_no)
         parent_ref = (self.fs.record(dir_no).sequence << 48) | dir_no
 
         # Kucuk veri kayda yerlesir; buyuk veri kumelere yazilir.
         resident_limit = self.fs.record_size - 0x200
         if len(data) <= resident_limit:
             data_attr = self._resident_attr(AT_DATA, data, attr_id=2)
-            runs, allocated = [], 0
+            allocated = 0
         else:
             clusters = (len(data) + self.cs - 1) // self.cs
-            runs = self.alloc_clusters(clusters)
+            runs.extend(self.alloc_clusters(clusters))
             pos = 0
             for lcn, count in runs:
                 span = count * self.cs
@@ -868,7 +929,8 @@ class NtfsWriter:
 
         attrs = [
             self._resident_attr(AT_STANDARD_INFORMATION,
-                                self._std_info(0x20), attr_id=0),
+                                self._std_info(0x20, self._security_id_for(dir_no)),
+                                attr_id=0),
             self._resident_attr(AT_FILE_NAME,
                                 self._file_name_value(parent_ref, name, 0x20,
                                                       len(data), allocated),
@@ -887,12 +949,14 @@ class NtfsWriter:
         parent_path, name = self._split(path)
         dir_no = self._dir_number(parent_path)
         rec_no = self.alloc_record()
-        sequence = 1
+        sequence = self._next_sequence(rec_no)
         parent_ref = (self.fs.record(dir_no).sequence << 48) | dir_no
 
         attrs = [
             self._resident_attr(AT_STANDARD_INFORMATION,
-                                self._std_info(FILE_ATTR_DIRECTORY), attr_id=0),
+                                self._std_info(FILE_ATTR_DIRECTORY,
+                                               self._security_id_for(dir_no, True)),
+                                attr_id=0),
             self._resident_attr(AT_FILE_NAME,
                                 self._file_name_value(parent_ref, name,
                                                       FILE_ATTR_DIRECTORY),
@@ -907,21 +971,43 @@ class NtfsWriter:
         self.fs._cache.clear()
 
     def remove(self, path: str) -> None:
-        """Dosyayi veya **bos** klasoru siler."""
+        """Dosyayi veya **bos** klasoru siler.
+
+        Kaydin bu dizindeki TUM adlari indeksten kalkar: Windows'un
+        olusturdugu dosyada uzun ad ile 8.3 kisa ad iki ayri giris olabilir;
+        eskiden yalnizca biri siliniyor, digeri serbest kaydi gosteren sahipsiz
+        giris olarak kaliyordu. Baska dizinde de adi olan (sabit bag) kayit
+        serbest birakilmaz; yalnizca bu dizindeki adlari kalkar.
+        """
         self._require_writable()
         parent_path, name = self._split(path)
         dir_no = self._dir_number(parent_path)
         rec = self.fs.resolve(path)
-        if rec.is_dir:
-            if self.fs.listdir_record(rec):
-                raise NtfsError(tr("Klasor bos degil: {}", name))
-        else:
+        if rec.is_dir and self.fs.listdir_record(rec):
+            raise NtfsError(tr("Klasor bos degil: {}", name))
+        target = rec.number
+        items, raw = self._record_attrs(target)
+        here, elsewhere = [], []
+        for it in items:
+            if it[0] == AT_FILE_NAME:
+                parent, fn, ns = self._fn_info(it[2])
+                (here if parent == dir_no else elsewhere).append((it, fn, ns))
+        for _it, fn, _ns in here:
+            try:
+                self.index_remove(dir_no, fn)
+            except NtfsError:
+                pass                              # zaten yoksa sorun degil
+        if any(ns != 2 for _i, _f, ns in elsewhere):
+            # sabit bag: kayit yasamaya devam eder
+            keep = [it for it in items if not any(it is h[0] for h in here)]
+            links = sum(1 for _i, _f, ns in elsewhere if ns != 2)
+            self._write_record_attrs(target, raw, keep, links=links)
+            self.fs._cache.clear()
+            return
+        if not rec.is_dir:
             data = rec.find(AT_DATA)
             if data is not None and not data.resident:
                 self.free_clusters(data.runs)
-
-        target = self.index_remove(dir_no, name)
-        raw = self._raw_record(target)
         flags = struct.unpack_from("<H", raw, 0x16)[0]
         struct.pack_into("<H", raw, 0x16, flags & ~MFT_FLAG_IN_USE)
         sequence = struct.unpack_from("<H", raw, 0x10)[0]
@@ -931,20 +1017,45 @@ class NtfsWriter:
         self.fs._cache.clear()
 
     def rename(self, path: str, new_name: str) -> None:
-        """Ayni dizin icinde yeniden adlandirir."""
+        """Ayni dizin icinde yeniden adlandirir.
+
+        Hem indeks girisi HEM kayittaki $FILE_NAME degisir. Eskiden yalnizca
+        indeks degisiyordu: Windows dosyayi eski adiyla gosteriyordu
+        (olculdu 2026-09-29). Bu dizindeki eski adlarin hepsi (8.3 kisa ad
+        dahil) kalkar, yerine tek bir Win32 adi gelir.
+        """
         self._require_writable()
         parent_path, name = self._split(path)
         if "/" in new_name or "\\" in new_name:
             raise NtfsError(tr("Yeni ad yol icermemeli"))
+        dir_no = self._dir_number(parent_path)
+        if self.index_contains(dir_no, new_name):
+            raise NtfsError(tr("Zaten var: {}", new_name))
         rec = self.fs.resolve(path)
         data = rec.find(AT_DATA)
         size = data.data_size if data is not None else 0
         allocated = data.allocated_size if (data and not data.resident) else 0
         file_attr = FILE_ATTR_DIRECTORY if rec.is_dir else 0x20
-        dir_no = self._dir_number(parent_path)
         sequence = rec.sequence
-
-        self.index_remove(dir_no, name)
+        items, raw = self._record_attrs(rec.number)
+        here = [it for it in items if it[0] == AT_FILE_NAME
+                and self._fn_info(it[2])[0] == dir_no]
+        for it in here:
+            try:
+                self.index_remove(dir_no, self._fn_info(it[2])[1])
+            except NtfsError:
+                pass
+        parent_ref = (self.fs.record(dir_no).sequence << 48) | dir_no
+        new_fn = self._resident_attr(
+            AT_FILE_NAME, self._file_name_value(parent_ref, new_name, file_attr,
+                                                size, allocated),
+            attr_id=struct.unpack_from("<H", here[0][2], 0x0E)[0] if here else 0,
+            indexed=1)
+        items = [it for it in items if not any(it is h for h in here)]
+        items.append([AT_FILE_NAME, "", bytearray(new_fn)])
+        links = sum(1 for it in items if it[0] == AT_FILE_NAME
+                    and self._fn_info(it[2])[2] != 2)
+        self._write_record_attrs(rec.number, raw, items, links=links)
         self.index_add(dir_no, new_name, rec.number, sequence, file_attr,
                        size, allocated)
         self.fs._cache.clear()
@@ -962,7 +1073,11 @@ def _encode_runs(runs: List[Tuple[int, int]]) -> bytes:
     for lcn, count in runs:
         delta = lcn - prev
         prev = lcn
-        len_b = _signed_bytes(count, unsigned=True)
+        # Uzunluk da ISARETLI kodlanir: ntfs-3g ve Windows uzunlugu isaretli
+        # okur. 138 kume tek bayt 0x8A yazilinca negatif sayiliyor, kosu
+        # listesi "bozuk" oluyordu (ntfs-3g: mapping_pairs_decompress failed;
+        # 4K kumede 512 KB-1 MB gibi araliktaki her dosya etkileniyordu).
+        len_b = _signed_bytes(count)
         off_b = _signed_bytes(delta)
         out.append((len(off_b) << 4) | len(len_b))
         out += len_b

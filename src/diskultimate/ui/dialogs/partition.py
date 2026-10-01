@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox,
                              QLabel, QLineEdit, QMessageBox, QSlider,
                              QVBoxLayout)
 
+from ...core.fsregistry import fs_display
 from ...core.formatter import FS_BY_KEY, all_kinds
 from ...core.ptable import FreeRegion, Partition, human_size
 from ...i18n import tr
@@ -26,7 +27,7 @@ def _fill_fs_combo(combo: QComboBox, size_bytes: int = 0) -> None:
     """
     model = combo.model()
     for kind, reason in all_kinds(size_bytes):
-        metin = kind.label if not reason else f"{kind.label}  —  {reason}"
+        metin = tr(kind.label) if not reason else f"{tr(kind.label)}  —  {reason}"
         combo.addItem(metin, kind.key)
         if reason:
             satir = combo.count() - 1
@@ -161,7 +162,7 @@ class CreatePartitionDialog(QDialog):
     def _update_summary(self) -> None:
         sector = self.sector_count()
         fs = self.fs_combo.currentData()
-        name = FS_BY_KEY[fs].label if fs else tr("bicimlendirilmemis")
+        name = tr(FS_BY_KEY[fs].label) if fs else tr("bicimlendirilmemis")
         self.summary.setText(
             tr("{} — {} sektor — {}", human_size(sector * self.sector_size),
                f"{sector:,}".replace(",", "."), name))
@@ -201,7 +202,7 @@ class FormatDialog(QDialog):
         p = self.partition
         layout.addWidget(QLabel(
             tr("<b>Bolum {}</b> — {}<br>Mevcut dosya sistemi: {}",
-               p.index, human_size(p.size), p.fs_type or 'yok')))
+               p.index, human_size(p.size), fs_display(p.fs_type) or tr('yok'))))
 
         grup = QGroupBox(tr("Bicimlendirme secenekleri"))
         form = QFormLayout(grup)

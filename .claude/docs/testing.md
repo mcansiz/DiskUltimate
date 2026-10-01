@@ -503,6 +503,26 @@ ve **`mkntfs`** (indeks B+ agacina tasmis). `ntfsfix` yoksa kosum basarisiz
 sayilir. `ntfs-3g` baglama adimi root gerektirir; yoksa atlanir ve bu acikca
 yazilir.
 
+## Boyutlandirma matrisi (2026-09-29)
+
+`python3 -m tests.resize_matrix [--quick] [--keep] [fs ...]` — FAT12/16/32,
+exFAT, NTFS, ext2/3/4 x MBR/GPT; her birinde kucult -> buyut -> saga tasi ->
+sola tasi+kucult -> sola tasi+buyut (`DiskSession.resize_partition`). Her
+adimda tum dosyalarin SHA-1'i, yeni dosya yazma ve varsa harici fsck.
+`--keep` son goruntuyu ve `<img>.sha1.txt` manifestini saklar (Windows'ta
+VHD olarak takilip `.tmp/win/wincheck_matrix.ps1` ile denetlenir).
+
+| Platform | Sonuc |
+|---|---|
+| Linux (ana makine, goruntu) | 16/16, fsck.vfat / fsck.exfat / ntfsfix / e2fsck temiz |
+| Windows 10 (VBox win10) | 16/16 (harici arac yok) |
+| Windows surucusu, sonuc birimleri (FAT16/FAT32/exFAT/NTFS, MBR) | Healthy, 128/128 SHA-1, Windows yazma/silme sorunsuz |
+| macOS | ortam yok — **sinanmadi** |
+
+Not: `Get-Volume` Windows 10'da exFAT icin `FileSystemType=Unknown` doner
+(mkfs.exfat birimi de ayni); `FileSystem`/`DriveInfo.DriveFormat` "exFAT".
+Disk: saklanan goruntuler tasimadan sonra seyrek kalmaz (~600 MB/adet).
+
 ## Harici dogrulama (elle)
 
 ```bash

@@ -266,3 +266,45 @@ def parse_size(text: str, default_unit: str = "MB") -> int:
             text = text[: -len(suffix)].strip()
             break
     return int(float(text) * mult[unit])
+
+
+class WholeDiskTable(PartitionTable):
+    """Bolum tablosu olmayan, tum diski tek dosya sistemi kaplayan disk.
+
+    Tablosuz USB bellek ("super disket"), duz `.iso`, `mkfs` ile uretilmis
+    `ext4.img` gibi dosya sistemi goruntuleri. Arayuz diski tek bir bolum
+    olarak gosterir; icerik okunur, bicimlendirilir, yedeklenir. Tabloya
+    **yazilacak** bir sey yoktur: bolum ekleme/silme reddedilir, `write()`
+    hicbir sey yapmaz (tur bilgisi saklanacak yer yok).
+    """
+
+    scheme = "none"
+
+    def __init__(self, device):
+        super().__init__(device)
+        self.partitions = [Partition(index=1, start_lba=0,
+                                     sector_count=device.sector_count,
+                                     scheme="none", type_id=0,
+                                     type_guid=GPT_UNUSED,
+                                     sector_size=device.sector_size)]
+
+    def write(self) -> None:
+        return None
+
+    def _refuse(self):
+        raise PartitionTableError(tr(
+            "Bu diskte bolum tablosu yok; dosya sistemi tum diski kapliyor. "
+            "Bolum eklemek/silmek icin once bolum tablosu olusturun (icindeki "
+            "dosya sistemi silinir)."))
+
+    def add_partition(self, start_lba: int, sector_count: int, **kwargs) -> Partition:
+        self._refuse()
+
+    def delete_partition(self, index: int) -> None:
+        self._refuse()
+
+    def first_usable_lba(self) -> int:
+        return 0
+
+    def free_regions(self, min_sectors: int = 1) -> List[FreeRegion]:
+        return []

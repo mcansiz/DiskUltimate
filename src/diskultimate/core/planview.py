@@ -29,6 +29,7 @@ from typing import Dict, List, Optional
 
 from .ptable import (GPT_UNUSED, FreeRegion, Partition, PartitionTable,
                      human_size)
+from . import fsregistry
 from ..i18n import tr
 
 # Bolumun bekleyen adimlara gore durumu (`Partition.plan_state`)
@@ -230,7 +231,8 @@ def _fs_name(fs_key: str) -> str:
     """Kuyruktaki dosya sistemi anahtarini gosterilecek ada cevirir."""
     names = {"fat12": "FAT12", "fat16": "FAT16", "fat32": "FAT32",
              "exfat": "exFAT", "ntfs": "NTFS", "ext2": "ext2",
-             "ext3": "ext3", "ext4": "ext4", "swap": "Linux Takas"}
+             "ext3": "ext3", "ext4": "ext4", "swap": fsregistry.SWAP,
+             "hfsplus": "HFS+", "udf": "UDF", "xfs": "XFS"}
     return names.get((fs_key or "").lower(), fs_key.upper() if fs_key else "")
 
 
@@ -247,7 +249,8 @@ def _new_partition(params: dict, scheme: str, sector_size: int,
         name=params.get("name", ""),
         bootable=bool(params.get("bootable", False)),
         logical=bool(params.get("logical", False)),
-        fs_type=_fs_name(params.get("fs_key", "")),
+        fs_type=(params.get("found_fs", "") if params.get("keep_data")
+                 else _fs_name(params.get("fs_key", ""))),
         fs_label=params.get("label", ""),
         sector_size=sector_size)
     part.plan_state = STATE_NEW

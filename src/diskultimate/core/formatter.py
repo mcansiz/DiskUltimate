@@ -17,8 +17,12 @@ from .ntfs import format_ntfs
 from .fat import FatFS
 from .image import BlockDevice
 from .platform import PLATFORM_NAME, find_tool, run_tool, tool_names
-from .ptable import GPT_UNUSED
-from ..i18n import tr
+from .ptable import GPT_UNUSED, human_size
+from .hfsformat import HfsFormatError, format_hfsplus
+from .swap import SwapError, format_swap
+from .udfformat import UdfFormatError, format_udf
+from .xfsformat import XfsFormatError, format_xfs
+from ..i18n import mark, tr
 
 CHUNK = 4 * 1024 * 1024
 
@@ -67,12 +71,15 @@ class FsKind:
         adaylar = tool_names(self.key)
         if not adaylar:
             return tr("{} uzerinde {} icin harici arac yok",
-                      PLATFORM_NAME, self.label)
+                      PLATFORM_NAME, tr(self.label))
         return tr("gerekli arac: {}", tr(" veya ").join(adaylar))
 
 
 MSBASIC = "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7"
+SWAP_GUID = "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F"
+MIN_SWAP_BYTES = 10 * 4096
 LINUXFS = "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+APPLE_HFS = "48465300-0000-11AA-AA11-00306543ECAC"
 
 FS_KINDS: List[FsKind] = [
     FsKind("fat32", "FAT32", True, min_bytes=33 * 1024 * 1024,
@@ -91,6 +98,19 @@ FS_KINDS: List[FsKind] = [
            min_bytes=8 * 1024 * 1024, mbr_type=0x83, gpt_type=LINUXFS),
     FsKind("ext2", "ext2", True,
            min_bytes=1024 * 1024, mbr_type=0x83, gpt_type=LINUXFS),
+    # HFS+ gunluksuz (ADR 0061); macOS gunlugu ilk baglamada acabilir.
+    FsKind("hfsplus", "HFS+", True, min_bytes=1024 * 1024,
+           mbr_type=0xAF, gpt_type=APPLE_HFS),
+    # XFS v5 (crc, ftype, finobt, bigtime, inobtcount; ADR 0067)
+    FsKind("xfs", "XFS", True, min_bytes=300 * 1024 * 1024,
+           mbr_type=0x83, gpt_type=LINUXFS),
+    # UDF 2.01, sabit disk yerlesimi (ADR 0064): Windows/macOS/Linux ortak
+    FsKind("udf", "UDF", True, min_bytes=1024 * 1024,
+           mbr_type=0x07, gpt_type=MSBASIC),
+    # Gorunen ad cevrilir (arayuz `tr(kind.label)`); ayni ad fsdetect'in
+    # urettigi `fs_type` oldugu icin veri olarak cevrilmemis kalir.
+    FsKind("swap", mark("Linux Takas"), True, min_bytes=MIN_SWAP_BYTES,
+           mbr_type=0x82, gpt_type=SWAP_GUID),
 ]
 
 FS_BY_KEY = {k.key: k for k in FS_KINDS}
@@ -162,8 +182,8 @@ def format_partition(view: BlockDevice, fs_key: str, label: str = "",
         raise FormatError(tr("Goruntu salt okunur acildi"))
     if kind.min_bytes and view.size < kind.min_bytes:
         raise FormatError(
-            tr("{} icin en az {} MB gerekir",
-               kind.label, kind.min_bytes // (1024*1024)))
+            tr("{} icin en az {} gerekir",
+               tr(kind.label), human_size(kind.min_bytes)))
 
     def report(msg: str, pct: int) -> None:
         if progress:
@@ -172,7 +192,7 @@ def format_partition(view: BlockDevice, fs_key: str, label: str = "",
     wipe_signatures(view)
 
     if kind.internal:
-        report(tr("{} bicimlendiriliyor...", kind.label), 10)
+        report(tr("{} bicimlendiriliyor...", tr(kind.label)), 10)
         spc = max(1, cluster_bytes // view.sector_size) if cluster_bytes else 0
         # Bolumun diskteki baslangici onyukleme sektorune yazilir (FAT/NTFS
         # "gizli sektor", exFAT PartitionOffset). Eskiden yalnizca exFAT
@@ -185,6 +205,26 @@ def format_partition(view: BlockDevice, fs_key: str, label: str = "",
             format_ntfs(view, label=label,
                         cluster_size=cluster_bytes if cluster_bytes else 0,
                         progress=progress, partition_offset=offset)
+        elif kind.key == "hfsplus":
+            try:
+                format_hfsplus(view, label=label, progress=progress)
+            except HfsFormatError as exc:
+                raise FormatError(str(exc)) from exc
+        elif kind.key == "xfs":
+            try:
+                format_xfs(view, label=label, progress=progress)
+            except XfsFormatError as exc:
+                raise FormatError(str(exc)) from exc
+        elif kind.key == "udf":
+            try:
+                format_udf(view, label=label, progress=progress)
+            except UdfFormatError as exc:
+                raise FormatError(str(exc)) from exc
+        elif kind.key == "swap":
+            try:
+                format_swap(view, label=label)
+            except SwapError as exc:
+                raise FormatError(str(exc)) from exc
         elif kind.key.startswith("ext"):
             format_ext(view, version=kind.key, label=label,
                        block_size=cluster_bytes if cluster_bytes in

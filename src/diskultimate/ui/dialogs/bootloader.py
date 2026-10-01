@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QCheckBox, QDialog,
                              QSplitter, QTreeWidget, QTreeWidgetItem,
                              QVBoxLayout, QWidget)
 
+from ...core.fsregistry import fs_display
 from ...core import bootloader as bl
 from ...core import grub as grub_mod
 from ...core import operations as ops
@@ -206,7 +207,7 @@ class BootloaderDialog(QDialog):
                 # kullanicinin aradigi sistemi neden goremedigini anlatmaz.
                 item.setText(1, entry.reason or tr("-"))
                 item.setDisabled(True)
-            label = f"{entry.fs_type}" + (f" · {entry.label}" if entry.label
+            label = f"{fs_display(entry.fs_type)}" + (f" · {entry.label}" if entry.label
                                           else "")
             if entry.is_esp:
                 label += tr(" · EFI")

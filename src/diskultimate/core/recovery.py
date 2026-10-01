@@ -18,7 +18,7 @@ from typing import Callable, Dict, Iterator, List, Optional, Tuple
 from .exfat import (ATTR_DIRECTORY as EX_DIR, E_FILE, E_NAME, E_STREAM,
                     ExFatFS, ExFatError)
 from .fat import ATTR_DIRECTORY, ATTR_LFN, ATTR_VOLUME_ID, FatFS, FatError
-from .image import BlockDevice
+from .image import BlockDevice, PartitionView
 from .platform import restore_owner
 from .ptable import human_size
 from ..i18n import mark, tr
@@ -280,6 +280,13 @@ def _probe_signature(block: bytes, dev: BlockDevice, lba: int) -> Optional[LostP
         total = struct.unpack_from("<Q", block, 40)[0] + 1
         if 0 < total <= dev.sector_count:
             return LostPartition(lba, total, "NTFS", "", ss)
+    extra = _probe_modern(block, dev)
+    if extra is not None:
+        fs_type, size_bytes, label = extra
+        count = size_bytes // ss
+        if 0 < count and lba + count <= dev.sector_count:
+            return LostPartition(lba, count, fs_type, label, ss)
+        return None
     # FAT12/16/32
     if block[510:512] == b"\x55\xAA" and block[0] in (0xEB, 0xE9, 0xE8):
         bps = struct.unpack_from("<H", block, 11)[0]
@@ -296,6 +303,81 @@ def _probe_signature(block: bytes, dev: BlockDevice, lba: int) -> Optional[LostP
                 etiket_off = 0x47 if root == 0 else 0x2B
                 etiket = block[etiket_off:etiket_off + 11].decode("latin-1", "ignore").strip()
                 return LostPartition(lba, total, kind, etiket, ss)
+    return None
+
+
+# Adaydan itibaren okunan pencere: btrfs ustblogu 64 KiB'dedir.
+PROBE_WINDOW = 0x10000 + 0x1000
+
+
+def _probe_modern(head: bytes, dev: BlockDevice) -> Optional[Tuple[str, int, str]]:
+    """(kind_name, boyut_bayt, etiket) — boyutu ustbloktan okunabilen turler.
+
+    Boyutu bilinemeyen turler (LUKS, UDF, LVM) burada **aranmaz**: kayip bolum
+    tabloya boyutuyla eklenir; tahmini boyut yanlis bolum demektir.
+    """
+    ss = dev.sector_size
+    # ext2/3/4: ustblok +1024; yalnizca birincil (s_block_group_nr == 0)
+    sb = head[1024:2048]
+    if len(sb) == 1024 and struct.unpack_from("<H", sb, 0x38)[0] == 0xEF53 \
+            and struct.unpack_from("<H", sb, 0x5A)[0] == 0:
+        log_bs = struct.unpack_from("<I", sb, 0x18)[0]
+        if log_bs <= 6:
+            blocks = struct.unpack_from("<I", sb, 0x04)[0]
+            incompat = struct.unpack_from("<I", sb, 0x60)[0]
+            if incompat & 0x0080:
+                blocks |= struct.unpack_from("<I", sb, 0x150)[0] << 32
+            compat = struct.unpack_from("<I", sb, 0x5C)[0]
+            ro = struct.unpack_from("<I", sb, 0x64)[0]
+            kind_name = "ext4" if incompat & 0x0040 or ro & 0x0008 else \
+                ("ext3" if compat & 0x0004 else "ext2")
+            label = sb[0x78:0x88].split(b"\x00")[0].decode("utf-8", "ignore")
+            return kind_name, blocks * (1024 << log_bs), label
+    # XFS (buyuk sonlu)
+    if head[:4] == b"XFSB" and len(head) >= 512:
+        bs = struct.unpack_from(">I", head, 4)[0]
+        dblocks = struct.unpack_from(">Q", head, 8)[0]
+        if bs in (512, 1024, 2048, 4096, 8192, 16384, 32768, 65536):
+            label = head[0x6C:0x78].split(b"\x00")[0].decode("utf-8", "ignore")
+            return "XFS", bs * dblocks, label
+    # HFS+ / HFSX
+    h = head[1024:1536]
+    if len(h) >= 64 and h[:2] in (b"H+", b"HX") and \
+            struct.unpack_from(">H", h, 2)[0] in (4, 5):
+        bs = struct.unpack_from(">I", h, 40)[0]
+        total = struct.unpack_from(">I", h, 44)[0]
+        if bs and bs & (bs - 1) == 0:
+            return ("HFSX" if h[:2] == b"HX" else "HFS+"), bs * total, ""
+    # APFS kapsayicisi (nesne turu 1 = NX ustblogu)
+    if head[32:36] == b"NXSB" and struct.unpack_from("<I", head, 24)[0] & 0xFFFF == 1:
+        bs = struct.unpack_from("<I", head, 36)[0]
+        count = struct.unpack_from("<Q", head, 40)[0]
+        if 4096 <= bs <= 65536:
+            return "APFS", bs * count, ""
+    # F2FS: ustblok +1024
+    f = head[1024:1024 + 128]
+    if len(f) >= 64 and f[:4] == b"\x10\x20\xF5\xF2":
+        bs = 1 << struct.unpack_from("<I", f, 16)[0]
+        count = struct.unpack_from("<Q", f, 36)[0]
+        label = head[1024 + 0x7C:1024 + 0x7C + 64].decode("utf-16-le", "ignore").split("\x00")[0]
+        return "F2FS", bs * count, label
+    # btrfs: ustblok 64 KiB, bytenr alani kendini gostermeli (yansilar degil)
+    b = head[0x10000:0x10000 + 0x1000]
+    if len(b) >= 0x200 and b[0x40:0x48] == b"_BHRfS_M" and \
+            struct.unpack_from("<Q", b, 0x30)[0] == 0x10000:
+        label = b[0x12B:0x12B + 64].split(b"\x00")[0].decode("utf-8", "ignore")
+        return "btrfs", struct.unpack_from("<Q", b, 0x70)[0], label
+    # Linux takas
+    if len(head) >= 4096 and head[4086:4096] == b"SWAPSPACE2":
+        last_page = struct.unpack_from("<I", head, 1028)[0]
+        label = head[1052:1068].split(b"\x00")[0].decode("utf-8", "ignore")
+        return "Linux Takas", (last_page + 1) * 4096, label
+    # ReFS
+    if head[3:11] == b"ReFS\x00\x00\x00\x00" and head[16:20] == b"FSRS":
+        sectors = struct.unpack_from("<Q", head, 0x18)[0]
+        bps = struct.unpack_from("<I", head, 0x20)[0]
+        if bps in (512, 4096):
+            return "ReFS", sectors * bps, ""
     return None
 
 
@@ -323,17 +405,34 @@ def scan_lost_partitions(device: BlockDevice, step_sectors: int = 2048,
             veri = device.read_sectors(lba, adet)
         except Exception:
             break
+        ss = device.sector_size
         for i in range(0, adet, step_sectors):
             mevcut = lba + i
-            aday = _probe_signature(veri[i * device.sector_size:
-                                         (i + 1) * device.sector_size],
-                                    device, mevcut)
-            if aday is None:
-                continue
             if any(bas <= mevcut <= last for bas, last in bilinen):
                 continue          # zaten tabloda olan bolum
-            if any(b.start_lba == mevcut for b in bulunanlar):
+            # Bulunmus bir bolumun icindeki aday atlanir: ext/XFS/APFS/btrfs
+            # yedek ustbloklari ayri "kayip bolum" gibi gorunurdu.
+            if any(b.start_lba <= mevcut <= b.end_lba for b in bulunanlar):
                 continue
+            window = veri[i * ss:i * ss + PROBE_WINDOW]
+            if len(window) < PROBE_WINDOW and mevcut * ss + len(window) < device.size:
+                try:
+                    window = device.read(mevcut * ss, min(
+                        PROBE_WINDOW, device.size - mevcut * ss))
+                except Exception:          # noqa: BLE001
+                    pass
+            aday = _probe_signature(window, device, mevcut)
+            if aday is None:
+                continue
+            if not aday.label:
+                # NTFS ve HFS+ etiketi ustveri dosyasindadir ($Volume,
+                # katalog); bulunan aday icin tam tespit bir kez calistirilir.
+                try:
+                    from .fsdetect import detect
+                    aday.label = detect(PartitionView(
+                        device, aday.start_lba, aday.sector_count)).label or ""
+                except Exception:          # noqa: BLE001
+                    pass
             bulunanlar.append(aday)
         lba += adet
         if progress:

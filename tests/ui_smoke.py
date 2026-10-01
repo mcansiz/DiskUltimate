@@ -655,9 +655,18 @@ def main() -> int:
 
     boyut_oncesi = os.path.getsize(goruntu)
     surukle(sag_x, sag_x - genislik)
-    assert len(pencere.queue) == 1, f"surukleme kuyruga eklenmedi: {len(pencere.queue)}"
-    adim = pencere.queue[0]
-    assert adim.kind == "resize", adim.kind
+    # FAT'in sagindaki bolum ext4'tur. ext boyutlandirilabildigi icin
+    # (ADR 0052) sag kenar ORTAK sinirdir ve iki adim uretir: once FAT
+    # kucultulur, sonra ext acilan alana dogru buyur (ADR 0049). ext'in
+    # bicimlendirilemedigi ortamda (ham bolum) yine tek adim cikar.
+    ilk_sayi = len(pencere.queue)
+    assert ilk_sayi in (1, 2), f"surukleme kuyruga eklenmedi: {ilk_sayi}"
+
+    def fat_adimi():
+        return next(op for op in pencere.queue if op.kind == "resize"
+                    and op.params.get("index") == fat_bolum.index)
+    adim = fat_adimi()
+    assert pencere.queue[0] is adim, "yer acan adim once gelmeli"
     assert os.path.getsize(goruntu) == boyut_oncesi, "surukleme diske yazdi"
     kaydet(pencere, "39-haritada-tutamak.png")
 
@@ -668,14 +677,15 @@ def main() -> int:
     sag_x2 = sag_kenar(fat_bolum.index)
     assert sag_x2 is not None, "kucultulen bolumde tutamak yok"
     surukle(sag_x2, sag_x2 + 8)
-    assert len(pencere.queue) == 1, f"ikinci adim eklendi: {len(pencere.queue)}"
-    buyuk = pencere.queue[0].params["sector_count"]
+    assert len(pencere.queue) == ilk_sayi, f"yeni adim eklendi: {len(pencere.queue)}"
+    buyuk = fat_adimi().params["sector_count"]
     assert buyuk > adim.params["sector_count"], "geri buyutme olmadi"
     pencere.select_partition(fat_bolum.index)
     sinirlari_bekle()
     sag_x3 = sag_kenar(fat_bolum.index)
     surukle(sag_x3, sag_x3 + 400)
-    kalan = [op.params.get("sector_count") for op in pencere.queue]
+    kalan = [op.params.get("sector_count") for op in pencere.queue
+             if op.params.get("index") == fat_bolum.index]
     assert not kalan or kalan[0] >= buyuk, kalan
     print(f"  (geri buyutme: adim yerinde guncellendi, kuyrukta {len(kalan)})")
     pencere.queue.clear()

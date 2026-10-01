@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QHBoxLayout,
                              QHeaderView, QLabel, QPushButton, QTreeWidget,
                              QTreeWidgetItem, QVBoxLayout)
 
+from ...core.fsregistry import fs_display
 from ...core.ptable import human_size
 from ...core.resize import FsResizeInfo, ResizeWindow
 from ...core.layoutedit import EditableLayout
@@ -156,11 +157,11 @@ class PartitionLayoutDialog(QDialog):
                 changes.append(tr("kilitli"))
             elif not part.resizable:
                 changes.append(tr("boyut sabit ({})",
-                                  part.fs_type or tr("bilinmeyen")))
+                                  fs_display(part.fs_type) or tr("bilinmeyen")))
             elif not part.fs_resizable and part.grows:
                 changes.append(tr("eklenen alan bos kalir"))
             item = QTreeWidgetItem(self.tree, [
-                tr("Bolum {}", part.index), part.fs_type or "-",
+                tr("Bolum {}", part.index), fs_display(part.fs_type) or "-",
                 human_size(part.old_count * ss),
                 human_size(part.new_count * ss),
                 f"{part.new_start:,}", ", ".join(limits),
@@ -226,7 +227,7 @@ class PartitionLayoutDialog(QDialog):
         else:
             kind = "unsupported"
             note = tr("{} bu surumde boyutlandirilamaz; yalnizca yeri "
-                      "degisebilir", part.fs_type or tr("Bu dosya sistemi"))
+                      "degisebilir", fs_display(part.fs_type) or tr("Bu dosya sistemi"))
         fs_info = FsResizeInfo(kind=kind, fs_type=part.fs_type,
                                min_sectors=part.min_count,
                                max_sectors=part.max_count, movable=True,

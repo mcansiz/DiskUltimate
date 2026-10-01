@@ -15,6 +15,7 @@ from PyQt5.QtCore import QRect, QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPen
 from PyQt5.QtWidgets import QSizePolicy, QWidget
 
+from ...core.fsregistry import fs_display
 from ...core.ptable import human_size
 from ..theme import (FREE_COLOR, darken, draw_usage_bar, fs_color, lighten,
                      palette_color)
@@ -131,7 +132,7 @@ class PartitionEditBar(QWidget):
                 painter.setFont(self.font())
                 painter.drawText(text.adjusted(0, 16, 0, 0),
                                  Qt.AlignHCenter | Qt.AlignTop,
-                                 part.fs_type or "-")
+                                 fs_display(part.fs_type) or "-")
                 painter.drawText(text.adjusted(0, 31, 0, 0),
                                  Qt.AlignHCenter | Qt.AlignTop,
                                  human_size(part.new_count * ss))

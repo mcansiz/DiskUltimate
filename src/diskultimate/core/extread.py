@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from typing import Dict, Iterator, List, Optional, Tuple
 
 from .image import BlockDevice
+from .extlayout import ExtGeometry
 from ..i18n import tr
 
 EXT_MAGIC = 0xEF53
@@ -155,10 +156,22 @@ class ExtFS:
             1, (self.blocks_count - self.first_data_block
                 + self.blocks_per_group - 1) // self.blocks_per_group)
 
-        # Grup tanimlayicilari ustblogun hemen ardindaki blokta baslar.
-        self.gdt_block = self.first_data_block + 1 if self.block_size == 1024 else 1
-        self._gdt = self.dev.read(self.gdt_block * self.block_size,
-                                  self.group_count * self.desc_size)
+        # Grup tanimlayicilari: klasik duzende ustblogun hemen ardinda,
+        # `meta_bg` birimde (resize2fs ile buyutulmus birimler) meta
+        # gruplarina dagitilmis. Yerlesim hesabi `extlayout` icinde tektir.
+        self.geometry = ExtGeometry(sb)
+        self.geometry.desc_size = self.desc_size
+        self.gdt_block = self.geometry.primary_gdt_block(0)
+        parts = []
+        bs = self.block_size
+        for index in range(self.geometry.desc_blocks):
+            parts.append(self.dev.read(
+                self.geometry.primary_gdt_block(index) * bs, bs))
+        self._gdt = b"".join(parts)[:self.group_count * self.desc_size]
+
+    def descriptor_offset(self, group: int) -> int:
+        """Grup tanimlayicisinin birincil kopyasinin bayt ofseti."""
+        return self.geometry.descriptor_offset(group)
 
     def _inode_table_block(self, group: int) -> int:
         off = group * self.desc_size
