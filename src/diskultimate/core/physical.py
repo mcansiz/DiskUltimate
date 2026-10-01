@@ -506,8 +506,12 @@ def _win_drive_type(letter: str) -> int:
     return int(k32.GetDriveTypeW(f"{letter}:\\"))
 
 
-def _win_handle(path: str, write: bool = False):
-    """Windows aygit tutamaci acar. Hata durumunda istisna firlatir."""
+def _win_handle(path: str, write: bool = False, query_only: bool = False):
+    """Windows aygit tutamaci acar. Hata durumunda istisna firlatir.
+
+    `query_only`: erisim hakki istenmez (0) — yalnizca IOCTL sorgusu icin.
+    Birimi okuma hakkiyla acmak onu baglatir; sorgu icin buna gerek yok.
+    """
     import ctypes
     import ctypes.wintypes as wt
 
@@ -515,7 +519,7 @@ def _win_handle(path: str, write: bool = False):
     k32.CreateFileW.argtypes = [wt.LPCWSTR, wt.DWORD, wt.DWORD, wt.LPVOID,
                                 wt.DWORD, wt.DWORD, wt.HANDLE]
     k32.CreateFileW.restype = wt.HANDLE
-    erisim = GENERIC_READ | (GENERIC_WRITE if write else 0)
+    erisim = 0 if query_only else GENERIC_READ | (GENERIC_WRITE if write else 0)
     # Ortamsiz yuvalarda kutu acilip cagri bloklanmasin diye sessiz kip.
     with _win_quiet_errors():
         handle = k32.CreateFileW(path, erisim,
@@ -666,6 +670,97 @@ def _win_volume_extents() -> Tuple[Dict[int, List[str]], Dict[Tuple[int, int], s
         finally:
             _win_close(handle)
     return result, extents
+
+
+def _win_volume_guids() -> List[str]:
+    r"""Sistemdeki butun birimler: `\\?\Volume{...}\` (harfi olsun olmasin).
+
+    Surucu harfi birimi bulmanin guvenilir yolu degildir: "Bolumu cikar"
+    Windows'ta yalnizca harfi kaldirir, birim **bagli kalir** ve Windows
+    sektorlerine dogrudan yazmayi engellemeye devam eder (2026-10-01, VBox
+    win10: "bagli birim yok, kilit gerekmiyor" yazildi, hemen ardindan yazma
+    "bagli birim" diye reddedildi).
+    """
+    import ctypes
+    import ctypes.wintypes as wt
+
+    k32 = ctypes.windll.kernel32
+    k32.FindFirstVolumeW.argtypes = [wt.LPWSTR, wt.DWORD]
+    k32.FindFirstVolumeW.restype = wt.HANDLE
+    k32.FindNextVolumeW.argtypes = [wt.HANDLE, wt.LPWSTR, wt.DWORD]
+    k32.FindNextVolumeW.restype = wt.BOOL
+    k32.FindVolumeClose.argtypes = [wt.HANDLE]
+    buf = ctypes.create_unicode_buffer(1024)
+    find = k32.FindFirstVolumeW(buf, len(buf))
+    if find in (INVALID_HANDLE, None) or find == ctypes.c_void_p(-1).value:
+        return []
+    names = []
+    try:
+        while True:
+            names.append(buf.value)
+            if not k32.FindNextVolumeW(find, buf, len(buf)):
+                break
+    finally:
+        k32.FindVolumeClose(find)
+    return names
+
+
+def _win_volume_paths(guid: str) -> List[str]:
+    """Birimin baglama yollari (surucu harfleri / klasorler); yoksa bos."""
+    import ctypes
+    import ctypes.wintypes as wt
+
+    k32 = ctypes.windll.kernel32
+    k32.GetVolumePathNamesForVolumeNameW.argtypes = [
+        wt.LPCWSTR, wt.LPWSTR, wt.DWORD, ctypes.POINTER(wt.DWORD)]
+    k32.GetVolumePathNamesForVolumeNameW.restype = wt.BOOL
+    buf = ctypes.create_unicode_buffer(1024)
+    needed = wt.DWORD(0)
+    if not k32.GetVolumePathNamesForVolumeNameW(guid, buf, len(buf),
+                                                ctypes.byref(needed)):
+        return []
+    return [p for p in ctypes.wstring_at(ctypes.addressof(buf),
+                                         len(buf)).split("\x00") if p]
+
+
+def _win_volumes_on_disk(disk_no: int) -> List[Tuple[str, str]]:
+    r"""Diskteki butun birimler: [(aygit yolu, gosterim adi)].
+
+    Aygit yolu `\\?\Volume{...}` (sondaki ters bolu YOK: o hali kok
+    dizindir, aygit degil). Gosterim adi harf varsa harf, yoksa kisa GUID.
+    Tutamac erisim hakki istenmeden acilir (yalnizca kapsam sorgusu); boylece
+    sorgu birimi baglatmaz. CD/DVD ve ag birimleri acilmadan elenir.
+    """
+    import ctypes
+    import ctypes.wintypes as wt
+
+    k32 = ctypes.windll.kernel32
+    k32.GetDriveTypeW.argtypes = [wt.LPCWSTR]
+    k32.GetDriveTypeW.restype = wt.UINT
+    out: List[Tuple[str, str]] = []
+    for guid in _win_volume_guids():
+        if int(k32.GetDriveTypeW(guid)) in (DRIVE_REMOTE, DRIVE_CDROM):
+            continue
+        device = guid.rstrip("\\")
+        try:
+            handle = _win_handle(device, query_only=True)
+        except PhysicalDiskError:
+            continue
+        try:
+            ham = _win_ioctl(handle, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, b"", 1024)
+        finally:
+            _win_close(handle)
+        if not ham or len(ham) < 8:
+            continue
+        adet = struct.unpack_from("<I", ham, 0)[0]
+        disks = {struct.unpack_from("<I", ham, 8 + n * 24)[0]
+                 for n in range(min(adet, 16)) if 8 + n * 24 + 4 <= len(ham)}
+        if disk_no not in disks:
+            continue
+        paths = _win_volume_paths(guid)
+        short = guid[guid.find("{"):guid.find("{") + 9] + "...}" if "{" in guid else guid
+        out.append((device, ", ".join(p.rstrip("\\") for p in paths) or short))
+    return out
 
 
 def _win_drive_letters() -> Dict[int, List[str]]:
@@ -859,47 +954,51 @@ class PhysicalDisk(BlockDevice):
         (`FSCTL_DISMOUNT_VOLUME`). Kilit, tutamac acik kaldigi surece gecerlidir
         ve baska bir surecin birimi yeniden baglamasini engeller.
 
-        Birim harfleri **listelemede zaten ogrenilmistir** (`info.mounted`);
-        burada yeniden sorulmaz. Sorulsaydi acik aygit kutugune takilirdi: aygit
-        bu noktada kutuge girmis olur, `_win_drive_letters()` de kutuktekilerin
-        harflerini atlar — sonuc olarak hicbir birim kilitlenmez ve **sonraki
-        her yazma** "Windows bagli birimlere yazmayi engeller" hatasi verir.
-        Yasandi (2026-09-15): dosya silme reddedildi, kullanici yonetici
-        oldugu halde "Yonetici olarak calistirin" mesajini gordu.
+        Birimler **GUID ile** bulunur (`_win_volumes_on_disk`), surucu harfiyle
+        degil (ADR 0075). Iki gercek ariza harf yolundan cikti:
+        * 2026-09-15: harfler acik aygit kutugu yuzunden atlandi, hicbir birim
+          kilitlenmedi, her yazma "bagli birim" diye reddedildi;
+        * 2026-10-01: "Bolumu cikar" harfi kaldirdi ama birim bagli kaldi;
+          harfsiz birim bulunamadi ("kilit gerekmiyor"), yazma yine reddedildi.
+        GUID taramasi kutuge bakmaz ve harfsiz birimi de gorur. Basarisiz
+        olursa listelemede ogrenilen harfler (`info.mounted`) kullanilir.
 
         Basarisizlik olumcul degildir ama **sessiz de degildir**: hangi birimin
         kilitlendigi gunluge yazilir, cunku kilitlenemeyen birim sonraki yazma
         hatalarinin nedenidir.
         """
-        letters = [item for item in (self.info.mounted or []) if item]
-        if not letters:
-            # Bilgi yoksa (orn. dogrudan yol ile acilmissa) son care: sor.
-            numaralar = "".join(ch for ch in self.info.name if ch.isdigit())
-            if not numaralar:
-                return
+        # Birimler GUID ile bulunur (harfi kaldirilmis ama bagli birim dahil);
+        # olmazsa eski yol: listelemede ogrenilen harfler.
+        targets: List[Tuple[str, str]] = []
+        disk_no = int("".join(ch for ch in self.path if ch.isdigit()) or -1)
+        if disk_no >= 0:
             try:
-                letters = _win_drive_letters().get(int(numaralar), [])
-            except Exception:
-                letters = []
-        if not letters:
+                targets = _win_volumes_on_disk(disk_no)
+            except Exception as exc:                      # noqa: BLE001
+                diagnostics.warn(f"{self.path}: birim GUID taramasi basarisiz: {exc}")
+                targets = []
+        if not targets:
+            letters = [item for item in (self.info.mounted or []) if item]
+            targets = [(f"\\\\.\\{h.rstrip(chr(92))}", h) for h in letters]
+        if not targets:
             diagnostics.info(f"{self.path}: bagli birim yok, kilit gerekmiyor")
             return
         locked, failed = [], []
-        for harf in letters:
+        for device, name in targets:
             try:
-                handle = _win_handle(f"\\\\.\\{harf.rstrip(chr(92))}", write=True)
+                handle = _win_handle(device, write=True)
             except PhysicalDiskError as exc:
-                failed.append(tr("{} (acilamadi: {})", harf, exc))
+                failed.append(tr("{} (acilamadi: {})", name, exc))
                 continue
             kilitlendi = _win_ioctl(handle, FSCTL_LOCK_VOLUME, b"", 0) is not None
             _win_ioctl(handle, FSCTL_DISMOUNT_VOLUME, b"", 0)
             if kilitlendi:
                 self._volume_handles.append(handle)
-                locked.append(harf)
+                locked.append(name)
             else:
                 # kilitlenemedi: tutamaci birak, birim kullanimda olabilir
                 _win_close(handle)
-                failed.append(tr("{} (kilitlenemedi — birim kullanimda)", harf))
+                failed.append(tr("{} (kilitlenemedi — birim kullanimda)", name))
         self._locked_letters = locked
         self._unlocked_letters = failed
         diagnostics.info(f"{self.path}: kilitlenen birim {locked or 'yok'}"

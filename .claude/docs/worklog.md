@@ -5499,3 +5499,19 @@ calismiyordu.
 - Linux run_all 73/75 (0 hata), ntfs_write_check 2/2, resize_matrix 16/16,
   fs_matrix 12/13 (ReFS Linux'ta beklenen), diag 13/13, i18n, platform 0.
 - Windows (VBox win10): run_all 72/75 (0 hata, 3 arac yok), ui_smoke tamam.
+
+## 2026-10-01 (10) — Windows: harfi kaldirilmis birim kilitlenmiyordu (ADR 0075)
+
+- Kullanici VBox win10'da PhysicalDrive1'de bolum 3 (exFAT) kucultme +
+  bolum 4 (ext4) genisletme denedi; her seferinde "Windows bagli birimin
+  sektorlerine yazmayi engeller". Gunlukler `%LOCALAPPDATA%\DiskUltimate\logs`
+  (.tmp/winlog'a kopyalandi): "Bolumu cikar" yalnizca harfi kaldiriyor,
+  birim bagli kaliyor; kilit kodu birimleri harfle aradigi icin "kilit
+  gerekmiyor" dedi.
+- `_win_volumes_on_disk`: FindFirstVolumeW + disk kapsami (erisim hakki
+  istemeden); kilit GUID yoluyla. VBox'ta disk 1'de 3 harfsiz birim
+  bulundu (eski tarama bos). Kilitleme yonetici ister: sinanmadi.
+- Yeni exe misafirde derlendi (C:\Python312 + PyInstaller) -> dist/;
+  eski exe .tmp/DiskUltimate-2215-eski.exe. Windows run_all 72/75 (0 hata).
+- Ayrica: 567 MB ext4'e eklemede 7,7 sn donma — `ExtAccess.import_file`
+  dosyayi tek parca okuyor (ADR 0073'te bilinen sinir); ayri is.
