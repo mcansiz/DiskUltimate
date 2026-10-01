@@ -5325,6 +5325,110 @@ def t68_btrfs_okuma():
         denetle(yol, "VARYANT")
 
 
+@test
+def t69_f2fs_okuma():
+    """F2FS salt okuma: satir ici veri/dizin, dolayli dugumler, NAT gunlugu, LZ4 (ADR 0070)
+
+    `f2fs.img.gz`: mkfs.f2fs + sload.f2fs 1.16 (extra_attr, inode_checksum):
+    600 girdilik dizin, 16 MB seyrek dosya (dolayli dugum), satir ici veri,
+    satir disi uzun sembolik bag. NAT gunlugu ve ikinci NAT kopyasi yalnizca
+    cekirdek yazinca olusur; burada birim elle degistirilerek okuyucunun bu
+    yollari izledigi sinanir (oz-tutarlilik, cekirdek ciktisi degil).
+    LZ4 blok cozucusu lz4 CLI varsa onun ciktisiyla sinanir. F2FS
+    sikistirmasi icin uretici yok (sload LZ4/LZO'suz derlenmis) — sinanmadi.
+    """
+    import gzip
+    import random
+    from diskultimate.core.f2fs import (BLOCK, NAT_ENTRY_SIZE, NAT_PER_BLOCK, F2fsFS,
+                                        lz4_block_decompress)
+    from diskultimate.core.filesystem import F2fsAccess, open_filesystem
+
+    beklenen = {"/a.txt": b"merhaba\n", "/kucuk.txt": b"x" * 3000,
+                "/Türkçe ğüşİı dosya.txt": "içerik\n".encode("utf-8"),
+                "/desen.bin": bytes(range(256)) * 16000}
+    for i in range(600):
+        beklenen[f"/buyukdizin/uzun_bir_dosya_adi_{i:04d}.txt"] = bytes([i % 256]) * (i % 300)
+    seyrek = bytearray(15 * 1048576 + 5000)
+    for i in range(16):
+        seyrek[i * 1048576:i * 1048576 + 5000] = b"z" * 5000
+    beklenen["/seyrek.bin"] = bytes(seyrek)
+
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+    yol = img_path("t69.img")
+    with gzip.open(os.path.join(fixtures, "f2fs.img.gz"), "rb") as a, open(yol, "wb") as b:
+        b.write(a.read())
+
+    def denetle(etiket):
+        d = DiskImage(yol, readonly=True)
+        erisim = open_filesystem(d)
+        assert isinstance(erisim, F2fsAccess) and erisim.label == "F2FSFIX", erisim
+        assert not erisim.writable and erisim.write_reason
+        for p, veri in beklenen.items():
+            assert erisim.read(p) == veri, (etiket, p)
+        fs = erisim.fs
+        assert fs.resolve("/bag").symlink == "a.txt"
+        assert fs.resolve("/uzun_bag").symlink == "/" + "uzun/" * 200 + "son"
+        assert len(fs.listdir("/buyukdizin")) == 600
+        assert fs.listdir("/klasor") == []
+        d.close()
+        return fs
+
+    fs = denetle("ozgun")
+    # --- NAT gunlugu ve ikinci kopya: elle ---------------------------------
+    hedef = fs.resolve("/desen.bin").ino
+    blok_ofs = hedef // NAT_PER_BLOCK
+    sbs = fs.bps
+    birinci = fs.nat_blkaddr + ((blok_ofs >> fs.log_bps) << fs.log_bps << 1) + (blok_ofs & (sbs - 1))
+    with open(yol, "r+b") as fh:
+        fh.seek(birinci * BLOCK)
+        nat = bytearray(fh.read(BLOCK))
+        eski = struct.unpack_from("<I", nat, (hedef % NAT_PER_BLOCK) * NAT_ENTRY_SIZE + 5)[0]
+        # 1) giris NAT blogunda sifirlanir, gunluge yazilir
+        struct.pack_into("<I", nat, (hedef % NAT_PER_BLOCK) * NAT_ENTRY_SIZE + 5, 0)
+        # 2) NAT blogu ikinci kopyaya tasinir, birinci bozulur, bitmap biti kurulur
+        fh.seek((birinci + sbs) * BLOCK)
+        fh.write(bytes(nat))
+        fh.seek(birinci * BLOCK)
+        fh.write(b"\xEE" * BLOCK)
+        fh.seek(fs.cp_blkaddr * BLOCK)                 # gecerli checkpoint paketi
+        cp = fs.cp_blkaddr if fh.read(8) == fs.cp[:8] else fs.cp_blkaddr + sbs
+        sit_boy, nat_boy = struct.unpack_from("<II", fs.cp, 156)
+        fh.seek(cp * BLOCK + 192 + sit_boy + (blok_ofs >> 3))
+        bayt = fh.read(1)[0] | (0x80 >> (blok_ofs & 7))
+        fh.seek(cp * BLOCK + 192 + sit_boy + (blok_ofs >> 3))
+        fh.write(bytes([bayt]))
+        ozet_bas = struct.unpack_from("<I", fs.cp, 140)[0]
+        fh.seek((cp + ozet_bas) * BLOCK + 3584)
+        gunluk = bytearray(fh.read(507))
+        n = struct.unpack_from("<H", gunluk, 0)[0]
+        struct.pack_into("<IBII", gunluk, 2 + 13 * n, hedef, 0, hedef, eski)
+        struct.pack_into("<H", gunluk, 0, n + 1)
+        fh.seek((cp + ozet_bas) * BLOCK + 3584)
+        fh.write(bytes(gunluk))
+    fs = denetle("gunluk + ikinci kopya")
+    assert hedef in fs._nat_journal
+
+    lz4, _ortam = _dev_tool("lz4")
+    if lz4:
+        r = random.Random(5)
+        for veri in (beklenen["/desen.bin"][:300000], r.randbytes(80000),
+                     "".join(f"satir {i}\n" for i in range(9000)).encode()):
+            kare = subprocess.run([lz4, "-q", "-c", "-B4", "-BI", "--no-frame-crc"],
+                                  input=veri, capture_output=True).stdout
+            pos = 7 + (8 if kare[4] & 0x08 else 0)
+            cikti = bytearray()
+            while True:
+                boy = struct.unpack_from("<I", kare, pos)[0]
+                pos += 4
+                if not boy:
+                    break
+                ham, boy = boy & 0x80000000, boy & 0x7FFFFFFF
+                parca = kare[pos:pos + boy]
+                cikti += parca if ham else lz4_block_decompress(parca, 1 << 20)
+                pos += boy
+            assert bytes(cikti) == veri
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

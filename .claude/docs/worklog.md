@@ -5384,3 +5384,16 @@ calismiyordu.
   sikistirmasiz/zlib/LZO/zstd + 4 varyant birebir, btrfs check temiz.
   Fixture'lar btrfs_{zlib,lzo,zstd}.img.gz (~200 KB). t68.
 - Linux run_all 66/68, Windows 65/68. i18n 35 yeni metin, platform 0, ui_smoke.
+
+## 2026-10-01 (3) — F2FS salt okuma (ADR 0070) — Asama 3 tamam
+
+- Yeni `core/f2fs.py` (F2fsFS, saf LZ4 blok cozucu) + `F2fsAccess`.
+- Test verisi mkfs.f2fs + sload.f2fs 1.16 (kullanici alani); 5036 dosya
+  birebir, iki ozellik varyanti. Fixture f2fs.img.gz (190 KB). t69 NAT
+  gunlugu/ikinci kopya yollarini elle degistirilmis birimde sinar.
+- lz4 CLI kullanici alanina acildi (.tmp/tools); LZ4 cozucu 92 blokta birebir.
+- sload.f2fs LZ4/LZO'suz derlenmis: F2FS sikistirmasi sinanmadi (ADR'de).
+- Not: 64 MB F2FS birimine sload sonsuz "Free segments" dongusune girdi;
+  kalinti fsck.f2fs etkilesimli soruda bekledi — PID ile kapatildi.
+  (`pkill -f` kendi kabugunu esledigi icin kullanilmadi.)
+- Linux run_all 67/69, Windows 66/69. i18n 10 yeni metin, platform 0, ui_smoke.
