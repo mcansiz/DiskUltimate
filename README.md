@@ -47,10 +47,30 @@ installation, no Python needed.
 - The exe is not code-signed, so Windows SmartScreen may show
   *"Windows protected your PC"*. Choose **More info → Run anyway**.
 
+### Linux (AppImage)
+
+Download **`DiskUltimate-<version>-x86_64.AppImage`** from the
+[Releases](../../releases) page, make it executable and run it — nothing to
+install, Python and Qt are inside:
+
+```bash
+chmod +x DiskUltimate-*-x86_64.AppImage
+./DiskUltimate-*-x86_64.AppImage
+```
+
+- Works on 64-bit distributions with glibc 2.17 or newer (practically every
+  desktop distribution since 2014). On musl systems (Alpine, Void-musl) run
+  from source instead.
+- It uses the X11/xcb libraries every desktop already has. On a minimal
+  install, if it does not start: `sudo apt install libxcb-xinerama0
+  libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0
+  libxkbcommon-x11-0`.
+- Without FUSE: `./DiskUltimate-*-x86_64.AppImage --appimage-extract-and-run`.
+- Root is requested through `pkexec` at start-up, as below.
+
 ### Linux (run from source)
 
-There is no prebuilt Linux binary yet; running from source takes a minute and
-only needs Python 3.8+ and PyQt5:
+Running from source takes a minute and only needs Python 3.8+ and PyQt5:
 
 ```bash
 git clone https://github.com/mcansiz/DiskUltimate.git
@@ -293,11 +313,14 @@ Build a single-file executable with PyInstaller (all settings are in
 build_exe.bat        :: Windows → dist\DiskUltimate.exe
 ```
 ```bash
-./build_linux.sh     # Linux → dist/DiskUltimate
+./build_appimage.sh  # Linux → dist/DiskUltimate-<version>-x86_64.AppImage
 ```
 
-A Linux binary built this way only runs on systems with the same or a newer
-glibc than the build machine; that is why releases ship Linux as source.
+The AppImage is built from a portable Python (manylinux2014, glibc 2.17) and
+the PyPI PyQt5 wheels, so the result does not depend on the build machine's
+glibc; the tool prints the highest glibc version the package needs.
+`./build_linux.sh` still builds a single-file PyInstaller binary, but that one
+only runs on systems with the same or a newer glibc than the build machine.
 
 Tests run on disk image files only (nothing touches your real disks):
 

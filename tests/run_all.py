@@ -1250,6 +1250,29 @@ def t22_yetki_yukseltme():
     finally:
         sys.argv = eski_argv
 
+    # -- AppImage icinde (ADR 0050): yorumlayici FUSE baglantisinda durur,
+    # root ona erisemez; komut AppImage dosyasinin KENDISI olmali --
+    from diskultimate import paths as _paths
+    sahte = img_path("t22_DiskUltimate.AppImage")
+    open(sahte, "wb").close()
+    eski = (_paths.IS_APPIMAGE, os.environ.get("APPIMAGE"), list(sys.argv))
+    try:
+        _paths.IS_APPIMAGE = True
+        os.environ["APPIMAGE"] = sahte
+        sys.argv = [sys.argv[0], "disk.img"]
+        assert pf._relaunch_target() == [sahte, "disk.img"], pf._relaunch_target()
+        os.environ["APPIMAGE"] = sahte + ".yok"       # dosya yoksa eski yol
+        assert pf._relaunch_target()[0] != sahte + ".yok"
+    finally:
+        _paths.IS_APPIMAGE = eski[0]
+        if eski[1] is None:
+            os.environ.pop("APPIMAGE", None)
+        else:
+            os.environ["APPIMAGE"] = eski[1]
+        sys.argv = eski[2]
+    # Kaynaktan calisirken AppImage sayilmamali (APPDIR proje disinda)
+    assert not _paths._inside_appimage() or os.environ.get("APPDIR")
+
     # -- uygunluk yetkiliyken kapali, nedeni acik --
     uygun, neden = pf.elevation_available()
     if elevated:

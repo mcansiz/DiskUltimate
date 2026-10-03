@@ -278,6 +278,14 @@ def _relaunch_target() -> List[str]:
     Donmus (PyInstaller vb.) pakette calistirilabilir dosyanin kendisi,
     kaynaktan calistirildiginda yorumlayici + betik kullanilir.
     """
+    # AppImage: yorumlayici ve betik kullanicinin FUSE baglantisinda
+    # (/tmp/.mount_...) durur; o baglantiya varsayilan olarak root bile
+    # erisemez, pkexec ile yetkili kopya hic baslamazdi. Root AppImage
+    # dosyasinin kendisini calistirir ve kendi baglantisini kurar (ADR 0050).
+    from ..paths import IS_APPIMAGE
+    appimage = os.environ.get("APPIMAGE", "")
+    if IS_APPIMAGE and os.path.isfile(appimage):
+        return [appimage] + list(sys.argv[1:])
     if getattr(sys, "frozen", False):
         return [sys.executable] + list(sys.argv[1:])
     script = os.path.abspath(sys.argv[0]) if sys.argv and sys.argv[0] else ""

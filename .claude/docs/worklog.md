@@ -5612,3 +5612,21 @@ calismiyordu.
 - Gercek ornekler (A NTFS XTS-128, B exFAT CBC-128, C NTFS XTS-256): tespit
   Windows'ta fiziksel yoldan ve ana makinede VHD'den dogru, blkid ile ayni.
   Ayrinti ADR 0053 ek. Kilit acma calismasi bu oturumda ilerletilmedi.
+
+## 2026-10-03 (4) — Linux AppImage (ADR 0050 uygulandi)
+
+- Yontem plandan farkli: PyInstaller + Mint VM yerine python-appimage
+  manylinux2014 (glibc 2.17) Python 3.12.14 + PyPI PyQt5 tekerlekleri;
+  `tools/appimage.py`, `build_appimage.sh`. Araclar SHA-256 ile sabit.
+- `$APPIMAGE` duzeltmesi (`_relaunch_target`) ve `paths.IS_APPIMAGE` /
+  `IS_PACKAGED` (gunlukler kullanici veri dizinine). t22 genisletildi.
+- Kirpma: Qt Core/Gui/Widgets/DBus/XcbQpa/WaylandClient/Svg; NEEDED
+  denetimi. Sonuc 39.6 MB, en yuksek GLIBC_2.17.
+- Sinandi: offscreen + gercek ekran (xcb/XWayland) acilis, ui_smoke paketin
+  kendi Python/PyQt5'iyle tamam, eklenti sistem bagimliliklari tam.
+- Sinanmadi: eski dagitim, `pkexec "$APPIMAGE"` (root yok), musl mesaji.
+- README (en/tr): Linux (AppImage) bolumu, derleme bolumu.
+- Hafiza: `siradaki-appimage` notu silindi (is bitti).
+- Kullanici AppImage'i ana makinede calistirdi: pkexec parola sordu,
+  yetkili kopya acildi (gunlukle dogrulandi). Yan bulgu: root kopyanin
+  tanilama gunlukleri root'a ait kaliyor (eski sorun, duzeltilmedi).

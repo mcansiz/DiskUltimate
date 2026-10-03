@@ -1,8 +1,9 @@
 # 0050 — Linux dagitimi: AppImage; musl sistemlerde kaynaktan calistirma
 
 Tarih: 2026-09-28
-Durum: **planlandi** — uygulanmadi (kullanici: "AppImage islemini baska bir
-oturumda yapacagim")
+Durum: **uygulandi (2026-10-03)** — yontem plandan farkli; asagidaki
+"Uygulama" bolumu gecerlidir. Ilk plan (PyInstaller onedir + Mint VM'de
+derleme) tarihce olarak duruyor.
 Ilgili: ADR 0042 (acilista kosulsuz yetki), ADR 0044 (uygulama ikonu),
 ADR 0021 (ayni aygita ikinci tutamac yok), `DiskUltimate.spec`,
 `build_linux.sh`
@@ -93,3 +94,61 @@ eklenti modulleri gibi agir bir yukte guvenilir degildir.
   gorunur; acilmazsa kullanici yine anlamsiz hata gorur — o durumda musl
   notu yalnizca README'de kalir).
 - `pkexec "$APPIMAGE"` ile root'un AppImage'i kendisi baglayip calistirdigi.
+
+
+## Uygulama (2026-10-03)
+
+Plan PyInstaller ciktisini eski glibc'li Mint VM'de derlemeyi oneriyordu.
+Linux VM 2026-09-29'dan beri yok, ana makinede root ve konteyner araci da
+yok. Bu yuzden **derleme tabani sorunu baska yoldan cozuldu**:
+
+* `niess/python-appimage` **manylinux2014** (glibc 2.17) Python 3.12.14 —
+  tasinabilir yorumlayici, eski bir derleme makinesi gerektirmez.
+* PyQt5 PyPI tekerlekleri (PyQt5 5.15.11, PyQt5-Qt5 5.15.19, sip 12.19.0)
+  zaten manylinux_2_17.
+* PyInstaller yok: kaynak `usr/share/diskultimate` altinda, `AppRun`
+  paketteki Python'la `main.py`yi calistirir (`-s -E`, kullanicinin
+  `PYTHONPATH`i karismaz). musl'da (glibc yukleyicisi yok) anlasilir mesaj.
+* Kirpma: uygulama yalnizca QtCore/QtGui/QtWidgets kullanir; Qt
+  kutuphanelerinden Core, Gui, Widgets, DBus, XcbQpa, WaylandClient, Svg
+  kalir; QML/Quick/Multimedia/... ve tkinter, test, pip silinir. Arac kalan
+  her ELF'in Qt/ICU `NEEDED`larini denetler, eksik varsa durur.
+* `appimagetool` 1.9.1 (statik calisma zamani; libfuse2 gerekmez).
+  Araclarin SHA-256'si `tools/appimage.py` icinde sabit.
+* Giris: `./build_appimage.sh` -> `tools/appimage.py`.
+
+**`$APPIMAGE` duzeltmesi** (planin 1. maddesi) yapildi:
+`platform._relaunch_target()` AppImage icindeyse `[$APPIMAGE] + argv`
+dondurur. Ayrica `paths.IS_APPIMAGE` / `IS_PACKAGED`: kod `$APPDIR`
+altindaysa paketlenmis kopya sayilir; gunluk ve gecici dosyalar kullanicinin
+veri dizinine yazilir (aksi halde salt okunur FUSE baglantisina yazmaya
+calisirdi). t22 komut uretimini sinar.
+
+### Olculenler
+
+* Paket 39.6 MB; icindeki butun ELF dosyalarinda gereken en yuksek
+  surum **GLIBC_2.17**.
+* Gelistirme makinesinde (Kubuntu, glibc 2.43, Wayland): offscreen ve gercek
+  ekranda (xcb/XWayland) acildi; gunluk `~/.local/state/DiskUltimate/`
+  altina yazildi, Qt cevirisi yuklendi, surum 0.5.0-beta.
+* `tests.ui_smoke` paketin **kendi** Python'u ve kirpilmis PyQt5'iyle
+  tamamen gecti (butun pencereler).
+* `libqxcb` / `libqwayland-generic` / GLX eklentisinin sistem bagimliliklari
+  bu makinede tam. Bunlar (libxcb-*, libxkbcommon-x11, libGL, fontconfig)
+  pakete konmaz; README en kucuk kurulum icin paket listesini verir.
+
+* **`pkexec "$APPIMAGE"` (kullanici, 2026-10-03, ana makine):** parola
+  soruldu, yetkili kopya acildi. Gunluk: acilis kopyasi "yetkili kopya
+  acildi; acilis kopyasi kapaniyor", root kopyasi fiziksel diski erisim
+  hatasi olmadan listeledi. Root, AppImage'i kendisi bagladi (FUSE).
+* Yan bulgu (AppImage'a ozgu degil): root kopyanin **tanilama gunlugu**
+  root'a ait kaliyor; `restore_owner` gunluklere uygulanmiyor. Kaynaktan
+  yetkili calismalarin `.claude/logs` dosyalari da ayni (Eylul'den beri).
+
+### Olculmeyenler
+
+* Eski bir dagitimda calistirma (glibc 2.17 iddiasi yalnizca sembol
+  surumlerinden olculdu).
+* musl'da `AppRun` mesajinin gorunmesi.
+* Stil: pakette Qt'nin kendi "Fusion" stili kullanilir; dagitimin PyQt5'iyle
+  gelen KDE/Breeze stil eklentisi pakette yoktur.

@@ -46,10 +46,30 @@ indirin. Tek, taşınabilir bir dosyadır — kurulum ve Python gerekmez.
 - Exe kod imzalı değildir; Windows SmartScreen *"Windows bilgisayarınızı
   korudu"* uyarısı gösterebilir. **Ek bilgi → Yine de çalıştır** seçin.
 
+### Linux (AppImage)
+
+[Releases](../../releases) sayfasından **`DiskUltimate-<sürüm>-x86_64.AppImage`**
+dosyasını indirin, çalıştırılabilir yapın ve açın — kurulum gerekmez, Python ve
+Qt içindedir:
+
+```bash
+chmod +x DiskUltimate-*-x86_64.AppImage
+./DiskUltimate-*-x86_64.AppImage
+```
+
+- glibc 2.17 ve sonrası olan 64 bit dağıtımlarda çalışır (2014'ten beri
+  neredeyse bütün masaüstü dağıtımları). musl sistemlerde (Alpine, Void-musl)
+  kaynaktan çalıştırın.
+- Her masaüstünde bulunan X11/xcb kütüphanelerini kullanır. En küçük
+  kurulumlarda açılmazsa: `sudo apt install libxcb-xinerama0 libxcb-icccm4
+  libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxkbcommon-x11-0`.
+- FUSE yoksa: `./DiskUltimate-*-x86_64.AppImage --appimage-extract-and-run`.
+- Root yetkisi açılışta `pkexec` ile istenir (aşağıdaki gibi).
+
 ### Linux (kaynaktan çalıştırma)
 
-Henüz hazır bir Linux ikilisi yok; kaynaktan çalıştırmak bir dakika sürer ve
-yalnızca Python 3.8+ ile PyQt5 gerekir:
+Kaynaktan çalıştırmak bir dakika sürer ve yalnızca Python 3.8+ ile PyQt5
+gerekir:
 
 ```bash
 git clone https://github.com/mcansiz/DiskUltimate.git
@@ -300,12 +320,14 @@ PyInstaller ile tek dosyalık çalıştırılabilir üretmek için (bütün ayar
 build_exe.bat        :: Windows → dist\DiskUltimate.exe
 ```
 ```bash
-./build_linux.sh     # Linux → dist/DiskUltimate
+./build_appimage.sh  # Linux → dist/DiskUltimate-<sürüm>-x86_64.AppImage
 ```
 
-Bu yolla üretilen Linux ikilisi yalnızca derlendiği makineninkiyle aynı veya
-daha yeni glibc'ye sahip sistemlerde çalışır; sürümlerde Linux'un kaynak olarak
-dağıtılmasının nedeni budur.
+AppImage taşınabilir bir Python (manylinux2014, glibc 2.17) ve PyPI'deki PyQt5
+paketleriyle kurulur; sonuç derleme makinesinin glibc sürümüne bağlı değildir,
+araç paketin gerektirdiği en yüksek glibc sürümünü yazar. `./build_linux.sh`
+hâlâ tek dosyalık PyInstaller ikilisi üretir; ancak o, yalnızca derlendiği
+makineninkiyle aynı veya daha yeni glibc'ye sahip sistemlerde çalışır.
 
 Testler yalnızca disk görüntüsü dosyalarında çalışır (gerçek disklerinize
 dokunulmaz):
