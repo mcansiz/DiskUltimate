@@ -5630,3 +5630,11 @@ calismiyordu.
 - Kullanici AppImage'i ana makinede calistirdi: pkexec parola sordu,
   yetkili kopya acildi (gunlukle dogrulandi). Yan bulgu: root kopyanin
   tanilama gunlukleri root'a ait kaliyor (eski sorun, duzeltilmedi).
+
+## 2026-10-03 (5) — Release v0.5.0-beta guncellendi
+
+- Etiket `v0.5.0-beta` a8e8951'e tasindi (AppImage commit'i + oturum kaydi).
+- Windows exe ayni commit'ten VBox'ta yeniden derlendi (acilis denendi);
+  release'teki exe degistirildi, AppImage eklendi. Iki dosya da geri
+  indirilip SHA-256 dogrulandi; surum notu Linux AppImage satiri ve
+  ozetlerle guncellendi.
