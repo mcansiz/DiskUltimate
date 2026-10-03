@@ -89,6 +89,9 @@ KINDS: Dict[str, OperationKind] = {
         # gelebilir. Bolum tablosu korunur, veri durur — ama makine acilmaz.
         OperationKind("clear_boot_code", mark("Onyukleme kodunu kaldir"),
                       "bootloader", True),
+        # Gunluk bosaltilinca Windows'un diske islemedigi son ustveri
+        # degisiklikleri kaybolur; bu yuzden yikici sayilir.
+        OperationKind("ntfs_fix", mark("NTFS'i onar"), "fs-repair", True),
     )
 }
 
@@ -243,6 +246,13 @@ def _run_clear_boot_code(session, p, progress):
     session.clear_boot_code()
 
 
+def _run_ntfs_fix(session, p, progress):
+    session.ntfs_fix(p["index"], clear_dirty=p.get("clear_dirty", True),
+                     schedule_chkdsk=p.get("schedule_chkdsk", False),
+                     remove_hibernation=p.get("remove_hibernation", False),
+                     progress=progress)
+
+
 RUNNERS: Dict[str, Callable] = {
     "create_table": _run_create_table,
     "clear_table": _run_clear_table,
@@ -259,6 +269,7 @@ RUNNERS: Dict[str, Callable] = {
     "wipe_free": _run_wipe_free,
     "resize_image": _run_resize_image,
     "clear_boot_code": _run_clear_boot_code,
+    "ntfs_fix": _run_ntfs_fix,
 }
 
 
@@ -782,6 +793,24 @@ def wipe_free_op(index: int, at_lba: int = -1) -> Operation:
                      detail_text=mark("dosyalar korunur"),
                      target_text=mark("Bolum {}"), target_args=(index,),
                      params={"index": index, "at_lba": at_lba})
+
+
+def ntfs_fix_op(index: int, clear_dirty: bool = True,
+                schedule_chkdsk: bool = False, remove_hibernation: bool = False,
+                at_lba: int = -1) -> Operation:
+    if remove_hibernation:
+        detail = mark("gunluk bosaltilir, hazirda bekletme gecersiz kilinir")
+    elif schedule_chkdsk:
+        detail = mark("gunluk bosaltilir, Windows'ta chkdsk istenir")
+    else:
+        detail = mark("gunluk bosaltilir, kirli bayragi temizlenir")
+    return Operation("ntfs_fix", title_text=mark("Bolum {} NTFS onar"),
+                     title_args=(index,), detail_text=detail,
+                     target_text=mark("Bolum {}"), target_args=(index,),
+                     params={"index": index, "clear_dirty": clear_dirty,
+                             "schedule_chkdsk": schedule_chkdsk,
+                             "remove_hibernation": remove_hibernation,
+                             "at_lba": at_lba})
 
 
 def resize_image_op(size: int) -> Operation:

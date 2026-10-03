@@ -5532,3 +5532,83 @@ calismiyordu.
 - Sinanmayan: gercek fiziksel hedef (yonetici gerekir). VBox misafirinde
   yalnizca 2 disk var (disk 0 = sistem); sinamak icin ucuncu bir sanal disk
   eklenmeli.
+
+## 2026-10-02 (1) — README iki dilde, ekran goruntuleri, surum 0.5.0-beta
+
+- Kullanici: repo public olacak; README guncellensin, uygulama resimleri
+  konsun, Ingilizce + Turkce, `.claude` baglantilari cikarilsin, desteklenen
+  tum ozellikler yazilsin. Ardindan: surum beta olsun, Windows exe release,
+  Linux kaynaktan.
+- `README.md` (Ingilizce, varsayilan) + `README.tr.md` (Turkce, dogru yazimla).
+  Ozellik listesi kod/ADR'lerden yeniden cikarildi (eski README 21 Eylul'dendi:
+  HFS+, UDF, XFS, btrfs, F2FS, APFS, ISO, ReFS, diskten diske klon, UEFI
+  duzenleyici, bolum duzeni yoktu). `.claude/` baglantilari kaldirildi.
+- `tools/readme_screenshots.py`: 14 goruntu x 2 dil -> `docs/screenshots/{tr,en}/`.
+  ui_smoke'tan farki: fiziksel disk listesi bos (makinenin disk modeli
+  sizmasin), durum cubugundaki tam yol temizlenir, ornek veriler secilen dilde.
+  Offscreen'de bootloader/UEFI formlari kucuk boyutta ust uste biniyordu;
+  pencere buyutulerek alinir.
+- `APP_VERSION = "0.5.0-beta"`; pencere basliginda surum, `setApplicationVersion`,
+  .po basliklari. i18n/platform/diag 13/13/ui_smoke temiz.
+- **Exe yeniden derlenemedi:** VBox "win10 " acilmiyor — SATA-0 bos ("No
+  bootable medium"), `win10_.vdi` erisilemez, `win10 .vdi` 2 MB, SATA-3'te
+  19.9 GB `wtest55.vdi`. VM yapilandirmasi 2026-10-01 23:49'da degismis;
+  dokunulmadi, VM kapatildi. dist/DiskUltimate.exe (10-01 23:11) HEAD
+  kodundan ama surumu 0.4.0 gosterir.
+- Gorulen arayuz cevirisi eksikleri (duzeltilmedi): dosya listesi ve
+  silinmis dosyalar basliginda "Ad" Ingilizcede cevrilmiyor; yuzde "%41"
+  Ingilizcede de Turkce bicimde; Hakkinda metni eski (yalniz FAT/exFAT).
+
+## 2026-10-03 (1) — NTFS denetle ve onar (ntfsfix karsiligi, ADR 0077)
+
+- Kullanici: makinesindeki NTFS veri bolumu Linux'ta gorunmuyor/baglanmiyordu,
+  `sudo ntfsfix -d` ile acildi; "programa eklenebilir mi".
+- `core/ntfsfix.py`: `ntfs_check` (salt okunur) + `ntfs_fix` — onyukleme
+  sektoru/yedegi, `$MFT`/`$MFTMirr`, `$LogFile` bosaltma, kirli bayragi
+  temizle ya da chkdsk iste, hiberfil.sys gecersiz kilma (yalnizca acik
+  secimle; yoksa hazirda bekletmede onarim reddedilir).
+- `FSInfo.unclean/hibernated` (fsdetect), `session.ntfs_check/ntfs_fix`,
+  kuyruk adimi `ntfs_fix` (yikici), `Bolum > NTFS'i denetle ve onar...`,
+  bolum bilgisinde "Durum", Linux'ta NTFS baglama hatasinda oneri.
+  Yeni ikon `fs-repair` (klasik + tile/line + 5 paket, tools/iconpacks.py).
+- **Hata duzeltildi:** `ntfsresize._is_dirty` bayragi ofset 12'den okuyordu
+  (dogrusu 10) ve hep "temiz" donuyordu — kirli birim boyutlandiriliyordu.
+- Gercek ornek: VBox win10 misafiri (sistem diski artik `wtest55.vdi`,
+  SATA-0) + `.tmp/vm/du-ntfs-test.vdi`. Guestcontrol yonetici degil,
+  `schtasks /rl highest` "Erisim engellendi" — bu yuzden disk ana makinede
+  bizim bicimlendiricimizle hazirlandi, Windows bagladi ve yazdi, VDI
+  bagliyken okundu -> `tests/fixtures/ntfs_windows_kirli.img.gz` (427 KB).
+  ntfs-3g: "Metadata kept in Windows cache, refused to mount"; bizim denetim
+  ayni. Onarim sonrasi ntfs-3g ile fark yalnizca `$Volume` USN'si.
+  Onarilan disk Windows'a takildi: Healthy, olay 98.
+- Sicak takma yarim kaldi (VBox "hotpluggable" bayragi calisirken
+  degistirilemiyor); misafir `shutdown /s` ile kapatilip disk kapaliyken
+  takildi. ACPI dugmesi kilit ekraninda yok sayiliyor.
+- Pencere: grup kutusundaki satir kaydirmali etiketler kesiliyordu;
+  duz duzen + `showEvent`te `totalHeightForWidth` ile cozuldu.
+- Testler: t77; ui_smoke NTFS bolumu; Linux run_all 75/77, Windows 74/77
+  (0 hata), i18n TAMAM (70 yeni metin en/de), platform 0 bulgu.
+- README (en/tr): ozellik bolumu, "Windows bolumu Linux'ta baglanmiyor mu"
+  ipucu, `ntfs-repair.png`.
+- Sinanmayan: gercek fiziksel diskte uygulama (yonetici gerekir), gercek
+  Hizli baslatma hiberfil'i.
+
+## 2026-10-03 (2) — VBox yonetici yetkisi + NTFS onarimi fiziksel diskte (Windows)
+
+- Neden yetki yoktu (olculdu): `pc` Administrators uyesi ama UAC belirteci
+  suzuyor (grup "deny only", Orta zorunlu duzey); yerlesik Administrator
+  kapaliydi. Kullanici `net user Administrator 1234 /active:yes` yapti;
+  guestcontrol `--username Administrator` tam yetkili (Yuksek duzey, fltmc).
+- `tests/physical_ntfsfix_test.py` (alti olcut, bagli birim kabul).
+  Misafir icinde VHD (PhysicalDrive1, "Msft Virtual Disk") + NTFS +
+  `fsutil dirty set`: onarim kuyruktan uygulandi -> Windows "NOT Dirty",
+  Healthy, 41 dosya ayni, chkdsk ve Repair-Volume temiz. VHD silindi.
+  Ayrinti: ADR 0077. VM ayarlari degismedi.
+
+## 2026-10-03 (3) — BitLocker tespiti gercek birimlerde olculdu
+
+- Kullanici: "yazilim BitLocker icin neler yapabiliyor" -> tanima, uyari,
+  ham kopyalama/yedek, kucultme reddi; kilit acma yok.
+- Gercek ornekler (A NTFS XTS-128, B exFAT CBC-128, C NTFS XTS-256): tespit
+  Windows'ta fiziksel yoldan ve ana makinede VHD'den dogru, blkid ile ayni.
+  Ayrinti ADR 0053 ek. Kilit acma calismasi bu oturumda ilerletilmedi.

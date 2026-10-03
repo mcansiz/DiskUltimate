@@ -5970,6 +5970,197 @@ def t76_diskten_diske_klon():
     kaynak.close()
 
 
+@test
+def t77_ntfs_denetle_ve_onar():
+    """NTFS denetle/onar (ntfsfix karsiligi): kirli bayrak, gunluk, aynalar, onyukleme, hiberfil (ADR 0077)
+
+    Gercek ornek `tests/fixtures/ntfs_windows_kirli.img.gz`: Windows 10'un
+    bagli tuttugu bir birimin o anki hali — `$LogFile` temiz degil.
+    ntfs-3g ayni goruntu icin "Metadata kept in Windows cache, refused to
+    mount" der; onarimdan sonra ntfs-3g'nin `ntfsfix -d` ciktisiyla yalnizca
+    `$Volume` kaydinin USN'si farklidir (2026-10-03, olculdu).
+    """
+    import gzip
+    import struct as _st
+    from diskultimate.core import ntfsfix as nf
+    from diskultimate.core.ntfs import format_ntfs
+    from diskultimate.core.ntfsread import NtfsFS as _NtfsFS
+    from diskultimate.core.ntfsresize import NtfsResizeError, ntfs_resize, ntfs_size_info
+    from diskultimate.core.ntfswrite import NtfsWriter
+
+    def bayrak_yaz(dev, deger):
+        fs = _NtfsFS(dev)
+        attr = fs.record(3).find(0x70)
+        v = bytearray(attr.value)
+        _st.pack_into("<H", v, 10, deger)
+        NtfsWriter(fs)._patch_resident(3, attr, bytes(v))
+
+    def temiz_degil_gunluk(dev):
+        """Windows'un bagliyken biraktigi yeniden baslatma sayfasi (etkin istemci)."""
+        fs = _NtfsFS(dev)
+        lcn = fs.record(2).find(0x80).runs[0][0]
+        sayfa = bytearray(4096)
+        sayfa[0:4] = b"RSTR"
+        _st.pack_into("<HH", sayfa, 4, 0x1E, 9)
+        _st.pack_into("<QIIHHH", sayfa, 8, 0, 4096, 4096, 0x30, 1, 1)
+        _st.pack_into("<QHHHH", sayfa, 0x30, 0x1234, 1, 0xFFFF, 0, 0)
+        for i in range(1, 9):
+            sayfa[0x1E + 2 * i:0x20 + 2 * i] = sayfa[i * 512 - 2:i * 512]
+            sayfa[i * 512 - 2:i * 512] = b"\x01\x00"
+        sayfa[0x1E:0x20] = b"\x01\x00"
+        for k in (0, 1):
+            dev.write(lcn * fs.cluster_size + k * 4096, bytes(sayfa))
+
+    def ntfs3g_kabul(yol):
+        """ntfs-3g yazma kipinde acmayi kabul ediyor mu (kopya uzerinde)."""
+        arac = shutil.which("ntfsfix")
+        if not arac:
+            return None
+        kopya = yol + ".kopya"
+        shutil.copyfile(yol, kopya)
+        try:
+            r = subprocess.run([arac, kopya], capture_output=True, text=True)
+            return r.stdout.startswith("Mounting volume... OK")
+        finally:
+            os.unlink(kopya)
+
+    # --- 1. Kirli bayrak + temiz olmayan gunluk ---
+    yol = img_path("t77.img")
+    d = DiskImage.create(yol, 128 * MIB, overwrite=True)
+    format_ntfs(d, label="KIRLI")
+    erisim = open_filesystem(d)
+    erisim.mkdir("/klasor")
+    erisim.write_file("/klasor/veri.bin", b"\x5A" * 300000)
+    erisim.flush()
+    h = nf.ntfs_check(d)
+    assert not h.needs_repair and h.logfile == nf.LOG_EMPTY, h.problems()
+    assert h.version == "3.1", h.version
+    bayrak_yaz(d, nf.VOLUME_DIRTY)
+    temiz_degil_gunluk(d)
+    d.flush()
+    h = nf.ntfs_check(d)
+    assert h.dirty and h.logfile == nf.LOG_UNCLEAN and h.blocks_linux_mount, h
+    assert len(h.problems()) == 2, h.problems()
+    assert detect(d).unclean, "tespit kirli birimi gormedi"
+    # 2026-10-03'e kadar `_is_dirty` yanlis ofsetten okuyup hep "temiz"
+    # diyordu; kirli birim boyutlandiriliyordu.
+    assert ntfs_size_info(d).dirty, "boyutlandirma kirli bayragi gormedi"
+    try:
+        ntfs_resize(d, d.sector_count - 2048)
+        raise AssertionError("kirli birim boyutlandirildi")
+    except NtfsResizeError:
+        pass
+    d.close()
+    assert ntfs3g_kabul(yol) in (False, None), "ntfs-3g kirli birimi kabul etti"
+
+    d = DiskImage(yol)
+    try:
+        nf.ntfs_fix(d, clear_dirty=True, schedule_chkdsk=True)
+        raise AssertionError("celisen secenekler kabul edildi")
+    except nf.NtfsFixError:
+        pass
+    sonuc = nf.ntfs_fix(d)
+    assert not sonuc.after.needs_repair, sonuc.after.problems()
+    assert len(sonuc.steps) == 2, sonuc.steps
+    assert not detect(d).unclean
+    assert open_filesystem(d).read("/klasor/veri.bin") == b"\x5A" * 300000
+    assert nf.ntfs_fix(d).steps == [], "temiz birimde onarim bir sey yazdi"
+    d.close()
+    assert ntfs3g_kabul(yol) in (True, None), "ntfs-3g onarilan birimi reddetti"
+
+    # chkdsk istemek: bayrak acilir, gunluk yine bosaltilir
+    d = DiskImage(yol)
+    temiz_degil_gunluk(d)
+    sonuc = nf.ntfs_fix(d, clear_dirty=False, schedule_chkdsk=True)
+    assert sonuc.after.dirty and sonuc.after.logfile == nf.LOG_EMPTY, sonuc.after
+    nf.ntfs_fix(d)
+    d.close()
+
+    # --- 2. Onyukleme sektoru ve $MFTMirr ---
+    d = DiskImage(yol)
+    fs = _NtfsFS(d)
+    cs, rs = fs.cluster_size, fs.record_size
+    asil = d.read(0, 512)
+    d.write(0, b"\x00" * 512)                       # asil bozuk, yedek saglam
+    h = nf.ntfs_check(d)
+    assert h.primary_boot == nf.BOOT_BAD and h.backup_boot == nf.BOOT_OK and h.repairable
+    nf.ntfs_fix(d)
+    assert d.read(0, 512) == asil, "onyukleme sektoru yedekten donmedi"
+    yedek_ofs = _st.unpack_from("<Q", asil, 0x28)[0] * 512
+    d.write(yedek_ofs, b"\x00" * 512)               # yedek bozuk
+    assert nf.ntfs_check(d).backup_boot == nf.BOOT_BAD
+    nf.ntfs_fix(d)
+    assert d.read(yedek_ofs, 512) == asil, "yedek onyukleme yazilmadi"
+
+    ayna = fs.mftmirr_lcn * cs
+    kayit1 = d.read(fs.mft_lcn * cs + rs, rs)
+    d.write(ayna + rs, b"\x00" * rs)                # ayna kaydi 1 bozuk
+    assert nf.ntfs_check(d).mirror_mismatch == [1]
+    nf.ntfs_fix(d)
+    assert d.read(ayna + rs, rs) == kayit1, "$MFTMirr duzeltilmedi"
+    kayit3 = d.read(fs.mft_lcn * cs + 3 * rs, rs)
+    d.write(fs.mft_lcn * cs + 3 * rs, b"BAAD" + kayit3[4:])   # asil kayit 3 bozuk
+    nf.ntfs_fix(d)
+    assert d.read(fs.mft_lcn * cs + 3 * rs, rs) == kayit3, "$MFT aynadan donmedi"
+    assert not nf.ntfs_check(d).needs_repair
+    d.close()
+
+    # --- 3. Hazirda bekletme: secilmeden reddedilir ---
+    d = DiskImage(yol)
+    erisim = open_filesystem(d)
+    erisim.write_file("/hiberfil.sys", b"HIBR" + b"\x11" * 20000)
+    erisim.flush()
+    bayrak_yaz(d, nf.VOLUME_DIRTY)
+    h = nf.ntfs_check(d)
+    assert h.hibernated and detect(d).hibernated, h
+    try:
+        nf.ntfs_fix(d)
+        raise AssertionError("hazirda bekletmedeki birim onarildi")
+    except nf.NtfsFixError:
+        pass
+    assert nf.ntfs_check(d).dirty, "reddedilen onarim yine de yazdi"
+    nf.ntfs_fix(d, remove_hibernation=True)
+    h = nf.ntfs_check(d)
+    assert not h.hibernated and not h.dirty, h
+    veri = open_filesystem(d).read("/hiberfil.sys")
+    assert veri[:4096] == b"\x00" * 4096 and veri[4096:] == b"\x11" * (20004 - 4096)
+    d.close()
+
+    # --- 4. Gercek Windows ornegi + kuyruk ---
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+    bolum = img_path("t77_win_bolum.img")
+    with gzip.open(os.path.join(fixtures, "ntfs_windows_kirli.img.gz"), "rb") as a, \
+            open(bolum, "wb") as b:
+        shutil.copyfileobj(a, b)
+    d = DiskImage(bolum, readonly=True)
+    h = nf.ntfs_check(d)
+    assert h.logfile == nf.LOG_UNCLEAN and not h.dirty and h.blocks_linux_mount, h
+    assert len(open_filesystem(d).listdir("/Belgeler")) == 20
+    d.close()
+    assert ntfs3g_kabul(bolum) in (False, None), "ntfs-3g Windows birimini kabul etti"
+
+    disk = img_path("t77_win_disk.img")
+    s = DiskSession.create(disk, 300 * MIB, scheme="gpt", overwrite=True)
+    r = s.free_regions()[0]
+    boyut = os.path.getsize(bolum) // 512
+    s.create_partition(r.start_lba, boyut, fs_key="", name="Windows")
+    v = s.view(s.table.get(1))
+    with open(bolum, "rb") as f:
+        v.write(0, f.read())
+    s.reload()
+    assert s.partitions[0].fs_type == "NTFS"
+    assert s.detect_fs(s.table.get(1)).unclean
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.ntfs_fix_op(1, at_lba=r.start_lba))
+    assert kuyruk[0].destructive
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, sonuc.summary()
+    assert not s.detect_fs(s.table.get(1)).unclean, "kuyruk onarimi gunlugu birakti"
+    assert not s.ntfs_check(1).needs_repair
+    assert len(s.filesystem(1).listdir("/Belgeler")) == 20
+    s.close()
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

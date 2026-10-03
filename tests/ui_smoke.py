@@ -106,6 +106,10 @@ def _sozde_diyaloglar(pencere):
         InfoDialog(i18n.tr("Sistem Bilgisi"), dict(platform_summary()), pencere,
                    note=i18n.tr("Tanilama notu")),
     ]
+    from diskultimate.core import ntfsfix as nf
+    from diskultimate.ui.dialogs.ntfsfix import NtfsFixDialog
+    diyaloglar.append(NtfsFixDialog(pencere, i18n.tr("Bolum {}", 3), nf.NtfsHealth(
+        dirty=True, logfile=nf.LOG_UNCLEAN, hibernated=True, version="3.1")))
     from diskultimate.core import operations as ops
     from diskultimate.ui.dialogs.apply import ApplyDialog
 
@@ -432,6 +436,38 @@ def main() -> int:
     d4.show()
     kaydet(d4, "09-guvenli-silme.png")
     d4.close()
+
+    # --- NTFS denetle ve onar (ADR 0077) ---
+    # Ornek goruntudeki NTFS bolumu (3) temizdir; bilgi paneli "Temiz" demeli.
+    from diskultimate.core import ntfsfix as nf
+    from diskultimate.ui.dialogs.ntfsfix import NtfsFixDialog
+    ntfs_bolum = pencere.session.table.get(3)
+    if ntfs_bolum.fs_type == "NTFS":
+        pencere.select_partition(3)
+        app.processEvents()
+        assert pencere.act_ntfs_fix.isEnabled(), "NTFS bolumde onar eylemi pasif"
+        assert i18n.tr("Temiz") in pencere.info_view.toPlainText(), \
+            "bolum bilgisinde NTFS durumu yok"
+        pencere.select_partition(1)
+        app.processEvents()
+        assert not pencere.act_ntfs_fix.isEnabled(), "FAT bolumde onar eylemi etkin"
+    kirli = nf.NtfsHealth(dirty=True, logfile=nf.LOG_UNCLEAN, version="3.1")
+    d4b = NtfsFixDialog(pencere, "Bolum 3 (Windows Veri)", kirli)
+    d4b.show()
+    kaydet(d4b, "09b-ntfs-onar.png")
+    assert d4b.buttons.button(d4b.buttons.Ok).isEnabled()
+    assert d4b.values() == {"clear_dirty": True, "schedule_chkdsk": False,
+                            "remove_hibernation": False}, d4b.values()
+    d4b.close()
+    # Hazirda bekletmede: kutu secilmeden "kuyruga ekle" pasif ve nedeni yazar
+    uyuyan = nf.NtfsHealth(logfile=nf.LOG_UNCLEAN, hibernated=True, version="3.1")
+    d4c = NtfsFixDialog(pencere, "Bolum 3", uyuyan)
+    tamam = d4c.buttons.button(d4c.buttons.Ok)
+    assert not tamam.isEnabled() and tamam.toolTip(), "hazirda bekletmede onarim acik"
+    d4c.hiber_check.setChecked(True)
+    assert tamam.isEnabled() and d4c.values()["remove_hibernation"]
+    d4c.close()
+    print("  (NTFS onar: eylem yalnizca NTFS'te, hazirda bekletme kilidi denetlendi)")
 
     silinmisler = [
         DeletedFile("Onemli Rapor 2026.docx", "/belgeler/Onemli Rapor 2026.docx",

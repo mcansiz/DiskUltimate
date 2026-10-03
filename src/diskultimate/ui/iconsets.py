@@ -328,6 +328,10 @@ def s_wipe_free(g):
     g.line([(7, 14.5), (15, 14.5)], width=1.1)
     g.poly([(8, 12.8), (11.5, 9.3), (14, 11.8), (11.5, 14.3), (9.5, 14.3)], g.acc)
 
+def s_fs_repair(g):
+    g.rect(1.5, 3, 13, 6, 1.0)
+    g.line([(4.5, 12), (7, 14.2), (12, 9.5)], g.acc, 1.9)
+
 def s_image_resize(g):
     doc(g, 2.5, 1.5, 9, 12)
     arrow(g, 8, 12.5, 15, 12.5, g.acc, 1.5)
@@ -445,6 +449,7 @@ SYMBOLS: Dict[str, tuple] = {
     "rename": (BLUE, s_rename), "type": (PURPLE, s_type),
     "boot": (ORANGE, s_boot), "wipe": (RED, s_wipe),
     "wipe-free": (RED, s_wipe_free), "image-resize": (BLUE, s_image_resize),
+    "fs-repair": (GREEN, s_fs_repair),
     "mount": (GREEN, s_mount), "unmount": (ORANGE, s_unmount),
     "disk": (GREY, s_disk), "disk-system": (BLUE, s_disk_system),
     "disk-removable": (TEAL, s_disk_removable), "image": (BLUE, s_image),

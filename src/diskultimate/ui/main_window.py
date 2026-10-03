@@ -73,7 +73,7 @@ from ..i18n import mark, tr, trn
 APP_NAME = "DiskUltimate"
 # Surumun tek kaynagi burasidir. Degistirildiginde README.md'deki surum rozeti
 # ve .claude/docs/project-overview.md "Durum" satiri da guncellenir.
-APP_VERSION = "0.4.0"
+APP_VERSION = "0.5.0-beta"
 
 # Sekme sirasi tek yerden tanimlanir; `tabs.setCurrentIndex` cagrilari ciplak
 # sayi kullanmaz, boylece sekme sirasi degisince sessizce yanlis sekme acilmaz.
@@ -102,7 +102,7 @@ class MainWindow(QMainWindow):
         self.session: Optional[DiskSession] = None
         self.selected_partition: Optional[int] = None
         self.selected_free: Optional[Tuple[int, int]] = None
-        self.setWindowTitle(APP_NAME)
+        self.setWindowTitle(f"{APP_NAME} {APP_VERSION}")
         self.resize(1280, 800)
         self._physical_cache: Dict[str, object] = {}
         # Her oturumun kendi bekleyen islem kuyrugu vardir: adimlar o oturumun
@@ -397,6 +397,10 @@ class MainWindow(QMainWindow):
         self.act_wipe_part = QAction(app_icon("wipe"), "", self)
         self.act_wipe_part.triggered.connect(lambda: self.wipe(disk=False))
 
+        # --- NTFS denetle ve onar (ntfsfix karsiligi, ADR 0077) ---
+        self.act_ntfs_fix = QAction(app_icon("fs-repair"), "", self)
+        self.act_ntfs_fix.triggered.connect(lambda: self.ntfs_fix())
+
         # --- Kurtarma ---
         self.act_scan_deleted = QAction(app_icon("recover"), "", self)
         self.act_scan_deleted.triggered.connect(self.scan_deleted)
@@ -515,6 +519,8 @@ class MainWindow(QMainWindow):
         m_part.addAction(self.act_type_part)
         m_part.addAction(self.act_boot)
         m_part.addSeparator()
+        m_part.addAction(self.act_ntfs_fix)
+        m_part.addSeparator()
         m_part.addAction(self.act_backup_part)
         m_part.addAction(self.act_restore_part)
         m_part.addAction(self.act_wipe_part)
@@ -631,6 +637,10 @@ class MainWindow(QMainWindow):
         self.act_restore_part.setText(tr("Bolume geri yukle..."))
         self.act_wipe_disk.setText(tr("Diski guvenli sil..."))
         self.act_wipe_part.setText(tr("Bolumu guvenli sil..."))
+        self.act_ntfs_fix.setText(tr("NTFS'i denetle ve onar..."))
+        self.act_ntfs_fix.setToolTip(tr(
+            "Windows'un temiz kapatmadigi NTFS birimini baglanabilir hale "
+            "getirir (ntfsfix gibi)"))
         self.act_bootloader.setText(tr("Onyukleyici yoneticisi..."))
         self.act_bootloader.setToolTip(
             tr("Diskteki isletim sistemlerini ve onyukleme kodunu gosterir; "
@@ -1004,7 +1014,7 @@ class MainWindow(QMainWindow):
         self.browser.set_filesystem(None)
         self.hex_view.set_device(None)
         self.info_view.setPlainText(self._physical_summary_text())
-        self.setWindowTitle(APP_NAME)
+        self.setWindowTitle(f"{APP_NAME} {APP_VERSION}")
         self.status_file.setText(tr("Disk goruntusu acik degil"))
         self.status_scheme.setText("")
         self.status_sel.setText("")
@@ -1570,6 +1580,20 @@ class MainWindow(QMainWindow):
         basarili, detay = result
         if not basarili:
             self.log(tr("{} basarisiz: {}", title, detay))
+            if mount and fs_type == "NTFS" and not platform.IS_WINDOWS:
+                # Linux'un NTFS'i baglamamasinin en sik nedeni Windows'un
+                # birimi temiz kapatmamasidir (Hizli baslatma). Kullaniciya
+                # terminale inmeden cozum sunulur (ADR 0077).
+                cevap = QMessageBox.question(
+                    self, title,
+                    tr("{}\n\nWindows bu NTFS birimini temiz kapatmamis "
+                       "olabilir (Hizli baslatma, hazirda bekletme, elektrik "
+                       "kesintisi). Birimi simdi denetlemek ister misiniz?",
+                       detay or tr("Islem basarisiz.")),
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                if cevap == QMessageBox.Yes:
+                    self.ntfs_fix(part)
+                return
             QMessageBox.warning(self, title, detay or tr("Islem basarisiz."))
             return
         if mount:
@@ -1768,6 +1792,47 @@ class MainWindow(QMainWindow):
             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
         if cevap == QMessageBox.Yes:
             self.open_path(result)
+
+    # ==================================================================
+    # NTFS denetle ve onar (ADR 0077)
+    # ==================================================================
+    def ntfs_fix(self, part: Optional[Partition] = None) -> None:
+        """Denetimi is parcaciginda yapar, bulgulari gosterir, onarimi
+        kuyruga ekler. Diske burada hicbir sey yazilmaz (ADR 0025)."""
+        from .dialogs.ntfsfix import NtfsFixDialog
+
+        part = part or self._current_partition()
+        if part is None:
+            return
+        if part.fs_type != "NTFS":
+            QMessageBox.information(self, tr("NTFS degil"),
+                                    tr("Bu islem yalnizca NTFS bolumlerde "
+                                       "kullanilabilir."))
+            return
+        # Linux/macOS'ta bagli birime yazmak onu bozar; Windows'ta ise
+        # uygulama birimi kilitleyip ayirir (ADR 0016, 0075).
+        if part.mount_point and not platform.IS_WINDOWS:
+            QMessageBox.warning(
+                self, tr("Bolum bagli"),
+                tr("Bolum {} su anda bagli ({}). Bagli bir NTFS birimi "
+                   "onarilamaz; once baglantisini kesin.", part.index,
+                   part.mount_point))
+            return
+        index = part.index
+        title = tr("NTFS denetleniyor — Bolum {}", index)
+        ok, health = run_task(self, title, lambda report: (
+            report(title, -1), self.session.ntfs_check(index))[1])
+        if not ok:
+            self.error(tr("NTFS denetlenemedi"), str(health))
+            return
+        for sorun in health.problems():
+            self.log(tr("Bolum {}: {}", index, sorun))
+        dlg = NtfsFixDialog(self, tr("Bolum {} ({})", index, part.display_name),
+                            health)
+        if exec_dialog(dlg) != QDialog.Accepted:
+            return
+        v = dlg.values()
+        self.enqueue(ops.ntfs_fix_op(index, at_lba=part.start_lba, **v))
 
     # ==================================================================
     # Guvenli silme
@@ -2899,7 +2964,7 @@ class MainWindow(QMainWindow):
         # Agac diskteki gercek duruma bagli kalir.
         shown_parts, shown_free = self._refresh_plan_views()
         self._build_tree(partitions)
-        self.setWindowTitle(f"{session.name} — {APP_NAME}")
+        self.setWindowTitle(f"{session.name} — {APP_NAME} {APP_VERSION}")
         self.status_file.setText(session.path)
         state = tr("{} | {} | {} bolum", session.scheme_name,
                    human_size(session.image.size), len(partitions))
@@ -3531,6 +3596,8 @@ class MainWindow(QMainWindow):
             menu.addSeparator()
             menu.addAction(self.act_mount)
             menu.addAction(self.act_unmount)
+        if self.act_ntfs_fix.isEnabled():
+            menu.addAction(self.act_ntfs_fix)
         menu.addSeparator()
         for act in (self.act_backup_part, self.act_restore_part,
                     self.act_scan_deleted, self.act_wipe_part):
@@ -3713,6 +3780,8 @@ class MainWindow(QMainWindow):
             alanlar.append((tr("Kume/blok boyutu"), human_size(info.cluster_size)))
         if info.uuid:
             alanlar.append((tr("UUID / Seri no"), info.uuid))
+        if part.fs_type == "NTFS":
+            alanlar.append((tr("Durum"), self._ntfs_state_text(part, info)))
         if info.total_bytes >= 0 and info.used_bytes >= 0:
             oran = 100 * info.used_bytes / max(1, info.total_bytes)
             alanlar.append((tr("Kullanilan"),
@@ -3725,6 +3794,23 @@ class MainWindow(QMainWindow):
     # ==================================================================
     # Yardimcilar
     # ==================================================================
+    @staticmethod
+    def _ntfs_state_text(part: Partition, info) -> str:
+        """NTFS biriminin temizlik durumu (bolum bilgisi paneli icin).
+
+        Bagli bir birim kullanimdayken her zaman "kirli" gorunur (Windows ve
+        ntfs3 bayragi bagliyken acar); orada uyari yaniltici olurdu.
+        """
+        if part.mount_point:
+            return tr("Bagli — isletim sistemi kullaniyor")
+        if info.hibernated:
+            return tr("Windows hazirda bekletmede — Bolum > NTFS'i denetle "
+                      "ve onar")
+        if info.unclean:
+            return tr("Temiz kapatilmamis — Linux baglamaz; Bolum > NTFS'i "
+                      "denetle ve onar")
+        return tr("Temiz")
+
     def _selected_partition_quiet(self) -> Optional[Partition]:
         """Secili bolumu **diyalog acmadan** dondurur.
 
@@ -3884,6 +3970,9 @@ class MainWindow(QMainWindow):
         # silme
         self.act_wipe_disk.setEnabled(yazilabilir)
         self.act_wipe_part.setEnabled(yazilabilir and part_selected)
+        selected = self._selected_partition_quiet()
+        self.act_ntfs_fix.setEnabled(
+            yazilabilir and selected is not None and selected.fs_type == "NTFS")
         # fiziksel diskler
         disk_selected = self._selected_disk_path() is not None
         self.act_refresh_disks.setEnabled(True)

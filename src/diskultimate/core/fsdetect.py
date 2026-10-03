@@ -22,6 +22,10 @@ class FSInfo:
     encrypted: bool = False      # icerik sifreli (BitLocker, LUKS, ...)
     container: bool = False      # icinde baska birimler var (LVM, RAID, ZFS, APFS)
     maybe_encrypted: bool = False  # imza yok ama ilk bloklar rastgele gorunuyor
+    # Temiz ayrilmamis birim (NTFS: kirli bayrak ya da temiz kapatilmamis
+    # gunluk). Linux suruculeri boyle bir birimi baglamayi reddeder.
+    unclean: bool = False
+    hibernated: bool = False     # Windows hazirda bekletmede (hiberfil.sys)
 
     @property
     def free_bytes(self) -> int:
@@ -577,6 +581,8 @@ def _ntfs(dev: BlockDevice, boot: bytes) -> FSInfo:
             if 0 <= used <= info.total_bytes:
                 info.used_bytes = used
             info.label = fs.label
+            from .ntfsfix import quick_state
+            info.unclean, info.hibernated = quick_state(fs)
         except Exception as exc:
             diagnostics.debug(f"NTFS ustverisi okunamadi: {exc}")
     return info

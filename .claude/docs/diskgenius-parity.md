@@ -103,6 +103,7 @@ Guncelleme: 2026-09-15 (v0.3.0)
 | UEFI onyukleme girisi yonetimi | ✅ | ⛔ | Isletim sistemi NVRAM islemi |
 | Onyuklenebilir kurtarma ortami (WinPE) | ✅ | ⛔ | Windows lisans/arac zinciri gerektirir |
 | Dosya sistemi denetimi (chkdsk benzeri) | ✅ | 📋 | v0.4 — FAT/exFAT tutarlilik denetimi |
+| **NTFS onarma (ntfsfix -d)** | 🟡 | ✅ | Kirli bayrak, temiz kapatilmamis $LogFile, $MFTMirr, yedek onyukleme, hazirda bekletme tespiti; Linux'un baglamadigi Windows bolumu icin (ADR 0077). chkdsk degildir |
 | Islem gunlugu | 🟡 | ✅ | Arayuzde sekme + `.claude/logs/` dosyasi |
 
 ---

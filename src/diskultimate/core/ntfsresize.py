@@ -145,9 +145,12 @@ def _is_dirty(fs: NtfsFS) -> bool:
         attr = fs.record(VOLUME_RECORD).find(AT_VOLUME_INFORMATION)
     except NtfsError:
         return False
-    if attr is None or not attr.resident or len(attr.value) < 14:
+    # VOLUME_INFORMATION: 8 bayt ayrilmis, surum (2 bayt), bayraklar ofset 10.
+    # 2026-10-03'e kadar ofset 12 okunuyordu; deger 12 bayt oldugu icin
+    # uzunluk denetimi hep "temiz" donduruyor, kirli birim boyutlandiriliyordu.
+    if attr is None or not attr.resident or len(attr.value) < 12:
         return False
-    return bool(struct.unpack_from("<H", attr.value, 12)[0] & VOLUME_DIRTY)
+    return bool(struct.unpack_from("<H", attr.value, 10)[0] & VOLUME_DIRTY)
 
 
 def _bitmap_attr(fs: NtfsFS) -> Attribute:
@@ -419,9 +422,9 @@ def ntfs_repair(view: BlockDevice, progress: Progress = None) -> int:
     writer._require_writable()
     if _is_dirty(fs):
         raise NtfsResizeError(
-            tr("Birim 'kirli' isaretli. Once Windows'ta chkdsk, Linux'ta "
-               "ntfsfix calistirin; kirli bir birimi boyutlandirmak veri "
-               "kaybettirebilir."))
+            tr("Birim 'kirli' isaretli. Once Bolum > NTFS'i denetle ve onar "
+               "(ya da Windows'ta chkdsk) calistirin; kirli bir birimi "
+               "boyutlandirmak veri kaybettirebilir."))
     count = repair_orphan_low_clusters(writer, progress)
     if count:
         writer.flush()
@@ -708,9 +711,9 @@ def ntfs_resize(view: BlockDevice, new_sector_count: int,
         raise NtfsResizeError(tr("NTFS en fazla {} kume adresler", MAX_CLUSTERS))
     if _is_dirty(fs):
         raise NtfsResizeError(
-            tr("Birim 'kirli' isaretli. Once Windows'ta chkdsk, Linux'ta "
-               "ntfsfix calistirin; kirli bir birimi boyutlandirmak veri "
-               "kaybettirebilir."))
+            tr("Birim 'kirli' isaretli. Once Bolum > NTFS'i denetle ve onar "
+               "(ya da Windows'ta chkdsk) calistirin; kirli bir birimi "
+               "boyutlandirmak veri kaybettirebilir."))
 
     # Eski bicimlendiricinin sahipsiz kumeleri (ADR 0074): boyutlandirma
     # zaten yaziyor, birim tutarli birakilir.

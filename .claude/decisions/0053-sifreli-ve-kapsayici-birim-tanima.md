@@ -75,3 +75,18 @@ okunmuyordu — 16 TiB ustu birimde doluluk yanlis cikardi.
 
 Yalnizca **taninma**. Bu birimlerin icini acmak (LUKS cozme, LVM mantiksal
 birimleri, APFS birimleri) kapsam disidir; APFS salt okuma Asama 4'tedir.
+
+## Ek: gercek BitLocker olcumu (2026-10-03)
+
+VBox win10 (Windows 10 Pro 20H2), yerlesik Administrator ile misafir icinde
+128 MB VHD'ler: A NTFS + XTS-AES 128, B exFAT + AES-CBC 128, C NTFS +
+XTS-AES 256 (`Enable-BitLocker -UsedSpaceOnly`, parola + kurtarma anahtari).
+Uc ornekte de `-FVE-FS-` OEM ve FVE GUID (ofset 160) eslesti:
+
+* Windows'ta fiziksel disk yolundan, **kilit acikken**: BitLocker, sifreli.
+* Ana makinede VHD okuyucuyla: BitLocker, sifreli; `blkid -p` ayni
+  (`TYPE=BitLocker VERSION=2`).
+
+Ornekler depoya girmedi (gzip 8-17 MB); `.tmp/vm/bitlocker/` altinda,
+parola/kurtarma anahtarlari `rapor.txt`te. Kilit acma (salt okunur cozme)
+degerlendirilmedi; kapsam disi kaldi.

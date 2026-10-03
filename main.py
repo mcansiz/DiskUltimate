@@ -38,7 +38,8 @@ from diskultimate.core.platform import (is_elevated,  # noqa: E402
                                         signal_elevated_ready)
 from diskultimate.ui import qt_i18n  # noqa: E402
 from diskultimate.ui.appicon import apply_app_icon  # noqa: E402
-from diskultimate.ui.main_window import APP_NAME, MainWindow  # noqa: E402
+from diskultimate.ui.main_window import (APP_NAME, APP_VERSION,  # noqa: E402
+                                         MainWindow)
 from diskultimate.ui.startup import elevate_at_startup  # noqa: E402
 from diskultimate.ui.theme import apply_theme  # noqa: E402
 
@@ -53,6 +54,7 @@ def main() -> int:
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
+    app.setApplicationVersion(APP_VERSION)
     app.setOrganizationName("DiskUltimate")
     # Ikon uygulama duzeyinde verilir: butun ust duzey pencereler ve
     # diyaloglar bunu miras alir, tek tek setWindowIcon gerekmez. Yetki

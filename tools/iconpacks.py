@@ -57,6 +57,7 @@ MAP = {
     "wipe": ("eraser", "eraser", "eraser", "eraser", "ink_eraser"),
     "wipe-free": ("eraser-off", "broom", "brush-cleaning", "eraser-fill", "cleaning_services"),
     "image-resize": ("arrow-autofit-width", "arrows-out-simple", "scaling", "arrows-angle-expand", "aspect_ratio"),
+    "fs-repair": ("tool", "wrench", "wrench", "wrench", "build"),
     "mount": ("plug-connected", "plugs-connected", "plug", "plug", "cable"),
     "unmount": ("player-eject", "eject", "unplug", "eject", "eject"),
     "disk": ("server-2", "hard-drive", "hard-drive", "hdd", "hard_drive"),

@@ -1,204 +1,324 @@
 # DiskUltimate
 
-DiskGenius benzeri gorsel disk yonetim araci: disk goruntuleri, sanal diskler ve
-**sistemdeki gercek diskler** uzerinde calisir. Python 3 + PyQt5, harici bagimlilik yok.
+**English** · [Türkçe](README.tr.md)
 
-**Desteklenen platformlar: Windows ve Linux** — ikisinde de testler kosulmustur.
-Cekirdek saf Python ve macOS kod yollari (`diskutil`) yazilmis durumda, ancak
-**macOS'ta hicbir test calistirilmamistir**; bu yuzden destegi ilan edilmiyor.
+A visual disk management tool in the spirit of DiskGenius. It works on disk
+images, virtual disks and **the real disks in your computer**: partitioning,
+formatting, file access, backup, cloning, boot management and data recovery.
+Written in Python 3 + PyQt5; every partition table and file system is
+implemented **from scratch in pure Python**, so it needs no external tools.
 
-![surum](https://img.shields.io/badge/surum-0.4.0-blue) ![python](https://img.shields.io/badge/python-3.8%2B-green) ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen) ![test](https://img.shields.io/badge/test-28%2F28-brightgreen) ![dil](https://img.shields.io/badge/dil-tr%20%7C%20en%20%7C%20de-blue)
+![version](https://img.shields.io/badge/version-0.5.0--beta-orange)
+![python](https://img.shields.io/badge/python-3.8%2B-green)
+![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen)
+![languages](https://img.shields.io/badge/languages-en%20%7C%20tr%20%7C%20de-blue)
+![license](https://img.shields.io/badge/license-GPL--3.0-lightgrey)
 
-Bolum tablolari ve dosya sistemleri **sifirdan, saf Python ile** yazilir. Sekiz
-dosya sisteminin (FAT12/16/32, exFAT, NTFS, ext2/3/4) tamaminda **bicimlendirme,
-okuma ve yazma** calisir; uretilen birimler `fsck.vfat`, `fsck.exfat`, `e2fsck`,
-`ntfsfix`/`ntfs-3g` ve Windows `chkdsk` ile capraz dogrulanir.
+![Main window](docs/screenshots/en/main-window.png)
 
-## Yetenekler
+> [!WARNING]
+> **This is a beta release.** DiskUltimate writes to disks. Every destructive
+> step is queued and confirmed before it runs, but a beta can still have bugs:
+> **back up important data first**, and try new operations on a disk image
+> before using them on a real disk.
 
-**Disk ve bolum**
-- Seyrek goruntu olusturma, acma, yeniden boyutlandirma
-- Sanal disk destegi: **VHD, VDI, VMDK, QCOW2** okuma; VHD olusturma ve yazma
-- **Fiziksel diskler** — takili her disk listelenir ve acilir (Windows / Linux / macOS);
-  USB bellek ve SD kart uygulama acikken takilsa da listede **kendiliginden** belirir
-- MBR (4 birincil + genisletilmis + mantiksal) ve GPT (128 bolum, CRC32, yedek baslik)
-- **MBR ↔ GPT donusumu** — bolum verileri yerinde kalir
-- **Bolumu boyutlandirma / tasima** — fareyle suruklenebilir serit; FAT, exFAT
-  ve **NTFS** veri korunarak kucultulur/buyutulur (saf Python, her platformda ve
-  goruntu dosyalarinda); ext hala harici arac ister. Windows'ta fiziksel diskte
-  isletim sisteminin kendi boyutlandiricisi tercih edilir.
-- 4K hizalama denetimi
+## Contents
 
-- **Yedekleme ve geri yukleme tek pencerede** — ustte `.dub` dosyasinin
-  bilgisi, **notu** ve icerigi; altta acik goruntuler ve fiziksel diskler.
-  Sikistirma duzeyi secilir, ilerleme ayni formda izlenir.
-- **Planlanan yerlesim ana ekranda** — bekleyen adimlar harita ve tabloya
-  islenir; yeni bolum belirir, silinecek kalkar. "Uygula" penceresi adimlari
-  sirayla ve **adim basina ilerleme cubuguyla** calistirir.
+- [Download and install](#download-and-install)
+- [Features](#features)
+- [Supported file systems](#supported-file-systems)
+- [Screenshots](#screenshots)
+- [Usage](#usage)
+- [Safety](#safety)
+- [Known limitations](#known-limitations)
+- [Building and testing](#building-and-testing)
+- [License](#license)
 
-**Dosya sistemleri**
-- **FAT12 / FAT16 / FAT32 ve exFAT: saf Python** — bicimlendirme ve tam okuma/yazma,
-  harici arac gerekmez, uc platformda da calisir
-- **ext2 / ext3 / ext4 ve NTFS: saf Python bicimlendirme** — JBD2 gunlugu, MFT,
-  `$UpCase`/`$AttrDef` tablolari dahil. Oncelik sirasi: (1) isletim sisteminin kendi
-  araci, (2) harici `mkfs.*`, (3) saf Python — boylece sekiz dosya sistemi de
-  **uc platformda** olusturulabilir
-- **NTFS okuma ve yazma (saf Python)** — MFT cozumleme, fixup dizileri, veri
-  kosullari, `$ATTRIBUTE_LIST`, B+ agac dizin indeksi. Yazma: dosya/klasor
-  olusturma, silme, yeniden adlandirma, `$MFT` kendiliginden buyutulur;
-  `ntfsfix` temiz ve `ntfs-3g` ile baglanip dogrulandi
-- Tespit: FAT, exFAT, NTFS, ext2/3/4, btrfs, XFS, F2FS, ISO9660, Linux takas
-- **ext2/3/4 okuma ve yazma (saf Python)** — okuma: extent agaci, dolayli blok,
-  sembolik bag izleme, 64 bit blok. Yazma: dosya/klasor olusturma, silme,
-  yeniden adlandirma; **`metadata_csum` (CRC-32C saglamalar) dahil**. Her adim
-  `e2fsck` ile dogrulanir; `mkfs.ext4` ciktisi ve gercek SD kart yerlesimi
-  uzerinde sinanmistir
-- Dosya gezgini: listeleme, uzun ad (LFN/UTF-16), okuma, yazma, klasor, silme,
-  yeniden adlandirma, disa/ice aktarma, onizleme
-  (sekiz dosya sisteminde de okuma ve yazma)
+## Download and install
 
-**Yedekleme ve klonlama**
-- `.dub` yedek bicimi — sikistirmali, sifir bloklarini atlar
-  (400 MB'lik bos bolum → 34 KB yedek)
-- **Yedek dogrudan acilir** — geri yuklemeye gerek yok: bolumler, klasorler ve
-  dosyalar salt okunur olarak gezilir, dosyalar disa aktarilabilir
-- **Yedegi hedefe yazma** — yeni goruntu dosyasina veya **fiziksel diske**
-  (fiziksel hedefte alti katmanli onay gecerlidir)
-- Disk ve bolum klonlama, seyreklik korunarak
+### Windows
 
-**Onyukleme**
-- **Onyukleyici yoneticisi** — diskteki isletim sistemlerini ve onyukleme
-  kodunu (GRUB 2 / GRUB Legacy / Windows / SYSLINUX / LILO) gosterir.
-  Tespit **her platformda** calisir: bolumler projenin kendi dosya sistemi
-  surucileriyle okunur, `mount` ve yonetici yetkisi gerekmez; goruntu
-  dosyalarindaki sistemler de gorunur
-- **Onyukleme kodunu kaldirma** — ilk 440 bayti sifirlar, bolum tablosunu ve
-  dosyalari **korur**; bekleyen islem olarak kuyruga girer
-- **GRUB yonetimi (Linux)** — kurulum, onyukleme menusunu yeniden uretme,
-  `os-prober`i acma, ayarlari yedekleme/geri yukleme ve tek dugmeyle onarim.
-  Onarim GRUB'u yalnizca **zaten bulundugu** diske yazar
-- **UEFI onyukleme duzenleyici** — bellenimdeki girisleri listeler, sirayi
-  degistirir, etkin/gizli bayragini ve menu bekleme suresini ayarlar.
-  Aygit yolu `efibootmgr` bicimindedir. Hicbir sey aninda yazilmaz: once
-  degisiklik listesi gosterilir, sonra **yedek alinir**, sonra yazilir
-- Onyukleme duzenini JSON olarak disa/ice aktarma
+Download **`DiskUltimate.exe`** from the
+[Releases](../../releases) page. It is a single portable file — no
+installation, no Python needed.
 
-**Veri kurtarma**
-- Silinmis dosya tarama ve kurtarma (FAT + exFAT, **uzun adlar dahil**),
-  kurtarilabilirlik degerlendirmesi
-- Kayip bolum tarama ve tabloya geri ekleme
-- Imza tabanli dosya kurtarma (carving) — 13 dosya turu
+- At start-up the app asks for administrator rights (UAC). Physical disks need
+  them; if you decline, the app still opens and works with disk images.
+- The exe is not code-signed, so Windows SmartScreen may show
+  *"Windows protected your PC"*. Choose **More info → Run anyway**.
 
-**Bakim**
-- Guvenli silme: sifir / rastgele / DoD 3 gecis / DoD 7 gecis + dogrulama
-- Bos alan silme (mevcut dosyalara dokunmadan)
-- Sektor onaltilik goruntuleyici, islem gunlugu
+### Linux (run from source)
 
-## Kurulum
+There is no prebuilt Linux binary yet; running from source takes a minute and
+only needs Python 3.8+ and PyQt5:
 
 ```bash
-pip install PyQt5        # tum platformlar
+git clone https://github.com/mcansiz/DiskUltimate.git
+cd DiskUltimate
+
+# install PyQt5 — pick the line for your distribution
+sudo apt install python3-pyqt5        # Debian / Ubuntu / Mint
+sudo dnf install python3-qt5          # Fedora
+sudo pacman -S python-pyqt5           # Arch / Manjaro
+# or: python3 -m pip install -r requirements.txt
+
 python3 main.py
 ```
 
-Linux'ta dagitim paketi de kullanilabilir: `sudo apt install python3-pyqt5`
+At start-up the app asks for root through `pkexec` (needed for physical disks).
+If you cancel, it opens as a normal user and works with disk images.
+Start with `--no-root` to skip the question.
 
-Opsiyonel — yalnizca NTFS/ext bicimlendirmesi ve capraz dogrulama icin (Linux):
-```bash
-sudo apt install dosfstools exfatprogs ntfs-3g e2fsprogs
-```
-
-**Windows ve macOS'ta** sekiz dosya sistemi de harici arac olmadan olusturulabilir;
-bicimlendirme penceresi kullanilamayan bir secenegi gizlemez, yanina **nedenini** yazar.
-
-Fiziksel disklere erisim yonetici/root yetkisi ister. Yetki yoksa diskler yine
-listelenir ama acilamaz ve anlamli bir hata verilir.
-
-## Kullanim
+Optional (Linux): if `mkfs.*` tools are installed they are used for
+formatting; otherwise the built-in pure-Python formatter is used.
 
 ```bash
-python3 main.py                 # bos baslat
-python3 main.py disk.img        # dosya acarak baslat
+sudo apt install dosfstools exfatprogs ntfs-3g e2fsprogs xfsprogs   # optional
 ```
 
-**Dil.** Arayuz Turkce, Ingilizce ve Almanca calisir. Secim
-**Araclar > Dil** menusundedir ve **aninda** uygulanir — uygulama yeniden
-baslatilmaz, acik disk ve bekleyen islem kuyrugu kaybolmaz. Secim saklanir.
-Acilisda sira: `DISKULTIMATE_LANG` > kayitli secim > isletim sisteminin dili >
-Turkce.
+### macOS
+
+The core is pure Python and the macOS code paths (`diskutil`) exist, but
+**nothing has been tested on macOS**, so it is not listed as supported.
+
+## Features
+
+### Disks and images
+- **Physical disks** — every attached disk is listed with model, size, bus and
+  partitions; USB sticks and SD cards appear **automatically** when plugged in
+  while the app is running
+- Several disks and images open at the same time, side by side in the tree
+- Disk images: `.img` / `.raw` / `.dd` (created as sparse files), resizable
+- Virtual disks: **VHD** (fixed and dynamic — read, write, create),
+  **VMDK** (read; flat VMDK also write), **VDI** and **QCOW2** (read)
+- Disks without a partition table (a whole-disk file system, an `.iso`) open too
+
+### Partitions
+- **MBR** (4 primary + extended + logical) and **GPT** (128 entries, CRC32,
+  backup header, protective MBR)
+- **MBR ↔ GPT conversion without data loss** — partition data stays in place;
+  a pre-check tells you if a conversion is not possible
+- Create, delete, format; change partition type, GPT name, volume label and
+  boot (active) flag
+- **Resize and move with the mouse** — drag the handles on the partition bar;
+  data is preserved for FAT12/16/32, exFAT, NTFS and ext2/3/4 (shrink, grow,
+  move) and XFS (grow), all in pure Python on every platform
+- Shrinking below the space the files need is **refused**, whatever you confirm
+- Partition layout editor for changing size and position of a partition in one step
+- 4K alignment check
+- Mount / unmount (Linux), assign / remove drive letter (Windows)
+
+### Pending operations and one "Apply"
+- Destructive steps are **not written immediately**: they go into a queue
+- The main screen shows the **planned layout** — new partitions appear,
+  deleted ones disappear — and you can switch back to the on-disk layout
+- **Undo** removes the last step, **Discard** cancels them all
+- **Apply** lists every step, counts the ones that destroy data, and runs them
+  in order with a progress bar per step
+
+### File access
+- File browser with folder tree: list, preview (text and hex), export files and
+  folders, import files, create folders, delete, rename
+- Long file names (FAT LFN, exFAT/NTFS UTF-16)
+- Read **and write** on FAT, exFAT, NTFS, ext2/3/4, HFS+ and UDF — see the
+  [file system table](#supported-file-systems)
+
+### Backup and cloning
+- Own backup format **`.dub`** — compressed, skips empty blocks (a 400 MB empty
+  partition becomes a 34 KB backup); each backup can carry a note
+- **Open a backup without restoring it** — browse partitions, folders and files
+  read-only and export what you need
+- Restore a disk or partition to an open disk, a new image file or a
+  **physical disk**
+- **Clone** a disk to an image file or **directly to another disk** (on a
+  larger target the GPT backup header is moved to the end); clone a partition
+  to another partition; sparse regions are preserved
+- Create a new VHD virtual disk
+
+### Boot management
+- **Boot loader manager** — shows the operating systems on a disk and its boot
+  code (GRUB 2, GRUB Legacy, Windows, SYSLINUX, LILO); works on every platform
+  and on image files, without mounting
+- **Remove boot code** — clears the first 440 bytes, keeps the partition table and files
+- **GRUB management (Linux)** — install, regenerate the boot menu, toggle
+  `os-prober`, back up / restore settings, one-click repair
+- **UEFI boot editor** — list firmware boot entries, change the order, enable
+  or disable entries, rename, delete, set *next boot* and the menu timeout.
+  Nothing is written until you confirm; a **backup is taken first**.
+  Entries can be exported to / imported from a file
+
+### Data recovery
+- **Deleted file recovery** on FAT (including long names) and exFAT, with a
+  recoverability estimate for each file
+- **Lost partition scan** (quick and deep) — FAT, exFAT, NTFS, ext2/3/4, XFS,
+  btrfs, HFS+, APFS, F2FS, ReFS and Linux swap; found partitions can be added
+  back to the table
+- **File carving** by signature: JPEG, PNG, GIF, PDF, ZIP/Office, RAR, 7z,
+  GZIP, MP3, MP4, EXE, ELF, SQLite
+
+### NTFS check and repair
+- When Windows is shut down with **Fast Startup**, hibernates or loses power,
+  its NTFS partitions are left "not cleanly unmounted" and **Linux refuses to
+  mount them** — the classic fix is `sudo ntfsfix -d /dev/…` in a terminal
+- *Partition → Check and repair NTFS…* does the same job on every platform:
+  shows what is wrong (dirty flag, unclean `$LogFile`, `$MFTMirr` mismatch,
+  damaged boot sector or backup, hibernated Windows), then repairs it as a
+  queued step — boot sector from its backup, `$MFT` ↔ `$MFTMirr`, empties the
+  journal, clears the dirty flag (or asks Windows to run chkdsk instead)
+- A hibernated Windows is detected and the repair is refused unless you
+  explicitly choose to invalidate the hibernation file — writing to a
+  hibernated volume and resuming Windows would corrupt it
+- The partition info panel shows the state of every NTFS partition, and a
+  failed mount on Linux offers the check directly
+
+![NTFS check and repair](docs/screenshots/en/ntfs-repair.png)
+
+### Maintenance
+- **Secure wipe** of a disk or partition: zero fill, random, DoD 3-pass,
+  DoD 7-pass, with optional verification
+- **Free space wipe** — destroys leftover data without touching existing files
+- Sector hex viewer
+- Operation log, system information, built-in diagnostics (the app writes a
+  report by itself if the interface stops responding)
+
+### Interface
+- **English, Turkish and German**, switched live from *Tools → Language*
+  (no restart; open disks and pending steps are kept)
+- Several icon sets (built-in, Tabler, Lucide, Material, Phosphor, Bootstrap)
+- Uses your system's Qt theme
+
+## Supported file systems
+
+| File system | Format | Read | Write | Notes |
+|---|:---:|:---:|:---:|---|
+| FAT12 / FAT16 / FAT32 | ✅ | ✅ | ✅ | checked with `fsck.vfat` |
+| exFAT | ✅ | ✅ | ✅ | checked with `fsck.exfat` |
+| NTFS | ✅ | ✅ | ✅ | checked with `chkdsk` and `ntfs-3g`; compressed/encrypted streams not supported |
+| ext2 / ext3 / ext4 | ✅ | ✅ | ✅ | `metadata_csum`, extents, htree; `bigalloc`/`inline_data` refused for writing |
+| HFS+ / HFSX | ✅ | ✅ | ✅ | checked with `fsck.hfsplus` |
+| UDF | ✅ | ✅ | ✅ | verified both ways with Windows |
+| XFS | ✅ | ✅ | — | grow supported; checked with `xfs_repair` |
+| btrfs | — | ✅ | — | zlib / LZO / zstd decompression |
+| F2FS | — | ✅ | — | |
+| APFS | — | ✅ | — | unencrypted volumes only |
+| ISO 9660 | — | ✅ | — | Joliet and Rock Ridge |
+| ReFS | ✅* | — | — | *Windows' own tool only (Enterprise, Pro for Workstations, Server) |
+
+**Recognised only** (shown with name and colour, content not read):
+BitLocker, LUKS1/2, LVM2, Linux RAID, ZFS, Linux swap, CoreStorage, JFS,
+ReiserFS, bcachefs, NILFS2, EROFS, SquashFS, Minix.
+
+When an option cannot be used on your system, the format dialog does not hide
+it — it shows it greyed out with the **reason**.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Planned layout with pending operations](docs/screenshots/en/pending-operations.png) | ![Apply window](docs/screenshots/en/apply.png) |
+| Pending steps are drawn on the map before anything is written | *Apply* runs the steps in order, each with its own progress |
+| ![Resize partition](docs/screenshots/en/resize-partition.png) | ![Format](docs/screenshots/en/format.png) |
+| Resize and move by dragging | Format dialog |
+| ![Backup](docs/screenshots/en/backup.png) | ![Boot loader manager](docs/screenshots/en/bootloader.png) |
+| Backup and restore in one window | Boot loader manager |
+| ![UEFI boot editor](docs/screenshots/en/uefi-boot.png) | ![Deleted files](docs/screenshots/en/deleted-files.png) |
+| UEFI boot editor | Deleted file recovery |
+| ![Lost partitions](docs/screenshots/en/lost-partitions.png) | ![File carving](docs/screenshots/en/file-carving.png) |
+| Lost partition scan | Signature-based file recovery |
+| ![Secure wipe](docs/screenshots/en/secure-wipe.png) | ![Hex viewer](docs/screenshots/en/hex-viewer.png) |
+| Secure wipe | Sector hex viewer |
+
+## Usage
 
 ```bash
-DISKULTIMATE_LANG=en python3 main.py    # arayuzu Ingilizce ac
+python3 main.py                  # start empty
+python3 main.py disk.img         # open an image at start-up
+python3 main.py --no-root        # do not ask for root / administrator rights
+DISKULTIMATE_LANG=en python3 main.py   # force a language (en, tr, de)
 ```
 
-Yeni dil eklemek icin kod degistirmek gerekmez; ayrintilar:
-`.claude/decisions/0027-cok-dilli-arayuz.md`.
+The same options work with `DiskUltimate.exe`.
 
-**Wayland notu:** Qt5'in yerel Wayland eklentisinde modal pencereler bos ciziliyor,
-bu yuzden uygulama Wayland oturumlarinda otomatik olarak XWayland (`xcb`) uzerinde
-acilir. Zorlamak isterseniz: `DISKULTIMATE_QPA=wayland python3 main.py`
+**A typical session:** *File → New image…* (choose size and partition table) →
+right-click the free space on the map → *New partition…* → choose a file
+system → add files from the *File Browser* tab → **Apply**.
 
-**Tipik akis:** `Dosya > Yeni goruntu...` ile boyut ve bolum tablosunu sec →
-haritada bos alana sag tikla > `Yeni bolum...` → dosya sistemini sec →
-`Dosya Gezgini` sekmesinden icerige dosya ekle.
+**Language at start-up:** `DISKULTIMATE_LANG` → the saved choice → the
+operating system's language → Turkish.
 
-## Test
+**Windows partition does not mount on Linux?** Windows most likely left it
+"dirty" (Fast Startup is on by default). Select the partition and use
+*Partition → Check and repair NTFS…*, then **Apply**. To stop it happening
+again, turn off Fast Startup in Windows (*Control Panel → Power Options →
+Choose what the power buttons do*) or shut Windows down with **Restart**.
+
+**Wayland:** Qt 5's native Wayland plugin draws modal windows empty, so on
+Wayland sessions the app starts on XWayland (`xcb`) automatically. To force
+native Wayland: `DISKULTIMATE_QPA=wayland python3 main.py`.
+
+## Safety
+
+Access to physical disks goes through six layers, and none of them is relaxed:
+
+1. **Listing is harmless** — listing disks reads no sectors and writes nothing.
+2. **Read-only by default** — a disk is always opened read-only; write access
+   is taken only while pending steps are being applied.
+3. **System disk** — writing to the disk the running system lives on requires
+   typing the disk's name to confirm.
+4. **Incomplete information** (for example, no permission to read it) — writing
+   is **refused**; "unknown" is never presented as "safe".
+5. **Mounted partitions** — you are warned before anything is written.
+6. Every new destructive operation is **tested** against these layers.
+
+A failed format restores the old partition table. Disk images never need
+administrator rights.
+
+## Known limitations
+
+- **Beta:** operations on real disks have been tested on Windows and Linux
+  test machines, but not on every hardware and configuration.
+- macOS is not tested and not supported.
+- The hex viewer is read-only (no sector editing).
+- Not available: splitting / merging partitions, primary ↔ logical
+  conversion, bad sector scan, S.M.A.R.T., dynamic disks, RAID recovery.
+- Deleted file recovery works on FAT and exFAT; on other file systems use
+  file carving.
+
+## Building and testing
+
+Build a single-file executable with PyInstaller (all settings are in
+`DiskUltimate.spec`):
+
+```bat
+build_exe.bat        :: Windows → dist\DiskUltimate.exe
+```
+```bash
+./build_linux.sh     # Linux → dist/DiskUltimate
+```
+
+A Linux binary built this way only runs on systems with the same or a newer
+glibc than the build machine; that is why releases ship Linux as source.
+
+Tests run on disk image files only (nothing touches your real disks):
 
 ```bash
-python3 -m tests.run_all        # cekirdek: 28 test
-python3 -m tests.platform_check # capraz platform denetimi (beklenen: 0 bulgu)
-python3 -m tests.i18n_check     # ceviri sozlukleri (eksik/bayat/yer tutucu)
-python3 -m tests.diag_check     # tanilama / donma yakalayici (13/13)
-python3 -m tests.ui_smoke       # arayuz: ornek goruntu + ekran goruntuleri
+python3 -m tests.run_all          # core tests
+python3 -m tests.platform_check   # cross-platform rules
+python3 -m tests.i18n_check       # translation catalogs
+python3 -m tests.diag_check       # diagnostics / freeze detector
+python3 -m tests.ui_smoke         # interface smoke test
 ```
 
-Uretilen birimler bagimsiz araclarla capraz dogrulanir: FAT icin `fsck.vfat`,
-exFAT icin `fsck.exfat`, ext icin `e2fsck`, NTFS icin `ntfsfix`/`ntfsinfo`,
-bolum tablolari icin `fdisk -l`, sanal diskler icin `VBoxManage showhdinfo`.
-Fiziksel disk testleri ana makinede degil, VirtualBox misafirine eklenen **bos bir
-sanal disk** uzerinde yapilir (`tests/physical_probe.py`, `tests/physical_write_test.py`).
-Testler proje icindeki `.tmp/` klasorunde calisir (`/tmp` kullanilmaz); temizlik
-icin `rm -rf .tmp`.
+Volumes written by the app are cross-checked with independent tools
+(`fsck.vfat`, `fsck.exfat`, `e2fsck`, `ntfsfix`, `xfs_repair`, `fsck.hfsplus`,
+Windows `chkdsk`). Translations live in `src/diskultimate/i18n/catalogs/*.po`
+and can be edited with Poedit or Weblate.
 
-## Proje belgeleri
+The README screenshots are regenerated with `python3 tools/readme_screenshots.py`.
 
-Tum tasarim notlari, kararlar ve is gunlugu depo icindeki `.claude/` klasorundedir:
+## License
 
-- [`.claude/docs/diskgenius-parity.md`](.claude/docs/diskgenius-parity.md) — **DiskGenius ozellik karsilastirmasi**
-- [`.claude/docs/feature-analysis.md`](.claude/docs/feature-analysis.md) — pazar ve kaynak analizi
-- [`.claude/docs/platform-matrix.md`](.claude/docs/platform-matrix.md) — **platform / bicim yetenek matrisi** (okuma-yazma, kutuphaneler)
-- [`.claude/docs/cross-platform.md`](.claude/docs/cross-platform.md) — capraz platform notlari
-- [`.claude/docs/project-overview.md`](.claude/docs/project-overview.md) — kapsam ve yol haritasi
-- [`.claude/docs/architecture.md`](.claude/docs/architecture.md) — modul yapisi ve veri akisi
-- [`.claude/docs/worklog.md`](.claude/docs/worklog.md) — is gunlugu
-- [`.claude/docs/testing.md`](.claude/docs/testing.md) — test yontemi
-- [`.claude/decisions/`](.claude/decisions/) — teknik kararlar (ADR)
-- [`.claude/specs/`](.claude/specs/) — MBR / GPT / FAT bicim notlari
-
-## Guvenlik
-
-Fiziksel disk erisimi alti katmanli bir kapidan gecer ve bu katmanlar gevsetilmez:
-
-1. **Listeleme zararsizdir** — hicbir sektor okunmaz, hicbir yazma yapilmaz.
-   (Windows'ta boyut/model yalnizca aygit tutamaci uzerinden sorgulanabildigi
-   icin salt okunur bir tutamac acilip hemen kapatilir; veri okunmaz.)
-2. **Varsayilan salt okunur** — yazma icin `readonly=False` *ve* `confirm=True`.
-3. **Sistem diski** — ayrica `allow_system=True`; arayuzde kullanici disk adini
-   yazarak dogrular.
-4. **Bilgisi eksik disk** (yetki yok) — yazma **reddedilir**; "bilinmiyor" durumu
-   asla "risk yok" gibi sunulmaz.
-5. **Bagli bolum** varsa yazma oncesi ayrica uyarilir.
-6. Yeni bir yikici islem eklenirken bu katmanlardan gectigi **test edilir**.
-
-Bicimlendirme, silme ve boyutlandirma onay ister; basarisiz bicimlendirme bolum
-tablosunu eski haline dondurur. Bolum kucultme, dosya sisteminin verisi sigmiyorsa
-**hicbir onayla** yapilmaz — reddedilir.
-
-Gerekceler: [`.claude/decisions/0014-fiziksel-disk-destegi.md`](.claude/decisions/0014-fiziksel-disk-destegi.md),
-[`.claude/decisions/0019-bolum-boyutlandirma.md`](.claude/decisions/0019-bolum-boyutlandirma.md)
-
-## Lisans
-
-[GNU General Public License v3.0](LICENSE) — bu yazilimi kullanabilir, degistirebilir
-ve dagitabilirsiniz; turetilen calismalar da ayni lisansla **acik kaynak** kalmak
-zorundadir.
+[GNU General Public License v3.0](LICENSE) — you may use, modify and
+distribute this software; derived works must stay open source under the same
+license. Licenses of the bundled icon sets are listed under
+*Help → Third-party licenses*.

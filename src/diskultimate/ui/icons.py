@@ -405,6 +405,12 @@ def _wipe_free(p, u, dark):
         p.drawLine(QPointF(x, 10.0 * u), QPointF(x + 1.6 * u, 5.4 * u))
 
 
+def _fs_repair(p, u, dark):
+    """Dosya sistemi onarimi: bolum serviti + yesil onay rozeti."""
+    _volume(p, u, dark, _tone(BLUE, dark), fill=0.55)
+    _badge(p, u, "check", _tone(GREEN, dark), dark)
+
+
 def _image_resize(p, u, dark):
     _disk_body(p, u, dark, _tone(BLUE, dark))
     _badge(p, u, "arrows", _tone(BLUE, dark), dark)
@@ -725,7 +731,7 @@ DRAWERS = {
     "partition-new": _partition_new, "partition-delete": _partition_delete,
     "format": _format, "resize": _resize, "label": _label, "rename": _rename,
     "type": _type, "boot": _boot, "wipe": _wipe, "wipe-free": _wipe_free,
-    "image-resize": _image_resize, "mount": _mount, "unmount": _unmount,
+    "fs-repair": _fs_repair, "image-resize": _image_resize, "mount": _mount, "unmount": _unmount,
     # kaynaklar ve araclar
     "disk": _disk, "disk-system": _disk_system,
     "disk-removable": _disk_removable, "image": _image, "backup": _backup,

@@ -4,8 +4,8 @@
 diskler** uzerinde, DiskGenius benzeri gorsel bir arayuzle bolumleme,
 bicimlendirme, yedekleme, kurtarma ve dosya erisimi saglamak.
 
-**Durum:** v0.4.0 — **Windows ve Linux** (ikisinde de kosuldu), **18/18** cekirdek
-testi basarili; sekiz dosya sisteminde de okuma/yazma. DiskGenius ozellik karsilastirmasi: [diskgenius-parity.md](diskgenius-parity.md)
+**Durum:** v0.5.0-beta (2026-10-02) — ilk genel beta. **Windows ve Linux**
+(ikisinde de kosuldu); FAT/exFAT/NTFS/ext/HFS+/UDF okuma-yazma, XFS/btrfs/F2FS/APFS/ISO okuma. DiskGenius ozellik karsilastirmasi: [diskgenius-parity.md](diskgenius-parity.md)
 
 > Surumun tek kaynagi koddaki `ui/main_window.py::APP_VERSION`. Bu satir
 > degistiginde buradaki "Durum" ve README rozeti de guncellenir.

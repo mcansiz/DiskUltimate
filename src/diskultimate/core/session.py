@@ -1086,6 +1086,40 @@ class DiskSession:
         self.reload()
         return result
 
+    # -- NTFS denetimi ve onarimi (ntfsfix karsiligi) ------------------------
+    def ntfs_check(self, index: int):
+        """Bolumdeki NTFS biriminin sagligi (`ntfsfix.NtfsHealth`); yazmaz."""
+        from .ntfsfix import ntfs_check
+
+        self._require_table()
+        with diagnostics.span("session.ntfs_check", part=index):
+            return ntfs_check(self.view_by_index(index))
+
+    def ntfs_fix(self, index: int, clear_dirty: bool = True,
+                 schedule_chkdsk: bool = False,
+                 remove_hibernation: bool = False, progress=None):
+        """`ntfsfix -d` karsiligi: gunlugu bosaltir, kirli bayragi temizler.
+
+        Ayrinti ve riskler: `core/ntfsfix.py`. Kuyruktan cagrilir (ADR 0025).
+        """
+        from .ntfsfix import ntfs_fix
+
+        self._require_table()
+        self._require_writable()
+        part = self.table.get(index)
+        if part.fs_type != "NTFS":
+            raise SessionError(tr("Bolum {} NTFS degil", index))
+        self.close_filesystems()
+        with diagnostics.span("session.ntfs_fix", part=index):
+            result = ntfs_fix(self.view(part), clear_dirty=clear_dirty,
+                              schedule_chkdsk=schedule_chkdsk,
+                              remove_hibernation=remove_hibernation,
+                              progress=progress)
+        for step in result.steps:
+            diagnostics.info(f"ntfs onarim bolum {index}: {step}")
+        self.reload()
+        return result
+
     def wipe_free_space(self, index: int, progress=None):
         fs = self.filesystem(index)
         if fs is None:

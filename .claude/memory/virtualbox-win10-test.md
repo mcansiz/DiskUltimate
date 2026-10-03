@@ -25,3 +25,24 @@ VMware misafiridir.
   gorunmez.
 - Ikinci disk `du-test-disk.vdi` bagli (SATA 2) — fiziksel disk testi icin
   aday; henuz kullanilmadi, sistem diski asla hedeflenmez.
+
+**2026-10-03 durumu:** kullanici VM'i duzeltti; sistem diski artik
+`wtest55.vdi` (SATA-0). `du-test-disk.vdi` takili degil. NTFS testi icin
+`.tmp/vm/du-ntfs-test.vdi`/`du-ntfs-fixed.vdi` SATA-2'ye takildi (silinebilir).
+- Guestcontrol **yonetici degil** (olculdu: `pc` Administrators uyesi ama
+  UAC belirteci suzuyor — grup "deny only", Orta zorunlu duzey S-1-16-8192;
+  EnableLUA=1; yerlesik Administrator hesabi devre disi). `schtasks /rl
+  highest` de "Erisim engellendi" diyor.
+- **2026-10-03 cozuldu:** kullanici yerlesik hesabi acti (`net user
+  Administrator 1234 /active:yes`). `--username Administrator --password
+  1234` ile oturum **tam yetkili** gelir (Administrators etkin, S-1-16-12288,
+  `fltmc` calisir). Yonetici isleri (diskpart, fsutil, chkdsk, fiziksel disk)
+  bu hesapla. `net session` yine hata verir (Sunucu hizmeti) — olcut degil.
+  Eski not (yonetici yok): Yoneticisiz yol: diski ana makinede hazirla, Windows
+  kendiliginden baglar (normal kullanici okuyup yazabilir).
+- Calisirken takilan disk icin `--hotpluggable on` verilemez (VM degistirilemez
+  hatasi, yarim kalan takma); misafiri `shutdown.exe /s /t 0` ile kapatip takmak
+  guvenli. ACPI dugmesi kilit ekraninda yok sayiliyor.
+- Exe derleme: `robocopy \\VBoxSvr\GitHub\DiskUltimate C:\du-test\DiskUltimate /MIR
+  /XD .git sessions .tmp __pycache__ build dist` + `C:\Python312\python.exe -m
+  PyInstaller DiskUltimate.spec --noconfirm --clean` (normal kullanici yeter).
