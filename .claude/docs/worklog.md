@@ -5657,3 +5657,8 @@ calismiyordu.
 - tools/smoke_launch.py: paket acilisi + gunlukte surum (minimal QPA; surec
   grubu kapatilir).
 - Fark edilen: depo PUBLIC (2026-10-03 sorgusu); kullaniciya bildirildi.
+- Ilk Actions kosusu: macOS testleri GECTI ve .app derlendi (macOS'ta ilk
+  olcum). Windows: PyQt5-Qt5 5.15.19'un Windows tekerlegi yok (yalniz
+  5.15.2) -> .github/requirements-ci.txt platform kosullu. Linux 73/78:
+  t65/t67/t68 Ubuntu 24.04'un eski mkfs.xfs (-p klasor) / mkfs.btrfs
+  (--subvol) yuzunden -> `_arac_eski_mi`: secenek tanimlanmiyorsa ATLANDI.

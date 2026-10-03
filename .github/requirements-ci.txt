@@ -1,0 +1,7 @@
+# CI ve release derlemeleri icin sabit surumler (ADR 0079).
+# PyQt5-Qt5'in Windows tekerlegi yalnizca 5.15.2'de var (CI'da olculdu);
+# Linux ve macOS'ta 5.15.19 (AppImage ile ayni: tools/appimage.py).
+PyQt5==5.15.11
+PyQt5-sip==12.19.0
+PyQt5-Qt5==5.15.19; sys_platform != "win32"
+PyQt5-Qt5==5.15.2; sys_platform == "win32"

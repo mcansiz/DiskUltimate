@@ -1,0 +1,3 @@
+# Release derlemesi: PyQt5 (requirements-ci.txt) + PyInstaller.
+-r requirements-ci.txt
+pyinstaller==6.22.3

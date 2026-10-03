@@ -275,6 +275,25 @@ def _fsck(image_path: str, skip_sectors: int) -> None:
     assert r.returncode == 0, f"fsck.vfat hata: {r.stdout}{r.stderr}"
 
 
+def _arac_eski_mi(r, arac: str, secenek: str) -> None:
+    """Harici arac bir secenegi tanimiyorsa testi ATLA (basarisiz sayma).
+
+    Ornek: Ubuntu 24.04'teki mkfs.xfs 6.6 `-p <klasor>`u bilmez (klasoru
+    eski "protofile" sanip "Is a directory" der), mkfs.btrfs 6.6
+    `--subvol`u bilmez. Gelistirme makinesinde araclar yenidir (CI'da
+    olculdu, ADR 0079). Gomulu orneklerle yapilan denetimler bundan once
+    kosmus olur; yalnizca aracla varyant uretimi atlanir.
+    """
+    if r.returncode == 0:
+        return
+    hata = (r.stderr or "") + (r.stdout or "")
+    if any(m in hata for m in ("Is a directory", "unrecognized option",
+                               "invalid option", "unknown option")):
+        raise Atlandi(f"{arac} '{secenek}' secenegini desteklemiyor (eski "
+                      f"surum); gomulu ornekler denetlendi, varyant uretimi "
+                      f"atlandi")
+
+
 class Atlandi(Exception):
     """Test bu ortamda calistirilamadi (eksik harici arac vb.).
 
@@ -5064,6 +5083,7 @@ def t65_xfs_okuma():
             fh.truncate(320 * MIB)
         r = subprocess.run([mkfs, "-q", *secenek, "-L", "VARYANT", "-p", kok, yol],
                            capture_output=True, text=True)
+        _arac_eski_mi(r, "mkfs.xfs", "-p <klasor>")
         if r.returncode:
             if "crc=0" in secenek:                # v4 derleme disi olabilir
                 continue
@@ -5220,7 +5240,10 @@ def t67_xfs_buyutme():
         os.unlink(yol)
     with open(yol, "wb") as fh:
         fh.truncate(320 * MIB)
-    subprocess.run([mkfs, "-q", "-d", "agsize=24000b", "-p", kok, yol], check=True)
+    r = subprocess.run([mkfs, "-q", "-d", "agsize=24000b", "-p", kok, yol],
+                       capture_output=True, text=True)
+    _arac_eski_mi(r, "mkfs.xfs", "-p <klasor>")
+    assert r.returncode == 0, r.stderr
     with open(yol, "r+b") as fh:
         fh.truncate(900 * MIB)
     d = DiskImage(yol)
@@ -5358,6 +5381,7 @@ def t68_btrfs_okuma():
         r = subprocess.run([mkfs, "-q", "-f", "-L", "VARYANT", "--rootdir", kok,
                             "--subvol", "rw:alt_hacim", *secenek, yol],
                            capture_output=True, text=True)
+        _arac_eski_mi(r, "mkfs.btrfs", "--subvol")
         assert r.returncode == 0, r.stderr
         denetle(yol, "VARYANT")
 
