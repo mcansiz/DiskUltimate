@@ -64,13 +64,12 @@ def log_root() -> str:
 
 def scratch_root() -> str:
     """Gecici calisma alaninin kokunu dondurur (gerekirse olusturur)."""
+    from .core.platform import make_user_dirs
     path = os.environ.get("DISKULTIMATE_SCRATCH") or os.path.join(data_root(), ".tmp")
-    os.makedirs(path, exist_ok=True)
-    return path
+    return make_user_dirs(path)
 
 
 def scratch(*parts: str) -> str:
     """Gecici alan altinda bir alt yol dondurur ve dizinini olusturur."""
-    path = os.path.join(scratch_root(), *parts)
-    os.makedirs(path, exist_ok=True)
-    return path
+    from .core.platform import make_user_dirs
+    return make_user_dirs(os.path.join(scratch_root(), *parts))

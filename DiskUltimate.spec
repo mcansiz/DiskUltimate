@@ -164,33 +164,79 @@ if len(_kept) < len(QT_LANGS):
 
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.datas,
-    [],
-    name='DiskUltimate',
-    debug=False,
-    bootloader_ignore_signals=False,
-    # Linux: .so sembol tablolarını soy (özellikle pyenv/kaynaktan derlenmiş
-    # libpython 31 MB -> ~8 MB). `strip` komutu için: sudo apt install binutils
-    # Windows'ta PE dosyalarına uygulanmaz, zararsız.
-    strip=IS_LINUX,
-    # onefile zaten her parçayı zlib ile sıkıştırıyor; UPX üstüne pek bir şey
-    # eklemez, Qt ile nadiren sorun çıkarır — kapalı.
-    upx=False,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    # Pencereli uygulama: konsol penceresi açılmaz. Hata ayıklarken
-    # geçici olarak True yapıp exe'yi komut satırından çalıştırın.
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    # Uygulamanın kendi ikonu (`ui/icons.py` içindeki çizilen işlem
-    # ikonlarından ayrıdır — gerekçe: ui/appicon.py docstring'i).
-    icon=EXE_ICON,
-)
+IS_MACOS = sys.platform == 'darwin'
+
+if IS_MACOS:
+    # macOS: kullanici `.app` paketi bekler; cift tiklayarak acilmayan ciplak
+    # bir ikili ise yaramaz. PyInstaller tek dosya + .app birlesimini
+    # onermez (her acilista paketin icini /tmp'ye acar); klasor cikti
+    # (COLLECT) + BUNDLE kullanilir. CI'da uretilir, **deneysel**: macOS'ta
+    # yalnizca otomatik testler kosuldu (ADR 0079).
+    _ver = re.search(r'^APP_VERSION = "([^"]+)"', open(os.path.join(
+        SPECPATH, 'src', 'diskultimate', 'ui', 'main_window.py'),
+        encoding='utf-8').read(), re.M).group(1)
+    exe = EXE(
+        pyz,
+        a.scripts,
+        [],
+        exclude_binaries=True,
+        name='DiskUltimate',
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=False,
+        console=False,
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+        icon=EXE_ICON,
+    )
+    coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False,
+                   name='DiskUltimate')
+    app = BUNDLE(
+        coll,
+        name='DiskUltimate.app',
+        icon=ICON_ICNS,
+        bundle_identifier='io.github.mcansiz.diskultimate',
+        version=_ver,
+        info_plist={
+            'CFBundleName': 'DiskUltimate',
+            'CFBundleDisplayName': 'DiskUltimate',
+            'CFBundleShortVersionString': _ver,
+            'NSHighResolutionCapable': True,
+            'LSMinimumSystemVersion': '11.0',
+        },
+    )
+else:
+    exe = EXE(
+        pyz,
+        a.scripts,
+        a.binaries,
+        a.datas,
+        [],
+        name='DiskUltimate',
+        debug=False,
+        bootloader_ignore_signals=False,
+        # Linux: .so sembol tablolarını soy (özellikle pyenv/kaynaktan derlenmiş
+        # libpython 31 MB -> ~8 MB). `strip` komutu için: sudo apt install binutils
+        # Windows'ta PE dosyalarına uygulanmaz, zararsız.
+        strip=IS_LINUX,
+        # onefile zaten her parçayı zlib ile sıkıştırıyor; UPX üstüne pek bir şey
+        # eklemez, Qt ile nadiren sorun çıkarır — kapalı.
+        upx=False,
+        upx_exclude=[],
+        runtime_tmpdir=None,
+        # Pencereli uygulama: konsol penceresi açılmaz. Hata ayıklarken
+        # geçici olarak True yapıp exe'yi komut satırından çalıştırın.
+        console=False,
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+        # Uygulamanın kendi ikonu (`ui/icons.py` içindeki çizilen işlem
+        # ikonlarından ayrıdır — gerekçe: ui/appicon.py docstring'i).
+        icon=EXE_ICON,
+    )

@@ -66,18 +66,16 @@ _start_time = 0.0
 # ==========================================================================
 def log_dir() -> str:
     """Gunluk dizini (gerekirse olusturulur)."""
+    from .platform import make_user_dirs
     base = os.environ.get("DISKULTIMATE_LOG_DIR") or log_root()
-    path = os.path.join(base, "runtime")
-    os.makedirs(path, exist_ok=True)
-    return path
+    return make_user_dirs(os.path.join(base, "runtime"))
 
 
 def report_dir() -> str:
     """Donma / cokme raporlarinin dizini."""
+    from .platform import make_user_dirs
     base = os.environ.get("DISKULTIMATE_LOG_DIR") or log_root()
-    path = os.path.join(base, "freeze")
-    os.makedirs(path, exist_ok=True)
-    return path
+    return make_user_dirs(os.path.join(base, "freeze"))
 
 
 def _prune(path: str, prefix: str, keep: int) -> None:
@@ -112,6 +110,10 @@ def configure(*, verbose: Optional[bool] = None, crash_handler: bool = True) -> 
         _start_time = time.monotonic()
         stamp = time.strftime("%Y%m%d-%H%M%S")
         folder = log_dir()
+        # Yetkili kopya: onceki surumlerin root'a biraktigi gunlukleri bir kez
+        # kullaniciya cevirir (yalnizca kendi gunluk klasorumuz).
+        from .platform import reclaim_tree, restore_owner
+        reclaimed = reclaim_tree(os.path.dirname(folder))
         _prune(folder, "session-", KEEP_SESSIONS)
         _session_log = os.path.join(folder, f"session-{stamp}-{os.getpid()}.log")
 
@@ -124,16 +126,20 @@ def configure(*, verbose: Optional[bool] = None, crash_handler: bool = True) -> 
             datefmt="%H:%M:%S"))
         logger.addHandler(handler)
         _logger = logger
+        restore_owner(_session_log)      # dosya FileHandler'da olustu
 
         if crash_handler:
             _crash_log = os.path.join(folder, f"crash-{stamp}-{os.getpid()}.log")
             try:
                 _crash_handle = open(_crash_log, "w", encoding="utf-8")
+                restore_owner(_crash_log)
                 faulthandler.enable(file=_crash_handle, all_threads=True)
             except Exception:       # tanilama hicbir zaman uygulamayi durdurmaz
                 _crash_handle = None
         info(f"tanilama basladi — python {sys.version.split()[0]} "
              f"— pid {os.getpid()} — platform {sys.platform}")
+        if reclaimed:
+            info(f"root'a ait kalmis {reclaimed} gunluk ogesi kullaniciya verildi")
         return _session_log
 
 
@@ -433,10 +439,14 @@ class Watchdog(threading.Thread):
 
 def _write(path: str, text: str, append: bool = False) -> None:
     try:
+        new = not os.path.exists(path)
         with open(path, "a" if append else "w", encoding="utf-8") as handle:
             handle.write(text)
             if not text.endswith("\n"):
                 handle.write("\n")
+        if new:
+            from .platform import restore_owner
+            restore_owner(path)
     except OSError:
         pass
 

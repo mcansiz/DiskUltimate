@@ -5638,3 +5638,22 @@ calismiyordu.
   release'teki exe degistirildi, AppImage eklendi. Iki dosya da geri
   indirilip SHA-256 dogrulandi; surum notu Linux AppImage satiri ve
   ozetlerle guncellendi.
+
+## 2026-10-03 (6) — Yetkili kopyada sahiplik ve ayarlar (ADR 0078)
+
+- Bulgu: root kopyanin gunlukleri ve ilk olusturdugu klasorler root'a ait
+  kaliyordu (`logs/freeze` 28 Eylul'den beri; donma raporu yazilamiyordu);
+  ayarlar /root/.config'e gidiyordu.
+- `make_user_dirs`, `reclaim_tree`; gunluk/donma/ayar/app-log/el sikisma
+  dosyalarinda `restore_owner`; `config_dir`/`user_data_dir` `user_home()`.
+- t78 eklendi; diag 13/13, i18n, ui_smoke, platform 0.
+
+## 2026-10-03 (7) — GitHub Actions (ADR 0079)
+
+- tests.yml (ortak), ci.yml (push: Linux), release.yml (etiket: 3 platform
+  test + derleme + deneme acilisi + taslak release). release-notes.md sablonu.
+- DiskUltimate.spec: macOS dali (.app). Linux onefile yerelde yeniden
+  derlenip denendi.
+- tools/smoke_launch.py: paket acilisi + gunlukte surum (minimal QPA; surec
+  grubu kapatilir).
+- Fark edilen: depo PUBLIC (2026-10-03 sorgusu); kullaniciya bildirildi.

@@ -6184,6 +6184,99 @@ def t77_ntfs_denetle_ve_onar():
     s.close()
 
 
+@test
+def t78_yetkili_kopya_sahiplik_ve_ayarlar():
+    """Yetkili kopya: klasor/gunluk/ayar sahipligi kullaniciya, ayarlar kullanicinin evinde
+
+    Root olmadan gercek sahiplik degistirilemez: yetkiyi veren kullanici
+    taklit edilir, `os.chown`/`os.lchown` cagrilari kaydedilir. Olculen eski
+    hata: `logs/freeze` root'a aitti, normal kopya donma raporu yazamiyordu;
+    yetkili kopyanin ayarlari /root/.config'e gidiyordu.
+    """
+    from diskultimate.core import diagnostics as dg
+    from diskultimate.core import platform as pf
+    from diskultimate.core import settings as st
+    if pf.IS_WINDOWS:
+        raise Atlandi("sahiplik kavrami yalnizca Unix'te")
+
+    kok = img_path("t78")
+    shutil.rmtree(kok, ignore_errors=True)
+    os.makedirs(kok)
+    cagrilar = []
+    eski = (pf.invoking_user, os.chown, os.lchown, os.environ.get("HOME"),
+            os.environ.get("XDG_CONFIG_HOME"), os.environ.get("XDG_STATE_HOME"),
+            st.config_dir)
+    try:
+        pf.invoking_user = lambda: (54321, 54321)
+        os.chown = lambda p, u, g: cagrilar.append(("chown", os.path.relpath(p, kok)))
+        os.lchown = lambda p, u, g: cagrilar.append(("lchown", os.path.relpath(p, kok)))
+
+        # 1. Yalnizca YENI acilan basamaklar cevrilir
+        pf.make_user_dirs(os.path.join(kok, "a", "b", "c"))
+        assert cagrilar == [("chown", "a"), ("chown", "a/b"), ("chown", "a/b/c")], cagrilar
+        cagrilar.clear()
+        pf.make_user_dirs(os.path.join(kok, "a", "b"))       # zaten var
+        assert cagrilar == [], cagrilar
+
+        # 2. Onceki surumun root'a biraktiklari (burada: bizim uid'imiz
+        # "yabanci" sayilir) bir kez cevrilir; sembolik bag izlenmez
+        dis = os.path.join(kok, "disari")
+        os.makedirs(dis)
+        open(os.path.join(dis, "dokunma.txt"), "w").close()
+        gunluk = os.path.join(kok, "logs")
+        os.makedirs(os.path.join(gunluk, "freeze"))
+        open(os.path.join(gunluk, "freeze", "eski.md"), "w").close()
+        os.symlink(dis, os.path.join(gunluk, "bag"))
+        n = pf.reclaim_tree(gunluk, foreign_uid=os.getuid())
+        yollar = sorted(p for _, p in cagrilar)
+        assert yollar == ["logs", "logs/bag", "logs/freeze", "logs/freeze/eski.md"], yollar
+        assert n == 4, n
+        cagrilar.clear()
+
+        # 3. Tanilama: donma raporu dosyasi ve klasoru
+        os.environ["DISKULTIMATE_LOG_DIR"] = os.path.join(kok, "tlog")
+        dg.report_dir()
+        dg._write(os.path.join(kok, "tlog", "freeze", "r.md"), "rapor")
+        dg._write(os.path.join(kok, "tlog", "freeze", "r.md"), "ek", append=True)
+        assert ("chown", "tlog") in cagrilar and ("chown", "tlog/freeze") in cagrilar, cagrilar
+        assert cagrilar.count(("chown", "tlog/freeze/r.md")) == 1, cagrilar
+        cagrilar.clear()
+
+        # 4. Ayar dosyasi
+        st.config_dir = lambda: kok
+        st.reset_cache()
+        st.load()
+        assert st.save()
+        assert ("chown", os.path.basename(st.path())) in cagrilar, cagrilar
+
+        # 5. Ayar ve veri klasoru yetkili kopyada da kullanicinin evinde
+        import pwd
+        pf.invoking_user = lambda: (os.getuid(), os.getgid())
+        os.chown = eski[1]
+        os.environ["HOME"] = os.path.join(kok, "sahte_root_evi")
+        os.environ.pop("XDG_CONFIG_HOME", None)
+        os.environ.pop("XDG_STATE_HOME", None)
+        gercek_ev = pwd.getpwuid(os.getuid()).pw_dir
+        assert eski[6]().startswith(gercek_ev + os.sep), eski[6]()
+        assert pf.user_data_dir().startswith(gercek_ev + os.sep), pf.user_data_dir()
+        assert not os.path.exists(os.environ["HOME"]), "sahte ev dizinine yazildi"
+        # Yetkisiz kopyada eskisi gibi ~ kullanilir
+        pf.invoking_user = lambda: None
+        assert eski[6]().startswith(os.environ["HOME"]), eski[6]()
+    finally:
+        pf.invoking_user, os.chown, os.lchown = eski[0], eski[1], eski[2]
+        for ad, deger in (("HOME", eski[3]), ("XDG_CONFIG_HOME", eski[4]),
+                          ("XDG_STATE_HOME", eski[5])):
+            if deger is None:
+                os.environ.pop(ad, None)
+            else:
+                os.environ[ad] = deger
+        os.environ.pop("DISKULTIMATE_LOG_DIR", None)
+        st.config_dir = eski[6]
+        st.reset_cache()
+        shutil.rmtree(kok, ignore_errors=True)
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

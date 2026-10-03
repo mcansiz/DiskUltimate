@@ -846,11 +846,14 @@ class MainWindow(QMainWindow):
         # gunlugu ile sure olcumleri **tek dosyada** yan yana okunur.
         diagnostics.info(f"arayuz: {message}")
         try:
-            folder = log_root()
-            os.makedirs(folder, exist_ok=True)
+            folder = platform.make_user_dirs(log_root())
             gun = datetime.datetime.now().strftime("%Y-%m-%d")
-            with open(os.path.join(folder, f"app-{gun}.log"), "a", encoding="utf-8") as fh:
+            log_path = os.path.join(folder, f"app-{gun}.log")
+            is_new = not os.path.exists(log_path)
+            with open(log_path, "a", encoding="utf-8") as fh:
                 fh.write(f"{datetime.datetime.now().isoformat(timespec='seconds')} {message}\n")
+            if is_new:
+                platform.restore_owner(log_path)   # yetkili kopyada root'a kalmasin
         except OSError:
             pass
 

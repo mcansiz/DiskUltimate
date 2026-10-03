@@ -1,0 +1,200 @@
+# Surum: `v*` etiketi push edilince test + uc platform derlemesi + TASLAK
+# release. Taslagi bir insan inceleyip yayinlar (ADR 0079).
+# Elle calistirma (workflow_dispatch) = deneme: her sey derlenir, dosyalar
+# calistirmanin "artifacts" bolumune konur, release olusturulmaz.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PYTHONIOENCODING: utf-8
+  PYQT: PyQt5==5.15.11 PyQt5-Qt5==5.15.19 PyQt5-sip==12.19.0
+  PYINSTALLER: pyinstaller==6.22.3
+
+jobs:
+  version:
+    name: Surum denetimi
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: src/diskultimate/ui/main_window.py
+          sparse-checkout-cone-mode: false
+      - id: v
+        shell: bash
+        run: |
+          ver=$(sed -nE 's/^APP_VERSION = "([^"]+)"/\1/p' src/diskultimate/ui/main_window.py)
+          echo "APP_VERSION=$ver"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v$ver" ]; then
+            echo "::error::Etiket ($GITHUB_REF_NAME) koddaki surumle (v$ver) ayni degil"
+            exit 1
+          fi
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+
+  test-linux:
+    needs: version
+    uses: ./.github/workflows/tests.yml
+    with: { os: ubuntu-24.04 }
+  test-windows:
+    needs: version
+    uses: ./.github/workflows/tests.yml
+    with: { os: windows-2022 }
+  test-macos:
+    needs: version
+    uses: ./.github/workflows/tests.yml
+    with: { os: macos-14 }
+
+  build-linux:
+    name: Derleme (Linux AppImage)
+    needs: [version, test-linux]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            /*
+            !/.claude/sessions/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Qt calisma kutuphaneleri (deneme acilisi icin)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends binutils \
+            libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+      - name: AppImage
+        run: ./build_appimage.sh
+      - name: Deneme acilisi
+        run: python tools/smoke_launch.py "${{ needs.version.outputs.version }}" "dist/DiskUltimate-${{ needs.version.outputs.version }}-x86_64.AppImage" --appimage-extract-and-run
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist-linux
+          path: dist/DiskUltimate-${{ needs.version.outputs.version }}-x86_64.AppImage
+          if-no-files-found: error
+
+  build-windows:
+    name: Derleme (Windows exe)
+    needs: [version, test-windows]
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            /*
+            !/.claude/sessions/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: PyQt5 + PyInstaller
+        run: python -m pip install --disable-pip-version-check ${{ env.PYQT }} ${{ env.PYINSTALLER }}
+      - name: Exe
+        shell: bash
+        run: |
+          python -m PyInstaller DiskUltimate.spec --noconfirm --clean
+          mv dist/DiskUltimate.exe "dist/DiskUltimate-${{ needs.version.outputs.version }}-windows-x64.exe"
+      - name: Deneme acilisi
+        run: python tools/smoke_launch.py "${{ needs.version.outputs.version }}" "dist/DiskUltimate-${{ needs.version.outputs.version }}-windows-x64.exe"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist-windows
+          path: dist/DiskUltimate-${{ needs.version.outputs.version }}-windows-x64.exe
+          if-no-files-found: error
+
+  build-macos:
+    name: Derleme (macOS, deneysel)
+    needs: [version, test-macos]
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            /*
+            !/.claude/sessions/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: PyQt5 + PyInstaller
+        run: python -m pip install --disable-pip-version-check ${{ env.PYQT }} ${{ env.PYINSTALLER }}
+      - name: .app
+        run: |
+          python -m PyInstaller DiskUltimate.spec --noconfirm --clean
+          ditto -c -k --keepParent dist/DiskUltimate.app "dist/DiskUltimate-${{ needs.version.outputs.version }}-macos-arm64.zip"
+      - name: Deneme acilisi
+        run: python tools/smoke_launch.py "${{ needs.version.outputs.version }}" dist/DiskUltimate.app/Contents/MacOS/DiskUltimate
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist-macos
+          path: dist/DiskUltimate-${{ needs.version.outputs.version }}-macos-arm64.zip
+          if-no-files-found: error
+
+  release:
+    name: Taslak release
+    # macOS deneyseldir: testi ya da derlemesi duserse release yine olusur,
+    # yalnizca macOS dosyasi eklenmez. Windows ve Linux sarttir.
+    needs: [version, build-linux, build-windows, build-macos]
+    if: >-
+      always() && github.ref_type == 'tag'
+      && needs.build-linux.result == 'success'
+      && needs.build-windows.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: dist-*
+          path: out
+          merge-multiple: true
+      - name: Taslak release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VER: ${{ needs.version.outputs.version }}
+          MACOS: ${{ needs.build-macos.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          cd out
+          sha256sum DiskUltimate-* > SHA256SUMS
+          cat SHA256SUMS
+          if [ "$MACOS" = "success" ]; then
+            row="| **macOS 11+ (Apple Silicon), experimental** | \`DiskUltimate-$VER-macos-arm64.zip\` | Not tested beyond automated tests; macOS is not officially supported. Unsigned: right-click the app → **Open** the first time. |"
+            tr="- **macOS (deneysel):** \`DiskUltimate-$VER-macos-arm64.zip\` — yalnızca otomatik testlerden geçti, resmi olarak desteklenmiyor. İmzasız: ilk açılışta sağ tık → **Aç**."
+          else
+            row=""; tr=""
+          fi
+          python3 - "$VER" "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY" "$RUN_URL" "$row" "$tr" <<'PY'
+          import sys
+          ver, tag, repo, run, row, tr = sys.argv[1:7]
+          text = open("../.github/release-notes.md", encoding="utf-8").read()
+          for key, value in (("{VERSION}", ver), ("{TAG}", tag), ("{REPO}", repo),
+                             ("{RUN_URL}", run), ("{MACOS_ROW}", row), ("{MACOS_TR}", tr)):
+              text = text.replace(key, value)
+          open("notes.md", "w", encoding="utf-8").write(text)
+          PY
+          pre=""
+          case "$VER" in *-*) pre="--prerelease" ;; esac
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release zaten var: dosyalar guncelleniyor"
+            gh release upload "$GITHUB_REF_NAME" DiskUltimate-* SHA256SUMS --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" DiskUltimate-* SHA256SUMS \
+              --draft $pre --title "DiskUltimate $VER" --notes-file notes.md
+          fi

@@ -480,6 +480,7 @@ def signal_elevated_ready() -> str:
     try:
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(str(os.getpid()))
+        restore_owner(path)
     except OSError:
         return ""
     return path
@@ -886,6 +887,62 @@ def restore_owner(path: str, recursive: bool = False) -> bool:
     return changed
 
 
+def make_user_dirs(path: str) -> str:
+    """`os.makedirs` gibi; yetkili kopyada **yeni acilan** basamaklari
+    yetkiyi veren kullaniciya verir.
+
+    Root'un ilk olusturdugu klasor root'a ait kalirsa, uygulama sonra normal
+    kullaniciyla calistiginda oraya hic yazamaz (olculdu: `logs/freeze`
+    28 Eylul'den beri root'a aitti, donma raporlari yazilamiyordu).
+    Var olan basamaklara dokunulmaz.
+    """
+    if not path:
+        return path
+    missing = []
+    probe = os.path.abspath(path)
+    while probe and not os.path.isdir(probe):
+        missing.append(probe)
+        parent = os.path.dirname(probe)
+        if parent == probe:
+            break
+        probe = parent
+    os.makedirs(path, exist_ok=True)
+    if missing and invoking_user() is not None:
+        for created in reversed(missing):
+            restore_owner(created)
+    return path
+
+
+def reclaim_tree(path: str, foreign_uid: int = 0) -> int:
+    """`path` altinda `foreign_uid`e (root) ait kalmis her seyi yetkiyi veren
+    kullaniciya cevirir; cevrilen oge sayisini dondurur.
+
+    Yalnizca uygulamanin **kendi** klasorlerinde (gunluk, gecici alan)
+    cagrilir; onceki surumlerin root'a birakdigi dosyalari bir kez onarir.
+    Sembolik baglar izlenmez.
+    """
+    owner = invoking_user()
+    if owner is None or not path or not os.path.isdir(path):
+        return 0
+    uid, gid = owner
+    count = 0
+    for root, dirs, files in os.walk(path):
+        # Her oge bir kez: kok burada, alt klasorler ust klasorun icerigi olarak
+        targets = [os.path.join(root, n) for n in dirs + files]
+        if root == path:
+            targets.insert(0, root)
+        for target in targets:
+            try:
+                info = os.lstat(target)
+                if info.st_uid == foreign_uid and info.st_uid != uid:
+                    os.lchown(target, uid, gid)
+                    count += 1
+            except OSError:
+                pass
+        dirs[:] = [d for d in dirs if not os.path.islink(os.path.join(root, d))]
+    return count
+
+
 # --------------------------------------------------------------------------
 # Kullanici dizinleri
 # --------------------------------------------------------------------------
@@ -895,8 +952,11 @@ def user_data_dir(app: str = "DiskUltimate") -> str:
     Yalnizca **paketlenmis** kopya icin gerekir: kaynaktan calisirken uretilen
     her sey proje dizininde kalir (CLAUDE.md). Paketlenmis kopyada proje
     dizini yoktur, bu yuzden isletim sisteminin gosterdigi yer kullanilir.
+
+    Yetkili kopyada (pkexec/sudo) `~` /root'a cikar; kullanicinin dizini
+    kullanilir ki iki kopya ayni gunlukleri ve gecici alani paylassin.
     """
-    home = os.path.expanduser("~")
+    home = user_home()
     if IS_WINDOWS:
         base = os.environ.get("LOCALAPPDATA") or os.path.join(home, "AppData", "Local")
     elif IS_MACOS:
@@ -904,7 +964,7 @@ def user_data_dir(app: str = "DiskUltimate") -> str:
     else:
         base = os.environ.get("XDG_STATE_HOME") or os.path.join(home, ".local", "state")
     path = os.path.join(base, app)
-    os.makedirs(path, exist_ok=True)
+    make_user_dirs(path)
     return path
 
 
@@ -1073,20 +1133,24 @@ def config_dir() -> str:
 
     Ayarlar **proje dizinine degil** buraya yazilir: uygulama salt okunur bir
     klasorden (Program Files, /usr/bin) calistirilabilir.
+
+    Yetkili kopyada da **kullanicinin** ayar klasoru kullanilir (`user_home`):
+    pkexec ev dizinini /root yapar ve uygulama acilista hep yetki istedigi
+    icin (ADR 0042) secilen dil/ikon seti yoksa root'un ayarlarina giderdi.
     """
+    home = user_home()
     if IS_WINDOWS:
         base = os.environ.get("APPDATA") or os.path.join(
-            os.path.expanduser("~"), "AppData", "Roaming")
+            home, "AppData", "Roaming")
         path = os.path.join(base, "DiskUltimate")
     elif IS_MACOS:
-        path = os.path.join(os.path.expanduser("~"), "Library",
-                            "Application Support", "DiskUltimate")
+        path = os.path.join(home, "Library", "Application Support",
+                            "DiskUltimate")
     else:
-        base = os.environ.get("XDG_CONFIG_HOME") or os.path.join(
-            os.path.expanduser("~"), ".config")
+        base = os.environ.get("XDG_CONFIG_HOME") or os.path.join(home, ".config")
         path = os.path.join(base, "diskultimate")
     try:
-        os.makedirs(path, exist_ok=True)
+        make_user_dirs(path)
     except OSError:
         pass
     return path

@@ -17,7 +17,7 @@ import json
 import os
 from typing import Any, Dict, Optional
 
-from .platform import config_dir
+from .platform import config_dir, restore_owner
 
 FILE_NAME = "settings.json"
 
@@ -65,6 +65,7 @@ def save() -> bool:
         with open(temporary, "w", encoding="utf-8") as fh:
             json.dump(data, fh, ensure_ascii=False, indent=2, sort_keys=True)
         os.replace(temporary, target)
+        restore_owner(target)            # yetkili kopyada root'a ait kalmasin
         return True
     except OSError:
         return False
