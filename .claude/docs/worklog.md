@@ -5662,3 +5662,4 @@ calismiyordu.
   5.15.2) -> .github/requirements-ci.txt platform kosullu. Linux 73/78:
   t65/t67/t68 Ubuntu 24.04'un eski mkfs.xfs (-p klasor) / mkfs.btrfs
   (--subvol) yuzunden -> `_arac_eski_mi`: secenek tanimlanmiyorsa ATLANDI.
+- AppImage CI: libqpdf.so eklentisi silinen Qt5Pdf'e bagliydi (denetim yakaladi); kirpma artik bagimliligi kalmayan eklentileri de siler.

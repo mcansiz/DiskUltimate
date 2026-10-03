@@ -164,6 +164,20 @@ def trim(appdir: str) -> None:
                     os.remove(os.path.join(path, name))
         elif os.path.isdir(path):
             shutil.rmtree(path)
+    # Eklentiler istege baglidir: silinmis bir Qt kutuphanesine baglanan
+    # eklenti de silinir (orn. imageformats/libqpdf.so -> Qt5Pdf; CI'daki
+    # tekerlekte vardi, yereldekinde yoktu — 2026-10-03).
+    kept = set(os.listdir(os.path.join(qt, "lib")))
+    for dirpath, _, files in os.walk(plugins):
+        for name in files:
+            full = os.path.join(dirpath, name)
+            out = subprocess.run(["readelf", "-dW", full], capture_output=True,
+                                 text=True).stdout
+            needs = re.findall(r"\(NEEDED\)\s+Shared library: \[(libQt5[^\]]+)\]", out)
+            gone = [n for n in needs if n not in kept]
+            if gone:
+                log(f"  eklenti siliniyor: {os.path.relpath(full, qt)} ({', '.join(gone)})")
+                os.remove(full)
     for name in os.listdir(pyqt):
         full = os.path.join(pyqt, name)
         mod = name.split(".")[0]
