@@ -161,8 +161,11 @@ yapılmaz.**
   (`.claude/sessions/*.jsonl`) depoya girmez. **Canlı transcript'ler**
   (`.claude/sessions/live/*.jsonl`) ve `INDEX.md` **girer** — geçmişin
   makineler arasında taşınmasının tek yolu budur. Desen bilerek tek yıldızlıdır;
-  `**` yapılırsa kalıcılık ortadan kalkar. Bu yüzden depo **private** kalmalıdır:
-  transcript konuşmanın tamamıdır. `.gitattributes` → `.claude/sessions/** -text -diff`
+  `**` yapılırsa kalıcılık ortadan kalkar. Transcript konuşmanın tamamıdır;
+  depo 2026-10-03'ten beri **kullanıcı kararıyla public**'tir ve dökümlerin
+  (ve `.claude/` notlarının) herkese açık olması bu proje için **sorun
+  sayılmaz** — bu konuda uyarı yapılmaz. Yine de dökümlere ve notlara gizli
+  bilgi (gerçek parola, anahtar, kişisel veri) yazılmaz. `.gitattributes` → `.claude/sessions/** -text -diff`
   (CRLF çevrimi canlı yazılan JSONL'i bozar).
 
 ## Arayuz Donmasi ve Tanilama (ZORUNLU)

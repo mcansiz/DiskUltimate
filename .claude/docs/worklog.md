@@ -5664,3 +5664,4 @@ calismiyordu.
   (--subvol) yuzunden -> `_arac_eski_mi`: secenek tanimlanmiyorsa ATLANDI.
 - AppImage CI: libqpdf.so eklentisi silinen Qt5Pdf'e bagliydi (denetim yakaladi); kirpma artik bagimliligi kalmayan eklentileri de siler.
 - Actions ucuncu kosu yesil: 3 platformda 73/78, AppImage/exe/macOS .app derlendi ve acildi. README macOS 'deneysel' + CI rozeti.
+- Kullanici: depoyu bilerek public yapti, dokumlerin acik olmasi sorun degil. CLAUDE.md 'private kalmali' kurali buna gore guncellendi.
