@@ -13,6 +13,7 @@ sistemleri **sıfırdan, saf Python ile** yazıldığı için harici araç gerek
 ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen)
 ![dil](https://img.shields.io/badge/dil-tr%20%7C%20en%20%7C%20de-blue)
 ![lisans](https://img.shields.io/badge/lisans-GPL--3.0-lightgrey)
+[![CI](https://github.com/mcansiz/DiskUltimate/actions/workflows/ci.yml/badge.svg)](https://github.com/mcansiz/DiskUltimate/actions/workflows/ci.yml)
 
 ![Ana pencere](docs/screenshots/tr/main-window.png)
 
@@ -95,11 +96,13 @@ kullanılır; yoksa yerleşik saf Python biçimlendirici devreye girer.
 sudo apt install dosfstools exfatprogs ntfs-3g e2fsprogs xfsprogs   # isteğe bağlı
 ```
 
-### macOS
+### macOS (deneysel)
 
-Çekirdek saf Python'dur ve macOS kod yolları (`diskutil`) yazılmıştır, ancak
-**macOS'ta hiçbir test çalıştırılmamıştır**; bu yüzden desteklenen platformlar
-arasında sayılmaz.
+Sürümlerde imzasız bir `DiskUltimate-<sürüm>-macos-arm64.zip` bulunur (Apple
+Silicon, macOS 11+). Otomatik testler GitHub Actions'ta macOS 14 üzerinde
+geçiyor; ancak uygulama bir Mac'te **elle denenmedi** ve macOS'ta fiziksel disk
+erişimi sınanmadı, bu yüzden resmi olarak desteklenmiyor. İlk açılış: uygulamaya
+sağ tık → **Aç**.
 
 ## Özellikler
 

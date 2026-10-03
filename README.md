@@ -13,6 +13,7 @@ implemented **from scratch in pure Python**, so it needs no external tools.
 ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen)
 ![languages](https://img.shields.io/badge/languages-en%20%7C%20tr%20%7C%20de-blue)
 ![license](https://img.shields.io/badge/license-GPL--3.0-lightgrey)
+[![CI](https://github.com/mcansiz/DiskUltimate/actions/workflows/ci.yml/badge.svg)](https://github.com/mcansiz/DiskUltimate/actions/workflows/ci.yml)
 
 ![Main window](docs/screenshots/en/main-window.png)
 
@@ -96,10 +97,13 @@ formatting; otherwise the built-in pure-Python formatter is used.
 sudo apt install dosfstools exfatprogs ntfs-3g e2fsprogs xfsprogs   # optional
 ```
 
-### macOS
+### macOS (experimental)
 
-The core is pure Python and the macOS code paths (`diskutil`) exist, but
-**nothing has been tested on macOS**, so it is not listed as supported.
+Releases include an unsigned `DiskUltimate-<version>-macos-arm64.zip`
+(Apple Silicon, macOS 11+). The automated tests pass on macOS 14 in GitHub
+Actions, but the app has **not been tried by hand on a Mac** and physical-disk
+access on macOS is untested, so macOS is not officially supported. First
+start: right-click the app → **Open**.
 
 ## Features
 

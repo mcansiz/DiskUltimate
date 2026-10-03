@@ -1,7 +1,8 @@
 # 0079 — GitHub Actions: her push'ta test, etikette uc platform + taslak release
 
 Tarih: 2026-10-03
-Durum: **uygulandi** — ilk kosu sonuclari worklog'da.
+Durum: **uygulandi** — deneme kosusu (workflow_dispatch) uc platformda yesil;
+**taslak release adimi henuz bir etiketle calismadi** (ilk surum etiketinde).
 Ilgili: [0050](0050-linux-dagitimi-appimage-ve-musl.md) (AppImage),
 CLAUDE.md test ortami kurali.
 
@@ -36,3 +37,26 @@ paketinden atiyor; deneme acilisi bu yuzden `minimal` eklentisiyle yapilir
 (ilk denemede "Could not find the Qt platform plugin offscreen"). Deneme
 betigi ilk surumde AppImage'in alt surecinin actigi boruda takiliyordu;
 cikti dosyaya yazilir ve surec grubu butunuyle kapatilir.
+
+## Ilk kosular (2026-10-03)
+
+1. Windows: `PyQt5-Qt5==5.15.19`in Windows tekerlegi yok (yalniz 5.15.2) ->
+   `.github/requirements-ci.txt` platform kosullu. Linux: Ubuntu 24.04'un
+   mkfs.xfs 6.6 (`-p <klasor>`) / mkfs.btrfs 6.6 (`--subvol`) eski ->
+   `_arac_eski_mi`: varyant uretimi ATLANDI (gomulu ornekler denetlenir).
+2. AppImage: CI'daki tekerlekte `imageformats/libqpdf.so` silinen Qt5Pdf'e
+   bagliydi; NEEDED denetimi yakaladi. Kirpma artik boyle eklentileri siler.
+3. Ucuncu kosu tamamen yesil (37145184377):
+
+| Runner | run_all | Atlanan |
+|---|---|---|
+| ubuntu-24.04 | 73/78 | 2 Windows dali, 3 eski mkfs |
+| windows-2022 | 73/78 | e2fsck/mkswap yok (3), Unix (t78), bellenim yazilabilir (t34, bilerek) |
+| macos-14 arm64 | 73/78 | 2 Windows dali, e2fsck/mkswap yok (3) |
+
+**macOS'ta ilk olcum:** cekirdek testleri ve ui_smoke geciyor; `.app`
+derlendi ve deneme acilisi gecti. Elle denenmedi, fiziksel disk yolu
+(diskutil) sinanmadi -> README'de "deneysel".
+
+Uyari: ayni etiketi yeniden push etmek mevcut release'in dosyalarini
+`--clobber` ile degistirir (taslak degilse yayindaki dosyalar degisir).
