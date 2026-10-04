@@ -35,3 +35,5 @@ durur ve depoya girer; VS Code eklentisinin "gecmis" listesi de orayi okur
 | 2026-10-02 | [d39e4d9c-7c3a-4302-af91-73282437af84](2026-10-02-d39e4d9c-7c3a-4302-af91-73282437af84.jsonl) | other | 20.1 MB |
 | 2026-10-02 | [830884b0-70f2-43db-9e72-aa796ddccb5a](2026-10-02-830884b0-70f2-43db-9e72-aa796ddccb5a.jsonl) | other | 6.9 MB |
 | 2026-10-03 | [830884b0-70f2-43db-9e72-aa796ddccb5a](2026-10-03-830884b0-70f2-43db-9e72-aa796ddccb5a.jsonl) | other | 12.0 MB |
+| 2026-10-04 | [e9b61dfd-4c83-414e-89e0-82f701e6adf1](2026-10-04-e9b61dfd-4c83-414e-89e0-82f701e6adf1.jsonl) | other | 280.8 KB |
+| 2026-10-04 | [830884b0-70f2-43db-9e72-aa796ddccb5a](2026-10-04-830884b0-70f2-43db-9e72-aa796ddccb5a.jsonl) | other | 25.0 MB |
