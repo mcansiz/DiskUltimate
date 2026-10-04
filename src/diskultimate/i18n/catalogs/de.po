@@ -9030,6 +9030,9 @@ msgstr "Dieses Dateisystem kann nur mit dem eigenen Werkzeug des Betriebssystems
 msgid "Ic hata: geri kaydirma istendi ({} sektor); hicbir sey yazilmadi"
 msgstr "Interner Fehler: Eine Rückwärtsverschiebung wurde angefordert ({} Sektoren); es wurde nichts geschrieben"
 
+msgid "Bozuk veri kosulu: uzunluk {}"
+msgstr "Beschädigter Datenlauf: Länge {}"
+
 #: src/diskultimate/ui/main_window.py:1942
 #~ msgid ""
 #~ "<br><br><b>{} adim veri kaybettirebilir.</b> Uygulandiktan sonra geri "

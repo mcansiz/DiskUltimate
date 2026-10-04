@@ -22,8 +22,9 @@ Bu modul ayni isi, terminale inmeden ve **her platformda** yapar.
    asil saglam, yedek farkliysa yedek tazelenir.
 2. **`$MFT` / `$MFTMirr`** — ilk kayitlar karsilastirilir; farkliysa saglam
    olan digerine kopyalanir.
-3. **`$LogFile` bosaltilir** (0xFF ile doldurulur). Windows'un yarim kalan
-   gunlugu artik yeniden oynatilmaz.
+3. **`$LogFile` bosaltilir** (0xFF + temiz yeniden baslatma alani, ADR 0085).
+   Windows'un yarim kalan gunlugu artik yeniden oynatilmaz. Zaten temiz ya da
+   bos gunluge dokunulmaz.
 4. **Kirli bayragi** temizlenir (`ntfsfix -d`) ya da istenirse **acilir**:
    Windows bir sonraki acilista `chkdsk` calistirir (`ntfsfix`in varsayilani).
 5. Istenirse **`hiberfil.sys` gecersiz kilinir**: Windows kaydedilmis oturuma
@@ -52,6 +53,7 @@ from dataclasses import dataclass, field
 from typing import Callable, List, Optional, Tuple
 
 from .image import BlockDevice
+from .ntfs import fill_logfile
 from .ntfsread import AT_DATA, NtfsError, NtfsFS
 from ..i18n import tr
 
@@ -448,7 +450,7 @@ def ntfs_fix(dev: BlockDevice, clear_dirty: bool = True,
     # 3. Islem gunlugu
     report(tr("Islem gunlugu ($LogFile) bosaltiliyor..."), 50)
     state = logfile_state(fs)
-    if state != LOG_EMPTY:
+    if state not in (LOG_EMPTY, LOG_CLEAN):
         _reset_logfile(fs, progress)
         result.steps.append(tr("Islem gunlugu ($LogFile) bosaltildi"))
 
@@ -486,26 +488,19 @@ def ntfs_fix(dev: BlockDevice, clear_dirty: bool = True,
 
 
 def _reset_logfile(fs: NtfsFS, progress: Progress = None) -> None:
-    """`$LogFile`in butun kumelerini 0xFF ile doldurur (`ntfs_logfile_reset`)."""
+    """`$LogFile`i bosaltir (`ntfs_logfile_reset` gibi) ve temiz yeniden
+    baslatma alani yazar."""
     attr = fs.record(LOGFILE_RECORD).find(AT_DATA)
     if attr is None or attr.resident:
         raise NtfsFixError(tr("$LogFile okunamadi"))
-    cs = fs.cluster_size
-    chunk_clusters = max(1, (1024 * 1024) // cs)
-    total = sum(c for lcn, c in attr.runs if lcn >= 0) or 1
-    done = 0
-    for lcn, count in attr.runs:
-        if lcn < 0:
-            continue
-        pos = 0
-        while pos < count:
-            n = min(chunk_clusters, count - pos)
-            fs.dev.write((lcn + pos) * cs, b"\xFF" * (n * cs))
-            pos += n
-            done += n
-            if progress:
-                progress(tr("Islem gunlugu ($LogFile) bosaltiliyor..."),
-                         50 + 30 * done // total)
+    def report(done: int, total: int) -> None:
+        if progress:
+            progress(tr("Islem gunlugu ($LogFile) bosaltiliyor..."),
+                     50 + 30 * done // total)
+
+    # 0xFF + temiz yeniden baslatma alani: Windows salt okunur da baglar (ADR 0085)
+    fill_logfile(fs.dev.write, attr.runs, fs.cluster_size, attr.data_size,
+                 progress=report)
 
 
 def _invalidate_hiberfile(fs: NtfsFS) -> None:

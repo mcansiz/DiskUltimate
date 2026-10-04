@@ -252,7 +252,12 @@ def _decode_runs(data: bytes) -> List[Tuple[int, int]]:
         pos += 1
         if len_size == 0 or pos + len_size + off_size > len(data):
             break
-        count = int.from_bytes(data[pos:pos + len_size], "little", signed=False)
+        # Uzunluk ISARETLI okunur (Windows, ntfs-3g); negatifse kosu listesi
+        # bozuktur. Eskiden isaretsiz okunuyordu: kendi boyutlandiricimizin
+        # yanlis kodladigi uzunlugu kabul edip hatayi gizliyordu (ADR 0085).
+        count = int.from_bytes(data[pos:pos + len_size], "little", signed=True)
+        if count <= 0:
+            raise NtfsError(tr("Bozuk veri kosulu: uzunluk {}", count))
         pos += len_size
         if off_size == 0:
             out.append((-1, count))          # seyrek alan: diskte yer kaplamaz

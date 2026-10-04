@@ -477,7 +477,8 @@ class DiskSession:
             self.image.rescan_partitions()
         except Exception:
             pass
-        ok, message = windows_format_volume(disk_no, index, fs_key, label,
+        offset = self.table.get(index).start_lba * self.table.sector_size
+        ok, message = windows_format_volume(disk_no, offset, fs_key, label,
                                           cluster_bytes)
         if not ok:
             if native_only:
@@ -742,7 +743,8 @@ class DiskSession:
         if disk_no is None:
             return False, 0, 0, tr("Disk numarasi bilinmiyor")
         self._release_volume_locks()
-        return windows_partition_size_limits(disk_no, index)
+        offset = self.table.get(index).start_lba * self.table.sector_size
+        return windows_partition_size_limits(disk_no, offset)
 
     def _try_native_resize(self, index: int, sector_count: int,
                            progress) -> bool:
@@ -761,7 +763,8 @@ class DiskSession:
             progress(tr("Windows boyutlandiricisi calisiyor..."), 20)
         self._release_volume_locks()
         ok, message = windows_resize_partition(
-            disk_no, index, sector_count * self.table.sector_size)
+            disk_no, self.table.get(index).start_lba * self.table.sector_size,
+            sector_count * self.table.sector_size)
         if not ok:
             raise SessionError(tr("Windows boyutlandiricisi basarisiz: {}", message))
         if progress:

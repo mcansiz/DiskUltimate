@@ -5598,9 +5598,13 @@ def t71_refs_yerel_bicimlendirme():
     for (surum, tur), beklenen in tablo.items():
         assert plat.refs_edition_allows(surum, tur) is beklenen, (surum, tur)
 
-    komut = plat.format_volume_command(2, 3, "refs", 'Veri"$x`')
+    komut = plat.format_volume_command(2, 3 * MIB, "refs", 'Veri"$x`')
     assert "-FileSystem ReFS" in komut and "-DiskNumber 2" in komut
-    assert "-PartitionNumber 3" in komut and '"Verix"' in komut
+    assert '"Verix"' in komut
+    # bolum numarayla degil ofsetle secilir (Windows mantiksal bolumleri
+    # kendi sirasiyla numaralar; ADR 0085)
+    assert "-PartitionNumber" not in komut
+    assert f"$_.Offset -eq {3 * MIB}" in komut and "throw" in komut
 
     tur = FS_BY_KEY["refs"]
     neden = dict((k.key, r) for k, r in all_kinds(1 << 30))["refs"]
@@ -6085,7 +6089,7 @@ def t77_ntfs_denetle_ve_onar():
     erisim.write_file("/klasor/veri.bin", b"\x5A" * 300000)
     erisim.flush()
     h = nf.ntfs_check(d)
-    assert not h.needs_repair and h.logfile == nf.LOG_EMPTY, h.problems()
+    assert not h.needs_repair and h.logfile == nf.LOG_CLEAN, h.problems()
     assert h.version == "3.1", h.version
     bayrak_yaz(d, nf.VOLUME_DIRTY)
     temiz_degil_gunluk(d)
@@ -6124,7 +6128,7 @@ def t77_ntfs_denetle_ve_onar():
     d = DiskImage(yol)
     temiz_degil_gunluk(d)
     sonuc = nf.ntfs_fix(d, clear_dirty=False, schedule_chkdsk=True)
-    assert sonuc.after.dirty and sonuc.after.logfile == nf.LOG_EMPTY, sonuc.after
+    assert sonuc.after.dirty and sonuc.after.logfile == nf.LOG_CLEAN, sonuc.after
     nf.ntfs_fix(d)
     d.close()
 
@@ -6676,6 +6680,113 @@ def t83_yerel_boyutlandirma_tablo_yalniz_degil():
             s.__dict__.pop(ad, None)
     s.reload()
     assert s.filesystem(1).read("/v.bin") == veri
+    s.close()
+
+
+@test
+def t84_ntfs_temiz_gunluk():
+    """NTFS $LogFile: temiz yeniden baslatma alani (Windows salt okunur baglar, ADR 0085)
+
+    Uzun testler (Windows, salt okunur VHD) yakaladi: 0xFF dolu "bos" gunlugu
+    Windows ilk baglamada yazarak baslatir; salt okunur ortamda birim
+    baglanmaz, kok dizin "Yazma korumasi var" der. Bicimlendirici, boyutlandirma
+    ve onarim artik Windows'un yazdigiyla ayni RSTR sayfalarini yazar; VM'de
+    olculdu: salt okunur baglama + chkdsk temiz.
+    """
+    import gzip
+    from diskultimate.core import ntfsfix as nf
+    from diskultimate.core.ntfsread import AT_DATA
+    from diskultimate.core.ntfsresize import ntfs_resize
+
+    def sayfa(fs, no):
+        a = fs.record(2).find(AT_DATA)
+        p = bytearray(fs.read_attribute_range(a, no * 4096, 4096))
+        assert p[:4] == b"RSTR", (no, bytes(p[:4]))
+        fs._apply_fixup(p)
+        bas = struct.unpack_from("<HHQIIHhh", p, 4)
+        alan = list(struct.unpack_from("<QHHHHIHHqIHHI", p, 0x30))
+        istemci = bytes(p[0x70 + 0x1C:0x70 + 0x28])
+        alan[0] = alan[9] = alan[12] = 0      # LSN, son kayit boyu, acilis sayaci
+        return bas, tuple(alan), istemci, a.data_size
+
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+    win = img_path("t84_win.img")
+    with gzip.open(os.path.join(fixtures, "ntfs_windows.img.gz"), "rb") as a, \
+            open(win, "wb") as b:
+        b.write(a.read())
+    dw = DiskImage(win, readonly=True)
+    beklenen = sayfa(NtfsFS(dw), 0)
+    dw.close()
+
+    yol = img_path("t84.img")
+    d = DiskImage.create(yol, 64 * MIB, overwrite=True)
+    format_ntfs(d, label="GUNLUK")
+    fs = NtfsFS(d)
+    for no in (0, 1):
+        assert sayfa(fs, no) == beklenen, (no, sayfa(fs, no), beklenen)
+    a = fs.record(2).find(AT_DATA)
+    geri = fs.read_attribute_range(a, 8192, a.data_size - 8192)
+    assert geri.count(0xFF) == len(geri), "gunlugun geri kalani 0xFF degil"
+    assert nf.ntfs_check(d).logfile == nf.LOG_CLEAN
+    d.close()
+    if shutil.which("ntfs-3g.probe"):
+        r = subprocess.run(["ntfs-3g.probe", "--readonly", yol], capture_output=True,
+                           text=True)
+        assert r.returncode == 0, r.stderr[-400:]
+
+    # boyutlandirma ve onarim gunlugu yine temiz birakir
+    d = DiskImage(yol)
+    ntfs_resize(d, d.sector_count - 8 * 2048)
+    assert nf.ntfs_check(d).logfile == nf.LOG_CLEAN
+    assert sayfa(NtfsFS(d), 0) == beklenen
+    d.close()
+
+
+@test
+def t85_ntfs_boyutlandirma_kosu_uzunlugu_isaretli():
+    """NTFS boyutlandirma: kosu uzunlugu isaretli kodlanir ($BadClus, ADR 0085)
+
+    VM'de Windows chkdsk: buyutulen birimde "Attribute record (80, $Bad) from
+    file record segment 8 is corrupt". `ntfsresize.encode_runs` uzunlugu
+    isaretsiz yaziyordu: 46335 kume = 0xB4FF iki bayt, Windows'a gore negatif.
+    Okuyucumuz da isaretsiz okudugu icin hata gorunmuyordu; artik negatif
+    uzunluk bozukluk sayilir.
+    """
+    from diskultimate.core import operations as _ops
+    from diskultimate.core.ntfsread import AT_DATA, _decode_runs
+    from diskultimate.core.ntfsresize import encode_runs
+
+    for uzunluk in (127, 128, 255, 256, 32767, 32768, 46335, 65535, 8388608):
+        for lcn in (-1, 5000):
+            kod = encode_runs([(lcn, uzunluk)])
+            assert _decode_runs(kod) == [(lcn, uzunluk)], (lcn, uzunluk, kod.hex())
+    try:
+        _decode_runs(bytes([0x02, 0xFF, 0xB4, 0x00]))   # eski hatali kodlama
+        raise AssertionError("negatif uzunluk kabul edildi")
+    except NtfsError:
+        pass
+
+    yol = img_path("t85.img")
+    s = DiskSession.create(yol, 264 * MIB, scheme="gpt", overwrite=True)
+    k = _ops.OperationQueue()
+    k.add(_ops.create_op(2048, 145 * 2048, 512, fs_key="ntfs", label="KOSU"))
+    assert k.apply(s).ok
+    s.reload()
+    veri = os.urandom(3 * MIB)
+    fs = s.filesystem(1)
+    fs.write_file("/v.bin", veri)
+    fs.flush()
+    s.close_filesystems()
+    for boyut in (181 * 2048, 60 * 2048, 181 * 2048):    # buyut, kucult, buyut
+        p = s.table.get(1)
+        s.resize_partition(1, p.start_lba, boyut, confirm=True)
+        s.reload()
+        ntfs = NtfsFS(s.view(s.table.get(1)))
+        kume = ntfs.total_sectors * ntfs.sector_size // ntfs.cluster_size
+        bad = ntfs.record(8).find(AT_DATA, "$Bad")
+        assert bad.runs == [(-1, kume)], (boyut, bad.runs, kume)
+        assert s.filesystem(1).read("/v.bin") == veri, boyut
+        s.close_filesystems()
     s.close()
 
 

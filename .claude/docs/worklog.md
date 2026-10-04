@@ -5734,3 +5734,20 @@ calismiyordu.
   dosyalari misafirdeki X: (ana makinenin `myiso` paylasimi) icine yazdi;
   silme kullaniciya birakildi. Ders: misafirde harf atamak yerine birim
   GUID yolu kullanilir, betik diskpart sonucunu denetler.
+
+## 2026-10-04 (5) — NTFS Windows uyumu (ADR 0085)
+
+- CI 37199361406 (quick, 3 platform): Linux ve macOS tamami gecti (macOS UDF,
+  hfsplus dahil); kalan: Windows NTFS goruntu (3) + aygit mantiksal (1).
+- $LogFile: 0xFF dolu gunlugu Windows salt okunur baglamiyor (kok "Yazma
+  korumasi var"). Bicimlendirici/boyutlandirma/onarim artik Windows'un
+  yazdigi temiz RSTR sayfalarini yazar. VM'de deneyle ayrildi (yalniz
+  gunluk baytlari nakledilince calisti). t84.
+- **ntfsresize kosu uzunlugunu isaretsiz kodluyordu** — buyutulen birimde
+  Windows chkdsk "$Bad is corrupt". Kodlayici isaretli; okuyucu da artik
+  isaretli okur ve negatif uzunlugu bozukluk sayar (hatayi gizliyordu). t85.
+- Windows yerel bicimlendirme/boyutlandirma bolumu numara yerine bayt
+  ofsetiyle secer (mantiksal bolumde "No matching MSFT_Partition"; yanlis
+  bolum bicimlendirme riski). Harf ata/kaldir hala numarali (kalan is).
+- VM: NTFS goruntu 14/14 + 2 atlama (Windows surucusu + chkdsk), aygit
+  ntfs/exfat x mbr-mantiksal/gpt tamam.

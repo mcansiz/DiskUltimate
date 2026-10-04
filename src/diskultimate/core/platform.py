@@ -1327,15 +1327,31 @@ def native_format_supported(fs_key: str) -> bool:
     return False
 
 
-def format_volume_command(disk_number: int, partition_number: int, fs_key: str,
+def win_partition_selector(disk_number: int, offset: int) -> str:
+    """PowerShell: `$p` = diskteki bolum, **bayt ofsetiyle** secilir.
+
+    `-PartitionNumber` bizim bolum numaramiz degildir: Windows MBR mantiksal
+    bolumlerini kendi sirasiyla numaralar (bizde 5, 6...; uzun testler,
+    2026-10-04: "No matching MSFT_Partition"). Numara baska bir bolume denk
+    gelirse yanlis bolum bicimlendirilirdi. Ofset tektir (ADR 0085).
+    """
+    return (f"$p = Get-Partition -DiskNumber {int(disk_number)} | "
+            f"Where-Object {{ $_.Offset -eq {int(offset)} }}; "
+            f"if (-not $p) {{ throw 'Bolum bulunamadi (ofset {int(offset)})' }}; ")
+
+
+def format_volume_command(disk_number: int, offset: int, fs_key: str,
                           label: str = "", cluster_size: int = 0) -> str:
-    """`Format-Volume` komutu (saf islev — test edilebilir)."""
+    """`Format-Volume` komutu (saf islev — test edilebilir).
+
+    `offset`: bolumun diskteki bayt ofseti (numara degil, bkz.
+    `win_partition_selector`).
+    """
     fs_name = {"ntfs": "NTFS", "exfat": "exFAT", "fat32": "FAT32", "fat16": "FAT",
                "refs": "ReFS"}[fs_key]
     etiket = (label or "").replace('"', "").replace("`", "").replace("$", "")
     komut = (f"$ErrorActionPreference='Stop'; "
-             f"$p = Get-Partition -DiskNumber {int(disk_number)} "
-             f"-PartitionNumber {int(partition_number)}; "
+             + win_partition_selector(disk_number, offset) +
              f"$p | Format-Volume -FileSystem {fs_name} "
              f"-NewFileSystemLabel \"{etiket}\" -Confirm:$false -Force")
     if cluster_size:
@@ -1343,7 +1359,7 @@ def format_volume_command(disk_number: int, partition_number: int, fs_key: str,
     return komut + " | Out-Null; 'TAMAM'"
 
 
-def windows_format_volume(disk_number: int, partition_number: int,
+def windows_format_volume(disk_number: int, offset: int,
                           fs_key: str, label: str = "",
                           cluster_size: int = 0) -> tuple:
     """Windows'un kendi bicimlendiricisiyle bir bolumu bicimlendirir.
@@ -1355,7 +1371,7 @@ def windows_format_volume(disk_number: int, partition_number: int,
         return False, tr("Yalnizca Windows")
     if fs_key not in ("ntfs", "exfat", "fat32", "fat16", "refs"):
         return False, tr("{} Windows araciyla olusturulamaz", fs_key)
-    komut = format_volume_command(disk_number, partition_number, fs_key, label,
+    komut = format_volume_command(disk_number, offset, fs_key, label,
                                   cluster_size)
     try:
         result = run_tool(["powershell", "-NoProfile", "-NonInteractive",
@@ -1379,13 +1395,14 @@ def native_resize_supported() -> bool:
     return IS_WINDOWS
 
 
-def windows_partition_size_limits(disk_number: int, partition_number: int) -> tuple:
-    """(basarili_mi, en_kucuk_bayt, en_buyuk_bayt, mesaj)."""
+def windows_partition_size_limits(disk_number: int, offset: int) -> tuple:
+    """(basarili_mi, en_kucuk_bayt, en_buyuk_bayt, mesaj). `offset`: bolumun
+    bayt ofseti (`win_partition_selector`)."""
     if not IS_WINDOWS:
         return False, 0, 0, tr("Yalnizca Windows")
     komut = (f"$ErrorActionPreference='Stop'; "
-             f"$s = Get-PartitionSupportedSize -DiskNumber {disk_number} "
-             f"-PartitionNumber {partition_number}; "
+             + win_partition_selector(disk_number, offset) +
+             f"$s = $p | Get-PartitionSupportedSize; "
              f"\"$($s.SizeMin) $($s.SizeMax)\"")
     try:
         result = run_tool(["powershell", "-NoProfile", "-NonInteractive",
@@ -1401,7 +1418,7 @@ def windows_partition_size_limits(disk_number: int, partition_number: int) -> tu
         return False, 0, 0, tr("Beklenmeyen cikti")
 
 
-def windows_resize_partition(disk_number: int, partition_number: int,
+def windows_resize_partition(disk_number: int, offset: int,
                              size_bytes: int) -> tuple:
     """Windows'un kendi boyutlandiricisiyla bolumu yeniden boyutlandirir.
 
@@ -1410,8 +1427,8 @@ def windows_resize_partition(disk_number: int, partition_number: int,
     if not IS_WINDOWS:
         return False, tr("Yalnizca Windows")
     komut = (f"$ErrorActionPreference='Stop'; "
-             f"Resize-Partition -DiskNumber {disk_number} "
-             f"-PartitionNumber {partition_number} -Size {int(size_bytes)}; "
+             + win_partition_selector(disk_number, offset) +
+             f"$p | Resize-Partition -Size {int(size_bytes)}; "
              f"'TAMAM'")
     try:
         result = run_tool(["powershell", "-NoProfile", "-NonInteractive",

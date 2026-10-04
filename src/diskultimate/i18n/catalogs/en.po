@@ -8823,6 +8823,9 @@ msgstr "This file system can only be resized by the operating system's own tool;
 msgid "Ic hata: geri kaydirma istendi ({} sektor); hicbir sey yazilmadi"
 msgstr "Internal error: a backward shift was requested ({} sectors); nothing was written"
 
+msgid "Bozuk veri kosulu: uzunluk {}"
+msgstr "Corrupt data run: length {}"
+
 #: src/diskultimate/ui/main_window.py:1942
 #~ msgid ""
 #~ "<br><br><b>{} adim veri kaybettirebilir.</b> Uygulandiktan sonra geri "

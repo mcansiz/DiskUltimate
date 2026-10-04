@@ -45,8 +45,8 @@ Yanlis yazip bozmaktansa yazmamak yeglenir — `ntfswrite.py` ile ayni ilke.
 
 ## Islem gunlugu
 
-Basarili bir boyutlandirmadan sonra `$LogFile` 0xFF ile doldurulur (bos
-gunluk). Eski gunluk kayitlari artik var olmayan kume numaralarina gonderme
+Basarili bir boyutlandirmadan sonra `$LogFile` bosaltilir: 0xFF + temiz
+yeniden baslatma alani (ADR 0085; yalniz 0xFF'i Windows salt okunur baglamaz). Eski gunluk kayitlari artik var olmayan kume numaralarina gonderme
 yapabilir; bir sonraki baglamada yeniden oynatilirsa birimi bozar.
 `ntfsresize` de ayni seyi yapar.
 """
@@ -57,6 +57,7 @@ from dataclasses import dataclass
 from typing import Callable, List, Optional, Tuple
 
 from .image import BlockDevice
+from .ntfs import fill_logfile
 from .ntfsread import (AT_DATA, ATTR_COMPRESSED, ATTR_ENCRYPTED, ATTR_SPARSE,
                        Attribute, NtfsError, NtfsFS)
 from .ntfswrite import BITMAP_RECORD, MFTMIRR_RECORD, NtfsWriter
@@ -232,7 +233,10 @@ def encode_runs(runs: List[Tuple[int, int]]) -> bytes:
     for lcn, count in runs:
         if count <= 0:
             continue
-        len_b = _signed_bytes(count, unsigned=True)
+        # Uzunluk ISARETLI kodlanir (Windows, ntfs-3g): 46335 kume iki bayt
+        # 0xB4FF yazilinca negatif okunuyor, buyutulen birimde $BadClus
+        # "bozuk" oluyordu (VM chkdsk, ADR 0085). Bkz. ntfswrite._encode_runs.
+        len_b = _signed_bytes(count)
         if lcn < 0:
             out.append(len(len_b))
             out += len_b
@@ -644,7 +648,8 @@ def _resize_badclus(writer: NtfsWriter, new_clusters: int) -> None:
 
 
 def _reset_logfile(writer: NtfsWriter) -> None:
-    """`$LogFile` alanini 0xFF ile doldurur (bos gunluk)."""
+    """`$LogFile`i temiz ve bos yapar (ADR 0085: 0xFF dolu gunlugu Windows
+    salt okunur ortamda baglamaz)."""
     fs = writer.fs
     try:
         attr = fs.record(LOGFILE_RECORD).find(AT_DATA)
@@ -652,13 +657,7 @@ def _reset_logfile(writer: NtfsWriter) -> None:
         return
     if attr is None or attr.resident:
         return
-    cs = fs.cluster_size
-    block = b"\xFF" * cs
-    for lcn, count in attr.runs:
-        if lcn < 0:
-            continue
-        for i in range(count):
-            fs.dev.write((lcn + i) * cs, block)
+    fill_logfile(fs.dev.write, attr.runs, fs.cluster_size, attr.data_size)
 
 
 def _write_boot(view: BlockDevice, fs: NtfsFS, volume_sectors: int,

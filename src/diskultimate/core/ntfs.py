@@ -155,6 +155,90 @@ def upcase_info() -> bytes:
     return _UPCASE_INFO
 
 
+# $LogFile (LFS 1.1) yeniden baslatma sayfasi. Coklu sektor korumasi NTFS'te
+# fiziksel sektorden bagimsiz olarak her 512 baytta bir uygulanir.
+LOG_PAGE_SIZE = 4096
+NTFS_BLOCK_SIZE = 512
+RESTART_VOLUME_IS_CLEAN = 0x0002
+LFS_NO_CLIENT = 0xFFFF
+
+
+def logfile_restart_page(log_size: int, open_count: int = 0) -> bytes:
+    """Temiz, bos bir `$LogFile`in yeniden baslatma sayfasi ("RSTR", 4 KiB).
+
+    Yalnizca 0xFF ile dolu ("bos") gunlugu Windows bagladiginda **yazarak**
+    baslatir; salt okunur ortamda (yazma korumali kart, salt okunur VHD) birimi
+    hic baglamaz — kok dizin "Yazma korumasi var" der (uzun testler, VM,
+    2026-10-04, ADR 0085). Bu sayfa Windows 10'un ilk baglamada yazdigiyla alan
+    alan aynidir; yalnizca LSN'ler sifirdir (kayit yok) ve "birim temiz"
+    bayragi aciktir. Tek istemci: "NTFS".
+    """
+    page = bytearray(LOG_PAGE_SIZE)
+    usa_count = LOG_PAGE_SIZE // NTFS_BLOCK_SIZE + 1
+    page[0:4] = b"RSTR"
+    # usa ofseti, sayisi, chkdsk LSN, sistem/gunluk sayfa boyu, alan ofseti, surum 1.1
+    struct.pack_into("<HHQIIHhh", page, 4, 0x1E, usa_count, 0,
+                     LOG_PAGE_SIZE, LOG_PAGE_SIZE, 0x30, 1, 1)
+    area, client_off, client_len = 0x30, 0x40, 0xA0
+    seq_bits = 64 - (log_size.bit_length() - 3)
+    struct.pack_into("<QHHHHIHHqIHHI", page, area,
+                     0,                         # current_lsn: kayit yok
+                     1,                         # istemci sayisi
+                     LFS_NO_CLIENT,             # bos istemci listesi
+                     0,                         # kullanimdaki istemci: 0
+                     RESTART_VOLUME_IS_CLEAN,
+                     seq_bits, client_off + client_len, client_off, log_size,
+                     0,                         # son kayit veri uzunlugu
+                     48,                        # kayit basligi uzunlugu
+                     0x40,                      # kayit sayfasi veri ofseti
+                     open_count & 0xFFFFFFFF)
+    client = area + client_off
+    struct.pack_into("<QQHHH", page, client, 0, 0, LFS_NO_CLIENT, LFS_NO_CLIENT, 0)
+    struct.pack_into("<I", page, client + 0x1C, 8)
+    page[client + 0x20:client + 0x28] = "NTFS".encode("utf-16le")
+    usn = 1
+    struct.pack_into("<H", page, 0x1E, usn)
+    for i in range(1, usa_count):
+        end = i * NTFS_BLOCK_SIZE - 2
+        page[0x1E + 2 * i:0x20 + 2 * i] = page[end:end + 2]
+        struct.pack_into("<H", page, end, usn)
+    return bytes(page)
+
+
+def fill_logfile(write: Callable[[int, bytes], None],
+                 runs: List[Tuple[int, int]], cluster_size: int,
+                 log_size: int, open_count: int = 0,
+                 progress: Optional[Callable[[int, int], None]] = None) -> None:
+    """`$LogFile`i temiz ve bos hale getirir: iki yeniden baslatma sayfasi +
+    geri kalani 0xFF.
+
+    `write(bayt_ofseti, veri)` birime yazar; `runs` (lcn, kume) listesidir
+    (gunluk parcali olabilir). `progress(yapilan, toplam)` kume sayar.
+    """
+    head = logfile_restart_page(log_size, open_count) * 2
+    total = sum(count for lcn, count in runs if lcn >= 0) or 1
+    chunk = max(1, (1024 * 1024) // cluster_size)
+    vcn_bytes = done = 0
+    for lcn, count in runs:
+        if lcn < 0:
+            vcn_bytes += count * cluster_size
+            continue
+        pos = 0
+        while pos < count:
+            n = min(chunk, count - pos)
+            data = bytearray(b"\xFF" * (n * cluster_size))
+            start = vcn_bytes + pos * cluster_size
+            if start < len(head):
+                part = head[start:start + len(data)]
+                data[:len(part)] = part
+            write((lcn + pos) * cluster_size, bytes(data))
+            pos += n
+            done += n
+            if progress:
+                progress(done, total)
+        vcn_bytes += count * cluster_size
+
+
 def upcase_table() -> bytes:
     """$UpCase icerigi (128 KiB): 65536 UTF-16 buyuk harf eslemesi.
 
@@ -836,17 +920,11 @@ class _NtfsBuilder(NtfsFormatter):
         self._write_clusters(self.layout.secure_lcn, secure_sds_stream())
 
     def _write_logfile(self) -> None:
-        """$LogFile alanini 0xFF ile doldurur (bos gunluk)."""
+        """$LogFile: temiz yeniden baslatma alani + bos gunluk (ADR 0085)."""
         L = self.layout
-        cs = L.cluster_size
-        chunk = max(1, (4 * 1024 * 1024) // cs)
-        dolgu = b"\xFF" * (chunk * cs)
-        kalan, cur = L.logfile_clusters, L.logfile_lcn
-        while kalan > 0:
-            n = min(chunk, kalan)
-            self.dev.write(cur * cs, dolgu[: n * cs])
-            cur += n
-            kalan -= n
+        fill_logfile(self.dev.write, [(L.logfile_lcn, L.logfile_clusters)],
+                     L.cluster_size, L.logfile_clusters * L.cluster_size,
+                     open_count=self.serial)
 
     def _collation_key(self, name: str) -> List[int]:
         """$FILE_NAME siralama anahtari: $UpCase ile buyuk harfe cevrilmis kodlar.
