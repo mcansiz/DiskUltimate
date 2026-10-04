@@ -5702,3 +5702,8 @@ calismiyordu.
   suruculeriyle ozet) ve macOS (hdiutil + fsck_* + diskutil mount) islari;
   full profilde bos diskin 1/3'u veri butcesi, sigmayan buyuk dosyalar
   raporda "SINANMADI" diye yazilir.
+- 3 platform quick (37195838321): Linux 33/33 (cekirdek dogrulamali),
+  macOS 15/21, Windows 0/18 (seyrek VHD). Bulgular ADR 0083: exFAT
+  kucultmede bitmap zinciri (Apple fsck_exfat), macOS yetki komutu
+  (tirnaklama/enjeksiyon + el sikisma). macOS UDF baglanmiyor: teshis
+  eklendi, sonraki kosu.

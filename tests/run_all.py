@@ -6470,6 +6470,42 @@ def t80_mantiksal_bolum_boyutlandirma_ve_tasima():
     s.close()
 
 
+@test
+def t81_macos_yetki_komutu():
+    """macOS yetki komutu: POSIX tirnaklama, ortam aktarimi, iptal mesaji (ADR 0083)
+
+    Eskiden `do shell script` icin Windows'un `list2cmdline`i kullaniliyordu:
+    yolda `$`, ters tirnak ya da tirnak varsa /bin/sh onlari yorumluyordu.
+    Burada uretilen kabuk komutu /bin/sh ile GERCEKTEN calistirilir; argumanlar
+    ve ortam karakteri karakterine korunmali. (Gercek osascript parola
+    penceresi otomatik sinanamaz — ADR 0080.)
+    """
+    import json as _json
+    from diskultimate.core import platform as pf
+    if pf.IS_WINDOWS or not shutil.which("sh"):
+        raise Atlandi("POSIX kabuk yok")
+    zor = '/Users/a b/$HOME/`echo SIZDI`/"tirnak"/ağaç;rm -rf x'
+    log = img_path("t81.log")
+    env = {"DISKULTIMATE_HANDOFF": "/tmp/el $sikisma", "DISKULTIMATE_LANG": "en"}
+    komut = [sys.executable, "-c",
+             "import sys,os,json;print(json.dumps([sys.argv[1:],"
+             "os.environ.get('DISKULTIMATE_HANDOFF'),os.environ.get('DISKULTIMATE_LANG')]))",
+             zor, "--no-root"]
+    betik = pf.mac_elevation_script(komut, env, log)
+    assert betik.startswith('do shell script "') and betik.endswith(
+        '" with administrator privileges'), betik[:80]
+    # AppleScript dizesini geri coz (\\ ve \" kacislari)
+    ic = betik[len('do shell script "'):-len('" with administrator privileges')]
+    kabuk = ic.replace('\\"', '"').replace("\\\\", "\\")
+    r = subprocess.run(["sh", "-c", kabuk], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    with open(log, encoding="utf-8") as fh:
+        argv, handoff, lang = _json.loads(fh.read().strip().splitlines()[-1])
+    assert argv == [zor, "--no-root"], argv
+    # argv karakteri karakterine ayni: $HOME genislemedi, ters tirnak calismadi
+    assert handoff == "/tmp/el $sikisma" and lang == "en", (handoff, lang)
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

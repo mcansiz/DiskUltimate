@@ -230,9 +230,23 @@ def windows_mount_check(fs_key: str, image_path: str, offset: int, size: int,
     from diskultimate.core.vdisk import build_vhd_footer
     disk_size = os.path.getsize(image_path)
     vhd = os.path.splitext(image_path)[0] + "_kontrol.vhd"
-    with open(image_path, "ab") as fh:
-        fh.write(build_vhd_footer(disk_size))
-    os.replace(image_path, vhd)
+    # Windows seyrek dosyayi VHD olarak takmaz (0xC03A001A "virtual disk
+    # system limitation"; CI'da olculdu). Bayrak kaldirilir; kalkmazsa
+    # seyrek olmayan bir kopya takilir.
+    subprocess.run(["fsutil", "sparse", "setflag", image_path, "0"],
+                   capture_output=True)
+    q = subprocess.run(["fsutil", "sparse", "queryflag", image_path],
+                       capture_output=True, text=True)
+    copy = "NOT" not in q.stdout.upper() and "DEGIL" not in q.stdout.upper()
+    if copy:
+        with open(image_path, "rb") as src, open(vhd, "wb") as dst:
+            for block in iter(lambda: src.read(8 * MIB), b""):
+                dst.write(block)
+            dst.write(build_vhd_footer(disk_size))
+    else:
+        with open(image_path, "ab") as fh:
+            fh.write(build_vhd_footer(disk_size))
+        os.replace(image_path, vhd)
     try:
         code, out = _powershell(f"""
 $ErrorActionPreference = 'Stop'
@@ -262,9 +276,12 @@ $yol = if ($p.DriveLetter -and $p.DriveLetter -ne [char]0) {{ "$($p.DriveLetter)
                       f"{len(manifest.entries)} dosya ayni, chkdsk temiz")
     finally:
         _powershell(f"Dismount-DiskImage -ImagePath '{vhd}' | Out-Null")
-        os.replace(vhd, image_path)
-        with open(image_path, "r+b") as fh:
-            fh.truncate(disk_size)
+        if copy:
+            os.unlink(vhd)
+        else:
+            os.replace(vhd, image_path)
+            with open(image_path, "r+b") as fh:
+                fh.truncate(disk_size)
 
 
 # --------------------------------------------------------------------------
@@ -313,8 +330,23 @@ def mac_mount_check(fs_key: str, image_path: str, offset: int, size: int,
         mr = subprocess.run(["diskutil", "mount", "readOnly", "-mountPoint", mnt, target],
                             capture_output=True, text=True)
         if mr.returncode != 0:
+            # Teshis: dogrudan mount'un hatasi, diskutil'in gordugu tur ve
+            # surucunun sistem gunlugune yazdiklari (neden bilinmeden "hata"
+            # demek yetmez).
+            dm = subprocess.run(["mount", "-r", "-t", MAC_FS[fs_key], target, mnt],
+                                capture_output=True, text=True)
+            info = subprocess.run(["diskutil", "info", target], capture_output=True,
+                                  text=True).stdout
+            tur = [l.strip() for l in info.splitlines()
+                   if "Type (Bundle)" in l or "File System Personality" in l]
+            kayit = subprocess.run(["log", "show", "--last", "2m", "--style", "compact",
+                                    "--predicate", f'eventMessage CONTAINS[c] "{MAC_FS[fs_key]}"'],
+                                   capture_output=True, text=True).stdout.splitlines()[-8:]
+            subprocess.run(["diskutil", "unmount", "force", mnt], capture_output=True)
             os.rmdir(mnt)
-            return "fail", f"diskutil mount: {(mr.stdout + mr.stderr)[-400:]}"
+            return "fail", (f"diskutil mount: {(mr.stdout + mr.stderr)[-300:]} | "
+                            f"mount -t {MAC_FS[fs_key]}: {(dm.stdout + dm.stderr).strip()[-300:]} | "
+                            f"diskutil: {tur} | gunluk: {' / '.join(kayit)[-700:]}")
         try:
             errors = _hash_tree(mnt, manifest)
         finally:

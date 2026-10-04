@@ -355,8 +355,9 @@ class ElevatedLaunch:
 
     def poll(self) -> Tuple[str, str]:
         """(durum, hata_metni) — durum STARTED/WAITING iken metin bostur."""
-        # Windows/macOS: yetki penceresini isletim sistemi kendi yonetir ve
-        # sonucu hemen bildirir; beklenecek bir sey yoktur.
+        # Windows: yetki penceresini isletim sistemi kendi yonetir ve
+        # sonucu hemen bildirir; beklenecek bir sey yoktur. Linux ve macOS
+        # el sikisma dosyasini bekler.
         if self._process is None:
             return self.STARTED, ""
         if self._handoff and os.path.exists(self._handoff):
@@ -368,6 +369,8 @@ class ElevatedLaunch:
 
     def _failure(self, code: int) -> str:
         """Cikis kodunu kullanicinin anlayacagi cumleye cevirir."""
+        if IS_MACOS and "(-128)" in self._log_tail():
+            return tr("Yetki verilmedi (parola penceresi iptal edildi).")
         if code == PKEXEC_DISMISSED:
             return tr("Yetki verilmedi (parola penceresi iptal edildi).")
         if code == PKEXEC_ERROR:
@@ -417,11 +420,7 @@ def relaunch_elevated() -> Tuple[Optional["ElevatedLaunch"], str]:
             started, error = _win_relaunch(command)
             return (ElevatedLaunch() if started else None), error
         if IS_MACOS:
-            script = ("do shell script "
-                      + _osascript_quote(subprocess.list2cmdline(command))
-                      + " with administrator privileges")
-            subprocess.Popen(["osascript", "-e", script])
-            return ElevatedLaunch(), ""
+            return _mac_relaunch(command), ""
         return _linux_relaunch(command), ""
     except Exception as exc:
         return None, str(exc)
@@ -484,6 +483,52 @@ def signal_elevated_ready() -> str:
     except OSError:
         return ""
     return path
+
+
+def mac_elevation_script(command: List[str], env: Dict[str, str], log: str) -> str:
+    """`osascript -e` icin AppleScript: komutu yonetici olarak calistirir.
+
+    `do shell script` komutu /bin/sh ile calistirir; komut POSIX kurallariyla
+    tirnaklanmali (`shlex`). Eskiden Windows'un `list2cmdline`i kullaniliyordu:
+    yolda `$`, ters tirnak ya da tirnak varsa kabuk onlari yorumluyordu.
+    Ortam `env` ile tasinir (do shell script temiz ortamla baslar).
+    """
+    import shlex
+    parts = ["/usr/bin/env"] + [f"{k}={v}" for k, v in env.items()] + list(command)
+    shell = shlex.join(parts) + " >" + shlex.quote(log) + " 2>&1"
+    return ("do shell script " + _osascript_quote(shell)
+            + " with administrator privileges")
+
+
+def _mac_relaunch(command: List[str]) -> "ElevatedLaunch":
+    """osascript ile yetkili kopyayi baslatir; Linux'la ayni el sikisma.
+
+    `do shell script` yetkili kopya kapanana kadar doner; o yuzden osascript
+    sureci yetkili kopyanin yasam suresince durur. Iptal edilen parola
+    penceresi osascript'i hata (-128) ile bitirir: acilis kopyasi bunu gorup
+    yetkisiz devam eder (ADR 0042). Eskiden acilis kopyasi hemen kapaniyordu;
+    iptalde uygulama tamamen kayboluyordu.
+    """
+    from ..paths import log_root, scratch
+
+    folder = scratch("elevate")
+    stamp = f"{os.getpid()}-{int(time.time())}"
+    handoff = os.path.join(folder, f"ready-{stamp}")
+    log = os.path.join(folder, f"stderr-{stamp}.log")
+    osa_log = os.path.join(folder, f"osascript-{stamp}.log")
+    env = {k: os.environ[k] for k in ("DISKULTIMATE_LANG", "DISKULTIMATE_THEME",
+                                      "DISKULTIMATE_DIAG", "DISKULTIMATE_DIAG_VERBOSE")
+           if os.environ.get(k)}
+    env[HANDOFF_ENV] = handoff
+    env["DISKULTIMATE_LOG_DIR"] = os.environ.get("DISKULTIMATE_LOG_DIR") or log_root()
+    stream = open(osa_log, "wb")
+    try:
+        process = subprocess.Popen(["osascript", "-e",
+                                    mac_elevation_script(command, env, log)],
+                                   stdout=subprocess.DEVNULL, stderr=stream)
+    finally:
+        stream.close()
+    return ElevatedLaunch(process, handoff, osa_log)
 
 
 def _osascript_quote(text: str) -> str:

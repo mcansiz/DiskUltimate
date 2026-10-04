@@ -544,7 +544,25 @@ def exfat_resize(view: BlockDevice, new_sector_count: int,
 
 def _exfat_set_bitmap_length(fs: ExFatFS, new_length: int,
                              old_clusters: int, new_clusters: int) -> None:
-    """Bitmap'in gecerli uzunlugunu ve sinir disi bitlerini duzeltir."""
+    """Bitmap'in gecerli uzunlugunu ve sinir disi bitlerini duzeltir.
+
+    Bitmap kisalinca zinciri de kisalir: surplus kumeler FAT'tan cikarilip bos
+    isaretlenir. Eskiden yalnizca uzunluk alani dusuyordu; Apple'in
+    fsck_exfat'i "Cluster chain for Main Bitmap has too many clusters for its
+    size" diyordu (uzun testler, macOS, 2026-10-04; Linux fsck.exfat bunu
+    denetlemiyor).
+    """
+    cb = fs.cluster_bytes
+    old_count = (fs.bitmap_length + cb - 1) // cb
+    new_count = max(1, (new_length + cb - 1) // cb)
+    surplus: List[int] = []
+    if new_count < old_count:
+        chain = fs.chain(fs.bitmap_cluster, old_count, False)
+        if len(chain) >= old_count:
+            surplus = chain[new_count:old_count]
+            fs.set_fat(chain[new_count - 1], EXFAT_EOC)
+            for c in surplus:
+                fs.set_fat(c, 0)
     bm = fs._load_bitmap()
     if new_length > len(bm):
         bm.extend(b"\x00" * (new_length - len(bm)))
@@ -552,6 +570,10 @@ def _exfat_set_bitmap_length(fs: ExFatFS, new_length: int,
     artik = new_clusters % 8
     if artik and fs._bitmap:
         fs._bitmap[-1] &= (1 << artik) - 1
+    for c in surplus:
+        i = c - 2
+        if 0 <= i < new_clusters:
+            fs._bitmap[i >> 3] &= ~(1 << (i & 7)) & 0xFF
     fs._bitmap_dirty = True
     _exfat_patch_bitmap_entry(fs, fs.bitmap_cluster, new_length)
     fs.bitmap_length = new_length
