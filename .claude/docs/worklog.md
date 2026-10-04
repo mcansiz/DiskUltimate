@@ -5789,3 +5789,6 @@ calismiyordu.
   güncellenmiyordu — düzeltildi, t88 (eski kodda düşer).
 - FAT32 tam profil yeniden koşu (37210687468): 19/19. Tam profilin bütün
   bulguları kapandı; issue #3 kapatıldı. Sürüm 0.5.2-beta.
+- **v0.5.2-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.5.2-beta
+  — sürüm koşusu 37212216485: 3 platform test + Windows exe, Linux AppImage,
+  macOS zip.
