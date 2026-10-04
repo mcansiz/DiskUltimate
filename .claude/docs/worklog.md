@@ -5816,3 +5816,6 @@ calismiyordu.
   FAT32 `kurtar` (test tarafı, 227b9bc). FAT32 yeniden koşu (37219805226):
   19/19. Issue #4 ve #5 kapatıldı; açık uzun-test issue'su yok.
 - Sürüm 0.6.0-beta (kullanıcı kararı): tema + .ts + yedi yeni dil.
+- **v0.6.0-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.6.0-beta
+  — sürüm koşusu 37221403278: 3 platform test + Windows exe, Linux AppImage,
+  macOS zip.
