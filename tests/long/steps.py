@@ -195,7 +195,30 @@ def degistir(ctx: Ctx):
     return f"{len(gone)} silindi, {renamed} adlandirildi, 1 uzerine yazildi, 20 eklendi"
 
 
+def _chain_info(access, path: str):
+    """(ardisik_mi, aciklama) — dosyanin kume zinciri (FAT/exFAT)."""
+    fs = getattr(access, "fs", None)
+    try:
+        entry = fs.find(path)
+        first = getattr(entry, "cluster", None) or getattr(entry, "first_cluster", 0)
+        chain = fs.chain(first)
+    except Exception as exc:                       # noqa: BLE001
+        return False, f"zincir okunamadi ({exc})"
+    ardisik = bool(chain) and chain == list(range(chain[0], chain[0] + len(chain)))
+    return ardisik, (f"ilk kume {first}, {len(chain)} kume, "
+                     f"{'ardisik' if ardisik else 'PARCALI'}")
+
+
 def kurtar(ctx: Ctx):
+    """Silinen dosyayi kurtarir.
+
+    FAT'te silinen dosyanin kume zinciri silinir; yalnizca **ardisik**
+    yazilmis dosya meta veriden geri gelir. Kurtarilacak dosya bu yuzden
+    zinciri ardisik olanlardan secilir ve icerigi birebir donmeli. Parcali
+    bir aday varsa o da silinir: tarayici ona "iyi" (tam kurtarilabilir)
+    **dememeli**. (Tohum 73770: alfabetik ilk aday `degistir`de bosluklara
+    yazilmis 231 kumelik parcali bir dosyaydi; test yanlis seyi bekliyordu.)
+    """
     if not ctx.fs.recover:
         raise StepSkip(f"silinmis dosya kurtarma {ctx.fs.key} icin yok (FAT/exFAT)")
     access = ctx.access()
@@ -203,26 +226,55 @@ def kurtar(ctx: Ctx):
                      if 4096 <= size <= 200_000)
     if not adaylar:
         raise StepSkip("uygun dosya yok")
-    path = adaylar[0]
-    size, sha1 = ctx.manifest.entries[path]
-    access.remove(path)
+    ardisik, parcali = None, None
+    for aday in adaylar:
+        tamam, aciklama = _chain_info(access, aday)
+        if tamam and ardisik is None:
+            ardisik = (aday, aciklama)
+        elif not tamam and parcali is None and "okunamadi" not in aciklama:
+            parcali = (aday, aciklama)
+        if ardisik and parcali:
+            break
+    if ardisik is None:
+        raise StepSkip("zinciri ardisik aday dosya yok")
+    silinen = [ardisik[0]] + ([parcali[0]] if parcali else [])
+    beklenen = {}
+    for path in silinen:
+        beklenen[path] = ctx.manifest.entries[path]
+        access.remove(path)
+        ctx.manifest.drop(path)
     access.flush()
-    ctx.manifest.drop(path)
     ctx.session.close_filesystems()
     index = ctx.part().index
     items = ctx.session.scan_deleted(index)
-    name = path.rsplit("/", 1)[-1]
-    match = [i for i in items if i.name == name and i.size == size]
-    if not match:
-        raise StepFail(f"silinen '{name}' taramada bulunamadi ({len(items)} kayit)")
+
+    def bul(path):
+        size = beklenen[path][0]
+        name = path.rsplit("/", 1)[-1]
+        match = [i for i in items if i.name == name and i.size == size]
+        if not match:
+            raise StepFail(f"silinen '{name}' taramada bulunamadi ({len(items)} kayit)")
+        return match[0]
+
+    path = ardisik[0]
+    size, sha1 = beklenen[path]
+    kayit = bul(path)
     out = os.path.join(ctx.workdir, "kurtarilan.bin")
-    ctx.session.recover_deleted(index, match[0], out)
+    ctx.session.recover_deleted(index, kayit, out)
     with open(out, "rb") as fh:
         got = hashlib.sha1(fh.read()).hexdigest()
     os.unlink(out)
     if got != sha1:
-        raise StepFail(f"kurtarilan icerik farkli ({match[0].condition})")
-    return f"'{name}' kurtarildi ({size} bayt)"
+        raise StepFail(f"kurtarilan icerik farkli ({kayit.condition}); {path}, "
+                       f"{size} bayt, silmeden once {ardisik[1]}")
+    note = f"'{path.rsplit('/', 1)[-1]}' kurtarildi ({size} bayt, {ardisik[1]})"
+    if parcali:
+        durum = bul(parcali[0]).condition
+        if durum == "iyi":
+            raise StepFail(f"parcali dosya '{parcali[0]}' tam kurtarilabilir "
+                           f"gosterildi ({parcali[1]})")
+        note += f"; parcali '{parcali[0].rsplit('/', 1)[-1]}' -> '{durum}' (dogru)"
+    return note
 
 
 def _image_bytes(path: str) -> int:

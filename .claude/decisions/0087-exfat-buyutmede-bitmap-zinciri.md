@@ -58,3 +58,18 @@ bu farki tek basina "mostly harmless" deyip 0 ile cikiyor; full'de 4 GiB-1
 tasma satiriyla birlikte cikti ve istisna (madde 3) yalnizca o kalibi kabul
 ettigi icin dogru olarak dustu. Duzeltme: FAT32'de yedek de yazilir. t88
 (eski kodda "asil/yedek BPB farkli").
+
+## 5. `kurtar` adimi parcali dosyayi seciyordu (test tarafi)
+
+0.5.2-beta tam kosusu (CI 37214273770, tohum 73770): aygit FAT32 `kurtar`
+"kurtarilan icerik farkli (kismen uzerine yazilmis)" — Linux ve Windows.
+Yerelde (goruntu, quick, ayni tohum) yeniden uretildi: alfabetik ilk aday
+`degistir`de silinen dosyalarin bosluklarina yazilmis **231 kumelik parcali**
+bir dosyaydi. FAT'te silinen dosyanin zinciri silinir; parcali dosya meta
+veriden geri gelmez (DiskGenius da gelmez) ve arac bunu "kismen uzerine
+yazilmis" diye dogru bildiriyordu. Urun hatasi yok.
+
+Test duzeltildi: kurtarilacak dosya silmeden once zinciri **ardisik**
+olanlardan secilir ve birebir donmeli; parcali aday varsa o da silinir ve
+tarayicinin ona "iyi" **dememesi** denetlenir. Yerelde fat12/16/32 + exfat x
+gpt/mbr-mantiksal tamam.

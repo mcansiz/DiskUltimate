@@ -5807,3 +5807,8 @@ calismiyordu.
 - Ajanların bulduğu kaynak hataları: taşıma yönü çevrilmeden Türkçe
   ("ileri/geri"), "Ad" başlığı tr()'siz (2 yer), dar blokta "%5".
 - run_all 86/88, platform 0, diag 13/13, ui_smoke tamam.
+- 0.5.2-beta tam koşusunda aygıt FAT32 `kurtar` düştü: test, `degistir`de
+  parçalı yazılmış bir dosyayı kurtarmaya çalışıyordu (FAT'te parçalı silinmiş
+  dosya meta veriden dönmez; araç doğru "kısmen üzerine yazılmış" diyordu).
+  Test ardışık dosyayı seçer, parçalı dosyada "iyi" denmediğini ayrıca
+  denetler (ADR 0087 madde 5).
