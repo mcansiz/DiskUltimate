@@ -63,7 +63,7 @@ secilir, bulunamazsa komut `throw` eder. Bicimlendirme, boyut sinirlari ve
 boyutlandirma bunu kullanir. VM: ntfs/exfat x mbr-mantiksal/gpt aygit kipi
 4/4 senaryo tamam.
 
-Kalan: surucu harfi ata/kaldir (`_win_assign_letter`, `_win_remove_letter`,
+Kalan (cozuldu: ADR 0086): surucu harfi ata/kaldir (`_win_assign_letter`, `_win_remove_letter`,
 `partition_mount_point`) hala numarayla calisir. Yikici degil (harf yanlis
 bolume atanabilir ya da hata verir); guvenlik uyarilari zaten ofsetli
 `mount_map`'ten gelir. Ayri is olarak duruyor.

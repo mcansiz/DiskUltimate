@@ -3135,18 +3135,20 @@ def t43_baglama_guvenlik_katmani():
     else:
         kok, siradan = "/", "/media/kullanici/VERI"
     try:
-        ph.pf_mount_point = lambda path, index: kok
+        ph.pf_mount_point = lambda path, index, offset=-1: kok
         ph.pf_unmount = patlayici
-        ok, message = ph.unmount_partition(info, 1)
+        ok, message = ph.unmount_partition(info, 1, offset=MIB)
         assert not ok and message, (ok, message)
         assert kok in message
 
         # Kritik olmayan noktada cikarma platform katmanina INER
         cagrildi = []
-        ph.pf_mount_point = lambda path, index: siradan
-        ph.pf_unmount = lambda path, index: (cagrildi.append((path, index)), (True, ""))[1]
-        ok, message = ph.unmount_partition(info, 2)
-        assert ok and cagrildi == [("/dev/sahte", 2)], (ok, cagrildi)
+        ph.pf_mount_point = lambda path, index, offset=-1: siradan
+        ph.pf_unmount = lambda path, index, offset=-1: (
+            cagrildi.append((path, index, offset)), (True, ""))[1]
+        ok, message = ph.unmount_partition(info, 2, offset=300 * MIB)
+        # ofset platform katmanina kadar tasinir (Windows bolumu onunla bulur)
+        assert ok and cagrildi == [("/dev/sahte", 2, 300 * MIB)], (ok, cagrildi)
     finally:
         ph.pf_mount_point, ph.pf_unmount = eski_nokta, eski_cikar
 
@@ -6788,6 +6790,36 @@ def t85_ntfs_boyutlandirma_kosu_uzunlugu_isaretli():
         assert s.filesystem(1).read("/v.bin") == veri, boyut
         s.close_filesystems()
     s.close()
+
+
+@test
+def t86_surucu_harfi_ofsetle():
+    """Windows surucu harfi: bolum numarayla degil ofsetle secilir (ADR 0086)
+
+    Windows MBR mantiksal bolumlerini kendi sirasiyla numaralar; bizim 5
+    numarali bolumumuz Windows'ta baska bir numaradir. `-PartitionNumber`
+    ile harf baska bir bolume atanir ya da baska bir bolumunki kaldirilirdi.
+    Gercek Windows davranisi VM'de sinanir (tests/physical_drive_letter_test.py).
+    """
+    from diskultimate.core import platform as pf
+    ofset = 301 * MIB
+    for eylem in ("query", "assign", "remove"):
+        komut = pf.win_letter_command(eylem, 3, ofset, "E:\\")
+        assert "-PartitionNumber" not in komut, komut
+        assert f"$_.Offset -eq {ofset}" in komut and "-DiskNumber 3" in komut
+        assert "throw" in komut, "bolum bulunamazsa sessiz gecilmemeli"
+    assert "Add-PartitionAccessPath -AssignDriveLetter" in \
+        pf.win_letter_command("assign", 3, ofset)
+    kaldir = pf.win_letter_command("remove", 3, ofset, "E:\\'; Format-Volume")
+    assert "-AccessPath 'E:\\; Format-Volume'" in kaldir, kaldir   # tirnak kacamaz
+
+    # Windows'ta ofsetsiz harf islemi reddedilir; "bagli degil" basarisi
+    # donmez (Uygula bu sonuca guvenip diske yazar).
+    if pf.IS_WINDOWS:
+        ok, mesaj = pf.unmount_partition("\\\\.\\PhysicalDrive9", 5)
+        assert not ok and mesaj
+        ok, mesaj = pf.mount_partition("\\\\.\\PhysicalDrive9", 5)
+        assert not ok and mesaj
 
 
 def _dis_denetim(fs_key: str, yol: str) -> None:

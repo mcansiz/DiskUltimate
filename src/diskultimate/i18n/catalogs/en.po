@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: DiskUltimate 0.5.0-beta\n"
+"Project-Id-Version: DiskUltimate 0.5.1-beta\n"
 "Report-Msgid-Bugs-To: \n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
@@ -8825,6 +8825,12 @@ msgstr "Internal error: a backward shift was requested ({} sectors); nothing was
 
 msgid "Bozuk veri kosulu: uzunluk {}"
 msgstr "Corrupt data run: length {}"
+
+msgid "Bolumun diskteki konumu bilinmiyor; surucu harfi atanmadi"
+msgstr "The partition's position on the disk is unknown; no drive letter was assigned"
+
+msgid "Bolumun diskteki konumu bilinmiyor; surucu harfi kaldirilmadi"
+msgstr "The partition's position on the disk is unknown; the drive letter was not removed"
 
 #: src/diskultimate/ui/main_window.py:1942
 #~ msgid ""

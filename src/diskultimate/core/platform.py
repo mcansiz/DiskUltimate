@@ -639,19 +639,41 @@ def _powershell(script: str, timeout: int = 60):
                     timeout=timeout)
 
 
-def partition_mount_point(disk_path: str, index: int) -> str:
+def win_letter_command(action: str, disk_number: int, offset: int,
+                       point: str = "") -> str:
+    """Surucu harfi PowerShell komutu (saf islev — test edilebilir).
+
+    `action`: "query" | "assign" | "remove". Bolum **bayt ofsetiyle** secilir
+    (`win_partition_selector`): Windows MBR mantiksal bolumlerini kendi
+    sirasiyla numaralar, `-PartitionNumber <bizim numara>` harfi baska bir
+    bolume atar ya da kaldirir (ADR 0086).
+    """
+    secici = win_partition_selector(disk_number, offset)
+    if action == "query":
+        return ("$ErrorActionPreference='Stop'; " + secici +
+                "[string]$p.DriveLetter")
+    if action == "assign":
+        return ("$ErrorActionPreference='Stop'; " + secici +
+                "$p | Add-PartitionAccessPath -AssignDriveLetter")
+    if action == "remove":
+        guvenli = point.replace("'", "")
+        return ("$ErrorActionPreference='Stop'; " + secici +
+                f"$p | Remove-PartitionAccessPath -AccessPath '{guvenli}'")
+    raise ValueError(action)
+
+
+def partition_mount_point(disk_path: str, index: int, offset: int = -1) -> str:
     r"""Bolum su an nereye bagli? Bagli degilse bos dize.
 
-    Windows'ta surucu harfi doner (`E:\`).
+    Windows'ta surucu harfi doner (`E:\`); bolum `offset` (bayt) ile
+    secilir — ofsetsiz Windows sorgusu yapilmaz, bos doner.
     """
     try:
         if IS_WINDOWS:
             numara = _win_disk_number(disk_path)
-            if numara < 0:
+            if numara < 0 or offset < 0:
                 return ""
-            result = _powershell(
-                f"(Get-Partition -DiskNumber {numara} -PartitionNumber {index}"
-                f" -ErrorAction SilentlyContinue).DriveLetter")
+            result = _powershell(win_letter_command("query", numara, offset))
             harf = (result.stdout or "").strip()
             return f"{harf}:\\" if harf and harf != "\x00" else ""
         device = partition_device(disk_path, index)
@@ -723,7 +745,7 @@ _OWNER_OPTION_FS = ("fat", "vfat", "exfat", "ntfs", "fuseblk", "msdos")
 
 
 def mount_partition(disk_path: str, index: int, label: str = "",
-                    fs_type: str = "") -> Tuple[bool, str]:
+                    fs_type: str = "", offset: int = -1) -> Tuple[bool, str]:
     """Bolumu baglar (Windows'ta surucu harfi atar).
 
     Doner: (basarili, baglama noktasi veya hata metni).
@@ -731,12 +753,15 @@ def mount_partition(disk_path: str, index: int, label: str = "",
     allowed, reason = mount_supported()
     if not allowed:
         return False, reason
-    mevcut = partition_mount_point(disk_path, index)
+    if IS_WINDOWS and offset < 0:
+        return False, tr("Bolumun diskteki konumu bilinmiyor; surucu harfi "
+                         "atanmadi")
+    mevcut = partition_mount_point(disk_path, index, offset)
     if mevcut:
         return True, mevcut
     try:
         if IS_WINDOWS:
-            return _win_assign_letter(disk_path, index)
+            return _win_assign_letter(disk_path, index, offset)
         device = partition_device(disk_path, index)
         if not device or not os.path.exists(device):
             return False, tr("Bolum aygiti bulunamadi: {}", device or "?")
@@ -794,17 +819,22 @@ def _linux_mount(device: str, disk_path: str, index: int, label: str,
     return True, target
 
 
-def unmount_partition(disk_path: str, index: int) -> Tuple[bool, str]:
+def unmount_partition(disk_path: str, index: int,
+                      offset: int = -1) -> Tuple[bool, str]:
     """Bolumun baglantisini keser (Windows'ta surucu harfini kaldirir)."""
     allowed, reason = mount_supported()
     if not allowed:
         return False, reason
-    point = partition_mount_point(disk_path, index)
+    if IS_WINDOWS and offset < 0:
+        # "bagli degil" sanilip basari donulmez: Uygula bu sonuca guvenir
+        return False, tr("Bolumun diskteki konumu bilinmiyor; surucu harfi "
+                         "kaldirilmadi")
+    point = partition_mount_point(disk_path, index, offset)
     if not point:
         return True, ""                   # zaten bagli degil
     try:
         if IS_WINDOWS:
-            return _win_remove_letter(disk_path, index, point)
+            return _win_remove_letter(disk_path, offset, point)
         device = partition_device(disk_path, index)
         if IS_MACOS:
             result = run_tool(["diskutil", "unmount", device], timeout=60)
@@ -842,27 +872,23 @@ def unmount_partition(disk_path: str, index: int) -> Tuple[bool, str]:
         return False, str(exc)
 
 
-def _win_assign_letter(disk_path: str, index: int) -> Tuple[bool, str]:
-    """Bolume ilk bos surucu harfini atar."""
+def _win_assign_letter(disk_path: str, index: int, offset: int) -> Tuple[bool, str]:
+    """Bolume ilk bos surucu harfini atar (bolum ofsetle secilir)."""
     numara = _win_disk_number(disk_path)
     if numara < 0:
         return False, tr("Disk numarasi cozulemedi: {}", disk_path)
-    result = _powershell(
-        f"Add-PartitionAccessPath -DiskNumber {numara} -PartitionNumber {index}"
-        f" -AssignDriveLetter -ErrorAction Stop")
+    result = _powershell(win_letter_command("assign", numara, offset))
     if result.returncode != 0:
         return False, (result.stderr or result.stdout or "").strip()
-    return True, partition_mount_point(disk_path, index)
+    return True, partition_mount_point(disk_path, index, offset)
 
 
-def _win_remove_letter(disk_path: str, index: int, point: str) -> Tuple[bool, str]:
-    """Bolumun surucu harfini kaldirir."""
+def _win_remove_letter(disk_path: str, offset: int, point: str) -> Tuple[bool, str]:
+    """Bolumun surucu harfini kaldirir (bolum ofsetle secilir)."""
     numara = _win_disk_number(disk_path)
     if numara < 0:
         return False, tr("Disk numarasi cozulemedi: {}", disk_path)
-    result = _powershell(
-        f"Remove-PartitionAccessPath -DiskNumber {numara} -PartitionNumber {index}"
-        f" -AccessPath '{point}' -ErrorAction Stop")
+    result = _powershell(win_letter_command("remove", numara, offset, point))
     if result.returncode != 0:
         return False, (result.stderr or result.stdout or "").strip()
     return True, ""

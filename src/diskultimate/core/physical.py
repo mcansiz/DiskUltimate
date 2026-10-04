@@ -249,35 +249,40 @@ def is_critical_mount(point: str) -> bool:
     return duz in CRITICAL_MOUNTS
 
 
-def partition_mount_point(info: DiskInfo, index: int) -> str:
-    """Bolum su an nereye bagli (bagli degilse bos dize)."""
-    return pf_mount_point(info.path, index)
+def partition_mount_point(info: DiskInfo, index: int, offset: int = -1) -> str:
+    """Bolum su an nereye bagli (bagli degilse bos dize).
+
+    `offset`: bolumun bayt ofseti — Windows bolumu numarayla degil bununla
+    bulur (ADR 0086).
+    """
+    return pf_mount_point(info.path, index, offset)
 
 
 def mount_partition(info: DiskInfo, index: int, label: str = "",
-                    fs_type: str = "") -> Tuple[bool, str]:
+                    fs_type: str = "", offset: int = -1) -> Tuple[bool, str]:
     """Bolumu baglar / surucu harfi atar.
 
     Baglama **yikici degildir**: kuyruga girmez, dogrudan calisir (ADR 0043).
     Doner: (basarili, baglama noktasi veya hata metni).
     """
-    ok, result = pf_mount(info.path, index, label, fs_type)
+    ok, result = pf_mount(info.path, index, label, fs_type, offset)
     diagnostics.info(f"bolum baglandi: {info.path}#{index} -> {result}" if ok
                      else f"bolum baglanamadi: {info.path}#{index}: {result}")
     return ok, result
 
 
-def unmount_partition(info: DiskInfo, index: int) -> Tuple[bool, str]:
+def unmount_partition(info: DiskInfo, index: int,
+                      offset: int = -1) -> Tuple[bool, str]:
     """Bolumun baglantisini keser / surucu harfini kaldirir.
 
     Calisan sistemin kullandigi bir bolum **cikarilmaz**: kok dosya sistemini
     ya da `/boot`u ayirmak makineyi aninda kullanilamaz hale getirir.
     """
-    point = pf_mount_point(info.path, index)
+    point = pf_mount_point(info.path, index, offset)
     if point and is_critical_mount(point):
         return False, tr("Bu bolum calisan sistemin parcasi ({}); "
                          "cikarilamaz.", point)
-    ok, error = pf_unmount(info.path, index)
+    ok, error = pf_unmount(info.path, index, offset)
     diagnostics.info(f"bolum cikarildi: {info.path}#{index}" if ok
                      else f"bolum cikarilamadi: {info.path}#{index}: {error}")
     return ok, error

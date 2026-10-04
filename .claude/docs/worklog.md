@@ -5753,3 +5753,13 @@ calismiyordu.
   ntfs/exfat x mbr-mantiksal/gpt tamam.
 - CI 37201218408 (quick, tohum 7, Linux + Windows + macOS, goruntu + aygit +
   arayuz): **102/102 is basarili**. Ilk kez butun platformlarda temiz.
+
+## 2026-10-04 (6) — Surucu harfi ofsetle (ADR 0086); v0.5.1-beta
+
+- Issue #1, #2 cozum yorumuyla kapatildi (CI 37201218408, 102/102).
+- Windows surucu harfi sorgula/ata/kaldir bolumu bayt ofsetiyle secer;
+  ofsetsiz Windows harf islemi reddedilir. t86 + t43 guncellendi.
+- `tests/physical_drive_letter_test.py` (VM, takili VHD, MBR + 2 mantiksal):
+  Windows numaralari 1/2/3, bizimkiler 1/5/6 (bulgunun kaniti); harf ikinci
+  mantiksala atandi ve yalnizca orada gorundu, kaldirildi. BASARILI.
+- Surum 0.5.1-beta (APP_VERSION, README rozetleri, .po basliklari).

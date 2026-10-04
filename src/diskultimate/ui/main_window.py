@@ -73,7 +73,7 @@ from ..i18n import mark, tr, trn
 APP_NAME = "DiskUltimate"
 # Surumun tek kaynagi burasidir. Degistirildiginde README.md'deki surum rozeti
 # ve .claude/docs/project-overview.md "Durum" satiri da guncellenir.
-APP_VERSION = "0.5.0-beta"
+APP_VERSION = "0.5.1-beta"
 
 # Sekme sirasi tek yerden tanimlanir; `tabs.setCurrentIndex` cagrilari ciplak
 # sayi kullanmaz, boylece sekme sirasi degisince sessizce yanlis sekme acilmaz.
@@ -1508,16 +1508,18 @@ class MainWindow(QMainWindow):
         onu bozar, "cikaramadim ama devam ediyorum" demek riski gizlerdi.
         """
         table = self.session.table if self.session else None
-        indexes = [p.index for p in (table.partitions if table else [])]
+        # (numara, bayt ofseti): Windows bolumu ofsetle bulur (ADR 0086)
+        indexes = [(p.index, p.start_lba * table.sector_size)
+                   for p in (table.partitions if table else [])]
         if not indexes:
             return True
 
         def task(report):
             failures = []
-            for sira, index in enumerate(indexes, 1):
+            for sira, (index, offset) in enumerate(indexes, 1):
                 report(tr("Bolum {} cikariliyor...", index),
                        int(100 * sira / len(indexes)))
-                ok, error = unmount_physical_partition(info, index)
+                ok, error = unmount_physical_partition(info, index, offset)
                 if not ok:
                     failures.append((index, error))
             return failures
@@ -1567,14 +1569,16 @@ class MainWindow(QMainWindow):
         mount_text, unmount_text = mount_action_labels()
         title = mount_text if mount else unmount_text
         index = part.index
+        offset = part.start_lba * self.session.table.sector_size
         label = part.fs_label or part.name
         fs_type = part.fs_type          # veri: baglama secenekleri buna gore
 
         def task(report):
             report(title, -1)
             if mount:
-                return mount_physical_partition(info, index, label, fs_type)
-            return unmount_physical_partition(info, index)
+                return mount_physical_partition(info, index, label, fs_type,
+                                                offset=offset)
+            return unmount_physical_partition(info, index, offset=offset)
 
         ok, result = run_task(self, title, task)
         if not ok:

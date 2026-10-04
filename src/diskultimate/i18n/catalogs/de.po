@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: DiskUltimate 0.5.0-beta\n"
+"Project-Id-Version: DiskUltimate 0.5.1-beta\n"
 "Report-Msgid-Bugs-To: \n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -9032,6 +9032,12 @@ msgstr "Interner Fehler: Eine Rückwärtsverschiebung wurde angefordert ({} Sekt
 
 msgid "Bozuk veri kosulu: uzunluk {}"
 msgstr "Beschädigter Datenlauf: Länge {}"
+
+msgid "Bolumun diskteki konumu bilinmiyor; surucu harfi atanmadi"
+msgstr "Die Position der Partition auf dem Datenträger ist unbekannt; es wurde kein Laufwerksbuchstabe zugewiesen"
+
+msgid "Bolumun diskteki konumu bilinmiyor; surucu harfi kaldirilmadi"
+msgstr "Die Position der Partition auf dem Datenträger ist unbekannt; der Laufwerksbuchstabe wurde nicht entfernt"
 
 #: src/diskultimate/ui/main_window.py:1942
 #~ msgid ""
