@@ -5815,3 +5815,4 @@ calismiyordu.
 - 0.5.2-beta tam koşusu (37214273770, tohum 73770): 95/102; tek bulgu aygıt
   FAT32 `kurtar` (test tarafı, 227b9bc). FAT32 yeniden koşu (37219805226):
   19/19. Issue #4 ve #5 kapatıldı; açık uzun-test issue'su yok.
+- Sürüm 0.6.0-beta (kullanıcı kararı): tema + .ts + yedi yeni dil.
