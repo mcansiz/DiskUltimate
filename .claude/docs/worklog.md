@@ -5792,3 +5792,18 @@ calismiyordu.
 - **v0.5.2-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.5.2-beta
   — sürüm koşusu 37212216485: 3 platform test + Windows exe, Linux AppImage,
   macOS zip.
+
+## 2026-10-04 (8) — Tema ve yedi yeni dil (ADR 0088)
+
+- Kullanıcı kararları: tema "palet + az QSS"; sözlükler "hepsi .ts".
+- Araçlar > Tema: Sistem / Açık / Koyu (Fusion + QPalette + paletten küçük
+  QSS); eski kullanılmayan STYLESHEET silindi. ui_smoke açık/koyu denetler.
+- Sözlükler `.ts` (Qt Linguist); `i18n/ts.py` saf Python okur, QTranslator
+  yok. en/de geçişi alan alan kayıpsız (1944 giriş). `PLURAL_RULES`,
+  `po.merge(nplurals)`, i18n_check, `.spec`, AppImage Qt çevirileri.
+- fr, it, es, ru, zh, ja, ko: 7 paralel alt ajan, 1854 metin/dil,
+  doğrulayıcıyla; i18n_check her dil TAMAM (1861). Terim sözlükleri
+  `.claude/docs/ceviri-sozlukleri/`. Anadili gözden geçirmesi yok.
+- Ajanların bulduğu kaynak hataları: taşıma yönü çevrilmeden Türkçe
+  ("ileri/geri"), "Ad" başlığı tr()'siz (2 yer), dar blokta "%5".
+- run_all 86/88, platform 0, diag 13/13, ui_smoke tamam.

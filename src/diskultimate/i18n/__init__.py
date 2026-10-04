@@ -11,29 +11,24 @@ gorunmez.
     tr("Bolum tablosunu sil")                 # -> "Delete partition table"
     tr("{} bolum bulundu", len(parts))        # -> "3 partitions found"
 
-Ceviriler `i18n/catalogs/<kod>.po` icinde, gettext'in standart `.po`
-biciminde durur. Yeni bir dil eklemek icin:
+Ceviriler `i18n/catalogs/<kod>.ts` icinde, Qt Linguist'in `.ts` (XML)
+biciminde durur (ADR 0088; once `.po` idi). Yeni bir dil eklemek icin:
 
 1. `python3 -m tests.i18n_check --write <kod>` dosyayi uretir/tazeler,
-2. `LANGUAGE_NAMES` icine dilin kendi adini yazin.
+2. `LANGUAGE_NAMES` icine dilin kendi adini, `PLURAL_RULES` icine cogul
+   kuralini yazin.
 
-Koda dokunmak gerekmez; dosya bulunursa dil menusunde cikar.
+Dosya bulunursa dil menusunde cikar.
 
-## Neden `.po` (ama gettext calisma zamani degil)
+## `.ts` ama `QTranslator` degil
 
-Bicim gettext'in `.po` dosyasidir: cogul ekleri (`Plural-Forms`), baglam
-(`msgctxt`) ve bayat ceviriyi koruyan `fuzzy` isareti oradan gelir; Poedit,
-Weblate ve Crowdin dosyayi dogrudan okur. Ama `gettext` **modulu**
-kullanilmaz: o yalnizca derlenmis `.mo` okur ve derlemek icin `msgfmt`
-gerekir. `.po` burada dogrudan okunuyor (`i18n/po.py`), derleme adimi yok.
-
-## Neden Qt Linguist (.ts/.qm) degil
-
-`QTranslator` yalnizca `QObject.tr()` cagrilarini cevirir; bu projede metnin
+Dosya Qt Linguist ile duzenlenir; ama calisma zamaninda `QTranslator`
+kullanilmaz: o yalnizca `QObject.tr()` cagrilarini cevirir, oysa metnin
 onemli bir bolumu `core/` icinde uretilir ve `core/` PyQt import etmez
-(CLAUDE.md katman kurali). Ayrica `.qm` uretmek Qt'nin `lrelease` aracini
-gerektirir — "harici bagimlilik yok" kuralina aykiridir. Gerekce:
-`.claude/decisions/0027-cok-dilli-arayuz.md`.
+(CLAUDE.md katman kurali); `.qm` uretmek de `lrelease` ister. `.ts` burada
+`xml.etree` ile dogrudan okunur (`i18n/ts.py`), derleme adimi yok. Cogul,
+baglam ve "bitmemis" (fuzzy) isareti `.ts`'te de vardir. Gerekce:
+`.claude/decisions/0027-cok-dilli-arayuz.md`, `0088-ts-sozlukler-yedi-dil-ve-tema.md`.
 
 ## Is parcaciklari
 
@@ -47,7 +42,7 @@ import os
 import re
 from typing import Callable, Dict, List, Optional, Tuple
 
-from . import po
+from . import po, ts
 
 # Kaynak dil: kodun icindeki metinlerin dili. Ceviri dosyasi yoktur.
 SOURCE_LANGUAGE = "tr"
@@ -57,7 +52,37 @@ LANGUAGE_NAMES: Dict[str, str] = {
     "tr": "Türkçe",
     "en": "English",
     "de": "Deutsch",
+    "fr": "Français",
+    "it": "Italiano",
+    "es": "Español",
+    "ru": "Русский",
+    "zh": "简体中文",
+    "ja": "日本語",
+    "ko": "한국어",
 }
+
+# Dil basina cogul kurali (gettext `Plural-Forms` ifadesi). `.ts` dosyasi
+# kurali tasimaz; Qt Linguist bicim sayisini dil kodundan bilir, calisma
+# zamani buradan alir. Sayilar Qt'nin numerus kurallariyla aynidir.
+PLURAL_RULES: Dict[str, str] = {
+    "tr": "nplurals=2; plural=(n != 1);",
+    "en": "nplurals=2; plural=(n != 1);",
+    "de": "nplurals=2; plural=(n != 1);",
+    "it": "nplurals=2; plural=(n != 1);",
+    "es": "nplurals=2; plural=(n != 1);",
+    "fr": "nplurals=2; plural=(n > 1);",
+    "ru": ("nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+           "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"),
+    "zh": "nplurals=1; plural=0;",
+    "ja": "nplurals=1; plural=0;",
+    "ko": "nplurals=1; plural=0;",
+}
+
+
+def nplurals(code: str) -> int:
+    """Dilin cogul bicim sayisi (bilinmeyen dilde 2)."""
+    match = re.search(r"nplurals\s*=\s*(\d+)", PLURAL_RULES.get(code, ""))
+    return int(match.group(1)) if match else 2
 
 # Dil secimi ayar dosyasinda bu anahtarla durur.
 SETTING_KEY = "language"
@@ -235,7 +260,7 @@ def catalog_languages() -> List[str]:
         names = os.listdir(CATALOG_DIR)
     except OSError:
         return []
-    return sorted(n[:-3] for n in names if n.endswith(".po"))
+    return sorted(n[:-3] for n in names if n.endswith(".ts"))
 
 
 def available_languages() -> List[Tuple[str, str]]:
@@ -250,19 +275,28 @@ def available_languages() -> List[Tuple[str, str]]:
 
 
 def catalog_path(code: str) -> str:
-    """Bir dilin `.po` dosyasinin yolu."""
-    return os.path.join(CATALOG_DIR, f"{code}.po")
+    """Bir dilin `.ts` dosyasinin yolu."""
+    return os.path.join(CATALOG_DIR, f"{code}.ts")
 
 
-def load_po(code: str) -> po.Catalog:
-    """Dilin `.po` dosyasini okur; yoksa/bozuksa bos katalog doner."""
+def load_file(code: str) -> po.Catalog:
+    """Dilin `.ts` dosyasini okur; yoksa/bozuksa bos katalog doner.
+
+    Cogul kurali `PLURAL_RULES`'tan `Plural-Forms` basligina konur; boylece
+    katalogu kullanan kod bicimden habersiz kalir.
+    """
     if code in (SOURCE_LANGUAGE, PSEUDO_LANGUAGE):
         return po.Catalog()
     try:
         with open(catalog_path(code), "r", encoding="utf-8") as fh:
-            return po.parse(fh.read())
-    except (OSError, ValueError):
+            catalog = ts.parse(fh.read())
+    except (OSError, ValueError, ts.ET.ParseError):
         return po.Catalog()
+    catalog.headers["Plural-Forms"] = PLURAL_RULES.get(code, SOURCE_PLURAL_FORMS)
+    return catalog
+
+
+load_po = load_file          # eski ad (geriye donuk)
 
 
 def load_catalog(code: str) -> Dict[str, str]:
@@ -271,7 +305,7 @@ def load_catalog(code: str) -> Dict[str, str]:
     `fuzzy` isaretli girisler **kullanilmaz** (gettext davranisi): ceviri
     dosyada durur ve cevirmene onerilir, ama arayuzde gosterilmez.
     """
-    return {e.msgid: e.msgstr for e in load_po(code).entries
+    return {e.msgid: e.msgstr for e in load_file(code).entries
             if e.context is None and e.plural is None and e.translated}
 
 
@@ -303,7 +337,7 @@ def set_language(code: str, remember: bool = True) -> str:
             and code not in catalog_languages():
         code = SOURCE_LANGUAGE
     changed = code != _language or not _ready
-    katalog = load_po(code)
+    katalog = load_file(code)
     _catalog = {e.msgid: e.msgstr for e in katalog.entries
                 if e.context is None and e.plural is None and e.translated}
     _contexts = {(e.context, e.msgid): e.msgstr for e in katalog.entries

@@ -171,9 +171,17 @@ def trim(appdir: str) -> None:
     for sub in ("qml", "translations"):
         path = os.path.join(qt, sub)
         if sub == "translations" and os.path.isdir(path):
-            # Qt'nin kendi dugme metinleri (Evet/Hayir) icin qtbase_* gerekir.
+            # Qt'nin kendi metinleri (dosya diyalogu, Evet/Hayir) icin
+            # qtbase_* gerekir; yalnizca uygulamanin dilleri tutulur. Diller
+            # sozluk klasorunden gelir (elle liste yeni dili unutuyordu);
+            # Cince Qt'de bolge ekiyle adlanir (ui/qt_i18n.py).
+            catalogs = os.path.join(ROOT, "src", "diskultimate", "i18n", "catalogs")
+            langs = {"tr", "en"} | {n[:-3] for n in os.listdir(catalogs)
+                                    if n.endswith(".ts")}
+            langs = {{"zh": "zh_CN"}.get(code, code) for code in langs}
+            keep = re.compile(r"qtbase_(%s)\.qm$" % "|".join(sorted(langs)))
             for name in os.listdir(path):
-                if not re.match(r"qtbase_(tr|de|en)\.qm$", name):
+                if not keep.match(name):
                     os.remove(os.path.join(path, name))
         elif os.path.isdir(path):
             shutil.rmtree(path)

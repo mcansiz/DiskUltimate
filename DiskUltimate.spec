@@ -21,14 +21,14 @@ SRC = os.path.join(ROOT, 'src')
 
 # Çeviri sözlükleri. `i18n.CATALOG_DIR` paketin yanındaki `catalogs/` klasörüne
 # bakar; pakette de aynı göreli yerde durmalı, yoksa dil menüsü yalnızca
-# kaynak dili (Türkçe) gösterir. `.po` dosyaları veri, kod değil — PyInstaller
+# kaynak dili (Türkçe) gösterir. `.ts` dosyaları veri, kod değil — PyInstaller
 # bunları kendiliğinden almaz.
 datas = [
     (p, os.path.join('diskultimate', 'i18n', 'catalogs'))
-    for p in sorted(glob.glob(os.path.join(SRC, 'diskultimate', 'i18n', 'catalogs', '*.po')))
+    for p in sorted(glob.glob(os.path.join(SRC, 'diskultimate', 'i18n', 'catalogs', '*.ts')))
 ]
 if not datas:
-    raise SystemExit('DiskUltimate.spec: src/diskultimate/i18n/catalogs/*.po bulunamadi')
+    raise SystemExit('DiskUltimate.spec: src/diskultimate/i18n/catalogs/*.ts bulunamadi')
 
 # Uygulama ikonu. Çalışma anında `ui.appicon` paketin yanındaki `resources/`
 # klasörüne bakar (çeviri sözlükleriyle aynı yöntem), bu yüzden pakette de aynı
@@ -61,12 +61,15 @@ if len(ICONPACK_MODULES) < 6:
                      'uret: python3 tools/iconpacks.py' % len(ICONPACK_MODULES))
 
 # Qt'nin kendi çevirileri: yalnızca uygulamanın dilleri (Türkçe kaynak dil +
-# `.po` sözlüğü olanlar; İngilizce Qt'nin kendi dili, dosyası boştur).
+# `.ts` sözlüğü olanlar; İngilizce Qt'nin kendi dili, dosyası boştur).
+# Çince Qt'de bölge ekiyle adlanır: qtbase_zh_CN.qm (`ui/qt_i18n.py`).
 # `ui/qt_i18n.py` bunları yükler: dosya diyaloğu, sağ tık menüsü gibi Qt
 # metinleri arayüz dilinde görünür (standart düğmeler zaten sözlüğümüzden).
+_QT_FILE_LOCALE = {'zh': 'zh_CN'}
 QT_LANGS = sorted({'tr'} | {
-    os.path.splitext(os.path.basename(p))[0] for p, _dest in datas
-    if p.endswith('.po')} - {'en'})
+    _QT_FILE_LOCALE.get(os.path.splitext(os.path.basename(p))[0],
+                        os.path.splitext(os.path.basename(p))[0])
+    for p, _dest in datas if p.endswith('.ts')} - {'en'})
 
 # EXE'ye gömülecek ikon: Windows `.ico`, macOS `.icns` ister. Linux'ta
 # PyInstaller bu alanı UYGULAMAZ, yalnızca "Ignoring icon; supported only on
@@ -147,7 +150,7 @@ _DROP = re.compile(
 )
 a.binaries = [b for b in a.binaries if not _DROP.search(b[0])]
 
-# Qt'nin kendi çevirileri (~1,6 MB): uygulama metinleri kendi `.po`
+# Qt'nin kendi çevirileri (~1,6 MB): uygulama metinleri kendi `.ts`
 # sözlüklerinden gelir (ADR 0027), ama Qt'nin KENDİ metinleri (dosya diyaloğu,
 # sağ tık menüsü) `qtbase_<dil>.qm` ister (`ui/qt_i18n.py`). Yalnızca
 # uygulamanın dilleri tutulur (~300 KB); geri kalanı atılır. `uic`

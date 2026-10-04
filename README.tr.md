@@ -11,7 +11,7 @@ sistemleri **sıfırdan, saf Python ile** yazıldığı için harici araç gerek
 ![sürüm](https://img.shields.io/badge/s%C3%BCr%C3%BCm-0.5.2--beta-orange)
 ![python](https://img.shields.io/badge/python-3.8%2B-green)
 ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen)
-![dil](https://img.shields.io/badge/dil-tr%20%7C%20en%20%7C%20de-blue)
+![dil](https://img.shields.io/badge/dil-tr%20%7C%20en%20%7C%20de%20%7C%20fr%20%7C%20it%20%7C%20es%20%7C%20ru%20%7C%20zh%20%7C%20ja%20%7C%20ko-blue)
 ![lisans](https://img.shields.io/badge/lisans-GPL--3.0-lightgrey)
 [![CI](https://github.com/mcansiz/DiskUltimate/actions/workflows/ci.yml/badge.svg)](https://github.com/mcansiz/DiskUltimate/actions/workflows/ci.yml)
 
@@ -210,10 +210,14 @@ sağ tık → **Aç**.
   uygulama kendiliğinden rapor yazar)
 
 ### Arayüz
-- **Türkçe, İngilizce ve Almanca**; *Araclar → Dil* menüsünden anında değişir
-  (yeniden başlatma gerekmez, açık diskler ve bekleyen adımlar korunur)
+- **On dil**: Türkçe, İngilizce, Almanca, Fransızca, İtalyanca, İspanyolca,
+  Rusça, Basitleştirilmiş Çince, Japonca ve Korece; *Araclar → Dil*
+  menüsünden anında değişir (yeniden başlatma gerekmez, açık diskler ve
+  bekleyen adımlar korunur). Fransızca, İtalyanca, İspanyolca, Rusça, Çince,
+  Japonca ve Korece çeviriler bu sürümde eklendi ve henüz anadili konuşanlarca
+  gözden geçirilmedi — düzeltmeler memnuniyetle karşılanır
 - Birden fazla ikon seti (yerleşik, Tabler, Lucide, Material, Phosphor, Bootstrap)
-- Sistemin Qt temasını kullanır
+- **Sistem, Açık ve Koyu tema** (*Araclar → Tema*); Sistem masaüstünün Qt temasını izler
 
 ## Desteklenen dosya sistemleri
 
@@ -262,7 +266,8 @@ gri gösterilir ve yanında **nedeni** yazar.
 python3 main.py                  # boş başlat
 python3 main.py disk.img         # açılışta bir görüntü aç
 python3 main.py --no-root        # root / yönetici yetkisi sorma
-DISKULTIMATE_LANG=en python3 main.py   # dili zorla (tr, en, de)
+DISKULTIMATE_LANG=en python3 main.py   # dili zorla (tr, en, de, fr, it, es, ru, zh, ja, ko)
+DISKULTIMATE_THEME=dark python3 main.py  # temayı zorla (system, light, dark)
 ```
 
 Aynı seçenekler `DiskUltimate.exe` ile de çalışır.
@@ -345,8 +350,8 @@ python3 -m tests.ui_smoke         # arayüz duman testi
 
 Uygulamanın yazdığı birimler bağımsız araçlarla çapraz doğrulanır
 (`fsck.vfat`, `fsck.exfat`, `e2fsck`, `ntfsfix`, `xfs_repair`, `fsck.hfsplus`,
-Windows `chkdsk`). Çeviriler `src/diskultimate/i18n/catalogs/*.po`
-dosyalarındadır; Poedit veya Weblate ile düzenlenebilir.
+Windows `chkdsk`). Çeviriler `src/diskultimate/i18n/catalogs/*.ts` (Qt Linguist biçimi)
+dosyalarındadır; Qt Linguist ile düzenlenebilir.
 
 README ekran görüntüleri `python3 tools/readme_screenshots.py` ile yeniden
 üretilir.

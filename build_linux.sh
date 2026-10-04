@@ -48,7 +48,7 @@ fi
 echo "Python : $("$PY" -c 'import sys; print(sys.version.split()[0], sys.executable)')"
 
 # Kaynak agaci yerinde mi? (Yanlis dizinden calistirma erken yakalanir.)
-for gerekli in main.py DiskUltimate.spec src/diskultimate/i18n/catalogs/en.po \
+for gerekli in main.py DiskUltimate.spec src/diskultimate/i18n/catalogs/en.ts \
                src/diskultimate/ui/resources/app-icon.ico; do
   [ -e "$gerekli" ] || hata "Kaynak agaci eksik ($gerekli yok).
   Bu betik depo kokunde durmali. Su an: $PWD"
@@ -72,7 +72,7 @@ echo
 
 # ---------------------------------------------------------------------
 # 3) Paketleme. Butun ayarlar DiskUltimate.spec icinde: giris noktasi
-#    main.py, pathex=src, ceviri sozlukleri (.po) datas olarak,
+#    main.py, pathex=src, ceviri sozlukleri (.ts) datas olarak,
 #    kullanilmayan Qt modullerinin haric tutulmasi ve fazla kitapliklari
 #    kirpan _DROP filtresi.
 # ---------------------------------------------------------------------

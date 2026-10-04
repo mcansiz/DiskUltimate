@@ -1,5 +1,7 @@
-"""Gorunum sabitleri: renk paleti, dosya sistemi renkleri, stil sayfasi."""
+"""Gorunum: tema (Sistem/Acik/Koyu), dosya sistemi renkleri, cizim yardimcilari."""
 from __future__ import annotations
+
+from typing import Optional
 
 from PyQt5.QtCore import QPointF, QRectF, Qt
 from PyQt5.QtGui import (QBrush, QColor, QIcon, QLinearGradient, QPainter,
@@ -7,18 +9,8 @@ from PyQt5.QtGui import (QBrush, QColor, QIcon, QLinearGradient, QPainter,
 from PyQt5.QtWidgets import QApplication
 
 from ..core import fsregistry
-from ..i18n import mark, tr
+from ..i18n import mark, tr, trc
 
-# Ana palet (DiskGenius'a yakin, acik tema)
-BG = "#f4f6f9"
-PANEL = "#ffffff"
-BORDER = "#c8d0da"
-TEXT = "#1f2933"
-TEXT_DIM = "#6b7785"
-ACCENT = "#1769c7"
-ACCENT_LIGHT = "#e3eefb"
-HEADER_TOP = "#fbfcfe"
-HEADER_BOTTOM = "#e7ecf3"
 
 # Dosya sistemine gore bolum renkleri — tek kaynak `core/fsregistry` (ADR 0056)
 FS_COLORS = fsregistry.colors()
@@ -186,167 +178,150 @@ def draw_usage_bar(painter: QPainter, rect, ratio: float, base: QColor,
     painter.restore()
 
 
-# NOT: Bu stil sayfasi su an UYGULANMIYOR. Uygulama sistemin varsayilan Qt
-# gorunumunu kullanir (bkz. ADR 0013). Ileride "Tema" bolumu eklendiginde
-# `apply_theme(app, "diskultimate")` ile secenek olarak sunulacak.
-STYLESHEET = f"""
-QMainWindow, QWidget {{
-    background: {BG};
-    color: {TEXT};
-    font-size: 12px;
-}}
-QMenuBar {{
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 {HEADER_TOP}, stop:1 {HEADER_BOTTOM});
-    border-bottom: 1px solid {BORDER};
-    padding: 2px;
-}}
-QMenuBar::item {{ padding: 5px 11px; background: transparent; border-radius: 3px; }}
-QMenuBar::item:selected {{ background: {ACCENT_LIGHT}; }}
-QMenu {{ background: {PANEL}; border: 1px solid {BORDER}; padding: 4px; }}
-QMenu::item {{ padding: 6px 26px 6px 22px; border-radius: 3px; }}
-QMenu::item:selected {{ background: {ACCENT_LIGHT}; color: {ACCENT}; }}
-QMenu::separator {{ height: 1px; background: {BORDER}; margin: 4px 8px; }}
-QToolBar {{
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 {HEADER_TOP}, stop:1 {HEADER_BOTTOM});
-    border-bottom: 1px solid {BORDER};
-    spacing: 2px; padding: 4px;
-}}
-QToolButton {{ padding: 5px 9px; border-radius: 4px; border: 1px solid transparent; }}
-QToolButton:hover {{ background: {ACCENT_LIGHT}; border-color: #bcd6f2; }}
-QToolButton:pressed {{ background: #cfe0f5; }}
-QToolButton:disabled {{ color: #a8b0ba; }}
-QStatusBar {{ background: {HEADER_BOTTOM}; border-top: 1px solid {BORDER}; }}
-QStatusBar::item {{ border: none; }}
-QTreeWidget, QTableWidget, QListWidget, QTreeView, QTableView {{
-    background: {PANEL};
-    border: 1px solid {BORDER};
-    alternate-background-color: #f8fafc;
-    selection-background-color: {ACCENT_LIGHT};
-    selection-color: {TEXT};
-    outline: 0;
-}}
-QTreeWidget::item, QListWidget::item {{ padding: 3px 2px; }}
-QTreeWidget::item:selected, QListWidget::item:selected, QTableWidget::item:selected {{
-    background: {ACCENT_LIGHT}; color: {TEXT};
-}}
-QHeaderView::section {{
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 {HEADER_TOP}, stop:1 {HEADER_BOTTOM});
-    border: none; border-right: 1px solid {BORDER}; border-bottom: 1px solid {BORDER};
-    padding: 5px 6px; font-weight: 600; color: #45505c;
-}}
-QTabWidget::pane {{ border: 1px solid {BORDER}; background: {PANEL}; top: -1px; }}
-/* Sekmelerde font-weight KULLANILMAZ: Qt sekme genisligini stil sayfasindaki
-   fontu hesaba katmadan olctugu icin kalin metin kirpiliyor (Windows'ta
-   "Dosya Gezgini" -> "osya Gezgin"). Secili sekme yalnizca renk ve zeminle
-   vurgulanir; min-width metnin sigmasini garantiler. */
-QTabBar::tab {{
-    background: {HEADER_BOTTOM}; border: 1px solid {BORDER}; border-bottom: none;
-    padding: 6px 18px; margin-right: 2px; min-width: 96px; color: #55606c;
-    border-top-left-radius: 4px; border-top-right-radius: 4px;
-}}
-QTabBar::tab:selected {{ background: {PANEL}; color: {ACCENT}; }}
-QTabBar::tab:hover:!selected {{ background: #eef2f7; }}
-QPushButton {{
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #ffffff, stop:1 #eef1f5);
-    border: 1px solid {BORDER}; border-radius: 4px; padding: 6px 16px; min-width: 76px;
-}}
-QPushButton:hover {{ border-color: {ACCENT}; background: {ACCENT_LIGHT}; }}
-QPushButton:pressed {{ background: #cfe0f5; }}
-QPushButton:disabled {{ color: #a8b0ba; background: #f0f2f5; }}
-QPushButton[primary="true"] {{
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3a8ae0, stop:1 {ACCENT});
-    color: white; border-color: #1560b4; font-weight: 600;
-}}
-QPushButton[primary="true"]:hover {{ background: #2d7fd6; }}
-QLineEdit, QComboBox, QPlainTextEdit, QTextEdit {{
-    background: {PANEL}; border: 1px solid {BORDER}; border-radius: 3px; padding: 4px 6px;
-    selection-background-color: {ACCENT};
-}}
-/* QSpinBox/QDoubleSpinBox'a kutu kurali verilmez: stil sayfasi alt kontrolleri
-   devraldiginda Fusion artir/azalt oklarini cizmiyor. Yalnizca renk ayarlanir. */
-QSpinBox, QDoubleSpinBox {{
-    background: {PANEL}; selection-background-color: {ACCENT}; min-height: 20px;
-}}
-QLineEdit:focus, QComboBox:focus {{ border-color: {ACCENT}; }}
-QComboBox QAbstractItemView {{
-    background: {PANEL}; border: 1px solid {BORDER}; selection-background-color: {ACCENT_LIGHT};
-    selection-color: {TEXT};
-}}
-QGroupBox {{
-    border: 1px solid {BORDER}; border-radius: 4px; margin-top: 10px;
-    padding-top: 8px; background: {PANEL};
-}}
-QGroupBox::title {{
-    subcontrol-origin: margin; left: 10px; padding: 0 5px;
-    color: {ACCENT}; font-weight: 600;
-}}
-QProgressBar {{
-    border: 1px solid {BORDER}; border-radius: 3px; background: {PANEL};
-    text-align: center; height: 18px;
-}}
-QProgressBar::chunk {{
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #4a93e8, stop:1 {ACCENT});
-    border-radius: 2px;
-}}
-QSplitter::handle {{ background: {BORDER}; }}
-QSplitter::handle:horizontal {{ width: 3px; }}
-QSplitter::handle:vertical {{ height: 3px; }}
-QScrollBar:vertical {{ background: {BG}; width: 12px; margin: 0; }}
-QScrollBar::handle:vertical {{ background: #b9c2cc; border-radius: 6px; min-height: 24px; }}
-QScrollBar::handle:vertical:hover {{ background: #9aa5b1; }}
-QScrollBar:horizontal {{ background: {BG}; height: 12px; margin: 0; }}
-QScrollBar::handle:horizontal {{ background: #b9c2cc; border-radius: 6px; min-width: 24px; }}
-QScrollBar::add-line, QScrollBar::sub-line {{ width: 0; height: 0; }}
-QToolTip {{
-    background: #2f3b47; color: white; border: none; padding: 5px 8px; border-radius: 3px;
-}}
-"""
-
-
-def apply_icon_theme() -> str:
-    """Acik arayuz temasiyla uyumlu bir ikon seti secer.
-
-    Masaustu koyu bir ikon temasi kullaniyorsa (orn. `breeze-dark`) ikonlar
-    acik renkli olur ve uygulamanin acik zemininde gorunmez. Bu durumda ayni
-    temanin acik surumune gecilir; o da yoksa Qt'nin gomulu ikonlarina dusulur.
-
-    QApplication olusturulduktan SONRA cagrilmalidir. Secilen tema adini dondurur.
-    """
-    mevcut = QIcon.themeName()
-    if not mevcut or not mevcut.lower().endswith("-dark"):
-        return mevcut
-    for aday in (mevcut[:-len("-dark")], "breeze", "Adwaita"):
-        if not aday:
-            continue
-        QIcon.setThemeName(aday)
-        if QIcon.hasThemeIcon("folder"):
-            return aday
-    QIcon.setThemeName("")      # Qt'nin gomulu ikon seti
-    return ""
-
-
 # --------------------------------------------------------------------------
-# Tema uygulama (su an yalnizca "sistem")
+# Tema: Sistem / Acik / Koyu (ADR 0088)
 # --------------------------------------------------------------------------
-THEMES = {
-    "system": "Sistem varsayilani",
-    "diskultimate": "DiskUltimate (acik)",
+# ADR 0013 sabit renkli stil sayfasini kaldirdi: masaustunun (ozellikle koyu)
+# temasiyla catisip ogeleri okunmaz yapiyordu, Windows'ta sekme basliklarini
+# kirpiyordu. Acik/koyu tema bu yuzden **palet** ile yapilir: Fusion stili +
+# QPalette; butun pencereler (ve `palette_color` kullanan cizimler) rengini
+# paletten aldigi icin kendiliginden uyar. QSS yalnizca paletin kapsamadigi
+# iki ayrinti icindir (ipucu kenarligi, odak cercevesi) ve renklerini de
+# paletten alir — sabit renk yazilmaz.
+SETTING_KEY = "theme"
+ENV_NAME = "DISKULTIMATE_THEME"
+DEFAULT_THEME = "system"
+
+# (anahtar, Turkce ad). Gorunen ad `theme_label()`'dan gelir: "Acik" baska
+# yerde "On" (acik/kapali) diye cevrilir; tema adlari bu yuzden "tema"
+# baglamiyla ayri girislerdir (`trc`).
+THEMES = [
+    ("system", "Sistem"),
+    ("light", "Acik"),
+    ("dark", "Koyu"),
+]
+
+# Rol -> (etkin renk, devre disi renk). Devre disi verilmezse etkinle ayni.
+_LIGHT = {
+    "Window": ("#f3f4f6", None), "WindowText": ("#1f2933", "#9aa3ad"),
+    "Base": ("#ffffff", "#f3f4f6"), "AlternateBase": ("#f5f7fa", None),
+    "ToolTipBase": ("#ffffff", None), "ToolTipText": ("#1f2933", None),
+    "PlaceholderText": ("#6b7785", None), "Text": ("#1f2933", "#9aa3ad"),
+    "Button": ("#eceff3", None), "ButtonText": ("#1f2933", "#9aa3ad"),
+    "BrightText": ("#d0312d", None), "Link": ("#1769c7", None),
+    "LinkVisited": ("#7a4fb5", None), "Highlight": ("#1769c7", "#c8d0da"),
+    "HighlightedText": ("#ffffff", None), "Light": ("#ffffff", None),
+    "Midlight": ("#e6e9ee", None), "Mid": ("#c8d0da", None),
+    "Dark": ("#a0a8b3", None), "Shadow": ("#6b7785", None),
 }
+_DARK = {
+    "Window": ("#2b2d31", None), "WindowText": ("#e4e6eb", "#7d828a"),
+    "Base": ("#1e1f22", "#26282c"), "AlternateBase": ("#25272b", None),
+    "ToolTipBase": ("#3a3d42", None), "ToolTipText": ("#e4e6eb", None),
+    "PlaceholderText": ("#8b9099", None), "Text": ("#e4e6eb", "#7d828a"),
+    "Button": ("#35383d", None), "ButtonText": ("#e4e6eb", "#7d828a"),
+    "BrightText": ("#ff6b6b", None), "Link": ("#5aa9ff", None),
+    "LinkVisited": ("#b48ef0", None), "Highlight": ("#2f6fd0", "#3a3d42"),
+    "HighlightedText": ("#ffffff", None), "Light": ("#4a4e54", None),
+    "Midlight": ("#3c3f44", None), "Mid": ("#2f3236", None),
+    "Dark": ("#1a1b1e", None), "Shadow": ("#000000", None),
+}
+_PALETTES = {"light": _LIGHT, "dark": _DARK}
+
+# Ilk cagrida masaustunun stili ve paleti saklanir: "Sistem"e donulurken
+# bunlar geri yuklenir (uygulama yeniden baslatilmadan).
+_system_style: Optional[str] = None
+_system_palette = None
+_current = DEFAULT_THEME
 
 
-def apply_theme(app, name: str = "system") -> str:
-    """Uygulamaya tema uygular. Su an varsayilan 'system'dir.
+def theme_label(key: str) -> str:
+    """Temanin etkin dildeki adi."""
+    if key == "system":
+        return trc("tema", "Sistem")
+    if key == "light":
+        return trc("tema", "Acik")
+    if key == "dark":
+        return trc("tema", "Koyu")
+    return key
 
-    'system' : hicbir stil sayfasi uygulanmaz; masaustunun kendi gorunumu,
-               paleti ve ikon temasi aynen kullanilir.
-    'diskultimate' : proje icindeki acik tema (ileride Tema bolumunden secilir).
+
+def build_palette(name: str):
+    """Tema adindan QPalette uretir ("light" / "dark")."""
+    from PyQt5.QtGui import QPalette
+
+    roles = _PALETTES[name]
+    palette = QPalette()
+    for role_name, (active, disabled) in roles.items():
+        role = getattr(QPalette, role_name)
+        color = QColor(active)
+        palette.setColor(QPalette.Active, role, color)
+        palette.setColor(QPalette.Inactive, role, color)
+        palette.setColor(QPalette.Disabled, role, QColor(disabled or active))
+    return palette
+
+
+def theme_stylesheet(palette) -> str:
+    """Paletin kapsamadigi ayrintilar icin kucuk QSS (renkler paletten)."""
+    from PyQt5.QtGui import QPalette
+
+    kenar = palette.color(QPalette.Mid).name()
+    vurgu = palette.color(QPalette.Highlight).name()
+    return (f"QToolTip {{ border: 1px solid {kenar}; padding: 3px 5px; }}\n"
+            f"QLineEdit:focus, QSpinBox:focus, QComboBox:focus, "
+            f"QPlainTextEdit:focus {{ border: 1px solid {vurgu}; }}\n")
+
+
+def saved_theme() -> str:
+    """Acilista kullanilacak tema: ortam degiskeni > kayitli secim > Sistem."""
+    import os
+
+    istenen = os.environ.get(ENV_NAME, "").strip().lower()
+    if istenen in dict(THEMES):
+        return istenen
+    try:
+        from ..core import settings
+        kayitli = str(settings.get(SETTING_KEY, DEFAULT_THEME))
+    except Exception:
+        kayitli = DEFAULT_THEME
+    return kayitli if kayitli in dict(THEMES) else DEFAULT_THEME
+
+
+def current_theme() -> str:
+    return _current
+
+
+def apply_theme(app, name: str = DEFAULT_THEME, remember: bool = False) -> str:
+    """Temayi uygular; uygulanan anahtari dondurur.
+
+    'system': masaustunun kendi stili ve paleti, stil sayfasi yok (ADR 0013).
+    'light' / 'dark': Fusion + tema paleti + kucuk QSS. Bilinmeyen ad
+    'system' sayilir. `remember=True` secimi ayar dosyasina yazar.
     """
-    if name == "diskultimate":
-        app.setStyleSheet(STYLESHEET)
-        apply_icon_theme()
-        return "diskultimate"
-    app.setStyleSheet("")
-    return "system"
+    from PyQt5.QtWidgets import QStyleFactory
+
+    global _system_style, _system_palette, _current
+    if _system_style is None:
+        _system_style = app.style().objectName()
+        _system_palette = app.palette()
+    if name not in _PALETTES:
+        name = DEFAULT_THEME
+    if name == DEFAULT_THEME:
+        app.setStyleSheet("")
+        stil = QStyleFactory.create(_system_style) if _system_style else None
+        if stil is not None:
+            app.setStyle(stil)
+        app.setPalette(_system_palette)
+    else:
+        app.setStyle(QStyleFactory.create("Fusion"))
+        palette = build_palette(name)
+        app.setPalette(palette)
+        app.setStyleSheet(theme_stylesheet(palette))
+    _current = name
+    if remember:
+        from ..core import settings
+        settings.set_value(SETTING_KEY, name)
+    return name
 
 
 def palette_color(widget, role: str = "text"):

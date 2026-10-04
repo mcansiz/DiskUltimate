@@ -14,7 +14,7 @@ ceviri dosyasina (`qtbase_tr.qm`) bakar. Uygulama o dosyayi hic yuklemiyordu.
    tekerlegiyle gelir; ama dagitim paketlerinde (ayri `qttranslations`) ya da
    paketlenmis exe'de **eksik olabilir**.
 2. **Yedek cevirmen** (`_ButtonTranslator`) — standart dugme metinlerini
-   bizim `.po` sozluklerimizden cevirir. `.qm` bulunmasa da Evet/Hayir/Tamam/
+   bizim `.ts` sozluklerimizden cevirir. `.qm` bulunmasa da Evet/Hayir/Tamam/
    Iptal dogru gorunur. Son yuklenen cevirmene once bakildigi icin bu katman
    Qt'ninkinin ustundedir: dugmeler her platformda ayni kelimeyi kullanir.
 
@@ -61,12 +61,12 @@ _installed: List[QTranslator] = []
 
 
 class _ButtonTranslator(QTranslator):
-    """Standart dugme metinlerini `.po` sozluklerimizden cevirir."""
+    """Standart dugme metinlerini `.ts` sozluklerimizden cevirir."""
 
     def translate(self, context, source, disambiguation=None, n=-1):
         if context in CONTEXTS and source in BUTTONS:
             # Ingilizce dahil her dil bizim sozlugumuzden: `tr` kaynak dilde
-            # Turkceyi, `en`de en.po'daki karsiligi dondurur.
+            # Turkceyi, `en`de en.ts'deki karsiligi dondurur.
             return tr(BUTTONS[source])
         # None = "bende yok" (null QString): Qt siradaki cevirmene, sonra kaynak
         # metne bakar. "" DONDURULMEZ: PyQt onu bos ama gecerli bir ceviri
@@ -90,9 +90,15 @@ def _qt_translation_dirs() -> List[str]:
     return [d for d in dirs if d and os.path.isdir(d)]
 
 
+# Qt ceviri dosyasi bolge ekiyle adlanan diller: `qtbase_zh.qm` yok,
+# `qtbase_zh_CN.qm` var; QTranslator eki kendiliginden eklemez.
+QT_FILE_LOCALE = {"zh": "zh_CN"}
+
+
 def _load_qtbase(code: str) -> Optional[QTranslator]:
     """qtbase_<dil>.qm varsa yukler; yoksa None (yedek katman yeter)."""
     lang = "tr" if code == i18n.SOURCE_LANGUAGE else code
+    lang = QT_FILE_LOCALE.get(lang, lang)
     if lang in (i18n.PSEUDO_LANGUAGE, "en"):
         return None
     for folder in _qt_translation_dirs():

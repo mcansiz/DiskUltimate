@@ -1546,47 +1546,55 @@ def main() -> int:
     kaydet(d9, "15-sistem-bilgisi.png")
     d9.close()
 
-    # ADR 0013 ozel temayi kaldirdi ama `theme.STYLESHEET` ileride "Tema"
-    # bolumu icin bilerek birakildi ve `DISKULTIMATE_THEME=diskultimate` ile
-    # halen acilabiliyor. Bu dal hicbir testten gecmiyordu; ADR 0012'deki
-    # sekme kirpilmasi tuzagi fark edilmeden geri gelebilirdi.
-    from diskultimate.ui.theme import THEMES
-    assert set(THEMES) == {"system", "diskultimate"}, THEMES
-    onceki = app.styleSheet()
+    # --- Tema: Sistem / Acik / Koyu (ADR 0088) ---
+    # Acik/koyu palet + kucuk QSS. Her temada ana pencere acilir: sekme
+    # basliklari kirpilmamali (ADR 0012), palet gercekten acik/koyu olmali,
+    # metin zeminden ayrismali; menuden secim isaretlenip saklanmali.
+    from diskultimate.core import settings as _ayarlar
+    from diskultimate.ui import theme as tema
+    assert [k for k, _ in tema.THEMES] == ["system", "light", "dark"], tema.THEMES
+    onceki_tema = tema.current_theme()
     try:
-        secilen = apply_theme(app, "diskultimate")
-        assert secilen == "diskultimate", secilen
-        assert app.styleSheet(), "diskultimate temasi stil sayfasi uygulamadi"
-        app.processEvents()
-        tema_penceresi = MainWindow()
-        tema_penceresi.resize(1400, 860)
-        tema_penceresi.open_path(goruntu)
-        app.processEvents()
-        # ADR 0012: stil sayfasindaki font-weight sekme basliklarini kirpmisti.
-        #
-        # `tabSizeHint` korumali (protected) bir islevdir. PyQt5'in bazi
-        # surumleri Python'da olusturulmamis bir nesnede buna izin vermez ve
-        # `RuntimeError` atar (Ubuntu 24.04 / PyQt5 5.15 boyle). O zaman bu tek
-        # denetim atlanir; testin geri kalani kosmaya devam eder — eskiden tum
-        # duman testi burada duruyordu ve sonraki adimlar hic calismiyordu.
-        cubuk = tema_penceresi.tabs.tabBar()
-        try:
-            for i in range(cubuk.count()):
-                gereken = cubuk.tabSizeHint(i).width()
-                gercek = cubuk.tabRect(i).width()
-                assert gercek + 1 >= gereken, (
-                    f"sekme {i} ({cubuk.tabText(i)!r}) kirpildi: "
-                    f"{gercek}px < gereken {gereken}px")
-            sonuc = f"{cubuk.count()} sekme kirpilmadi"
-        except RuntimeError as exc:
-            sonuc = f"sekme genisligi olculemedi, atlandi ({exc})"
-        kaydet(tema_penceresi, "16-tema-diskultimate.png")
-        tema_penceresi.close_all()
-        tema_penceresi.close()
-        print(f"  (tema dali denetlendi: {sonuc})")
+        sonuclar = []
+        for anahtar, dosya in (("light", "16-tema-acik.png"), ("dark", "16b-tema-koyu.png")):
+            tema_penceresi = MainWindow()
+            tema_penceresi.resize(1400, 860)
+            tema_penceresi.change_theme(anahtar)
+            assert tema.current_theme() == anahtar
+            assert _ayarlar.get(tema.SETTING_KEY) == anahtar, "secim saklanmadi"
+            secili = [a.data() for a in tema_penceresi._theme_group.actions()
+                      if a.isChecked()]
+            assert secili == [anahtar], secili
+            # (QSS varken app.style() QStyleSheetStyle sarmalayicisidir; adi
+            # bos gelir — Fusion'u palet ve QSS uzerinden denetliyoruz.)
+            assert app.styleSheet(), "tema kucuk QSS'ini uygulamadi"
+            tema_penceresi.open_path(goruntu)
+            app.processEvents()
+            koyu = tema.is_dark(tema_penceresi)
+            assert koyu == (anahtar == "dark"), (anahtar, koyu)
+            yazi = tema.palette_color(tema_penceresi, "text").value()
+            zemin = tema.palette_color(tema_penceresi, "window").value()
+            assert abs(yazi - zemin) > 120, f"{anahtar}: metin zeminden ayrismiyor"
+            cubuk = tema_penceresi.tabs.tabBar()
+            try:
+                for i in range(cubuk.count()):
+                    gereken = cubuk.tabSizeHint(i).width()
+                    gercek = cubuk.tabRect(i).width()
+                    assert gercek + 1 >= gereken, (
+                        f"{anahtar}: sekme {i} ({cubuk.tabText(i)!r}) kirpildi")
+                sonuclar.append(f"{anahtar}: {cubuk.count()} sekme tam")
+            except RuntimeError:
+                sonuclar.append(f"{anahtar}: sekme olculemedi")
+            kaydet(tema_penceresi, dosya)
+            tema_penceresi.close_all()
+            tema_penceresi.close()
+        # Sisteme donus: stil sayfasi kalkar, masaustu paleti geri gelir
+        tema.apply_theme(app, "system")
+        assert app.styleSheet() == "", "Sistem temasinda stil sayfasi kaldi"
+        print(f"  (tema: {'; '.join(sonuclar)})")
     finally:
-        apply_theme(app, "system")
-        app.setStyleSheet(onceki)
+        tema.apply_theme(app, onceki_tema)
+        _ayarlar.set_value(tema.SETTING_KEY, onceki_tema)
         app.processEvents()
 
     # --- takilan/cikarilan aygit agaca yansiyor mu? ---

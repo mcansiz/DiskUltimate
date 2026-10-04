@@ -1,4 +1,8 @@
-"""Gettext `.po` dosyalarini okuyup yazar — saf Python, harici arac yok.
+"""Ceviri girisi/katalog modeli ve gettext `.po` okuyucu-yazici — saf Python.
+
+2026-10-04'ten beri sozlukler `.ts`tir (`i18n/ts.py`, ADR 0088); bu modul
+ortak veri modelini (`Entry`, `Catalog`) ve birlestirmeyi (`merge`) tasir.
+`.po` okuyucu/yazici, `.po` disa/ice aktarim (Poedit/Weblate) icin durur.
 
 ## Neden `.po`
 
@@ -315,7 +319,8 @@ def dump(catalog: Catalog) -> str:
 # --------------------------------------------------------------------------
 # Birlestirme (msgmerge esdegeri)
 # --------------------------------------------------------------------------
-def merge(current: Catalog, source: List[Entry], similarity: float = 0.65) -> dict:
+def merge(current: Catalog, source: List[Entry], similarity: float = 0.65,
+          nplurals: int = 2) -> dict:
     """Kaynaktaki metinleri mevcut sozluge isler.
 
     - Ayni `msgid` varsa cevirisi **korunur**.
@@ -346,11 +351,11 @@ def merge(current: Catalog, source: List[Entry], similarity: float = 0.65) -> di
             if fresh.plural is not None and existing.plural is None:
                 # Duz giris cogula donustu: eski ceviri ilk bicime tasinir,
                 # yoksa `msgstr` dump sirasinda dusup ceviri kaybolurdu.
-                existing.plurals = [existing.msgstr, ""]
+                existing.plurals = [existing.msgstr] + [""] * (nplurals - 1)
                 existing.msgstr = ""
             existing.plural = fresh.plural
             if fresh.plural is not None and not existing.plurals:
-                existing.plurals = ["", ""]
+                existing.plurals = [""] * nplurals
             result.append(existing)
             counts["korunan"] += 1
         else:

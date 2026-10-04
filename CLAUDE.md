@@ -49,8 +49,12 @@ DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
 - **Çoklu dil:** arayüzde görünen her metin `i18n.tr("...")` ile sarılır; modül
   düzeyinde üretilen metinler (`MBR_TYPES`, `WIPE_METHODS`, `operations.KINDS`)
   `mark("...")` ile işaretlenip gösterim anında çevrilir (ADR 0027).
-  Sözlükler: `src/diskultimate/i18n/catalogs/<dil>.po` (gettext biçimi;
-  çoğul için `trn()`, bağlam için `trc()`). Poedit/Weblate doğrudan açar.
+  Sözlükler: `src/diskultimate/i18n/catalogs/<dil>.ts` — **Qt Linguist `.ts`
+  biçimi** (kullanıcı kararı, ADR 0088; önce `.po`). Dosya `i18n/ts.py` ile
+  saf Python okunur, `QTranslator`/`.qm` kullanılmaz (çekirdek PyQt import
+  etmez). Çoğul için `trn()` (kural `i18n.PLURAL_RULES`), bağlam için `trc()`.
+  Diller: tr (kaynak), en, de, fr, it, es, ru, zh, ja, ko. Yeni metin sonrası
+  `python3 -m tests.i18n_check --write <dil>` her dil için.
   Denetim: `python3 -m tests.i18n_check` (beklenen: her dil TAMAM).
 - **Yazım kuralı:** konsol/günlük çıktısı ve kod ASCII kalabilir; **arayüz
   metni ve çeviriler dilin doğru yazımıyla** yazılır. Almanca çeviriler bir kez
@@ -218,9 +222,13 @@ Denetim: `python3 -m tests.diag_check` (beklenen: 13/13).
 - **Görünen metin karar girdisi değildir:** kod, ürettiği metnin içinde arama
   yaparak karar vermez (metin çevrilince arama boşa düşer). Durum bayrakla
   taşınır (`DiskImage.readonly_locked` gibi).
-- **Görünüm:** özel stil sayfası kullanılmaz; sistemin Qt teması geçerlidir
-  (ADR 0013). Renk gerektiğinde `theme.palette_color(...)` kullanılır; sabit renk
-  yalnızca anlamsal olanlarda (dosya sistemi renkleri, ikon renkleri) kabul edilir.
+- **Görünüm:** tema Sistem / Açık / Koyu (Araçlar > Tema, ADR 0088). Sistem:
+  masaüstünün kendi Qt teması, stil sayfası yok (ADR 0013). Açık/Koyu: Fusion +
+  `QPalette` + paletten türetilen **küçük** bir QSS (`theme.theme_stylesheet`);
+  pencere başına sabit renkli QSS yazılmaz — ADR 0013'te okunmaz öğe ve kırpılan
+  sekme üretmişti. Renk gerektiğinde `theme.palette_color(...)` kullanılır; sabit
+  renk yalnızca anlamsal olanlarda (dosya sistemi renkleri, ikon renkleri) kabul
+  edilir.
 - **İkonlar `ui/icons.py` içinde QPainter ile çizilir** (ADR 0025).
   `QStyle` standart ikonları platforma göre değişir ve çoğu işlemin karşılığı
   yoktur; SVG ise `PyQt5.QtSvg` her dağıtımda kurulu olmadığı için kullanılamaz.

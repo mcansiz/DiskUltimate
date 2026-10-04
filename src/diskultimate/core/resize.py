@@ -748,15 +748,18 @@ class ResizePlan:
         return self.moves or self.new_count != self.old_count
 
     def summary(self) -> str:
-        satir = [f"Bolum {self.index}: "
-                 f"{human_size(self.old_count * self.sector_size)} -> "
-                 f"{human_size(self.new_count * self.sector_size)}"]
+        satir = [tr("Bolum {}: {} -> {}", self.index,
+                    human_size(self.old_count * self.sector_size),
+                    human_size(self.new_count * self.sector_size))]
         if self.moves:
-            yon = "ileri" if self.new_start > self.old_start else "geri"
-            fark = abs(self.new_start - self.old_start) * self.sector_size
-            satir.append(tr("{} {} tasinacak ({} veri kopyalanir)",
-                            human_size(fark), yon,
-                            human_size(self.move_bytes)))
+            # Yon ayri kelime olarak cumleye konmaz: cevrilmeden Turkce
+            # kaliyordu ve dil dil soz dizimi farkli (cince ceviri yakaladi).
+            fark = human_size(abs(self.new_start - self.old_start) * self.sector_size)
+            kopya = human_size(self.move_bytes)
+            if self.new_start > self.old_start:
+                satir.append(tr("{} ileri tasinacak ({} veri kopyalanir)", fark, kopya))
+            else:
+                satir.append(tr("{} geri tasinacak ({} veri kopyalanir)", fark, kopya))
         return "; ".join(satir)
 
 

@@ -120,7 +120,7 @@ class DeletedFilesDialog(QDialog):
                "kurtarilabilir gorunuyor.", len(self.items), kurtarilabilir)))
 
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Ad", tr("Yol"), tr("Boyut"), tr("Durum"), tr("Kurtarilabilirlik")])
+        self.tree.setHeaderLabels([tr("Ad"), tr("Yol"), tr("Boyut"), tr("Durum"), tr("Kurtarilabilirlik")])
         self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.tree.setAlternatingRowColors(True)
         self.tree.setRootIsDecorated(False)

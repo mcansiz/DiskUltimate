@@ -11,7 +11,7 @@ implemented **from scratch in pure Python**, so it needs no external tools.
 ![version](https://img.shields.io/badge/version-0.5.2--beta-orange)
 ![python](https://img.shields.io/badge/python-3.8%2B-green)
 ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen)
-![languages](https://img.shields.io/badge/languages-en%20%7C%20tr%20%7C%20de-blue)
+![languages](https://img.shields.io/badge/languages-tr%20%7C%20en%20%7C%20de%20%7C%20fr%20%7C%20it%20%7C%20es%20%7C%20ru%20%7C%20zh%20%7C%20ja%20%7C%20ko-blue)
 ![license](https://img.shields.io/badge/license-GPL--3.0-lightgrey)
 [![CI](https://github.com/mcansiz/DiskUltimate/actions/workflows/ci.yml/badge.svg)](https://github.com/mcansiz/DiskUltimate/actions/workflows/ci.yml)
 
@@ -206,10 +206,14 @@ start: right-click the app → **Open**.
   report by itself if the interface stops responding)
 
 ### Interface
-- **English, Turkish and German**, switched live from *Tools → Language*
-  (no restart; open disks and pending steps are kept)
+- **Ten languages**: English, Turkish, German, French, Italian, Spanish,
+  Russian, Simplified Chinese, Japanese and Korean, switched live from
+  *Tools → Language* (no restart; open disks and pending steps are kept).
+  The French, Italian, Spanish, Russian, Chinese, Japanese and Korean
+  translations are new in this version and have not yet been reviewed by
+  native speakers — corrections are welcome
 - Several icon sets (built-in, Tabler, Lucide, Material, Phosphor, Bootstrap)
-- Uses your system's Qt theme
+- **System, Light and Dark themes** (*Tools → Theme*); System follows your desktop's Qt theme
 
 ## Supported file systems
 
@@ -258,7 +262,8 @@ it — it shows it greyed out with the **reason**.
 python3 main.py                  # start empty
 python3 main.py disk.img         # open an image at start-up
 python3 main.py --no-root        # do not ask for root / administrator rights
-DISKULTIMATE_LANG=en python3 main.py   # force a language (en, tr, de)
+DISKULTIMATE_LANG=en python3 main.py   # force a language (tr, en, de, fr, it, es, ru, zh, ja, ko)
+DISKULTIMATE_THEME=dark python3 main.py  # force a theme (system, light, dark)
 ```
 
 The same options work with `DiskUltimate.exe`.
@@ -338,8 +343,8 @@ python3 -m tests.ui_smoke         # interface smoke test
 
 Volumes written by the app are cross-checked with independent tools
 (`fsck.vfat`, `fsck.exfat`, `e2fsck`, `ntfsfix`, `xfs_repair`, `fsck.hfsplus`,
-Windows `chkdsk`). Translations live in `src/diskultimate/i18n/catalogs/*.po`
-and can be edited with Poedit or Weblate.
+Windows `chkdsk`). Translations live in `src/diskultimate/i18n/catalogs/*.ts` (Qt Linguist
+format) and can be edited with Qt Linguist.
 
 The README screenshots are regenerated with `python3 tools/readme_screenshots.py`.
 

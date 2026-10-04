@@ -90,7 +90,7 @@ class FileBrowser(QWidget):
 
         self.list = QTreeWidget()
         self.list.setIconSize(QSize(20, 20))
-        self.list.setHeaderLabels(["Ad", tr("Boyut"), tr("Tur"), tr("Degistirme"), tr("Oznitelik")])
+        self.list.setHeaderLabels([tr("Ad"), tr("Boyut"), tr("Tur"), tr("Degistirme"), tr("Oznitelik")])
         self.list.setRootIsDecorated(False)
         self.list.setAlternatingRowColors(True)
         self.list.setSelectionMode(QAbstractItemView.ExtendedSelection)

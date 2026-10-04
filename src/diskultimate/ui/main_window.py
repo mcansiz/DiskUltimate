@@ -61,7 +61,8 @@ from .dialogs.task import run_task
 from .dialogs.tools import (CarveOptionsDialog,
                             CarvedFilesDialog, DeletedFilesDialog, InfoDialog,
                             LostPartitionsDialog, TextViewDialog, WipeDialog)
-from .theme import fs_color, os_icon, palette_color
+from .theme import (THEMES, apply_theme, current_theme, fs_color, os_icon,
+                    palette_color, theme_label)
 from .widgets.disk_map import DiskMapWidget
 from .widgets.disk_overview import DiskOverviewWidget
 from .widgets.file_browser import FileBrowser
@@ -543,6 +544,9 @@ class MainWindow(QMainWindow):
         # Ikon seti: sekiz set, secim saklanir ve aninda uygulanir (ADR 0046)
         self.m_icons = m_arac.addMenu(tr("Ikon seti"))
         self._build_icon_menu()
+        # Tema: Sistem / Acik / Koyu, secim saklanir ve aninda uygulanir (ADR 0088)
+        self.m_theme = m_arac.addMenu(tr("Tema"))
+        self._build_theme_menu()
 
         m_tani = m_arac.addMenu(tr("Tanilama"))
         m_tani.addAction(self.act_diag_status)
@@ -589,6 +593,7 @@ class MainWindow(QMainWindow):
         self._menus.append((m_tani, 'Tanilama'))
         self._menus.append((self.m_lang, 'Dil'))
         self._menus.append((self.m_icons, 'Ikon seti'))
+        self._menus.append((self.m_theme, 'Tema'))
         self._menus.append((m_yardim, '&Yardim'))
         self._retranslate_actions()
 
@@ -730,6 +735,41 @@ class MainWindow(QMainWindow):
             self._icon_group.addAction(action)
             self.m_icons.addAction(action)
 
+    # ==================================================================
+    # Tema (ADR 0088)
+    # ==================================================================
+    def _build_theme_menu(self) -> None:
+        """Tema menusu: Sistem / Acik / Koyu (isaretlenebilir)."""
+        self.m_theme.clear()
+        self._theme_group = QActionGroup(self)
+        self._theme_group.setExclusive(True)
+        current = current_theme()
+        for key, _text in THEMES:
+            action = QAction(theme_label(key), self)
+            action.setCheckable(True)
+            action.setChecked(key == current)
+            action.setData(key)
+            action.triggered.connect(
+                lambda _checked, k=key: self.change_theme(k))
+            self._theme_group.addAction(action)
+            self.m_theme.addAction(action)
+
+    def change_theme(self, key: str) -> None:
+        """Temayi degistirir ve saklar; yeniden baslatma gerekmez.
+
+        Palet degisince Qt standart pencereleri kendiliginden yeniler; kendi
+        cizdigimiz ogeler (disk haritasi, ikonlar) rengi paletten okudugu
+        icin onbellek temizlenip yeniden cizdirilir.
+        """
+        with diagnostics.span("ui.change_theme", key=key):
+            applied = apply_theme(QApplication.instance(), key, remember=True)
+            icons_mod.clear_cache()
+            for action in self._theme_group.actions():
+                action.setChecked(action.data() == applied)
+            for widget in QApplication.allWidgets():
+                widget.update()
+        self.log(tr("Tema degistirildi: {}", theme_label(applied)))
+
     def change_icon_set(self, key: str) -> None:
         """Ikon setini degistirir; arayuz yeniden baslatilmadan yenilenir."""
         if key == iconsets.current():
@@ -810,6 +850,7 @@ class MainWindow(QMainWindow):
         self.hex_view.retranslate()
         self._build_language_menu()
         self._build_icon_menu()
+        self._build_theme_menu()
         if self.session is None:
             self.status_file.setText(tr("Disk goruntusu acik degil"))
             self.info_view.setPlainText(self._physical_summary_text())

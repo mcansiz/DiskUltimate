@@ -41,7 +41,7 @@ from diskultimate.ui.appicon import apply_app_icon  # noqa: E402
 from diskultimate.ui.main_window import (APP_NAME, APP_VERSION,  # noqa: E402
                                          MainWindow)
 from diskultimate.ui.startup import elevate_at_startup  # noqa: E402
-from diskultimate.ui.theme import apply_theme  # noqa: E402
+from diskultimate.ui.theme import apply_theme, saved_theme  # noqa: E402
 
 def main() -> int:
     # Tanilama pencereden once acilir: acilista yetki istegi de gunluge girsin
@@ -69,9 +69,10 @@ def main() -> int:
     from diskultimate.ui import iconpacks
     diagnostics.info(f"ikon paketleri: {len(iconpacks.notices())}/"
                      f"{len(iconpacks.MODULES)} yuklendi")
-    # Gorunum: sistemin kendi Qt temasi. Ozel stil sayfasi uygulanmaz;
-    # "Tema" bolumu eklendiginde buradan secilecek (bkz. theme.apply_theme).
-    theme = apply_theme(app, os.environ.get("DISKULTIMATE_THEME", "system"))
+    # Gorunum: Sistem (masaustunun kendi temasi) / Acik / Koyu — kayitli
+    # secim ya da DISKULTIMATE_THEME (ADR 0088). Yetki penceresinden once ki
+    # o da secilen temayla acilsin.
+    theme = apply_theme(app, saved_theme())
 
     if elevate_at_startup(APP_NAME):
         return 0                      # yetkili kopya devraldi

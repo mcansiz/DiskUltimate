@@ -1,25 +1,25 @@
-"""Ceviri denetimi ve `.po` sozluk uretimi.
+"""Ceviri denetimi ve `.ts` sozluk uretimi (ADR 0088; once `.po`).
 
     python3 -m tests.i18n_check            # denetle (her oturum / CI)
-    python3 -m tests.i18n_check --write en # en.po'yu kaynaktan tazele
+    python3 -m tests.i18n_check --write en # en.ts'yi kaynaktan tazele
     python3 -m tests.i18n_check --list     # cevrilecek metinleri bas
 
 ## Ne dogrulanir
 
 1. **Eksik ceviri yok** — kaynaktaki her `tr` / `mark` / `trn` / `trc` metni
-   her dil dosyasinda cevrilidir. `#, fuzzy` isaretli giris de eksik sayilir:
-   calisma aninda **kullanilmaz**, yani kullanici Turkce gorur.
+   her dil dosyasinda cevrilidir. `type="unfinished"` (fuzzy) giris de eksik
+   sayilir: calisma aninda **kullanilmaz**, yani kullanici Turkce gorur.
 2. **Yer tutucular tutar** — `{}` sayisi ve `{ad}` adlari kaynakla cevirinin
    arasinda ayni; tutmazsa `str.format` calisma aninda patlardi.
 3. **HTML etiketleri korunur** — `<b>`, `<br>` gibi etiketler kaybolmamis.
-4. **Cogul bicimleri tam** — `Plural-Forms` kac bicim diyorsa o kadar
-   `msgstr[n]` dolu.
+4. **Cogul bicimleri tam** — dilin kurali (`i18n.PLURAL_RULES`) kac bicim
+   diyorsa o kadar `numerusform` dolu.
 5. **Eylem metinleri tek yerde** — `MainWindow` icindeki her `self.act_*`
    nesnesinin `_retranslate_actions()` icinde bir satiri var.
 6. **Dil degisimi metni gercekten degistirir** — sozluk yuklendiginde `tr()`
    cevrilmis metni dondurur, kaynak dile donunce geri gelir.
 
-Bayatlamis (`#~`) girisler **hata degildir**: `.po` biciminde bunlar arsivdir,
+Bayatlamis (`type="vanished"`) girisler **hata degildir**: bunlar arsivdir,
 kaynak metin geri gelirse cevirisi yeniden bulunur.
 
 Metin **hic sarilmamissa** bu denetim onu goremez (kaynakta olmayan bir seyi
@@ -38,22 +38,13 @@ SRC = os.path.join(ROOT, "src", "diskultimate")
 CATALOGS = os.path.join(SRC, "i18n", "catalogs")
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from diskultimate.i18n import po        # noqa: E402
+from diskultimate.i18n import PLURAL_RULES, SOURCE_PLURAL_FORMS  # noqa: E402
+from diskultimate.i18n import nplurals as language_nplurals  # noqa: E402
+from diskultimate.i18n import po, ts    # noqa: E402
 
 PLACEHOLDER = re.compile(r"\{([^{}]*)\}")
 HTML_TAG = re.compile(r"</?[a-zA-Z]+[^>]*>")
 
-VARSAYILAN_BASLIK = {
-    "Project-Id-Version": "DiskUltimate 0.5.2-beta",
-    "Report-Msgid-Bugs-To": "",
-    "Language": "",
-    "MIME-Version": "1.0",
-    "Content-Type": "text/plain; charset=UTF-8",
-    "Content-Transfer-Encoding": "8bit",
-    "Plural-Forms": "nplurals=2; plural=(n != 1);",
-    "X-Source-Language": "tr",
-    "X-Generator": "tests/i18n_check.py",
-}
 
 
 # --------------------------------------------------------------------------
@@ -148,34 +139,29 @@ def collect_strings():
 # Sozluk dosyalari
 # --------------------------------------------------------------------------
 def catalog_path(code: str) -> str:
-    return os.path.join(CATALOGS, f"{code}.po")
+    return os.path.join(CATALOGS, f"{code}.ts")
 
 
 def languages():
     if not os.path.isdir(CATALOGS):
         return []
-    return sorted(n[:-3] for n in os.listdir(CATALOGS) if n.endswith(".po"))
+    return sorted(n[:-3] for n in os.listdir(CATALOGS) if n.endswith(".ts"))
 
 
 def load(code: str) -> po.Catalog:
     try:
         with open(catalog_path(code), "r", encoding="utf-8") as fh:
-            return po.parse(fh.read())
+            catalog = ts.parse(fh.read())
     except FileNotFoundError:
-        basliklar = dict(VARSAYILAN_BASLIK)
-        basliklar["Language"] = code
-        return po.Catalog(headers=basliklar)
+        catalog = po.Catalog(headers={"Language": code})
+    catalog.headers["Plural-Forms"] = PLURAL_RULES.get(code, SOURCE_PLURAL_FORMS)
+    return catalog
 
 
 def save(code: str, catalog: po.Catalog) -> None:
     os.makedirs(CATALOGS, exist_ok=True)
     with open(catalog_path(code), "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(po.dump(catalog))
-
-
-def nplurals(catalog: po.Catalog) -> int:
-    match = re.search(r"nplurals\s*=\s*(\d+)", catalog.plural_forms or "")
-    return int(match.group(1)) if match else 2
+        fh.write(ts.dump(catalog, code, language_nplurals(code)))
 
 
 def refresh(code: str) -> dict:
@@ -185,10 +171,7 @@ def refresh(code: str) -> dict:
     benzer yeni bir giris varsa cevirisi oraya tasinip `fuzzy` isaretlenir.
     """
     catalog = load(code)
-    if not catalog.headers:
-        catalog.headers = dict(VARSAYILAN_BASLIK, Language=code)
-    catalog.headers.setdefault("Language", code)
-    sayac = po.merge(catalog, collect_entries())
+    sayac = po.merge(catalog, collect_entries(), nplurals=language_nplurals(code))
     save(code, catalog)
     sayac.update(catalog.counts())
     return sayac
@@ -207,7 +190,9 @@ def check_language(code: str, kaynak) -> list:
     problems = []
     catalog = load(code)
     girisler = catalog.by_key()
-    forms = nplurals(catalog)
+    forms = language_nplurals(code)
+    if code not in PLURAL_RULES:
+        problems.append(f"  cogul kurali yok: i18n.PLURAL_RULES['{code}']")
 
     eksik, fuzzy = [], []
     for giris in kaynak:
@@ -306,7 +291,7 @@ def main() -> int:
             print("kullanim: --write <dil kodu>")
             return 2
         sayac = refresh(args[1])
-        print(f"{args[1]}.po tazelendi: {sayac['toplam']} giris "
+        print(f"{args[1]}.ts tazelendi: {sayac['toplam']} giris "
               f"({sayac['korunan']} korundu, {sayac['yeni']} yeni, "
               f"{sayac['fuzzy']} fuzzy tasindi, "
               f"{sayac['bayatlayan']} bayatladi)")
@@ -332,11 +317,11 @@ def main() -> int:
         sayim = load(code).counts()
         if problems:
             failures += 1
-            print(f"\n{code}.po: {len(problems)} sorun")
+            print(f"\n{code}.ts: {len(problems)} sorun")
             for line in problems:
                 print(line)
         else:
-            print(f"{code}.po: TAMAM ({sayim['cevrili']} ceviri, "
+            print(f"{code}.ts: TAMAM ({sayim['cevrili']} ceviri, "
                   f"{sayim['bayat']} bayat giris arsivde)")
 
     for name, problems in (("eylem metinleri", check_actions()),

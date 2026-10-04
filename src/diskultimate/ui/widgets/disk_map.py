@@ -247,7 +247,7 @@ class DiskMapWidget(QWidget):
             etiket = ""
             if oran >= 0 and cubuk.width() > 52:
                 etiket = (tr("%{:.0f} dolu", oran * 100) if cubuk.width() > 108
-                          else f"%{oran * 100:.0f}")
+                          else tr("%{:.0f}", oran * 100))   # dil "5%" ister
             f = painter.font(); f.setPointSize(8); f.setBold(True)
             painter.setFont(f)
             draw_usage_bar(painter, cubuk, oran, base, etiket)
