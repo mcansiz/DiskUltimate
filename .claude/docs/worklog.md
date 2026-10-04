@@ -5708,3 +5708,29 @@ calismiyordu.
   (tirnaklama/enjeksiyon + el sikisma). macOS UDF baglanmiyor: teshis
   eklendi, sonraki kosu.
 - Asama 4-5: tests/long/gui.py (Cocoa/Windows pencere + ekran goruntusu), tests/long/device.py + --aygit (scsi_debug / takili VHD / hdiutil; yalnizca GITHUB_ACTIONS). Windows quick: 7/8 gecti (Windows surucusu + chkdsk); NTFS mantiksal bolumde chkdsk sorun buldu (inceleniyor). macOS UDF: diskutil reddediyor, mount -t udf kabul ediyor.
+
+## 2026-10-04 (4) — Windows aygit kipi bulgulari (ADR 0084)
+
+- CI uzun testlerinin Windows aygit hatalari VirtualBox "win10 " misafirinde
+  `DU_TEST_VM=1` ile yeniden uretildi; gunluk `<rapor>/gunluk` altinda.
+- **Veri kaybi 1:** Windows fiziksel diskte NTFS boyutlandirma yalnizca
+  tabloyu yaziyordu (`disk_number` hic atanmiyordu; "native" plan
+  `apply_resize`'a dusuyordu). Kucultme bolumu 1 MiB'a indirdi. Duzeltildi:
+  `windows_disk_number()`, sinir/arac yoksa ve tasimada saf Python,
+  `apply_resize` "native"i reddeder, yerel arac oncesi kilit birakilir. t83.
+- **Veri kaybi 2:** exFAT buyutme Windows'un bicimlendirdigi birimde yigini
+  geri kaydiriyordu (sondan basa kopya parca sinirlarini ezdi). Yigin artik
+  geri cekilmez; `_shift_forward` negatifi reddeder. Windows fiksturu
+  `tests/fixtures/exfat_windows.img.gz` (diskpart + Format exFAT). t82; eski
+  kod t82'de `/Klasör/kucuk.bin` bozuk cikti.
+- Sonradan baglanan birim: yazma reddinde yeni birimler kilitlenip bir kez
+  yeniden denenir; birakmada kilit listesi sifirlanir.
+- NTFS `$UpCase:$Info` (CRC64) — chkdsk temiz (VM: eski cikis 3, yeni 0).
+- Test tarafi: chkdsk OEM kod cozumu, NFC/NFD ad farki ayri raporlanir,
+  hfsplus modulu, adim notlari.
+- VM (aygit, quick, tohum 7): exFAT 15/15 tamam (1 atlandi), NTFS 14/14
+  tamam (2 atlandi: kurtarma NTFS'te yok, boyut siniri yok).
+- Not: fikstur betigi ilk denemede `assign letter=X` basarisiz olunca
+  dosyalari misafirdeki X: (ana makinenin `myiso` paylasimi) icine yazdi;
+  silme kullaniciya birakildi. Ders: misafirde harf atamak yerine birim
+  GUID yolu kullanilir, betik diskpart sonucunu denetler.

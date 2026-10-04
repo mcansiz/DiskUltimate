@@ -78,6 +78,11 @@ def main(argv=None) -> int:
     report_dir = a.rapor or os.path.join(ROOT, ".tmp", "uzun", "rapor")
     if a.cekirdek:
         os.environ["DU_UZUN_CEKIRDEK"] = "1"
+    # Uygulamanin tanilama gunlugu rapor klasorune: kilit, boyutlandirma ve
+    # aygit cagrilari hata incelemesinde gorunsun (CI artifact'ina girer).
+    os.environ.setdefault("DISKULTIMATE_LOG_DIR", os.path.join(report_dir, "gunluk"))
+    from diskultimate.core import diagnostics
+    diagnostics.configure(verbose=True, crash_handler=False)
     failures = 0
     for key in fs_keys:
         plan = FS_PLANS[key]

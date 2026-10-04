@@ -121,6 +121,40 @@ def attrdef_table() -> bytes:
     return zlib.decompress(base64.b64decode(_ATTRDEF_B64))
 
 
+_UPCASE_INFO: Optional[bytes] = None
+
+
+def _crc64_ntfs(data: bytes) -> int:
+    """$UpCase:$Info'daki CRC64: yansitilmis, polinom 0x9A6C9329AC4BC9B5,
+    baslangic ve son XOR tumu 1 (Windows'un bicimlendirdigi birimden
+    olculdu: tests/fixtures/ntfs_windows.img.gz -> 0xdadc7e776b1b690c)."""
+    table = []
+    for i in range(256):
+        c = i
+        for _ in range(8):
+            c = (c >> 1) ^ 0x9A6C9329AC4BC9B5 if c & 1 else c >> 1
+        table.append(c)
+    crc = 0xFFFFFFFFFFFFFFFF
+    for b in data:
+        crc = table[(crc ^ b) & 0xFF] ^ (crc >> 8)
+    return crc ^ 0xFFFFFFFFFFFFFFFF
+
+
+def upcase_info() -> bytes:
+    """`$UpCase:$Info` akisi (32 bayt): uzunluk, tablonun CRC64'u, surum.
+
+    Windows 8 ve sonrasi bu akisi yazar; chkdsk tabloyu onunla dogrular.
+    Akis yoksa Windows Server 2022 chkdsk "Errors detected in the uppercase
+    file" der (uzun testler, CI, 2026-10-04). Surum alanlari Windows 10'un
+    bicimlendirdigi birimdeki gibi sifirdir.
+    """
+    global _UPCASE_INFO
+    if _UPCASE_INFO is None:
+        _UPCASE_INFO = struct.pack("<IIQIIIHH", 32, 0, _crc64_ntfs(upcase_table()),
+                                   0, 0, 0, 0, 0)
+    return _UPCASE_INFO
+
+
 def upcase_table() -> bytes:
     """$UpCase icerigi (128 KiB): 65536 UTF-16 buyuk harf eslemesi.
 
@@ -1038,6 +1072,7 @@ class _NtfsBuilder(NtfsFormatter):
                       L.upcase_clusters * cs),
             self._attr_nonresident(AT_DATA, [(L.upcase_lcn, L.upcase_clusters)],
                                    upcase_size, attr_id=1),
+            self._attr_resident(AT_DATA, upcase_info(), name="$Info", attr_id=2),
         ]))
 
         # 11: $Extend — $Quota/$ObjId/$Reparse dizini

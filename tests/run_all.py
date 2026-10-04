@@ -6506,6 +6506,179 @@ def t81_macos_yetki_komutu():
     assert handoff == "/tmp/el $sikisma" and lang == "en", (handoff, lang)
 
 
+@test
+def t82_windows_exfat_buyutme():
+    """Windows'un bicimlendirdigi exFAT: buyut/kucult veriyi korur (ADR 0084)
+
+    Uzun testler (Windows aygit kipi, 2026-10-04) yakaladi: Windows kume
+    yiginini FAT'in ardina degil hizali bir sinira koyar (FAT 128+96, yigin
+    256). Buyutme yigini yeniden hesapliyor (224), "kaydirma" negatif
+    cikiyor ve sondan basa kopya her parcada sonrakinin kaynagini eziyordu.
+    Bizim bicimlendiricimizde bosluk olmadigi icin goruntu testleri bunu
+    hic gormedi. Fikstur: Windows 10, diskpart + Format exFAT (48 MB).
+    """
+    import gzip
+    from diskultimate.core import operations as _ops
+    from diskultimate.core.resize import _shift_forward, ResizeError
+    fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+    with gzip.open(os.path.join(fixtures, "exfat_windows.img.gz"), "rb") as fh:
+        birim = fh.read()
+    beklenen = {}
+    with open(os.path.join(fixtures, "exfat_windows.sha1.txt"), encoding="utf-8") as fh:
+        for satir in fh:
+            if satir.strip():
+                ozet, ad = satir.split(None, 1)
+                beklenen[ad.strip()] = ozet
+    sektor = len(birim) // 512
+
+    yol = img_path("t82.img")
+    s = DiskSession.create(yol, 300 * MIB, scheme="mbr", overwrite=True)
+    k = _ops.OperationQueue()
+    k.add(_ops.create_op(2048, sektor, 512))
+    assert k.apply(s).ok
+    s.image.write(2048 * 512, birim)
+    s.reload()
+    p = s.partitions[0]
+    fs = ExFatFS(s.view(p))
+    assert fs.cluster_heap_offset > fs.fat_offset + fs.fat_length, \
+        "fikstur Windows yerlesimi degil (yigin onunde bosluk yok)"
+
+    def denetle(etiket, yigin=None):
+        s.close_filesystems()
+        s.reload()
+        p = s.partitions[0]
+        fs = s.filesystem(p.index)
+        for ad, ozet in beklenen.items():
+            assert hashlib.sha1(fs.read(ad)).hexdigest() == ozet, (etiket, ad)
+        s.close_filesystems()
+        ex = ExFatFS(s.view(p))
+        if yigin is not None:
+            assert ex.cluster_heap_offset == yigin, (etiket, ex.cluster_heap_offset)
+        assert ex.cluster_count == (p.sector_count - ex.cluster_heap_offset) // \
+            ex.sectors_per_cluster, (etiket, ex.cluster_count)
+        if shutil.which("fsck.exfat"):
+            parca = img_path("t82_bolum.img")
+            with open(parca, "wb") as out:
+                for bas in range(0, p.sector_count, 8192):
+                    n = min(8192, p.sector_count - bas)
+                    out.write(s.image.read((p.start_lba + bas) * 512, n * 512))
+            r = subprocess.run(["fsck.exfat", "-n", parca], capture_output=True,
+                               text=True)
+            assert r.returncode == 0, (etiket, r.stdout[-800:], r.stderr[-300:])
+        return p
+
+    p = denetle("baslangic", yigin=256)
+    # Ezilme parca (4 MiB) sinirlarinda olur: kullanilan alan birkac parca
+    # olmali. Windows'un yazdiklarina ek olarak bizden bir dosya.
+    ek = os.urandom(12 * MIB)
+    fs = s.filesystem(p.index)
+    fs.write_file("/bizim_12MiB.bin", ek)
+    fs.flush()
+    beklenen["/bizim_12MiB.bin"] = hashlib.sha1(ek).hexdigest()
+    p = denetle("dosya eklendi", yigin=256)
+    # 56 MB: buyuyen FAT (112 sektor) bosluga sigar, yigin yerinde kalir.
+    # Eski hesap yigini 240'a koyuyordu: -16 sektor, aygit kipindeki ariza.
+    s.resize_partition(p.index, p.start_lba, 56 * 2048, confirm=True)
+    p = denetle("buyut", yigin=256)
+    # 200 MB: FAT bosluga sigmaz, yigin bu kez ileri kayar
+    s.resize_partition(p.index, p.start_lba, 200 * 2048, confirm=True)
+    p = denetle("cok buyut")
+    assert ExFatFS(s.view(p)).cluster_heap_offset > 256
+    s.resize_partition(p.index, p.start_lba, 60 * 2048, confirm=True)
+    denetle("kucult")
+    s.close()
+
+    # Geri kaydirma her durumda reddedilir (sondan basa kopya veriyi ezer)
+    d = DiskImage.create(img_path("t82_bos.img"), MIB, overwrite=True)
+    try:
+        _shift_forward(d, 100, -16, 64, 512)
+    except ResizeError:
+        pass
+    else:
+        raise AssertionError("geri kaydirma reddedilmedi")
+    d.close()
+
+
+@test
+def t83_yerel_boyutlandirma_tablo_yalniz_degil():
+    """Fiziksel diskte yerel arac yoksa NTFS saf Python ile boyutlanir (ADR 0084)
+
+    Uzun testler (Windows aygit kipi) yakaladi: oturum `disk_number`
+    alanini hic tasimiyordu; "native" secilip `Resize-Partition` hic
+    calismiyor, plan `apply_resize`'a dusup **yalnizca tabloyu** yaziyordu.
+    Buyutmede NTFS eski boyutta kaliyor, kucultmede (en kucuk 1 sektor
+    gorundugu icin) bolum 1 MB'a inip birim bozuluyordu.
+    """
+    from diskultimate.core import operations as _ops
+    from diskultimate.core import resize as _resize
+    from diskultimate.core.resize import FsResizeInfo, ResizeError, apply_resize
+
+    yol = img_path("t83.img")
+    s = DiskSession.create(yol, 400 * MIB, scheme="gpt", overwrite=True)
+    k = _ops.OperationQueue()
+    k.add(_ops.create_op(2048, 150 * 2048, 512, fs_key="ntfs", label="YEREL"))
+    assert k.apply(s).ok
+    s.reload()
+    veri = os.urandom(5 * MIB)
+    fs = s.filesystem(1)
+    fs.write_file("/v.bin", veri)
+    fs.flush()
+    s.close_filesystems()
+
+    # 1) "native" plan apply_resize'a giderse tablo tek basina degismez
+    p = s.table.get(1)
+    yerel = FsResizeInfo(kind="native", fs_type="NTFS", min_sectors=1,
+                         movable=False)
+    plan = s.plan_resize(1, p.start_lba, 2048, fs_info=yerel)
+    try:
+        apply_resize(s, plan)
+    except ResizeError:
+        pass
+    else:
+        raise AssertionError("native plan tablo-yalniz uygulandi")
+    s.reload()
+    assert s.table.get(1).sector_count == 150 * 2048, "tablo degisti"
+
+    # 2) Fiziksel disk gibi davranan oturum
+    class FizikselGibi(type(s)):
+        is_physical = True
+        disk_info = None
+    asil = type(s)
+    s.__class__ = FizikselGibi
+    eski_yerel = _resize._native_resize_available
+    _resize._native_resize_available = lambda session: True
+    try:
+        # disk numarasi yoksa "native" hic secilmez
+        s.windows_disk_number = lambda: None
+        assert _resize.fs_resize_info_for(s, s.table.get(1)).kind == "ntfs"
+        # numara var ama Windows sinir bildirmiyor: saf Python sinirlari
+        s.windows_disk_number = lambda: 7
+        s._native_size_limits = lambda index: (False, 0, 0, "sahte")
+        bilgi = s.resize_info(1)
+        assert bilgi.kind == "ntfs" and bilgi.min_sectors > 2048, bilgi
+        # yerel arac calistirilamadi: saf Python yoluna doner
+        s._try_native_resize = lambda *a: False
+        p = s.table.get(1)
+        s.resize_partition(1, p.start_lba, 250 * 2048, confirm=True)
+        s.reload()
+        assert s.table.get(1).sector_count == 250 * 2048
+        ntfs = NtfsFS(s.view(s.table.get(1)))
+        assert ntfs.total_sectors >= 249 * 2048, "NTFS buyumedi (tablo-yalniz)"
+        # tasima istenirse de saf Python (Windows'un araci tasiyamaz)
+        p = s.table.get(1)
+        s.resize_partition(1, p.start_lba + 20 * 2048, p.sector_count,
+                           confirm=True)
+    finally:
+        _resize._native_resize_available = eski_yerel
+        s.__class__ = asil
+        for ad in ("windows_disk_number", "_native_size_limits",
+                   "_try_native_resize"):
+            s.__dict__.pop(ad, None)
+    s.reload()
+    assert s.filesystem(1).read("/v.bin") == veri
+    s.close()
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

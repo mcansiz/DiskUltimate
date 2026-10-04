@@ -8817,6 +8817,12 @@ msgstr "{}<br><br>Restart the application <b>with {} privileges</b>?"
 msgid "◀ onunde {}"
 msgstr "◀ {} before"
 
+msgid "Bu dosya sistemi yalnizca isletim sisteminin kendi araciyla boyutlandirilabilir; bolum tablosu tek basina degistirilmez"
+msgstr "This file system can only be resized by the operating system's own tool; the partition table is not changed on its own"
+
+msgid "Ic hata: geri kaydirma istendi ({} sektor); hicbir sey yazilmadi"
+msgstr "Internal error: a backward shift was requested ({} sectors); nothing was written"
+
 #: src/diskultimate/ui/main_window.py:1942
 #~ msgid ""
 #~ "<br><br><b>{} adim veri kaybettirebilir.</b> Uygulandiktan sonra geri "

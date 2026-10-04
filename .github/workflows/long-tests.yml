@@ -120,6 +120,9 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q --no-install-recommends dosfstools exfatprogs \
             ntfs-3g e2fsprogs xfsprogs hfsprogs udftools
+          # hfsplus gibi suruculer ek modul paketindedir; yoksa cekirdek
+          # dogrulamasi sessizce "atlandi" sayiliyordu (CI'da olculdu).
+          sudo apt-get install -y -q --no-install-recommends "linux-modules-extra-$(uname -r)" || true
           for m in hfsplus udf exfat ntfs3 xfs; do sudo modprobe $m || echo "modul yok: $m"; done
           sudo mkdir -p /mnt/du && sudo chown "$(id -u):$(id -g)" /mnt/du
           df -h /mnt / | cat

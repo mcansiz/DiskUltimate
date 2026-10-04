@@ -46,3 +46,10 @@ VMware misafiridir.
 - Exe derleme: `robocopy \\VBoxSvr\GitHub\DiskUltimate C:\du-test\DiskUltimate /MIR
   /XD .git sessions .tmp __pycache__ build dist` + `C:\Python312\python.exe -m
   PyInstaller DiskUltimate.spec --noconfirm --clean` (normal kullanici yeter).
+- **Misafirdeki X: ana makinenin `/run/media/pc/Data/myiso` paylasimidir**
+  (etiket VBOX_myiso; kullanicinin ISO arsivi). 2026-10-04'te bir betik
+  `assign letter=X` basarisiz olunca test dosyalarini oraya yazdi. Misafirde
+  surucu harfi atanmaz/varsayilmaz: birim `Get-Volume` + etiketle bulunur,
+  `\\?\Volume{...}\` yolu .NET API'leriyle kullanilir (New-Item bu yolu
+  kabul etmez). PowerShell 5 BOM'suz .ps1'i ANSI okur — Turkce ad varsa
+  UTF-8 BOM ile yazilir.

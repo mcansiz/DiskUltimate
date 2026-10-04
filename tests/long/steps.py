@@ -117,8 +117,9 @@ def buyut(ctx: Ctx):
         target = min(target, _align_down(info.max_sectors))
     if target <= part.sector_count:
         raise StepSkip("buyutecek yer yok")
+    old = part.sector_count          # _resize bolum nesnesini yerinde degistirir
     _resize(ctx, part.start_lba, target)
-    return f"{part.sector_count // ALIGN} -> {target // ALIGN} MiB"
+    return f"{old // ALIGN} -> {target // ALIGN} MiB"
 
 
 def kucult(ctx: Ctx):
@@ -128,8 +129,9 @@ def kucult(ctx: Ctx):
     target = _align_up(max(info.min_sectors, 1))
     if target >= part.sector_count:
         raise StepSkip(f"kucultulecek yer yok (en az {target // ALIGN} MiB)")
+    old = part.sector_count
     _resize(ctx, part.start_lba, target)
-    return f"{part.sector_count // ALIGN} -> {target // ALIGN} MiB (en aza)"
+    return f"{old // ALIGN} -> {target // ALIGN} MiB (en aza)"
 
 
 def saga_tasi(ctx: Ctx):
@@ -149,8 +151,9 @@ def sola_tasi(ctx: Ctx):
     part = ctx.part()
     if part.start_lba == ctx.original_lba:
         raise StepSkip("zaten ilk yerinde")
+    old = part.start_lba
     _resize(ctx, ctx.original_lba, part.sector_count)
-    return f"LBA {part.start_lba} -> {ctx.original_lba}"
+    return f"LBA {old} -> {ctx.original_lba}"
 
 
 def geri_buyut(ctx: Ctx):
@@ -228,7 +231,8 @@ def _image_bytes(path: str) -> int:
 
 
 def klonla(ctx: Ctx):
-    need = _image_bytes(ctx.image)
+    # aygit kipinde ctx.image bir aygit yoludur; stat boyut vermez
+    need = ctx.session.image.size if ctx.device else _image_bytes(ctx.image)
     if ctx.free_disk() < need * 1.1 + 512 * MIB:
         raise StepSkip(f"disk yetmez: klon ~{need // MIB} MiB ister")
     ctx.session.close_filesystems()

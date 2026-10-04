@@ -1,0 +1,3 @@
+866bd0cceb45c598a27f29c6ab8ebbd893806e75  /desen_3MiB.bin
+bf8a8a4ff4b32d416443e4aa9f470b2a002f131d  /Klasör/kucuk.bin
+bb482530167036070a160497d5b75e44ccabe21d  /Klasör/çiçek.txt

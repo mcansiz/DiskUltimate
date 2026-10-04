@@ -401,7 +401,14 @@ def fat_resize(view: BlockDevice, new_sector_count: int) -> None:
 
 def _shift_forward(view: BlockDevice, start_lba: int, shift: int,
                    sector_count: int, bps: int) -> None:
-    """Sektor blogunu `shift` sektor ileri kaydirir (sondan basa kopyalar)."""
+    """Sektor blogunu `shift` sektor ileri kaydirir (sondan basa kopyalar).
+
+    Sondan basa kopya yalnizca ileri kaydirmada guvenlidir; geri kaydirmada
+    her yazma bir sonraki parcanin henuz okunmamis kaynagini ezer.
+    """
+    if shift < 0:
+        raise ResizeError(tr("Ic hata: geri kaydirma istendi ({} sektor); "
+                             "hicbir sey yazilmadi", shift))
     step = max(1, COPY_CHUNK // bps)
     kalan = sector_count
     while kalan > 0:
@@ -523,9 +530,13 @@ def exfat_resize(view: BlockDevice, new_sector_count: int,
     # --- buyutme ------------------------------------------------------------
     bps = fs.bytes_per_sector
     new_fat, new_heap, new_clusters = _exfat_layout_for(new_sector_count, fs)
-    if new_fat < fs.fat_length:            # FAT bolgesi asla kucultulmez
-        new_fat, new_heap = fs.fat_length, fs.cluster_heap_offset
-        new_clusters = (new_sector_count - new_heap) // spc
+    new_fat = max(new_fat, fs.fat_length)  # FAT bolgesi asla kucultulmez
+    # Kume yigini asla geri cekilmez. Windows yigini FAT'in hemen ardina
+    # degil hizali bir sinira koyar (48 MB'ta FAT 128+96, yigin 256); yeniden
+    # hesaplanan yer ondan once duser. Buyuyen FAT o bosluga sigiyorsa yigin
+    # yerinde kalir (ADR 0084). Daha az kume, FAT'in yetmesini bozmaz.
+    new_heap = max(new_heap, fs.cluster_heap_offset)
+    new_clusters = (new_sector_count - new_heap) // spc
     kaydirma = new_heap - fs.cluster_heap_offset
 
     if kaydirma:
@@ -777,6 +788,9 @@ def plan_resize(session, index: int, new_start_lba: int,
 
     if info is None:
         info = fs_resize_info_for(session, part)
+    if info.kind == "native" and new_start_lba != part.start_lba:
+        # Windows'un araci tasiyamaz; tasima saf Python yolundan gider.
+        info = fs_resize_info(session.view(part), info.fs_type, native_ok=False)
     uyarilar: List[str] = []
 
     if new_sector_count < part.sector_count:
@@ -822,7 +836,11 @@ def fs_resize_info_for(session, part: Partition) -> FsResizeInfo:
     kind = getattr(fs_info, "fs_type", "") or ""
     yerel = False
     try:
-        yerel = bool(session.is_physical) and _native_resize_available(session)
+        # Yerel arac disk numarasiyla calisir; numara yoksa hic secilmez
+        # (eskiden secilip sessizce tablo-yalniz yola dusuyordu, ADR 0084).
+        number = getattr(session, "windows_disk_number", lambda: None)()
+        yerel = (bool(session.is_physical) and number is not None
+                 and _native_resize_available(session))
     except Exception:
         yerel = False
     return fs_resize_info(session.view(part), kind, native_ok=yerel)
@@ -851,6 +869,13 @@ def apply_resize(session, plan: ResizePlan,
         raise ResizeError(tr("Bolum plan hazirlandiktan sonra degismis; yenileyin"))
     if not plan.changed:
         return part
+    if plan.fs.kind == "native":
+        # Bu tur yalnizca isletim sisteminin araciyla uygulanir. Burada tablo
+        # tek basina degisirse dosya sistemi eski boyutta kalir; kucultmede
+        # bolumun disina tasar (ADR 0084).
+        raise ResizeError(tr("Bu dosya sistemi yalnizca isletim sisteminin "
+                             "kendi araciyla boyutlandirilabilir; bolum "
+                             "tablosu tek basina degistirilmez"))
 
     session.close_filesystems()
     image = session.image

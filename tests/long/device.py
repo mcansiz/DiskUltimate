@@ -32,13 +32,17 @@ class DeviceError(Exception):
 
 
 def require_ci() -> None:
-    if os.environ.get("GITHUB_ACTIONS") != "true":
-        raise DeviceError("aygit kipi yalnizca GitHub Actions makinesinde calisir "
-                          "(ana makinede fiziksel diske yazilmaz — CLAUDE.md)")
+    """GitHub Actions makinesi ya da acikca beyan edilmis test VM'i
+    (`DU_TEST_VM=1`; CLAUDE.md: fiziksel disk testleri VM'de)."""
+    if os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("DU_TEST_VM") == "1":
+        return
+    raise DeviceError("aygit kipi yalnizca GitHub Actions makinesinde ya da test "
+                      "VM'inde (DU_TEST_VM=1) calisir — ana makinede fiziksel diske "
+                      "yazilmaz (CLAUDE.md)")
 
 
 def _run(cmd, **kw):
-    return subprocess.run(cmd, capture_output=True, text=True, **kw)
+    return subprocess.run(cmd, capture_output=True, text=True, errors="replace", **kw)
 
 
 def create(size_mb: int, workdir: str) -> Tuple[str, Callable[[], None]]:

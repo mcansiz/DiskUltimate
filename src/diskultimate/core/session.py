@@ -467,8 +467,8 @@ class DiskSession:
                                       "kullanilamaz.", kind.label))
         if not (self.is_physical and IS_WINDOWS and native_format_supported(fs_key)):
             return None
-        numaralar = "".join(ch for ch in self.image.info.name if ch.isdigit())
-        if not numaralar:
+        disk_no = self.windows_disk_number()
+        if disk_no is None:
             return None
         if progress:
             progress(tr("Windows bicimlendiricisi cagriliyor..."), 20)
@@ -477,7 +477,7 @@ class DiskSession:
             self.image.rescan_partitions()
         except Exception:
             pass
-        ok, message = windows_format_volume(int(numaralar), index, fs_key, label,
+        ok, message = windows_format_volume(disk_no, index, fs_key, label,
                                           cluster_bytes)
         if not ok:
             if native_only:
@@ -651,11 +651,17 @@ class DiskSession:
         part = self.table.get(index)
         info = fs_resize_info_for(self, part)
         if info.kind == "native":
-            ok, lower, upper, _ = self._native_size_limits(index)
-            if ok:
-                ss = self.table.sector_size
-                info.min_sectors = max(1, lower // ss)
-                info.max_sectors = upper // ss
+            ok, lower, upper, message = self._native_size_limits(index)
+            if not ok:
+                # Windows sinir bildirmedi: saf Python yoluna donulur. "native"
+                # ile en kucuk 1 sektor kalirsa kucultme sinirsiz gorunur.
+                diagnostics.warn(f"yerel boyut siniri okunamadi (bolum {index}): "
+                                 f"{message}; saf Python yolu kullanilacak")
+                return fs_resize_info(self.view(part), info.fs_type,
+                                      native_ok=False)
+            ss = self.table.sector_size
+            info.min_sectors = max(1, lower // ss)
+            info.max_sectors = upper // ss
         return info
 
     def plan_resize(self, index: int, new_start_lba: int,
@@ -691,35 +697,71 @@ class DiskSession:
         plan = self.plan_resize(index, new_start_lba, new_sector_count)
         if not plan.changed:
             return self.table.get(index)
-        if plan.fs.kind == "native" and not plan.moves:
-            result = self._try_native_resize(index, new_sector_count, progress)
-            if result:
+        if plan.fs.kind == "native":
+            if not plan.moves and self._try_native_resize(
+                    index, new_sector_count, progress):
                 return self.table.get(index)
+            # Yerel arac calistirilamadi (ya da tasima istendi): saf Python
+            # yolu. "native" plani `apply_resize`'a gitmez — yalnizca tabloyu
+            # degistirip dosya sistemini eski boyutta birakirdi (ADR 0084).
+            part = self.table.get(index)
+            plan = self.plan_resize(
+                index, new_start_lba, new_sector_count,
+                fs_info=fs_resize_info(self.view(part), plan.fs.fs_type,
+                                       native_ok=False))
         return apply_resize(self, plan, progress=progress)
+
+    def windows_disk_number(self) -> Optional[int]:
+        r"""Fiziksel diskin Windows numarasi (`\\.\PhysicalDrive2` -> 2).
+
+        Windows disinda ve goruntu dosyasinda None. Yerel bicimlendirici ve
+        boyutlandirici bu numarayla calisir.
+        """
+        if not (self.is_physical and IS_WINDOWS):
+            return None
+        digits = "".join(ch for ch in self.image.info.name if ch.isdigit())
+        return int(digits) if digits else None
+
+    def _release_volume_locks(self) -> None:
+        """Yerel arac calismadan once bu surecin birim kilitlerini birakir.
+
+        Windows'un kendi araci birimi bagli ister; kilitli birimde
+        `Resize-Partition` reddedilir. Kilit sonraki ham yazmada yeniden
+        alinir (`PhysicalDisk._win_write`).
+        """
+        self.close_filesystems()
+        release = getattr(self.image, "release_volumes", None)
+        if release:
+            release()
 
     def _native_size_limits(self, index: int) -> tuple:
         """Windows'un bolum icin bildirdigi (tamam, en_kucuk, en_buyuk, mesaj)."""
-        if not (self.is_physical and native_resize_supported()):
+        if not native_resize_supported():
             return False, 0, 0, tr("Yerel boyutlandirici yok")
-        info = self.disk_info
-        numara = getattr(info, "disk_number", None)
-        if numara is None:
+        disk_no = self.windows_disk_number()
+        if disk_no is None:
             return False, 0, 0, tr("Disk numarasi bilinmiyor")
-        return windows_partition_size_limits(numara, index)
+        self._release_volume_locks()
+        return windows_partition_size_limits(disk_no, index)
 
     def _try_native_resize(self, index: int, sector_count: int,
                            progress) -> bool:
-        """Windows `Resize-Partition` yolu; basarisizsa False doner."""
-        if not (self.is_physical and native_resize_supported()):
+        """Windows `Resize-Partition` yolu.
+
+        Arac calistirilamiyorsa False doner (cagiran saf Python yoluna
+        gecer); calisip hata verirse `SessionError` — yarim kalmis olabilecek
+        bir islemin ustune ikinci bir yol denenmez.
+        """
+        if not native_resize_supported():
             return False
-        info = self.disk_info
-        numara = getattr(info, "disk_number", None)
-        if numara is None:
+        disk_no = self.windows_disk_number()
+        if disk_no is None:
             return False
         if progress:
             progress(tr("Windows boyutlandiricisi calisiyor..."), 20)
+        self._release_volume_locks()
         ok, message = windows_resize_partition(
-            numara, index, sector_count * self.table.sector_size)
+            disk_no, index, sector_count * self.table.sector_size)
         if not ok:
             raise SessionError(tr("Windows boyutlandiricisi basarisiz: {}", message))
         if progress:

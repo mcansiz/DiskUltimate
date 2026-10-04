@@ -85,7 +85,7 @@ def _partition_device(image_path: str, offset: int, size: int):
             if sudo_ok():
                 r = subprocess.run(["sudo", "-n", "losetup", "-f", "--show", "-r",
                                     "-o", str(offset), "--sizelimit", str(size),
-                                    image_path], capture_output=True, text=True)
+                                    image_path], capture_output=True, text=True, errors="replace")
                 if r.returncode == 0:
                     self_inner.loop = r.stdout.strip()
                     return self_inner.loop, True
@@ -128,18 +128,50 @@ def external_fsck(fs_key: str, image_path: str, offset: int, size: int) -> Tuple
         if dev is None:
             return "skip", f"sudo yok ve bolum {size // MIB} MiB > kopyalama siniri"
         cmd = (["sudo", "-n"] if privileged else []) + [exe] + args + [dev]
-        r = subprocess.run(cmd, capture_output=True, text=True)
+        r = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
     out = (r.stdout + r.stderr).strip()
     if r.returncode == 0:
         return "ok", f"{tool}: {out.splitlines()[-1] if out else 'temiz'}"
     return "fail", f"{tool} cikis {r.returncode}: {out[-800:]}"
 
 
-def _hash_tree(root: str, manifest: Manifest, sep: str = "/") -> List[str]:
+def _resolve_listed(root: str, path: str, sep: str) -> Optional[str]:
+    """Adi, klasor listesinden Unicode bicimine (NFC/NFD) bakmadan bulur.
+
+    Bazi suruculer adi baska bicimde ister ya da dondurur (macOS UDF NFD;
+    Linux hfsplus kendi ayristirmasi). Listeden bulunup ACILABILEN dosya
+    veri kaybi degil "ad bicimi farki"dir; listede hic olmayan dosya
+    gercek eksiktir.
+    """
+    import unicodedata
+    cur = root.rstrip("/\\")
+    for part in path.strip("/").split("/"):
+        want = unicodedata.normalize("NFC", part)
+        try:
+            names = os.listdir(cur + sep if cur.endswith(":") else cur)
+        except OSError:
+            return None
+        hit = [n for n in names if unicodedata.normalize("NFC", n) == want]
+        if not hit:
+            return None
+        cur = cur + sep + hit[0]
+    return cur
+
+
+def _hash_tree(root: str, manifest: Manifest, sep: str = "/",
+               notes: Optional[List[str]] = None) -> List[str]:
     """Baglanmis birimdeki dosyalari isletim sisteminin surucusuyle ozetler."""
     errors: List[str] = []
     for path, (size_e, sha1) in sorted(manifest.entries.items()):
         full = root.rstrip("/\\") + sep + path.lstrip("/").replace("/", sep)
+        if not os.path.exists(full):
+            listed = _resolve_listed(root, path, sep)
+            if listed is None:
+                errors.append(f"{path}: surucu dosyayi listede de gostermiyor")
+                continue
+            if notes is not None:
+                notes.append(path)
+            full = listed
         try:
             h = hashlib.sha1()
             n = 0
@@ -148,7 +180,7 @@ def _hash_tree(root: str, manifest: Manifest, sep: str = "/") -> List[str]:
                     h.update(block)
                     n += len(block)
         except OSError as exc:
-            errors.append(f"{path}: {exc}")
+            errors.append(f"{path}: listede var ama acilamiyor: {exc}")
             continue
         if n != size_e or h.hexdigest() != sha1:
             errors.append(f"{path}: surucu farkli icerik goruyor ({n} bayt)")
@@ -185,21 +217,24 @@ def kernel_mount_check(fs_key: str, image_path: str, offset: int, size: int,
         # temsil edemez; dosya "yok" gorunur (CI'da olculdu). Uzun adlar UTF-16.
         opts += ",utf8"
     r = subprocess.run(["sudo", "-n", "mount", "-t", kind, "-o", opts, image_path, mnt],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, errors="replace")
     if r.returncode != 0:
         os.rmdir(mnt)
         msg = (r.stdout + r.stderr).strip()
         if "unknown filesystem type" in msg:
             return "skip", f"cekirdekte {kind} surucusu yok"
         return "fail", f"mount -t {kind}: {msg[-400:]}"
+    notes: List[str] = []
     try:
-        errors = _hash_tree(mnt, manifest)
+        errors = _hash_tree(mnt, manifest, notes=notes)
     finally:
         subprocess.run(["sudo", "-n", "umount", mnt], capture_output=True)
         os.rmdir(mnt)
     if errors:
         return "fail", "; ".join(errors[:10])
-    return "ok", f"{kind}: {len(manifest.entries)} dosya cekirdekle ayni"
+    extra = (f"; {len(notes)} dosyada ad bicimi farki (listeden acildi): "
+             f"{', '.join(notes[:3])}") if notes else ""
+    return "ok", f"{kind}: {len(manifest.entries)} dosya cekirdekle ayni{extra}"
 
 
 # --------------------------------------------------------------------------
@@ -211,7 +246,7 @@ WINDOWS_FS = {"fat12", "fat16", "fat32", "exfat", "ntfs", "udf"}
 def _powershell(script: str, timeout: int = 600) -> Tuple[int, str]:
     r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive",
                         "-ExecutionPolicy", "Bypass", "-Command", script],
-                       capture_output=True, text=True, timeout=timeout)
+                       capture_output=True, text=True, errors="replace", timeout=timeout)
     return r.returncode, (r.stdout + r.stderr).strip()
 
 
@@ -238,7 +273,7 @@ def windows_mount_check(fs_key: str, image_path: str, offset: int, size: int,
     subprocess.run(["fsutil", "sparse", "setflag", image_path, "0"],
                    capture_output=True)
     q = subprocess.run(["fsutil", "sparse", "queryflag", image_path],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, errors="replace")
     copy = "NOT" not in q.stdout.upper() and "DEGIL" not in q.stdout.upper()
     if copy:
         with open(image_path, "rb") as src, open(vhd, "wb") as dst:
@@ -267,7 +302,8 @@ $yol = if ($p.DriveLetter -and $p.DriveLetter -ne [char]0) {{ "$($p.DriveLetter)
         root = [l for l in out.splitlines() if l.startswith("YOL=")][0][4:].strip()
         info = [l for l in out.splitlines() if l.startswith("FS=")]
         errors = _hash_tree(root, manifest, sep="\\")
-        r = subprocess.run(["chkdsk", root], capture_output=True, text=True,
+        r = subprocess.run(["chkdsk", root], capture_output=True, text=True, errors="replace",
+                           encoding="oem",
                            timeout=1800)
         chk = (r.stdout + r.stderr).strip()
         if errors:
@@ -343,28 +379,28 @@ def _mac_check_entities(fs_key: str, disk: str, entities, offset: int,
         note = ""
         if fsck:
             raw = target.replace("/dev/disk", "/dev/rdisk")
-            fr = subprocess.run(fsck + [raw], capture_output=True, text=True)
+            fr = subprocess.run(fsck + [raw], capture_output=True, text=True, errors="replace")
             if fr.returncode != 0:
                 return "fail", f"{fsck[0]} cikis {fr.returncode}: {(fr.stdout + fr.stderr)[-500:]}"
             note = f", {fsck[0]} temiz"
         mnt = tempfile.mkdtemp(prefix="du_mnt_")
         mr = subprocess.run(["diskutil", "mount", "readOnly", "-mountPoint", mnt, target],
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, errors="replace")
         if mr.returncode != 0:
             # diskutil (DiskArbitration) reddetti: dogrudan mount denenir.
             # CI'da olculdu: UDF'te diskutil "failed to mount" derken
             # `mount -t udf` kabul ediyor.
             dm = subprocess.run(["mount", "-r", "-t", MAC_FS[fs_key], target, mnt],
-                                capture_output=True, text=True)
+                                capture_output=True, text=True, errors="replace")
             if dm.returncode != 0:
                 info = subprocess.run(["diskutil", "info", target], capture_output=True,
-                                      text=True).stdout
+                                      text=True, errors="replace").stdout
                 tur = [l.strip() for l in info.splitlines()
                        if "Type (Bundle)" in l or "File System Personality" in l]
                 kayit = subprocess.run(
                     ["log", "show", "--last", "2m", "--style", "compact", "--predicate",
                      f'eventMessage CONTAINS[c] "{MAC_FS[fs_key]}"'],
-                    capture_output=True, text=True).stdout.splitlines()[-8:]
+                    capture_output=True, text=True, errors="replace").stdout.splitlines()[-8:]
                 try:
                     os.rmdir(mnt)
                 except OSError:
@@ -373,8 +409,9 @@ def _mac_check_entities(fs_key: str, disk: str, entities, offset: int,
                                 f"mount -t {MAC_FS[fs_key]}: {(dm.stdout + dm.stderr).strip()[-300:]} | "
                                 f"diskutil: {tur} | gunluk: {' / '.join(kayit)[-700:]}")
             note += f", diskutil reddetti; mount -t {MAC_FS[fs_key]} kabul etti"
+        notes: List[str] = []
         try:
-            errors = _hash_tree(mnt, manifest)
+            errors = _hash_tree(mnt, manifest, notes=notes)
         finally:
             subprocess.run(["diskutil", "unmount", "force", mnt], capture_output=True)
             subprocess.run(["umount", "-f", mnt], capture_output=True)
@@ -384,6 +421,9 @@ def _mac_check_entities(fs_key: str, disk: str, entities, offset: int,
                 pass
         if errors:
             return "fail", f"macOS surucusu: {'; '.join(errors[:8])}"
+        if notes:
+            note += (f", {len(notes)} dosyada ad bicimi farki (listeden acildi): "
+                     f"{', '.join(notes[:3])}")
         return "ok", f"macOS {MAC_FS[fs_key]}: {len(manifest.entries)} dosya ayni{note}"
     finally:
         if detach:
@@ -420,7 +460,8 @@ $yol = if ($p.DriveLetter -and $p.DriveLetter -ne [char]0) {{ "$($p.DriveLetter)
     root = [l for l in out.splitlines() if l.startswith("YOL=")][0][4:].strip()
     info = [l for l in out.splitlines() if l.startswith("FS=")]
     errors = _hash_tree(root, manifest, sep="\\")
-    r = subprocess.run(["chkdsk", root], capture_output=True, text=True, timeout=1800)
+    r = subprocess.run(["chkdsk", root], capture_output=True, text=True, errors="replace",
+                           encoding="oem", timeout=1800)
     if errors:
         return "fail", f"Windows surucusu: {'; '.join(errors[:8])}"
     if r.returncode != 0:

@@ -96,6 +96,11 @@ hala `Resize-Partition` tercih edilir. Isletim sistemi bagli birimi kendisi
 cozer, birim kilidiyle ugrasmaz. Saf Python yolu **goruntu dosyalarinda ve
 Windows disi platformlarda** devreye girer.
 
+> **Duzeltme (2026-10-04, ADR 0084):** bu yol hic calismamisti — disk
+> numarasi okunamiyor, plan tablo-yalniz uygulaniyordu (veri kaybi). Artik
+> numara aygit yolundan alinir; Windows sinir bildirmezse, arac
+> calistirilamazsa veya tasima istenirse saf Python yolu kullanilir.
+
 ## Sonuc
 
 Linux misafirinde olculdu (Mint 22.3, 2026-09-17):

@@ -909,6 +909,8 @@ class PhysicalDisk(BlockDevice):
         self._win_handle = None
         self._volume_handles: List[object] = []
         self._locked_letters: List[str] = []
+        self._locked_devices: set = set()   # kilitli birim aygit yollari
+        self._relocking = False
         self._unlocked_letters: List[str] = []
         self._open_device()
         # Aygit acildigi andan kapanana kadar kutukte durur; listeleme ona
@@ -983,8 +985,10 @@ class PhysicalDisk(BlockDevice):
         if not targets:
             diagnostics.info(f"{self.path}: bagli birim yok, kilit gerekmiyor")
             return
-        locked, failed = [], []
+        locked, failed = list(self._locked_letters), []
         for device, name in targets:
+            if device in self._locked_devices:
+                continue                       # zaten kilitli: yeniden acilmaz
             try:
                 handle = _win_handle(device, write=True)
             except PhysicalDiskError as exc:
@@ -994,6 +998,7 @@ class PhysicalDisk(BlockDevice):
             _win_ioctl(handle, FSCTL_DISMOUNT_VOLUME, b"", 0)
             if kilitlendi:
                 self._volume_handles.append(handle)
+                self._locked_devices.add(device)
                 locked.append(name)
             else:
                 # kilitlenemedi: tutamaci birak, birim kullanimda olabilir
@@ -1016,6 +1021,18 @@ class PhysicalDisk(BlockDevice):
                 pass
             _win_close(handle)
         self._volume_handles = []
+        self._locked_devices = set()
+        self._locked_letters = []
+
+    def release_volumes(self) -> None:
+        """Birim kilitlerini birakir (yerel aracin birimi baglamasi icin).
+
+        Disk acik kalir; sonraki ham yazma reddedilirse kilit yeniden alinir.
+        Windows disinda bir sey yapmaz.
+        """
+        if IS_WINDOWS and self._volume_handles:
+            self._win_release_volumes()
+            diagnostics.info(f"{self.path}: birim kilitleri birakildi (yerel arac)")
 
     def close(self) -> None:
         # Kilitli birimler once birakilir ki rescan sonrasi yeniden baglanabilsinler
@@ -1174,6 +1191,22 @@ class PhysicalDisk(BlockDevice):
         if not k32.WriteFile(wt.HANDLE(self._win_handle), tampon, len(mevcut),
                              ctypes.byref(yazilan), None):
             error = k32.GetLastError()
+            if error == ERROR_ACCESS_DENIED and not self._relocking:
+                # Disk acildiktan SONRA baglanan birim (orn. ayni Uygula'da
+                # Windows'un Format-Volume'u yeni bolumu bagladi) kilitli
+                # degildir; yazma yarida reddedilirse cok adimli islem (veri
+                # kaydirma) yarim kalir ve veri bozulur — uzun testler gercek
+                # aygitta yakaladi (2026-10-04). Yeni birimler kilitlenip
+                # yazma bir kez tekrarlanir.
+                diagnostics.warn(f"{self.path}: yazma reddedildi (LBA {bas // ss}); "
+                                 "sonradan baglanan birimler kilitleniyor")
+                self._relocking = True
+                try:
+                    self._win_lock_volumes()
+                    self._win_write(offset, data)
+                    return
+                finally:
+                    self._relocking = False
             if error == ERROR_ACCESS_DENIED:
                 raise AccessDeniedError(self._write_denied_text(bas))
             raise PhysicalDiskError(tr("Yazma hatasi (Windows {})", error))

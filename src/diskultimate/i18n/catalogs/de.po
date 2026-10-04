@@ -9024,6 +9024,12 @@ msgstr "{}<br><br>Die Anwendung <b>mit {}-Rechten</b> neu starten?"
 msgid "◀ onunde {}"
 msgstr "◀ {} davor"
 
+msgid "Bu dosya sistemi yalnizca isletim sisteminin kendi araciyla boyutlandirilabilir; bolum tablosu tek basina degistirilmez"
+msgstr "Dieses Dateisystem kann nur mit dem eigenen Werkzeug des Betriebssystems in der Größe geändert werden; die Partitionstabelle wird nicht allein geändert"
+
+msgid "Ic hata: geri kaydirma istendi ({} sektor); hicbir sey yazilmadi"
+msgstr "Interner Fehler: Eine Rückwärtsverschiebung wurde angefordert ({} Sektoren); es wurde nichts geschrieben"
+
 #: src/diskultimate/ui/main_window.py:1942
 #~ msgid ""
 #~ "<br><br><b>{} adim veri kaybettirebilir.</b> Uygulandiktan sonra geri "
