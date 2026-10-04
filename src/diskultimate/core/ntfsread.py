@@ -608,6 +608,24 @@ class NtfsFS:
     def listdir(self, path: str = "/") -> List[NtfsEntry]:
         return self.listdir_record(self.resolve(path))
 
+    def iter_file(self, path: str, chunk: int = 4 * 1024 * 1024):
+        """Dosyanin $DATA akisini parca parca verir (ADR 0081)."""
+        rec = self.resolve(path)
+        if rec.is_dir:
+            raise NtfsError(tr("Klasor okunamaz"))
+        data = rec.find(AT_DATA, "")
+        if data is None:
+            return
+        if data.flags & ATTR_COMPRESSED:
+            yield self.read_attribute(data)     # sikistirilmis: eski yol
+            return
+        size = self.attribute_size(data)
+        offset = 0
+        while offset < size:
+            n = min(chunk, size - offset)
+            yield self.read_attribute_range(data, offset, n)
+            offset += n
+
     def read_file(self, path: str, max_bytes: int = -1) -> bytes:
         rec = self.resolve(path)
         if rec.is_dir:

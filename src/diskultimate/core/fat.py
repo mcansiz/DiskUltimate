@@ -22,7 +22,7 @@ from typing import Dict, List, Optional, Tuple
 
 from .image import BlockDevice
 from .platform import restore_owner
-from .streamio import group_runs, write_runs
+from .streamio import CHUNK, group_runs, write_runs
 from ..i18n import tr
 
 MAX_FILE_SIZE = 0xFFFFFFFF          # dizin girisindeki boyut alani 32 bit
@@ -514,6 +514,26 @@ class FatFS:
         if entry.is_dir:
             raise FatError(tr("Dizin dosya olarak okunamaz"))
         return self.read_entry(entry, max_bytes)
+
+    def iter_file(self, path: str, chunk: int = CHUNK):
+        """Dosyayi parca parca verir; bellek dosya boyutundan bagimsiz (ADR 0081)."""
+        entry = self.find(path)
+        if entry.is_dir:
+            raise FatError(tr("Dizin dosya olarak okunamaz"))
+        remaining = entry.size
+        if not entry.cluster or remaining <= 0:
+            return
+        cb = self.cluster_bytes
+        per = max(1, chunk // cb)
+        for start, count in group_runs(self.chain(entry.cluster)):
+            for i in range(0, count, per):
+                n = min(per, count - i)
+                data = self.dev.read(self.cluster_offset(start + i), n * cb)
+                data = data[:remaining]
+                remaining -= len(data)
+                yield data
+                if remaining <= 0:
+                    return
 
     def read_entry(self, entry: DirEntry, max_bytes: int = -1) -> bytes:
         if entry.cluster == 0 or entry.size == 0:

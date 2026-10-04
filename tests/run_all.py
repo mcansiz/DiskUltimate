@@ -6306,6 +6306,186 @@ def t78_yetkili_kopya_sahiplik_ve_ayarlar():
         shutil.rmtree(kok, ignore_errors=True)
 
 
+@test
+def t79_akis_yazma_ve_okuma():
+    """Akis yazma/okuma: alti yazicida parcali yerlesim, yarida kalan kaynak, FAT32 4 GiB reddi (ADR 0081)
+
+    Yazicilar eskiden dosyanin tamamini bellege aliyordu; FAT32 4 GiB+
+    dosyayi yazip sonra dusuyor, kumeleri sizdiriyordu. Burada her yazilabilir
+    dosya sisteminde: bosluklara dagilmak zorunda kalan dosya akisla yazilir,
+    akisla geri okunur (`iter_read`, `extract`), yarida kalan kaynak yarim
+    dosya ve sizinti birakmaz.
+    """
+    import hashlib
+    import io as _io
+    from diskultimate.core.formatter import format_partition
+    from diskultimate.core.streamio import StreamError
+
+    def ozet(parcalar):
+        h = hashlib.sha1()
+        for p in parcalar:
+            h.update(p)
+        return h.hexdigest()
+
+    for fs_key in ("fat32", "exfat", "ntfs", "ext4", "ext2", "hfsplus", "udf"):
+        yol = img_path(f"t79_{fs_key}.img")
+        d = DiskImage.create(yol, 160 * MIB, overwrite=True)
+        format_partition(d, fs_key, label="AKIS")
+        a = open_filesystem(d)
+        for i in range(20):
+            a.write_file(f"/d{i:02d}.bin", bytes([i]) * (3 * MIB))
+        for i in range(0, 20, 2):
+            a.remove(f"/d{i:02d}.bin")
+        a.flush()
+        # kalan bitisik alani doldur: buyuk dosya bosluklara dagilmak zorunda
+        bos = a.stats().get("free_bytes", 0) if hasattr(a, "stats") else 0
+        if bos > 40 * MIB:
+            a.write_stream("/dolgu.bin", _io.BytesIO(bytes(bos - 32 * MIB)),
+                           bos - 32 * MIB)
+        veri = os.urandom(21 * MIB + 333)
+        a.write_stream("/parcali.bin", _io.BytesIO(veri), len(veri))
+        kucuk = b"k" * 100
+        a.write_stream("/kucuk.txt", _io.BytesIO(kucuk), len(kucuk))
+        try:
+            a.write_stream("/yarim.bin", _io.BytesIO(b"x" * 1000), 4 * MIB)
+            raise AssertionError(f"{fs_key}: kisa kaynak kabul edildi")
+        except StreamError:
+            pass
+        a.flush()
+        d.close()
+
+        d = DiskImage(yol, readonly=True)
+        a = open_filesystem(d)
+        adlar = {n.name for n in a.listdir("/")}
+        assert "yarim.bin" not in adlar, (fs_key, "yarim dosya kaldi")
+        assert ozet(a.iter_read("/parcali.bin")) == hashlib.sha1(veri).hexdigest(), fs_key
+        assert b"".join(a.iter_read("/kucuk.txt")) == kucuk, fs_key
+        assert a.read("/d01.bin") == bytes([1]) * (3 * MIB), fs_key
+        cikan = img_path(f"t79_{fs_key}.out")
+        a.extract("/parcali.bin", cikan)
+        with open(cikan, "rb") as fh:
+            assert fh.read() == veri, (fs_key, "extract")
+        os.unlink(cikan)
+        d.close()
+        _dis_denetim(fs_key, yol)
+
+    # FAT32: 4 GiB+ yer AYRILMADAN reddedilir, kaynak okunmaz
+    from diskultimate.core.fat import FatError, FatFS
+    yol = img_path("t79_fat_sinir.img")
+    d = DiskImage.create(yol, 64 * MIB, overwrite=True)
+    format_partition(d, "fat32", label="SINIR")
+    fs = FatFS(d)
+    once = fs.free_clusters()
+
+    class Okunmamali:
+        def read(self, n):
+            raise AssertionError("4 GiB+ dosyada kaynak okundu")
+    try:
+        fs.write_stream("/buyuk.bin", Okunmamali(), 5 * 1024 ** 3)
+        raise AssertionError("FAT32 5 GiB dosyayi kabul etti")
+    except FatError:
+        pass
+    assert fs.free_clusters() == once, "reddedilen dosya kume sizdirdi"
+    d.close()
+
+
+@test
+def t80_mantiksal_bolum_boyutlandirma_ve_tasima():
+    """MBR mantiksal bolum: buyut/kucult/tasi; ilk EBR genisletilmis bolumun basinda (ADR 0082)
+
+    Uzun testler (2026-10-04) yakaladi: (1) genel cakisma denetimi mantiksal
+    bolumu kapsayicisiyla karsilastiriyordu, her boyutlandirma "1 numarali
+    bolum ile cakisiyor" diye dusuyordu — tasimada veri ONCEDEN kopyalanmis
+    oluyordu; (2) tasinan ilk mantiksal bolumun EBR'si yeni yerin onune
+    yaziliyor, zincirin basi eski yeri gostermeye devam ediyordu; (3) pencere
+    onceki mantiksal bolume bitisik baslangica izin veriyordu (EBR'ye yer yok).
+    """
+    from diskultimate.core import operations as _ops
+
+    def uygula(s, *adimlar):
+        k = _ops.OperationQueue()
+        for a in adimlar:
+            k.add(a)
+        r = k.apply(s)
+        assert r.ok, r.summary()
+
+    yol = img_path("t80.img")
+    s = DiskSession.create(yol, 600 * MIB, scheme="mbr", overwrite=True)
+    uygula(s, _ops.create_op(2048, 500 * 2048, 512, extended=True))
+    uygula(s, _ops.create_op(4096, 100 * 2048, 512, fs_key="fat32", label="BIR",
+                             logical=True))
+    s.reload()
+    ic = [r for r in s.free_regions() if 4096 < r.start_lba < 2048 + 500 * 2048][0]
+    uygula(s, _ops.create_op(ic.start_lba, 100 * 2048, 512, fs_key="fat32",
+                             label="IKI", logical=True))
+    s.reload()
+    veriler = []
+    for p in [x for x in s.partitions if x.logical]:
+        d = os.urandom(30 * MIB)
+        fs = s.filesystem(p.index)
+        fs.write_file("/v.bin", d)
+        fs.flush()
+        veriler.append(d)
+    s.close_filesystems()
+
+    def mantiksal():
+        s.reload()
+        return [x for x in s.partitions if x.logical]
+
+    def denetle(etiket):
+        ls = mantiksal()
+        assert len(ls) == 2, (etiket, ls)
+        for p, d in zip(ls, veriler):
+            assert s.filesystem(p.index).read("/v.bin") == d, etiket
+        s.close_filesystems()
+        # diskten yeniden okununca ayni yerlesim (EBR zinciri dogru)
+        t = DiskSession.open(yol, readonly=True)
+        assert [(x.start_lba, x.sector_count) for x in t.partitions if x.logical] == \
+            [(x.start_lba, x.sector_count) for x in ls], (etiket, "zincir")
+        t.close()
+        if shutil.which("sfdisk"):
+            r = subprocess.run(["sfdisk", "--verify", yol], capture_output=True,
+                               text=True, env=dict(os.environ, LC_ALL="C"))
+            assert "No errors detected" in r.stdout, (etiket, r.stdout[-300:])
+
+    denetle("baslangic")
+    p = mantiksal()[0]
+    s.resize_partition(p.index, p.start_lba, 60 * 2048, confirm=True)
+    denetle("ilk kucult")
+    p = mantiksal()[0]
+    s.resize_partition(p.index, p.start_lba + 30 * 2048, p.sector_count, confirm=True)
+    denetle("ilk saga tasi")
+    p = mantiksal()[0]
+    s.resize_partition(p.index, 4096, p.sector_count, confirm=True)
+    denetle("ilk geri tasi")
+    onceki, p2 = mantiksal()
+    w = s.resize_window(p2.index)
+    assert w.start_lba > onceki.end_lba + 1, "EBR icin bosluk birakilmadi"
+    s.resize_partition(p2.index, w.start_lba, p2.sector_count, confirm=True)
+    denetle("ikinci sola tasi")
+    p2 = mantiksal()[1]
+    s.resize_partition(p2.index, p2.start_lba, p2.sector_count + 50 * 2048,
+                       confirm=True)
+    denetle("ikinci buyut")
+    s.close()
+
+
+def _dis_denetim(fs_key: str, yol: str) -> None:
+    """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
+    araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],
+               "ntfs": ["ntfsfix", "-n"], "ext4": ["e2fsck", "-fn"],
+               "ext2": ["e2fsck", "-fn"], "hfsplus": ["fsck.hfsplus", "-n"]}
+    if fs_key not in araclar:
+        return
+    arac = shutil.which(araclar[fs_key][0]) or shutil.which(
+        araclar[fs_key][0], path="/usr/sbin:/sbin")
+    if not arac:
+        return
+    r = subprocess.run([arac] + araclar[fs_key][1:] + [yol], capture_output=True,
+                       text=True)
+    assert r.returncode == 0, (fs_key, (r.stdout + r.stderr)[-400:])
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

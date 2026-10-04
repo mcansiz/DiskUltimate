@@ -570,6 +570,22 @@ class HfsPlusFS:
             return b""
         return self.read_fork(entry.data, 0, max_bytes, entry.cnid)
 
+    def iter_file(self, path: str, chunk: int = 4 * 1024 * 1024):
+        """Dosyanin veri catalini parca parca verir (ADR 0081)."""
+        entry = self.resolve(path)
+        if entry.is_dir:
+            raise HfsError(tr("Dizin okunamaz: {}", path))
+        if entry.compressed or entry.data is None:
+            yield self.read_entry(entry)
+            return
+        pos = 0
+        while pos < entry.data.size:
+            piece = self.read_fork(entry.data, pos, chunk, entry.cnid)
+            if not piece:
+                break
+            yield piece
+            pos += len(piece)
+
     def read_file(self, path: str, max_bytes: int = -1) -> bytes:
         return self.read_entry(self.resolve(path), max_bytes)
 

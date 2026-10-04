@@ -21,7 +21,7 @@ from typing import Dict, List, Optional, Tuple
 
 from .image import BlockDevice
 from .platform import restore_owner
-from .streamio import group_runs, write_runs
+from .streamio import CHUNK, group_runs, write_runs
 from ..i18n import tr
 
 ENTRY_SIZE = 32
@@ -571,6 +571,28 @@ class ExFatFS:
         if entry.is_dir:
             raise ExFatError(tr("Dizin dosya olarak okunamaz"))
         return self.read_entry(entry, max_bytes)
+
+    def iter_file(self, path: str, chunk: int = CHUNK):
+        """Dosyayi parca parca verir (ADR 0081)."""
+        entry = self.find(path)
+        if entry.is_dir:
+            raise ExFatError(tr("Dizin dosya olarak okunamaz"))
+        remaining = entry.size
+        if not entry.cluster or remaining <= 0:
+            return
+        cb = self.cluster_bytes
+        count = (entry.size + cb - 1) // cb
+        runs = ([(entry.cluster, count)] if entry.contiguous else
+                group_runs(self.chain(entry.cluster, count, False)))
+        per = max(1, chunk // cb)
+        for start, n_total in runs:
+            for i in range(0, n_total, per):
+                n = min(per, n_total - i)
+                data = self.dev.read(self.cluster_offset(start + i), n * cb)[:remaining]
+                remaining -= len(data)
+                yield data
+                if remaining <= 0:
+                    return
 
     def read_entry(self, entry: ExEntry, max_bytes: int = -1) -> bytes:
         if not entry.cluster or not entry.size:

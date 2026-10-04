@@ -209,9 +209,25 @@ class MBRTable(PartitionTable):
                           key=lambda p: p.start_lba)
         if extended is None:
             return
+        prev_end = extended.start_lba - 1
         for i, part in enumerate(logicals):
-            ebr_lba = part.ebr_lba or (part.start_lba - self.align_sectors)
+            # Ilk EBR HER ZAMAN genisletilmis bolumun ilk sektorundedir:
+            # okuyucular zinciri oradan izler. Eskiden tasinan ilk mantiksal
+            # bolumun EBR'si yeni yerin onune yaziliyor, zincirin basi eski
+            # yeri gostermeye devam ediyordu (veri kopyalanmis, tablo eski;
+            # uzun testler yakaladi, 2026-10-04).
+            if i == 0:
+                ebr_lba = extended.start_lba
+            else:
+                ebr_lba = part.ebr_lba or (part.start_lba - self.align_sectors)
+                if ebr_lba <= prev_end:
+                    ebr_lba = part.start_lba - 1
+            if not prev_end < ebr_lba < part.start_lba:
+                raise PartitionTableError(
+                    tr("Bolum {} icin EBR'ye yer yok (onceki bolume bitisik)",
+                       part.index))
             part.ebr_lba = ebr_lba
+            prev_end = part.end_lba
             sector = bytearray(512)
             sector[ENTRY_OFFSET:ENTRY_OFFSET + ENTRY_SIZE] = _pack_entry(
                 None, start_lba=part.start_lba - ebr_lba,
@@ -220,6 +236,8 @@ class MBRTable(PartitionTable):
             if i + 1 < len(logicals):
                 nxt = logicals[i + 1]
                 next_ebr = nxt.ebr_lba or (nxt.start_lba - self.align_sectors)
+                if next_ebr <= part.end_lba:
+                    next_ebr = nxt.start_lba - 1
                 nxt.ebr_lba = next_ebr
                 sector[ENTRY_OFFSET + ENTRY_SIZE:ENTRY_OFFSET + 2 * ENTRY_SIZE] = _pack_entry(
                     None, start_lba=next_ebr - extended.start_lba,
@@ -286,14 +304,38 @@ class MBRTable(PartitionTable):
                                   logical=False)
 
     def _check_logical_range(self, start_lba: int, sector_count: int,
-                             extended: Partition) -> None:
+                             extended: Partition, ignore_index: int = -1) -> None:
         if start_lba < extended.start_lba or start_lba + sector_count - 1 > extended.end_lba:
             raise PartitionTableError(
                 tr("Mantiksal bolum genisletilmis bolumun disinda"))
         for p in self.partitions:
+            if p.index == ignore_index:
+                continue
             if p.logical and p.overlaps(start_lba, sector_count):
                 raise PartitionTableError(tr("{} numarali bolum ile cakisiyor",
                                              p.index))
+
+    def check_range(self, start_lba: int, sector_count: int,
+                    ignore_index: int = -1) -> None:
+        """Mantiksal bolumler genisletilmis bolumun ICINDE dogrulanir.
+
+        Genel denetim (ptable) araligi butun bolumlerle karsilastirir; mantiksal
+        bolum kapsayicisinin icinde durdugu icin her zaman "1 numarali bolum ile
+        cakisiyor" cikiyordu: mantiksal bolum hic boyutlandirilamiyor ve
+        tasinamiyordu (uzun testler yakaladi, 2026-10-04).
+        """
+        part = next((p for p in self.partitions if p.index == ignore_index), None)
+        if part is not None and part.logical:
+            extended = self.extended_partition()
+            if extended is None:
+                raise PartitionTableError(
+                    tr("Mantiksal bolumun genisletilmis bolumu bulunamadi"))
+            if sector_count <= 0:
+                raise PartitionTableError(tr("Bolum boyutu sifir olamaz"))
+            self._check_logical_range(start_lba, sector_count, extended,
+                                      ignore_index=ignore_index)
+            return
+        super().check_range(start_lba, sector_count, ignore_index)
 
     def delete_partition(self, index: int) -> None:
         part = self.get(index)

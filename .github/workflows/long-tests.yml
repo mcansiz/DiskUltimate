@@ -1,0 +1,170 @@
+# Uzun (derin) testler — ADR 0080. Yalnizca elle baslatilir (kullanici karari:
+# eklenen ozellige gore istendiginde). Her dosya sistemi x bolum tablosu ayri
+# is; sonuc ozet tablosu + hata varsa otomatik issue.
+name: Uzun testler
+
+on:
+  workflow_dispatch:
+    inputs:
+      profil:
+        description: quick (dakikalar) / full (5 GiB dosyalar, saatler)
+        type: choice
+        options: [full, quick]
+        default: full
+      fs:
+        description: "Dosya sistemleri (virgulle) ya da all"
+        type: string
+        default: all
+      tablo:
+        description: "mbr,gpt,mbr-mantiksal ya da all"
+        type: string
+        default: all
+      platformlar:
+        description: "linux,windows,macos"
+        type: string
+        default: linux,windows,macos
+      tohum:
+        description: "0 = kosu numarasindan uret (ayni tohum = ayni veri)"
+        type: string
+        default: "0"
+      issue:
+        description: Hata olursa GitHub issue ac
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHONIOENCODING: utf-8
+  DISKULTIMATE_NO_ELEVATION_PROMPT: "1"
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-24.04
+    outputs:
+      linux: ${{ steps.p.outputs.linux }}
+      windows: ${{ steps.p.outputs.windows }}
+      macos: ${{ steps.p.outputs.macos }}
+      tohum: ${{ steps.p.outputs.tohum }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: tests/long
+          sparse-checkout-cone-mode: false
+      - id: p
+        shell: bash
+        env:
+          FS: ${{ inputs.fs }}
+          TABLO: ${{ inputs.tablo }}
+          PLATFORMLAR: ${{ inputs.platformlar }}
+          TOHUM: ${{ inputs.tohum }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          fs_all = ["fat12","fat16","fat32","exfat","ntfs","ext4","ext3","ext2","hfsplus","udf","xfs"]
+          # Windows ve macOS'ta cekirdek/surucu dogrulamasi yapilabilen turler
+          fs_win = ["fat12","fat16","fat32","exfat","ntfs","udf"]
+          fs_mac = ["fat12","fat16","fat32","exfat","hfsplus","udf","ntfs"]
+          fs = fs_all if os.environ["FS"] == "all" else os.environ["FS"].split(",")
+          tb = ["mbr","gpt","mbr-mantiksal"] if os.environ["TABLO"] == "all" else os.environ["TABLO"].split(",")
+          pl = [x.strip() for x in os.environ["PLATFORMLAR"].split(",")]
+          def m(keys, allowed):
+              return json.dumps([{"fs": f, "tablo": t} for f in keys if f in allowed for t in tb])
+          seed = os.environ["TOHUM"] if os.environ["TOHUM"] != "0" else str(int(os.environ["GITHUB_RUN_ID"]) % 100000)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"linux={m(fs, fs_all) if 'linux' in pl else '[]'}\n")
+              out.write(f"windows={m(fs, fs_win) if 'windows' in pl else '[]'}\n")
+              out.write(f"macos={m(fs, fs_mac) if 'macos' in pl else '[]'}\n")
+              out.write(f"tohum={seed}\n")
+          print("tohum", seed)
+          PY
+
+  linux:
+    name: Linux ${{ matrix.fs }}-${{ matrix.tablo }}
+    needs: plan
+    if: needs.plan.outputs.linux != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.linux) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            /*
+            !/.claude/sessions/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Araclar ve cekirdek modulleri
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends dosfstools exfatprogs \
+            ntfs-3g e2fsprogs xfsprogs hfsprogs udftools
+          for m in hfsplus udf exfat ntfs3 xfs; do sudo modprobe $m || echo "modul yok: $m"; done
+          sudo mkdir -p /mnt/du && sudo chown "$(id -u):$(id -g)" /mnt/du
+          df -h /mnt / | cat
+      - name: Senaryo
+        run: >
+          python -m tests.long --profil ${{ inputs.profil }} --fs ${{ matrix.fs }}
+          --tablo ${{ matrix.tablo }} --tohum ${{ needs.plan.outputs.tohum }}
+          --cekirdek --calisma /mnt/du/is --rapor rapor/linux
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rapor-linux-${{ matrix.fs }}-${{ matrix.tablo }}
+          path: rapor/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  ozet:
+    name: Ozet ve issue
+    needs: [plan, linux]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            tests/__init__.py
+            tests/long/
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: rapor-*
+          path: raporlar
+      - name: Ozet
+        id: ozet
+        shell: bash
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set +e
+          python3 -m tests.long.report raporlar --md ozet.md --issue issue.md --kosu "$RUN_URL"
+          kod=$?
+          cat ozet.md >> "$GITHUB_STEP_SUMMARY"
+          echo "kod=$kod" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Issue
+        if: inputs.issue && steps.ozet.outputs.kod != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: "Uzun testler: hata (${{ inputs.profil }}, tohum ${{ needs.plan.outputs.tohum }})"
+        run: |
+          gh label create uzun-test --color B60205 --description "Uzun testlerin otomatik actigi" 2>/dev/null || true
+          if [ -f issue.md ]; then body=issue.md; else
+            printf 'Uzun testler kosusu rapor uretmedi (is coktu?): %s\n' \
+              "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" > bos.md
+            body=bos.md
+          fi
+          gh issue create --title "$TITLE" --body-file "$body" --label uzun-test
+      - name: Sonuc
+        if: steps.ozet.outputs.kod != '0'
+        run: exit 1

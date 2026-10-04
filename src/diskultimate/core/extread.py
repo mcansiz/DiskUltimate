@@ -278,6 +278,54 @@ class ExtFS:
             return b"\x00" * self.block_size
         return self.dev.read(block * self.block_size, self.block_size)
 
+    def iter_data(self, node: ExtInode, chunk: int = 4 * 1024 * 1024):
+        """Inode verisini parca parca verir (ADR 0081).
+
+        `read_data` her blok icin sozluk girdisi kurar (5 GiB'ta ~1.3 milyon);
+        bu yol extent'leri dogrudan dolasir. Bosluklar (seyrek) sifirdir.
+        """
+        if node.is_symlink:
+            raise ExtError(tr("Sembolik bagin icerigi okunamaz"))
+        size = node.size
+        if size <= 0:
+            return
+        bs = self.block_size
+        total = (size + bs - 1) // bs
+        runs: List[Tuple[int, int]] = []          # (fiziksel ya da 0=bosluk, blok)
+        if node.uses_extents:
+            pos = 0
+            for logical, physical, length in sorted(self._extent_blocks(node)):
+                if logical >= total or logical + length <= pos:
+                    continue
+                if logical > pos:
+                    runs.append((0, logical - pos))
+                skip = max(0, pos - logical)
+                n = min(length - skip, total - max(logical, pos))
+                runs.append((physical + skip, n))
+                pos = max(logical, pos) + n
+            if pos < total:
+                runs.append((0, total - pos))
+        else:
+            for block in self._indirect_blocks(node, total):
+                if runs and ((block == 0 and runs[-1][0] == 0) or
+                             (block and runs[-1][0] and
+                              runs[-1][0] + runs[-1][1] == block)):
+                    runs[-1] = (runs[-1][0], runs[-1][1] + 1)
+                else:
+                    runs.append((block, 1))
+        per = max(1, chunk // bs)
+        remaining = size
+        for physical, count in runs:
+            for i in range(0, count, per):
+                n = min(per, count - i)
+                data = (bytes(n * bs) if not physical else
+                        self.dev.read((physical + i) * bs, n * bs))
+                data = data[:remaining]
+                remaining -= len(data)
+                yield data
+                if remaining <= 0:
+                    return
+
     def read_data(self, node: ExtInode, max_bytes: int = -1) -> bytes:
         """Inode'un veri icerigini dondurur.
 

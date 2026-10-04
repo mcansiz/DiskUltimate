@@ -93,9 +93,14 @@ def window_for(table: PartitionTable, part: Partition) -> ResizeWindow:
 
     bas = lower
     last = upper
+    # Mantiksal bolumun onunde kendi EBR'si durur: onceki mantiksal bolumden
+    # sonra bir hizalama birimi bos kalmali (olusturmadaki kuralla ayni).
+    # Eskiden pencere bitisik baslangica izin veriyordu; EBR onceki bolumun
+    # verisinin uzerine yazilirdi.
+    ebr_gap = table.align_sectors if part.logical else 0
     for p in sorted(komsular, key=lambda x: x.start_lba):
         if p.end_lba < part.start_lba:
-            bas = max(bas, p.end_lba + 1)
+            bas = max(bas, p.end_lba + 1 + ebr_gap)
         elif p.start_lba > part.end_lba:
             last = min(last, p.start_lba - 1)
         else:

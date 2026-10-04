@@ -77,6 +77,19 @@ class FileSystemAccess:
     def extract(self, path: str, dest: str) -> str:
         raise NotImplementedError
 
+    def iter_read(self, path: str):
+        """Dosyayi parca parca verir. Alt siniflar akisla saglar (ADR 0081);
+        burasi tek parca okuyan yedek yoldur."""
+        yield self.read(path)
+
+    def _extract_stream(self, path: str, dest: str) -> str:
+        """`iter_read` ile dosyayi diske yazar (bellek dosya boyutundan bagimsiz)."""
+        with open(dest, "wb") as fh:
+            for piece in self.iter_read(path):
+                fh.write(piece)
+        restore_owner(dest)     # yetkili kopyada dosya root'a ait kalmasin
+        return dest
+
     def write_file(self, path: str, data: bytes) -> FileNode:
         return self.write_stream(path, io.BytesIO(data), len(data))
 
@@ -272,6 +285,9 @@ class FatAccess(FileSystemAccess):
     def read(self, path: str, max_bytes: int = -1) -> bytes:
         return self.fs.read_file(path, max_bytes)
 
+    def iter_read(self, path: str):
+        return self.fs.iter_file(path)
+
     def extract(self, path: str, dest: str) -> str:
         return self.fs.extract(path, dest)
 
@@ -330,6 +346,9 @@ class ExFatAccess(FileSystemAccess):
 
     def read(self, path: str, max_bytes: int = -1) -> bytes:
         return self.fs.read_file(path, max_bytes)
+
+    def iter_read(self, path: str):
+        return self.fs.iter_file(path)
 
     def extract(self, path: str, dest: str) -> str:
         return self.fs.extract(path, dest)
@@ -413,12 +432,11 @@ class ExtAccess(FileSystemAccess):
     def read(self, path: str, max_bytes: int = -1) -> bytes:
         return self.fs.read_data(self.fs.resolve(path), max_bytes)
 
+    def iter_read(self, path: str):
+        return self.fs.iter_data(self.fs.resolve(path))
+
     def extract(self, path: str, dest: str) -> str:
-        data = self.read(path)
-        with open(dest, "wb") as fh:
-            fh.write(data)
-        restore_owner(dest)     # yetkili kopyada dosya root'a ait kalmasin
-        return dest
+        return self._extract_stream(path, dest)
 
     @property
     def write_reason(self) -> str:
@@ -518,11 +536,11 @@ class NtfsAccess(FileSystemAccess):
     def read(self, path: str, max_bytes: int = -1) -> bytes:
         return self.fs.read_file(path, max_bytes)
 
+    def iter_read(self, path: str):
+        return self.fs.iter_file(path)
+
     def extract(self, path: str, dest: str) -> str:
-        with open(dest, "wb") as fh:
-            fh.write(self.read(path))
-        restore_owner(dest)     # yetkili kopyada dosya root'a ait kalmasin
-        return dest
+        return self._extract_stream(path, dest)
 
     def stats(self) -> Dict[str, int]:
         return self.fs.stats()
@@ -635,6 +653,12 @@ class UdfAccess(FileSystemAccess):
 
     def read(self, path: str, max_bytes: int = -1) -> bytes:
         return self.fs.read_file(path, max_bytes)
+
+    def iter_read(self, path: str):
+        entry = self.fs.resolve(path)
+        if entry.is_dir:
+            raise UdfError(tr("Dizin okunamaz: {}", path))
+        return self.fs.iter_entry(entry)
 
     def extract(self, path: str, dest: str) -> str:
         self.fs.extract(path, dest)
@@ -895,6 +919,9 @@ class HfsAccess(FileSystemAccess):
 
     def read(self, path: str, max_bytes: int = -1) -> bytes:
         return self.fs.read_file(path, max_bytes)
+
+    def iter_read(self, path: str):
+        return self.fs.iter_file(path)
 
     def extract(self, path: str, dest: str) -> str:
         self.fs.extract(path, dest)

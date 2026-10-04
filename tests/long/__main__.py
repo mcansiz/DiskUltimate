@@ -1,0 +1,107 @@
+"""Uzun testler komut satiri. Ayrinti: tests/long/__init__.py, ADR 0080."""
+from __future__ import annotations
+
+import argparse
+import os
+import shutil
+import sys
+import time
+
+from .data import GIB, MIB, PROFILES, FileSpec, build
+from .engine import FS_PLANS, TABLES, Ctx, ROOT, run, save
+from .steps import ALIGN, STEPS
+
+
+def plan_sizes(plan, dataset) -> tuple:
+    """(bolum sektoru, disk bayti): veri + %15 ustveri payi; buyutme ve tasima
+    icin disk bolumun ~1.6 kati."""
+    data = sum(f.size for f in dataset.files)
+    part = max(data * 115 // 100 + 48 * MIB, 64 * MIB)
+    if plan.key == "xfs":
+        part = max(part, 320 * MIB)
+    if plan.max_volume:
+        part = min(part, plan.max_volume * 2 // 3)
+    part_sectors = (part // 512 + ALIGN - 1) // ALIGN * ALIGN
+    disk = part_sectors * 512 * 8 // 5 + 16 * MIB
+    if plan.max_volume:
+        disk = min(disk, plan.max_volume * 3 // 2 + 16 * MIB)
+    return part_sectors, disk
+
+
+def make_dataset(plan, profile, seed: int, budget_gb: float):
+    budget = int(budget_gb * GIB) if budget_gb else 0
+    if plan.max_volume:
+        limit = plan.max_volume * 55 // 100
+        budget = min(budget, limit) if budget else limit
+    ds = build(seed, profile, max_file=plan.max_file, budget=budget)
+    # Tam sinirda dosya: profil siniri asan bir buyuk dosya istiyorsa ve
+    # birim alabiliyorsa (FAT32: 4 GiB-1) o boyutta bir dosya eklenir.
+    if (plan.max_file and any(b > plan.max_file for b in profile.big)
+            and not plan.max_volume
+            and (not budget or sum(f.size for f in ds.files) + plan.max_file <= budget)):
+        ds.files.insert(0, FileSpec("/sinir_tam_4GiB-1.bin", plan.max_file,
+                                    seed * 1_000_003 + 999_999))
+    if not plan.writable:
+        ds.files = []
+    return ds
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(prog="python -m tests.long")
+    ap.add_argument("--profil", default="quick", choices=sorted(PROFILES))
+    ap.add_argument("--fs", default="all", help="virgulle: ntfs,ext4 ya da all")
+    ap.add_argument("--tablo", default="all", help="mbr,gpt,mbr-mantiksal ya da all")
+    ap.add_argument("--tohum", type=int, default=0, help="0 = zamandan uret")
+    ap.add_argument("--butce-gb", type=float, default=0.0,
+                    help="senaryo basina en fazla veri (0 = profil)")
+    ap.add_argument("--rapor", default="", help="JSON rapor klasoru")
+    ap.add_argument("--calisma", default="", help="goruntulerin yazilacagi klasor")
+    ap.add_argument("--cekirdek", action="store_true",
+                    help="cekirdek ile baglayarak dogrula (Linux + sudo; ADR 0080)")
+    ap.add_argument("--devam", action="store_true", help="hatada durma, sonraki adima gec")
+    ap.add_argument("--liste", action="store_true")
+    a = ap.parse_args(argv)
+
+    fs_keys = list(FS_PLANS) if a.fs == "all" else a.fs.split(",")
+    tables = list(TABLES) if a.tablo == "all" else a.tablo.split(",")
+    if a.liste:
+        for k in fs_keys:
+            for t in tables:
+                print(f"{k}-{t}")
+        print("adimlar: " + ", ".join(s.name for s in STEPS))
+        return 0
+    seed = a.tohum or int(time.time()) % 100000
+    profile = PROFILES[a.profil]
+    report_dir = a.rapor or os.path.join(ROOT, ".tmp", "uzun", "rapor")
+    if a.cekirdek:
+        os.environ["DU_UZUN_CEKIRDEK"] = "1"
+    failures = 0
+    for key in fs_keys:
+        plan = FS_PLANS[key]
+        for table in tables:
+            workdir = a.calisma or os.path.join(ROOT, ".tmp", "uzun", f"{key}-{table}")
+            os.makedirs(workdir, exist_ok=True)
+            ds = make_dataset(plan, profile, seed, a.butce_gb)
+            part_sectors, disk = plan_sizes(plan, ds)
+            ctx = Ctx(fs=plan, table=table, profile=profile.name, seed=seed,
+                      workdir=workdir, dataset=ds,
+                      image=os.path.join(workdir, "disk.img"),
+                      part_sectors=part_sectors, disk_bytes=disk,
+                      kernel_check=a.cekirdek)
+            print(f"== {key}-{table} (profil {profile.name}, tohum {seed}, "
+                  f"{len(ds.files)} dosya, {sum(f.size for f in ds.files) // MIB} MiB)",
+                  flush=True)
+            result = run(ctx, STEPS, stop_on_fail=not a.devam)
+            if ctx.session is not None:
+                ctx.session.close()
+            save(result, os.path.join(report_dir, f"{key}-{table}.json"))
+            if not result["tamam"]:
+                failures += 1
+                print(f"   HATA — tekrar: {result['tekrar']}")
+            shutil.rmtree(workdir, ignore_errors=True)
+    print(f"\n{failures} senaryo hatali" if failures else "\nButun senaryolar tamam")
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

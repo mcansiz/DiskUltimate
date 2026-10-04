@@ -5680,3 +5680,17 @@ calismiyordu.
   geri verme — uc hata duzeltildi.
 - 2 GiB kopya: bellek 32-53 MB (eskiden >= 2 GiB), icerik ayni, fsck temiz.
 - t74: ilerleme izleyicisinin bolme adimi 4 MiB -> 1 MiB (akis 4 MiB yazdigi icin cubuk 4 MB'ta bir ilerliyordu; test yakaladi). run_all 76/78, fs_matrix 12/13 (ReFS Linux'ta beklenen), resize_matrix 8/8, ui_smoke, diag 13/13.
+
+## 2026-10-04 (3) — Akis okuma; uzun test motoru (Asama 1); mantiksal bolum hatasi
+
+- Okuma da akista: iter_file/iter_data/iter_entry (FAT, exFAT, NTFS, ext,
+  UDF, HFS+), erisim katmaninda iter_read; ext/NTFS/UDF extract artik tek
+  parca okumaz. 2 GiB disa aktarma 34-53 MB bellek. t79.
+- tests/long: data (tohumlu veri, parca basinda kimlik), verify (kendi
+  okuyucu + fsck + istege bagli cekirdek baglama), engine (adim, olcum,
+  JSON), steps (arayuz yolu: kuyruk), report (Markdown/issue).
+- Ilk kosu GERCEK HATA buldu: MBR mantiksal bolum boyutlandirilamiyor/
+  tasinamiyor, tasima veriyi bozabiliyordu (ADR 0082, t80).
+- UDF kayip bolum taramasi desteklenmiyor (ADR 0054'te bilincli) — adim
+  "atlandi" + neden; kullaniciya bulgu olarak sunulacak.
+- quick: 33/33 (tohum 12).

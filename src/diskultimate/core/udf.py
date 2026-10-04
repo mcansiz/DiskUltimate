@@ -334,6 +334,33 @@ class UdfFS:
             out.append((blk, length, pref, kind))
         return out
 
+    def iter_entry(self, entry: UdfEntry, chunk: int = 4 * 1024 * 1024):
+        """Dosya girisinin verisini parca parca verir (ADR 0081)."""
+        remaining = entry.size
+        if entry.embedded or not entry.extents:
+            yield entry.embedded[:remaining]
+            return
+        bs = self.block_size
+        chunk = max(bs, chunk - chunk % bs)
+        for blk, length, pref, kind in entry.extents:
+            if remaining <= 0:
+                return
+            take = min(length, remaining)
+            p = self.partitions[pref] if pref < len(self.partitions) else None
+            off = 0
+            while off < take:
+                n = min(chunk, take - off)
+                nblocks = (n + bs - 1) // bs
+                if kind != EXTENT_RECORDED:
+                    data = bytes(n)                 # ayrilmis ama yazilmamis
+                elif p is not None and p.kind == "physical":
+                    data = self._read_block(p.start + blk + off // bs, nblocks)[:n]
+                else:
+                    data = self._read_logical(blk + off // bs, pref, nblocks)[:n]
+                yield data
+                off += n
+            remaining -= take
+
     def _read_entry(self, entry: UdfEntry, max_bytes: int = -1) -> bytes:
         limit = entry.size if max_bytes < 0 else min(entry.size, max_bytes)
         if entry.embedded or not entry.extents:
@@ -453,7 +480,8 @@ class UdfFS:
             return dest
         os.makedirs(os.path.dirname(os.path.abspath(dest)) or ".", exist_ok=True)
         with open(dest, "wb") as fh:
-            fh.write(self._read_entry(entry))
+            for piece in self.iter_entry(entry):     # akis (ADR 0081)
+                fh.write(piece)
         if entry.mtime:
             ts = entry.mtime.timestamp()
             os.utime(dest, (ts, ts))

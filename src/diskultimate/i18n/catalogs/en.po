@@ -252,7 +252,7 @@ msgstr ""
 "0x00, 0xFF and random data. Common in enterprise data destruction "
 "standards."
 
-#: src/diskultimate/core/mbr.py:269
+#: src/diskultimate/core/mbr.py:287
 msgid "4 birincil bolum dolu; genisletilmis bolum kullanin"
 msgstr "All 4 primary partitions are used; use an extended partition"
 
@@ -602,7 +602,7 @@ msgstr "APFS object not found in the object map: {}"
 msgid "APFS sikistirma ozniteligi bozuk"
 msgstr "APFS compression attribute is corrupt"
 
-#: src/diskultimate/core/filesystem.py:797
+#: src/diskultimate/core/filesystem.py:821
 msgid "APFS yazma desteklenmiyor; birim salt okunur acildi."
 msgstr ""
 "Writing to APFS is not supported; the volume was opened read-only."
@@ -820,11 +820,11 @@ msgstr "No such device: {}"
 msgid "Aygit yolu"
 msgstr "Device path"
 
-#: src/diskultimate/core/resize.py:621
+#: src/diskultimate/core/resize.py:626
 msgid "Ayirma bitmap'i icin yeterli ardisik bos alan bulunamadi"
 msgstr "Not enough contiguous free space for the allocation bitmap"
 
-#: src/diskultimate/core/exfat.py:1018
+#: src/diskultimate/core/exfat.py:1040
 msgid "Ayirma bitmap'i yaziliyor..."
 msgstr "Writing the allocation bitmap..."
 
@@ -1012,7 +1012,7 @@ msgstr "Start LBA"
 msgid "Baslangic cok erken (en az LBA {})"
 msgstr "The start is too early (at least LBA {})"
 
-#: src/diskultimate/core/resize.py:745
+#: src/diskultimate/core/resize.py:750
 msgid "Baslangic kapsayici alanin disinda (en erken LBA {})"
 msgstr "The start is outside the surrounding area (earliest LBA {})"
 
@@ -1334,12 +1334,12 @@ msgstr "Volume label:"
 msgid "Birim etiketini degistir..."
 msgstr "Change volume label..."
 
-#: src/diskultimate/core/exfat.py:735
-#: src/diskultimate/core/exfat.py:786
-#: src/diskultimate/core/exfat.py:810
-#: src/diskultimate/core/fat.py:701
-#: src/diskultimate/core/fat.py:767
-#: src/diskultimate/core/fat.py:804
+#: src/diskultimate/core/exfat.py:757
+#: src/diskultimate/core/exfat.py:808
+#: src/diskultimate/core/exfat.py:832
+#: src/diskultimate/core/fat.py:721
+#: src/diskultimate/core/fat.py:787
+#: src/diskultimate/core/fat.py:824
 msgid "Birim salt okunur"
 msgstr "The volume is read-only"
 
@@ -1355,7 +1355,7 @@ msgstr ""
 msgid "Birimde bos kume kalmadi"
 msgstr "No free clusters left on the volume"
 
-#: src/diskultimate/core/fat.py:718
+#: src/diskultimate/core/fat.py:738
 msgid "Birimde yer yok: {} kume gerekli, {} bos"
 msgstr "Not enough space on the volume: {} clusters needed, {} free"
 
@@ -1440,11 +1440,11 @@ msgstr "Partition Info"
 msgid "Bolum Duzeni"
 msgstr "Partition Layout"
 
-#: src/diskultimate/core/fat.py:945
+#: src/diskultimate/core/fat.py:965
 msgid "Bolum FAT icin cok kucuk"
 msgstr "The partition is too small for FAT"
 
-#: src/diskultimate/core/fat.py:969
+#: src/diskultimate/core/fat.py:989
 msgid "Bolum FAT{} icin cok kucuk (kume sayisi {})"
 msgstr "The partition is too small for FAT{} (cluster count {})"
 
@@ -1497,8 +1497,9 @@ msgstr "Partition device not found: {}"
 msgid "Bolum bagli"
 msgstr "Partition is mounted"
 
+#: src/diskultimate/core/mbr.py:334
 #: src/diskultimate/core/ptable.py:219
-#: src/diskultimate/core/resize.py:742
+#: src/diskultimate/core/resize.py:747
 msgid "Bolum boyutu sifir olamaz"
 msgstr "The partition size cannot be zero"
 
@@ -1512,7 +1513,7 @@ msgstr "The partition cannot shrink this much"
 msgid "Bolum bulunamadi"
 msgstr "Partition not found"
 
-#: src/diskultimate/core/resize.py:770
+#: src/diskultimate/core/resize.py:775
 msgid ""
 "Bolum buyutuluyor ama dosya sistemi buyutulemiyor; eklenen alan "
 "kullanilamaz"
@@ -1540,16 +1541,16 @@ msgstr "Change partition layout..."
 msgid "Bolum eklenemez"
 msgstr "Cannot add a partition"
 
-#: src/diskultimate/core/exfat.py:932
-#: src/diskultimate/core/exfat.py:944
+#: src/diskultimate/core/exfat.py:954
+#: src/diskultimate/core/exfat.py:966
 msgid "Bolum exFAT icin cok kucuk"
 msgstr "The partition is too small for exFAT"
 
-#: src/diskultimate/core/exfat.py:916
+#: src/diskultimate/core/exfat.py:938
 msgid "Bolum exFAT icin cok kucuk (en az 1 MB)"
 msgstr "The partition is too small for exFAT (at least 1 MB)"
 
-#: src/diskultimate/core/exfat.py:962
+#: src/diskultimate/core/exfat.py:984
 msgid "Bolum exFAT metaverisi icin yetersiz"
 msgstr "The partition is too small for exFAT metadata"
 
@@ -1560,7 +1561,7 @@ msgstr "The partition is too small for exFAT metadata"
 msgid "Bolum ext icin cok kucuk"
 msgstr "The partition is too small for ext"
 
-#: src/diskultimate/core/resize.py:749
+#: src/diskultimate/core/resize.py:754
 msgid "Bolum kapsayici alani asiyor (en gec LBA {})"
 msgstr "The partition goes past the surrounding area (latest LBA {})"
 
@@ -1569,7 +1570,7 @@ msgstr "The partition goes past the surrounding area (latest LBA {})"
 msgid "Bolum olusturuluyor..."
 msgstr "Creating the partition..."
 
-#: src/diskultimate/core/resize.py:824
+#: src/diskultimate/core/resize.py:829
 msgid "Bolum plan hazirlandiktan sonra degismis; yenileyin"
 msgstr "The partition changed after the plan was prepared; refresh"
 
@@ -1605,17 +1606,17 @@ msgstr "Do not create a partition table"
 msgid "Bolum tablosu silindi"
 msgstr "Partition table erased"
 
-#: src/diskultimate/core/resize.py:866
+#: src/diskultimate/core/resize.py:871
 msgid "Bolum tablosu yazilamadi: {}"
 msgstr "The partition table could not be written: {}"
 
-#: src/diskultimate/core/resize.py:854
+#: src/diskultimate/core/resize.py:859
 #: src/diskultimate/core/restoreplan.py:287
 msgid "Bolum tablosu yaziliyor..."
 msgstr "Writing the partition table..."
 
-#: src/diskultimate/core/resize.py:735
-#: src/diskultimate/core/resize.py:820
+#: src/diskultimate/core/resize.py:740
+#: src/diskultimate/core/resize.py:825
 #: src/diskultimate/core/session.py:156
 #: src/diskultimate/core/session.py:320
 #: src/diskultimate/ui/main_window.py:1093
@@ -1785,6 +1786,11 @@ msgid "Bolum {} hedef diskin sonunu asiyor (hedef {}, gereken en az {})"
 msgstr ""
 "Partition {} extends past the end of the target disk (target {}, at least "
 "{} required)"
+
+#: src/diskultimate/core/mbr.py:227
+msgid "Bolum {} icin EBR'ye yer yok (onceki bolume bitisik)"
+msgstr ""
+"No room for the EBR of partition {} (adjacent to the previous partition)"
 
 #: src/diskultimate/core/bootloader.py:538
 msgid "Bolum {} inceleniyor..."
@@ -2243,11 +2249,11 @@ msgstr "This file is not a DiskUltimate backup"
 msgid "Bu dosya sistemi"
 msgstr "This file system"
 
-#: src/diskultimate/core/resize.py:775
+#: src/diskultimate/core/resize.py:780
 msgid "Bu dosya sistemi tasinamaz — {}"
 msgstr "This file system cannot be moved — {}"
 
-#: src/diskultimate/core/resize.py:761
+#: src/diskultimate/core/resize.py:766
 msgid "Bu dosya sistemi {} altina inemez (veri kaybi olurdu)"
 msgstr "This file system cannot go below {} (data would be lost)"
 
@@ -2347,7 +2353,7 @@ msgstr "Describe this backup — the note is stored inside the file"
 #: src/diskultimate/core/apfs.py:405
 #: src/diskultimate/core/btrfs.py:263
 #: src/diskultimate/core/exfat.py:559
-#: src/diskultimate/core/extread.py:369
+#: src/diskultimate/core/extread.py:417
 #: src/diskultimate/core/extwrite.py:1253
 #: src/diskultimate/core/extwrite.py:1290
 #: src/diskultimate/core/f2fs.py:410
@@ -2359,7 +2365,7 @@ msgstr "Describe this backup — the note is stored inside the file"
 #: src/diskultimate/core/iso9660.py:236
 #: src/diskultimate/core/ntfsindex.py:472
 #: src/diskultimate/core/ntfsread.py:604
-#: src/diskultimate/core/udf.py:429
+#: src/diskultimate/core/udf.py:456
 #: src/diskultimate/core/udfwrite.py:681
 #: src/diskultimate/core/udfwrite.py:719
 #: src/diskultimate/core/xfs.py:305
@@ -2387,7 +2393,7 @@ msgstr "Grow, shrink or move all partitions together in one window"
 msgid "Butun is parcaciklarinin o anki yiginini dosyaya yazar"
 msgstr "Writes the current stack of all threads to a file"
 
-#: src/diskultimate/core/exfat.py:1028
+#: src/diskultimate/core/exfat.py:1050
 msgid "Buyuk harf tablosu yaziliyor..."
 msgstr "Writing the upcase table..."
 
@@ -2919,7 +2925,7 @@ msgstr "Writing directory blocks..."
 msgid "Dizin cok buyuk"
 msgstr "Directory is too large"
 
-#: src/diskultimate/core/extread.py:324
+#: src/diskultimate/core/extread.py:372
 #: src/diskultimate/core/ntfsread.py:421
 msgid "Dizin degil"
 msgstr "Not a directory"
@@ -2929,7 +2935,7 @@ msgstr "Not a directory"
 #: src/diskultimate/core/btrfs.py:260
 #: src/diskultimate/core/btrfs.py:270
 #: src/diskultimate/core/exfat.py:538
-#: src/diskultimate/core/extread.py:363
+#: src/diskultimate/core/extread.py:411
 #: src/diskultimate/core/extwrite.py:1167
 #: src/diskultimate/core/extwrite.py:1218
 #: src/diskultimate/core/f2fs.py:407
@@ -2941,8 +2947,8 @@ msgstr "Not a directory"
 #: src/diskultimate/core/iso9660.py:218
 #: src/diskultimate/core/ntfsread.py:601
 #: src/diskultimate/core/ntfswrite.py:867
-#: src/diskultimate/core/udf.py:422
-#: src/diskultimate/core/udf.py:437
+#: src/diskultimate/core/udf.py:449
+#: src/diskultimate/core/udf.py:464
 #: src/diskultimate/core/udfwrite.py:571
 #: src/diskultimate/core/xfs.py:302
 #: src/diskultimate/core/xfs.py:312
@@ -2950,7 +2956,9 @@ msgid "Dizin degil: {}"
 msgstr "Not a directory: {}"
 
 #: src/diskultimate/core/exfat.py:572
+#: src/diskultimate/core/exfat.py:579
 #: src/diskultimate/core/fat.py:515
+#: src/diskultimate/core/fat.py:522
 msgid "Dizin dosya olarak okunamaz"
 msgstr "A directory cannot be read as a file"
 
@@ -2987,9 +2995,11 @@ msgstr ""
 #: src/diskultimate/core/apfs.py:420
 #: src/diskultimate/core/btrfs.py:315
 #: src/diskultimate/core/f2fs.py:423
+#: src/diskultimate/core/filesystem.py:660
 #: src/diskultimate/core/hfsplus.py:565
+#: src/diskultimate/core/hfsplus.py:577
 #: src/diskultimate/core/iso9660.py:252
-#: src/diskultimate/core/udf.py:443
+#: src/diskultimate/core/udf.py:470
 #: src/diskultimate/core/xfs.py:318
 msgid "Dizin okunamaz: {}"
 msgstr "Cannot read a directory as a file: {}"
@@ -3106,15 +3116,15 @@ msgstr "The file system could not be opened: {}"
 msgid "Dosya sistemi bolumu dolduracak kadar buyutuluyor..."
 msgstr "Growing the file system to fill the partition..."
 
-#: src/diskultimate/core/resize.py:878
+#: src/diskultimate/core/resize.py:883
 msgid "Dosya sistemi buyutulemedi: {}"
 msgstr "The file system could not be grown: {}"
 
-#: src/diskultimate/core/resize.py:870
+#: src/diskultimate/core/resize.py:875
 msgid "Dosya sistemi buyutuluyor..."
 msgstr "Growing the file system..."
 
-#: src/diskultimate/core/resize.py:766
+#: src/diskultimate/core/resize.py:771
 msgid ""
 "Dosya sistemi en fazla {} olabilir; kalan alan bolum icinde "
 "**kullanilmadan** kalir"
@@ -3122,7 +3132,7 @@ msgstr ""
 "The file system can be at most {}; the remaining space stays **unused** "
 "inside the partition"
 
-#: src/diskultimate/core/resize.py:833
+#: src/diskultimate/core/resize.py:838
 msgid "Dosya sistemi kucultuluyor..."
 msgstr "Shrinking the file system..."
 
@@ -3166,8 +3176,8 @@ msgstr "File exists"
 msgid "Dosya yolu"
 msgstr "File path"
 
-#: src/diskultimate/core/exfat.py:742
-#: src/diskultimate/core/fat.py:712
+#: src/diskultimate/core/exfat.py:764
+#: src/diskultimate/core/fat.py:732
 #: src/diskultimate/core/image.py:200
 #: src/diskultimate/core/vdisk.py:261
 msgid "Dosya zaten var: {}"
@@ -3307,17 +3317,17 @@ msgstr "F2FS node not found: {}"
 msgid "F2FS ustblogu bulunamadi"
 msgstr "F2FS superblock not found"
 
-#: src/diskultimate/core/filesystem.py:754
+#: src/diskultimate/core/filesystem.py:778
 msgid "F2FS yazma bu surumde yok; birim salt okunur acildi."
 msgstr ""
 "Writing to F2FS is not available in this version; the volume was opened "
 "read-only."
 
-#: src/diskultimate/core/exfat.py:1005
+#: src/diskultimate/core/exfat.py:1027
 msgid "FAT bolgesi hazirlaniyor..."
 msgstr "Preparing the FAT area..."
 
-#: src/diskultimate/core/fat.py:706
+#: src/diskultimate/core/fat.py:726
 msgid "FAT en fazla 4 GiB - 1 bayt dosya alir ({} bayt istendi)"
 msgstr "FAT allows files of at most 4 GiB - 1 byte ({} bytes requested)"
 
@@ -3358,11 +3368,11 @@ msgstr "FAT32 (CHS)"
 msgid "FAT32 (LBA)"
 msgstr "FAT32 (LBA)"
 
-#: src/diskultimate/core/fat.py:960
+#: src/diskultimate/core/fat.py:980
 msgid "FAT{} bu boyut icin uygun degil; FAT32 secin"
 msgstr "FAT{} is not suitable for this size; choose FAT32"
 
-#: src/diskultimate/core/resize.py:360
+#: src/diskultimate/core/resize.py:365
 msgid "FAT{} icin gecersiz kume sayisi"
 msgstr "Invalid cluster count for FAT{}"
 
@@ -3421,7 +3431,7 @@ msgstr "Scanning the physical disk list..."
 msgid "Fiziksel disk — {}"
 msgstr "Physical disk — {}"
 
-#: src/diskultimate/core/resize.py:780
+#: src/diskultimate/core/resize.py:785
 msgid "Fiziksel disk: islem oncesi yedek alin"
 msgstr "Physical disk: make a backup before the operation"
 
@@ -3686,8 +3696,8 @@ msgstr "Invalid partition window"
 msgid "Gecersiz boyut"
 msgstr "Invalid size"
 
-#: src/diskultimate/core/exfat.py:738
-#: src/diskultimate/core/fat.py:704
+#: src/diskultimate/core/exfat.py:760
+#: src/diskultimate/core/fat.py:724
 #: src/diskultimate/core/hfswrite.py:670
 #: src/diskultimate/core/udfwrite.py:568
 msgid "Gecersiz dosya yolu"
@@ -3701,8 +3711,8 @@ msgstr "Invalid exFAT parameters"
 msgid "Gecersiz inode numarasi: {}"
 msgstr "Invalid inode number: {}"
 
-#: src/diskultimate/core/exfat.py:789
-#: src/diskultimate/core/fat.py:770
+#: src/diskultimate/core/exfat.py:811
+#: src/diskultimate/core/fat.py:790
 msgid "Gecersiz klasor yolu"
 msgstr "Invalid folder path"
 
@@ -3926,7 +3936,7 @@ msgstr "No image"
 msgid "Goruntulenecek aygit secilmedi."
 msgstr "No device selected to display."
 
-#: src/diskultimate/core/resize.py:845
+#: src/diskultimate/core/resize.py:850
 msgid ""
 "Goruntunun bulundugu yerde yeterli bos alan yok: tasima {} yeni alan "
 "gerektiriyor, {} bos. Hicbir sey yazilmadi."
@@ -4224,7 +4234,7 @@ msgstr "All data on the target will be erased; I understand"
 msgid "Hedefteki veriler yedekle degistirilir."
 msgstr "Data on the target is replaced by the backup."
 
-#: src/diskultimate/core/resize.py:373
+#: src/diskultimate/core/resize.py:378
 msgid "Hesaplanan yerlesim bolume sigmiyor"
 msgstr "The computed layout does not fit in the partition"
 
@@ -4291,7 +4301,7 @@ msgstr "OPERATING SYSTEM DISK — writing makes the machine unusable"
 msgid "ISO 9660 birincil birim tanimlayicisi yok"
 msgstr "ISO 9660 primary volume descriptor not found"
 
-#: src/diskultimate/core/filesystem.py:544
+#: src/diskultimate/core/filesystem.py:562
 msgid "ISO 9660 salt okunur bir bicimdir; yazilmaz, bastan uretilir."
 msgstr ""
 "ISO 9660 is a read-only format; it is not written to but created from "
@@ -4608,8 +4618,8 @@ msgstr ""
 msgid "Kaynak salt okunur acildi."
 msgstr "The source was opened read-only."
 
-#: src/diskultimate/core/filesystem.py:299
-#: src/diskultimate/core/filesystem.py:358
+#: src/diskultimate/core/filesystem.py:315
+#: src/diskultimate/core/filesystem.py:377
 msgid ""
 "Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda acarsaniz bu "
 "bolume yazabilirsiniz."
@@ -4676,7 +4686,7 @@ msgstr "Dirty flag cleared"
 msgid "Kirli bayragini temizle (ntfsfix -d)"
 msgstr "Clear the dirty flag (ntfsfix -d)"
 
-#: src/diskultimate/core/fat.py:598
+#: src/diskultimate/core/fat.py:618
 msgid "Kisa ad uretilemedi"
 msgstr "A short name could not be generated"
 
@@ -4712,8 +4722,8 @@ msgstr "Could not open folder: {}"
 msgid "Klasor adi:"
 msgstr "Folder name:"
 
-#: src/diskultimate/core/exfat.py:818
-#: src/diskultimate/core/fat.py:812
+#: src/diskultimate/core/exfat.py:840
+#: src/diskultimate/core/fat.py:832
 msgid "Klasor bos degil"
 msgstr "The folder is not empty"
 
@@ -4765,7 +4775,8 @@ msgstr "A folder cannot be moved into itself"
 msgid "Klasor kopyalaniyor"
 msgstr "Copying the folder"
 
-#: src/diskultimate/core/ntfsread.py:614
+#: src/diskultimate/core/ntfsread.py:615
+#: src/diskultimate/core/ntfsread.py:632
 msgid "Klasor okunamaz"
 msgstr "The folder cannot be read"
 
@@ -4816,7 +4827,7 @@ msgstr "Starting the clone..."
 msgid "Klonlaniyor... {} / {}"
 msgstr "Cloning... {} / {}"
 
-#: src/diskultimate/core/fat.py:648
+#: src/diskultimate/core/fat.py:668
 msgid "Kok dizin dolu"
 msgstr "The root directory is full"
 
@@ -4824,13 +4835,13 @@ msgstr "The root directory is full"
 msgid "Kok dizin dolu (FAT16 giris siniri)"
 msgstr "The root directory is full (FAT16 entry limit)"
 
-#: src/diskultimate/core/exfat.py:1032
+#: src/diskultimate/core/exfat.py:1054
 #: src/diskultimate/core/ntfs.py:741
 msgid "Kok dizin olusturuluyor..."
 msgstr "Creating the root directory..."
 
-#: src/diskultimate/core/exfat.py:813
-#: src/diskultimate/core/fat.py:807
+#: src/diskultimate/core/exfat.py:835
+#: src/diskultimate/core/fat.py:827
 msgid "Kok dizin silinemez"
 msgstr "The root directory cannot be deleted"
 
@@ -4871,7 +4882,7 @@ msgstr ""
 msgid "Kucultme icin yeterli bos alan yok"
 msgstr "Not enough free space for shrinking"
 
-#: src/diskultimate/core/resize.py:341
+#: src/diskultimate/core/resize.py:346
 msgid ""
 "Kucultme veri kaybina yol acar: dosyalar yeni sinirin otesinde. Once "
 "dosyalari tasiyin."
@@ -4879,12 +4890,12 @@ msgstr ""
 "Shrinking would cause data loss: files lie beyond the new boundary. Move "
 "the files first."
 
-#: src/diskultimate/core/resize.py:510
+#: src/diskultimate/core/resize.py:515
 msgid "Kucultme veri kaybina yol acar: kumeler yeni sinirin otesinde"
 msgstr ""
 "Shrinking would cause data loss: clusters lie beyond the new boundary"
 
-#: src/diskultimate/core/resize.py:758
+#: src/diskultimate/core/resize.py:763
 msgid "Kucultme yapilamaz — {}"
 msgstr "Cannot shrink — {}"
 
@@ -5161,14 +5172,15 @@ msgstr "Logical (EBR: LBA {})"
 msgid "Mantiksal bolum"
 msgstr "Logical partition"
 
-#: src/diskultimate/core/mbr.py:292
+#: src/diskultimate/core/mbr.py:310
 msgid "Mantiksal bolum genisletilmis bolumun disinda"
 msgstr "The logical partition is outside the extended partition"
 
-#: src/diskultimate/core/mbr.py:260
+#: src/diskultimate/core/mbr.py:278
 msgid "Mantiksal bolum icin once genisletilmis bolum olusturun"
 msgstr "Create an extended partition first for a logical partition"
 
+#: src/diskultimate/core/mbr.py:332
 #: src/diskultimate/core/resize.py:84
 msgid "Mantiksal bolumun genisletilmis bolumu bulunamadi"
 msgstr "The extended partition of the logical partition was not found"
@@ -5615,7 +5627,7 @@ msgstr "Checking the boot sector..."
 
 #: src/diskultimate/core/ntfsresize.py:723
 #: src/diskultimate/core/ntfsresize.py:744
-#: src/diskultimate/core/resize.py:882
+#: src/diskultimate/core/resize.py:887
 msgid "Onyukleme sektoru guncelleniyor..."
 msgstr "Updating the boot sector..."
 
@@ -5889,11 +5901,15 @@ msgstr "A write that is not aligned to the sector boundary"
 msgid "Sema"
 msgstr "Scheme"
 
-#: src/diskultimate/core/extread.py:358
+#: src/diskultimate/core/extread.py:406
 msgid "Sembolik bag dongusu: {}"
 msgstr "Symbolic link loop: {}"
 
-#: src/diskultimate/core/extread.py:290
+#: src/diskultimate/core/extread.py:288
+msgid "Sembolik bagin icerigi okunamaz"
+msgstr "The content of a symbolic link cannot be read"
+
+#: src/diskultimate/core/extread.py:338
 msgid ""
 "Sembolik bagin icerigi okunamaz; hedefi icin symlink_target() kullanin "
 "veya resolve(..., follow=True) ile izleyin"
@@ -6073,7 +6089,7 @@ msgstr ""
 "reinstalled on disk <b>{}</b><br>4. The boot menu is regenerated<br><br>No "
 "other disk is touched. Continue?"
 
-#: src/diskultimate/core/filesystem.py:507
+#: src/diskultimate/core/filesystem.py:525
 msgid "Sis"
 msgstr "Sys"
 
@@ -6266,7 +6282,7 @@ msgstr ""
 "A disk without a partition table cannot be converted; the file system "
 "covers the whole disk"
 
-#: src/diskultimate/core/resize.py:793
+#: src/diskultimate/core/resize.py:798
 msgid "Tablosuz disk: dosya sistemi tum diski kapliyor"
 msgstr ""
 "Disk without partition table: the file system covers the whole disk"
@@ -6290,7 +6306,7 @@ msgstr "OK"
 #: src/diskultimate/core/clone.py:421
 #: src/diskultimate/core/efistore.py:233
 #: src/diskultimate/core/efistore.py:490
-#: src/diskultimate/core/exfat.py:1056
+#: src/diskultimate/core/exfat.py:1078
 #: src/diskultimate/core/ext.py:441
 #: src/diskultimate/core/formatter.py:254
 #: src/diskultimate/core/formatter.py:285
@@ -6301,7 +6317,7 @@ msgstr "OK"
 #: src/diskultimate/core/ntfsresize.py:726
 #: src/diskultimate/core/ntfsresize.py:748
 #: src/diskultimate/core/operations.py:622
-#: src/diskultimate/core/resize.py:887
+#: src/diskultimate/core/resize.py:892
 #: src/diskultimate/core/restoreplan.py:316
 #: src/diskultimate/core/session.py:729
 #: src/diskultimate/core/udfformat.py:358
@@ -6697,7 +6713,7 @@ msgstr "Applied: {}"
 msgid "Uygulaniyor..."
 msgstr "Applying..."
 
-#: src/diskultimate/core/fat.py:973
+#: src/diskultimate/core/fat.py:993
 msgid "Uygun FAT yerlesimi hesaplanamadi"
 msgstr "A suitable FAT layout could not be computed"
 
@@ -6773,7 +6789,7 @@ msgstr "Data runs did not fit into the FILE record (record {})"
 msgid "Veri kosulu degeri cok buyuk"
 msgstr "The data run value is too large"
 
-#: src/diskultimate/core/resize.py:1056
+#: src/diskultimate/core/resize.py:1061
 msgid ""
 "Veri tasinirken hata: {}. {} / {} kopyalanmisti ve kaynak bolumun basi "
 "ezildi: bolum su an BOZUK (ne eski ne yeni yerinde tam). Tasima: sektor {} "
@@ -6786,7 +6802,7 @@ msgstr ""
 "sectors, {} sectors done (recorded in the diagnostics log). Restore from a "
 "backup, or free up space and have the move completed using these numbers."
 
-#: src/diskultimate/core/resize.py:1052
+#: src/diskultimate/core/resize.py:1057
 msgid ""
 "Veri tasinirken hata: {}. {} / {} kopyalanmisti; kaynak bolum henuz "
 "ezilmedi, bolum eski yerinde saglam ve tablo degismedi."
@@ -6795,11 +6811,11 @@ msgstr ""
 "had not been overwritten yet, so the partition is intact at its old "
 "location and the table is unchanged."
 
-#: src/diskultimate/core/resize.py:849
+#: src/diskultimate/core/resize.py:854
 msgid "Veri tasiniyor..."
 msgstr "Moving data..."
 
-#: src/diskultimate/core/resize.py:1040
+#: src/diskultimate/core/resize.py:1045
 msgid "Veri tasiniyor... {}"
 msgstr "Moving data... {}"
 
@@ -6968,11 +6984,11 @@ msgstr "XFS extent tree is too deep"
 msgid "XFS kok dizini ve gunlugu yaziliyor..."
 msgstr "Writing the XFS root directory and log..."
 
-#: src/diskultimate/core/resize.py:921
+#: src/diskultimate/core/resize.py:926
 msgid "XFS kucultulemez"
 msgstr "XFS cannot be shrunk"
 
-#: src/diskultimate/core/resize.py:227
+#: src/diskultimate/core/resize.py:232
 msgid "XFS kucultulemez; yalnizca buyutulebilir"
 msgstr "XFS cannot be shrunk; it can only be grown"
 
@@ -6985,7 +7001,7 @@ msgstr "XFS superblock not found"
 msgid "XFS v4 birimleri bu surumde buyutulemiyor"
 msgstr "XFS v4 volumes cannot be grown in this version"
 
-#: src/diskultimate/core/filesystem.py:661
+#: src/diskultimate/core/filesystem.py:685
 msgid "XFS yazma bu surumde yok; birim salt okunur acildi."
 msgstr ""
 "Writing to XFS is not available in this version; the volume was opened "
@@ -7423,11 +7439,11 @@ msgstr "New partition..."
 msgid "Yeni boyut"
 msgstr "New size"
 
-#: src/diskultimate/core/resize.py:333
+#: src/diskultimate/core/resize.py:338
 msgid "Yeni boyut FAT ust verisinden kucuk"
 msgstr "The new size is smaller than the FAT metadata"
 
-#: src/diskultimate/core/resize.py:337
+#: src/diskultimate/core/resize.py:342
 msgid "Yeni boyut FAT{} icin cok kucuk (en az {} kume gerekir)"
 msgstr ""
 "The new size is too small for FAT{} (at least {} clusters are required)"
@@ -7436,15 +7452,15 @@ msgstr ""
 msgid "Yeni boyut NTFS icin cok kucuk"
 msgstr "New size is too small for NTFS"
 
-#: src/diskultimate/core/resize.py:507
+#: src/diskultimate/core/resize.py:512
 msgid "Yeni boyut exFAT icin cok kucuk"
 msgstr "The new size is too small for exFAT"
 
-#: src/diskultimate/core/resize.py:503
+#: src/diskultimate/core/resize.py:508
 msgid "Yeni boyut exFAT ust verisinden kucuk"
 msgstr "The new size is smaller than the exFAT metadata"
 
-#: src/diskultimate/core/resize.py:463
+#: src/diskultimate/core/resize.py:468
 msgid "Yeni boyut exFAT yerlesimi icin cok kucuk"
 msgstr "The new size is too small for the exFAT layout"
 
@@ -7545,7 +7561,7 @@ msgstr "Refresh"
 msgid "Yenileme hatasi"
 msgstr "Refresh error"
 
-#: src/diskultimate/core/resize.py:885
+#: src/diskultimate/core/resize.py:890
 #: src/diskultimate/core/session.py:726
 msgid "Yenileniyor..."
 msgstr "Refreshing..."
@@ -7688,14 +7704,14 @@ msgstr "ZIP / Office document"
 msgid "Zaten acik, one getirildi: {}"
 msgstr "Already open, brought to front: {}"
 
-#: src/diskultimate/core/mbr.py:284
+#: src/diskultimate/core/mbr.py:302
 msgid "Zaten bir genisletilmis bolum var"
 msgstr "An extended partition already exists"
 
-#: src/diskultimate/core/exfat.py:792
+#: src/diskultimate/core/exfat.py:814
 #: src/diskultimate/core/extwrite.py:1220
 #: src/diskultimate/core/extwrite.py:1286
-#: src/diskultimate/core/fat.py:774
+#: src/diskultimate/core/fat.py:794
 #: src/diskultimate/core/hfswrite.py:731
 #: src/diskultimate/core/hfswrite.py:755
 #: src/diskultimate/core/hfswrite.py:857
@@ -7760,7 +7776,7 @@ msgstr ""
 msgid "`{}` okunamadi."
 msgstr "`{}` could not be read."
 
-#: src/diskultimate/core/filesystem.py:713
+#: src/diskultimate/core/filesystem.py:737
 msgid "alt hacim"
 msgstr "subvolume"
 
@@ -7772,7 +7788,7 @@ msgstr "{} after ▶"
 msgid "ayri gunluk aygiti"
 msgstr "external journal device"
 
-#: src/diskultimate/core/filesystem.py:401
+#: src/diskultimate/core/filesystem.py:420
 msgid "bag"
 msgstr "link"
 
@@ -7803,7 +7819,7 @@ msgstr "unknown"
 msgid "bilinmiyor"
 msgstr "unknown"
 
-#: src/diskultimate/core/filesystem.py:805
+#: src/diskultimate/core/filesystem.py:829
 msgid "birim"
 msgstr "volume"
 
@@ -7849,7 +7865,7 @@ msgstr ""
 "Part of the btrfs data is on another device; it cannot be read with a "
 "single device"
 
-#: src/diskultimate/core/filesystem.py:705
+#: src/diskultimate/core/filesystem.py:729
 msgid "btrfs yazma bu surumde yok; birim salt okunur acildi."
 msgstr ""
 "Writing to btrfs is not available in this version; the volume was opened "
@@ -7893,7 +7909,7 @@ msgstr "files are preserved"
 msgid "eklenen alan bos kalir"
 msgstr "added space stays unused"
 
-#: src/diskultimate/core/resize.py:139
+#: src/diskultimate/core/resize.py:144
 #: src/diskultimate/ui/dialogs/partition_layout.py:144
 msgid "en az {}"
 msgstr "at least {}"
@@ -7902,7 +7918,7 @@ msgstr "at least {}"
 msgid "en az {} gerekir"
 msgstr "at least {} is required"
 
-#: src/diskultimate/core/resize.py:141
+#: src/diskultimate/core/resize.py:146
 #: src/diskultimate/ui/dialogs/partition_layout.py:146
 #: src/diskultimate/ui/dialogs/resize.py:170
 msgid "en cok {}"
@@ -7924,11 +7940,11 @@ msgstr "inactive"
 msgid "exFAT imzasi bulunamadi"
 msgstr "No exFAT signature found"
 
-#: src/diskultimate/core/resize.py:655
+#: src/diskultimate/core/resize.py:660
 msgid "exFAT onyukleme bolgesi taninmadi"
 msgstr "The exFAT boot region was not recognised"
 
-#: src/diskultimate/core/exfat.py:964
+#: src/diskultimate/core/exfat.py:986
 msgid "exFAT onyukleme bolgesi yaziliyor..."
 msgstr "Writing the exFAT boot region..."
 
@@ -7959,7 +7975,7 @@ msgstr "physical disk"
 msgid "gerekli arac: {}"
 msgstr "required tool: {}"
 
-#: src/diskultimate/core/filesystem.py:403
+#: src/diskultimate/core/filesystem.py:422
 #: src/diskultimate/ui/dialogs/efiboot.py:275
 msgid "gizli"
 msgstr "hidden"
@@ -8056,7 +8072,7 @@ msgstr "os-prober disabled"
 msgid "resize inode'un cift dolayli blogu yok"
 msgstr "The resize inode has no double-indirect block"
 
-#: src/diskultimate/core/filesystem.py:807
+#: src/diskultimate/core/filesystem.py:831
 msgid "sifreli"
 msgstr "encrypted"
 
@@ -8395,7 +8411,7 @@ msgstr ""
 "The information of {} could not be read (no privileges); whether it is the "
 "system disk is unknown. Writing to an unknown disk was rejected."
 
-#: src/diskultimate/core/filesystem.py:923
+#: src/diskultimate/core/filesystem.py:950
 msgid "{} bir kapsayicidir; icindeki birimler bu surumde acilamiyor."
 msgstr ""
 "{} is a container; the volumes inside it cannot be opened in this version."
@@ -8542,7 +8558,7 @@ msgstr ""
 "{} reported an error:\n"
 "{}"
 
-#: src/diskultimate/core/filesystem.py:926
+#: src/diskultimate/core/filesystem.py:953
 msgid ""
 "{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya sistemleri: "
 "FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, APFS, UDF, XFS, btrfs, F2FS, ISO "
@@ -8580,12 +8596,12 @@ msgstr "shrinks by {}"
 msgid "{} kurulu degil"
 msgstr "{} is not installed"
 
-#: src/diskultimate/core/mbr.py:295
+#: src/diskultimate/core/mbr.py:315
 #: src/diskultimate/core/ptable.py:230
 msgid "{} numarali bolum ile cakisiyor"
 msgstr "It overlaps partition {}"
 
-#: src/diskultimate/core/resize.py:102
+#: src/diskultimate/core/resize.py:107
 msgid "{} numarali bolum ile cakisma var"
 msgstr "There is an overlap with partition {}"
 
@@ -8643,7 +8659,7 @@ msgstr "Creating {} ({})..."
 msgid "{} saniye"
 msgstr "{} seconds"
 
-#: src/diskultimate/core/filesystem.py:920
+#: src/diskultimate/core/filesystem.py:947
 msgid "{} sifreli bir birimdir; icerigi anahtar olmadan okunamaz."
 msgstr ""
 "{} is an encrypted volume; its contents cannot be read without the key."
@@ -8670,7 +8686,7 @@ msgstr "There is no tool for this format on {}"
 msgid "{} uzerinde {} icin harici arac yok"
 msgstr "There is no external tool for {} on {}"
 
-#: src/diskultimate/core/resize.py:777
+#: src/diskultimate/core/resize.py:782
 msgid "{} veri kopyalanacak; islem yarida kesilirse bolum bozulur"
 msgstr ""
 "{} of data will be copied; if the operation is interrupted the partition "
@@ -8717,7 +8733,7 @@ msgstr "Requesting {} privileges. Enter your password if asked."
 msgid "{} {} baslatildi"
 msgstr "{} {} started"
 
-#: src/diskultimate/core/resize.py:713
+#: src/diskultimate/core/resize.py:718
 msgid "{} {} tasinacak ({} veri kopyalanir)"
 msgstr "will move {} {} ({} of data is copied)"
 
