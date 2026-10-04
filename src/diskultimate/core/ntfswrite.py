@@ -26,6 +26,7 @@ Yazilan her birim `ntfsfix` ve mumkunse `ntfs-3g` ile baglanarak dogrulanir
 from __future__ import annotations
 
 import datetime
+import io
 import struct
 from typing import List, Optional, Tuple
 
@@ -36,6 +37,7 @@ from .ntfsread import (AT_BITMAP, AT_DATA, AT_END, AT_FILE_NAME,
                        MFT_FLAG_DIRECTORY, MFT_FLAG_IN_USE, MFT_RECORD_ROOT,
                        Attribute, MftRecord, NtfsError, NtfsFS)
 from .ntfsindex import DirIndex, Entry
+from .streamio import read_exact, write_runs
 from ..i18n import tr
 
 # $Bitmap pencere boyutu: bir kerede okunup taranan bayt. 64 KB, 4 KB
@@ -867,6 +869,10 @@ class NtfsWriter:
 
     def write_file(self, path: str, data: bytes) -> None:
         """Dosya olusturur (varsa once siler)."""
+        self.write_stream(path, io.BytesIO(data), len(data))
+
+    def write_stream(self, path: str, src, size: int) -> None:
+        """Kaynaktan `size` bayti parca parca yazar (ADR 0081)."""
         self._require_writable()
         parent_path, name = self._split(path)
         dir_no = self._dir_number(parent_path)
@@ -878,7 +884,7 @@ class NtfsWriter:
         rec_no = self.alloc_record()
         runs: List[Tuple[int, int]] = []
         try:
-            self._write_file_body(rec_no, dir_no, name, data, runs)
+            self._write_file_body(rec_no, dir_no, name, src, size, runs)
         except Exception:
             # Yarida kalan yazma birimi bozmasin: kayit ve kumeler geri verilir
             if runs:
@@ -903,29 +909,22 @@ class NtfsWriter:
         seq = struct.unpack_from("<H", raw, 0x10)[0]
         return seq if seq else 1
 
-    def _write_file_body(self, rec_no: int, dir_no: int, name: str,
-                         data: bytes, runs: List[Tuple[int, int]]) -> None:
+    def _write_file_body(self, rec_no: int, dir_no: int, name: str, src,
+                         size: int, runs: List[Tuple[int, int]]) -> None:
         sequence = self._next_sequence(rec_no)
         parent_ref = (self.fs.record(dir_no).sequence << 48) | dir_no
 
         # Kucuk veri kayda yerlesir; buyuk veri kumelere yazilir.
         resident_limit = self.fs.record_size - 0x200
-        if len(data) <= resident_limit:
-            data_attr = self._resident_attr(AT_DATA, data, attr_id=2)
+        if size <= resident_limit:
+            data_attr = self._resident_attr(AT_DATA, read_exact(src, size),
+                                            attr_id=2)
             allocated = 0
         else:
-            clusters = (len(data) + self.cs - 1) // self.cs
+            clusters = (size + self.cs - 1) // self.cs
             runs.extend(self.alloc_clusters(clusters))
-            pos = 0
-            for lcn, count in runs:
-                span = count * self.cs
-                chunk = data[pos:pos + span]
-                self.dev.write(lcn * self.cs, chunk.ljust(
-                    min(span, len(data) - pos), b"\x00"))
-                pos += span
             allocated = clusters * self.cs
-            data_attr = self._nonresident_attr(AT_DATA, runs, len(data),
-                                               attr_id=2)
+            data_attr = self._nonresident_attr(AT_DATA, runs, size, attr_id=2)
 
         attrs = [
             self._resident_attr(AT_STANDARD_INFORMATION,
@@ -933,14 +932,20 @@ class NtfsWriter:
                                 attr_id=0),
             self._resident_attr(AT_FILE_NAME,
                                 self._file_name_value(parent_ref, name, 0x20,
-                                                      len(data), allocated),
+                                                      size, allocated),
                                 attr_id=1, indexed=1),
             data_attr,
         ]
+        # Kayit veri yazilmadan ONCE kurulur: cok parcali dosyanin kosullari
+        # kayda sigmiyorsa hata veri diske yazilmadan cikar (eskiden butun
+        # veri yazildiktan sonra cikiyordu).
         raw = self._build_record(rec_no, sequence, MFT_FLAG_IN_USE, attrs)
+        if runs:
+            write_runs(src, size, runs, self.cs,
+                       lambda lcn, off, data: self.dev.write(lcn * self.cs + off,
+                                                             data))
         self.write_record(rec_no, raw)
-        self.index_add(dir_no, name, rec_no, sequence, 0x20,
-                       len(data), allocated)
+        self.index_add(dir_no, name, rec_no, sequence, 0x20, size, allocated)
         self.fs._cache.clear()
 
     def mkdir(self, path: str) -> None:

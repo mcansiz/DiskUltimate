@@ -21,6 +21,7 @@ Kurallar (ECMA-167 4. bolum, OSTA UDF 2.01):
 from __future__ import annotations
 
 import datetime
+import io
 import re
 import struct
 from typing import Dict, List, Optional, Tuple
@@ -29,6 +30,7 @@ from .udf import (ALLOC_EMBEDDED, ALLOC_LONG, ALLOC_SHORT, EXTENT_NEXT,
                   FID_DELETED, FID_DIRECTORY, FID_PARENT, FT_DIRECTORY, FT_FILE, TAG_EFE,
                   TAG_FE, TAG_FID, TAG_LVID, TAG_TD, UdfEntry, UdfError, UdfFS,
                   cs0)
+from .streamio import read_exact, write_runs
 from .udfformat import cs0_encode, make_tag, regid, timestamp
 from ..i18n import tr
 
@@ -285,7 +287,7 @@ class UdfWriter:
             raise UdfWriteError(tr("UDF dosya girisi bloga sigmiyor"))
         return make_tag(d, TAG_EFE if efe else TAG_FE, loc)
 
-    def _store_data(self, data: bytes, goal: int, entry_loc: int
+    def _store_data(self, src, size: int, goal: int, entry_loc: int
                     ) -> Tuple[int, bytes, int, List[Tuple[int, int]]]:
         """Veriyi yazar: (kapsam turu, AD baytlari, kayitli blok, ek bloklar).
 
@@ -293,21 +295,24 @@ class UdfWriter:
         cagiran gerekirse geri almak icin kullanir.
         """
         bs = self.bs
-        if len(data) <= self.bs - self._entry_header():
-            return ALLOC_EMBEDDED, data, 0, []
-        blocks = (len(data) + bs - 1) // bs
+        if size <= self.bs - self._entry_header():
+            return ALLOC_EMBEDDED, read_exact(src, size), 0, []
+        blocks = (size + bs - 1) // bs
         runs = self.alloc(blocks, goal)
         taken = list(runs)
         try:
+            write_runs(src, size, runs, bs,
+                       lambda start, off, data: self._write_logical(
+                           start + off // bs, data))
+            # Kapsam tanimlari yalnizca boyuttan cikar: parcanin tasidigi
+            # veri bayti, kapsam en fazla MAX_EXTENT bayt.
             pos = 0
             ads: List[bytes] = []
             for start, count in runs:
-                chunk = data[pos:pos + count * bs]
-                self._write_logical(start, chunk)
-                # kapsam en fazla MAX_EXTENT bayt
+                run_len = min(count * bs, size - pos)
                 off = 0
-                while off < len(chunk):
-                    n = min(MAX_EXTENT, len(chunk) - off)
+                while off < run_len:
+                    n = min(MAX_EXTENT, run_len - off)
                     ads.append(struct.pack("<II", n, start + off // bs))
                     off += n
                 pos += count * bs
@@ -612,6 +617,11 @@ class UdfWriter:
         return struct.unpack_from("<Q", raw, off)[0]
 
     def write_file(self, path: str, data: bytes, overwrite: bool = True) -> None:
+        self.write_stream(path, io.BytesIO(data), len(data), overwrite)
+
+    def write_stream(self, path: str, src, size: int,
+                     overwrite: bool = True) -> None:
+        """Kaynaktan `size` bayti parca parca yazar (ADR 0081)."""
         self._require()
         parent, name = self._split(path)
         fids = self._read_dir(parent)
@@ -625,10 +635,10 @@ class UdfWriter:
         loc = self.alloc(1, parent.icb[0] + 1)[0][0]
         taken: List[Tuple[int, int]] = [(loc, 1)]
         try:
-            alloc_type, ads, recorded, runs = self._store_data(data, loc + 1, loc)
+            alloc_type, ads, recorded, runs = self._store_data(src, size, loc + 1, loc)
             taken += runs
             unique = self._next_unique()
-            entry = self._build_entry(loc, FT_FILE, unique, len(data), alloc_type,
+            entry = self._build_entry(loc, FT_FILE, unique, size, alloc_type,
                                       ads, 1, recorded, PERM_FILE,
                                       flags_extra=ICB_ARCHIVE)
             self._write_logical(loc, entry)

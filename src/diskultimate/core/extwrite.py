@@ -33,6 +33,7 @@ Dogrulama: uretilen her birim `e2fsck -nf` ile denetlenir
 """
 from __future__ import annotations
 
+import io
 import struct
 import time
 from typing import Dict, List, Optional, Tuple
@@ -44,6 +45,7 @@ from . import exthtree
 from .extlayout import ExtCsum, ExtGeometry
 from .extread import (EXTENTS_FL, INO_ROOT, S_IFDIR, S_IFMT, S_IFREG,
                       ExtError, ExtFS, ExtInode, _normalize)
+from .streamio import group_runs, write_runs
 from ..i18n import tr
 
 # Desteklenmeyen ozellikler
@@ -148,6 +150,24 @@ class ExtWriter:
         if block <= 0 or block >= self.fs.blocks_count:
             raise ExtError(tr("Sinir disi blok yazimi: {}", block))
         self.dev.write(block * self.bs, bytes(data))
+
+    def _stream_blocks(self, blocks: List[int], src, size: int) -> None:
+        """Kaynaktan `size` bayti ayrilmis bloklara parca parca yazar.
+
+        Ardisik bloklar tek yazimda birlesir (ADR 0081). Yazma yarida kalirsa
+        bloklar geri verilir: ayrilmis ama sahipsiz blok e2fsck'te "block
+        bitmap differences" olurdu.
+        """
+        def write(start: int, off: int, data: bytes) -> None:
+            last = start + (off + len(data)) // self.bs
+            if start <= 0 or last > self.fs.blocks_count:
+                raise ExtError(tr("Sinir disi blok yazimi: {}", start))
+            self.dev.write(start * self.bs + off, data)
+        try:
+            write_runs(src, size, group_runs(blocks), self.bs, write)
+        except Exception:
+            self.free_blocks(blocks)
+            raise
 
     # ------------------------------------------------------------------
     # Grup tanimlayicisi ve ustblok sayaclari
@@ -555,7 +575,7 @@ class ExtWriter:
         n = self._per_table()
         return (12 + n + n * n + n * n * n) * self.bs
 
-    def _store_data(self, data: bytes) -> Tuple[List[int], int]:
+    def _store_data(self, src, size: int) -> Tuple[List[int], int]:
         """Veriyi bloklara yazar; (i_block girdileri, 512'lik sektor sayisi).
 
         ext2/3 yerlesimi: 12 dogrudan blok, sonra tek / cift / uc kat dolayli.
@@ -563,19 +583,17 @@ class ExtWriter:
         tablolar da yer kaplar ve `i_blocks` sayacina dahildir.
         """
         bs = self.bs
-        if len(data) > self._max_bytes():
+        if size > self._max_bytes():
             raise ExtError(
                 tr("Dosya cok buyuk: en fazla {} GB", self._max_bytes() >> 30))
-        needed = (len(data) + bs - 1) // bs
+        needed = (size + bs - 1) // bs
         if needed == 0:
             return [0] * 15, 0
 
         # Tum veri bloklari tek seferde tahsis edilir: blok basina bitmap
         # okuyup yazmak buyuk dosyalarda kabul edilemez yavaslikta.
         data_blocks = self.alloc_blocks(needed)
-        for i, blk in enumerate(data_blocks):
-            chunk = data[i * bs:(i + 1) * bs]
-            self._write_block(blk, chunk.ljust(bs, b"\x00"))
+        self._stream_blocks(data_blocks, src, size)
 
         i_block = [0] * 15
         i_block[:min(12, needed)] = data_blocks[:12]
@@ -616,7 +634,7 @@ class ExtWriter:
     def uses_extents(self) -> bool:
         return bool(self.fs.feature_incompat & INCOMPAT_EXTENTS_W)
 
-    def _store_extents(self, ino: int, data: bytes) -> Tuple[bytes, int]:
+    def _store_extents(self, ino: int, src, size: int) -> Tuple[bytes, int]:
         """Veriyi yazar ve extent agacini kurar: (i_block, 512'lik sektor).
 
         ext4'te yeni dosyalar eskiden dolayli blok duzeniyle yaziliyordu
@@ -625,12 +643,11 @@ class ExtWriter:
         """
         from .extmove import build_extent_tree
         bs = self.bs
-        needed = (len(data) + bs - 1) // bs
+        needed = (size + bs - 1) // bs
         extents: List[Tuple[int, int, int, bool]] = []
         if needed:
             blocks = self.alloc_blocks(needed)
-            for i, blk in enumerate(blocks):
-                self._write_block(blk, data[i * bs:(i + 1) * bs].ljust(bs, b"\x00"))
+            self._stream_blocks(blocks, src, size)
             start, run = blocks[0], 1
             logical = 0
             for blk in blocks[1:]:
@@ -1139,6 +1156,10 @@ class ExtWriter:
 
     def write_file(self, path: str, data: bytes) -> None:
         """Dosya olusturur veya uzerine yazar."""
+        self.write_stream(path, io.BytesIO(data), len(data))
+
+    def write_stream(self, path: str, src, size: int) -> None:
+        """Kaynaktan `size` bayti parca parca yazar (ADR 0081)."""
         self._require_writable()
         parent_path, name = self._split(path)
         parent = self.fs.resolve(parent_path)
@@ -1154,15 +1175,15 @@ class ExtWriter:
             old = self.fs.read_inode(existing.inode)
             if old.is_dir:
                 raise ExtError(tr("Ayni adda klasor var: {}", name))
-            self._require_space(self._blocks_needed(len(data))
+            self._require_space(self._blocks_needed(size)
                                 - (old.size + self.bs - 1) // self.bs)
             self._release_data(old)
             ino = existing.inode
         else:
-            self._require_space(self._blocks_needed(len(data)), inodes=1)
+            self._require_space(self._blocks_needed(size), inodes=1)
             ino = self.alloc_inode(is_dir=False)
         try:
-            self._write_file_body(ino, data, existing is None, parent, name)
+            self._write_file_body(ino, src, size, existing is None, parent, name)
         except Exception:
             if existing is None:
                 # ayrilan inode geri verilir; bitmap'te sahipsiz kalmasin
@@ -1172,17 +1193,17 @@ class ExtWriter:
                     pass
             raise
 
-    def _write_file_body(self, ino: int, data: bytes, is_new: bool,
+    def _write_file_body(self, ino: int, src, size: int, is_new: bool,
                          parent, name: str) -> None:
         """Veriyi ve inode'u yazar, yeni dosyayi dizine baglar."""
         if self.uses_extents:
-            root, sectors = self._store_extents(ino, data)
-            self.write_inode(ino, mode=S_IFREG | 0o644, size=len(data), links=1,
+            root, sectors = self._store_extents(ino, src, size)
+            self.write_inode(ino, mode=S_IFREG | 0o644, size=size, links=1,
                              blocks=[], sectors=sectors, flags=EXTENTS_FL,
                              i_block=root)
         else:
-            i_block, sectors = self._store_data(data)
-            self.write_inode(ino, mode=S_IFREG | 0o644, size=len(data), links=1,
+            i_block, sectors = self._store_data(src, size)
+            self.write_inode(ino, mode=S_IFREG | 0o644, size=size, links=1,
                              blocks=i_block, sectors=sectors)
         if is_new:
             self.dir_add(parent.number, name, ino, FT_REG)

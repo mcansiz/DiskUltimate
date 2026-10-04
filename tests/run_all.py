@@ -5833,18 +5833,23 @@ def t74_dosya_ekleme_ilerlemesi():
         assert "write_observer" not in fs.device.__dict__
         s.close()
 
-    # buyuk tek yazim gozlemciyle 4 MB'lik parcalara bolunur, icerik ayni
+    # buyuk tek yazim gozlemciyle WRITE_PROGRESS_CHUNK'lik parcalara bolunur
+    # (1 MiB, arayuzun bildirim araligi; ADR 0081), icerik ayni
+    adim = im.WRITE_PROGRESS_CHUNK
     d = DiskImage.create(img_path("t74_ham.img"), 32 * MIB, overwrite=True)
     parcalar = []
     d.write_observer = parcalar.append
-    blok = os.urandom(10 * MIB)
+    blok = os.urandom(10 * MIB + 512)
     d.write(MIB, blok)
     del d.write_observer
-    assert parcalar == [4 * MIB, 4 * MIB, 2 * MIB], parcalar
+    beklenen = [adim] * (len(blok) // adim) + [len(blok) % adim]
+    assert parcalar == beklenen, parcalar
     assert d.read(MIB, len(blok)) == blok
     d.write(0, b"x" * 512)                     # gozlemcisiz: davranis ayni
-    assert parcalar == [4 * MIB, 4 * MIB, 2 * MIB]
-    assert im.WRITE_PROGRESS_CHUNK == 4 * MIB
+    assert parcalar == beklenen
+    # Bolme adimi arayuzun bildirim araligindan buyuk olursa cubuk adim atlar
+    from diskultimate.core.filesystem import PROGRESS_STEP
+    assert im.WRITE_PROGRESS_CHUNK <= PROGRESS_STEP, im.WRITE_PROGRESS_CHUNK
     d.close()
 
 

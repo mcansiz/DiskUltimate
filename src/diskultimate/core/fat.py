@@ -14,6 +14,7 @@ Harici bagimlilik veya root yetkisi gerektirmez; dogrudan bolum penceresi
 from __future__ import annotations
 
 import datetime
+import io
 import os
 import struct
 from dataclasses import dataclass, field
@@ -21,7 +22,10 @@ from typing import Dict, List, Optional, Tuple
 
 from .image import BlockDevice
 from .platform import restore_owner
+from .streamio import group_runs, write_runs
 from ..i18n import tr
+
+MAX_FILE_SIZE = 0xFFFFFFFF          # dizin girisindeki boyut alani 32 bit
 
 ATTR_READ_ONLY = 0x01
 ATTR_HIDDEN = 0x02
@@ -682,33 +686,55 @@ class FatFS:
     # ---- yazma islemleri ---------------------------------------------------
     def write_file(self, path: str, data: bytes, overwrite: bool = True) -> DirEntry:
         """Birime dosya yazar (ust dizin var olmali)."""
+        return self.write_stream(path, io.BytesIO(data), len(data), overwrite)
+
+    def write_stream(self, path: str, src, size: int,
+                     overwrite: bool = True) -> DirEntry:
+        """Kaynaktan `size` bayti parca parca okuyup dosya olarak yazar.
+
+        Bellek dosya boyutundan bagimsizdir (ADR 0081). Sinir ve bos alan
+        **kume ayrilmadan once** denetlenir: eskiden 4 GiB ustu dosya once
+        tamamen yazilip dizin girisinde hata veriyor, kumeler bosa
+        cikmiyordu.
+        """
         if self.readonly:
             raise FatError(tr("Birim salt okunur"))
         parts = _norm(path)
         if not parts:
             raise FatError(tr("Gecersiz dosya yolu"))
+        if size > MAX_FILE_SIZE:
+            raise FatError(tr("FAT en fazla 4 GiB - 1 bayt dosya alir ({} bayt "
+                              "istendi)", size))
         name = parts[-1]
         parent = "/" + "/".join(parts[:-1])
         if self.exists(path):
             if not overwrite:
                 raise FatError(tr("Dosya zaten var: {}", path))
             self.remove(path)
-        # kumeleri ayir
         first_cluster = 0
-        if data:
-            need = (len(data) + self.cluster_bytes - 1) // self.cluster_bytes
+        if size:
+            need = (size + self.cluster_bytes - 1) // self.cluster_bytes
+            if need > self.free_clusters():
+                raise FatError(tr("Birimde yer yok: {} kume gerekli, {} bos",
+                                  need, self.free_clusters()))
             clusters = []
             prev = None
-            for _ in range(need):
-                c = self.alloc_cluster(prev)
-                clusters.append(c)
-                prev = c
-            for i, c in enumerate(clusters):
-                self.write_cluster(c, data[i * self.cluster_bytes:(i + 1) * self.cluster_bytes])
-            first_cluster = clusters[0]
+            try:
+                for _ in range(need):
+                    c = self.alloc_cluster(prev)
+                    clusters.append(c)
+                    prev = c
+                first_cluster = clusters[0]
+                write_runs(src, size, group_runs(clusters), self.cluster_bytes,
+                           lambda start, off, data: self.dev.write(
+                               self.cluster_offset(start) + off, data))
+            except Exception:
+                if clusters:
+                    self.free_chain(clusters[0])      # yarim dosya kume sizdirmasin
+                raise
         short11, need_lfn = self._make_short_name(name, self._existing_names(parent))
         blob = self._build_entry_bytes(name, short11, ATTR_ARCHIVE,
-                                       first_cluster, len(data), need_lfn=need_lfn)
+                                       first_cluster, size, need_lfn=need_lfn)
         self._insert_entry(parent, blob)
         self.flush()
         return self.find(path)
@@ -717,8 +743,8 @@ class FatFS:
                     name: Optional[str] = None) -> DirEntry:
         name = name or os.path.basename(local_path)
         with open(local_path, "rb") as fh:
-            data = fh.read()
-        return self.write_file(dest_dir.rstrip("/") + "/" + name, data)
+            return self.write_stream(dest_dir.rstrip("/") + "/" + name, fh,
+                                     os.fstat(fh.fileno()).st_size)
 
     def import_tree(self, local_dir: str, dest_dir: str = "/") -> int:
         """Yerel klasoru birime kopyalar; kopyalanan dosya sayisini dondurur."""

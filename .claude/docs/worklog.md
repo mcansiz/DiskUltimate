@@ -5665,3 +5665,18 @@ calismiyordu.
 - AppImage CI: libqpdf.so eklentisi silinen Qt5Pdf'e bagliydi (denetim yakaladi); kirpma artik bagimliligi kalmayan eklentileri de siler.
 - Actions ucuncu kosu yesil: 3 platformda 73/78, AppImage/exe/macOS .app derlendi ve acildi. README macOS 'deneysel' + CI rozeti.
 - Kullanici: depoyu bilerek public yapti, dokumlerin acik olmasi sorun degil. CLAUDE.md 'private kalmali' kurali buna gore guncellendi.
+
+## 2026-10-04 (1) — Uzun testler plani (ADR 0080)
+
+- Kullanici: uzun testler istendiginde elle; 5 GB dosya; CI makineleri VM
+  sayilir (CLAUDE.md eki); hata olunca otomatik issue.
+- macOS "deneysel" nedeni ve kaldirma olcutleri ADR 0080'e yazildi.
+- Asama 0 (akis yazma) basliyor.
+
+## 2026-10-04 (2) — Asama 0: akis yazma (ADR 0081)
+
+- core/streamio.py; alti yazicida write_stream; erisim katmani import_file
+  akista. FAT 4 GiB / bos alan denetimi, NTFS kaydi once kurulur, ext blok
+  geri verme — uc hata duzeltildi.
+- 2 GiB kopya: bellek 32-53 MB (eskiden >= 2 GiB), icerik ayni, fsck temiz.
+- t74: ilerleme izleyicisinin bolme adimi 4 MiB -> 1 MiB (akis 4 MiB yazdigi icin cubuk 4 MB'ta bir ilerliyordu; test yakaladi). run_all 76/78, fs_matrix 12/13 (ReFS Linux'ta beklenen), resize_matrix 8/8, ui_smoke, diag 13/13.

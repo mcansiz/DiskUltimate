@@ -116,6 +116,11 @@ Uygulaması:
   `fsck.vfat`) yapılır; "çekirdek bağladı" denmez.
 - Bir yetenek VM'de sınanamıyorsa (örneğin misafir BIOS kipinde açıldığı için
   UEFI değişkeni yazılamıyor) bu **açıkça yazılır**, "test edildi" denmez.
+- **GitHub Actions makineleri de VM sayılır** (kullanıcı kararı, 2026-10-04,
+  ADR 0080): her koşudan sonra silinen geçici makinelerdir. Orada çekirdek
+  bağlama (`sudo mount -o loop`), loop aygıtı / takılı VHD / `hdiutil`
+  aygıtı üzerinden fiziksel disk yolu sınanabilir. Ana makine kuralı
+  değişmez.
 
 ## Kayıt / Dokümantasyon Kuralı (ZORUNLU)
 Yapılan **tüm işlemler, kararlar, ilerleme ve notlar** proje içindeki `.claude/` klasörüne

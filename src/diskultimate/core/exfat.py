@@ -13,6 +13,7 @@ Yerlesim (spec: .claude/specs/exfat.md):
 from __future__ import annotations
 
 import datetime
+import io
 import os
 import struct
 from dataclasses import dataclass
@@ -20,6 +21,7 @@ from typing import Dict, List, Optional, Tuple
 
 from .image import BlockDevice
 from .platform import restore_owner
+from .streamio import group_runs, write_runs
 from ..i18n import tr
 
 ENTRY_SIZE = 32
@@ -724,6 +726,11 @@ class ExFatFS:
         return -1
 
     def write_file(self, path: str, data: bytes, overwrite: bool = True) -> ExEntry:
+        return self.write_stream(path, io.BytesIO(data), len(data), overwrite)
+
+    def write_stream(self, path: str, src, size: int,
+                     overwrite: bool = True) -> ExEntry:
+        """Kaynaktan `size` bayti parca parca yazar (ADR 0081)."""
         if self.readonly:
             raise ExFatError(tr("Birim salt okunur"))
         parcalar = _norm(path)
@@ -735,14 +742,19 @@ class ExFatFS:
                 raise ExFatError(tr("Dosya zaten var: {}", path))
             self.remove(path)
         first_cluster, ardisik = 0, True
-        if data:
-            gereken = (len(data) + self.cluster_bytes - 1) // self.cluster_bytes
+        if size:
+            gereken = (size + self.cluster_bytes - 1) // self.cluster_bytes
             first_cluster, ardisik = self.alloc_clusters(gereken)
-            for i, c in enumerate(self.chain(first_cluster, gereken, ardisik)):
-                chunk = data[i * self.cluster_bytes:(i + 1) * self.cluster_bytes]
-                self.dev.write(self.cluster_offset(c),
-                               chunk.ljust(self.cluster_bytes, b"\x00"))
-        blob = self._build_entry_set(name, ATTR_ARCHIVE, first_cluster, len(data), ardisik)
+            try:
+                runs = ([(first_cluster, gereken)] if ardisik else
+                        group_runs(self.chain(first_cluster, gereken, False)))
+                write_runs(src, size, runs, self.cluster_bytes,
+                           lambda start, off, data: self.dev.write(
+                               self.cluster_offset(start) + off, data))
+            except Exception:
+                self.free_chain(first_cluster, gereken, ardisik)
+                raise
+        blob = self._build_entry_set(name, ATTR_ARCHIVE, first_cluster, size, ardisik)
         self._insert_entry(upper, blob)
         self.flush()
         return self.find(path)
@@ -751,7 +763,8 @@ class ExFatFS:
                     name: Optional[str] = None) -> ExEntry:
         entry_name = name or os.path.basename(local_path)
         with open(local_path, "rb") as fh:
-            return self.write_file(dest_dir.rstrip("/") + "/" + entry_name, fh.read())
+            return self.write_stream(dest_dir.rstrip("/") + "/" + entry_name, fh,
+                                     os.fstat(fh.fileno()).st_size)
 
     def import_tree(self, local_dir: str, dest_dir: str = "/") -> int:
         sayac = 0

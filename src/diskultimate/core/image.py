@@ -40,7 +40,10 @@ def _serialized(method):
     return wrapper
 
 
-WRITE_PROGRESS_CHUNK = 4 * 1024 * 1024
+# Arayuzun bildirim araligiyla ayni (filesystem.PROGRESS_STEP). Akis yazma
+# (ADR 0081) 4 MiB'lik yazimlar yapar; bolme olmasa cubuk 4 MB'ta bir
+# ilerlerdi (t74 yakaladi). Yalnizca gozlemci varken bolunur.
+WRITE_PROGRESS_CHUNK = 1024 * 1024
 
 
 def _observed(method):
@@ -50,7 +53,7 @@ def _observed(method):
     Dosya ekleme ilerlemesi icin: dosya sistemi yazicilari dosyayi cogu kez
     tek parca okuyup yazar, yani "dosyanin ne kadari yazildi" bilgisini
     disari vermez. Aygit katmaninda sayilan bayt her dosya sisteminde ayni
-    sekilde ilerleme verir. Gozlemci varken buyuk yazimlar 4 MB'lik
+    sekilde ilerleme verir. Gozlemci varken buyuk yazimlar 1 MB'lik
     parcalara bolunur — tek bir 2 GB'lik yazim cubugu 0'dan 100'e
     atlatirdi. Gozlemci yokken davranis degismez.
     """

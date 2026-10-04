@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import datetime
+import io
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional
@@ -77,10 +78,19 @@ class FileSystemAccess:
         raise NotImplementedError
 
     def write_file(self, path: str, data: bytes) -> FileNode:
+        return self.write_stream(path, io.BytesIO(data), len(data))
+
+    def write_stream(self, path: str, src, size: int) -> FileNode:
+        """Kaynaktan `size` bayti dosya olarak yazar; bellek dosya boyutundan
+        bagimsizdir (ADR 0081). Yazilabilen her dosya sistemi bunu saglar."""
         raise NotImplementedError
 
     def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
-        raise NotImplementedError
+        """Yerel dosyayi parca parca okuyarak kopyalar (tek parca okumaz)."""
+        name = os.path.basename(local_path)
+        target = (dest_dir.rstrip("/") + "/" + name) if dest_dir != "/" else "/" + name
+        with open(local_path, "rb") as fh:
+            return self.write_stream(target, fh, os.fstat(fh.fileno()).st_size)
 
     # Bolumun aygiti (PartitionView); open_filesystem atar. Yazilan bayti
     # saymak icin kullanilir (ilerleme), dosya sistemi kodu buna dokunmaz.
@@ -265,14 +275,9 @@ class FatAccess(FileSystemAccess):
     def extract(self, path: str, dest: str) -> str:
         return self.fs.extract(path, dest)
 
-    def write_file(self, path: str, data: bytes) -> FileNode:
+    def write_stream(self, path: str, src, size: int) -> FileNode:
         parent = "/" + "/".join(path.replace("\\", "/").split("/")[:-1]).strip("/")
-        entry = self.fs.write_file(path, data)
-        return self._node(entry, parent)
-
-    def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
-        entry = self.fs.import_file(local_path, dest_dir)
-        return self._node(entry, dest_dir)
+        return self._node(self.fs.write_stream(path, src, size), parent)
 
     def mkdir(self, path: str) -> None:
         self.fs.mkdir(path)
@@ -329,12 +334,9 @@ class ExFatAccess(FileSystemAccess):
     def extract(self, path: str, dest: str) -> str:
         return self.fs.extract(path, dest)
 
-    def write_file(self, path: str, data: bytes) -> FileNode:
+    def write_stream(self, path: str, src, size: int) -> FileNode:
         parent = "/" + "/".join(path.replace("\\", "/").split("/")[:-1]).strip("/")
-        return self._node(self.fs.write_file(path, data), parent)
-
-    def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
-        return self._node(self.fs.import_file(local_path, dest_dir), dest_dir)
+        return self._node(self.fs.write_stream(path, src, size), parent)
 
     def mkdir(self, path: str) -> None:
         self.fs.mkdir(path)
@@ -423,19 +425,11 @@ class ExtAccess(FileSystemAccess):
         return "" if self.writable else self._write_reason
 
     # -- yazma (ExtWriter uzerinden; her islem e2fsck ile dogrulanmistir) ----
-    def write_file(self, path: str, data: bytes) -> FileNode:
-        self.writer.write_file(path, data)
-        parent = "/" + "/".join(path.replace("\\", "/").split("/")[:-1]).strip("/")
+    def write_stream(self, path: str, src, size: int) -> FileNode:
+        self.writer.write_stream(path, src, size)
         name = path.replace("\\", "/").rstrip("/").split("/")[-1]
-        return FileNode(name=name, path=path, is_dir=False, size=len(data),
+        return FileNode(name=name, path=path, is_dir=False, size=size,
                         mtime=datetime.datetime.now())
-
-    def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
-        with open(local_path, "rb") as fh:
-            data = fh.read()
-        name = os.path.basename(local_path)
-        target = (dest_dir.rstrip("/") + "/" + name) if dest_dir != "/" else "/" + name
-        return self.write_file(target, data)
 
     def mkdir(self, path: str) -> None:
         self.writer.mkdir(path)
@@ -479,18 +473,11 @@ class NtfsAccess(FileSystemAccess):
         return "" if self.writable else self._write_reason
 
     # -- yazma (NtfsWriter; her adim ntfsfix ile dogrulanmistir) ------------
-    def write_file(self, path: str, data: bytes) -> FileNode:
-        self.writer.write_file(path, data)
+    def write_stream(self, path: str, src, size: int) -> FileNode:
+        self.writer.write_stream(path, src, size)
         name = path.replace("\\", "/").rstrip("/").split("/")[-1]
-        return FileNode(name=name, path=path, is_dir=False, size=len(data),
+        return FileNode(name=name, path=path, is_dir=False, size=size,
                         mtime=datetime.datetime.now())
-
-    def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
-        with open(local_path, "rb") as fh:
-            data = fh.read()
-        name = os.path.basename(local_path)
-        target = (dest_dir.rstrip("/") + "/" + name) if dest_dir != "/"             else "/" + name
-        return self.write_file(target, data)
 
     def mkdir(self, path: str) -> None:
         self.writer.mkdir(path)
@@ -605,19 +592,12 @@ class UdfAccess(FileSystemAccess):
 
     # Her islemden sonra flush: LVID "kapali" ve bitmap guncel kalsin
     # (dosya gezgini flush'i yalnizca oturum kapanirken cagirir).
-    def write_file(self, path: str, data: bytes) -> FileNode:
-        self.writer.write_file(path, data)
+    def write_stream(self, path: str, src, size: int) -> FileNode:
+        self.writer.write_stream(path, src, size)
         self.writer.flush()
         name = path.replace("\\", "/").rstrip("/").split("/")[-1]
-        return FileNode(name=name, path=path, is_dir=False, size=len(data),
+        return FileNode(name=name, path=path, is_dir=False, size=size,
                         mtime=datetime.datetime.now())
-
-    def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
-        with open(local_path, "rb") as fh:
-            data = fh.read()
-        name = os.path.basename(local_path)
-        target = (dest_dir.rstrip("/") + "/" + name) if dest_dir != "/" else "/" + name
-        return self.write_file(target, data)
 
     def mkdir(self, path: str) -> None:
         self.writer.mkdir(path)
@@ -868,19 +848,12 @@ class HfsAccess(FileSystemAccess):
     # Her islem sonunda bitmap ve birim basligi yazilir: dosya gezgini
     # flush'i yalnizca oturum kapanirken cagirir; arada birim "temiz
     # kapatilmadi" bitiyle ve eski bitmap'le kalmamali.
-    def write_file(self, path: str, data: bytes) -> FileNode:
-        self.writer.write_file(path, data)
+    def write_stream(self, path: str, src, size: int) -> FileNode:
+        self.writer.write_stream(path, src, size)
         self.writer.flush()
         name = path.replace("\\", "/").rstrip("/").split("/")[-1]
-        return FileNode(name=name, path=path, is_dir=False, size=len(data),
+        return FileNode(name=name, path=path, is_dir=False, size=size,
                         mtime=datetime.datetime.now())
-
-    def import_file(self, local_path: str, dest_dir: str = "/") -> FileNode:
-        with open(local_path, "rb") as fh:
-            data = fh.read()
-        name = os.path.basename(local_path)
-        target = (dest_dir.rstrip("/") + "/" + name) if dest_dir != "/" else "/" + name
-        return self.write_file(target, data)
 
     def mkdir(self, path: str) -> None:
         self.writer.mkdir(path)

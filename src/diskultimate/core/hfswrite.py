@@ -23,6 +23,7 @@ degistirilmez (acik hata).
 """
 from __future__ import annotations
 
+import io
 import re
 import struct
 import time
@@ -34,6 +35,7 @@ from .hfsplus import (Fork, HfsEntry, HfsError, HfsPlusFS, REC_FILE,
                       REC_FILE_THREAD, REC_FOLDER, REC_FOLDER_THREAD,
                       ROOT_FOLDER_ID, VOL_JOURNALED, _BTree)
 from .hfsunicode import compare_units, hfs_nfd
+from .streamio import write_runs
 from ..i18n import tr
 
 VOL_UNMOUNTED = 1 << 8
@@ -739,6 +741,11 @@ class HfsWriter:
         self._invalidate()
 
     def write_file(self, path: str, data: bytes, overwrite: bool = True) -> None:
+        self.write_stream(path, io.BytesIO(data), len(data), overwrite)
+
+    def write_stream(self, path: str, src, size: int,
+                     overwrite: bool = True) -> None:
+        """Kaynaktan `size` bayti parca parca yazar (ADR 0081)."""
         self._require()
         parent, name = self._split(path)
         disk = self._disk_name(name)
@@ -749,20 +756,18 @@ class HfsWriter:
             self.remove(path)
             parent = self.fs.resolve("/".join(path.replace("\\", "/").split("/")[:-1]) or "/")
         bs = self.bs
-        blocks = (len(data) + bs - 1) // bs
+        blocks = (size + bs - 1) // bs
         goal = struct.unpack_from(">I", self.header, 52)[0]
         runs = self.alloc_blocks(blocks, goal)
         cnid = self._next_cnid()
         inserted: List[Tuple[_TreeWriter, bytes]] = []
         try:
-            pos = 0
-            for start, count in runs:
-                chunk = data[pos:pos + count * bs]
-                if len(chunk) < count * bs:
-                    chunk = chunk + bytes(count * bs - len(chunk))
-                self.dev.write(start * bs, chunk)
-                pos += count * bs
-            fork = struct.pack(">QII", len(data), 0, blocks)
+            # Son blogun kalani sifirlanir (eskiden de oyleydi); parcanin geri
+            # kalan bloklari ayrilmis ama veri tasimaz.
+            write_runs(src, size, runs, bs,
+                       lambda start, off, data: self.dev.write(start * bs + off,
+                                                               data))
+            fork = struct.pack(">QII", size, 0, blocks)
             fork += b"".join(struct.pack(">II", s, c) for s, c in runs[:8])
             fork = fork.ljust(80, b"\x00")
             done = sum(c for _s, c in runs[:8])
