@@ -59,6 +59,9 @@ def main(argv=None) -> int:
     ap.add_argument("--cekirdek", action="store_true",
                     help="cekirdek ile baglayarak dogrula (Linux + sudo; ADR 0080)")
     ap.add_argument("--devam", action="store_true", help="hatada durma, sonraki adima gec")
+    ap.add_argument("--aygit", action="store_true",
+                    help="gercek test aygiti uzerinde kos (yalnizca GitHub Actions; "
+                         "Linux scsi_debug / Windows takili VHD / macOS hdiutil)")
     ap.add_argument("--liste", action="store_true")
     a = ap.parse_args(argv)
 
@@ -97,16 +100,39 @@ def main(argv=None) -> int:
                       image=os.path.join(workdir, "disk.img"),
                       part_sectors=part_sectors, disk_bytes=disk,
                       kernel_check=a.cekirdek)
+            cleanup = None
+            if a.aygit:
+                from . import device as dev
+                size_mb = min(4096, disk // MIB + 16)
+                try:
+                    ctx.device, cleanup = dev.create(size_mb, workdir)
+                except dev.DeviceError as exc:
+                    print(f"   AYGIT OLUSTURULAMADI: {exc}")
+                    failures += 1
+                    continue
+                print(f"   test aygiti: {ctx.device} ({size_mb} MiB)")
             print(f"== {key}-{table} (profil {profile.name}, tohum {seed}, "
                   f"{len(ds.files)} dosya, {sum(f.size for f in ds.files) // MIB} MiB)",
                   flush=True)
-            result = run(ctx, STEPS, stop_on_fail=not a.devam)
+            try:
+                result = run(ctx, STEPS, stop_on_fail=not a.devam)
+            finally:
+                if ctx.session is not None:
+                    ctx.session.close()
+                    ctx.session = None
+                if cleanup:
+                    cleanup()
+            if a.aygit:
+                result["senaryo"] += "-aygit"
+                result["aygit"] = ctx.device
+                result["tekrar"] += " --aygit"
             if dropped and plan.writable:
                 result["dusen_dosyalar_mb"] = [b // MIB for b in dropped]
                 result["butce_gb"] = round(budget_gb, 1)
             if ctx.session is not None:
                 ctx.session.close()
-            save(result, os.path.join(report_dir, f"{key}-{table}.json"))
+            save(result, os.path.join(report_dir,
+                                      f"{key}-{table}{'-aygit' if a.aygit else ''}.json"))
             if not result["tamam"]:
                 failures += 1
                 print(f"   HATA — tekrar: {result['tekrar']}")

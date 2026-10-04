@@ -115,6 +115,7 @@ class Ctx:
     manifest: Manifest = field(default_factory=Manifest)
     steps: List[dict] = field(default_factory=list)
     kernel_check: bool = False
+    device: str = ""                # bos degilse gercek aygit kipi (Asama 5)
 
     @property
     def scheme(self) -> str:
@@ -142,6 +143,15 @@ class Ctx:
         if not result.ok:
             raise StepFail(f"kuyruk: {result.summary()}")
         self.session.close_filesystems()
+
+    def reopen(self) -> None:
+        """Oturumu yeniden acar (dogrulama icin kapatildiktan sonra)."""
+        if self.device:
+            from diskultimate.core.physical import find_disk
+            self.session = DiskSession.open_physical(find_disk(self.device),
+                                                     readonly=False, confirm=True)
+        else:
+            self.session = DiskSession.open(self.image)
 
     def free_disk(self) -> int:
         return shutil.disk_usage(self.workdir).free
@@ -185,7 +195,7 @@ def run_verify(ctx: Ctx, rec: dict) -> None:
             status, detail = verify.kernel_mount_check(ctx.fs.key, ctx.image, offset,
                                                        size, ctx.manifest)
         finally:
-            ctx.session = DiskSession.open(ctx.image)
+            ctx.reopen()
         rec["cekirdek"] = {"durum": status, "ayrinti": detail[-300:]}
         if status == "fail":
             raise StepFail("cekirdek: " + detail[-500:])

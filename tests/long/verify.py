@@ -225,6 +225,8 @@ def windows_mount_check(fs_key: str, image_path: str, offset: int, size: int,
     """
     if fs_key not in WINDOWS_FS:
         return "skip", f"Windows {fs_key} okumaz"
+    if image_path.upper().startswith("\\\\.\\PHYSICALDRIVE"):
+        return _windows_check_volume(int(image_path[17:]), offset, manifest)
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))), "src"))
     from diskultimate.core.vdisk import build_vhd_footer
@@ -271,7 +273,7 @@ $yol = if ($p.DriveLetter -and $p.DriveLetter -ne [char]0) {{ "$($p.DriveLetter)
         if errors:
             return "fail", f"Windows surucusu: {'; '.join(errors[:8])}"
         if r.returncode != 0:
-            return "fail", f"chkdsk cikis {r.returncode}: {chk[-600:]}"
+            return "fail", f"chkdsk cikis {r.returncode}: {_chkdsk_summary(chk)}"
         return "ok", (f"Windows: {info[0] if info else ''}, "
                       f"{len(manifest.entries)} dosya ayni, chkdsk temiz")
     finally:
@@ -297,6 +299,17 @@ def mac_mount_check(fs_key: str, image_path: str, offset: int, size: int,
     if fs_key not in MAC_FS:
         return "skip", f"macOS {fs_key} baglamaz"
     import plistlib
+    if image_path.startswith("/dev/disk"):
+        # Gercek aygit kipi: zaten takili; bolumler diskutil'den
+        lst = subprocess.run(["diskutil", "list", "-plist", image_path],
+                             capture_output=True)
+        data = plistlib.loads(lst.stdout) if lst.returncode == 0 else {}
+        entities = [{"dev-entry": "/dev/" + p["DeviceIdentifier"]}
+                    for d in data.get("AllDisksAndPartitions", [])
+                    for p in d.get("Partitions", [])]
+        entities.append({"dev-entry": image_path})
+        return _mac_check_entities(fs_key, image_path, entities, offset, manifest,
+                                   detach=False)
     r = subprocess.run(["hdiutil", "attach", "-nomount", "-readonly", "-plist",
                         "-imagekey", "diskimage-class=CRawDiskImage", image_path],
                        capture_output=True)
@@ -304,6 +317,12 @@ def mac_mount_check(fs_key: str, image_path: str, offset: int, size: int,
         return "fail", f"hdiutil attach: {r.stderr.decode(errors='replace')[-400:]}"
     entities = plistlib.loads(r.stdout).get("system-entities", [])
     disk = min((e["dev-entry"] for e in entities), key=len)
+    return _mac_check_entities(fs_key, disk, entities, offset, manifest, detach=True)
+
+
+def _mac_check_entities(fs_key: str, disk: str, entities, offset: int,
+                        manifest: Manifest, detach: bool) -> Tuple[str, str]:
+    import plistlib
     try:
         target = None
         for e in entities:
@@ -317,6 +336,8 @@ def mac_mount_check(fs_key: str, image_path: str, offset: int, size: int,
                 break
         if target is None:
             return "fail", f"macOS bolumu bulamadi (ofset {offset})"
+        # DiskArbitration yeni birimi kendiliginden baglamis olabilir
+        subprocess.run(["diskutil", "unmount", "force", target], capture_output=True)
         fsck = {"msdos": ["fsck_msdos", "-n"], "exfat": ["fsck_exfat", "-n"],
                 "hfs": ["fsck_hfs", "-fn"]}.get(MAC_FS[fs_key])
         note = ""
@@ -330,27 +351,33 @@ def mac_mount_check(fs_key: str, image_path: str, offset: int, size: int,
         mr = subprocess.run(["diskutil", "mount", "readOnly", "-mountPoint", mnt, target],
                             capture_output=True, text=True)
         if mr.returncode != 0:
-            # Teshis: dogrudan mount'un hatasi, diskutil'in gordugu tur ve
-            # surucunun sistem gunlugune yazdiklari (neden bilinmeden "hata"
-            # demek yetmez).
+            # diskutil (DiskArbitration) reddetti: dogrudan mount denenir.
+            # CI'da olculdu: UDF'te diskutil "failed to mount" derken
+            # `mount -t udf` kabul ediyor.
             dm = subprocess.run(["mount", "-r", "-t", MAC_FS[fs_key], target, mnt],
                                 capture_output=True, text=True)
-            info = subprocess.run(["diskutil", "info", target], capture_output=True,
-                                  text=True).stdout
-            tur = [l.strip() for l in info.splitlines()
-                   if "Type (Bundle)" in l or "File System Personality" in l]
-            kayit = subprocess.run(["log", "show", "--last", "2m", "--style", "compact",
-                                    "--predicate", f'eventMessage CONTAINS[c] "{MAC_FS[fs_key]}"'],
-                                   capture_output=True, text=True).stdout.splitlines()[-8:]
-            subprocess.run(["diskutil", "unmount", "force", mnt], capture_output=True)
-            os.rmdir(mnt)
-            return "fail", (f"diskutil mount: {(mr.stdout + mr.stderr)[-300:]} | "
-                            f"mount -t {MAC_FS[fs_key]}: {(dm.stdout + dm.stderr).strip()[-300:]} | "
-                            f"diskutil: {tur} | gunluk: {' / '.join(kayit)[-700:]}")
+            if dm.returncode != 0:
+                info = subprocess.run(["diskutil", "info", target], capture_output=True,
+                                      text=True).stdout
+                tur = [l.strip() for l in info.splitlines()
+                       if "Type (Bundle)" in l or "File System Personality" in l]
+                kayit = subprocess.run(
+                    ["log", "show", "--last", "2m", "--style", "compact", "--predicate",
+                     f'eventMessage CONTAINS[c] "{MAC_FS[fs_key]}"'],
+                    capture_output=True, text=True).stdout.splitlines()[-8:]
+                try:
+                    os.rmdir(mnt)
+                except OSError:
+                    pass
+                return "fail", (f"diskutil mount: {(mr.stdout + mr.stderr)[-300:]} | "
+                                f"mount -t {MAC_FS[fs_key]}: {(dm.stdout + dm.stderr).strip()[-300:]} | "
+                                f"diskutil: {tur} | gunluk: {' / '.join(kayit)[-700:]}")
+            note += f", diskutil reddetti; mount -t {MAC_FS[fs_key]} kabul etti"
         try:
             errors = _hash_tree(mnt, manifest)
         finally:
             subprocess.run(["diskutil", "unmount", "force", mnt], capture_output=True)
+            subprocess.run(["umount", "-f", mnt], capture_output=True)
             try:
                 os.rmdir(mnt)
             except OSError:
@@ -359,4 +386,43 @@ def mac_mount_check(fs_key: str, image_path: str, offset: int, size: int,
             return "fail", f"macOS surucusu: {'; '.join(errors[:8])}"
         return "ok", f"macOS {MAC_FS[fs_key]}: {len(manifest.entries)} dosya ayni{note}"
     finally:
-        subprocess.run(["hdiutil", "detach", disk, "-force"], capture_output=True)
+        if detach:
+            subprocess.run(["hdiutil", "detach", disk, "-force"], capture_output=True)
+
+
+def _chkdsk_summary(text: str) -> str:
+    """chkdsk ciktisindan sorun satirlarini secer (kuyruk degil: asil satir
+    genelde bastadir)."""
+    keys = ("error", "corrupt", "invalid", "incorrect", "problem", "found",
+            "uppercase", "upcase", "attribute", "index", "orphan", "bad",
+            "mismatch", "repair", "fix", "insufficient", "unreadable")
+    lines = [l.strip() for l in text.splitlines()
+             if l.strip() and any(k in l.lower() for k in keys)]
+    return " / ".join(lines)[:1500] or text[-600:]
+
+
+def _windows_check_volume(disk_number: int, offset: int,
+                          manifest: Manifest) -> Tuple[str, str]:
+    """Takili gercek aygitta (aygit kipi) Windows'un bagladigi birimi denetler."""
+    code, out = _powershell(f"""
+$ErrorActionPreference = 'Stop'
+Update-HostStorageCache
+Start-Sleep 2
+$p = Get-Partition -DiskNumber {disk_number} | Where-Object {{ $_.Offset -eq {offset} }}
+if (-not $p) {{ throw "bolum yok (ofset {offset})" }}
+$v = $p | Get-Volume
+$yol = if ($p.DriveLetter -and $p.DriveLetter -ne [char]0) {{ "$($p.DriveLetter):" }} else {{ $v.Path.TrimEnd('\\') }}
+"YOL=$yol"
+"FS=$($v.FileSystem) SAGLIK=$($v.HealthStatus)"
+""")
+    if code != 0 or "YOL=" not in out:
+        return "fail", f"Windows birimi bulamadi: {out[-500:]}"
+    root = [l for l in out.splitlines() if l.startswith("YOL=")][0][4:].strip()
+    info = [l for l in out.splitlines() if l.startswith("FS=")]
+    errors = _hash_tree(root, manifest, sep="\\")
+    r = subprocess.run(["chkdsk", root], capture_output=True, text=True, timeout=1800)
+    if errors:
+        return "fail", f"Windows surucusu: {'; '.join(errors[:8])}"
+    if r.returncode != 0:
+        return "fail", f"chkdsk cikis {r.returncode}: {_chkdsk_summary(r.stdout + r.stderr)}"
+    return "ok", f"Windows (aygit): {info[0] if info else ''}, {len(manifest.entries)} dosya ayni, chkdsk temiz"

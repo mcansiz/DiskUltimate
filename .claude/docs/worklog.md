@@ -5707,3 +5707,4 @@ calismiyordu.
   kucultmede bitmap zinciri (Apple fsck_exfat), macOS yetki komutu
   (tirnaklama/enjeksiyon + el sikisma). macOS UDF baglanmiyor: teshis
   eklendi, sonraki kosu.
+- Asama 4-5: tests/long/gui.py (Cocoa/Windows pencere + ekran goruntusu), tests/long/device.py + --aygit (scsi_debug / takili VHD / hdiutil; yalnizca GITHUB_ACTIONS). Windows quick: 7/8 gecti (Windows surucusu + chkdsk); NTFS mantiksal bolumde chkdsk sorun buldu (inceleniyor). macOS UDF: diskutil reddediyor, mount -t udf kabul ediyor.

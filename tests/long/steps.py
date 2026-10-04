@@ -28,6 +28,26 @@ def _align_down(n: int) -> int:
 
 # --------------------------------------------------------------------------
 def olustur(ctx: Ctx):
+    if ctx.device:
+        # Gercek aygit: uygulamanin fiziksel disk kapilarindan gecilir.
+        from diskultimate.core.physical import find_disk
+        from . import device as dev
+        info = None
+        for _ in range(20):
+            info = find_disk(ctx.device)
+            if info is not None:
+                break
+            import time
+            time.sleep(0.5)
+        if info is None:
+            raise StepFail(f"aygit listede yok: {ctx.device}")
+        dev.check_safe(info)
+        ctx.session = DiskSession.open_physical(info, readonly=False, confirm=True)
+        ctx.apply(ops.create_table_op(ctx.scheme))
+        ctx.session.reload()
+        ctx.image = ctx.device
+        ctx.disk_bytes = info.size
+        return f"aygit {info.path} ({info.model}, {info.size // MIB} MiB), {ctx.scheme}"
     ctx.session = DiskSession.create(ctx.image, ctx.disk_bytes, scheme=ctx.scheme,
                                      overwrite=True)
     return f"disk {ctx.disk_bytes // MIB} MiB, {ctx.scheme}"

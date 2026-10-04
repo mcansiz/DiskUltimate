@@ -47,6 +47,8 @@ jobs:
       linux: ${{ steps.p.outputs.linux }}
       windows: ${{ steps.p.outputs.windows }}
       macos: ${{ steps.p.outputs.macos }}
+      aygit: ${{ steps.p.outputs.aygit }}
+      arayuz: ${{ steps.p.outputs.arayuz }}
       tohum: ${{ steps.p.outputs.tohum }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -73,7 +75,20 @@ jobs:
           def m(keys, allowed):
               return json.dumps([{"fs": f, "tablo": t} for f in keys if f in allowed for t in tb])
           seed = os.environ["TOHUM"] if os.environ["TOHUM"] != "0" else str(int(os.environ["GITHUB_RUN_ID"]) % 100000)
+          # Gercek aygit kipi (Asama 5): her platformun kendi suruculeriyle
+          # dogrulayabildigi turler; tablolar gpt + mbr-mantiksal
+          aygit_fs = {"linux": ["fat32","exfat","ntfs","ext4","hfsplus","udf"],
+                      "windows": ["fat32","exfat","ntfs","udf"],
+                      "macos": ["fat32","exfat","hfsplus"]}
+          runner = {"linux": "ubuntu-24.04", "windows": "windows-2022", "macos": "macos-14"}
+          aygit = [{"os": runner[k], "plat": k, "fs": f, "tablo": t}
+                   for k in pl if k in aygit_fs for f in aygit_fs[k]
+                   if os.environ["FS"] == "all" or f in fs
+                   for t in ("gpt", "mbr-mantiksal")]
+          arayuz = [{"os": runner[k], "plat": k} for k in pl if k in ("windows", "macos")]
           with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"aygit={json.dumps(aygit)}\n")
+              out.write(f"arayuz={json.dumps(arayuz)}\n")
               out.write(f"linux={m(fs, fs_all) if 'linux' in pl else '[]'}\n")
               out.write(f"windows={m(fs, fs_win) if 'windows' in pl else '[]'}\n")
               out.write(f"macos={m(fs, fs_mac) if 'macos' in pl else '[]'}\n")
@@ -193,9 +208,86 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+  aygit:
+    name: Aygit ${{ matrix.plat }} ${{ matrix.fs }}-${{ matrix.tablo }}
+    needs: plan
+    if: needs.plan.outputs.aygit != '[]'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.aygit) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            /*
+            !/.claude/sessions/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Linux araclari ve scsi_debug
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends dosfstools exfatprogs \
+            ntfs-3g e2fsprogs xfsprogs hfsprogs udftools "linux-modules-extra-$(uname -r)" || true
+          for m in hfsplus udf exfat ntfs3; do sudo modprobe $m || true; done
+      - name: Senaryo (Linux/macOS, root)
+        if: runner.os != 'Windows'
+        run: >
+          sudo -E env "PATH=$PATH" "$(command -v python)" -m tests.long --profil quick
+          --fs ${{ matrix.fs }} --tablo ${{ matrix.tablo }} --tohum ${{ needs.plan.outputs.tohum }}
+          --aygit --cekirdek --calisma "$RUNNER_TEMP/du" --rapor rapor/aygit-${{ matrix.plat }}
+      - name: Senaryo (Windows, yonetici)
+        if: runner.os == 'Windows'
+        run: >
+          python -m tests.long --profil quick --fs ${{ matrix.fs }} --tablo ${{ matrix.tablo }}
+          --tohum ${{ needs.plan.outputs.tohum }} --aygit --cekirdek
+          --calisma D:\\du\\aygit --rapor rapor/aygit-windows
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rapor-aygit-${{ matrix.plat }}-${{ matrix.fs }}-${{ matrix.tablo }}
+          path: rapor/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  arayuz:
+    name: Arayuz ${{ matrix.plat }}
+    needs: plan
+    if: needs.plan.outputs.arayuz != '[]'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.arayuz) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            /*
+            !/.claude/sessions/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: PyQt5
+        run: python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
+      - name: Arayuz (gercek pencere sistemi) + ekran goruntusu
+        run: python -m tests.long.gui --rapor rapor/arayuz-${{ matrix.plat }}
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rapor-arayuz-${{ matrix.plat }}
+          path: rapor/
+          if-no-files-found: ignore
+          retention-days: 30
+
   ozet:
     name: Ozet ve issue
-    needs: [plan, linux, windows, macos]
+    needs: [plan, linux, windows, macos, aygit, arayuz]
     if: always() && needs.plan.result == 'success'
     runs-on: ubuntu-24.04
     permissions:
