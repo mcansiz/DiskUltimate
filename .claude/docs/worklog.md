@@ -5751,3 +5751,5 @@ calismiyordu.
   bolum bicimlendirme riski). Harf ata/kaldir hala numarali (kalan is).
 - VM: NTFS goruntu 14/14 + 2 atlama (Windows surucusu + chkdsk), aygit
   ntfs/exfat x mbr-mantiksal/gpt tamam.
+- CI 37201218408 (quick, tohum 7, Linux + Windows + macOS, goruntu + aygit +
+  arayuz): **102/102 is basarili**. Ilk kez butun platformlarda temiz.
