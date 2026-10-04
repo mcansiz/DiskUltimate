@@ -5832,3 +5832,5 @@ calismiyordu.
   sütunu; harita: blok başında amblem.
 - t89, ui_smoke; run_all 87/89, i18n (9 dil) TAMAM, platform 0, diag 13/13.
 - Sürüm 0.6.1-beta (kullanıcı kararı): bölüm başına işletim sistemi.
+- **v0.6.1-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.6.1-beta
+  — sürüm koşusu 37223512268: 3 platform test + Windows exe, Linux AppImage, macOS zip.
