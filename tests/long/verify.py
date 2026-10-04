@@ -132,7 +132,34 @@ def external_fsck(fs_key: str, image_path: str, offset: int, size: int) -> Tuple
     out = (r.stdout + r.stderr).strip()
     if r.returncode == 0:
         return "ok", f"{tool}: {out.splitlines()[-1] if out else 'temiz'}"
+    if tool == "fsck.vfat" and _only_fsck_fat_overflow(out):
+        return "ok", (f"{tool}: yalnizca 4 GiB-1 dosyada zincir uzunlugu 32 bit "
+                      "tasmasi (fsck.fat 4.2 kusuru; zincir kendi okuyucu ve "
+                      "cekirdekle okunup ozetle dogrulandi)")
     return "fail", f"{tool} cikis {r.returncode}: {out[-800:]}"
+
+
+def _only_fsck_fat_overflow(out: str) -> bool:
+    """fsck.fat'in TEK bulgusu 4 GiB-1 dosyada "zincir 0 bayt" mi?
+
+    Tam 4 GiB-1 baytlik dosya her kume boyunda tam 2^32 baytlik zincir
+    kaplar; fsck.fat 4.2 zincir uzunlugunu 32 bitte tutar, 0'a tasar ve
+    dosyayi "kesmek" ister. Olculdu (2026-10-04): ayni dosya bir kume kisa
+    (4 GiB-4097) iken fsck temiz, kullanilan kume sayisi 2^20 + kok. Baska
+    herhangi bir satir varsa gercek bulgu sayilir.
+    """
+    lines = [l.strip() for l in out.splitlines() if l.strip()]
+    pattern = "File size is 4294967295 bytes, cluster chain length is 0 bytes."
+    if not any(l == pattern for l in lines):
+        return False
+    allowed = (pattern, "Truncating file to 0 bytes.", "Leaving filesystem unchanged.")
+    for i, l in enumerate(lines):
+        if l in allowed or l.startswith("fsck.fat ") or " files, " in l:
+            continue
+        if l.startswith("/") and i + 1 < len(lines) and lines[i + 1] == pattern:
+            continue                                  # dosya yolu satiri
+        return False
+    return True
 
 
 def _resolve_listed(root: str, path: str, sep: str) -> Optional[str]:

@@ -31,3 +31,18 @@ FAT12 tam profil: 1455 dosya (17 MiB) ~21 MiB'lik birime "yer yok" dedi;
 8 KiB kumede dosya basi artik ~6 MiB tutuyordu. `data.footprint(boyut,
 birim)` butcede ve bolum boyutunda kullanilir (FAT12 8 KiB, FAT16 64 KiB,
 digerleri 4 KiB). Yerelde FAT12 full: 16/16 tamam.
+
+## 3. FAT32 4 GiB-1 dosya: fsck.fat 4.2'nin 32 bit tasmasi (bizim hata degil)
+
+Tam profil Linux FAT32 (3 tablo): `fsck.vfat` "/sinir_tam_4GiB-1.bin: File
+size is 4294967295 bytes, cluster chain length is 0 bytes". Yerelde
+olculdu: dizin girisi ilk kume 3, kullanilan kume 2^20 + kok (zincir tam);
+ayni dosya bir kume kisa (4 GiB-4097) iken fsck temiz. Tam 4 GiB-1 dosya her
+kume boyunda tam 2^32 baytlik zincir kaplar; fsck.fat uzunlugu 32 bitte
+tutup 0'a tasiyor. Windows/macOS full islerinde butce sinir dosyasina
+yetmedigi icin yalnizca Linux'ta gorundu.
+
+Karar: `verify._only_fsck_fat_overflow` — fsck.fat ciktisinda **yalnizca**
+bu kalip varsa sonuc "ok + aciklama"; baska herhangi bir satir gercek bulgu.
+Zincirin dogrulugu ayrica kendi okuyucunun ve cekirdegin dosyayi okuyup
+SHA1 ile karsilastirmasiyla kanitlanir.
