@@ -365,6 +365,10 @@ OS_COLORS = {
 }
 
 
+# Amblemi cizilebilen isletim sistemi turleri (bolum basina gosterim, ADR 0089).
+OS_LOGOS = ("windows", "linux", "macos")
+
+
 def os_icon(os_name: str, size: int = 16) -> QIcon:
     """Isletim sistemi amblemi dondurur ('windows' | 'linux' | 'macos')."""
     pix = QPixmap(size, size)

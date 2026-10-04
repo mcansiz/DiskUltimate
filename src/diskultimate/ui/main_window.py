@@ -61,8 +61,9 @@ from .dialogs.task import run_task
 from .dialogs.tools import (CarveOptionsDialog,
                             CarvedFilesDialog, DeletedFilesDialog, InfoDialog,
                             LostPartitionsDialog, TextViewDialog, WipeDialog)
-from .theme import (THEMES, apply_theme, current_theme, fs_color, os_icon,
-                    palette_color, theme_label)
+from .theme import (OS_LOGOS, THEMES, apply_theme, current_theme, fs_color,
+                    os_icon, palette_color, theme_label)
+from .osinfo import OsInfoService
 from .widgets.disk_map import DiskMapWidget
 from .widgets.disk_overview import DiskOverviewWidget
 from .widgets.file_browser import FileBrowser
@@ -118,6 +119,9 @@ class MainWindow(QMainWindow):
         # durur (ADR 0047). Harita, boyutlandirma ve "Bolum duzeni" ortak.
         self.limits = FsLimitsService(self)
         self.limits.ready.connect(lambda _key: self._on_limits_ready())
+        # Bolum basina kurulu isletim sistemi, arka planda (ADR 0089)
+        self.osinfo = OsInfoService(self)
+        self.osinfo.ready.connect(self._on_os_ready)
         # Ana ekranin duzenlenebilir yerlesimi (ortak model, ADR 0049)
         self._edit_layout = None
         # Acilistaki otomatik disk secimi bir kez yapilir (ADR 0035).
@@ -1038,6 +1042,7 @@ class MainWindow(QMainWindow):
                 return
             self._queues.pop(id(self.session), None)
             self.log(tr("Kapatildi: {}", self.session.path or self.session.name))
+            self.osinfo.wait(self.session)
             try:
                 self.session.close()
             except Exception:
@@ -1384,6 +1389,18 @@ class MainWindow(QMainWindow):
                 busy = False
         self._edit_layout = model
         self.disk_map.set_edit_layout(model, focus=index, busy=busy)
+
+    def _on_os_ready(self, session) -> None:
+        """Bolumlerin isletim sistemleri bulundu: agac, tablo ve harita tazelenir.
+
+        Suruklenirken tazelenmez (yerlesim degisiyor); sonuc onbellektedir,
+        bir sonraki tazelemede gorunur.
+        """
+        if self.session is None or self.disk_map.edit.dragging:
+            return
+        if session is not self.session and session not in self.sessions:
+            return
+        self.refresh(reload=False)
 
     def _on_limits_ready(self) -> None:
         for exc in self.limits.errors():
@@ -2385,6 +2402,7 @@ class MainWindow(QMainWindow):
         plan = self._plan_layout if self._show_plan else None
         partitions = plan.partitions if plan else session.partitions
         free = plan.free if plan else session.free_regions()
+        self.osinfo.annotate(session, partitions)
         sema = (session.scheme_name if plan is None
                 else self._scheme_name(plan.scheme))
         self.disk_map.set_disk(
@@ -2600,6 +2618,9 @@ class MainWindow(QMainWindow):
     def _make_writable(self) -> bool:
         """Kaynagi yazma moduna alir; fiziksel diskte tum kapilardan gecer."""
         session = self.session
+        # Arka plandaki isletim sistemi taramasi ayni tutamactan okur;
+        # yazma baslamadan biter (ADR 0089).
+        self.osinfo.wait(session)
         if not session.readonly:
             return True
         allow_system = False
@@ -2997,6 +3018,7 @@ class MainWindow(QMainWindow):
             # Disk yeniden okundu: dosya sistemi dolulugu degismis olabilir,
             # eski boyutlandirma sinirlari kullanilmaz.
             self.limits.clear()
+            self.osinfo.forget(self.session)
             try:
                 self.session.reload()
             except Exception as exc:
@@ -3299,15 +3321,24 @@ class MainWindow(QMainWindow):
         kullanir; boylece iki yerde iki farkli liste olusmaz.
         """
         marks = self._queue_marks(session)
+        # Bolumde kurulu sistem (arka planda bulunur, ADR 0089): amblem
+        # bolumun basinda, adi metnin sonunda. Bulunamayan bolum dosya
+        # sistemi rengindeki kareyle kalir.
+        self.osinfo.annotate(session, session.partitions)
         for p in session.partitions:
             metin = tr("Bolum {}: {}", p.index, p.display_name)
+            if p.os_name:
+                metin += "  —  " + p.os_name
             if p.index in marks:
                 metin += "  ⏳"
             item = QTreeWidgetItem(parent, [metin])
-            item.setIcon(0, color_chip(fs_color(p.fs_type), 12))
+            item.setIcon(0, os_icon(p.os_kind, 16) if p.os_kind in OS_LOGOS
+                         else color_chip(fs_color(p.fs_type), 12))
             item.setData(0, Qt.UserRole, ("part", (id(session), p.index)))
             tip = tr("{} — {}", fs_display(p.fs_type) or tr("Bicimlendirilmemis"),
                      human_size(p.size))
+            if p.os_name:
+                tip += "\n" + tr("Isletim sistemi: {}", p.os_name)
             if p.index in marks:
                 tip += ("\n\n" + tr("Bekleyen islemler:") + "\n• "
                         + "\n• ".join(marks[p.index]))
@@ -4056,6 +4087,7 @@ class MainWindow(QMainWindow):
         # Arka plandaki sinir hesaplari biter (kisa surer); yarida kalan is
         # parcacigi kapanmis aygita ya da yikilmis pencereye ulasmasin.
         self.limits.wait_all()
+        self.osinfo.wait_all()
         # Yoklama zamanlayicisi once durur: kapanis sirasinda tetiklenirse
         # yikilmakta olan agaca dokunmaya calisirdi.
         timer = getattr(self, "_disk_timer", None)

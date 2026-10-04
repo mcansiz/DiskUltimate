@@ -6942,6 +6942,70 @@ def t88_fat32_tasimada_yedek_onyukleme():
     s.close()
 
 
+@test
+def t89_bolum_basina_isletim_sistemi():
+    """Bolum basina kurulu isletim sistemi: Windows surumu, Linux, macOS, ESP (ADR 0089)
+
+    Disk satirindaki amblem bolum turlerinden bir tahmindir; bir diskte
+    birden cok sistem olabilir. Her bolumun icine bakilir: Windows surumu
+    `ntoskrnl.exe` surum kaydindan (derleme 22631 -> Windows 11), Linux
+    `/etc/os-release`, macOS `SystemVersion.plist`, ESP'de yukleyicisi olan
+    sistemler (`EFI/Microsoft/Boot` bir alt klasorde). Veri bolumu "sistem
+    yok" demeli.
+    """
+    import plistlib
+    from diskultimate.core.bootloader import partition_os
+
+    yol = img_path("t89.img")
+    s = DiskSession.create(yol, 400 * MIB, scheme="gpt", overwrite=True)
+    s.create_partition(2048, 60 * 2048, fs_key="fat32", label="ESP")
+    s.create_partition(62 * 2048, 80 * 2048, fs_key="ntfs", label="WIN")
+    s.create_partition(142 * 2048, 80 * 2048, fs_key="ext4", label="ubuntu")
+    s.create_partition(222 * 2048, 60 * 2048, fs_key="hfsplus", label="Mac")
+    s.create_partition(282 * 2048, 60 * 2048, fs_key="ntfs", label="VERI")
+    s.reload()
+
+    def yaz(index, dizinler, dosyalar):
+        fs = s.filesystem(index)
+        for d in dizinler:
+            fs.mkdir(d)
+        for ad, veri in dosyalar.items():
+            fs.write_file(ad, veri)
+        fs.flush()
+        s.close_filesystems()
+
+    yaz(1, ["/EFI", "/EFI/Microsoft", "/EFI/Microsoft/Boot", "/EFI/ubuntu",
+            "/EFI/Boot"],
+        {"/EFI/Microsoft/Boot/bootmgfw.efi": b"MZ" + b"\0" * 64,
+         "/EFI/ubuntu/shimx64.efi": b"MZ" + b"\0" * 64,
+         "/EFI/Boot/bootx64.efi": b"MZ" + b"\0" * 64})
+    # ntoskrnl.exe: VS_FIXEDFILEINFO, dosya surumu 10.0.22631.4317
+    surum = struct.pack("<IIII", 0xFEEF04BD, 0x10000, (10 << 16) | 0,
+                        (22631 << 16) | 4317)
+    yaz(2, ["/Windows", "/Windows/System32", "/Windows/System32/config"],
+        {"/Windows/System32/config/SYSTEM": b"regf" + b"\0" * 4092,
+         "/Windows/System32/ntoskrnl.exe": b"MZ" + os.urandom(200_000) + surum
+         + b"\0" * 1024})
+    yaz(3, ["/etc"], {"/etc/os-release":
+                      b'NAME="Ubuntu"\nPRETTY_NAME="Ubuntu 24.04.1 LTS"\n'})
+    yaz(4, ["/System", "/System/Library", "/System/Library/CoreServices"],
+        {"/System/Library/CoreServices/SystemVersion.plist": plistlib.dumps(
+            {"ProductName": "macOS", "ProductVersion": "14.6.1"})})
+    yaz(5, ["/Belgeler"], {"/Belgeler/not.txt": b"veri"})
+
+    beklenen = {1: ("esp", "EFI: Windows, ubuntu"),
+                2: ("windows", "Windows 11 (22631)"),
+                3: ("linux", "Ubuntu 24.04.1 LTS"),
+                4: ("macos", "macOS 14.6.1"),
+                5: ("", "")}
+    for index, (tur, ad) in beklenen.items():
+        sonuc = partition_os(s, s.table.get(index))
+        assert (sonuc["kind"], sonuc["name"]) == (tur, ad), (index, sonuc)
+        if not tur:
+            assert sonuc["reason"], "veri bolumunde neden yazilmali"
+    s.close()
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

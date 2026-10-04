@@ -5,19 +5,19 @@
     <name>DiskUltimate</name>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="198"/>
-        <location filename="../../ui/main_window.py" line="2476"/>
+        <location filename="../../ui/main_window.py" line="2494"/>
         <source>
 (Bu adim veri kaybettirebilir)</source>
         <translation>
 (Этот шаг может привести к потере данных)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3798"/>
+        <location filename="../../ui/main_window.py" line="3829"/>
         <source>  (bolum yok)</source>
         <translation>  (нет разделов)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2832"/>
+        <location filename="../../ui/main_window.py" line="2853"/>
         <source>  (disk bulunamadi)</source>
         <translation>  (диски не найдены)</translation>
     </message>
@@ -135,17 +135,17 @@
         <translation>&amp;Открыть</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="533"/>
+        <location filename="../../ui/main_window.py" line="537"/>
         <source>&amp;Araclar</source>
         <translation>&amp;Сервис</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="508"/>
+        <location filename="../../ui/main_window.py" line="512"/>
         <source>&amp;Bolum</source>
         <translation>&amp;Раздел</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="468"/>
+        <location filename="../../ui/main_window.py" line="472"/>
         <source>&amp;Dosya</source>
         <translation>&amp;Файл</translation>
     </message>
@@ -175,7 +175,7 @@
         <translation>&amp;Сохранить</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="529"/>
+        <location filename="../../ui/main_window.py" line="533"/>
         <source>&amp;Onyukleme</source>
         <translation>&amp;Загрузка</translation>
     </message>
@@ -190,7 +190,7 @@
         <translation>Да для &amp;всех</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="558"/>
+        <location filename="../../ui/main_window.py" line="562"/>
         <source>&amp;Yardim</source>
         <translation>&amp;Справка</translation>
     </message>
@@ -231,34 +231,34 @@
         <translation>(нет разделов)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3440"/>
+        <location filename="../../ui/main_window.py" line="3471"/>
         <location filename="../../ui/widgets/disk_overview.py" line="155"/>
         <source>(bolumler okunamadi: {})</source>
         <translation>(не удалось прочитать разделы: {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3436"/>
+        <location filename="../../ui/main_window.py" line="3467"/>
         <source>(bolumler okunuyor...)</source>
         <translation>(чтение разделов...)</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="760"/>
-        <location filename="../../ui/main_window.py" line="2693"/>
+        <location filename="../../ui/main_window.py" line="2714"/>
         <source>(bos)</source>
         <translation>(ожидание)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3619"/>
+        <location filename="../../ui/main_window.py" line="3650"/>
         <source>(degistirilemez — neden?)</source>
         <translation>(изменение невозможно — почему?)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3403"/>
+        <location filename="../../ui/main_window.py" line="3434"/>
         <source>(disk bulunamadi)</source>
         <translation>(диски не найдены)</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/partition_table.py" line="48"/>
+        <location filename="../../ui/widgets/partition_table.py" line="52"/>
         <source>(mantiksal)</source>
         <translation>(логический)</translation>
     </message>
@@ -283,7 +283,7 @@
         <translation>(файл резервной копии не выбран)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2691"/>
+        <location filename="../../ui/main_window.py" line="2712"/>
         <source>(yok)</source>
         <translation>(нет)</translation>
     </message>
@@ -324,7 +324,7 @@
         <translation>&lt; Назад</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2228"/>
+        <location filename="../../ui/main_window.py" line="2245"/>
         <source>&lt;b&gt;Acik disk/goruntu kapatilacak.&lt;/b&gt;&lt;br&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;Открытый диск/образ будет закрыт.&lt;/b&gt;&lt;br&gt;&lt;br&gt;</translation>
     </message>
@@ -334,12 +334,12 @@
         <translation>&lt;b&gt;Раздел {}&lt;/b&gt; — {}&lt;br&gt;Текущая файловая система: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="458"/>
+        <location filename="../../ui/widgets/disk_map.py" line="466"/>
         <source>&lt;b&gt;Bos alan&lt;/b&gt;&lt;br&gt;Boyut: {}</source>
         <translation>&lt;b&gt;Свободное место&lt;/b&gt;&lt;br&gt;Размер: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2429"/>
+        <location filename="../../ui/main_window.py" line="2447"/>
         <source>&lt;b&gt;Diskteki hali&lt;/b&gt; gosteriliyor — {} bekleyen adim listede bekliyor.</source>
         <translation>Показана &lt;b&gt;текущая разметка диска&lt;/b&gt; — в списке ожидают отложенные шаги: {}.</translation>
     </message>
@@ -369,7 +369,7 @@
         <translation>&lt;b&gt;Не удалось прочитать конфигурацию загрузки.&lt;/b&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2423"/>
+        <location filename="../../ui/main_window.py" line="2441"/>
         <source>&lt;b&gt;Planlanan yerlesim&lt;/b&gt; gosteriliyor — {} bekleyen adim uygulandiginda disk boyle olacak ({}). Diske henuz yazilmadi.</source>
         <translation>Показана &lt;b&gt;планируемая разметка&lt;/b&gt; — так будет выглядеть диск после применения отложенных шагов: {} ({}). На диск пока ничего не записано.</translation>
     </message>
@@ -394,12 +394,12 @@
         <translation>&lt;b&gt;Шаги, способные уничтожить данные: {}&lt;/b&gt;. После применения их нельзя отменить.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2507"/>
+        <location filename="../../ui/main_window.py" line="2525"/>
         <source>&lt;b&gt;{} bekleyen adim&lt;/b&gt; henuz uygulanmadi ve kaynak kapatilinca kaybolacak.&lt;br&gt;&lt;br&gt;Diskte hicbir degisiklik yapilmadi.&lt;br&gt;&lt;br&gt;Yine de kapatilsin mi?</source>
         <translation>&lt;b&gt;Отложенные шаги ({})&lt;/b&gt; ещё не применены и будут потеряны при закрытии источника.&lt;br&gt;&lt;br&gt;На диске ничего не изменено.&lt;br&gt;&lt;br&gt;Всё равно закрыть?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2173"/>
+        <location filename="../../ui/main_window.py" line="2190"/>
         <source>&lt;b&gt;{} fiziksel diskin&lt;/b&gt; bilgisi okunamadi ({}).&lt;br&gt;&lt;br&gt;Fiziksel disklere erismek icin {} yetkisi gerekir. Uygulama simdi yetkili olarak yeniden baslatilsin mi?&lt;br&gt;&lt;br&gt;&lt;i&gt;Disk goruntusu dosyalari (.img, VHD, VDI...) icin yetki gerekmez; yalnizca goruntu dosyalariyla calisacaksaniz &lt;b&gt;Hayir&lt;/b&gt; diyebilirsiniz.&lt;/i&gt;</source>
         <translation>&lt;b&gt;Не удалось прочитать физические диски: {}&lt;/b&gt; ({}).&lt;br&gt;&lt;br&gt;Для доступа к физическим дискам нужны права {}. Перезапустить приложение с повышенными правами сейчас?&lt;br&gt;&lt;br&gt;&lt;i&gt;Для файлов образов дисков (.img, VHD, VDI...) права не нужны; если вы работаете только с образами, ответьте &lt;b&gt;Нет&lt;/b&gt;.&lt;/i&gt;</translation>
     </message>
@@ -424,7 +424,7 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; ({}) — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1011"/>
+        <location filename="../../ui/main_window.py" line="1015"/>
         <source>&lt;b&gt;{}&lt;/b&gt; bir DiskUltimate yedegidir. Icerigi &lt;b&gt;salt okunur&lt;/b&gt; olarak gezebilirsiniz: bolumler, klasorler ve dosyalar gorunur, dosyalari disa aktarabilirsiniz.&lt;br&gt;&lt;br&gt;&lt;b&gt;Kaynak boyut:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Yedek boyut:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Olusturma:&lt;/b&gt; {}&lt;br&gt;&lt;br&gt;Yedegi bir &lt;b&gt;diske veya goruntuye yazmak&lt;/b&gt; icin: &lt;i&gt;Disk &amp;gt; Yedegi diske yaz...&lt;/i&gt;</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; — резервная копия DiskUltimate. Её содержимое можно просматривать &lt;b&gt;только для чтения&lt;/b&gt;: видны разделы, папки и файлы, файлы можно экспортировать.&lt;br&gt;&lt;br&gt;&lt;b&gt;Размер источника:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Размер резервной копии:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Создана:&lt;/b&gt; {}&lt;br&gt;&lt;br&gt;Чтобы &lt;b&gt;записать резервную копию на диск или в образ&lt;/b&gt;: &lt;i&gt;Диск &amp;gt; Записать резервную копию на диск...&lt;/i&gt;</translation>
     </message>
@@ -449,17 +449,17 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; — диск операционной системы. После перезаписи система не загрузится. Для подтверждения введите имя диска: &lt;b&gt;{}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1755"/>
+        <location filename="../../ui/main_window.py" line="1772"/>
         <source>&lt;b&gt;{}&lt;/b&gt; nereye klonlansin?</source>
         <translation>Куда клонировать &lt;b&gt;{}&lt;/b&gt;?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3948"/>
+        <location filename="../../ui/main_window.py" line="3979"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acik — bu &lt;b&gt;normaldir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Yaptiginiz degisiklikler bekleyen islem olarak birikir ve diske ancak &lt;b&gt;Uygula&lt;/b&gt; dediginizde yazilir.</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; открыт только для чтения — это &lt;b&gt;нормально&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Ваши изменения собираются как отложенные операции и записываются на диск только после нажатия &lt;b&gt;Применить&lt;/b&gt;.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3917"/>
+        <location filename="../../ui/main_window.py" line="3948"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acildi; bu dosyada degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;&lt;b&gt;Neden:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Yol:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Bicim:&lt;/b&gt; {}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; открыт только для чтения; этот файл нельзя изменить.&lt;br&gt;&lt;br&gt;&lt;b&gt;Причина:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Путь:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Формат:&lt;/b&gt; {}</translation>
     </message>
@@ -469,7 +469,7 @@
         <translation>Найдено удалённых записей: &lt;b&gt;{}&lt;/b&gt;, из них полностью восстановимы, по-видимому: &lt;b&gt;{}&lt;/b&gt;.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3955"/>
+        <location filename="../../ui/main_window.py" line="3986"/>
         <source>&lt;b&gt;{}&lt;/b&gt; uzerinde degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;{}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; нельзя изменить.&lt;br&gt;&lt;br&gt;{}</translation>
     </message>
@@ -494,17 +494,17 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; — {} (показаны первые {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3922"/>
+        <location filename="../../ui/main_window.py" line="3953"/>
         <source>&lt;br&gt;&lt;br&gt;Dosyayi kullanan diger programi (baska bir disk araci, yedekleme yazilimi vb.) kapatip &lt;b&gt;Yeniden dene&lt;/b&gt;ye basin.</source>
         <translation>&lt;br&gt;&lt;br&gt;Закройте другую программу, использующую файл (другую дисковую утилиту, программу резервного копирования и т. п.), и нажмите &lt;b&gt;Повторить&lt;/b&gt;.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4042"/>
+        <location filename="../../ui/main_window.py" line="4073"/>
         <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt5, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
         <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Инструмент для разметки, форматирования, резервного копирования и восстановления образов дисков, виртуальных дисков и &lt;b&gt;реальных дисков этой системы&lt;/b&gt;.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Технологии:&lt;/b&gt; Python 3 + PyQt5, без внешних зависимостей&lt;br&gt;&lt;b&gt;Таблицы разделов:&lt;/b&gt; MBR (включая логические разделы), GPT, преобразование MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT&lt;br&gt;&lt;b&gt;Форматирование:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 и NTFS — все восемь на чистом Python, на трёх платформах&lt;br&gt;&lt;b&gt;Доступ к файлам:&lt;/b&gt; полное чтение и запись для FAT и exFAT&lt;/p&gt;&lt;p&gt;Для файлов образов права администратора не нужны. Доступ к физическим дискам требует прав администратора/root и &lt;b&gt;по умолчанию только для чтения&lt;/b&gt;; запись требует отдельного подтверждения.&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="795"/>
+        <location filename="../../ui/main_window.py" line="799"/>
         <source>&lt;p&gt;Bu uygulama asagidaki ikon paketlerinden secilmis ikonlari gomulu olarak icerir. Isletim sistemi amblemleri sahiplerinin ticari markasidir; yalnizca diski tanitmak icin gosterilir.&lt;/p&gt;</source>
         <translation>&lt;p&gt;В приложение встроены отдельные значки из следующих наборов. Эмблемы операционных систем являются товарными знаками их владельцев и показываются только для обозначения диска.&lt;/p&gt;</translation>
     </message>
@@ -596,12 +596,12 @@
         <translation>Вкл.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="680"/>
+        <location filename="../../ui/main_window.py" line="684"/>
         <source>Acik .dub yedegini yeni bir goruntu dosyasina veya fiziksel diske yazar</source>
         <translation>Записывает открытую резервную копию .dub в новый файл образа или на физический диск</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2141"/>
+        <location filename="../../ui/main_window.py" line="2158"/>
         <source>Acik dosya bicimi</source>
         <translation>Формат открытых файлов</translation>
     </message>
@@ -629,7 +629,7 @@
     <message>
         <location filename="../../ui/dialogs/backup.py" line="326"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3806"/>
+        <location filename="../../ui/main_window.py" line="3837"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <source>Ad</source>
@@ -676,8 +676,8 @@
         <translation>Сетевой интерфейс (MAC)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2802"/>
-        <location filename="../../ui/main_window.py" line="2876"/>
+        <location filename="../../ui/main_window.py" line="2823"/>
+        <location filename="../../ui/main_window.py" line="2897"/>
         <source>Agactan bir fiziksel disk secin.</source>
         <translation>Выберите физический диск в дереве.</translation>
     </message>
@@ -687,22 +687,22 @@
         <translation>Apple HFS+</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2696"/>
+        <location filename="../../ui/main_window.py" line="2717"/>
         <source>Arayuz bir saniyeden uzun yanit vermezse butun is parcaciklarinin yigini kendiliginden rapor dosyasina yazilir. Raporlar gunluk klasorundeki freeze/ altindadir.</source>
         <translation>Если интерфейс не отвечает дольше секунды, стеки всех потоков автоматически записываются в файл отчёта. Отчёты находятся в папке freeze/ каталога журналов.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2137"/>
+        <location filename="../../ui/main_window.py" line="2154"/>
         <source>Arayuz dili</source>
         <translation>Язык интерфейса</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2139"/>
+        <location filename="../../ui/main_window.py" line="2156"/>
         <source>Arayuz stili</source>
         <translation>Стиль интерфейса</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2721"/>
+        <location filename="../../ui/main_window.py" line="2742"/>
         <source>Arayuzun takildigi andaki yigin. En ustteki &apos;O an acik islem&apos; satiri hangi islemin bekledigini soyler.</source>
         <translation>Стек в момент зависания интерфейса. Верхняя строка «текущая открытая операция» показывает, какая операция ожидала.</translation>
     </message>
@@ -722,7 +722,7 @@
         <translation>Вниз</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2522"/>
+        <location filename="../../ui/main_window.py" line="2540"/>
         <source>Asagi tasi</source>
         <translation>Переместить вниз</translation>
     </message>
@@ -759,7 +759,7 @@
         <translation>Устройство</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3212"/>
+        <location filename="../../ui/main_window.py" line="3234"/>
         <source>Aygit cikarildi: {}</source>
         <translation>Устройство извлечено: {}</translation>
     </message>
@@ -784,7 +784,7 @@
         <translation>Устройство доступно только для чтения</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3208"/>
+        <location filename="../../ui/main_window.py" line="3230"/>
         <source>Aygit takildi: {} — {} ({})</source>
         <translation>Устройство подключено: {} — {} ({})</translation>
     </message>
@@ -908,17 +908,17 @@
         <translation>Загрузочное устройство BIOS</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2808"/>
+        <location filename="../../ui/main_window.py" line="2829"/>
         <source>BOLUM AYGITLARI</source>
         <translation>УСТРОЙСТВА РАЗДЕЛОВ</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3804"/>
+        <location filename="../../ui/main_window.py" line="3835"/>
         <source>BOLUM {}</source>
         <translation>РАЗДЕЛ {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3790"/>
+        <location filename="../../ui/main_window.py" line="3821"/>
         <source>BOLUMLER</source>
         <translation>РАЗДЕЛЫ</translation>
     </message>
@@ -938,7 +938,7 @@
         <translation>Точка подключения</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1607"/>
+        <location filename="../../ui/main_window.py" line="1624"/>
         <source>Baglama yalnizca gercek disklerde anlamlidir; goruntu dosyasi isletim sistemine bagli degildir.</source>
         <translation>Подключение возможно только для реальных дисков; файл образа не присоединён к операционной системе.</translation>
     </message>
@@ -953,15 +953,15 @@
         <translation>Шина</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1568"/>
-        <location filename="../../ui/main_window.py" line="1570"/>
-        <location filename="../../ui/main_window.py" line="1575"/>
-        <location filename="../../ui/main_window.py" line="2644"/>
+        <location filename="../../ui/main_window.py" line="1585"/>
+        <location filename="../../ui/main_window.py" line="1587"/>
+        <location filename="../../ui/main_window.py" line="1592"/>
+        <location filename="../../ui/main_window.py" line="2665"/>
         <source>Baglantilari kes</source>
         <translation>Отключить все</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2638"/>
+        <location filename="../../ui/main_window.py" line="2659"/>
         <source>Bagli bolum uyarisi</source>
         <translation>Предупреждение о подключённом разделе</translation>
     </message>
@@ -981,12 +981,12 @@
         <translation>Подключённые разделы</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3811"/>
+        <location filename="../../ui/main_window.py" line="3842"/>
         <source>Bagli degil</source>
         <translation>Не подключён</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3853"/>
+        <location filename="../../ui/main_window.py" line="3884"/>
         <source>Bagli — isletim sistemi kullaniyor</source>
         <translation>Подключён — используется операционной системой</translation>
     </message>
@@ -1001,7 +1001,7 @@
         <translation>Ошибка: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1757"/>
+        <location filename="../../ui/main_window.py" line="1774"/>
         <source>Baska bir diske...</source>
         <translation>На другой диск...</translation>
     </message>
@@ -1017,13 +1017,13 @@
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3814"/>
-        <location filename="../../ui/widgets/partition_table.py" line="23"/>
+        <location filename="../../ui/main_window.py" line="3845"/>
+        <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Baslangic LBA</source>
         <translation>Начальный LBA</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="222"/>
+        <location filename="../../core/ptable.py" line="228"/>
         <source>Baslangic cok erken (en az LBA {})</source>
         <translation>Начало слишком близко к началу диска (не раньше LBA {})</translation>
     </message>
@@ -1044,7 +1044,7 @@
         <translation>Начать</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/partition_table.py" line="24"/>
+        <location filename="../../ui/widgets/partition_table.py" line="25"/>
         <source>Bayrak</source>
         <translation>Флаги</translation>
     </message>
@@ -1054,7 +1054,7 @@
         <translation>Флаг остаётся установленным; Windows проверит том при следующем запуске. До этого Linux не будет его подключать.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3816"/>
+        <location filename="../../ui/main_window.py" line="3847"/>
         <source>Bayt ofseti</source>
         <translation>Смещение в байтах</translation>
     </message>
@@ -1069,38 +1069,38 @@
         <translation>Неожиданный вывод</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2364"/>
+        <location filename="../../ui/main_window.py" line="2381"/>
         <source>Bekleyen adimla cakisiyor</source>
         <translation>Конфликтует с отложенным шагом</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2493"/>
+        <location filename="../../ui/main_window.py" line="2511"/>
         <source>Bekleyen islem yok</source>
         <translation>Нет отложенных операций</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="184"/>
+        <location filename="../../ui/main_window.py" line="188"/>
         <source>Bekleyen islemler</source>
         <translation>Отложенные операции</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2492"/>
+        <location filename="../../ui/main_window.py" line="2510"/>
         <source>Bekleyen islemler ({})</source>
         <translation>Отложенные операции ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2506"/>
+        <location filename="../../ui/main_window.py" line="2524"/>
         <source>Bekleyen islemler var</source>
         <translation>Есть отложенные операции</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3312"/>
-        <location filename="../../ui/widgets/partition_table.py" line="140"/>
+        <location filename="../../ui/main_window.py" line="3343"/>
+        <location filename="../../ui/widgets/partition_table.py" line="145"/>
         <source>Bekleyen islemler:</source>
         <translation>Отложенные операции:</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/partition_table.py" line="197"/>
+        <location filename="../../ui/widgets/partition_table.py" line="204"/>
         <source>Bekleyen islemlerden geliyor: {}</source>
         <translation>Из отложенных операций: {}</translation>
     </message>
@@ -1110,12 +1110,12 @@
         <translation>Добавлено в отложенные операции: удаление загрузочного кода</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2554"/>
+        <location filename="../../ui/main_window.py" line="2572"/>
         <source>Bekleyen islemleri iptal et</source>
         <translation>Отменить отложенные операции</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="671"/>
+        <location filename="../../ui/main_window.py" line="675"/>
         <source>Bekleyen islemleri sirayla uygular. Bu ana kadar diske hicbir sey yazilmadi.</source>
         <translation>Выполняет отложенные операции по порядку. На диск пока ничего не записано.</translation>
     </message>
@@ -1174,7 +1174,7 @@
         <translation>Не удалось определить тип микропрограммы.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="655"/>
+        <location filename="../../ui/main_window.py" line="659"/>
         <source>Bellenimdeki onyukleme girislerini ve sirasini duzenler.</source>
         <translation>Изменяет загрузочные записи микропрограммы и их порядок.</translation>
     </message>
@@ -1205,14 +1205,14 @@
         <translation>Форматирование</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="618"/>
+        <location filename="../../ui/main_window.py" line="622"/>
         <source>Bicimlendir...</source>
         <translation>Форматировать...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3309"/>
-        <location filename="../../ui/main_window.py" line="3458"/>
-        <location filename="../../ui/main_window.py" line="3809"/>
+        <location filename="../../ui/main_window.py" line="3338"/>
+        <location filename="../../ui/main_window.py" line="3489"/>
+        <location filename="../../ui/main_window.py" line="3840"/>
         <location filename="../../ui/widgets/disk_map.py" line="194"/>
         <location filename="../../ui/widgets/disk_overview.py" line="240"/>
         <source>Bicimlendirilmemis</source>
@@ -1241,7 +1241,7 @@
     </message>
     <message>
         <location filename="../../core/fsregistry.py" line="87"/>
-        <location filename="../../core/ptable.py" line="108"/>
+        <location filename="../../core/ptable.py" line="114"/>
         <source>Bilinmeyen</source>
         <translation>Неизвестно</translation>
     </message>
@@ -1326,7 +1326,7 @@
         <translation>Неизвестно (не удалось прочитать конфигурацию)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2833"/>
+        <location filename="../../ui/main_window.py" line="2854"/>
         <source>Bir diski acmak icin uzerine cift tiklayin.</source>
         <translation>Дважды щёлкните диск, чтобы открыть его.</translation>
     </message>
@@ -1383,8 +1383,8 @@
     </message>
     <message>
         <location filename="../../core/operations.py" line="81"/>
-        <location filename="../../ui/main_window.py" line="1533"/>
-        <location filename="../../ui/main_window.py" line="3810"/>
+        <location filename="../../ui/main_window.py" line="1550"/>
+        <location filename="../../ui/main_window.py" line="3841"/>
         <source>Birim etiketi</source>
         <translation>Метка тома</translation>
     </message>
@@ -1400,7 +1400,7 @@
         <translation>Метка тома:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="630"/>
+        <location filename="../../ui/main_window.py" line="634"/>
         <source>Birim etiketini degistir...</source>
         <translation>Изменить метку тома...</translation>
     </message>
@@ -1450,8 +1450,8 @@
         <translation>Конечный сектор:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3815"/>
-        <location filename="../../ui/widgets/partition_table.py" line="23"/>
+        <location filename="../../ui/main_window.py" line="3846"/>
+        <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Bitis LBA</source>
         <translation>Конечный LBA</translation>
     </message>
@@ -1506,8 +1506,8 @@
         <translation>Раздел будет &lt;b&gt;уменьшен на {}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="277"/>
-        <location filename="../../ui/main_window.py" line="844"/>
+        <location filename="../../ui/main_window.py" line="281"/>
+        <location filename="../../ui/main_window.py" line="848"/>
         <source>Bolum Bilgisi</source>
         <translation>Сведения о разделе</translation>
     </message>
@@ -1527,7 +1527,7 @@
         <translation>Раздел слишком мал для FAT{} (число кластеров: {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3825"/>
+        <location filename="../../ui/main_window.py" line="3856"/>
         <source>Bolum GUID</source>
         <translation>GUID раздела</translation>
     </message>
@@ -1543,7 +1543,7 @@
     </message>
     <message>
         <location filename="../../core/operations.py" line="82"/>
-        <location filename="../../ui/main_window.py" line="1488"/>
+        <location filename="../../ui/main_window.py" line="1505"/>
         <source>Bolum adi</source>
         <translation>Имя раздела</translation>
     </message>
@@ -1553,7 +1553,7 @@
         <translation>Имена разделов поддерживаются только в схеме GPT</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1485"/>
+        <location filename="../../ui/main_window.py" line="1502"/>
         <source>Bolum adi yalnizca GPT semasinda saklanir.
 MBR icin birim etiketini degistirin.</source>
         <translation>Имена разделов хранятся только в схеме GPT.
@@ -1565,7 +1565,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Имя раздела:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="628"/>
+        <location filename="../../ui/main_window.py" line="632"/>
         <source>Bolum adini degistir...</source>
         <translation>Изменить имя раздела...</translation>
     </message>
@@ -1580,19 +1580,19 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Устройство раздела не найдено: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1864"/>
+        <location filename="../../ui/main_window.py" line="1881"/>
         <source>Bolum bagli</source>
         <translation>Раздел подключён</translation>
     </message>
     <message>
         <location filename="../../core/mbr.py" line="334"/>
-        <location filename="../../core/ptable.py" line="219"/>
+        <location filename="../../core/ptable.py" line="225"/>
         <location filename="../../core/resize.py" line="789"/>
         <source>Bolum boyutu sifir olamaz</source>
         <translation>Размер раздела не может быть нулевым</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1454"/>
+        <location filename="../../ui/main_window.py" line="1471"/>
         <source>Bolum bu kadar kuculemez</source>
         <translation>Раздел нельзя уменьшить настолько</translation>
     </message>
@@ -1614,22 +1614,22 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Раздел выходит за границы диска</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="224"/>
+        <location filename="../../core/ptable.py" line="230"/>
         <source>Bolum disk sonunu asiyor</source>
         <translation>Раздел выходит за конец диска</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1288"/>
+        <location filename="../../ui/main_window.py" line="1293"/>
         <source>Bolum duzeni acilamadi</source>
         <translation>Не удалось открыть разметку разделов</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="622"/>
+        <location filename="../../ui/main_window.py" line="626"/>
         <source>Bolum duzenini degistir...</source>
         <translation>Изменить разметку разделов...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1176"/>
+        <location filename="../../ui/main_window.py" line="1181"/>
         <source>Bolum eklenemez</source>
         <translation>Невозможно добавить раздел</translation>
     </message>
@@ -1663,8 +1663,8 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Раздел выходит за пределы окружающей области (не дальше LBA {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2093"/>
-        <location filename="../../ui/main_window.py" line="938"/>
+        <location filename="../../ui/main_window.py" line="2110"/>
+        <location filename="../../ui/main_window.py" line="942"/>
         <source>Bolum olusturuluyor...</source>
         <translation>Создание раздела...</translation>
     </message>
@@ -1679,7 +1679,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Число разделов</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3881"/>
+        <location filename="../../ui/main_window.py" line="3912"/>
         <source>Bolum secili degil</source>
         <translation>Раздел не выбран</translation>
     </message>
@@ -1689,7 +1689,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Таблица разделов</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1289"/>
+        <location filename="../../ui/main_window.py" line="1294"/>
         <source>Bolum tablosu kuyrukta degisiyor; once bekleyen islemleri uygulayin ya da kaldirin.</source>
         <translation>В очереди есть изменения таблицы разделов; сначала примените или удалите отложенные операции.</translation>
     </message>
@@ -1724,7 +1724,7 @@ MBR icin birim etiketini degistirin.</source>
         <location filename="../../core/resize.py" line="874"/>
         <location filename="../../core/session.py" line="156"/>
         <location filename="../../core/session.py" line="320"/>
-        <location filename="../../ui/main_window.py" line="1134"/>
+        <location filename="../../ui/main_window.py" line="1139"/>
         <source>Bolum tablosu yok</source>
         <translation>Нет таблицы разделов</translation>
     </message>
@@ -1740,17 +1740,17 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Обнаружены файловые системы, отсутствующие в таблице разделов: &lt;b&gt;{}&lt;/b&gt;. Выберите ту, которую нужно добавить в таблицу.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1994"/>
+        <location filename="../../ui/main_window.py" line="2011"/>
         <source>Bolum tablosunda olmayan bir dosya sistemi bulunamadi.</source>
         <translation>Файловых систем вне таблицы разделов не найдено.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="635"/>
+        <location filename="../../ui/main_window.py" line="639"/>
         <source>Bolum tablosunu GPT&apos;ye donustur</source>
         <translation>Преобразовать таблицу разделов в GPT</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="636"/>
+        <location filename="../../ui/main_window.py" line="640"/>
         <source>Bolum tablosunu MBR&apos;ye donustur</source>
         <translation>Преобразовать таблицу разделов в MBR</translation>
     </message>
@@ -1762,7 +1762,7 @@ MBR icin birim etiketini degistirin.</source>
     <message>
         <location filename="../../core/operations.py" line="648"/>
         <location filename="../../core/operations.py" line="75"/>
-        <location filename="../../ui/main_window.py" line="614"/>
+        <location filename="../../ui/main_window.py" line="618"/>
         <source>Bolum tablosunu sil</source>
         <translation>Удалить таблицу разделов</translation>
     </message>
@@ -1773,8 +1773,8 @@ MBR icin birim etiketini degistirin.</source>
     </message>
     <message>
         <location filename="../../core/operations.py" line="83"/>
-        <location filename="../../ui/main_window.py" line="1502"/>
-        <location filename="../../ui/main_window.py" line="1514"/>
+        <location filename="../../ui/main_window.py" line="1519"/>
+        <location filename="../../ui/main_window.py" line="1531"/>
         <source>Bolum turu</source>
         <translation>Тип раздела</translation>
     </message>
@@ -1784,7 +1784,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Тип:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="629"/>
+        <location filename="../../ui/main_window.py" line="633"/>
         <source>Bolum turunu degistir...</source>
         <translation>Изменить тип раздела...</translation>
     </message>
@@ -1794,12 +1794,12 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Данные разделов сохраняются</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1673"/>
+        <location filename="../../ui/main_window.py" line="1690"/>
         <source>Bolum yok</source>
         <translation>Нет разделов</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="541"/>
+        <location filename="../../core/bootloader.py" line="673"/>
         <location filename="../../core/operations.py" line="702"/>
         <location filename="../../core/operations.py" line="717"/>
         <location filename="../../core/operations.py" line="728"/>
@@ -1810,25 +1810,25 @@ MBR icin birim etiketini degistirin.</source>
         <location filename="../../core/operations.py" line="785"/>
         <location filename="../../core/operations.py" line="794"/>
         <location filename="../../core/operations.py" line="809"/>
-        <location filename="../../core/ptable.py" line="117"/>
+        <location filename="../../core/ptable.py" line="123"/>
         <location filename="../../ui/dialogs/backup.py" line="1042"/>
         <location filename="../../ui/dialogs/backup.py" line="512"/>
         <location filename="../../ui/dialogs/backup.py" line="738"/>
         <location filename="../../ui/dialogs/bootloader.py" line="201"/>
         <location filename="../../ui/dialogs/bootloader.py" line="234"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="164"/>
-        <location filename="../../ui/main_window.py" line="2020"/>
+        <location filename="../../ui/main_window.py" line="2037"/>
         <location filename="../../ui/widgets/disk_overview.py" line="177"/>
         <location filename="../../ui/widgets/layout_bar.py" line="131"/>
-        <location filename="../../ui/widgets/partition_table.py" line="47"/>
+        <location filename="../../ui/widgets/partition_table.py" line="51"/>
         <source>Bolum {}</source>
         <translation>Раздел {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1685"/>
-        <location filename="../../ui/main_window.py" line="1878"/>
-        <location filename="../../ui/main_window.py" line="1901"/>
-        <location filename="../../ui/main_window.py" line="2956"/>
+        <location filename="../../ui/main_window.py" line="1702"/>
+        <location filename="../../ui/main_window.py" line="1895"/>
+        <location filename="../../ui/main_window.py" line="1918"/>
+        <location filename="../../ui/main_window.py" line="2977"/>
         <source>Bolum {} ({})</source>
         <translation>Раздел {} ({})</translation>
     </message>
@@ -1858,7 +1858,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Имя раздела {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1648"/>
+        <location filename="../../ui/main_window.py" line="1665"/>
         <source>Bolum {} baglandi: {}</source>
         <translation>Раздел {} подключён в {}</translation>
     </message>
@@ -1878,17 +1878,17 @@ MBR icin birim etiketini degistirin.</source>
         <translation>Изменить размер раздела {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1650"/>
+        <location filename="../../ui/main_window.py" line="1667"/>
         <source>Bolum {} cikarildi</source>
         <translation>Раздел {} отключён</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1561"/>
+        <location filename="../../ui/main_window.py" line="1578"/>
         <source>Bolum {} cikariliyor...</source>
         <translation>Отключение раздела {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1455"/>
+        <location filename="../../ui/main_window.py" line="1472"/>
         <source>Bolum {} en az {} olabilir (dolu: {}); istenen {}.
 
 Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
@@ -1917,7 +1917,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>Нет места для EBR раздела {} (вплотную к предыдущему разделу)</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="538"/>
+        <location filename="../../core/bootloader.py" line="670"/>
         <source>Bolum {} inceleniyor...</source>
         <translation>Анализ раздела {}...</translation>
     </message>
@@ -1942,7 +1942,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>Удалить раздел {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1865"/>
+        <location filename="../../ui/main_window.py" line="1882"/>
         <source>Bolum {} su anda bagli ({}). Bagli bir NTFS birimi onarilamaz; once baglantisini kesin.</source>
         <translation>Раздел {} сейчас подключён ({}). Подключённый том NTFS нельзя исправить; сначала отключите его.</translation>
     </message>
@@ -1952,13 +1952,13 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>Тип раздела {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1942"/>
+        <location filename="../../ui/main_window.py" line="1959"/>
         <source>Bolum {} — Silinmis Dosyalar</source>
         <translation>Раздел {} — удалённые файлы</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="563"/>
-        <location filename="../../ui/main_window.py" line="2958"/>
+        <location filename="../../ui/main_window.py" line="2979"/>
         <source>Bolum {} — {}</source>
         <translation>Раздел {} — {}</translation>
     </message>
@@ -1988,13 +1988,13 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>Раздел {}: изменяется положение</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1877"/>
-        <location filename="../../ui/main_window.py" line="3303"/>
+        <location filename="../../ui/main_window.py" line="1894"/>
+        <location filename="../../ui/main_window.py" line="3329"/>
         <source>Bolum {}: {}</source>
         <translation>Раздел {}: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3450"/>
+        <location filename="../../ui/main_window.py" line="3481"/>
         <source>Bolum {}: {} ({})</source>
         <translation>Раздел {}: {} ({})</translation>
     </message>
@@ -2015,7 +2015,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>Раздел {}: размер {} изменить нельзя</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1941"/>
+        <location filename="../../ui/main_window.py" line="1958"/>
         <source>Bolum {}: {} silinmis giris bulundu</source>
         <translation>Раздел {}: найдено удалённых записей: {}</translation>
     </message>
@@ -2030,7 +2030,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>На разделе нет читаемой файловой системы</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="642"/>
+        <location filename="../../ui/main_window.py" line="646"/>
         <source>Bolume geri yukle...</source>
         <translation>Восстановить в раздел...</translation>
     </message>
@@ -2042,12 +2042,12 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
     </message>
     <message>
         <location filename="../../ui/widgets/disk_map.py" line="200"/>
-        <location filename="../../ui/widgets/partition_table.py" line="228"/>
+        <location filename="../../ui/widgets/partition_table.py" line="238"/>
         <source>Bolumlenmemis</source>
         <translation>Не размечено</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2974"/>
+        <location filename="../../ui/main_window.py" line="2995"/>
         <source>Bolumlenmemis alan
 {}
 Baslangic LBA   : {}
@@ -2115,12 +2115,12 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>Изменить размер раздела</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="619"/>
+        <location filename="../../ui/main_window.py" line="623"/>
         <source>Bolumu boyutlandir...</source>
         <translation>Изменить размер раздела...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="621"/>
+        <location filename="../../ui/main_window.py" line="625"/>
         <source>Bolumu fareyle surukleyerek kucult, buyut veya tasi</source>
         <translation>Перетаскивайте мышью, чтобы уменьшить, увеличить или переместить раздел</translation>
     </message>
@@ -2130,18 +2130,18 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>Безопасно стереть раздел</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="644"/>
+        <location filename="../../ui/main_window.py" line="648"/>
         <source>Bolumu guvenli sil...</source>
         <translation>Безопасно стереть раздел...</translation>
     </message>
     <message>
         <location filename="../../core/operations.py" line="79"/>
-        <location filename="../../ui/main_window.py" line="626"/>
+        <location filename="../../ui/main_window.py" line="630"/>
         <source>Bolumu sil</source>
         <translation>Удалить раздел</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="641"/>
+        <location filename="../../ui/main_window.py" line="645"/>
         <source>Bolumu yedekle...</source>
         <translation>Создать резервную копию раздела...</translation>
     </message>
@@ -2158,13 +2158,13 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
     <message>
         <location filename="../../core/ptable.py" line="22"/>
         <location filename="../../core/ptable.py" line="53"/>
-        <location filename="../../ui/main_window.py" line="3837"/>
-        <location filename="../../ui/widgets/partition_table.py" line="22"/>
+        <location filename="../../ui/main_window.py" line="3868"/>
+        <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Bos</source>
         <translation>Свободно</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="52"/>
+        <location filename="../../core/bootloader.py" line="54"/>
         <source>Bos (onyukleme kodu yok)</source>
         <translation>Пусто (нет загрузочного кода)</translation>
     </message>
@@ -2175,12 +2175,12 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
     </message>
     <message>
         <location filename="../../ui/widgets/disk_map.py" line="198"/>
-        <location filename="../../ui/widgets/partition_table.py" line="222"/>
+        <location filename="../../ui/widgets/partition_table.py" line="230"/>
         <source>Bos alan</source>
         <translation>Свободное место</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3316"/>
+        <location filename="../../ui/main_window.py" line="3347"/>
         <source>Bos alan ({})</source>
         <translation>Свободное место ({})</translation>
     </message>
@@ -2190,7 +2190,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>Заполнение свободного места... {} / {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1148"/>
+        <location filename="../../ui/main_window.py" line="1153"/>
         <source>Bos alan yok</source>
         <translation>Нет свободного места</translation>
     </message>
@@ -2215,7 +2215,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>Недостаточно свободных блоков: запрошено {}, найдено {}</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="259"/>
+        <location filename="../../core/ptable.py" line="265"/>
         <source>Bos boyut</source>
         <translation>Пустой размер</translation>
     </message>
@@ -2245,15 +2245,15 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3812"/>
+        <location filename="../../ui/main_window.py" line="3843"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
-        <location filename="../../ui/widgets/partition_table.py" line="22"/>
+        <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Boyut</source>
         <translation>Размер</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1091"/>
+        <location filename="../../ui/main_window.py" line="1096"/>
         <source>Boyut cozumlenemedi: {}</source>
         <translation>Не удалось разобрать размер: {}</translation>
     </message>
@@ -2264,7 +2264,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>Размер:</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="451"/>
+        <location filename="../../ui/widgets/disk_map.py" line="459"/>
         <source>Boyut: {}</source>
         <translation>Размер: {}</translation>
     </message>
@@ -2274,13 +2274,13 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>Изменить размер / переместить...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1232"/>
+        <location filename="../../ui/main_window.py" line="1237"/>
         <source>Boyutlandirilamaz</source>
         <translation>Размер изменить нельзя</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1241"/>
-        <location filename="../../ui/main_window.py" line="1341"/>
+        <location filename="../../ui/main_window.py" line="1246"/>
+        <location filename="../../ui/main_window.py" line="1346"/>
         <source>Boyutlandirma hazirlanamadi</source>
         <translation>Не удалось подготовить изменение размера</translation>
     </message>
@@ -2305,17 +2305,17 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>Эта редакция Windows ({}) не может создавать ReFS; нужна Enterprise, Pro для рабочих станций или Server</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2518"/>
+        <location filename="../../ui/main_window.py" line="2536"/>
         <source>Bu adimi kaldir</source>
         <translation>Удалить этот шаг</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2365"/>
+        <location filename="../../ui/main_window.py" line="2382"/>
         <source>Bu alan &lt;b&gt;{}&lt;/b&gt; ile cakisiyor. O bolum henuz diske yazilmadi ama bekleyen islemler arasinda ve bu alani tutuyor.&lt;br&gt;&lt;br&gt;Once bekleyen adimi kaldirin ya da baska bir alan secin.</source>
         <translation>Эта область перекрывает &lt;b&gt;{}&lt;/b&gt;. Этот раздел ещё не записан на диск, но он есть в списке отложенных операций и уже занимает это место.&lt;br&gt;&lt;br&gt;Удалите отложенный шаг или выберите другую область.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1233"/>
+        <location filename="../../ui/main_window.py" line="1238"/>
         <source>Bu bolum boyutlandirilamiyor.
 
 {}</source>
@@ -2324,7 +2324,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1242"/>
+        <location filename="../../ui/main_window.py" line="1247"/>
         <source>Bu bolum bu gorunumde duzenlenemez.</source>
         <translation>Этот раздел нельзя изменить в этом представлении.</translation>
     </message>
@@ -2344,7 +2344,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>Этот раздел недоступен для записи</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1939"/>
+        <location filename="../../ui/main_window.py" line="1956"/>
         <source>Bu bolumde silinmis dosya girisi bulunamadi.</source>
         <translation>На этом разделе не найдено записей удалённых файлов.</translation>
     </message>
@@ -2359,12 +2359,12 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>На этот раздел нельзя записывать.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2628"/>
+        <location filename="../../ui/main_window.py" line="2649"/>
         <source>Bu bolumler &lt;b&gt;hala bagli&lt;/b&gt;. Isletim sistemi onlari kullanirken ham sektorlere yazmak dosya sistemini &lt;b&gt;bozabilir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Once bu bolumleri cikarmaniz (unmount) onerilir.</source>
         <translation>Эти разделы &lt;b&gt;всё ещё подключены&lt;/b&gt;. Запись секторов напрямую, пока их использует операционная система, может &lt;b&gt;повредить&lt;/b&gt; файловую систему.&lt;br&gt;&lt;br&gt;Рекомендуется сначала отключить эти разделы.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1576"/>
+        <location filename="../../ui/main_window.py" line="1593"/>
         <source>Bu bolumler cikarilamadi:</source>
         <translation>Не удалось отключить эти разделы:</translation>
     </message>
@@ -2374,7 +2374,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>Эта функция btrfs (extent-tree-v2 / raid-stripe-tree) в этой версии не читается</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3736"/>
+        <location filename="../../ui/main_window.py" line="3767"/>
         <source>Bu diski kapat</source>
         <translation>Закрыть этот диск</translation>
     </message>
@@ -2385,17 +2385,17 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>На этом диске есть подключённые разделы: {} — перед записью рекомендуется их отключить.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2639"/>
+        <location filename="../../ui/main_window.py" line="2660"/>
         <source>Bu diskte bagli bolumler var:&lt;br&gt;&lt;b&gt;{}&lt;/b&gt;&lt;br&gt;&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>На этом диске есть подключённые разделы:&lt;br&gt;&lt;b&gt;{}&lt;/b&gt;&lt;br&gt;&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Продолжить?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1127"/>
+        <location filename="../../ui/main_window.py" line="1132"/>
         <source>Bu diskte bolum tablosu yok; dosya sistemi ({}) tum diski kapliyor. GPT olusturmak bu dosya sistemini siler. Devam edilsin mi?</source>
         <translation>На этом диске нет таблицы разделов; файловая система ({}) занимает весь диск. Создание GPT сотрёт эту файловую систему. Продолжить?</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="295"/>
+        <location filename="../../core/ptable.py" line="301"/>
         <source>Bu diskte bolum tablosu yok; dosya sistemi tum diski kapliyor. Bolum eklemek/silmek icin once bolum tablosu olusturun (icindeki dosya sistemi silinir).</source>
         <translation>На этом диске нет таблицы разделов; файловая система занимает весь диск. Чтобы добавлять или удалять разделы, сначала создайте таблицу разделов (файловая система на нём будет стёрта).</translation>
     </message>
@@ -2430,7 +2430,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>Эту файловую систему нельзя сделать меньше {} (данные будут потеряны)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1530"/>
+        <location filename="../../ui/main_window.py" line="1547"/>
         <source>Bu dosya sisteminde etiket degistirme desteklenmiyor.
 Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>Изменение метки в этой файловой системе не поддерживается.
@@ -2457,17 +2457,17 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>У этой записи нет восстановимых данных</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1135"/>
+        <location filename="../../ui/main_window.py" line="1140"/>
         <source>Bu goruntude bolum tablosu yok. Simdi GPT olusturulsun mu?</source>
         <translation>В этом образе нет таблицы разделов. Создать таблицу GPT сейчас?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3758"/>
+        <location filename="../../ui/main_window.py" line="3789"/>
         <source>Bu goruntuyu kapat</source>
         <translation>Закрыть этот образ</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1857"/>
+        <location filename="../../ui/main_window.py" line="1874"/>
         <source>Bu islem yalnizca NTFS bolumlerde kullanilabilir.</source>
         <translation>Эта операция доступна только для разделов NTFS.</translation>
     </message>
@@ -2482,7 +2482,7 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>Этот тип дескриптора размещения не поддерживается для записи: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3905"/>
+        <location filename="../../ui/main_window.py" line="3936"/>
         <source>Bu kaynak degistirilemez</source>
         <translation>Этот источник нельзя изменить</translation>
     </message>
@@ -2492,7 +2492,7 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>Этот компьютер загружен из этой записи</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2713"/>
+        <location filename="../../ui/main_window.py" line="2734"/>
         <source>Bu makinede kayitli donma raporu bulunamadi.
 
 Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
@@ -2559,7 +2559,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>Найденные файлы</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="676"/>
+        <location filename="../../ui/main_window.py" line="680"/>
         <source>Butun bekleyen adimlari iptal eder</source>
         <translation>Отменяет все отложенные шаги</translation>
     </message>
@@ -2569,12 +2569,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>Все разделы увеличиваются или уменьшаются пропорционально целевому диску</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="624"/>
+        <location filename="../../ui/main_window.py" line="628"/>
         <source>Butun bolumleri tek pencerede birlikte buyut, kucult ya da tasi</source>
         <translation>Увеличение, уменьшение или перемещение всех разделов сразу в одном окне</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="691"/>
+        <location filename="../../ui/main_window.py" line="695"/>
         <source>Butun is parcaciklarinin o anki yiginini dosyaya yazar</source>
         <translation>Записывает текущий стек всех потоков в файл</translation>
     </message>
@@ -2609,7 +2609,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>Выполняется...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2692"/>
+        <location filename="../../ui/main_window.py" line="2713"/>
         <source>Calisma suresi</source>
         <translation>Время работы</translation>
     </message>
@@ -2635,22 +2635,22 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>Съёмный</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1574"/>
+        <location filename="../../ui/main_window.py" line="1591"/>
         <source>Cikarilamayan bolum var:</source>
         <translation>Некоторые разделы не удалось отключить:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2054"/>
+        <location filename="../../ui/main_window.py" line="2071"/>
         <source>Cikariliyor: {}</source>
         <translation>Извлечение: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2047"/>
+        <location filename="../../ui/main_window.py" line="2064"/>
         <source>Cikarma hedefi</source>
         <translation>Папка для извлечения</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="611"/>
+        <location filename="../../ui/main_window.py" line="615"/>
         <source>Cikis</source>
         <translation>Выход</translation>
     </message>
@@ -2660,12 +2660,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>Контурные</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2686"/>
+        <location filename="../../ui/main_window.py" line="2707"/>
         <source>Cokme gunlugu</source>
         <translation>Журнал сбоев</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="476"/>
+        <location filename="../../ui/main_window.py" line="480"/>
         <source>D&amp;isk</source>
         <translation>&amp;Диск</translation>
     </message>
@@ -2675,37 +2675,37 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>БУДЕТ ИЗМЕНЁН</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3024"/>
+        <location filename="../../ui/main_window.py" line="3046"/>
         <source>DEGISTIRILEMEZ</source>
         <translation>НЕЛЬЗЯ ИЗМЕНИТЬ</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="908"/>
+        <location filename="../../ui/main_window.py" line="912"/>
         <source>DIKKAT: arayuz {:.1f} sn yanit vermedi — rapor: {}</source>
         <translation>ВНИМАНИЕ: интерфейс не отвечал {:.1f} с — отчёт: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1094"/>
+        <location filename="../../ui/main_window.py" line="1099"/>
         <source>DIKKAT: kucultme sondaki verileri siler (uygulama onayinda yeniden sorulur)</source>
         <translation>ВНИМАНИЕ: при уменьшении данные в конце стираются (при применении будет запрошено подтверждение)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3913"/>
+        <location filename="../../ui/main_window.py" line="3944"/>
         <source>DIKKAT: salt okunur acildi — {}</source>
         <translation>ВНИМАНИЕ: открыт только для чтения — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1105"/>
+        <location filename="../../ui/main_window.py" line="1110"/>
         <source>DIKKAT: yeni tablo mevcut {} bolumun tanimini siler</source>
         <translation>ВНИМАНИЕ: новая таблица сотрёт описание существующих разделов ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2596"/>
+        <location filename="../../ui/main_window.py" line="2614"/>
         <source>DIKKAT: {}</source>
         <translation>ВНИМАНИЕ: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3786"/>
+        <location filename="../../ui/main_window.py" line="3817"/>
         <source>DISK GORUNTUSU</source>
         <translation>ОБРАЗ ДИСКА</translation>
     </message>
@@ -2736,12 +2736,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>Изменения не вступят в силу, &lt;b&gt;пока не будут записаны&lt;/b&gt;.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3028"/>
+        <location filename="../../ui/main_window.py" line="3050"/>
         <source>Degisiklikler bekleyen islem olarak birikir; diske ancak Uygula ile yazilir.</source>
         <translation>Изменения собираются как отложенные операции; на диск они записываются только кнопкой «Применить».</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3947"/>
+        <location filename="../../ui/main_window.py" line="3978"/>
         <source>Degisiklikler bekliyor</source>
         <translation>Есть ожидающие изменения</translation>
     </message>
@@ -2766,7 +2766,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>Не удалось изменить</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3954"/>
+        <location filename="../../ui/main_window.py" line="3985"/>
         <source>Degistirilemez kaynak</source>
         <translation>Источник нельзя изменить</translation>
     </message>
@@ -2792,7 +2792,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>Результат проверки</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1981"/>
+        <location filename="../../ui/main_window.py" line="1998"/>
         <source>Derin tarama (64 KB adim) yapilsin mi?
 
 Hayir: hizli tarama (1 MB adim) — cogu durumda yeterlidir.
@@ -2818,9 +2818,9 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Неподдерживаемое сжатие HFS+ (тип {}): {} — LZVN/LZFSE в этой версии не открывается.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1484"/>
-        <location filename="../../ui/main_window.py" line="1529"/>
-        <location filename="../../ui/main_window.py" line="1606"/>
+        <location filename="../../ui/main_window.py" line="1501"/>
+        <location filename="../../ui/main_window.py" line="1546"/>
+        <location filename="../../ui/main_window.py" line="1623"/>
         <source>Desteklenmiyor</source>
         <translation>Не поддерживается</translation>
     </message>
@@ -2835,12 +2835,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Включение поиска других систем...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="542"/>
+        <location filename="../../ui/main_window.py" line="546"/>
         <source>Dil</source>
         <translation>Язык</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="829"/>
+        <location filename="../../ui/main_window.py" line="833"/>
         <source>Dil degistirildi: {}</source>
         <translation>Язык изменён: {}</translation>
     </message>
@@ -2892,18 +2892,18 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Диск слишком мал для GPT</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2117"/>
+        <location filename="../../ui/main_window.py" line="2134"/>
         <source>Disk acik degil</source>
         <translation>Нет открытого диска</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2897"/>
-        <location filename="../../ui/main_window.py" line="2900"/>
+        <location filename="../../ui/main_window.py" line="2918"/>
+        <location filename="../../ui/main_window.py" line="2921"/>
         <source>Disk acilamadi</source>
         <translation>Не удалось открыть диск</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2204"/>
+        <location filename="../../ui/main_window.py" line="2221"/>
         <source>Disk acilamadi (yetki): {}</source>
         <translation>Не удалось открыть диск (права доступа): {}</translation>
     </message>
@@ -2913,7 +2913,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Не удалось прочитать сведения о диске (нет прав) — является ли он системным, НЕИЗВЕСТНО</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="668"/>
+        <location filename="../../ui/main_window.py" line="672"/>
         <source>Disk bilgisi</source>
         <translation>Сведения о диске</translation>
     </message>
@@ -2943,7 +2943,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Диск аппаратно защищён от записи.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="960"/>
+        <location filename="../../ui/main_window.py" line="964"/>
         <source>Disk goruntuleri ({});;Ham goruntu (*.img *.raw *.dd *.bin);;Sanal diskler (*.vhd *.vhdx *.vdi *.vmdk *.qcow2);;Tum dosyalar (*)</source>
         <translation>Образы дисков ({});;Сырой образ (*.img *.raw *.dd *.bin);;Виртуальные диски (*.vhd *.vhdx *.vdi *.vmdk *.qcow2);;Все файлы (*)</translation>
     </message>
@@ -2958,7 +2958,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Образ диска (*.img *.raw *.dd);;Все файлы (*)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1825"/>
+        <location filename="../../ui/main_window.py" line="1842"/>
         <source>Disk goruntusu (*.img)</source>
         <translation>Образ диска (*.img)</translation>
     </message>
@@ -2968,14 +2968,14 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Образ диска (*.img);;Все файлы (*)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="959"/>
+        <location filename="../../ui/main_window.py" line="963"/>
         <source>Disk goruntusu ac</source>
         <translation>Открыть образ диска</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1062"/>
-        <location filename="../../ui/main_window.py" line="293"/>
-        <location filename="../../ui/main_window.py" line="855"/>
+        <location filename="../../ui/main_window.py" line="1067"/>
+        <location filename="../../ui/main_window.py" line="297"/>
+        <location filename="../../ui/main_window.py" line="859"/>
         <location filename="../../ui/widgets/disk_map.py" line="177"/>
         <source>Disk goruntusu acik degil</source>
         <translation>Нет открытого образа диска</translation>
@@ -2986,22 +2986,22 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Безопасно стереть диск</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1836"/>
+        <location filename="../../ui/main_window.py" line="1853"/>
         <source>Disk klonlandi: {}</source>
         <translation>Диск клонирован: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1808"/>
+        <location filename="../../ui/main_window.py" line="1825"/>
         <source>Disk klonlandi: {} -&gt; {} ({})</source>
         <translation>Диск клонирован: {} -&gt; {} ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1831"/>
+        <location filename="../../ui/main_window.py" line="1848"/>
         <source>Disk klonlaniyor</source>
         <translation>Клонирование диска</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1802"/>
+        <location filename="../../ui/main_window.py" line="1819"/>
         <source>Disk klonlaniyor — {}</source>
         <translation>Клонирование диска — {}</translation>
     </message>
@@ -3012,7 +3012,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Не удалось выполнить позиционирование на диске</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3156"/>
+        <location filename="../../ui/main_window.py" line="3178"/>
         <source>Disk listesi alinamadi: {}</source>
         <translation>Не удалось получить список дисков: {}</translation>
     </message>
@@ -3028,7 +3028,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Не удалось определить номер диска: {}</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="511"/>
+        <location filename="../../core/bootloader.py" line="643"/>
         <source>Disk okunamadi</source>
         <translation>Не удалось прочитать диск</translation>
     </message>
@@ -3038,7 +3038,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Диск открыт только для чтения</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="666"/>
+        <location filename="../../ui/main_window.py" line="670"/>
         <source>Disk salt okunur acilir. Degisiklikler bekleyen islem olarak birikir ve ancak Uygula ile diske yazilir.</source>
         <translation>Диск открыт только для чтения. Изменения собираются как отложенные операции и записываются на диск только кнопкой «Применить».</translation>
     </message>
@@ -3048,8 +3048,8 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Выбрать диск...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2801"/>
-        <location filename="../../ui/main_window.py" line="2875"/>
+        <location filename="../../ui/main_window.py" line="2822"/>
+        <location filename="../../ui/main_window.py" line="2896"/>
         <source>Disk secili degil</source>
         <translation>Диск не выбран</translation>
     </message>
@@ -3059,8 +3059,8 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Для резервной копии GPT в конце диска нужно {} свободного места; последний раздел заканчивается на LBA {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="174"/>
-        <location filename="../../ui/main_window.py" line="842"/>
+        <location filename="../../ui/main_window.py" line="178"/>
+        <location filename="../../ui/main_window.py" line="846"/>
         <source>Disk ve Bolumler</source>
         <translation>Диски и разделы</translation>
     </message>
@@ -3085,7 +3085,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Распределить пропорционально</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1025"/>
+        <location filename="../../ui/main_window.py" line="1029"/>
         <source>Diske yaz...</source>
         <translation>Записать на диск...</translation>
     </message>
@@ -3095,27 +3095,27 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Клонировать диск на другой диск</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="639"/>
+        <location filename="../../ui/main_window.py" line="643"/>
         <source>Diski geri yukle...</source>
         <translation>Восстановить диск...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="643"/>
+        <location filename="../../ui/main_window.py" line="647"/>
         <source>Diski guvenli sil...</source>
         <translation>Безопасно стереть диск...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1754"/>
+        <location filename="../../ui/main_window.py" line="1771"/>
         <source>Diski klonla</source>
         <translation>Клонировать диск</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="640"/>
+        <location filename="../../ui/main_window.py" line="644"/>
         <source>Diski klonla...</source>
         <translation>Клонировать диск...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="638"/>
+        <location filename="../../ui/main_window.py" line="642"/>
         <source>Diski yedekle...</source>
         <translation>Создать резервную копию диска...</translation>
     </message>
@@ -3125,7 +3125,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Свободное место в конце диска добавляется к последнему разделу</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2834"/>
+        <location filename="../../ui/main_window.py" line="2855"/>
         <source>Diskler varsayilan olarak SALT OKUNUR acilir.</source>
         <translation>По умолчанию диски открываются ТОЛЬКО ДЛЯ ЧТЕНИЯ.</translation>
     </message>
@@ -3140,7 +3140,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Недостаточно свободных кластеров на диске</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1578"/>
+        <location filename="../../ui/main_window.py" line="1595"/>
         <source>Diskteki baglantilar kesildi</source>
         <translation>Все разделы диска отключены</translation>
     </message>
@@ -3150,7 +3150,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Как на диске</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2426"/>
+        <location filename="../../ui/main_window.py" line="2444"/>
         <source>Diskteki hali goster</source>
         <translation>Показать разметку на диске</translation>
     </message>
@@ -3160,7 +3160,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Операционные системы на диске</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="651"/>
+        <location filename="../../ui/main_window.py" line="655"/>
         <source>Diskteki isletim sistemlerini ve onyukleme kodunu gosterir; GRUB kurulumunu yonetir.</source>
         <translation>Показывает операционные системы и загрузочный код на диске; управляет установкой GRUB.</translation>
     </message>
@@ -3279,22 +3279,22 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Проверка... {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2687"/>
+        <location filename="../../ui/main_window.py" line="2708"/>
         <source>Donma esigi</source>
         <translation>Порог зависания</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2712"/>
+        <location filename="../../ui/main_window.py" line="2733"/>
         <source>Donma raporu yok</source>
         <translation>Отчётов о зависании нет</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2720"/>
+        <location filename="../../ui/main_window.py" line="2741"/>
         <source>Donma raporu — {}</source>
         <translation>Отчёт о зависании — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1667"/>
+        <location filename="../../ui/main_window.py" line="1684"/>
         <source>Donusumde bolum verileri yerinde kalir; kesinti tabloyu bozabilir, onemli veriler icin once yedek alin</source>
         <translation>Во время преобразования данные разделов остаются на месте; прерывание может повредить таблицу, поэтому сначала создайте резервную копию важных данных</translation>
     </message>
@@ -3306,15 +3306,15 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Файл</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="270"/>
-        <location filename="../../ui/main_window.py" line="843"/>
+        <location filename="../../ui/main_window.py" line="274"/>
+        <location filename="../../ui/main_window.py" line="847"/>
         <source>Dosya Gezgini</source>
         <translation>Обзор файлов</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="326"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="74"/>
-        <location filename="../../ui/widgets/partition_table.py" line="21"/>
+        <location filename="../../ui/widgets/partition_table.py" line="22"/>
         <source>Dosya Sistemi</source>
         <translation>Файловая система</translation>
     </message>
@@ -3355,7 +3355,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Добавить файл...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3635"/>
+        <location filename="../../ui/main_window.py" line="3666"/>
         <source>Dosya gezgininde ac</source>
         <translation>Открыть в обзоре файлов</translation>
     </message>
@@ -3368,17 +3368,17 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../core/clone.py" line="79"/>
         <location filename="../../ui/dialogs/bootloader.py" line="76"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3809"/>
+        <location filename="../../ui/main_window.py" line="3840"/>
         <source>Dosya sistemi</source>
         <translation>Файловая система</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3071"/>
+        <location filename="../../ui/main_window.py" line="3093"/>
         <source>Dosya sistemi acilamadi</source>
         <translation>Не удалось открыть файловую систему</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2954"/>
+        <location filename="../../ui/main_window.py" line="2975"/>
         <source>Dosya sistemi acilamadi: {}</source>
         <translation>Не удалось открыть файловую систему: {}</translation>
     </message>
@@ -3408,7 +3408,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Уменьшение файловой системы...</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="254"/>
+        <location filename="../../core/bootloader.py" line="311"/>
         <source>Dosya sistemi okunamadi</source>
         <translation>Не удалось прочитать файловую систему</translation>
     </message>
@@ -3418,8 +3418,8 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Вычисление пределов файловой системы...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1337"/>
-        <location filename="../../ui/main_window.py" line="1350"/>
+        <location filename="../../ui/main_window.py" line="1342"/>
+        <location filename="../../ui/main_window.py" line="1355"/>
         <source>Dosya sistemi sinirlari okunuyor</source>
         <translation>Чтение пределов файловой системы</translation>
     </message>
@@ -3437,7 +3437,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Файловая система:</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="450"/>
+        <location filename="../../ui/widgets/disk_map.py" line="458"/>
         <source>Dosya sistemi: {}</source>
         <translation>Файловая система: {}</translation>
     </message>
@@ -3460,12 +3460,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Файл уже существует: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2063"/>
+        <location filename="../../ui/main_window.py" line="2080"/>
         <source>Dosyalar cikariliyor</source>
         <translation>Извлечение файлов</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1966"/>
+        <location filename="../../ui/main_window.py" line="1983"/>
         <source>Dosyalar kurtariliyor</source>
         <translation>Восстановление файлов</translation>
     </message>
@@ -3480,7 +3480,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../ui/dialogs/backup.py" line="419"/>
         <location filename="../../ui/dialogs/backup.py" line="637"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3832"/>
+        <location filename="../../ui/main_window.py" line="3863"/>
         <source>Durum</source>
         <translation>Состояние</translation>
     </message>
@@ -3490,7 +3490,8 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Системный раздел EFI (FAT)</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="284"/>
+        <location filename="../../core/bootloader.py" line="349"/>
+        <location filename="../../core/bootloader.py" line="448"/>
         <location filename="../../core/ptable.py" line="54"/>
         <source>EFI Sistem Bolumu</source>
         <translation>Системный раздел EFI</translation>
@@ -3499,6 +3500,11 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../ui/dialogs/bootloader.py" line="236"/>
         <source>EFI Sistem Bolumu:</source>
         <translation>Системный раздел EFI:</translation>
+    </message>
+    <message>
+        <location filename="../../core/bootloader.py" line="450"/>
+        <source>EFI: {}</source>
+        <translation>EFI: {}</translation>
     </message>
     <message>
         <location filename="../../core/physical.py" line="121"/>
@@ -3558,12 +3564,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Размер должен быть не менее 64 КБ.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2026"/>
+        <location filename="../../ui/main_window.py" line="2043"/>
         <source>En az bir dosya turu secin.</source>
         <translation>Выберите хотя бы один тип файлов.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2690"/>
+        <location filename="../../ui/main_window.py" line="2711"/>
         <source>En uzun donma</source>
         <translation>Самое долгое зависание</translation>
     </message>
@@ -3581,7 +3587,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../core/clone.py" line="80"/>
         <location filename="../../ui/dialogs/backup.py" line="326"/>
         <location filename="../../ui/dialogs/tools.py" line="183"/>
-        <location filename="../../ui/widgets/partition_table.py" line="21"/>
+        <location filename="../../ui/widgets/partition_table.py" line="22"/>
         <source>Etiket</source>
         <translation>Метка</translation>
     </message>
@@ -3593,7 +3599,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
     <message>
         <location filename="../../core/physical.py" line="127"/>
         <location filename="../../core/physical.py" line="128"/>
-        <location filename="../../ui/main_window.py" line="3818"/>
+        <location filename="../../ui/main_window.py" line="3849"/>
         <location filename="../../ui/qt_i18n.py" line="42"/>
         <source>Evet</source>
         <translation>Да</translation>
@@ -3649,7 +3655,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>FAT12</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2143"/>
+        <location filename="../../ui/main_window.py" line="2160"/>
         <source>FAT12/16/32 ve exFAT saf Python ile desteklenir ve her platformda calisir. NTFS ve ext2/3/4 bicimlendirmesi sistemdeki mkfs araclarini gerektirir.</source>
         <translation>FAT12/16/32 и exFAT реализованы на чистом Python и работают на любой платформе. Для форматирования в NTFS и ext2/3/4 в системе должны быть установлены средства mkfs.</translation>
     </message>
@@ -3699,7 +3705,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Нет сигнатуры FILE: запись {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2804"/>
+        <location filename="../../ui/main_window.py" line="2825"/>
         <source>FIZIKSEL DISK — {}</source>
         <translation>ФИЗИЧЕСКИЙ ДИСК — {}</translation>
     </message>
@@ -3714,13 +3720,13 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Сигнатура fixup не совпадает (запись повреждена)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3357"/>
+        <location filename="../../ui/main_window.py" line="3388"/>
         <source>Fiziksel Diskler ({})</source>
         <translation>Физические диски ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2902"/>
-        <location filename="../../ui/main_window.py" line="3268"/>
+        <location filename="../../ui/main_window.py" line="2923"/>
+        <location filename="../../ui/main_window.py" line="3290"/>
         <source>Fiziksel disk acildi (salt okunur): {} — {}, {}</source>
         <translation>Физический диск открыт (только для чтения): {} — {}, {}</translation>
     </message>
@@ -3730,7 +3736,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Физические диски не найдены</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="875"/>
+        <location filename="../../ui/main_window.py" line="879"/>
         <source>Fiziksel disk erisimi icin {} gerekir. Disk menusu &gt; &apos;{} olarak yeniden baslat&apos;</source>
         <translation>Для доступа к физическим дискам нужны {}. Меню «Диск» &gt; «Перезапустить как {}»</translation>
     </message>
@@ -3740,12 +3746,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Требуется физический диск</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3218"/>
+        <location filename="../../ui/main_window.py" line="3240"/>
         <source>Fiziksel disk listesi hazir: {} disk</source>
         <translation>Список физических дисков готов, дисков: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2783"/>
+        <location filename="../../ui/main_window.py" line="2804"/>
         <source>Fiziksel disk listesi taraniyor...</source>
         <translation>Сканирование списка физических дисков...</translation>
     </message>
@@ -3775,12 +3781,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Для безопасности физические диски открываются только для чтения. Изменения собираются как отложенные операции и записываются на диск только кнопкой «Применить».</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="662"/>
+        <location filename="../../ui/main_window.py" line="666"/>
         <source>Fiziksel disklere erisim icin uygulamayi yetkili olarak yeniden baslatir. Goruntu dosyalari icin gerekmez.</source>
         <translation>Перезапускает приложение с повышенными правами для доступа к физическим дискам. Для файлов образов не требуется.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="659"/>
+        <location filename="../../ui/main_window.py" line="663"/>
         <source>Fiziksel diskleri yenile</source>
         <translation>Обновить физические диски</translation>
     </message>
@@ -3791,7 +3797,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>FreeBSD</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="51"/>
+        <location filename="../../core/bootloader.py" line="53"/>
         <source>FreeBSD onyukleyicisi</source>
         <translation>Загрузчик FreeBSD</translation>
     </message>
@@ -3816,7 +3822,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Имя раздела GPT (необязательно)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="613"/>
+        <location filename="../../ui/main_window.py" line="617"/>
         <source>GPT bolum tablosu olustur</source>
         <translation>Создать таблицу разделов GPT</translation>
     </message>
@@ -3836,7 +3842,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>Массив записей GPT заполнен</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="46"/>
+        <location filename="../../core/bootloader.py" line="48"/>
         <source>GRUB 2</source>
         <translation>GRUB 2</translation>
     </message>
@@ -3846,7 +3852,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>GRUB будет установлен на диск &lt;b&gt;{}&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Первый сектор диска изменится. Продолжить?</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="47"/>
+        <location filename="../../core/bootloader.py" line="49"/>
         <source>GRUB Legacy</source>
         <translation>GRUB Legacy</translation>
     </message>
@@ -4045,7 +4051,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
     </message>
     <message>
         <location filename="../../ui/dialogs/new_image.py" line="163"/>
-        <location filename="../../ui/main_window.py" line="1091"/>
+        <location filename="../../ui/main_window.py" line="1096"/>
         <source>Gecersiz boyut</source>
         <translation>Недопустимый размер</translation>
     </message>
@@ -4134,12 +4140,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>XFS с подтомом реального времени (realtime) увеличить нельзя</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="673"/>
+        <location filename="../../ui/main_window.py" line="677"/>
         <source>Geri al</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2547"/>
+        <location filename="../../ui/main_window.py" line="2565"/>
         <source>Geri alindi: {}</source>
         <translation>Отменено: {}</translation>
     </message>
@@ -4248,23 +4254,23 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Образ</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="609"/>
+        <location filename="../../ui/main_window.py" line="613"/>
         <source>Goruntu ac...</source>
         <translation>Открыть образ...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="977"/>
+        <location filename="../../ui/main_window.py" line="981"/>
         <source>Goruntu acilamadi</source>
         <translation>Не удалось открыть образ</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="988"/>
+        <location filename="../../ui/main_window.py" line="992"/>
         <source>Goruntu acildi: {} — {}, {}, {}</source>
         <translation>Образ открыт: {} — {}, {}, {}</translation>
     </message>
     <message>
         <location filename="../../core/operations.py" line="87"/>
-        <location filename="../../ui/main_window.py" line="1082"/>
+        <location filename="../../ui/main_window.py" line="1087"/>
         <source>Goruntu boyutu</source>
         <translation>Размер образа</translation>
     </message>
@@ -4289,7 +4295,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Изменить размер образа</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="615"/>
+        <location filename="../../ui/main_window.py" line="619"/>
         <source>Goruntu boyutunu degistir...</source>
         <translation>Изменить размер образа...</translation>
     </message>
@@ -4300,22 +4306,22 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Файл образа</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="934"/>
+        <location filename="../../ui/main_window.py" line="938"/>
         <source>Goruntu dosyasi olusturuluyor...</source>
         <translation>Создание файла образа...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1756"/>
+        <location filename="../../ui/main_window.py" line="1773"/>
         <source>Goruntu dosyasina...</source>
         <translation>В файл образа...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="950"/>
+        <location filename="../../ui/main_window.py" line="954"/>
         <source>Goruntu olusturulamadi</source>
         <translation>Не удалось создать образ</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="953"/>
+        <location filename="../../ui/main_window.py" line="957"/>
         <source>Goruntu olusturuldu: {} ({})</source>
         <translation>Образ создан: {} ({})</translation>
     </message>
@@ -4330,10 +4336,10 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Образ открыт только для чтения</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1749"/>
-        <location filename="../../ui/main_window.py" line="1976"/>
-        <location filename="../../ui/main_window.py" line="2016"/>
-        <location filename="../../ui/main_window.py" line="3899"/>
+        <location filename="../../ui/main_window.py" line="1766"/>
+        <location filename="../../ui/main_window.py" line="1993"/>
+        <location filename="../../ui/main_window.py" line="2033"/>
+        <location filename="../../ui/main_window.py" line="3930"/>
         <source>Goruntu yok</source>
         <translation>Нет образа</translation>
     </message>
@@ -4348,7 +4354,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Недостаточно свободного места там, где хранится образ: для перемещения нужно {} нового места, свободно {}. Ничего не записано.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="610"/>
+        <location filename="../../ui/main_window.py" line="614"/>
         <source>Goruntuyu kapat</source>
         <translation>Закрыть образ</translation>
     </message>
@@ -4403,12 +4409,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Файл журнала</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2705"/>
+        <location filename="../../ui/main_window.py" line="2726"/>
         <source>Gunluk klasoru</source>
         <translation>Папка журналов</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="687"/>
+        <location filename="../../ui/main_window.py" line="691"/>
         <source>Gunluk klasorunu ac</source>
         <translation>Открыть папку журналов</translation>
     </message>
@@ -4423,7 +4429,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Не удалось выделить журнал одним фрагментом</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="686"/>
+        <location filename="../../ui/main_window.py" line="690"/>
         <source>Gunluk yolu, donma sayisi ve o an calisan islemler</source>
         <translation>Путь к журналу, число зависаний и выполняемые сейчас операции</translation>
     </message>
@@ -4443,7 +4449,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Запись дескрипторов безопасности ($Secure)...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="914"/>
+        <location filename="../../ui/main_window.py" line="918"/>
         <source>HATA — {}: {}</source>
         <translation>ОШИБКА — {}: {}</translation>
     </message>
@@ -4509,7 +4515,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Подготовка структуры HFS+...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="692"/>
+        <location filename="../../ui/main_window.py" line="696"/>
         <source>Hakkinda</source>
         <translation>О программе</translation>
     </message>
@@ -4537,7 +4543,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <location filename="../../core/physical.py" line="127"/>
         <location filename="../../core/physical.py" line="128"/>
         <location filename="../../core/physical.py" line="130"/>
-        <location filename="../../ui/main_window.py" line="3818"/>
+        <location filename="../../ui/main_window.py" line="3849"/>
         <location filename="../../ui/qt_i18n.py" line="44"/>
         <source>Hayir</source>
         <translation>Нет</translation>
@@ -4561,8 +4567,8 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <location filename="../../ui/dialogs/apply.py" line="121"/>
         <location filename="../../ui/dialogs/backup.py" line="419"/>
         <location filename="../../ui/dialogs/backup.py" line="637"/>
-        <location filename="../../ui/main_window.py" line="184"/>
-        <location filename="../../ui/main_window.py" line="2493"/>
+        <location filename="../../ui/main_window.py" line="188"/>
+        <location filename="../../ui/main_window.py" line="2511"/>
         <source>Hedef</source>
         <translation>Цель</translation>
     </message>
@@ -4614,7 +4620,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
     </message>
     <message>
         <location filename="../../core/grub.py" line="476"/>
-        <location filename="../../ui/main_window.py" line="1780"/>
+        <location filename="../../ui/main_window.py" line="1797"/>
         <source>Hedef disk yok</source>
         <translation>Нет целевого диска</translation>
     </message>
@@ -4701,17 +4707,17 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Ничего ещё не выполнялось; диск не затронут.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1678"/>
+        <location filename="../../ui/main_window.py" line="1695"/>
         <source>Hizalama</source>
         <translation>Выравнивание</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1688"/>
+        <location filename="../../ui/main_window.py" line="1705"/>
         <source>Hizalama Denetimi</source>
         <translation>Проверка выравнивания</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="637"/>
+        <location filename="../../ui/main_window.py" line="641"/>
         <source>Hizalama denetimi (4K)</source>
         <translation>Проверка выравнивания (4K)</translation>
     </message>
@@ -4793,12 +4799,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Двоичный файл</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="545"/>
+        <location filename="../../ui/main_window.py" line="549"/>
         <source>Ikon seti</source>
         <translation>Набор значков</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="786"/>
+        <location filename="../../ui/main_window.py" line="790"/>
         <source>Ikon seti degistirildi: {}</source>
         <translation>Набор значков изменён: {}</translation>
     </message>
@@ -4823,17 +4829,17 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Восстановление файлов по сигнатурам</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="658"/>
+        <location filename="../../ui/main_window.py" line="662"/>
         <source>Imza tabanli dosya kurtarma...</source>
         <translation>Восстановление файлов по сигнатурам...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2030"/>
+        <location filename="../../ui/main_window.py" line="2047"/>
         <source>Imza taramasi</source>
         <translation>Поиск по сигнатурам</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2040"/>
+        <location filename="../../ui/main_window.py" line="2057"/>
         <source>Imza taramasi ({}): {} dosya bulundu</source>
         <translation>Поиск по сигнатурам ({}): найдено файлов: {}</translation>
     </message>
@@ -4886,8 +4892,8 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="285"/>
-        <location filename="../../ui/main_window.py" line="846"/>
+        <location filename="../../ui/main_window.py" line="289"/>
+        <location filename="../../ui/main_window.py" line="850"/>
         <source>Islem Gunlugu</source>
         <translation>Журнал операций</translation>
     </message>
@@ -4898,8 +4904,8 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Ошибка операции</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1640"/>
-        <location filename="../../ui/main_window.py" line="1645"/>
+        <location filename="../../ui/main_window.py" line="1657"/>
+        <location filename="../../ui/main_window.py" line="1662"/>
         <source>Islem basarisiz.</source>
         <translation>Операция завершилась с ошибкой.</translation>
     </message>
@@ -4941,33 +4947,41 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
     </message>
     <message>
         <location filename="../../ui/dialogs/bootloader.py" line="92"/>
-        <location filename="../../ui/main_window.py" line="566"/>
-        <location filename="../../ui/main_window.py" line="841"/>
+        <location filename="../../ui/main_window.py" line="570"/>
+        <location filename="../../ui/main_window.py" line="845"/>
         <source>Islemler</source>
         <translation>Операции</translation>
     </message>
     <message>
         <location filename="../../core/physical.py" line="132"/>
         <location filename="../../ui/dialogs/bootloader.py" line="75"/>
+        <location filename="../../ui/widgets/partition_table.py" line="21"/>
         <source>Isletim sistemi</source>
         <translation>Операционная система</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="513"/>
+        <location filename="../../core/bootloader.py" line="645"/>
         <source>Isletim sistemi bulunamadi</source>
         <translation>Операционная система не найдена</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="286"/>
-        <location filename="../../core/bootloader.py" line="289"/>
+        <location filename="../../core/bootloader.py" line="351"/>
+        <location filename="../../core/bootloader.py" line="354"/>
         <source>Isletim sistemi kurulamayan bir dosya sistemi</source>
         <translation>Файловая система, на которую нельзя установить ОС</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="267"/>
-        <location filename="../../core/bootloader.py" line="279"/>
+        <location filename="../../core/bootloader.py" line="324"/>
+        <location filename="../../core/bootloader.py" line="336"/>
+        <location filename="../../core/bootloader.py" line="344"/>
         <source>Isletim sistemi kurulu degil (veri bolumu)</source>
         <translation>Операционная система не установлена (раздел данных)</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3341"/>
+        <location filename="../../ui/widgets/disk_map.py" line="456"/>
+        <source>Isletim sistemi: {}</source>
+        <translation>Операционная система: {}</translation>
     </message>
     <message>
         <location filename="../../core/recovery.py" line="462"/>
@@ -5008,7 +5022,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Закрыть</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1040"/>
+        <location filename="../../ui/main_window.py" line="1044"/>
         <source>Kapatildi: {}</source>
         <translation>Закрыто: {}</translation>
     </message>
@@ -5038,17 +5052,17 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>Результаты поиска потерянных разделов</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1996"/>
+        <location filename="../../ui/main_window.py" line="2013"/>
         <source>Kayip bolum taramasi: {} aday bulundu</source>
         <translation>Поиск потерянных разделов: найдено кандидатов: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1986"/>
+        <location filename="../../ui/main_window.py" line="2003"/>
         <source>Kayip bolumler taraniyor</source>
         <translation>Поиск потерянных разделов</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="657"/>
+        <location filename="../../ui/main_window.py" line="661"/>
         <source>Kayip bolumleri tara...</source>
         <translation>Поиск потерянных разделов...</translation>
     </message>
@@ -5164,7 +5178,7 @@ Konum: {}</source>
         <translation>Источник только читается; ничего не записывается, кроме файла резервной копии.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1715"/>
+        <location filename="../../ui/main_window.py" line="1732"/>
         <source>Kaynak yok</source>
         <translation>Нет источника</translation>
     </message>
@@ -5328,18 +5342,18 @@ Konum: {}</source>
         <translation>Папки</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1814"/>
-        <location filename="../../ui/main_window.py" line="1838"/>
+        <location filename="../../ui/main_window.py" line="1831"/>
+        <location filename="../../ui/main_window.py" line="1855"/>
         <source>Klon hazir</source>
         <translation>Клон готов</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1822"/>
+        <location filename="../../ui/main_window.py" line="1839"/>
         <source>Klon hedefi</source>
         <translation>Цель клонирования</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1838"/>
+        <location filename="../../ui/main_window.py" line="1855"/>
         <source>Klon olusturuldu:
 {}
 
@@ -5355,8 +5369,8 @@ Simdi acilsin mi?</source>
         <translation>Клонировать</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1805"/>
-        <location filename="../../ui/main_window.py" line="1834"/>
+        <location filename="../../ui/main_window.py" line="1822"/>
+        <location filename="../../ui/main_window.py" line="1851"/>
         <source>Klonlama basarisiz</source>
         <translation>Ошибка клонирования</translation>
     </message>
@@ -5399,12 +5413,12 @@ Simdi acilsin mi?</source>
         <translation>С корневым каталогом нельзя выполнить эту операцию</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="274"/>
+        <location filename="../../core/bootloader.py" line="331"/>
         <source>Kok dosya sistemi degil ({} yok)</source>
         <translation>Не корневая файловая система (нет {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3821"/>
+        <location filename="../../ui/main_window.py" line="3852"/>
         <source>Konum</source>
         <translation>Расположение</translation>
     </message>
@@ -5459,8 +5473,8 @@ Simdi acilsin mi?</source>
         <translation>Недоступно</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3835"/>
-        <location filename="../../ui/widgets/partition_table.py" line="22"/>
+        <location filename="../../ui/main_window.py" line="3866"/>
+        <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Kullanilan</source>
         <translation>Занято</translation>
     </message>
@@ -5470,7 +5484,7 @@ Simdi acilsin mi?</source>
         <translation>Сканирование используемых inode...</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="454"/>
+        <location filename="../../ui/widgets/disk_map.py" line="462"/>
         <source>Kullanilan: {} / {}</source>
         <translation>Занято: {} / {}</translation>
     </message>
@@ -5500,7 +5514,7 @@ Simdi acilsin mi?</source>
         <translation>Анализ карты кластеров...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3828"/>
+        <location filename="../../ui/main_window.py" line="3859"/>
         <source>Kume/blok boyutu</source>
         <translation>Размер кластера/блока</translation>
     </message>
@@ -5510,12 +5524,12 @@ Simdi acilsin mi?</source>
         <translation>Восстановимость</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1956"/>
+        <location filename="../../ui/main_window.py" line="1973"/>
         <source>Kurtariliyor: {}</source>
         <translation>Восстановление: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1968"/>
+        <location filename="../../ui/main_window.py" line="1985"/>
         <source>Kurtarma basarisiz</source>
         <translation>Ошибка восстановления</translation>
     </message>
@@ -5525,12 +5539,12 @@ Simdi acilsin mi?</source>
         <translation>Восстановление не поддерживается</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1949"/>
+        <location filename="../../ui/main_window.py" line="1966"/>
         <source>Kurtarma hedefi</source>
         <translation>Папка для восстановления</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1971"/>
+        <location filename="../../ui/main_window.py" line="1988"/>
         <source>Kurtarma tamamlandi</source>
         <translation>Восстановление завершено</translation>
     </message>
@@ -5545,13 +5559,13 @@ Simdi acilsin mi?</source>
         <translation>Добавить в очередь</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1420"/>
-        <location filename="../../ui/main_window.py" line="2462"/>
+        <location filename="../../ui/main_window.py" line="1437"/>
+        <location filename="../../ui/main_window.py" line="2480"/>
         <source>Kuyruga eklendi: {}</source>
         <translation>Добавлено в очередь: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2533"/>
+        <location filename="../../ui/main_window.py" line="2551"/>
         <source>Kuyruktan cikarildi: {}</source>
         <translation>Удалено из очереди: {}</translation>
     </message>
@@ -5567,18 +5581,18 @@ Simdi acilsin mi?</source>
         <translation>LBA {} - {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1686"/>
+        <location filename="../../ui/main_window.py" line="1703"/>
         <source>LBA {} — {}</source>
         <translation>LBA {} — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="452"/>
-        <location filename="../../ui/widgets/disk_map.py" line="459"/>
+        <location filename="../../ui/widgets/disk_map.py" line="460"/>
+        <location filename="../../ui/widgets/disk_map.py" line="467"/>
         <source>LBA: {} - {}</source>
         <translation>LBA: {} - {}</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="50"/>
+        <location filename="../../core/bootloader.py" line="52"/>
         <source>LILO</source>
         <translation>LILO</translation>
     </message>
@@ -5609,7 +5623,7 @@ Simdi acilsin mi?</source>
         <translation>LZO: неожиданный конец входных данных</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="233"/>
+        <location filename="../../core/bootloader.py" line="235"/>
         <location filename="../../core/ptable.py" line="39"/>
         <source>Linux</source>
         <translation>Linux</translation>
@@ -5654,7 +5668,7 @@ Simdi acilsin mi?</source>
         <translation>Linux отказывается подключать том NTFS в таком состоянии (ntfs3: «грязный» том, ntfs-3g: метаданные остались в кэше Windows).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1781"/>
+        <location filename="../../ui/main_window.py" line="1798"/>
         <source>Listede fiziksel disk yok. Diskleri yenileyin; Linux&apos;ta ve Windows&apos;ta disk listesi yonetici yetkisi ister.</source>
         <translation>В списке нет физических дисков. Обновите список дисков; в Linux и Windows для получения списка дисков нужны права администратора.</translation>
     </message>
@@ -5669,7 +5683,7 @@ Simdi acilsin mi?</source>
         <translation>MBR превышает предел 2 ТиБ; используйте GPT</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="612"/>
+        <location filename="../../ui/main_window.py" line="616"/>
         <source>MBR bolum tablosu olustur</source>
         <translation>Создать таблицу разделов MBR</translation>
     </message>
@@ -5685,7 +5699,7 @@ Simdi acilsin mi?</source>
         <translation>MBR вмещает не более 4 основных разделов, а в таблице их {}. Сначала уменьшите число разделов.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1177"/>
+        <location filename="../../ui/main_window.py" line="1182"/>
         <source>MBR tablosunda 4 birincil bolum dolu.
 Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</source>
         <translation>Все 4 основных раздела таблицы MBR заняты.
@@ -5748,12 +5762,12 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>Компьютер загружен в режиме BIOS (legacy); загрузочных переменных UEFI нет.</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/partition_table.py" line="217"/>
+        <location filename="../../ui/widgets/partition_table.py" line="225"/>
         <source>Mantiksal</source>
         <translation>Логический</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3822"/>
+        <location filename="../../ui/main_window.py" line="3853"/>
         <source>Mantiksal (EBR: LBA {})</source>
         <translation>Логический (EBR: LBA {})</translation>
     </message>
@@ -5839,7 +5853,7 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>Существующие разделы будут потеряны</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1083"/>
+        <location filename="../../ui/main_window.py" line="1088"/>
         <source>Mevcut boyut: {}
 
 Yeni boyut (orn. 4 GB, 512 MB):</source>
@@ -5878,17 +5892,17 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Проверка тома NTFS...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1856"/>
+        <location filename="../../ui/main_window.py" line="1873"/>
         <source>NTFS degil</source>
         <translation>Не NTFS</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1874"/>
+        <location filename="../../ui/main_window.py" line="1891"/>
         <source>NTFS denetlenemedi</source>
         <translation>Не удалось проверить NTFS</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1870"/>
+        <location filename="../../ui/main_window.py" line="1887"/>
         <source>NTFS denetleniyor — Bolum {}</source>
         <translation>Проверка NTFS — раздел {}</translation>
     </message>
@@ -5935,7 +5949,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Проверка и исправление NTFS</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="645"/>
+        <location filename="../../ui/main_window.py" line="649"/>
         <source>NTFS&apos;i denetle ve onar...</source>
         <translation>Проверить и исправить NTFS...</translation>
     </message>
@@ -5967,7 +5981,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Обычное</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="873"/>
+        <location filename="../../ui/main_window.py" line="877"/>
         <source>Normal kullanici</source>
         <translation>Обычный пользователь</translation>
     </message>
@@ -6071,8 +6085,8 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Hex</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="280"/>
-        <location filename="../../ui/main_window.py" line="845"/>
+        <location filename="../../ui/main_window.py" line="284"/>
+        <location filename="../../ui/main_window.py" line="849"/>
         <source>Onaltilik Goruntuleyici</source>
         <translation>Шестнадцатеричный просмотр</translation>
     </message>
@@ -6112,7 +6126,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Исправление завершено</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1673"/>
+        <location filename="../../ui/main_window.py" line="1690"/>
         <source>Once bir bolum tablosu acin.</source>
         <translation>Сначала откройте таблицу разделов.</translation>
     </message>
@@ -6127,14 +6141,14 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Сначала создайте таблицу разделов (MBR или GPT)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3900"/>
+        <location filename="../../ui/main_window.py" line="3931"/>
         <source>Once bir disk goruntusu acin veya olusturun.</source>
         <translation>Сначала откройте или создайте образ диска.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1749"/>
-        <location filename="../../ui/main_window.py" line="1976"/>
-        <location filename="../../ui/main_window.py" line="2016"/>
+        <location filename="../../ui/main_window.py" line="1766"/>
+        <location filename="../../ui/main_window.py" line="1993"/>
+        <location filename="../../ui/main_window.py" line="2033"/>
         <source>Once bir goruntu acin.</source>
         <translation>Сначала откройте образ.</translation>
     </message>
@@ -6144,7 +6158,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Сначала выберите источник.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3882"/>
+        <location filename="../../ui/main_window.py" line="3913"/>
         <source>Once listeden veya haritadan bir bolum secin.</source>
         <translation>Сначала выберите раздел в списке или на карте.</translation>
     </message>
@@ -6175,7 +6189,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Свободно перед:</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/partition_table.py" line="215"/>
+        <location filename="../../ui/widgets/partition_table.py" line="223"/>
         <source>Onyukleme</source>
         <translation>Загрузочный</translation>
     </message>
@@ -6185,12 +6199,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Флаг загрузки</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="89"/>
+        <location filename="../../ui/main_window.py" line="90"/>
         <source>Onyukleme bayragini kaldir</source>
         <translation>Снять флаг загрузки</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="88"/>
+        <location filename="../../ui/main_window.py" line="89"/>
         <source>Onyukleme bayragini koy</source>
         <translation>Установить флаг загрузки</translation>
     </message>
@@ -6206,7 +6220,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Анализ состояния загрузки</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2118"/>
+        <location filename="../../ui/main_window.py" line="2135"/>
         <source>Onyukleme durumunu incelemek icin once bir disk ya da goruntu acin.</source>
         <translation>Чтобы проверить состояние загрузки, сначала откройте диск или образ.</translation>
     </message>
@@ -6334,7 +6348,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Загрузочный сектор восстановлен из резервной копии</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3818"/>
+        <location filename="../../ui/main_window.py" line="3849"/>
         <source>Onyuklenebilir</source>
         <translation>Загрузочный</translation>
     </message>
@@ -6349,12 +6363,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Диспетчер загрузчиков</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="649"/>
+        <location filename="../../ui/main_window.py" line="653"/>
         <source>Onyukleyici yoneticisi...</source>
         <translation>Диспетчер загрузчиков...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2685"/>
+        <location filename="../../ui/main_window.py" line="2706"/>
         <source>Oturum gunlugu</source>
         <translation>Журнал сеанса</translation>
     </message>
@@ -6376,7 +6390,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Атрибут не найден в записи</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3826"/>
+        <location filename="../../ui/main_window.py" line="3857"/>
         <source>Oznitelikler</source>
         <translation>Атрибуты</translation>
     </message>
@@ -6413,7 +6427,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>План</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2431"/>
+        <location filename="../../ui/main_window.py" line="2449"/>
         <source>Planlanani goster</source>
         <translation>Показать планируемую разметку</translation>
     </message>
@@ -6443,7 +6457,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Сигнатура QCOW2 не найдена</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2138"/>
+        <location filename="../../ui/main_window.py" line="2155"/>
         <source>Qt platformu</source>
         <translation>Платформа Qt</translation>
     </message>
@@ -6485,7 +6499,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>СИСТЕМНЫЙ ДИСК</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2821"/>
+        <location filename="../../ui/main_window.py" line="2842"/>
         <source>SISTEMDEKI DISKLER</source>
         <translation>ДИСКИ ЭТОЙ СИСТЕМЫ</translation>
     </message>
@@ -6495,7 +6509,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>База данных SQLite</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="49"/>
+        <location filename="../../core/bootloader.py" line="51"/>
         <source>SYSLINUX / ISOLINUX</source>
         <translation>SYSLINUX / ISOLINUX</translation>
     </message>
@@ -6515,13 +6529,13 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Запись фиксированных таблиц ($UpCase, $AttrDef)...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3925"/>
-        <location filename="../../ui/main_window.py" line="3934"/>
+        <location filename="../../ui/main_window.py" line="3956"/>
+        <location filename="../../ui/main_window.py" line="3965"/>
         <source>Salt okunur acildi</source>
         <translation>Открыт только для чтения</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3928"/>
+        <location filename="../../ui/main_window.py" line="3959"/>
         <source>Salt okunur devam et</source>
         <translation>Продолжить только для чтения</translation>
     </message>
@@ -6531,17 +6545,17 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Только для чтения — изменения записываются кнопкой «Применить»</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2105"/>
+        <location filename="../../ui/main_window.py" line="2122"/>
         <source>Sanal disk olusturulamadi</source>
         <translation>Не удалось создать виртуальный диск</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2103"/>
+        <location filename="../../ui/main_window.py" line="2120"/>
         <source>Sanal disk olusturuluyor</source>
         <translation>Создание виртуального диска</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2085"/>
+        <location filename="../../ui/main_window.py" line="2102"/>
         <source>Sanal disk olusturuluyor...</source>
         <translation>Создание виртуального диска...</translation>
     </message>
@@ -6561,7 +6575,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Параметры</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2038"/>
+        <location filename="../../ui/main_window.py" line="2055"/>
         <source>Secilen turlerde dosya imzasi bulunamadi.</source>
         <translation>Сигнатуры файлов выбранных типов не найдены.</translation>
     </message>
@@ -6576,7 +6590,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Восстановить выбранное...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="664"/>
+        <location filename="../../ui/main_window.py" line="668"/>
         <source>Secili diski ac</source>
         <translation>Открыть выбранный диск</translation>
     </message>
@@ -6586,27 +6600,27 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Выбранная запись</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2937"/>
+        <location filename="../../ui/main_window.py" line="2958"/>
         <source>Secili: Bolum {} — {} ({})</source>
         <translation>Выбрано: раздел {} — {} ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2946"/>
+        <location filename="../../ui/main_window.py" line="2967"/>
         <source>Secili: Bolum {} — {} ({}) — planlanan, henuz olusturulmadi</source>
         <translation>Выбрано: раздел {} — {} ({}) — запланирован, ещё не создан</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2972"/>
+        <location filename="../../ui/main_window.py" line="2993"/>
         <source>Secili: Bos alan — {}</source>
         <translation>Выбрано: свободное место — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2816"/>
+        <location filename="../../ui/main_window.py" line="2837"/>
         <source>Secili: {} ({})</source>
         <translation>Выбрано: {} ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2026"/>
+        <location filename="../../ui/main_window.py" line="2043"/>
         <source>Secim yok</source>
         <translation>Ничего не выбрано</translation>
     </message>
@@ -6637,7 +6651,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Запись, не выровненная по границе сектора</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3807"/>
+        <location filename="../../ui/main_window.py" line="3838"/>
         <source>Sema</source>
         <translation>Схема</translation>
     </message>
@@ -6772,12 +6786,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Удалённые файлы</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1932"/>
+        <location filename="../../ui/main_window.py" line="1949"/>
         <source>Silinmis dosyalar taraniyor</source>
         <translation>Поиск удалённых файлов</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="656"/>
+        <location filename="../../ui/main_window.py" line="660"/>
         <source>Silinmis dosyalari tara...</source>
         <translation>Поиск удалённых файлов...</translation>
     </message>
@@ -6808,12 +6822,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Метод стирания:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="689"/>
+        <location filename="../../ui/main_window.py" line="693"/>
         <source>Simdi yigin dokumu al</source>
         <translation>Сделать дамп стека сейчас</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1026"/>
+        <location filename="../../ui/main_window.py" line="1030"/>
         <source>Simdilik gez</source>
         <translation>Пока только просмотреть</translation>
     </message>
@@ -6854,12 +6868,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Сист.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2142"/>
+        <location filename="../../ui/main_window.py" line="2159"/>
         <source>Sistem Bilgisi</source>
         <translation>Сведения о системе</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="683"/>
+        <location filename="../../ui/main_window.py" line="687"/>
         <source>Sistem bilgisi</source>
         <translation>Сведения о системе</translation>
     </message>
@@ -6869,17 +6883,17 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Системный диск</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2891"/>
+        <location filename="../../ui/main_window.py" line="2912"/>
         <source>Sistem diski korumasi</source>
         <translation>Защита системного диска</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2610"/>
+        <location filename="../../ui/main_window.py" line="2631"/>
         <source>Sistem diski onayi</source>
         <translation>Подтверждение для системного диска</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2616"/>
+        <location filename="../../ui/main_window.py" line="2637"/>
         <source>Sistem diski onayi verilmedi, uygulama iptal</source>
         <translation>Подтверждение для системного диска не получено, применение отменено</translation>
     </message>
@@ -6915,12 +6929,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Расширить последний раздел</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="688"/>
+        <location filename="../../ui/main_window.py" line="692"/>
         <source>Son donma raporunu goster...</source>
         <translation>Показать последний отчёт о зависании...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="674"/>
+        <location filename="../../ui/main_window.py" line="678"/>
         <source>Son eklenen bekleyen adimi kaldirir</source>
         <translation>Удаляет последний добавленный отложенный шаг</translation>
     </message>
@@ -6931,7 +6945,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Последняя группа слишком мала для своих метаданных</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2691"/>
+        <location filename="../../ui/main_window.py" line="2712"/>
         <source>Son rapor</source>
         <translation>Последний отчёт</translation>
     </message>
@@ -6967,9 +6981,9 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Проверка результата...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1938"/>
-        <location filename="../../ui/main_window.py" line="1993"/>
-        <location filename="../../ui/main_window.py" line="2037"/>
+        <location filename="../../ui/main_window.py" line="1955"/>
+        <location filename="../../ui/main_window.py" line="2010"/>
+        <location filename="../../ui/main_window.py" line="2054"/>
         <source>Sonuc yok</source>
         <translation>Нет результатов</translation>
     </message>
@@ -6984,7 +6998,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Текущая загрузка</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2693"/>
+        <location filename="../../ui/main_window.py" line="2714"/>
         <source>Su an calisan</source>
         <translation>Выполняется сейчас</translation>
     </message>
@@ -7057,12 +7071,12 @@ Devam edilsin mi?</source>
         <translation>Таблица уже имеет формат {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1678"/>
+        <location filename="../../ui/main_window.py" line="1695"/>
         <source>Tabloda bolum yok.</source>
         <translation>В таблице нет разделов.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1126"/>
+        <location filename="../../ui/main_window.py" line="1131"/>
         <source>Tablosuz disk</source>
         <translation>Диск без таблицы разделов</translation>
     </message>
@@ -7093,7 +7107,7 @@ Devam edilsin mi?</source>
         <translation>ОК</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="574"/>
+        <location filename="../../core/bootloader.py" line="706"/>
         <location filename="../../core/clone.py" line="168"/>
         <location filename="../../core/clone.py" line="387"/>
         <location filename="../../core/clone.py" line="421"/>
@@ -7119,7 +7133,7 @@ Devam edilsin mi?</source>
         <location filename="../../core/xfsformat.py" line="325"/>
         <location filename="../../core/xfsgrow.py" line="398"/>
         <location filename="../../ui/dialogs/apply.py" line="226"/>
-        <location filename="../../ui/main_window.py" line="2066"/>
+        <location filename="../../ui/main_window.py" line="2083"/>
         <source>Tamamlandi</source>
         <translation>Готово</translation>
     </message>
@@ -7139,40 +7153,40 @@ Devam edilsin mi?</source>
         <translation>Завершение...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2695"/>
-        <location filename="../../ui/main_window.py" line="551"/>
+        <location filename="../../ui/main_window.py" line="2716"/>
+        <location filename="../../ui/main_window.py" line="555"/>
         <source>Tanilama</source>
         <translation>Диагностика</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2680"/>
+        <location filename="../../ui/main_window.py" line="2701"/>
         <source>Tanilama DISKULTIMATE_DIAG=0 ile kapatilmis.</source>
         <translation>Диагностика отключается переменной DISKULTIMATE_DIAG=0.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="684"/>
+        <location filename="../../ui/main_window.py" line="688"/>
         <source>Tanilama durumu...</source>
         <translation>Состояние диагностики...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="141"/>
+        <location filename="../../ui/main_window.py" line="145"/>
         <source>Tanilama gunlugu: {}</source>
         <translation>Журнал диагностики: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2679"/>
+        <location filename="../../ui/main_window.py" line="2700"/>
         <source>Tanilama kapali</source>
         <translation>Диагностика отключена</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="53"/>
+        <location filename="../../core/bootloader.py" line="55"/>
         <source>Taninmayan onyukleme kodu</source>
         <translation>Нераспознанный загрузочный код</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1935"/>
-        <location filename="../../ui/main_window.py" line="1989"/>
-        <location filename="../../ui/main_window.py" line="2034"/>
+        <location filename="../../ui/main_window.py" line="1952"/>
+        <location filename="../../ui/main_window.py" line="2006"/>
+        <location filename="../../ui/main_window.py" line="2051"/>
         <source>Tarama basarisiz</source>
         <translation>Ошибка сканирования</translation>
     </message>
@@ -7187,7 +7201,7 @@ Devam edilsin mi?</source>
         <translation>Сканирование завершено, файлов: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1980"/>
+        <location filename="../../ui/main_window.py" line="1997"/>
         <source>Tarama derinligi</source>
         <translation>Глубина сканирования</translation>
     </message>
@@ -7207,22 +7221,22 @@ Devam edilsin mi?</source>
         <translation>Резервная копия одного раздела</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="548"/>
+        <location filename="../../ui/main_window.py" line="552"/>
         <source>Tema</source>
         <translation>Тема</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="771"/>
+        <location filename="../../ui/main_window.py" line="775"/>
         <source>Tema degistirildi: {}</source>
         <translation>Тема изменена: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3860"/>
+        <location filename="../../ui/main_window.py" line="3891"/>
         <source>Temiz</source>
         <translation>Чистый</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3858"/>
+        <location filename="../../ui/main_window.py" line="3889"/>
         <source>Temiz kapatilmamis — Linux baglamaz; Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>Не был корректно отключён — Linux не будет его подключать; Раздел &gt; Проверить и исправить NTFS</translation>
     </message>
@@ -7257,7 +7271,7 @@ Devam edilsin mi?</source>
         <translation>Стереть всю область (всё её содержимое будет уничтожено)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1689"/>
+        <location filename="../../ui/main_window.py" line="1706"/>
         <source>Tum bolumler 4K sinirinda hizali.</source>
         <translation>Все разделы выровнены по границе 4K.</translation>
     </message>
@@ -7267,16 +7281,16 @@ Devam edilsin mi?</source>
         <translation>Все разделы будут потеряны</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1892"/>
+        <location filename="../../ui/main_window.py" line="1909"/>
         <source>Tum disk ({})</source>
         <translation>Весь диск ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2020"/>
-        <location filename="../../ui/main_window.py" line="2944"/>
-        <location filename="../../ui/main_window.py" line="2980"/>
-        <location filename="../../ui/main_window.py" line="3043"/>
-        <location filename="../../ui/main_window.py" line="3602"/>
+        <location filename="../../ui/main_window.py" line="2037"/>
+        <location filename="../../ui/main_window.py" line="2965"/>
+        <location filename="../../ui/main_window.py" line="3001"/>
+        <location filename="../../ui/main_window.py" line="3065"/>
+        <location filename="../../ui/main_window.py" line="3633"/>
         <source>Tum goruntu</source>
         <translation>Весь образ</translation>
     </message>
@@ -7304,26 +7318,26 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3808"/>
+        <location filename="../../ui/main_window.py" line="3839"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
-        <location filename="../../ui/widgets/partition_table.py" line="23"/>
+        <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Tur</source>
         <translation>Тип</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3824"/>
+        <location filename="../../ui/main_window.py" line="3855"/>
         <source>Tur GUID</source>
         <translation>GUID типа</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1502"/>
-        <location filename="../../ui/main_window.py" line="1514"/>
+        <location filename="../../ui/main_window.py" line="1519"/>
+        <location filename="../../ui/main_window.py" line="1531"/>
         <source>Tur:</source>
         <translation>Тип:</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="449"/>
+        <location filename="../../ui/widgets/disk_map.py" line="457"/>
         <source>Tur: {}</source>
         <translation>Тип: {}</translation>
     </message>
@@ -7451,7 +7465,7 @@ Devam edilsin mi?</source>
         <translation>Редактор загрузки UEFI</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="653"/>
+        <location filename="../../ui/main_window.py" line="657"/>
         <source>UEFI onyukleme duzenleyici...</source>
         <translation>Редактор загрузки UEFI...</translation>
     </message>
@@ -7466,22 +7480,22 @@ Devam edilsin mi?</source>
         <translation>Устройство USB</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3830"/>
+        <location filename="../../ui/main_window.py" line="3861"/>
         <source>UUID / Seri no</source>
         <translation>UUID / серийный номер</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2812"/>
+        <location filename="../../ui/main_window.py" line="2833"/>
         <source>UYARI: Uygulama yonetici/root yetkisi olmadan calisiyor; disk icerigi okunamayabilir.</source>
         <translation>ВНИМАНИЕ: приложение работает без прав администратора/root; содержимое дисков может быть недоступно для чтения.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="806"/>
+        <location filename="../../ui/main_window.py" line="810"/>
         <source>Ucuncu taraf lisanslari</source>
         <translation>Сторонние лицензии</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="693"/>
+        <location filename="../../ui/main_window.py" line="697"/>
         <source>Ucuncu taraf lisanslari...</source>
         <translation>Сторонние лицензии...</translation>
     </message>
@@ -7518,14 +7532,14 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="166"/>
-        <location filename="../../ui/main_window.py" line="2495"/>
-        <location filename="../../ui/main_window.py" line="669"/>
+        <location filename="../../ui/main_window.py" line="2513"/>
+        <location filename="../../ui/main_window.py" line="673"/>
         <location filename="../../ui/qt_i18n.py" line="51"/>
         <source>Uygula</source>
         <translation>Применить</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2494"/>
+        <location filename="../../ui/main_window.py" line="2512"/>
         <source>Uygula ({})</source>
         <translation>Применить ({})</translation>
     </message>
@@ -7535,7 +7549,7 @@ Devam edilsin mi?</source>
         <translation>Приложение</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2586"/>
+        <location filename="../../ui/main_window.py" line="2604"/>
         <source>Uygulama basarisiz: {}</source>
         <translation>Ошибка применения: {}</translation>
     </message>
@@ -7545,7 +7559,7 @@ Devam edilsin mi?</source>
         <translation>Применение не было запущено.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2224"/>
+        <location filename="../../ui/main_window.py" line="2241"/>
         <source>Uygulama kapatilip &lt;b&gt;{} yetkisiyle&lt;/b&gt; yeniden baslatilacak.&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>Приложение будет закрыто и перезапущено &lt;b&gt;с правами {}&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Продолжить?</translation>
     </message>
@@ -7555,7 +7569,7 @@ Devam edilsin mi?</source>
         <translation>Приложение уже работает с правами {}.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="870"/>
+        <location filename="../../ui/main_window.py" line="874"/>
         <source>Uygulama {} yetkisiyle calisiyor; fiziksel disklere erisebilir.</source>
         <translation>Приложение работает с правами {}; доступ к физическим дискам открыт.</translation>
     </message>
@@ -7565,7 +7579,7 @@ Devam edilsin mi?</source>
         <translation>Не удалось определить путь к сценарию для перезапуска приложения.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2592"/>
+        <location filename="../../ui/main_window.py" line="2610"/>
         <source>Uygulandi: {}</source>
         <translation>Применено: {}</translation>
     </message>
@@ -7585,7 +7599,7 @@ Devam edilsin mi?</source>
         <translation>Неподходящее расположение</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2823"/>
+        <location filename="../../ui/main_window.py" line="2844"/>
         <source>VAR</source>
         <translation>ДА</translation>
     </message>
@@ -7615,7 +7629,7 @@ Devam edilsin mi?</source>
         <translation>Сигнатура VHD не найдена</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2108"/>
+        <location filename="../../ui/main_window.py" line="2125"/>
         <source>VHD olusturuldu: {} ({})</source>
         <translation>VHD создан: {} ({})</translation>
     </message>
@@ -7651,8 +7665,8 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="169"/>
-        <location filename="../../ui/main_window.py" line="2260"/>
-        <location filename="../../ui/main_window.py" line="675"/>
+        <location filename="../../ui/main_window.py" line="2277"/>
+        <location filename="../../ui/main_window.py" line="679"/>
         <location filename="../../ui/qt_i18n.py" line="50"/>
         <source>Vazgec</source>
         <translation>Отмена</translation>
@@ -7760,7 +7774,7 @@ Devam edilsin mi?</source>
         <translation>Windows в режиме гибернации (включая быстрый запуск). Запись в этот том с последующим возобновлением Windows повредит его. Загрузите Windows и завершите её работу через «Перезагрузку» или выберите при исправлении аннулирование файла гибернации.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3855"/>
+        <location filename="../../ui/main_window.py" line="3886"/>
         <source>Windows hazirda bekletmede — Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>Windows в режиме гибернации — Раздел &gt; Проверить и исправить NTFS</translation>
     </message>
@@ -7775,12 +7789,12 @@ Devam edilsin mi?</source>
         <translation>Windows не восстановит сохранённый сеанс, а запустится заново; несохранённая работа будет потеряна.</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="264"/>
+        <location filename="../../core/bootloader.py" line="321"/>
         <source>Windows onyukleme bolumu</source>
         <translation>Загрузочный раздел Windows</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="48"/>
+        <location filename="../../core/bootloader.py" line="50"/>
         <source>Windows onyukleyicisi</source>
         <translation>Загрузчик Windows</translation>
     </message>
@@ -7795,7 +7809,7 @@ Devam edilsin mi?</source>
         <translation>chkdsk будет запущен при следующей загрузке Windows</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="646"/>
+        <location filename="../../ui/main_window.py" line="650"/>
         <source>Windows&apos;un temiz kapatmadigi NTFS birimini baglanabilir hale getirir (ntfsfix gibi)</source>
         <translation>Делает снова подключаемым том NTFS, работу которого Windows не завершила корректно (как ntfsfix)</translation>
     </message>
@@ -7896,12 +7910,12 @@ Devam edilsin mi?</source>
         <translation>НОВЫЙ ТОМ</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2824"/>
+        <location filename="../../ui/main_window.py" line="2845"/>
         <source>YOK</source>
         <translation>НЕТ</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2689"/>
+        <location filename="../../ui/main_window.py" line="2710"/>
         <source>Yakalanan donma</source>
         <translation>Перехвачено зависаний</translation>
     </message>
@@ -7944,8 +7958,8 @@ Devam edilsin mi?</source>
         <translation>Не удалось записать</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2578"/>
-        <location filename="../../ui/main_window.py" line="3062"/>
+        <location filename="../../ui/main_window.py" line="2596"/>
+        <location filename="../../ui/main_window.py" line="3084"/>
         <source>Yazilamaz kaynak</source>
         <translation>Источник недоступен для записи</translation>
     </message>
@@ -8006,12 +8020,12 @@ Devam edilsin mi?</source>
         <translation>Режим записи нужно явно подтвердить (confirm=True)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2666"/>
+        <location filename="../../ui/main_window.py" line="2687"/>
         <source>Yazma modu acilamadi</source>
         <translation>Не удалось включить режим записи</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2668"/>
+        <location filename="../../ui/main_window.py" line="2689"/>
         <source>Yazma modu acildi: {}</source>
         <translation>Режим записи включён: {}</translation>
     </message>
@@ -8021,7 +8035,7 @@ Devam edilsin mi?</source>
         <translation>Запись выходит за границу виртуального диска</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2625"/>
+        <location filename="../../ui/main_window.py" line="2646"/>
         <source>Yazma sirasinda bu birimler &lt;b&gt;gecici olarak cikarilacak&lt;/b&gt; (kilitlenip ayrilir).</source>
         <translation>На время записи эти тома будут &lt;b&gt;временно отключены&lt;/b&gt; (заблокированы и отсоединены).</translation>
     </message>
@@ -8036,7 +8050,7 @@ Devam edilsin mi?</source>
         <translation>Создать резервную копию</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="678"/>
+        <location filename="../../ui/main_window.py" line="682"/>
         <source>Yedegi diske yaz...</source>
         <translation>Записать резервную копию на диск...</translation>
     </message>
@@ -8076,7 +8090,7 @@ Devam edilsin mi?</source>
         <translation>Резервная копия открыта</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1004"/>
+        <location filename="../../ui/main_window.py" line="1008"/>
         <source>Yedek acildi (salt okunur): {} — kaynak {}, yedek {}</source>
         <translation>Резервная копия открыта (только для чтения): {} — источник {}, резервная копия {}</translation>
     </message>
@@ -8150,12 +8164,12 @@ Devam edilsin mi?</source>
         <translation>Файл резервной копии (.dub) — это архив; поверх него записывать нельзя. Запишите резервную копию на диск или в новый образ.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1010"/>
+        <location filename="../../ui/main_window.py" line="1014"/>
         <source>Yedek dosyasi acildi</source>
         <translation>Файл резервной копии открыт</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="682"/>
+        <location filename="../../ui/main_window.py" line="686"/>
         <source>Yedek dosyasi bilgisi...</source>
         <translation>Сведения о файле резервной копии...</translation>
     </message>
@@ -8260,7 +8274,7 @@ Devam edilsin mi?</source>
         <translation>Резервное копирование и восстановление</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1716"/>
+        <location filename="../../ui/main_window.py" line="1733"/>
         <source>Yedeklenecek bir goruntu veya disk bulunamadi.
 
 Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
@@ -8324,7 +8338,7 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
         <translation>Новая ёмкость:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2075"/>
+        <location filename="../../ui/main_window.py" line="2092"/>
         <source>Yeni Sanal Disk (VHD)</source>
         <translation>Новый виртуальный диск (VHD)</translation>
     </message>
@@ -8340,7 +8354,7 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
         <translation>Новое имя не должно содержать путь</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1488"/>
+        <location filename="../../ui/main_window.py" line="1505"/>
         <location filename="../../ui/widgets/file_browser.py" line="397"/>
         <source>Yeni ad:</source>
         <translation>Новое имя:</translation>
@@ -8351,7 +8365,7 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
         <translation>Новый раздел</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1149"/>
+        <location filename="../../ui/main_window.py" line="1154"/>
         <source>Yeni bolum icin yeterli bos alan bulunamadi.
 
 Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
@@ -8365,7 +8379,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Создать новый раздел</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="617"/>
+        <location filename="../../ui/main_window.py" line="621"/>
         <source>Yeni bolum...</source>
         <translation>Новый раздел...</translation>
     </message>
@@ -8410,12 +8424,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Новый размер меньше текущего объёма данных; данные всё равно помещаются, потому что служебная область самой файловой системы тоже уменьшается</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="948"/>
+        <location filename="../../ui/main_window.py" line="952"/>
         <source>Yeni disk goruntusu</source>
         <translation>Новый образ диска</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1533"/>
+        <location filename="../../ui/main_window.py" line="1550"/>
         <source>Yeni etiket:</source>
         <translation>Новая метка:</translation>
     </message>
@@ -8430,7 +8444,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Новый файл образа...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="608"/>
+        <location filename="../../ui/main_window.py" line="612"/>
         <source>Yeni goruntu...</source>
         <translation>Новый образ...</translation>
     </message>
@@ -8448,12 +8462,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Новая папка</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="677"/>
+        <location filename="../../ui/main_window.py" line="681"/>
         <source>Yeni sanal disk (VHD)...</source>
         <translation>Новый виртуальный диск (VHD)...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1416"/>
+        <location filename="../../ui/main_window.py" line="1433"/>
         <source>Yeni yerlesim gecersiz</source>
         <translation>Новая разметка недопустима</translation>
     </message>
@@ -8476,8 +8490,8 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Не удалось переименовать</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2245"/>
-        <location filename="../../ui/main_window.py" line="2292"/>
+        <location filename="../../ui/main_window.py" line="2262"/>
+        <location filename="../../ui/main_window.py" line="2309"/>
         <source>Yeniden baslatilamadi</source>
         <translation>Не удалось перезапустить</translation>
     </message>
@@ -8487,8 +8501,8 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Не удалось перезапустить (ошибка ShellExecute {}).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2244"/>
-        <location filename="../../ui/main_window.py" line="2291"/>
+        <location filename="../../ui/main_window.py" line="2261"/>
+        <location filename="../../ui/main_window.py" line="2308"/>
         <source>Yeniden baslatilamadi: {}</source>
         <translation>Не удалось перезапустить: {}</translation>
     </message>
@@ -8498,14 +8512,14 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Изменение размера требует подтверждения (confirm=True)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3927"/>
+        <location filename="../../ui/main_window.py" line="3958"/>
         <location filename="../../ui/qt_i18n.py" line="46"/>
         <source>Yeniden dene</source>
         <translation>Повторить</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/bootloader.py" line="149"/>
-        <location filename="../../ui/main_window.py" line="616"/>
+        <location filename="../../ui/main_window.py" line="620"/>
         <location filename="../../ui/widgets/file_browser.py" line="113"/>
         <location filename="../../ui/widgets/file_browser.py" line="51"/>
         <location filename="../../ui/widgets/file_browser.py" line="539"/>
@@ -8513,7 +8527,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Обновить</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3003"/>
+        <location filename="../../ui/main_window.py" line="3025"/>
         <source>Yenileme hatasi</source>
         <translation>Ошибка обновления</translation>
     </message>
@@ -8554,12 +8568,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Права</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2169"/>
+        <location filename="../../ui/main_window.py" line="2186"/>
         <source>Yetki eksik ({}) — yukseltme yapilamiyor: {}</source>
         <translation>Недостаточно прав ({}) — повысить права невозможно: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2259"/>
+        <location filename="../../ui/main_window.py" line="2276"/>
         <source>Yetki penceresi bekleniyor. Parola sorulursa girin.</source>
         <translation>Ожидание окна авторизации. Введите пароль, если он будет запрошен.</translation>
     </message>
@@ -8575,14 +8589,14 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Разрешение не предоставлено (окно ввода пароля отменено).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2207"/>
-        <location filename="../../ui/main_window.py" line="2210"/>
-        <location filename="../../ui/main_window.py" line="2663"/>
+        <location filename="../../ui/main_window.py" line="2224"/>
+        <location filename="../../ui/main_window.py" line="2227"/>
+        <location filename="../../ui/main_window.py" line="2684"/>
         <source>Yetki yetersiz</source>
         <translation>Недостаточно прав</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3220"/>
+        <location filename="../../ui/main_window.py" line="3242"/>
         <source>Yetki: normal kullanici — fiziksel disk icin {} gerekir</source>
         <translation>Права: обычный пользователь — для физических дисков нужны {}</translation>
     </message>
@@ -8597,7 +8611,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Не удалось запустить копию с повышенными правами (код выхода {}).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2278"/>
+        <location filename="../../ui/main_window.py" line="2295"/>
         <source>Yetkili kopya beklenmekten vazgecildi; acilirsa iki kopyadan birini kapatin.</source>
         <translation>Ожидание копии с повышенными правами прекращено; если она всё же откроется, закройте одну из двух копий.</translation>
     </message>
@@ -8607,12 +8621,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Продолжить без прав администратора</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2728"/>
+        <location filename="../../ui/main_window.py" line="2749"/>
         <source>Yigin dokumu</source>
         <translation>Дамп стека</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2727"/>
+        <location filename="../../ui/main_window.py" line="2748"/>
         <source>Yigin dokumu yazildi: {}</source>
         <translation>Дамп стека записан: {}</translation>
     </message>
@@ -8654,7 +8668,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Администратор</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2822"/>
+        <location filename="../../ui/main_window.py" line="2843"/>
         <source>Yonetici/root yetkisi: {}</source>
         <translation>Права администратора/root: {}</translation>
     </message>
@@ -8669,7 +8683,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Вверх</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2521"/>
+        <location filename="../../ui/main_window.py" line="2539"/>
         <source>Yukari tasi</source>
         <translation>Переместить вверх</translation>
     </message>
@@ -8685,7 +8699,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>ZIP / документ Office</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="970"/>
+        <location filename="../../ui/main_window.py" line="974"/>
         <source>Zaten acik, one getirildi: {}</source>
         <translation>Уже открыт, перемещён на передний план: {}</translation>
     </message>
@@ -8712,22 +8726,22 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>Уже существует: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3374"/>
+        <location filename="../../ui/main_window.py" line="3405"/>
         <source>[SISTEM DISKI]</source>
         <translation>[СИСТЕМНЫЙ ДИСК]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3382"/>
+        <location filename="../../ui/main_window.py" line="3413"/>
         <source>[bagli bolum var]</source>
         <translation>[есть подключённые разделы]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3281"/>
+        <location filename="../../ui/main_window.py" line="3303"/>
         <source>[degistirilemez]</source>
         <translation>[нельзя изменить]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3371"/>
+        <location filename="../../ui/main_window.py" line="3402"/>
         <source>[{} SISTEM DISKI]</source>
         <translation>[{} СИСТЕМНЫЙ ДИСК]</translation>
     </message>
@@ -8820,7 +8834,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     </message>
     <message>
         <location filename="../../core/platform.py" line="1338"/>
-        <location filename="../../ui/main_window.py" line="1459"/>
+        <location filename="../../ui/main_window.py" line="1476"/>
         <source>bilinmiyor</source>
         <translation>неизвестно</translation>
     </message>
@@ -9038,8 +9052,8 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="564"/>
-        <location filename="../../ui/main_window.py" line="2956"/>
-        <location filename="../../ui/main_window.py" line="3451"/>
+        <location filename="../../ui/main_window.py" line="2977"/>
+        <location filename="../../ui/main_window.py" line="3482"/>
         <location filename="../../ui/widgets/disk_overview.py" line="184"/>
         <source>ham</source>
         <translation>сырой</translation>
@@ -9179,7 +9193,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <location filename="../../ui/dialogs/backup.py" line="796"/>
         <location filename="../../ui/dialogs/bootloader.py" line="235"/>
         <location filename="../../ui/dialogs/partition.py" line="205"/>
-        <location filename="../../ui/widgets/disk_map.py" line="450"/>
+        <location filename="../../ui/widgets/disk_map.py" line="458"/>
         <source>yok</source>
         <translation>нет</translation>
     </message>
@@ -9318,7 +9332,7 @@ Birimi kullanan programlari (Gezgin penceresi, virus tarayici, yedekleme) kapati
 Закройте программы, использующие том (окно Проводника, антивирус, резервное копирование), и снова откройте диск; или извлеките том в Windows.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1637"/>
+        <location filename="../../ui/main_window.py" line="1654"/>
         <source>{}
 
 Windows bu NTFS birimini temiz kapatmamis olabilir (Hizli baslatma, hazirda bekletme, elektrik kesintisi). Birimi simdi denetlemek ister misiniz?</source>
@@ -9336,7 +9350,7 @@ Yine de bu konumda olusturulsun mu?</source>
 Всё равно создать в этом расположении?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3390"/>
+        <location filename="../../ui/main_window.py" line="3421"/>
         <source>{}
 {}
 Sektor: {} B | Baglanti: {}</source>
@@ -9380,7 +9394,7 @@ Sektor: {} B | Baglanti: {}</source>
         <translation>{} (проходов: {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3812"/>
+        <location filename="../../ui/main_window.py" line="3843"/>
         <source>{} ({} sektor)</source>
         <translation>{} (секторов: {})</translation>
     </message>
@@ -9390,7 +9404,7 @@ Sektor: {} B | Baglanti: {}</source>
         <translation>{} / {} байт</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2611"/>
+        <location filename="../../ui/main_window.py" line="2632"/>
         <source>{} ISLETIM SISTEMI DISKIDIR.
 
 Bu diske yazmak isletim sistemini acilamaz hale getirebilir.
@@ -9451,7 +9465,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} подключён</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1630"/>
+        <location filename="../../ui/main_window.py" line="1647"/>
         <source>{} basarisiz: {}</source>
         <translation>{}: ошибка: {}</translation>
     </message>
@@ -9461,7 +9475,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} байт</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../ui/main_window.py" line="2562"/>
+        <location filename="../../ui/main_window.py" line="2580"/>
         <source>{} bekleyen adim iptal edildi</source>
         <extra-po-msgid_plural>{} bekleyen adim iptal edildi</extra-po-msgid_plural>
         <translation>
@@ -9471,7 +9485,7 @@ Devam etmek icin disk adini yazin: {}</source>
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2555"/>
+        <location filename="../../ui/main_window.py" line="2573"/>
         <source>{} bekleyen adim silinecek.&lt;br&gt;&lt;br&gt;Diskte hicbir degisiklik yapilmadigi icin bu islem &lt;b&gt;zararsizdir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>Отложенные шаги будут удалены: {}.&lt;br&gt;&lt;br&gt;Поскольку на диске ничего не изменено, это &lt;b&gt;безопасно&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Продолжить?</translation>
     </message>
@@ -9501,7 +9515,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} — системная/виртуальная файловая система устройств ({}); здесь нельзя создать образ.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1690"/>
+        <location filename="../../ui/main_window.py" line="1707"/>
         <source>{} bolum 4K sinirinda hizali degil; SSD ve ileri bicim disklerde basarim dusebilir.</source>
         <translation>Разделы, не выровненные по границе 4K: {}; производительность на SSD и дисках Advanced Format может снизиться.</translation>
     </message>
@@ -9572,7 +9586,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>Экспорт {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1815"/>
+        <location filename="../../ui/main_window.py" line="1832"/>
         <source>{} diskine klonlandi ({}).
 
 Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin isletim sistemi birini cevrimdisi yapabilir.</source>
@@ -9581,27 +9595,27 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
 Если оба диска останутся подключёнными к одному компьютеру, операционная система может перевести один из них в автономный режим, так как у них одинаковый идентификатор диска.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2692"/>
+        <location filename="../../ui/main_window.py" line="2713"/>
         <source>{} dk</source>
         <translation>{} мин</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1666"/>
+        <location filename="../../ui/main_window.py" line="1683"/>
         <source>{} donusumu kuyruga alindi: {}</source>
         <translation>Преобразование в {} поставлено в очередь: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1664"/>
+        <location filename="../../ui/main_window.py" line="1681"/>
         <source>{} donusumu yapilamaz</source>
         <translation>Преобразование в {} невозможно</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2065"/>
+        <location filename="../../ui/main_window.py" line="2082"/>
         <source>{} dosya cikarildi -&gt; {}</source>
         <translation>Извлечено файлов: {} -&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2067"/>
+        <location filename="../../ui/main_window.py" line="2084"/>
         <source>{} dosya cikarildi:
 {}</source>
         <translation>Извлечено файлов: {}:
@@ -9618,7 +9632,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1972"/>
+        <location filename="../../ui/main_window.py" line="1989"/>
         <source>{} dosya kurtarildi:
 {}</source>
         <translation>Восстановлено файлов: {}:
@@ -9645,7 +9659,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>{} обновлено: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4041"/>
+        <location filename="../../ui/main_window.py" line="4072"/>
         <source>{} hakkinda</source>
         <translation>О программе {}</translation>
     </message>
@@ -9667,7 +9681,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>{}: требуется не менее {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="803"/>
+        <location filename="../../ui/main_window.py" line="807"/>
         <source>{} ikon</source>
         <translation>Значки {}</translation>
     </message>
@@ -9698,7 +9712,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
     </message>
     <message>
         <location filename="../../core/mbr.py" line="315"/>
-        <location filename="../../core/ptable.py" line="230"/>
+        <location filename="../../core/ptable.py" line="236"/>
         <source>{} numarali bolum ile cakisiyor</source>
         <translation>Перекрывается с разделом {}</translation>
     </message>
@@ -9709,7 +9723,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
     </message>
     <message>
         <location filename="../../core/layoutedit.py" line="188"/>
-        <location filename="../../core/ptable.py" line="186"/>
+        <location filename="../../core/ptable.py" line="192"/>
         <source>{} numarali bolum yok</source>
         <translation>Раздела {} не существует</translation>
     </message>
@@ -9743,18 +9757,18 @@ Konum: {}</source>
         <translation>Чтение {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2231"/>
-        <location filename="../../ui/main_window.py" line="2261"/>
+        <location filename="../../ui/main_window.py" line="2248"/>
+        <location filename="../../ui/main_window.py" line="2278"/>
         <source>{} olarak yeniden baslat</source>
         <translation>Перезапустить как {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="660"/>
+        <location filename="../../ui/main_window.py" line="664"/>
         <source>{} olarak yeniden baslat...</source>
         <translation>Перезапустить как {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2184"/>
+        <location filename="../../ui/main_window.py" line="2201"/>
         <source>{} olarak yeniden baslatma reddedildi; fiziksel diskler acilamaz</source>
         <translation>Перезапуск как {} отклонён; физические диски открыть нельзя</translation>
     </message>
@@ -9790,8 +9804,8 @@ Konum: {}</source>
         <translation>Найдено удалённых записей: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2687"/>
-        <location filename="../../ui/main_window.py" line="2690"/>
+        <location filename="../../ui/main_window.py" line="2708"/>
+        <location filename="../../ui/main_window.py" line="2711"/>
         <source>{} sn</source>
         <translation>{} с</translation>
     </message>
@@ -9837,12 +9851,12 @@ Konum: {}</source>
         <translation>Подготовка структуры {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2221"/>
+        <location filename="../../ui/main_window.py" line="2238"/>
         <source>{} yetkisi</source>
         <translation>права {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2172"/>
+        <location filename="../../ui/main_window.py" line="2189"/>
         <source>{} yetkisi gerekiyor</source>
         <translation>Требуются права {}</translation>
     </message>
@@ -9852,17 +9866,17 @@ Konum: {}</source>
         <translation>Запрос прав {}. Введите пароль, если он будет запрошен.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="139"/>
+        <location filename="../../ui/main_window.py" line="143"/>
         <source>{} {} baslatildi</source>
         <translation>{} {} запущен</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3017"/>
+        <location filename="../../ui/main_window.py" line="3039"/>
         <source>{} | {} | {} bolum</source>
         <translation>{} | {} | разделов: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3379"/>
+        <location filename="../../ui/main_window.py" line="3410"/>
         <source>{} — (yetki yok, bilgi okunamadi)</source>
         <translation>{} — (нет прав, сведения не удалось прочитать)</translation>
     </message>
@@ -9877,12 +9891,12 @@ Konum: {}</source>
         <translation>{} — первые 440 байт обнуляются</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3309"/>
+        <location filename="../../ui/main_window.py" line="3338"/>
         <source>{} — {}</source>
         <translation>{} — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3456"/>
+        <location filename="../../ui/main_window.py" line="3487"/>
         <source>{} — {}
 LBA {} - {}
 Acmak icin tiklayin (salt okunur)</source>
@@ -9921,7 +9935,7 @@ LBA {} - {}
         <translation>{}, {} — данные сохраняются</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1970"/>
+        <location filename="../../ui/main_window.py" line="1987"/>
         <source>{}/{} dosya kurtarildi -&gt; {}</source>
         <translation>Восстановлено файлов: {}/{} -&gt; {}</translation>
     </message>
@@ -9942,7 +9956,7 @@ LBA {} - {}
         <translation>{}: просмотр содержимого не поддерживается</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2211"/>
+        <location filename="../../ui/main_window.py" line="2228"/>
         <source>{}&lt;br&gt;&lt;br&gt;Uygulama &lt;b&gt;{} yetkisiyle&lt;/b&gt; yeniden baslatilsin mi?</source>
         <translation>{}&lt;br&gt;&lt;br&gt;Перезапустить приложение &lt;b&gt;с правами {}&lt;/b&gt;?</translation>
     </message>

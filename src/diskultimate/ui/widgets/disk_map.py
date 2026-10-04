@@ -25,8 +25,8 @@ from PyQt5.QtWidgets import QSizePolicy, QWidget
 
 from ...core.fsregistry import fs_display
 from ...core.ptable import FreeRegion, Partition, human_size
-from ..theme import (PLAN_COLOR, blend, darken, draw_usage_bar, fs_color,
-                     palette_color, plan_label)
+from ..theme import (OS_LOGOS, PLAN_COLOR, blend, darken, draw_usage_bar,
+                     fs_color, os_icon, palette_color, plan_label)
 from .edgedrag import EdgeDragController
 from ...i18n import tr
 
@@ -279,8 +279,14 @@ class DiskMapWidget(QWidget):
         genislik_yazi = rect.width() - 20
         painter.setPen(metin_rengi)
         f = painter.font(); f.setPointSize(9); f.setBold(True); painter.setFont(f)
-        metin_alani = QRect(sol, rect.top() + 33,
-                            genislik_yazi - rozet_genisligi, 17)
+        # Bolumde kurulu isletim sisteminin amblemi basliktan once (ADR 0089)
+        os_kind = getattr(block.obj, "os_kind", "") if block.kind == "part" else ""
+        amblem = 0
+        if os_kind in OS_LOGOS and genislik_yazi - rozet_genisligi > 60:
+            os_icon(os_kind, 14).paint(painter, QRect(sol, rect.top() + 34, 14, 14))
+            amblem = 18
+        metin_alani = QRect(sol + amblem, rect.top() + 33,
+                            genislik_yazi - rozet_genisligi - amblem, 17)
         painter.drawText(metin_alani, Qt.AlignLeft | Qt.AlignVCenter,
                          self._elide(painter, title, metin_alani.width()))
 
@@ -445,8 +451,10 @@ class DiskMapWidget(QWidget):
     def _tooltip(block: Block) -> str:
         if block.kind == "part":
             p: Partition = block.obj
-            satir = [f"<b>{p.display_name}</b>",
-                     tr("Tur: {}", p.type_name),
+            satir = [f"<b>{p.display_name}</b>"]
+            if p.os_name:
+                satir.append(tr("Isletim sistemi: {}", p.os_name))
+            satir += [tr("Tur: {}", p.type_name),
                      tr("Dosya sistemi: {}", fs_display(p.fs_type) or tr("yok")),
                      tr("Boyut: {}", human_size(p.size)),
                      tr("LBA: {} - {}", p.start_lba, p.end_lba)]

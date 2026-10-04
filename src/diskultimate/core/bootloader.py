@@ -26,7 +26,9 @@ Gerekce: `.claude/decisions/0028-onyukleyici-yonetimi.md`
 """
 from __future__ import annotations
 
+import plistlib
 import re
+import struct
 from dataclasses import dataclass, field
 from typing import Dict, List
 
@@ -233,9 +235,66 @@ def _linux_name(fs) -> str:
     return tr("Linux")
 
 
+# Derleme numarasindan surum adi (en yuksekten asagi). Sunucu surumleri
+# ayni cekirdegi paylasir (Server 2019 = 17763, 2022 = 20348); derleme
+# numarasi bu yuzden adla birlikte gosterilir.
+_WINDOWS_BUILDS = ((22000, "Windows 11"), (10240, "Windows 10"),
+                   (9600, "Windows 8.1"), (9200, "Windows 8"),
+                   (7600, "Windows 7"), (6000, "Windows Vista"))
+_VS_FIXEDFILEINFO = struct.pack("<I", 0xFEEF04BD)
+
+
+def windows_build(fs) -> int:
+    """`Windows/System32/ntoskrnl.exe` surum kaydindaki derleme numarasi (0 = yok).
+
+    Surum bilgisi PE kaynaklarindaki VS_FIXEDFILEINFO yapisindadir
+    (imza 0xFEEF04BD); dosya surumu 10.0.<derleme>.<duzeltme> bicimindedir.
+    Kayit defteri (SOFTWARE kovani) ayristirmaktan cok daha basit ve
+    Windows XP'den 11'e kadar ayni yerde.
+    """
+    path = find_path(fs, "Windows", "System32", "ntoskrnl.exe")
+    if not path:
+        return 0
+    try:
+        data = fs.read(path, 32 * 1024 * 1024)
+    except Exception:
+        return 0
+    at = data.rfind(_VS_FIXEDFILEINFO)
+    if at < 0 or at + 16 > len(data):
+        return 0
+    _sig, _struc, version_ms, version_ls = struct.unpack_from("<IIII", data, at)
+    major = version_ms >> 16
+    build = version_ls >> 16
+    return build if 5 <= major <= 10 else 0
+
+
 def _windows_name(fs, label: str) -> str:
-    """Windows kurulumunun adi (etiket varsa onunla birlikte)."""
-    return f"Windows ({label})" if label else "Windows"
+    """Windows kurulumunun adi: surum ve derleme ("Windows 11 (22631)").
+
+    Etiket ada eklenmez: agacta, tabloda ve onyukleyici penceresinde ayrica
+    gosterilir ("Windows 11 (22631) — Windows" tekrar ediyordu).
+    """
+    build = windows_build(fs)
+    for threshold, title in _WINDOWS_BUILDS:
+        if build >= threshold:
+            return f"{title} ({build})"
+    return "Windows"
+
+
+def _macos_name(fs) -> str:
+    """`SystemVersion.plist`'ten macOS adi ve surumu (bulunamazsa bos)."""
+    path = find_path(fs, "System", "Library", "CoreServices",
+                     "SystemVersion.plist")
+    if not path:
+        return ""
+    try:
+        info = plistlib.loads(fs.read(path, 65536))
+    except Exception:
+        return "macOS"
+    product = str(info.get("ProductName") or "macOS")
+    version = str(info.get("ProductUserVisibleVersion")
+                  or info.get("ProductVersion") or "")
+    return f"{product} {version}".strip()
 
 
 def detect_os(fs, fs_type: str = "", label: str = "") -> Dict[str, str]:
@@ -278,6 +337,14 @@ def detect_os(fs, fs_type: str = "", label: str = "") -> Dict[str, str]:
         return {"name": "", "kind": "",
                 "reason": tr("Isletim sistemi kurulu degil (veri bolumu)")}
 
+    # -- macOS ------------------------------------------------------------
+    if kind.startswith("hfs") or kind.startswith("apfs"):
+        name = _macos_name(fs)
+        if name:
+            return {"name": name, "kind": "macos", "reason": ""}
+        return {"name": "", "kind": "",
+                "reason": tr("Isletim sistemi kurulu degil (veri bolumu)")}
+
     # -- EFI Sistem Bolumu -------------------------------------------------
     if kind.startswith("fat"):
         if find_path(fs, "EFI"):
@@ -317,6 +384,73 @@ def list_efi_loaders(fs, limit: int = 64) -> List[str]:
             found.append("\\EFI\\" + vendor.name + "\\" + node.name)
             if len(found) >= limit:
                 return found
+    return found
+
+
+# ESP'deki uretici klasoru -> gosterilecek ad (digerleri klasor adiyla).
+_EFI_VENDORS = {"microsoft": "Windows", "apple": "macOS", "boot": ""}
+
+
+def esp_systems(fs) -> List[str]:
+    """ESP'de onyukleyicisi bulunan sistemler, klasor sirasiyla.
+
+    `/EFI/<uretici>` altinda (iki seviyeye kadar) `.efi` dosyasi olan her
+    uretici sayilir. Windows'un yukleyicisi bir alt klasordedir
+    (`Microsoft/Boot/bootmgfw.efi`); `list_efi_loaders` onu gormez.
+    `/EFI/Boot` yedek yukleyicidir, sistem sayilmaz.
+    """
+    root = find_path(fs, "EFI")
+    if not root:
+        return []
+
+    def has_loader(path: str, depth: int) -> bool:
+        try:
+            entries = fs.listdir(path)
+        except Exception:
+            return False
+        for node in entries:
+            if not node.is_dir and node.name.lower().endswith(".efi"):
+                return True
+        if depth <= 0:
+            return False
+        return any(node.is_dir and has_loader(node.path, depth - 1)
+                   for node in entries)
+
+    names: List[str] = []
+    try:
+        vendors = fs.listdir(root)
+    except Exception:
+        return []
+    for vendor in vendors:
+        if not vendor.is_dir:
+            continue
+        name = _EFI_VENDORS.get(vendor.name.lower(), vendor.name)
+        if name and name not in names and has_loader(vendor.path, 1):
+            names.append(name)
+    return names
+
+
+def partition_os(session, part) -> Dict[str, str]:
+    """Tek bir bolumde kurulu isletim sistemi.
+
+    Doner: `{"name", "kind", "reason"}` — `detect_os` ile ayni; ESP'de ad
+    onyukleyicisi bulunan sistemleri de sayar ("EFI: Windows, ubuntu").
+    Dosya sistemini **okur** (salt okunur oturum tutamaciyla); fiziksel
+    diskte suresi ongorulemez, arayuz is parcaciginda cagrilmaz.
+    """
+    try:
+        info = session.detect_fs(part)
+        fs = session.filesystem(part.index)
+    except Exception as exc:                     # noqa: BLE001
+        return {"name": "", "kind": "", "reason": str(exc)}
+    found = detect_os(fs, getattr(info, "fs_type", ""), getattr(info, "label", ""))
+    if found["kind"] == "esp" or (is_esp(part) and fs is not None
+                                  and find_path(fs, "EFI")):
+        systems = esp_systems(fs)
+        name = tr("EFI Sistem Bolumu")
+        if systems:
+            name = tr("EFI: {}", ", ".join(systems))
+        return {"name": name, "kind": "esp", "reason": ""}
     return found
 
 

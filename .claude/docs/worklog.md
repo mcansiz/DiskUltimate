@@ -5819,3 +5819,15 @@ calismiyordu.
 - **v0.6.0-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.6.0-beta
   — sürüm koşusu 37221403278: 3 platform test + Windows exe, Linux AppImage,
   macOS zip.
+
+## 2026-10-04 (9) — Bölüm başına işletim sistemi (ADR 0089)
+
+- Kullanıcı isteği: disk satırındaki OS amblemi bölüm bazında gösterilsin.
+- `bootloader.partition_os`: Windows sürümü ntoskrnl.exe sürüm kaydından
+  (Windows 11 (22631)), macOS SystemVersion.plist (yeni), Linux os-release,
+  ESP'de yükleyicisi olan sistemler (Windows'un alt klasördeki yükleyicisi
+  artık görülüyor).
+- `ui/osinfo.py` arka plan servisi (oturum tutamacıyla, tek QThread; kapatma
+  ve Uygula öncesi beklenir). Ağaç: amblem + ad; tablo: "İşletim sistemi"
+  sütunu; harita: blok başında amblem.
+- t89, ui_smoke; run_all 87/89, i18n (9 dil) TAMAM, platform 0, diag 13/13.

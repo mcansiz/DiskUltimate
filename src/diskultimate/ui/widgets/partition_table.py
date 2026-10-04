@@ -11,22 +11,26 @@ from PyQt5.QtWidgets import (QAbstractItemView, QHeaderView, QTableWidget,
 from ...core.fsregistry import fs_display
 from ...core.platform import mount_point_label
 from ...core.ptable import FreeRegion, Partition, human_size
-from ..theme import (FREE_COLOR, PLAN_COLOR, fs_color, palette_color,
-                     plan_label)
+from ..theme import (FREE_COLOR, OS_LOGOS, PLAN_COLOR, fs_color, os_icon,
+                     palette_color, plan_label)
 from ...i18n import mark, tr
 
 # Kaynak metinler; gosterilirken `columns()` ile cevrilir (ADR 0027).
 # "Plan" sutunu yalnizca bekleyen adim varken gorunur (`set_partitions`
 # gizler/gosterir): bos bir sutunu surekli tasimak yer israfi olurdu.
-COLUMNS = [mark("Bolum"), mark("Plan"), mark("Dosya Sistemi"), mark("Etiket"),
-           mark("Baglama"), mark("Boyut"), mark("Kullanilan"), mark("Bos"),
+COLUMNS = [mark("Bolum"), mark("Isletim sistemi"), mark("Plan"),
+           mark("Dosya Sistemi"), mark("Etiket"), mark("Baglama"),
+           mark("Boyut"), mark("Kullanilan"), mark("Bos"),
            mark("Baslangic LBA"), mark("Bitis LBA"), mark("Tur"),
            mark("Bayrak")]
-PLAN_COLUMN = 1
-# "Baglama" sutunu isletim sisteminin bolumu bagladigi yeri gosterir:
-# Linux/macOS'ta dizin, Windows'ta surucu harfi (ADR 0043). Basligi
+# Sutun numaralari adla: yeni sutun eklemek sabit sayilari kaydiriyordu.
+(NAME_COLUMN, OS_COLUMN, PLAN_COLUMN, FS_COLUMN, LABEL_COLUMN, MOUNT_COLUMN,
+ SIZE_COLUMN, USED_COLUMN, FREE_COLUMN, START_COLUMN, END_COLUMN,
+ TYPE_COLUMN, FLAG_COLUMN) = range(len(COLUMNS))
+# "Isletim sistemi": bolumde kurulu sistem, dosya sistemi icinden bulunur
+# (ADR 0089, `ui/osinfo.py`). "Baglama" isletim sisteminin bolumu bagladigi
+# yer: Linux/macOS'ta dizin, Windows'ta surucu harfi (ADR 0043); basligi
 # platforma gore degisir (`columns()`).
-MOUNT_COLUMN = 4
 
 
 
@@ -84,17 +88,18 @@ class PartitionTableWidget(QTableWidget):
         header.setStretchLastSection(True)
         for i, mode in enumerate([QHeaderView.Interactive] * len(COLUMNS)):
             header.setSectionResizeMode(i, mode)
-        self.setColumnWidth(0, 150)
-        self.setColumnWidth(1, 140)
-        self.setColumnWidth(2, 110)
-        self.setColumnWidth(3, 120)
+        self.setColumnWidth(NAME_COLUMN, 150)
+        self.setColumnWidth(OS_COLUMN, 210)
+        self.setColumnWidth(PLAN_COLUMN, 140)
+        self.setColumnWidth(FS_COLUMN, 110)
+        self.setColumnWidth(LABEL_COLUMN, 120)
         self.setColumnWidth(MOUNT_COLUMN, 150)
-        self.setColumnWidth(5, 90)
-        self.setColumnWidth(6, 90)
-        self.setColumnWidth(7, 90)
-        self.setColumnWidth(8, 100)
-        self.setColumnWidth(9, 100)
-        self.setColumnWidth(10, 160)
+        self.setColumnWidth(SIZE_COLUMN, 90)
+        self.setColumnWidth(USED_COLUMN, 90)
+        self.setColumnWidth(FREE_COLUMN, 90)
+        self.setColumnWidth(START_COLUMN, 100)
+        self.setColumnWidth(END_COLUMN, 100)
+        self.setColumnWidth(TYPE_COLUMN, 160)
         self.setColumnHidden(PLAN_COLUMN, True)
         self._rows: List[Tuple[str, object]] = []
         self._pending: dict = {}
@@ -130,7 +135,7 @@ class PartitionTableWidget(QTableWidget):
             if kind != "part":
                 continue
             notes = self._pending.get(obj.index)
-            item = self.item(row, 0)
+            item = self.item(row, NAME_COLUMN)
             if item is None:
                 continue
             font = item.font()
@@ -186,8 +191,10 @@ class PartitionTableWidget(QTableWidget):
         # Durum **ilk sutunda** durur: ayri bir sutun saga kayip ekrandan
         # cikiyordu ve kullanici planlanan satiri fark etmiyordu.
         state_text = plan_label(p)
-        name_item = self._set(row, 0, part_label(p),
+        name_item = self._set(row, NAME_COLUMN, part_label(p),
                               icon=color_chip(fs_color(p.fs_type)), bold=True)
+        self._set(row, OS_COLUMN, p.os_name or "-", dim=not p.os_name,
+                  icon=os_icon(p.os_kind, 16) if p.os_kind in OS_LOGOS else None)
         plan_item = self._set(row, PLAN_COLUMN, state_text or "-",
                               dim=not state_text)
         if state_text:
@@ -198,35 +205,38 @@ class PartitionTableWidget(QTableWidget):
             font = plan_item.font()
             font.setBold(True)
             plan_item.setFont(font)
-        self._set(row, 2, fs_display(p.fs_type) or "-")
-        self._set(row, 3, p.name or p.fs_label or "-")
+        self._set(row, FS_COLUMN, fs_display(p.fs_type) or "-")
+        self._set(row, LABEL_COLUMN, p.name or p.fs_label or "-")
         self._set(row, MOUNT_COLUMN, p.mount_point or "-",
                   dim=not p.mount_point, bold=bool(p.mount_point))
-        self._set(row, 5, human_size(p.size), align=Qt.AlignRight)
-        self._set(row, 6, human_size(p.fs_used) if p.fs_used >= 0 else "-",
+        self._set(row, SIZE_COLUMN, human_size(p.size), align=Qt.AlignRight)
+        self._set(row, USED_COLUMN, human_size(p.fs_used) if p.fs_used >= 0 else "-",
                   align=Qt.AlignRight)
         free = p.fs_total - p.fs_used if (p.fs_total >= 0 and p.fs_used >= 0) else -1
-        self._set(row, 7, human_size(free) if free >= 0 else "-", align=Qt.AlignRight)
-        self._set(row, 8, str(p.start_lba), align=Qt.AlignRight)
-        self._set(row, 9, str(p.end_lba), align=Qt.AlignRight)
-        self._set(row, 10, p.type_name)
+        self._set(row, FREE_COLUMN, human_size(free) if free >= 0 else "-",
+                  align=Qt.AlignRight)
+        self._set(row, START_COLUMN, str(p.start_lba), align=Qt.AlignRight)
+        self._set(row, END_COLUMN, str(p.end_lba), align=Qt.AlignRight)
+        self._set(row, TYPE_COLUMN, p.type_name)
         flags = []
         if p.bootable:
             flags.append(tr("Onyukleme"))
         if p.logical:
             flags.append(tr("Mantiksal"))
-        self._set(row, 11, ", ".join(flags) or "-", dim=not flags)
+        self._set(row, FLAG_COLUMN, ", ".join(flags) or "-", dim=not flags)
 
 
     def _fill_free(self, row: int, r: FreeRegion) -> None:
-        self._set(row, 0, tr("Bos alan"), icon=color_chip(QColor(FREE_COLOR)), dim=True)
-        for col in (1, 2, 3, MOUNT_COLUMN, 6, 7):
+        self._set(row, NAME_COLUMN, tr("Bos alan"),
+                  icon=color_chip(QColor(FREE_COLOR)), dim=True)
+        for col in (OS_COLUMN, PLAN_COLUMN, FS_COLUMN, LABEL_COLUMN,
+                    MOUNT_COLUMN, USED_COLUMN, FREE_COLUMN):
             self._set(row, col, "-", dim=True)
-        self._set(row, 5, human_size(r.size), align=Qt.AlignRight, dim=True)
-        self._set(row, 8, str(r.start_lba), align=Qt.AlignRight, dim=True)
-        self._set(row, 9, str(r.end_lba), align=Qt.AlignRight, dim=True)
-        self._set(row, 10, tr("Bolumlenmemis"), dim=True)
-        self._set(row, 11, "-", dim=True)
+        self._set(row, SIZE_COLUMN, human_size(r.size), align=Qt.AlignRight, dim=True)
+        self._set(row, START_COLUMN, str(r.start_lba), align=Qt.AlignRight, dim=True)
+        self._set(row, END_COLUMN, str(r.end_lba), align=Qt.AlignRight, dim=True)
+        self._set(row, TYPE_COLUMN, tr("Bolumlenmemis"), dim=True)
+        self._set(row, FLAG_COLUMN, "-", dim=True)
 
     # -- secim ---------------------------------------------------------------
     def current_target(self) -> Optional[Tuple[str, object]]:

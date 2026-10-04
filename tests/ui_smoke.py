@@ -383,6 +383,34 @@ def main() -> int:
     pencere.open_path(goruntu)
     app.processEvents()
 
+    # Bolum basina isletim sistemi (ADR 0089): tarama arka planda biter,
+    # agac/tablo/harita kendiliginden tazelenir. Ornek goruntunun ilk bolumu
+    # `EFI` klasoru tasiyan bir ESP'dir.
+    import time as _zaman
+    from diskultimate.ui.widgets.partition_table import OS_COLUMN
+    bitis = _zaman.time() + 20
+    while pencere.osinfo.pending() and _zaman.time() < bitis:
+        app.processEvents()
+        _zaman.sleep(0.05)
+    app.processEvents()
+    assert not pencere.osinfo.pending(), "isletim sistemi taramasi bitmedi"
+    esp = pencere.session.table.get(1)
+    assert esp.os_kind == "esp", (esp.os_kind, esp.os_name)
+    agac_metni = [pencere.tree.topLevelItem(i) for i in range(pencere.tree.topLevelItemCount())]
+    bulunan = []
+    for kok in agac_metni:
+        yigin = [kok]
+        while yigin:
+            dugum = yigin.pop()
+            yigin += [dugum.child(j) for j in range(dugum.childCount())]
+            if dugum.data(0, Qt.UserRole) == ("part", (id(pencere.session), 1)):
+                bulunan.append(dugum.text(0))
+    assert bulunan and esp.os_name in bulunan[0], (bulunan, esp.os_name)
+    hucre = pencere.part_table.item(0, OS_COLUMN)
+    assert hucre is not None and hucre.text() == esp.os_name, \
+        (hucre.text() if hucre else None, esp.os_name)
+    print(f"  (isletim sistemi: bolum 1 -> {esp.os_name!r})")
+
     def kaydet(widget, ad: str) -> None:
         app.processEvents()
         app.processEvents()

@@ -89,6 +89,12 @@ class Partition:
     # ("/media/pc/VERI"), Windows'ta surucu harfi ("E:"). Bos = bagli degil.
     # Diskten okunmaz; fiziksel disk taramasindan gelir (ADR 0043).
     mount_point: str = ""
+    # Bolumde kurulu isletim sistemi ("Ubuntu 24.04", "Windows 11 (22631)")
+    # ve turu (windows | linux | macos | esp | ""). Diskten okunmaz; arka
+    # planda dosya sistemi icinden bulunur (`bootloader.partition_os`,
+    # `ui/osinfo.py`).
+    os_name: str = ""
+    os_kind: str = ""
     sector_size: int = 512
     # Bekleyen islem onizlemesinde bu bolumun durumu ("" = diskteki hali).
     # Degerler `planview.STATE_*`; diskten okunan bolumlerde hep bostur.
