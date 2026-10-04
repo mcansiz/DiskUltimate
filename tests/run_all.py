@@ -6824,6 +6824,70 @@ def t86_surucu_harfi_ofsetle():
         assert not ok and mesaj
 
 
+@test
+def t87_exfat_kucult_buyut_bitmap_zinciri():
+    """exFAT: en aza kucultup geri buyutunce bitmap zinciri boyuna yeter (ADR 0087)
+
+    Uzun testler (full profil, 6.7 GiB): `geri_buyut` sonrasi Apple
+    fsck_exfat "Cluster chain for Main Bitmap has too few clusters", Windows
+    dosyalari listelemiyor. Kucultme zinciri kisaltir (ADR 0083); buyutmede
+    yeni ardisik alan eski ilk kumeden basladiginda zincir yeniden
+    yazilmiyordu. Quick profilde bitmap tek kumeye sigdigi icin gorunmedi.
+    """
+    from diskultimate.core import operations as _ops
+    from diskultimate.core.exfat import EOC as EXFAT_EOC
+
+    yol = img_path("t87.img")
+    s = DiskSession.create(yol, 700 * MIB, scheme="gpt", overwrite=True)
+    k = _ops.OperationQueue()
+    k.add(_ops.create_op(2048, 600 * 2048, 512))
+    assert k.apply(s).ok, "olusturma"
+    s.reload()
+    # 4 KiB kume: 600 MB'ta bitmap 5 kumeye yayilir
+    s.format_partition(1, "exfat", label="ZINCIR", cluster_bytes=4096)
+    s.reload()
+    veri = {f"/d{i}.bin": os.urandom(300 * 1024 + i) for i in range(6)}
+    fs = s.filesystem(1)
+    for ad, icerik in veri.items():
+        fs.write_file(ad, icerik)
+    fs.flush()
+    s.close_filesystems()
+
+    def denetle(etiket):
+        ex = ExFatFS(s.view(s.table.get(1)))
+        kb = ex.cluster_bytes
+        gereken = (ex.bitmap_length + kb - 1) // kb
+        zincir = ex.chain(ex.bitmap_cluster)           # FAT'i EOC'ye kadar izler
+        assert len(zincir) == gereken, (etiket, len(zincir), gereken)
+        assert ex.get_fat(zincir[-1]) == EXFAT_EOC, etiket
+        assert ex.bitmap_length == (ex.cluster_count + 7) // 8, etiket
+        for c in zincir:
+            assert ex.is_used(c), (etiket, "bitmap kumesi bos isaretli", c)
+        okunan = s.filesystem(1)
+        for ad, icerik in veri.items():
+            assert okunan.read(ad) == icerik, (etiket, ad)
+        s.close_filesystems()
+        return gereken
+
+    assert denetle("baslangic") >= 4, "bitmap birden cok kumeye yayilmali"
+    en_az = s.resize_info(1).min_sectors
+    s.resize_partition(1, 2048, -(-en_az // 2048) * 2048, confirm=True)
+    s.reload()
+    assert denetle("kucult") == 1
+    s.resize_partition(1, 2048, 600 * 2048, confirm=True)
+    s.reload()
+    assert denetle("geri buyut") >= 4
+    s.close()
+    if shutil.which("fsck.exfat"):
+        parca = img_path("t87_bolum.img")
+        with open(yol, "rb") as src, open(parca, "wb") as out:
+            src.seek(2048 * 512)
+            for _ in range(600):
+                out.write(src.read(MIB))
+        r = subprocess.run(["fsck.exfat", "-n", parca], capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout[-600:]
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

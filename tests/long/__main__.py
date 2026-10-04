@@ -7,15 +7,22 @@ import shutil
 import sys
 import time
 
-from .data import GIB, MIB, PROFILES, FileSpec, build
+from .data import GIB, MIB, PROFILES, FileSpec, build, footprint
 from .engine import FS_PLANS, TABLES, Ctx, ROOT, run, save
 from .steps import ALIGN, STEPS
+
+
+def slack_unit(plan) -> int:
+    """Butce hesabindaki kume birimi. FAT12/16'da kume sayisi sinirli oldugu
+    icin kume buyuktur (FAT12 ~21 MiB: 8 KiB; FAT16 ~2.6 GiB: 64 KiB)."""
+    return {"fat12": 8 * 1024, "fat16": 64 * 1024}.get(plan.key, 4096)
 
 
 def plan_sizes(plan, dataset) -> tuple:
     """(bolum sektoru, disk bayti): veri + %15 ustveri payi; buyutme ve tasima
     icin disk bolumun ~1.6 kati."""
-    data = sum(f.size for f in dataset.files)
+    unit = slack_unit(plan)
+    data = sum(footprint(f.size, unit) for f in dataset.files)
     part = max(data * 115 // 100 + 48 * MIB, 64 * MIB)
     if plan.key == "xfs":
         part = max(part, 320 * MIB)
@@ -33,7 +40,8 @@ def make_dataset(plan, profile, seed: int, budget_gb: float):
     if plan.max_volume:
         limit = plan.max_volume * 55 // 100
         budget = min(budget, limit) if budget else limit
-    ds = build(seed, profile, max_file=plan.max_file, budget=budget)
+    ds = build(seed, profile, max_file=plan.max_file, budget=budget,
+               unit=slack_unit(plan))
     # Tam sinirda dosya: profil siniri asan bir buyuk dosya istiyorsa ve
     # birim alabiliyorsa (FAT32: 4 GiB-1) o boyutta bir dosya eklenir.
     if (plan.max_file and any(b > plan.max_file for b in profile.big)

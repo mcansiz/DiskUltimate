@@ -666,7 +666,13 @@ def _exfat_extend_bitmap(view: BlockDevice, old_clusters: int) -> None:
     for i, c in enumerate(target):
         view.write(fs.cluster_offset(c), dolgu[i * kb:(i + 1) * kb])
 
-    if first != fs.bitmap_cluster:
+    # Zincir, kume LISTESI degistiyse yeniden yazilir — ilk kume ayni olsa
+    # bile: kucultmede kisaltilan zincirin ardindaki kumeler bos kaldigi icin
+    # yeni ardisik alan cogu zaman eski ilk kumeden baslar. Eskiden yalnizca
+    # ilk kume degisince yaziliyordu; zincir kisa, uzunluk buyuk kaliyordu
+    # (Apple fsck_exfat "Main Bitmap has too few clusters", Windows dosya
+    # listelemiyor; uzun testler full profil, 6.7 GiB, ADR 0087).
+    if target != old_clusters:
         eskiler = set(old_clusters)
         for i, c in enumerate(target):      # yeni zincir
             fs.set_fat(c, EXFAT_EOC if i == len(target) - 1 else c + 1)

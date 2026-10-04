@@ -5775,3 +5775,12 @@ calismiyordu.
 - **v0.5.1-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.5.1-beta
   — sürüm koşusu 37203299268: 3 platform test + Windows exe, Linux AppImage,
   macOS zip; notların başına İngilizce/Türkçe "yenilikler" eklendi.
+
+## 2026-10-04 (7) — Tam profil ilk bulgular (ADR 0087)
+
+- Tam profil (CI 37202739981) koşarken 12 iş düştü: exFAT `geri_buyut`
+  (Windows + macOS; Linux denetlemiyor) ve FAT12 `doldur`.
+- exFAT: büyütmede bitmap zinciri yeni alan eski ilk kümeden başlayınca
+  yeniden yazılmıyordu (uzunluk büyük, zincir 1 küme). Düzeltildi, t87
+  (eski kodda 1/5). **0.5.1-beta'da var** — sonraki sürümle düzelir.
+- Uzun test bütçesi küme artığını sayar (`footprint`); FAT12 full yerelde 16/16.

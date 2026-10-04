@@ -101,11 +101,24 @@ class Dataset:
     dirs: List[str] = field(default_factory=list)
 
 
+def footprint(size: int, unit: int) -> int:
+    """Dosyanin birimde kapladigi yer (kume artigi + dizin girisi payi).
+
+    Bayt toplami kucuk dosyali profillerde yaniltir: FAT12'de (8 KiB kume)
+    1455 dosyanin artigi tek basina ~6 MiB tuttu, 21 MiB'lik birim "yer yok"
+    dedi (full profil, 2026-10-04).
+    """
+    if not unit:
+        return size
+    return -(-max(size, 1) // unit) * unit + 512
+
+
 def build(seed: int, profile: Profile, max_file: int = 0,
           budget: int = 0, ascii_only: bool = False,
-          name_max: int = 255) -> Dataset:
+          name_max: int = 255, unit: int = 0) -> Dataset:
     """Tohumdan dosya agaci uretir.
 
+    `unit`: butce hesabinda dosya boyutu bu birime yuvarlanir (`footprint`).
     `max_file`: dosya sisteminin tek dosya siniri (FAT32: 4 GiB-1); asan
     buyuk dosyalar listeden cikar (sinir ayrica sinanir). `budget`: toplam
     veri ust siniri (bolum boyutu). `ascii_only`/`name_max`: ad kurallari
@@ -129,7 +142,8 @@ def build(seed: int, profile: Profile, max_file: int = 0,
 
     def add(size: int, folder: str, stem: str) -> None:
         nonlocal used, key
-        if budget and used + size > budget:
+        cost = footprint(size, unit)
+        if budget and used + cost > budget:
             return
         if max_file and size > max_file:
             return
@@ -139,7 +153,7 @@ def build(seed: int, profile: Profile, max_file: int = 0,
         if any(f.path.lower() == path.lower() for f in ds.files):
             path += f".{key % 1000}"
         ds.files.append(FileSpec(path, size, key))
-        used += size
+        used += cost
 
     for size in profile.big:
         add(size, "/", f"buyuk_{size // MIB}MiB")
