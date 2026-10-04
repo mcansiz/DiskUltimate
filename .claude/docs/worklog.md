@@ -5848,3 +5848,4 @@ calismiyordu.
 - t90, ui_smoke; 20 yeni metin 9 dilde. run_all 88/90, platform 0, diag 13/13.
 - Güncelleme denetimi zaman aşımı (kullanıcı bildirdi): 15 sn, API'yi ikinci
   deneme, `releases.atom` yedeği, anlaşılır hata metni; t90 genişledi.
+- Sürüm 0.6.2-beta (kullanıcı kararı): lisanslar, Hakkında, güncelleme denetimi.

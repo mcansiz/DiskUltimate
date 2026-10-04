@@ -4,7 +4,7 @@
 diskler** uzerinde, DiskGenius benzeri gorsel bir arayuzle bolumleme,
 bicimlendirme, yedekleme, kurtarma ve dosya erisimi saglamak.
 
-**Durum:** v0.6.1-beta (2026-10-04) — bölüm başına işletim sistemi (ADR 0089); v0.6.0-beta Sistem/Açık/Koyu tema, .ts sözlükler, on dil (ADR 0088); v0.5.2-beta tam profil uzun testlerin bulguları (ADR 0087); v0.5.1-beta uzun testlerin bulduğu veri kaybı hataları (ADR 0084-0086); ilk genel beta v0.5.0-beta (2026-10-02). **Windows ve Linux**
+**Durum:** v0.6.2-beta (2026-10-04) — üçüncü taraf lisansları, Hakkında, güncelleme denetimi (ADR 0090); v0.6.1-beta bölüm başına işletim sistemi (ADR 0089); v0.6.0-beta Sistem/Açık/Koyu tema, .ts sözlükler, on dil (ADR 0088); v0.5.2-beta tam profil uzun testlerin bulguları (ADR 0087); v0.5.1-beta uzun testlerin bulduğu veri kaybı hataları (ADR 0084-0086); ilk genel beta v0.5.0-beta (2026-10-02). **Windows ve Linux**
 (ikisinde de kosuldu); FAT/exFAT/NTFS/ext/HFS+/UDF okuma-yazma, XFS/btrfs/F2FS/APFS/ISO okuma. DiskGenius ozellik karsilastirmasi: [diskgenius-parity.md](diskgenius-parity.md)
 
 > Surumun tek kaynagi koddaki `ui/main_window.py::APP_VERSION`. Bu satir
