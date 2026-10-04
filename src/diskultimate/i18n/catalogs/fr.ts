@@ -5,19 +5,19 @@
     <name>DiskUltimate</name>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="198"/>
-        <location filename="../../ui/main_window.py" line="2494"/>
+        <location filename="../../ui/main_window.py" line="2537"/>
         <source>
 (Bu adim veri kaybettirebilir)</source>
         <translation>
 (Cette étape peut entraîner une perte de données)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3829"/>
+        <location filename="../../ui/main_window.py" line="3872"/>
         <source>  (bolum yok)</source>
         <translation>  (aucune partition)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2853"/>
+        <location filename="../../ui/main_window.py" line="2896"/>
         <source>  (disk bulunamadi)</source>
         <translation>  (aucun disque trouvé)</translation>
     </message>
@@ -135,17 +135,17 @@
         <translation>&amp;Ouvrir</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="537"/>
+        <location filename="../../ui/main_window.py" line="549"/>
         <source>&amp;Araclar</source>
         <translation>&amp;Outils</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="512"/>
+        <location filename="../../ui/main_window.py" line="524"/>
         <source>&amp;Bolum</source>
         <translation>&amp;Partition</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="472"/>
+        <location filename="../../ui/main_window.py" line="484"/>
         <source>&amp;Dosya</source>
         <translation>&amp;Fichier</translation>
     </message>
@@ -175,7 +175,7 @@
         <translation>&amp;Enregistrer</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="533"/>
+        <location filename="../../ui/main_window.py" line="545"/>
         <source>&amp;Onyukleme</source>
         <translation>&amp;Démarrage</translation>
     </message>
@@ -190,7 +190,7 @@
         <translation>Oui pour &amp;tout</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="562"/>
+        <location filename="../../ui/main_window.py" line="574"/>
         <source>&amp;Yardim</source>
         <translation>&amp;Aide</translation>
     </message>
@@ -231,29 +231,29 @@
         <translation>(aucune partition)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3471"/>
+        <location filename="../../ui/main_window.py" line="3514"/>
         <location filename="../../ui/widgets/disk_overview.py" line="155"/>
         <source>(bolumler okunamadi: {})</source>
         <translation>(impossible de lire les partitions : {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3467"/>
+        <location filename="../../ui/main_window.py" line="3510"/>
         <source>(bolumler okunuyor...)</source>
         <translation>(lecture des partitions...)</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="760"/>
-        <location filename="../../ui/main_window.py" line="2714"/>
+        <location filename="../../ui/main_window.py" line="2757"/>
         <source>(bos)</source>
         <translation>(vide)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3650"/>
+        <location filename="../../ui/main_window.py" line="3693"/>
         <source>(degistirilemez — neden?)</source>
         <translation>(non modifiable — pourquoi ?)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3434"/>
+        <location filename="../../ui/main_window.py" line="3477"/>
         <source>(disk bulunamadi)</source>
         <translation>(aucun disque trouvé)</translation>
     </message>
@@ -283,7 +283,7 @@
         <translation>(aucun fichier de sauvegarde sélectionné)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2712"/>
+        <location filename="../../ui/main_window.py" line="2755"/>
         <source>(yok)</source>
         <translation>(aucun)</translation>
     </message>
@@ -324,7 +324,7 @@
         <translation>&lt; Précédent</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2245"/>
+        <location filename="../../ui/main_window.py" line="2288"/>
         <source>&lt;b&gt;Acik disk/goruntu kapatilacak.&lt;/b&gt;&lt;br&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;Le disque/l&apos;image ouvert(e) sera fermé(e).&lt;/b&gt;&lt;br&gt;&lt;br&gt;</translation>
     </message>
@@ -339,7 +339,7 @@
         <translation>&lt;b&gt;Espace libre&lt;/b&gt;&lt;br&gt;Taille : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2447"/>
+        <location filename="../../ui/main_window.py" line="2490"/>
         <source>&lt;b&gt;Diskteki hali&lt;/b&gt; gosteriliyor — {} bekleyen adim listede bekliyor.</source>
         <translation>Affichage de la &lt;b&gt;disposition actuelle sur le disque&lt;/b&gt; — {} étapes en attente figurent dans la liste.</translation>
     </message>
@@ -369,7 +369,7 @@
         <translation>&lt;b&gt;Impossible de lire la configuration de démarrage.&lt;/b&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2441"/>
+        <location filename="../../ui/main_window.py" line="2484"/>
         <source>&lt;b&gt;Planlanan yerlesim&lt;/b&gt; gosteriliyor — {} bekleyen adim uygulandiginda disk boyle olacak ({}). Diske henuz yazilmadi.</source>
         <translation>Affichage de la &lt;b&gt;disposition prévue&lt;/b&gt; — voici à quoi ressemblera le disque une fois les {} étapes en attente appliquées ({}). Rien n&apos;a encore été écrit.</translation>
     </message>
@@ -394,12 +394,12 @@
         <translation>&lt;b&gt;{} étapes peuvent détruire des données&lt;/b&gt; et ne peuvent pas être annulées une fois appliquées.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2525"/>
+        <location filename="../../ui/main_window.py" line="2568"/>
         <source>&lt;b&gt;{} bekleyen adim&lt;/b&gt; henuz uygulanmadi ve kaynak kapatilinca kaybolacak.&lt;br&gt;&lt;br&gt;Diskte hicbir degisiklik yapilmadi.&lt;br&gt;&lt;br&gt;Yine de kapatilsin mi?</source>
         <translation>&lt;b&gt;{} étapes en attente&lt;/b&gt; n&apos;ont pas encore été appliquées et seront perdues à la fermeture de la source.&lt;br&gt;&lt;br&gt;Rien n&apos;a été modifié sur le disque.&lt;br&gt;&lt;br&gt;Fermer quand même ?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2190"/>
+        <location filename="../../ui/main_window.py" line="2233"/>
         <source>&lt;b&gt;{} fiziksel diskin&lt;/b&gt; bilgisi okunamadi ({}).&lt;br&gt;&lt;br&gt;Fiziksel disklere erismek icin {} yetkisi gerekir. Uygulama simdi yetkili olarak yeniden baslatilsin mi?&lt;br&gt;&lt;br&gt;&lt;i&gt;Disk goruntusu dosyalari (.img, VHD, VDI...) icin yetki gerekmez; yalnizca goruntu dosyalariyla calisacaksaniz &lt;b&gt;Hayir&lt;/b&gt; diyebilirsiniz.&lt;/i&gt;</source>
         <translation>&lt;b&gt;{} disques physiques&lt;/b&gt; n&apos;ont pas pu être lus ({}).&lt;br&gt;&lt;br&gt;L&apos;accès aux disques physiques nécessite des privilèges {}. Redémarrer l&apos;application avec des privilèges élevés maintenant ?&lt;br&gt;&lt;br&gt;&lt;i&gt;Les fichiers image disque (.img, VHD, VDI...) ne nécessitent aucun privilège ; si vous travaillez uniquement avec des fichiers image, vous pouvez répondre &lt;b&gt;Non&lt;/b&gt;.&lt;/i&gt;</translation>
     </message>
@@ -424,7 +424,7 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; ({}) — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1015"/>
+        <location filename="../../ui/main_window.py" line="1058"/>
         <source>&lt;b&gt;{}&lt;/b&gt; bir DiskUltimate yedegidir. Icerigi &lt;b&gt;salt okunur&lt;/b&gt; olarak gezebilirsiniz: bolumler, klasorler ve dosyalar gorunur, dosyalari disa aktarabilirsiniz.&lt;br&gt;&lt;br&gt;&lt;b&gt;Kaynak boyut:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Yedek boyut:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Olusturma:&lt;/b&gt; {}&lt;br&gt;&lt;br&gt;Yedegi bir &lt;b&gt;diske veya goruntuye yazmak&lt;/b&gt; icin: &lt;i&gt;Disk &amp;gt; Yedegi diske yaz...&lt;/i&gt;</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; est une sauvegarde DiskUltimate. Vous pouvez parcourir son contenu &lt;b&gt;en lecture seule&lt;/b&gt; : les partitions, dossiers et fichiers sont visibles et vous pouvez exporter des fichiers.&lt;br&gt;&lt;br&gt;&lt;b&gt;Taille de la source :&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Taille de la sauvegarde :&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Créée le :&lt;/b&gt; {}&lt;br&gt;&lt;br&gt;Pour &lt;b&gt;écrire la sauvegarde sur un disque ou une image&lt;/b&gt; : &lt;i&gt;Disque &amp;gt; Écrire la sauvegarde sur un disque...&lt;/i&gt;</translation>
     </message>
@@ -449,17 +449,17 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; est le disque du système d&apos;exploitation. L&apos;écraser rendra le système impossible à démarrer. Saisissez le nom du disque pour confirmer : &lt;b&gt;{}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1772"/>
+        <location filename="../../ui/main_window.py" line="1815"/>
         <source>&lt;b&gt;{}&lt;/b&gt; nereye klonlansin?</source>
         <translation>Où &lt;b&gt;{}&lt;/b&gt; doit-il être cloné ?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3979"/>
+        <location filename="../../ui/main_window.py" line="4022"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acik — bu &lt;b&gt;normaldir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Yaptiginiz degisiklikler bekleyen islem olarak birikir ve diske ancak &lt;b&gt;Uygula&lt;/b&gt; dediginizde yazilir.</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; est ouvert en lecture seule — c&apos;est &lt;b&gt;normal&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Vos modifications sont regroupées en opérations en attente et ne sont écrites sur le disque que lorsque vous choisissez &lt;b&gt;Appliquer&lt;/b&gt;.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3948"/>
+        <location filename="../../ui/main_window.py" line="3991"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acildi; bu dosyada degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;&lt;b&gt;Neden:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Yol:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Bicim:&lt;/b&gt; {}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; a été ouvert en lecture seule ; ce fichier ne peut pas être modifié.&lt;br&gt;&lt;br&gt;&lt;b&gt;Raison :&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Chemin :&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Format :&lt;/b&gt; {}</translation>
     </message>
@@ -469,7 +469,7 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; entrées supprimées trouvées — &lt;b&gt;{}&lt;/b&gt; d&apos;entre elles semblent entièrement récupérables.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3986"/>
+        <location filename="../../ui/main_window.py" line="4029"/>
         <source>&lt;b&gt;{}&lt;/b&gt; uzerinde degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;{}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; ne peut pas être modifié.&lt;br&gt;&lt;br&gt;{}</translation>
     </message>
@@ -477,6 +477,11 @@
         <location filename="../../ui/dialogs/clone_target.py" line="138"/>
         <source>&lt;b&gt;{}&lt;/b&gt; uzerindeki bolum tablosu ve butun bolumler kaybolacak.</source>
         <translation>La table de partitions et toutes les partitions de &lt;b&gt;{}&lt;/b&gt; seront perdues.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/updatecheck.py" line="60"/>
+        <source>&lt;b&gt;{}&lt;/b&gt; yayinlandi (kullandiginiz surum: {}).&lt;br&gt;&lt;br&gt;Indirmek icin GitHub sayfasini acmak ister misiniz?</source>
+        <translation>&lt;b&gt;{}&lt;/b&gt; est disponible (vous utilisez {}).&lt;br&gt;&lt;br&gt;Ouvrir la page GitHub pour la télécharger ?</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/partition_layout.py" line="58"/>
@@ -494,19 +499,24 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; — {} (affichage des {} premiers)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3953"/>
+        <location filename="../../ui/main_window.py" line="3996"/>
         <source>&lt;br&gt;&lt;br&gt;Dosyayi kullanan diger programi (baska bir disk araci, yedekleme yazilimi vb.) kapatip &lt;b&gt;Yeniden dene&lt;/b&gt;ye basin.</source>
         <translation>&lt;br&gt;&lt;br&gt;Fermez l&apos;autre programme qui utilise le fichier (autre outil de disque, logiciel de sauvegarde, etc.) et appuyez sur &lt;b&gt;Réessayer&lt;/b&gt;.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4073"/>
+        <location filename="../../ui/main_window.py" line="4122"/>
         <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt5, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
         <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Un outil pour partitionner, formater, sauvegarder et récupérer des images disque, des disques virtuels et les &lt;b&gt;disques réels de ce système&lt;/b&gt;.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Technologie :&lt;/b&gt; Python 3 + PyQt5, sans dépendance externe&lt;br&gt;&lt;b&gt;Tables de partitions :&lt;/b&gt; MBR (y compris les partitions logiques), GPT, conversion MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT&lt;br&gt;&lt;b&gt;Formatage :&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 et NTFS — les huit en Python pur, sur trois plateformes&lt;br&gt;&lt;b&gt;Accès aux fichiers :&lt;/b&gt; lecture/écriture complète pour FAT et exFAT&lt;/p&gt;&lt;p&gt;Les fichiers image ne nécessitent pas de privilèges administrateur. L&apos;accès aux disques physiques nécessite les droits administrateur/root et se fait &lt;b&gt;en lecture seule par défaut&lt;/b&gt; ; l&apos;écriture demande une confirmation distincte.&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="799"/>
+        <location filename="../../ui/main_window.py" line="841"/>
         <source>&lt;p&gt;Bu uygulama asagidaki ikon paketlerinden secilmis ikonlari gomulu olarak icerir. Isletim sistemi amblemleri sahiplerinin ticari markasidir; yalnizca diski tanitmak icin gosterilir.&lt;/p&gt;</source>
         <translation>&lt;p&gt;Cette application intègre une sélection d&apos;icônes issues des packs d&apos;icônes suivants. Les emblèmes des systèmes d&apos;exploitation sont des marques de leurs propriétaires et ne sont affichés que pour identifier le disque.&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="825"/>
+        <source>&lt;p&gt;Bu uygulamanin indirilebilir surumleri (Windows exe, Linux AppImage, macOS) asagidaki bilesenleri icinde tasir. Uygulamanin kendisi GNU GPL surum 3 ile lisanslidir; kaynak kodu: {}&lt;/p&gt;</source>
+        <translation>&lt;p&gt;Les versions téléchargeables (exe Windows, AppImage Linux, macOS) incluent les composants ci-dessous. L&apos;application elle-même est sous licence GNU GPL version 3 ; code source : {}&lt;/p&gt;</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="74"/>
@@ -596,12 +606,12 @@
         <translation>Activé</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="684"/>
+        <location filename="../../ui/main_window.py" line="699"/>
         <source>Acik .dub yedegini yeni bir goruntu dosyasina veya fiziksel diske yazar</source>
         <translation>Écrit la sauvegarde .dub ouverte dans un nouveau fichier image ou sur un disque physique</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2158"/>
+        <location filename="../../ui/main_window.py" line="2201"/>
         <source>Acik dosya bicimi</source>
         <translation>Format de fichier à ouvrir</translation>
     </message>
@@ -622,6 +632,11 @@
         <translation>Description :</translation>
     </message>
     <message>
+        <location filename="../../ui/main_window.py" line="714"/>
+        <source>Acilista guncellemeleri denetle</source>
+        <translation>Rechercher les mises à jour au démarrage</translation>
+    </message>
+    <message>
         <location filename="../../ui/widgets/disk_overview.py" line="244"/>
         <source>Acmak icin tiklayin (salt okunur)</source>
         <translation>Cliquer pour ouvrir (lecture seule)</translation>
@@ -629,7 +644,7 @@
     <message>
         <location filename="../../ui/dialogs/backup.py" line="326"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3837"/>
+        <location filename="../../ui/main_window.py" line="3880"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <source>Ad</source>
@@ -676,8 +691,8 @@
         <translation>Interface réseau (MAC)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2823"/>
-        <location filename="../../ui/main_window.py" line="2897"/>
+        <location filename="../../ui/main_window.py" line="2866"/>
+        <location filename="../../ui/main_window.py" line="2940"/>
         <source>Agactan bir fiziksel disk secin.</source>
         <translation>Sélectionnez un disque physique dans l&apos;arborescence.</translation>
     </message>
@@ -687,22 +702,22 @@
         <translation>Apple HFS+</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2717"/>
+        <location filename="../../ui/main_window.py" line="2760"/>
         <source>Arayuz bir saniyeden uzun yanit vermezse butun is parcaciklarinin yigini kendiliginden rapor dosyasina yazilir. Raporlar gunluk klasorundeki freeze/ altindadir.</source>
         <translation>Si l&apos;interface cesse de répondre pendant plus d&apos;une seconde, les piles de tous les threads sont automatiquement écrites dans un fichier de rapport. Les rapports se trouvent dans freeze/ du dossier des journaux.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2154"/>
+        <location filename="../../ui/main_window.py" line="2197"/>
         <source>Arayuz dili</source>
         <translation>Langue de l&apos;interface</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2156"/>
+        <location filename="../../ui/main_window.py" line="2199"/>
         <source>Arayuz stili</source>
         <translation>Style de l&apos;interface</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2742"/>
+        <location filename="../../ui/main_window.py" line="2785"/>
         <source>Arayuzun takildigi andaki yigin. En ustteki &apos;O an acik islem&apos; satiri hangi islemin bekledigini soyler.</source>
         <translation>La pile au moment du blocage de l&apos;interface. La ligne « opération en cours » la plus haute indique quelle opération était en attente.</translation>
     </message>
@@ -722,7 +737,7 @@
         <translation>Vers le bas</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2540"/>
+        <location filename="../../ui/main_window.py" line="2583"/>
         <source>Asagi tasi</source>
         <translation>Déplacer vers le bas</translation>
     </message>
@@ -759,7 +774,7 @@
         <translation>Périphérique</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3234"/>
+        <location filename="../../ui/main_window.py" line="3277"/>
         <source>Aygit cikarildi: {}</source>
         <translation>Périphérique retiré : {}</translation>
     </message>
@@ -774,7 +789,7 @@
         <translation>Le périphérique est plus petit que la taille demandée</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1169"/>
+        <location filename="../../core/platform.py" line="1227"/>
         <source>Aygit klasorune ({}) goruntu olusturulamaz; bu alan bellekte tutulur ve dolunca sistem aygit dugumu olusturamaz.</source>
         <translation>Impossible de créer une image dans le dossier des périphériques ({}) ; cette zone est conservée en mémoire et lorsqu&apos;elle est pleine, le système ne peut plus créer de nœuds de périphérique.</translation>
     </message>
@@ -784,7 +799,7 @@
         <translation>Le périphérique est en lecture seule</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3230"/>
+        <location filename="../../ui/main_window.py" line="3273"/>
         <source>Aygit takildi: {} — {} ({})</source>
         <translation>Périphérique inséré : {} — {} ({})</translation>
     </message>
@@ -908,22 +923,22 @@
         <translation>Périphérique de démarrage BIOS</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2829"/>
+        <location filename="../../ui/main_window.py" line="2872"/>
         <source>BOLUM AYGITLARI</source>
         <translation>PÉRIPHÉRIQUES DE PARTITION</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3835"/>
+        <location filename="../../ui/main_window.py" line="3878"/>
         <source>BOLUM {}</source>
         <translation>PARTITION {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3821"/>
+        <location filename="../../ui/main_window.py" line="3864"/>
         <source>BOLUMLER</source>
         <translation>PARTITIONS</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="589"/>
+        <location filename="../../core/platform.py" line="590"/>
         <source>Bagla</source>
         <translation>Monter</translation>
     </message>
@@ -933,17 +948,17 @@
         <translation>Montage</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="594"/>
+        <location filename="../../core/platform.py" line="595"/>
         <source>Baglama noktasi</source>
         <translation>Point de montage</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1624"/>
+        <location filename="../../ui/main_window.py" line="1667"/>
         <source>Baglama yalnizca gercek disklerde anlamlidir; goruntu dosyasi isletim sistemine bagli degildir.</source>
         <translation>Le montage ne s&apos;applique qu&apos;aux disques réels ; un fichier image n&apos;est pas rattaché au système d&apos;exploitation.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="789"/>
+        <location filename="../../core/platform.py" line="790"/>
         <source>Baglamak icin root yetkisi veya `udisksctl` gerekir.</source>
         <translation>Le montage nécessite les privilèges root ou `udisksctl`.</translation>
     </message>
@@ -953,15 +968,15 @@
         <translation>Bus</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1585"/>
-        <location filename="../../ui/main_window.py" line="1587"/>
-        <location filename="../../ui/main_window.py" line="1592"/>
-        <location filename="../../ui/main_window.py" line="2665"/>
+        <location filename="../../ui/main_window.py" line="1628"/>
+        <location filename="../../ui/main_window.py" line="1630"/>
+        <location filename="../../ui/main_window.py" line="1635"/>
+        <location filename="../../ui/main_window.py" line="2708"/>
         <source>Baglantilari kes</source>
         <translation>Tout démonter</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2659"/>
+        <location filename="../../ui/main_window.py" line="2702"/>
         <source>Bagli bolum uyarisi</source>
         <translation>Avertissement de partition montée</translation>
     </message>
@@ -981,12 +996,12 @@
         <translation>Partitions montées</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3842"/>
+        <location filename="../../ui/main_window.py" line="3885"/>
         <source>Bagli degil</source>
         <translation>Non monté</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3884"/>
+        <location filename="../../ui/main_window.py" line="3927"/>
         <source>Bagli — isletim sistemi kullaniyor</source>
         <translation>Monté — utilisé par le système d&apos;exploitation</translation>
     </message>
@@ -1001,7 +1016,7 @@
         <translation>Échec : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1774"/>
+        <location filename="../../ui/main_window.py" line="1817"/>
         <source>Baska bir diske...</source>
         <translation>Vers un autre disque...</translation>
     </message>
@@ -1017,7 +1032,7 @@
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3845"/>
+        <location filename="../../ui/main_window.py" line="3888"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Baslangic LBA</source>
         <translation>LBA de début</translation>
@@ -1054,7 +1069,7 @@
         <translation>L&apos;indicateur reste activé ; Windows vérifie le volume à son prochain démarrage. Linux ne le montera pas d&apos;ici là.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3847"/>
+        <location filename="../../ui/main_window.py" line="3890"/>
         <source>Bayt ofseti</source>
         <translation>Décalage en octets</translation>
     </message>
@@ -1064,37 +1079,42 @@
         <translation>Certaines étapes ont échoué ; les détails figurent dans le journal ci-dessous.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1444"/>
+        <location filename="../../core/platform.py" line="1502"/>
         <source>Beklenmeyen cikti</source>
         <translation>Sortie inattendue</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2381"/>
+        <location filename="../../core/updates.py" line="110"/>
+        <source>Beklenmeyen yanit</source>
+        <translation>Réponse inattendue</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="2424"/>
         <source>Bekleyen adimla cakisiyor</source>
         <translation>En conflit avec une étape en attente</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2511"/>
+        <location filename="../../ui/main_window.py" line="2554"/>
         <source>Bekleyen islem yok</source>
         <translation>Aucune opération en attente</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="188"/>
+        <location filename="../../ui/main_window.py" line="192"/>
         <source>Bekleyen islemler</source>
         <translation>Opérations en attente</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2510"/>
+        <location filename="../../ui/main_window.py" line="2553"/>
         <source>Bekleyen islemler ({})</source>
         <translation>Opérations en attente ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2524"/>
+        <location filename="../../ui/main_window.py" line="2567"/>
         <source>Bekleyen islemler var</source>
         <translation>Des opérations sont en attente</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3343"/>
+        <location filename="../../ui/main_window.py" line="3386"/>
         <location filename="../../ui/widgets/partition_table.py" line="145"/>
         <source>Bekleyen islemler:</source>
         <translation>Opérations en attente :</translation>
@@ -1110,12 +1130,12 @@
         <translation>Ajouté aux opérations en attente : suppression du code d&apos;amorçage</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2572"/>
+        <location filename="../../ui/main_window.py" line="2615"/>
         <source>Bekleyen islemleri iptal et</source>
         <translation>Abandonner les opérations en attente</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="675"/>
+        <location filename="../../ui/main_window.py" line="690"/>
         <source>Bekleyen islemleri sirayla uygular. Bu ana kadar diske hicbir sey yazilmadi.</source>
         <translation>Applique les opérations en attente dans l&apos;ordre. Rien n&apos;a encore été écrit sur le disque.</translation>
     </message>
@@ -1143,12 +1163,12 @@
         <translation>Micrologiciel</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1766"/>
+        <location filename="../../core/platform.py" line="1824"/>
         <source>Bellenim ayricaligi bulunamadi.</source>
         <translation>Le privilège d&apos;accès au micrologiciel est introuvable.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1777"/>
+        <location filename="../../core/platform.py" line="1835"/>
         <source>Bellenim ayricaligi verilmedi ({} yetkisi gerekir).</source>
         <translation>Le privilège d&apos;accès au micrologiciel n&apos;a pas été accordé (droits {} requis).</translation>
     </message>
@@ -1158,23 +1178,23 @@
         <translation>Fichier de volume du micrologiciel</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1653"/>
+        <location filename="../../core/platform.py" line="1711"/>
         <source>Bellenim degiskenleri icin {} yetkisi gerekiyor.</source>
         <translation>Les variables du micrologiciel nécessitent des droits {}.</translation>
     </message>
     <message>
         <location filename="../../core/efistore.py" line="467"/>
-        <location filename="../../core/platform.py" line="1905"/>
+        <location filename="../../core/platform.py" line="1963"/>
         <source>Bellenim degiskenleri yazilamiyor.</source>
         <translation>Les variables du micrologiciel ne peuvent pas être écrites.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1651"/>
+        <location filename="../../core/platform.py" line="1709"/>
         <source>Bellenim turu belirlenemedi.</source>
         <translation>Impossible de déterminer le type de micrologiciel.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="659"/>
+        <location filename="../../ui/main_window.py" line="674"/>
         <source>Bellenimdeki onyukleme girislerini ve sirasini duzenler.</source>
         <translation>Modifie les entrées de démarrage du micrologiciel et leur ordre.</translation>
     </message>
@@ -1205,14 +1225,14 @@
         <translation>Formatage</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="622"/>
+        <location filename="../../ui/main_window.py" line="637"/>
         <source>Bicimlendir...</source>
         <translation>Formater...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3338"/>
-        <location filename="../../ui/main_window.py" line="3489"/>
-        <location filename="../../ui/main_window.py" line="3840"/>
+        <location filename="../../ui/main_window.py" line="3381"/>
+        <location filename="../../ui/main_window.py" line="3532"/>
+        <location filename="../../ui/main_window.py" line="3883"/>
         <location filename="../../ui/widgets/disk_map.py" line="194"/>
         <location filename="../../ui/widgets/disk_overview.py" line="240"/>
         <source>Bicimlendirilmemis</source>
@@ -1326,7 +1346,7 @@
         <translation>Inconnu (impossible de lire la configuration)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2854"/>
+        <location filename="../../ui/main_window.py" line="2897"/>
         <source>Bir diski acmak icin uzerine cift tiklayin.</source>
         <translation>Double-cliquez sur un disque pour l&apos;ouvrir.</translation>
     </message>
@@ -1383,8 +1403,8 @@
     </message>
     <message>
         <location filename="../../core/operations.py" line="81"/>
-        <location filename="../../ui/main_window.py" line="1550"/>
-        <location filename="../../ui/main_window.py" line="3841"/>
+        <location filename="../../ui/main_window.py" line="1593"/>
+        <location filename="../../ui/main_window.py" line="3884"/>
         <source>Birim etiketi</source>
         <translation>Nom de volume</translation>
     </message>
@@ -1400,7 +1420,7 @@
         <translation>Nom de volume :</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="634"/>
+        <location filename="../../ui/main_window.py" line="649"/>
         <source>Birim etiketini degistir...</source>
         <translation>Modifier le nom de volume...</translation>
     </message>
@@ -1450,7 +1470,7 @@
         <translation>Secteur de fin :</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3846"/>
+        <location filename="../../ui/main_window.py" line="3889"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Bitis LBA</source>
         <translation>LBA de fin</translation>
@@ -1506,8 +1526,8 @@
         <translation>La partition sera &lt;b&gt;réduite de {}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="281"/>
-        <location filename="../../ui/main_window.py" line="848"/>
+        <location filename="../../ui/main_window.py" line="285"/>
+        <location filename="../../ui/main_window.py" line="891"/>
         <source>Bolum Bilgisi</source>
         <translation>Infos sur la partition</translation>
     </message>
@@ -1527,7 +1547,7 @@
         <translation>La partition est trop petite pour FAT{} (nombre de clusters {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3856"/>
+        <location filename="../../ui/main_window.py" line="3899"/>
         <source>Bolum GUID</source>
         <translation>GUID de partition</translation>
     </message>
@@ -1543,7 +1563,7 @@
     </message>
     <message>
         <location filename="../../core/operations.py" line="82"/>
-        <location filename="../../ui/main_window.py" line="1505"/>
+        <location filename="../../ui/main_window.py" line="1548"/>
         <source>Bolum adi</source>
         <translation>Nom de partition</translation>
     </message>
@@ -1553,7 +1573,7 @@
         <translation>Les noms de partition ne sont pris en charge que dans le schéma GPT</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1502"/>
+        <location filename="../../ui/main_window.py" line="1545"/>
         <source>Bolum adi yalnizca GPT semasinda saklanir.
 MBR icin birim etiketini degistirin.</source>
         <translation>Les noms de partition ne sont enregistrés que dans le schéma GPT.
@@ -1565,7 +1585,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Nom de partition :</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="632"/>
+        <location filename="../../ui/main_window.py" line="647"/>
         <source>Bolum adini degistir...</source>
         <translation>Modifier le nom de partition...</translation>
     </message>
@@ -1575,12 +1595,12 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Paramètres de la partition</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="767"/>
+        <location filename="../../core/platform.py" line="768"/>
         <source>Bolum aygiti bulunamadi: {}</source>
         <translation>Périphérique de partition introuvable : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1881"/>
+        <location filename="../../ui/main_window.py" line="1924"/>
         <source>Bolum bagli</source>
         <translation>La partition est montée</translation>
     </message>
@@ -1592,7 +1612,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>La taille de la partition ne peut pas être nulle</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1471"/>
+        <location filename="../../ui/main_window.py" line="1514"/>
         <source>Bolum bu kadar kuculemez</source>
         <translation>La partition ne peut pas être réduite autant</translation>
     </message>
@@ -1619,17 +1639,17 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>La partition dépasse la fin du disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1293"/>
+        <location filename="../../ui/main_window.py" line="1336"/>
         <source>Bolum duzeni acilamadi</source>
         <translation>Impossible d&apos;ouvrir la disposition des partitions</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="626"/>
+        <location filename="../../ui/main_window.py" line="641"/>
         <source>Bolum duzenini degistir...</source>
         <translation>Modifier la disposition des partitions...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1181"/>
+        <location filename="../../ui/main_window.py" line="1224"/>
         <source>Bolum eklenemez</source>
         <translation>Impossible d&apos;ajouter une partition</translation>
     </message>
@@ -1663,8 +1683,8 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>La partition dépasse la zone environnante (LBA maximal {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2110"/>
-        <location filename="../../ui/main_window.py" line="942"/>
+        <location filename="../../ui/main_window.py" line="2153"/>
+        <location filename="../../ui/main_window.py" line="985"/>
         <source>Bolum olusturuluyor...</source>
         <translation>Création de la partition...</translation>
     </message>
@@ -1679,7 +1699,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Nombre de partitions</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3912"/>
+        <location filename="../../ui/main_window.py" line="3955"/>
         <source>Bolum secili degil</source>
         <translation>Aucune partition sélectionnée</translation>
     </message>
@@ -1689,7 +1709,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Table de partitions</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1294"/>
+        <location filename="../../ui/main_window.py" line="1337"/>
         <source>Bolum tablosu kuyrukta degisiyor; once bekleyen islemleri uygulayin ya da kaldirin.</source>
         <translation>La table de partitions est modifiée dans la file d&apos;attente ; appliquez ou supprimez d&apos;abord les opérations en attente.</translation>
     </message>
@@ -1724,7 +1744,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <location filename="../../core/resize.py" line="874"/>
         <location filename="../../core/session.py" line="156"/>
         <location filename="../../core/session.py" line="320"/>
-        <location filename="../../ui/main_window.py" line="1139"/>
+        <location filename="../../ui/main_window.py" line="1182"/>
         <source>Bolum tablosu yok</source>
         <translation>Aucune table de partitions</translation>
     </message>
@@ -1740,17 +1760,17 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>&lt;b&gt;{}&lt;/b&gt; systèmes de fichiers absents de la table de partitions ont été détectés. Sélectionnez celui que vous voulez ajouter à la table.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2011"/>
+        <location filename="../../ui/main_window.py" line="2054"/>
         <source>Bolum tablosunda olmayan bir dosya sistemi bulunamadi.</source>
         <translation>Aucun système de fichiers hors de la table de partitions n&apos;a été trouvé.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="639"/>
+        <location filename="../../ui/main_window.py" line="654"/>
         <source>Bolum tablosunu GPT&apos;ye donustur</source>
         <translation>Convertir la table de partitions en GPT</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="640"/>
+        <location filename="../../ui/main_window.py" line="655"/>
         <source>Bolum tablosunu MBR&apos;ye donustur</source>
         <translation>Convertir la table de partitions en MBR</translation>
     </message>
@@ -1762,7 +1782,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
     <message>
         <location filename="../../core/operations.py" line="648"/>
         <location filename="../../core/operations.py" line="75"/>
-        <location filename="../../ui/main_window.py" line="618"/>
+        <location filename="../../ui/main_window.py" line="633"/>
         <source>Bolum tablosunu sil</source>
         <translation>Supprimer la table de partitions</translation>
     </message>
@@ -1773,8 +1793,8 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
     </message>
     <message>
         <location filename="../../core/operations.py" line="83"/>
-        <location filename="../../ui/main_window.py" line="1519"/>
-        <location filename="../../ui/main_window.py" line="1531"/>
+        <location filename="../../ui/main_window.py" line="1562"/>
+        <location filename="../../ui/main_window.py" line="1574"/>
         <source>Bolum turu</source>
         <translation>Type de partition</translation>
     </message>
@@ -1784,7 +1804,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Type :</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="633"/>
+        <location filename="../../ui/main_window.py" line="648"/>
         <source>Bolum turunu degistir...</source>
         <translation>Modifier le type de partition...</translation>
     </message>
@@ -1794,12 +1814,12 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Les données des partitions sont conservées</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1690"/>
+        <location filename="../../ui/main_window.py" line="1733"/>
         <source>Bolum yok</source>
         <translation>Aucune partition</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="673"/>
+        <location filename="../../core/bootloader.py" line="675"/>
         <location filename="../../core/operations.py" line="702"/>
         <location filename="../../core/operations.py" line="717"/>
         <location filename="../../core/operations.py" line="728"/>
@@ -1817,7 +1837,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <location filename="../../ui/dialogs/bootloader.py" line="201"/>
         <location filename="../../ui/dialogs/bootloader.py" line="234"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="164"/>
-        <location filename="../../ui/main_window.py" line="2037"/>
+        <location filename="../../ui/main_window.py" line="2080"/>
         <location filename="../../ui/widgets/disk_overview.py" line="177"/>
         <location filename="../../ui/widgets/layout_bar.py" line="131"/>
         <location filename="../../ui/widgets/partition_table.py" line="51"/>
@@ -1825,10 +1845,10 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Partition {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1702"/>
-        <location filename="../../ui/main_window.py" line="1895"/>
-        <location filename="../../ui/main_window.py" line="1918"/>
-        <location filename="../../ui/main_window.py" line="2977"/>
+        <location filename="../../ui/main_window.py" line="1745"/>
+        <location filename="../../ui/main_window.py" line="1938"/>
+        <location filename="../../ui/main_window.py" line="1961"/>
+        <location filename="../../ui/main_window.py" line="3020"/>
         <source>Bolum {} ({})</source>
         <translation>Partition {} ({})</translation>
     </message>
@@ -1858,7 +1878,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Nom de la partition {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1665"/>
+        <location filename="../../ui/main_window.py" line="1708"/>
         <source>Bolum {} baglandi: {}</source>
         <translation>Partition {} montée sur {}</translation>
     </message>
@@ -1878,17 +1898,17 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Redimensionner la partition {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1667"/>
+        <location filename="../../ui/main_window.py" line="1710"/>
         <source>Bolum {} cikarildi</source>
         <translation>Partition {} démontée</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1578"/>
+        <location filename="../../ui/main_window.py" line="1621"/>
         <source>Bolum {} cikariliyor...</source>
         <translation>Démontage de la partition {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1472"/>
+        <location filename="../../ui/main_window.py" line="1515"/>
         <source>Bolum {} en az {} olabilir (dolu: {}); istenen {}.
 
 Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
@@ -1917,7 +1937,7 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Pas de place pour l&apos;EBR de la partition {} (adjacente à la partition précédente)</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="670"/>
+        <location filename="../../core/bootloader.py" line="672"/>
         <source>Bolum {} inceleniyor...</source>
         <translation>Examen de la partition {}...</translation>
     </message>
@@ -1942,7 +1962,7 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Supprimer la partition {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1882"/>
+        <location filename="../../ui/main_window.py" line="1925"/>
         <source>Bolum {} su anda bagli ({}). Bagli bir NTFS birimi onarilamaz; once baglantisini kesin.</source>
         <translation>La partition {} est actuellement montée ({}). Un volume NTFS monté ne peut pas être réparé ; démontez-le d&apos;abord.</translation>
     </message>
@@ -1952,13 +1972,13 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Type de la partition {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1959"/>
+        <location filename="../../ui/main_window.py" line="2002"/>
         <source>Bolum {} — Silinmis Dosyalar</source>
         <translation>Partition {} — Fichiers supprimés</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="563"/>
-        <location filename="../../ui/main_window.py" line="2979"/>
+        <location filename="../../ui/main_window.py" line="3022"/>
         <source>Bolum {} — {}</source>
         <translation>Partition {} — {}</translation>
     </message>
@@ -1988,13 +2008,13 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Partition {} : la position change</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1894"/>
-        <location filename="../../ui/main_window.py" line="3329"/>
+        <location filename="../../ui/main_window.py" line="1937"/>
+        <location filename="../../ui/main_window.py" line="3372"/>
         <source>Bolum {}: {}</source>
         <translation>Partition {} : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3481"/>
+        <location filename="../../ui/main_window.py" line="3524"/>
         <source>Bolum {}: {} ({})</source>
         <translation>Partition {} : {} ({})</translation>
     </message>
@@ -2015,7 +2035,7 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Partition {} : {} ne peut pas être redimensionné</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1958"/>
+        <location filename="../../ui/main_window.py" line="2001"/>
         <source>Bolum {}: {} silinmis giris bulundu</source>
         <translation>Partition {} : {} entrées supprimées trouvées</translation>
     </message>
@@ -2030,7 +2050,7 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>La partition n&apos;a pas de système de fichiers lisible</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="646"/>
+        <location filename="../../ui/main_window.py" line="661"/>
         <source>Bolume geri yukle...</source>
         <translation>Restaurer sur une partition...</translation>
     </message>
@@ -2047,7 +2067,7 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Non partitionné</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2995"/>
+        <location filename="../../ui/main_window.py" line="3038"/>
         <source>Bolumlenmemis alan
 {}
 Baslangic LBA   : {}
@@ -2115,12 +2135,12 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Redimensionner la partition</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="623"/>
+        <location filename="../../ui/main_window.py" line="638"/>
         <source>Bolumu boyutlandir...</source>
         <translation>Redimensionner la partition...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="625"/>
+        <location filename="../../ui/main_window.py" line="640"/>
         <source>Bolumu fareyle surukleyerek kucult, buyut veya tasi</source>
         <translation>Faites glisser avec la souris pour réduire, agrandir ou déplacer la partition</translation>
     </message>
@@ -2130,35 +2150,35 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Effacer la partition de manière sécurisée</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="648"/>
+        <location filename="../../ui/main_window.py" line="663"/>
         <source>Bolumu guvenli sil...</source>
         <translation>Effacer la partition de manière sécurisée...</translation>
     </message>
     <message>
         <location filename="../../core/operations.py" line="79"/>
-        <location filename="../../ui/main_window.py" line="630"/>
+        <location filename="../../ui/main_window.py" line="645"/>
         <source>Bolumu sil</source>
         <translation>Supprimer la partition</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="645"/>
+        <location filename="../../ui/main_window.py" line="660"/>
         <source>Bolumu yedekle...</source>
         <translation>Sauvegarder la partition...</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="757"/>
+        <location filename="../../core/platform.py" line="758"/>
         <source>Bolumun diskteki konumu bilinmiyor; surucu harfi atanmadi</source>
         <translation>La position de la partition sur le disque est inconnue ; aucune lettre de lecteur n&apos;a été attribuée</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="830"/>
+        <location filename="../../core/platform.py" line="831"/>
         <source>Bolumun diskteki konumu bilinmiyor; surucu harfi kaldirilmadi</source>
         <translation>La position de la partition sur le disque est inconnue ; la lettre de lecteur n&apos;a pas été retirée</translation>
     </message>
     <message>
         <location filename="../../core/ptable.py" line="22"/>
         <location filename="../../core/ptable.py" line="53"/>
-        <location filename="../../ui/main_window.py" line="3868"/>
+        <location filename="../../ui/main_window.py" line="3911"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Bos</source>
         <translation>Libre</translation>
@@ -2180,7 +2200,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Espace libre</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3347"/>
+        <location filename="../../ui/main_window.py" line="3390"/>
         <source>Bos alan ({})</source>
         <translation>Espace libre ({})</translation>
     </message>
@@ -2190,7 +2210,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Remplissage de l&apos;espace libre... {} / {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1153"/>
+        <location filename="../../ui/main_window.py" line="1196"/>
         <source>Bos alan yok</source>
         <translation>Aucun espace libre</translation>
     </message>
@@ -2231,7 +2251,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Plus aucun inode libre</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1554"/>
+        <location filename="../../core/platform.py" line="1612"/>
         <source>Bos komut</source>
         <translation>Commande vide</translation>
     </message>
@@ -2245,7 +2265,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <location filename="../../ui/dialogs/tools.py" line="123"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3843"/>
+        <location filename="../../ui/main_window.py" line="3886"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
@@ -2253,7 +2273,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Taille</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1096"/>
+        <location filename="../../ui/main_window.py" line="1139"/>
         <source>Boyut cozumlenemedi: {}</source>
         <translation>Impossible d&apos;analyser la taille : {}</translation>
     </message>
@@ -2274,13 +2294,13 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Redimensionner / déplacer...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1237"/>
+        <location filename="../../ui/main_window.py" line="1280"/>
         <source>Boyutlandirilamaz</source>
         <translation>Non redimensionnable</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1246"/>
-        <location filename="../../ui/main_window.py" line="1346"/>
+        <location filename="../../ui/main_window.py" line="1289"/>
+        <location filename="../../ui/main_window.py" line="1389"/>
         <source>Boyutlandirma hazirlanamadi</source>
         <translation>Impossible de préparer le redimensionnement</translation>
     </message>
@@ -2300,22 +2320,22 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Ce volume UDF (partition sparable, virtuelle ou de métadonnées) est ouvert en lecture seule dans cette version.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1336"/>
+        <location filename="../../core/platform.py" line="1394"/>
         <source>Bu Windows surumu ({}) ReFS olusturamiyor; Enterprise, Pro for Workstations ya da Server gerekir</source>
         <translation>Cette édition de Windows ({}) ne peut pas créer de ReFS ; Enterprise, Pro for Workstations ou Server est requis</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2536"/>
+        <location filename="../../ui/main_window.py" line="2579"/>
         <source>Bu adimi kaldir</source>
         <translation>Supprimer cette étape</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2382"/>
+        <location filename="../../ui/main_window.py" line="2425"/>
         <source>Bu alan &lt;b&gt;{}&lt;/b&gt; ile cakisiyor. O bolum henuz diske yazilmadi ama bekleyen islemler arasinda ve bu alani tutuyor.&lt;br&gt;&lt;br&gt;Once bekleyen adimi kaldirin ya da baska bir alan secin.</source>
         <translation>Cette zone chevauche &lt;b&gt;{}&lt;/b&gt;. Cette partition n&apos;a pas encore été écrite sur le disque, mais elle figure dans la liste des opérations en attente et occupe déjà cet espace.&lt;br&gt;&lt;br&gt;Supprimez l&apos;étape en attente ou choisissez une autre zone.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1238"/>
+        <location filename="../../ui/main_window.py" line="1281"/>
         <source>Bu bolum boyutlandirilamiyor.
 
 {}</source>
@@ -2324,7 +2344,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1247"/>
+        <location filename="../../ui/main_window.py" line="1290"/>
         <source>Bu bolum bu gorunumde duzenlenemez.</source>
         <translation>Cette partition ne peut pas être modifiée dans cette vue.</translation>
     </message>
@@ -2344,7 +2364,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Cette partition n&apos;est pas accessible en écriture</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1956"/>
+        <location filename="../../ui/main_window.py" line="1999"/>
         <source>Bu bolumde silinmis dosya girisi bulunamadi.</source>
         <translation>Aucune entrée de fichier supprimé n&apos;a été trouvée sur cette partition.</translation>
     </message>
@@ -2359,12 +2379,12 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Impossible d&apos;écrire sur cette partition.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2649"/>
+        <location filename="../../ui/main_window.py" line="2692"/>
         <source>Bu bolumler &lt;b&gt;hala bagli&lt;/b&gt;. Isletim sistemi onlari kullanirken ham sektorlere yazmak dosya sistemini &lt;b&gt;bozabilir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Once bu bolumleri cikarmaniz (unmount) onerilir.</source>
         <translation>Ces partitions sont &lt;b&gt;toujours montées&lt;/b&gt;. Écrire des secteurs bruts pendant que le système d&apos;exploitation les utilise peut &lt;b&gt;corrompre&lt;/b&gt; le système de fichiers.&lt;br&gt;&lt;br&gt;Il est recommandé de démonter d&apos;abord ces partitions.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1593"/>
+        <location filename="../../ui/main_window.py" line="1636"/>
         <source>Bu bolumler cikarilamadi:</source>
         <translation>Ces partitions n&apos;ont pas pu être démontées :</translation>
     </message>
@@ -2374,7 +2394,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Cette fonctionnalité btrfs (extent-tree-v2 / raid-stripe-tree) ne peut pas être lue dans cette version</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3767"/>
+        <location filename="../../ui/main_window.py" line="3810"/>
         <source>Bu diski kapat</source>
         <translation>Fermer ce disque</translation>
     </message>
@@ -2385,12 +2405,12 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Ce disque a des partitions montées : {} — il est recommandé de les démonter avant l&apos;écriture.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2660"/>
+        <location filename="../../ui/main_window.py" line="2703"/>
         <source>Bu diskte bagli bolumler var:&lt;br&gt;&lt;b&gt;{}&lt;/b&gt;&lt;br&gt;&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>Ce disque a des partitions montées :&lt;br&gt;&lt;b&gt;{}&lt;/b&gt;&lt;br&gt;&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Continuer ?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1132"/>
+        <location filename="../../ui/main_window.py" line="1175"/>
         <source>Bu diskte bolum tablosu yok; dosya sistemi ({}) tum diski kapliyor. GPT olusturmak bu dosya sistemini siler. Devam edilsin mi?</source>
         <translation>Ce disque n&apos;a pas de table de partitions ; le système de fichiers ({}) couvre tout le disque. La création d&apos;une table GPT effacera ce système de fichiers. Continuer ?</translation>
     </message>
@@ -2430,7 +2450,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Ce système de fichiers ne peut pas descendre sous {} (des données seraient perdues)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1547"/>
+        <location filename="../../ui/main_window.py" line="1590"/>
         <source>Bu dosya sisteminde etiket degistirme desteklenmiyor.
 Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>La modification du nom de volume n&apos;est pas prise en charge sur ce système de fichiers.
@@ -2457,22 +2477,22 @@ Vous pouvez définir un nom de volume en reformatant la partition.</translation>
         <translation>Cette entrée n&apos;a aucune donnée récupérable</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1140"/>
+        <location filename="../../ui/main_window.py" line="1183"/>
         <source>Bu goruntude bolum tablosu yok. Simdi GPT olusturulsun mu?</source>
         <translation>Cette image n&apos;a pas de table de partitions. En créer une GPT maintenant ?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3789"/>
+        <location filename="../../ui/main_window.py" line="3832"/>
         <source>Bu goruntuyu kapat</source>
         <translation>Fermer cette image</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1874"/>
+        <location filename="../../ui/main_window.py" line="1917"/>
         <source>Bu islem yalnizca NTFS bolumlerde kullanilabilir.</source>
         <translation>Cette opération n&apos;est disponible que sur les partitions NTFS.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1565"/>
+        <location filename="../../core/platform.py" line="1623"/>
         <source>Bu islem {} yetkisi gerektiriyor.</source>
         <translation>Cette opération nécessite des droits {}.</translation>
     </message>
@@ -2482,7 +2502,7 @@ Vous pouvez définir un nom de volume en reformatant la partition.</translation>
         <translation>Ce type de descripteur d&apos;allocation n&apos;est pas pris en charge en écriture : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3936"/>
+        <location filename="../../ui/main_window.py" line="3979"/>
         <source>Bu kaynak degistirilemez</source>
         <translation>Cette source ne peut pas être modifiée</translation>
     </message>
@@ -2492,7 +2512,7 @@ Vous pouvez définir un nom de volume en reformatant la partition.</translation>
         <translation>Cette machine a démarré depuis cette entrée</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2734"/>
+        <location filename="../../ui/main_window.py" line="2777"/>
         <source>Bu makinede kayitli donma raporu bulunamadi.
 
 Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
@@ -2501,17 +2521,17 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
 Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est créé automatiquement.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="609"/>
+        <location filename="../../core/platform.py" line="610"/>
         <source>Bu platformda baglama desteklenmiyor.</source>
         <translation>Le montage n&apos;est pas pris en charge sur cette plateforme.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1939"/>
+        <location filename="../../core/platform.py" line="1997"/>
         <source>Bu platformda bellenim degiskeni yazilamiyor.</source>
         <translation>Les variables du micrologiciel ne peuvent pas être écrites sur cette plateforme.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1660"/>
+        <location filename="../../core/platform.py" line="1718"/>
         <source>Bu platformda bellenim degiskenleri okunamiyor.</source>
         <translation>Les variables du micrologiciel ne peuvent pas être lues sur cette plateforme.</translation>
     </message>
@@ -2521,9 +2541,19 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>L&apos;élévation de privilèges n&apos;est pas prise en charge sur cette plateforme.</translation>
     </message>
     <message>
+        <location filename="../../licenses/__init__.py" line="37"/>
+        <source>Bu program Qt kutuphanelerini GNU LGPL surum 3 kosullariyla kullanir. Qt&apos;yi degistirip uygulamayi onunla calistirma hakkiniz vardir: uygulamanin tamami acik kaynaktir ve kaynaktan farkli bir Qt ile calistirilabilir. Kullanilan Qt surumunun kaynak kodunu en az uc yil boyunca istek uzerine saglariz (proje sayfasinda bir istek acin); resmi arsiv: {}</source>
+        <translation>Ce programme utilise les bibliothèques Qt selon les termes de la GNU LGPL version 3. Vous avez le droit de modifier Qt et d&apos;exécuter l&apos;application avec : l&apos;application est entièrement open source et peut être exécutée depuis le code source avec un autre Qt. Nous fournissons sur demande le code source de la version de Qt utilisée pendant au moins trois ans (ouvrez un ticket sur la page du projet) ; archive officielle : {}</translation>
+    </message>
+    <message>
         <location filename="../../ui/dialogs/tools.py" line="52"/>
         <source>Bu secenek yalnizca okunabilir bir dosya sistemi varsa kullanilabilir</source>
         <translation>Cette option n&apos;est disponible qu&apos;en présence d&apos;un système de fichiers lisible</translation>
+    </message>
+    <message>
+        <location filename="../../ui/updatecheck.py" line="64"/>
+        <source>Bu surumu atla</source>
+        <translation>Ignorer cette version</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="343"/>
@@ -2559,7 +2589,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Fichiers trouvés</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="680"/>
+        <location filename="../../ui/main_window.py" line="695"/>
         <source>Butun bekleyen adimlari iptal eder</source>
         <translation>Abandonne toutes les étapes en attente</translation>
     </message>
@@ -2569,12 +2599,12 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Toutes les partitions sont agrandies ou réduites proportionnellement au disque cible</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="628"/>
+        <location filename="../../ui/main_window.py" line="643"/>
         <source>Butun bolumleri tek pencerede birlikte buyut, kucult ya da tasi</source>
         <translation>Agrandir, réduire ou déplacer toutes les partitions ensemble dans une seule fenêtre</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="695"/>
+        <location filename="../../ui/main_window.py" line="710"/>
         <source>Butun is parcaciklarinin o anki yiginini dosyaya yazar</source>
         <translation>Écrit la pile actuelle de tous les threads dans un fichier</translation>
     </message>
@@ -2609,7 +2639,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>En cours...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2713"/>
+        <location filename="../../ui/main_window.py" line="2756"/>
         <source>Calisma suresi</source>
         <translation>Durée de fonctionnement</translation>
     </message>
@@ -2625,7 +2655,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Les extents de la branche (fork) sont incomplets (ID de fichier {})</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="589"/>
+        <location filename="../../core/platform.py" line="590"/>
         <source>Cikar</source>
         <translation>Démonter</translation>
     </message>
@@ -2635,22 +2665,22 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Amovible</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1591"/>
+        <location filename="../../ui/main_window.py" line="1634"/>
         <source>Cikarilamayan bolum var:</source>
         <translation>Certaines partitions n&apos;ont pas pu être démontées :</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2071"/>
+        <location filename="../../ui/main_window.py" line="2114"/>
         <source>Cikariliyor: {}</source>
         <translation>Extraction : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2064"/>
+        <location filename="../../ui/main_window.py" line="2107"/>
         <source>Cikarma hedefi</source>
         <translation>Destination de l&apos;extraction</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="615"/>
+        <location filename="../../ui/main_window.py" line="630"/>
         <source>Cikis</source>
         <translation>Quitter</translation>
     </message>
@@ -2660,12 +2690,12 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Trait</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2707"/>
+        <location filename="../../ui/main_window.py" line="2750"/>
         <source>Cokme gunlugu</source>
         <translation>Journal des plantages</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="480"/>
+        <location filename="../../ui/main_window.py" line="492"/>
         <source>D&amp;isk</source>
         <translation>D&amp;isque</translation>
     </message>
@@ -2675,39 +2705,44 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>À MODIFIER</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3046"/>
+        <location filename="../../ui/main_window.py" line="3089"/>
         <source>DEGISTIRILEMEZ</source>
         <translation>NON MODIFIABLE</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="912"/>
+        <location filename="../../ui/main_window.py" line="955"/>
         <source>DIKKAT: arayuz {:.1f} sn yanit vermedi — rapor: {}</source>
         <translation>ATTENTION : l&apos;interface n&apos;a pas répondu pendant {:.1f} s — rapport : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1099"/>
+        <location filename="../../ui/main_window.py" line="1142"/>
         <source>DIKKAT: kucultme sondaki verileri siler (uygulama onayinda yeniden sorulur)</source>
         <translation>ATTENTION : la réduction efface les données situées à la fin (une confirmation sera redemandée lors de l&apos;application)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3944"/>
+        <location filename="../../ui/main_window.py" line="3987"/>
         <source>DIKKAT: salt okunur acildi — {}</source>
         <translation>ATTENTION : ouvert en lecture seule — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1110"/>
+        <location filename="../../ui/main_window.py" line="1153"/>
         <source>DIKKAT: yeni tablo mevcut {} bolumun tanimini siler</source>
         <translation>ATTENTION : une nouvelle table efface la définition des {} partitions existantes</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2614"/>
+        <location filename="../../ui/main_window.py" line="2657"/>
         <source>DIKKAT: {}</source>
         <translation>ATTENTION : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3817"/>
+        <location filename="../../ui/main_window.py" line="3860"/>
         <source>DISK GORUNTUSU</source>
         <translation>IMAGE DISQUE</translation>
+    </message>
+    <message>
+        <location filename="../../ui/updatecheck.py" line="65"/>
+        <source>Daha sonra</source>
+        <translation>Plus tard</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/bootloader.py" line="132"/>
@@ -2736,12 +2771,12 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Les modifications ne sont pas appliquées &lt;b&gt;tant qu&apos;elles ne sont pas écrites&lt;/b&gt;.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3050"/>
+        <location filename="../../ui/main_window.py" line="3093"/>
         <source>Degisiklikler bekleyen islem olarak birikir; diske ancak Uygula ile yazilir.</source>
         <translation>Les modifications sont regroupées en opérations en attente ; elles ne sont écrites sur le disque qu&apos;avec Appliquer.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3978"/>
+        <location filename="../../ui/main_window.py" line="4021"/>
         <source>Degisiklikler bekliyor</source>
         <translation>Des modifications sont en attente</translation>
     </message>
@@ -2756,7 +2791,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Variable</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1645"/>
+        <location filename="../../core/platform.py" line="1703"/>
         <source>Degiskenler okunamiyor; root yetkisi gerekiyor.</source>
         <translation>Impossible de lire les variables ; les droits root sont requis.</translation>
     </message>
@@ -2766,7 +2801,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Modification impossible</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3985"/>
+        <location filename="../../ui/main_window.py" line="4028"/>
         <source>Degistirilemez kaynak</source>
         <translation>La source ne peut pas être modifiée</translation>
     </message>
@@ -2782,7 +2817,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Modifié</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1648"/>
+        <location filename="../../core/platform.py" line="1706"/>
         <source>Degistirmek icin root yetkisi gerekir.</source>
         <translation>Les droits root sont requis pour modifier ceci.</translation>
     </message>
@@ -2792,7 +2827,12 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Résultat de la vérification</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1998"/>
+        <location filename="../../ui/main_window.py" line="4179"/>
+        <source>Denetlenemedi: {}</source>
+        <translation>Vérification impossible : {}</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="2041"/>
         <source>Derin tarama (64 KB adim) yapilsin mi?
 
 Hayir: hizli tarama (1 MB adim) — cogu durumda yeterlidir.
@@ -2818,9 +2858,9 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Compression HFS+ non prise en charge (type {}) : {} — LZVN/LZFSE ne peut pas être ouvert dans cette version.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1501"/>
-        <location filename="../../ui/main_window.py" line="1546"/>
-        <location filename="../../ui/main_window.py" line="1623"/>
+        <location filename="../../ui/main_window.py" line="1544"/>
+        <location filename="../../ui/main_window.py" line="1589"/>
+        <location filename="../../ui/main_window.py" line="1666"/>
         <source>Desteklenmiyor</source>
         <translation>Non pris en charge</translation>
     </message>
@@ -2835,12 +2875,12 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Activation de la recherche d&apos;autres systèmes...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="546"/>
+        <location filename="../../ui/main_window.py" line="558"/>
         <source>Dil</source>
         <translation>Langue</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="833"/>
+        <location filename="../../ui/main_window.py" line="876"/>
         <source>Dil degistirildi: {}</source>
         <translation>Langue modifiée : {}</translation>
     </message>
@@ -2892,18 +2932,18 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Le disque est trop petit pour GPT</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2134"/>
+        <location filename="../../ui/main_window.py" line="2177"/>
         <source>Disk acik degil</source>
         <translation>Aucun disque ouvert</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2918"/>
-        <location filename="../../ui/main_window.py" line="2921"/>
+        <location filename="../../ui/main_window.py" line="2961"/>
+        <location filename="../../ui/main_window.py" line="2964"/>
         <source>Disk acilamadi</source>
         <translation>Impossible d&apos;ouvrir le disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2221"/>
+        <location filename="../../ui/main_window.py" line="2264"/>
         <source>Disk acilamadi (yetki): {}</source>
         <translation>Impossible d&apos;ouvrir le disque (privilèges) : {}</translation>
     </message>
@@ -2913,7 +2953,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Impossible de lire les informations du disque (pas de privilèges) — on ne sait PAS s&apos;il s&apos;agit du disque système</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="672"/>
+        <location filename="../../ui/main_window.py" line="687"/>
         <source>Disk bilgisi</source>
         <translation>Infos sur le disque</translation>
     </message>
@@ -2943,7 +2983,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Le disque est protégé en écriture par le matériel.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="964"/>
+        <location filename="../../ui/main_window.py" line="1007"/>
         <source>Disk goruntuleri ({});;Ham goruntu (*.img *.raw *.dd *.bin);;Sanal diskler (*.vhd *.vhdx *.vdi *.vmdk *.qcow2);;Tum dosyalar (*)</source>
         <translation>Images disque ({});;Image brute (*.img *.raw *.dd *.bin);;Disques virtuels (*.vhd *.vhdx *.vdi *.vmdk *.qcow2);;Tous les fichiers (*)</translation>
     </message>
@@ -2958,7 +2998,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Image disque (*.img *.raw *.dd);;Tous les fichiers (*)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1842"/>
+        <location filename="../../ui/main_window.py" line="1885"/>
         <source>Disk goruntusu (*.img)</source>
         <translation>Image disque (*.img)</translation>
     </message>
@@ -2968,14 +3008,14 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Image disque (*.img);;Tous les fichiers (*)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="963"/>
+        <location filename="../../ui/main_window.py" line="1006"/>
         <source>Disk goruntusu ac</source>
         <translation>Ouvrir une image disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1067"/>
-        <location filename="../../ui/main_window.py" line="297"/>
-        <location filename="../../ui/main_window.py" line="859"/>
+        <location filename="../../ui/main_window.py" line="1110"/>
+        <location filename="../../ui/main_window.py" line="301"/>
+        <location filename="../../ui/main_window.py" line="902"/>
         <location filename="../../ui/widgets/disk_map.py" line="177"/>
         <source>Disk goruntusu acik degil</source>
         <translation>Aucune image disque ouverte</translation>
@@ -2986,22 +3026,22 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Effacer le disque de manière sécurisée</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1853"/>
+        <location filename="../../ui/main_window.py" line="1896"/>
         <source>Disk klonlandi: {}</source>
         <translation>Disque cloné : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1825"/>
+        <location filename="../../ui/main_window.py" line="1868"/>
         <source>Disk klonlandi: {} -&gt; {} ({})</source>
         <translation>Disque cloné : {} -&gt; {} ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1848"/>
+        <location filename="../../ui/main_window.py" line="1891"/>
         <source>Disk klonlaniyor</source>
         <translation>Clonage du disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1819"/>
+        <location filename="../../ui/main_window.py" line="1862"/>
         <source>Disk klonlaniyor — {}</source>
         <translation>Clonage du disque — {}</translation>
     </message>
@@ -3012,7 +3052,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Impossible de se positionner sur le disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3178"/>
+        <location filename="../../ui/main_window.py" line="3221"/>
         <source>Disk listesi alinamadi: {}</source>
         <translation>Impossible d&apos;obtenir la liste des disques : {}</translation>
     </message>
@@ -3022,13 +3062,13 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Le numéro du disque est inconnu</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="879"/>
-        <location filename="../../core/platform.py" line="890"/>
+        <location filename="../../core/platform.py" line="880"/>
+        <location filename="../../core/platform.py" line="891"/>
         <source>Disk numarasi cozulemedi: {}</source>
         <translation>Impossible de résoudre le numéro du disque : {}</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="643"/>
+        <location filename="../../core/bootloader.py" line="645"/>
         <source>Disk okunamadi</source>
         <translation>Impossible de lire le disque</translation>
     </message>
@@ -3038,7 +3078,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Le disque a été ouvert en lecture seule</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="670"/>
+        <location filename="../../ui/main_window.py" line="685"/>
         <source>Disk salt okunur acilir. Degisiklikler bekleyen islem olarak birikir ve ancak Uygula ile diske yazilir.</source>
         <translation>Le disque est ouvert en lecture seule. Les modifications sont regroupées en opérations en attente et ne sont écrites sur le disque qu&apos;avec Appliquer.</translation>
     </message>
@@ -3048,8 +3088,8 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Sélectionner un disque...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2822"/>
-        <location filename="../../ui/main_window.py" line="2896"/>
+        <location filename="../../ui/main_window.py" line="2865"/>
+        <location filename="../../ui/main_window.py" line="2939"/>
         <source>Disk secili degil</source>
         <translation>Aucun disque sélectionné</translation>
     </message>
@@ -3059,8 +3099,8 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>{} d&apos;espace libre sont nécessaires à la fin du disque pour la GPT de secours ; la dernière partition se termine au LBA {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="178"/>
-        <location filename="../../ui/main_window.py" line="846"/>
+        <location filename="../../ui/main_window.py" line="182"/>
+        <location filename="../../ui/main_window.py" line="889"/>
         <source>Disk ve Bolumler</source>
         <translation>Disques et partitions</translation>
     </message>
@@ -3085,7 +3125,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Répartir proportionnellement</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1029"/>
+        <location filename="../../ui/main_window.py" line="1072"/>
         <source>Diske yaz...</source>
         <translation>Écrire sur un disque...</translation>
     </message>
@@ -3095,27 +3135,27 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Cloner le disque vers un autre disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="643"/>
+        <location filename="../../ui/main_window.py" line="658"/>
         <source>Diski geri yukle...</source>
         <translation>Restaurer le disque...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="647"/>
+        <location filename="../../ui/main_window.py" line="662"/>
         <source>Diski guvenli sil...</source>
         <translation>Effacer le disque de manière sécurisée...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1771"/>
+        <location filename="../../ui/main_window.py" line="1814"/>
         <source>Diski klonla</source>
         <translation>Cloner le disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="644"/>
+        <location filename="../../ui/main_window.py" line="659"/>
         <source>Diski klonla...</source>
         <translation>Cloner le disque...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="642"/>
+        <location filename="../../ui/main_window.py" line="657"/>
         <source>Diski yedekle...</source>
         <translation>Sauvegarder le disque...</translation>
     </message>
@@ -3125,7 +3165,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>L&apos;espace libre à la fin du disque est ajouté à la dernière partition</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2855"/>
+        <location filename="../../ui/main_window.py" line="2898"/>
         <source>Diskler varsayilan olarak SALT OKUNUR acilir.</source>
         <translation>Les disques sont ouverts en LECTURE SEULE par défaut.</translation>
     </message>
@@ -3140,7 +3180,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Clusters libres insuffisants sur le disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1595"/>
+        <location filename="../../ui/main_window.py" line="1638"/>
         <source>Diskteki baglantilar kesildi</source>
         <translation>Toutes les partitions du disque ont été démontées</translation>
     </message>
@@ -3150,7 +3190,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Comme sur le disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2444"/>
+        <location filename="../../ui/main_window.py" line="2487"/>
         <source>Diskteki hali goster</source>
         <translation>Afficher la disposition sur le disque</translation>
     </message>
@@ -3160,7 +3200,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Systèmes d&apos;exploitation présents sur le disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="655"/>
+        <location filename="../../ui/main_window.py" line="670"/>
         <source>Diskteki isletim sistemlerini ve onyukleme kodunu gosterir; GRUB kurulumunu yonetir.</source>
         <translation>Affiche les systèmes d&apos;exploitation et le code d&apos;amorçage du disque ; gère l&apos;installation de GRUB.</translation>
     </message>
@@ -3279,22 +3319,22 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Vérification... {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2708"/>
+        <location filename="../../ui/main_window.py" line="2751"/>
         <source>Donma esigi</source>
         <translation>Seuil de blocage</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2733"/>
+        <location filename="../../ui/main_window.py" line="2776"/>
         <source>Donma raporu yok</source>
         <translation>Aucun rapport de blocage</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2741"/>
+        <location filename="../../ui/main_window.py" line="2784"/>
         <source>Donma raporu — {}</source>
         <translation>Rapport de blocage — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1684"/>
+        <location filename="../../ui/main_window.py" line="1727"/>
         <source>Donusumde bolum verileri yerinde kalir; kesinti tabloyu bozabilir, onemli veriler icin once yedek alin</source>
         <translation>Les données des partitions restent en place pendant la conversion ; une interruption peut corrompre la table, sauvegardez donc d&apos;abord les données importantes</translation>
     </message>
@@ -3306,8 +3346,8 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Fichier</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="274"/>
-        <location filename="../../ui/main_window.py" line="847"/>
+        <location filename="../../ui/main_window.py" line="278"/>
+        <location filename="../../ui/main_window.py" line="890"/>
         <source>Dosya Gezgini</source>
         <translation>Explorateur de fichiers</translation>
     </message>
@@ -3355,7 +3395,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Ajouter un fichier...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3666"/>
+        <location filename="../../ui/main_window.py" line="3709"/>
         <source>Dosya gezgininde ac</source>
         <translation>Ouvrir dans l&apos;explorateur de fichiers</translation>
     </message>
@@ -3368,17 +3408,17 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <location filename="../../core/clone.py" line="79"/>
         <location filename="../../ui/dialogs/bootloader.py" line="76"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3840"/>
+        <location filename="../../ui/main_window.py" line="3883"/>
         <source>Dosya sistemi</source>
         <translation>Système de fichiers</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3093"/>
+        <location filename="../../ui/main_window.py" line="3136"/>
         <source>Dosya sistemi acilamadi</source>
         <translation>Impossible d&apos;ouvrir le système de fichiers</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2975"/>
+        <location filename="../../ui/main_window.py" line="3018"/>
         <source>Dosya sistemi acilamadi: {}</source>
         <translation>Impossible d&apos;ouvrir le système de fichiers : {}</translation>
     </message>
@@ -3408,7 +3448,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Réduction du système de fichiers...</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="311"/>
+        <location filename="../../core/bootloader.py" line="313"/>
         <source>Dosya sistemi okunamadi</source>
         <translation>Impossible de lire le système de fichiers</translation>
     </message>
@@ -3418,8 +3458,8 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Calcul des limites du système de fichiers...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1342"/>
-        <location filename="../../ui/main_window.py" line="1355"/>
+        <location filename="../../ui/main_window.py" line="1385"/>
+        <location filename="../../ui/main_window.py" line="1398"/>
         <source>Dosya sistemi sinirlari okunuyor</source>
         <translation>Lecture des limites du système de fichiers</translation>
     </message>
@@ -3460,12 +3500,12 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Le fichier existe déjà : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2080"/>
+        <location filename="../../ui/main_window.py" line="2123"/>
         <source>Dosyalar cikariliyor</source>
         <translation>Extraction des fichiers</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1983"/>
+        <location filename="../../ui/main_window.py" line="2026"/>
         <source>Dosyalar kurtariliyor</source>
         <translation>Récupération des fichiers</translation>
     </message>
@@ -3480,7 +3520,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <location filename="../../ui/dialogs/backup.py" line="419"/>
         <location filename="../../ui/dialogs/backup.py" line="637"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3863"/>
+        <location filename="../../ui/main_window.py" line="3906"/>
         <source>Durum</source>
         <translation>État</translation>
     </message>
@@ -3490,8 +3530,8 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Système EFI (FAT)</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="349"/>
-        <location filename="../../core/bootloader.py" line="448"/>
+        <location filename="../../core/bootloader.py" line="351"/>
+        <location filename="../../core/bootloader.py" line="450"/>
         <location filename="../../core/ptable.py" line="54"/>
         <source>EFI Sistem Bolumu</source>
         <translation>Partition système EFI</translation>
@@ -3502,7 +3542,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Partition système EFI :</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="450"/>
+        <location filename="../../core/bootloader.py" line="452"/>
         <source>EFI: {}</source>
         <translation>EFI : {}</translation>
     </message>
@@ -3564,12 +3604,17 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Elle doit faire au moins 64 KB.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2043"/>
+        <location filename="../../ui/main_window.py" line="2086"/>
         <source>En az bir dosya turu secin.</source>
         <translation>Sélectionnez au moins un type de fichier.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2711"/>
+        <location filename="../../ui/main_window.py" line="4192"/>
+        <source>En guncel surumu kullaniyorsunuz ({}).</source>
+        <translation>Vous utilisez la dernière version ({}).</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="2754"/>
         <source>En uzun donma</source>
         <translation>Blocage le plus long</translation>
     </message>
@@ -3599,7 +3644,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
     <message>
         <location filename="../../core/physical.py" line="127"/>
         <location filename="../../core/physical.py" line="128"/>
-        <location filename="../../ui/main_window.py" line="3849"/>
+        <location filename="../../ui/main_window.py" line="3892"/>
         <location filename="../../ui/qt_i18n.py" line="42"/>
         <source>Evet</source>
         <translation>Oui</translation>
@@ -3655,7 +3700,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>FAT12</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2160"/>
+        <location filename="../../ui/main_window.py" line="2203"/>
         <source>FAT12/16/32 ve exFAT saf Python ile desteklenir ve her platformda calisir. NTFS ve ext2/3/4 bicimlendirmesi sistemdeki mkfs araclarini gerektirir.</source>
         <translation>FAT12/16/32 et exFAT sont pris en charge en Python pur et fonctionnent sur toutes les plateformes. Le formatage NTFS et ext2/3/4 nécessite les outils mkfs installés sur le système.</translation>
     </message>
@@ -3705,7 +3750,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Pas de signature FILE : enregistrement {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2825"/>
+        <location filename="../../ui/main_window.py" line="2868"/>
         <source>FIZIKSEL DISK — {}</source>
         <translation>DISQUE PHYSIQUE — {}</translation>
     </message>
@@ -3720,13 +3765,13 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>La signature de correction (fixup) ne correspond pas (l&apos;enregistrement est corrompu)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3388"/>
+        <location filename="../../ui/main_window.py" line="3431"/>
         <source>Fiziksel Diskler ({})</source>
         <translation>Disques physiques ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2923"/>
-        <location filename="../../ui/main_window.py" line="3290"/>
+        <location filename="../../ui/main_window.py" line="2966"/>
+        <location filename="../../ui/main_window.py" line="3333"/>
         <source>Fiziksel disk acildi (salt okunur): {} — {}, {}</source>
         <translation>Disque physique ouvert (lecture seule) : {} — {}, {}</translation>
     </message>
@@ -3736,7 +3781,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Aucun disque physique trouvé</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="879"/>
+        <location filename="../../ui/main_window.py" line="922"/>
         <source>Fiziksel disk erisimi icin {} gerekir. Disk menusu &gt; &apos;{} olarak yeniden baslat&apos;</source>
         <translation>L&apos;accès aux disques physiques nécessite {}. Menu Disque &gt; « Redémarrer en tant que {} »</translation>
     </message>
@@ -3746,12 +3791,12 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Un disque physique est requis</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3240"/>
+        <location filename="../../ui/main_window.py" line="3283"/>
         <source>Fiziksel disk listesi hazir: {} disk</source>
         <translation>Liste des disques physiques prête : {} disques</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2804"/>
+        <location filename="../../ui/main_window.py" line="2847"/>
         <source>Fiziksel disk listesi taraniyor...</source>
         <translation>Analyse de la liste des disques physiques...</translation>
     </message>
@@ -3781,12 +3826,12 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Par sécurité, les disques physiques sont ouverts en lecture seule. Les modifications sont regroupées en opérations en attente et ne sont écrites sur le disque qu&apos;avec Appliquer.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="666"/>
+        <location filename="../../ui/main_window.py" line="681"/>
         <source>Fiziksel disklere erisim icin uygulamayi yetkili olarak yeniden baslatir. Goruntu dosyalari icin gerekmez.</source>
         <translation>Redémarre l&apos;application avec des privilèges élevés pour accéder aux disques physiques. Inutile pour les fichiers image.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="663"/>
+        <location filename="../../ui/main_window.py" line="678"/>
         <source>Fiziksel diskleri yenile</source>
         <translation>Actualiser les disques physiques</translation>
     </message>
@@ -3822,7 +3867,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Nom de partition GPT (facultatif)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="617"/>
+        <location filename="../../ui/main_window.py" line="632"/>
         <source>GPT bolum tablosu olustur</source>
         <translation>Créer une table de partitions GPT</translation>
     </message>
@@ -3867,7 +3912,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>GRUB installé : {}</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1534"/>
+        <location filename="../../core/platform.py" line="1592"/>
         <source>GRUB kurulumu yalnizca Linux&apos;ta yapilabilir; bu sistemde ({}) yalnizca inceleme yapilir.</source>
         <translation>GRUB ne peut être installé que sous Linux ; sur ce système ({}), seul l&apos;examen est possible.</translation>
     </message>
@@ -4051,7 +4096,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
     </message>
     <message>
         <location filename="../../ui/dialogs/new_image.py" line="163"/>
-        <location filename="../../ui/main_window.py" line="1096"/>
+        <location filename="../../ui/main_window.py" line="1139"/>
         <source>Gecersiz boyut</source>
         <translation>Taille invalide</translation>
     </message>
@@ -4110,6 +4155,11 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Passe {}/{} ({}) — {} / {}</translation>
     </message>
     <message>
+        <location filename="../../ui/main_window.py" line="4134"/>
+        <source>Gelistirici: {}</source>
+        <translation>Développeur : {}</translation>
+    </message>
+    <message>
         <location filename="../../ui/dialogs/apply.py" line="158"/>
         <source>Genel: %p%</source>
         <translation>Global : %p%</translation>
@@ -4140,12 +4190,12 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Un XFS avec sous-volume temps réel ne peut pas être agrandi</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="677"/>
+        <location filename="../../ui/main_window.py" line="692"/>
         <source>Geri al</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2565"/>
+        <location filename="../../ui/main_window.py" line="2608"/>
         <source>Geri alindi: {}</source>
         <translation>Annulé : {}</translation>
     </message>
@@ -4224,6 +4274,11 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Supprimer l&apos;entrée</translation>
     </message>
     <message>
+        <location filename="../../ui/updatecheck.py" line="63"/>
+        <source>GitHub sayfasini ac</source>
+        <translation>Ouvrir la page GitHub</translation>
+    </message>
+    <message>
         <location filename="../../core/ptable.py" line="32"/>
         <source>Gizli FAT12</source>
         <translation>FAT12 masqué</translation>
@@ -4254,23 +4309,23 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Image</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="613"/>
+        <location filename="../../ui/main_window.py" line="628"/>
         <source>Goruntu ac...</source>
         <translation>Ouvrir une image...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="981"/>
+        <location filename="../../ui/main_window.py" line="1024"/>
         <source>Goruntu acilamadi</source>
         <translation>Impossible d&apos;ouvrir l&apos;image</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="992"/>
+        <location filename="../../ui/main_window.py" line="1035"/>
         <source>Goruntu acildi: {} — {}, {}, {}</source>
         <translation>Image ouverte : {} — {}, {}, {}</translation>
     </message>
     <message>
         <location filename="../../core/operations.py" line="87"/>
-        <location filename="../../ui/main_window.py" line="1087"/>
+        <location filename="../../ui/main_window.py" line="1130"/>
         <source>Goruntu boyutu</source>
         <translation>Taille de l&apos;image</translation>
     </message>
@@ -4295,7 +4350,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Modifier la taille de l&apos;image</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="619"/>
+        <location filename="../../ui/main_window.py" line="634"/>
         <source>Goruntu boyutunu degistir...</source>
         <translation>Modifier la taille de l&apos;image...</translation>
     </message>
@@ -4306,22 +4361,22 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Fichier image</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="938"/>
+        <location filename="../../ui/main_window.py" line="981"/>
         <source>Goruntu dosyasi olusturuluyor...</source>
         <translation>Création du fichier image...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1773"/>
+        <location filename="../../ui/main_window.py" line="1816"/>
         <source>Goruntu dosyasina...</source>
         <translation>Vers un fichier image...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="954"/>
+        <location filename="../../ui/main_window.py" line="997"/>
         <source>Goruntu olusturulamadi</source>
         <translation>Impossible de créer l&apos;image</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="957"/>
+        <location filename="../../ui/main_window.py" line="1000"/>
         <source>Goruntu olusturuldu: {} ({})</source>
         <translation>Image créée : {} ({})</translation>
     </message>
@@ -4336,10 +4391,10 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>L&apos;image a été ouverte en lecture seule</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1766"/>
-        <location filename="../../ui/main_window.py" line="1993"/>
-        <location filename="../../ui/main_window.py" line="2033"/>
-        <location filename="../../ui/main_window.py" line="3930"/>
+        <location filename="../../ui/main_window.py" line="1809"/>
+        <location filename="../../ui/main_window.py" line="2036"/>
+        <location filename="../../ui/main_window.py" line="2076"/>
+        <location filename="../../ui/main_window.py" line="3973"/>
         <source>Goruntu yok</source>
         <translation>Aucune image</translation>
     </message>
@@ -4354,7 +4409,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Espace libre insuffisant à l&apos;emplacement de l&apos;image : le déplacement nécessite {} d&apos;espace supplémentaire, {} est libre. Rien n&apos;a été écrit.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="614"/>
+        <location filename="../../ui/main_window.py" line="629"/>
         <source>Goruntuyu kapat</source>
         <translation>Fermer l&apos;image</translation>
     </message>
@@ -4364,7 +4419,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Parcourir...</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1560"/>
+        <location filename="../../core/platform.py" line="1618"/>
         <source>Grafik yetki penceresi icin `pkexec` gerekiyor (polkit paketi).</source>
         <translation>Une demande d&apos;autorisation graphique nécessite `pkexec` (paquet polkit).</translation>
     </message>
@@ -4394,6 +4449,22 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Pas de descripteur de groupe : {}</translation>
     </message>
     <message>
+        <location filename="../../ui/main_window.py" line="4166"/>
+        <source>Guncellemeler denetleniyor...</source>
+        <translation>Recherche de mises à jour...</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="4178"/>
+        <location filename="../../ui/main_window.py" line="4191"/>
+        <source>Guncellemeleri denetle</source>
+        <translation>Rechercher les mises à jour</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="713"/>
+        <source>Guncellemeleri denetle...</source>
+        <translation>Rechercher les mises à jour...</translation>
+    </message>
+    <message>
         <location filename="../../core/ext.py" line="391"/>
         <source>Gunluk (journal) ayriliyor...</source>
         <translation>Réservation du journal...</translation>
@@ -4409,12 +4480,12 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Fichier journal</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2726"/>
+        <location filename="../../ui/main_window.py" line="2769"/>
         <source>Gunluk klasoru</source>
         <translation>Dossier des journaux</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="691"/>
+        <location filename="../../ui/main_window.py" line="706"/>
         <source>Gunluk klasorunu ac</source>
         <translation>Ouvrir le dossier des journaux</translation>
     </message>
@@ -4429,7 +4500,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Impossible d&apos;allouer le journal d&apos;un seul tenant</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="690"/>
+        <location filename="../../ui/main_window.py" line="705"/>
         <source>Gunluk yolu, donma sayisi ve o an calisan islemler</source>
         <translation>Chemin du journal, nombre de blocages et opérations en cours</translation>
     </message>
@@ -4449,7 +4520,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Écriture des descripteurs de sécurité ($Secure)...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="918"/>
+        <location filename="../../ui/main_window.py" line="961"/>
         <source>HATA — {}: {}</source>
         <translation>ERREUR — {} : {}</translation>
     </message>
@@ -4515,7 +4586,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Préparation de la disposition HFS+...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="696"/>
+        <location filename="../../ui/main_window.py" line="711"/>
         <source>Hakkinda</source>
         <translation>À propos</translation>
     </message>
@@ -4525,7 +4596,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Image disque brute (.img)</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1285"/>
+        <location filename="../../core/platform.py" line="1343"/>
         <source>Harici araclar</source>
         <translation>Outils externes</translation>
     </message>
@@ -4543,7 +4614,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <location filename="../../core/physical.py" line="127"/>
         <location filename="../../core/physical.py" line="128"/>
         <location filename="../../core/physical.py" line="130"/>
-        <location filename="../../ui/main_window.py" line="3849"/>
+        <location filename="../../ui/main_window.py" line="3892"/>
         <location filename="../../ui/qt_i18n.py" line="44"/>
         <source>Hayir</source>
         <translation>Non</translation>
@@ -4567,8 +4638,8 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <location filename="../../ui/dialogs/apply.py" line="121"/>
         <location filename="../../ui/dialogs/backup.py" line="419"/>
         <location filename="../../ui/dialogs/backup.py" line="637"/>
-        <location filename="../../ui/main_window.py" line="188"/>
-        <location filename="../../ui/main_window.py" line="2511"/>
+        <location filename="../../ui/main_window.py" line="192"/>
+        <location filename="../../ui/main_window.py" line="2554"/>
         <source>Hedef</source>
         <translation>Cible</translation>
     </message>
@@ -4620,7 +4691,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
     </message>
     <message>
         <location filename="../../core/grub.py" line="476"/>
-        <location filename="../../ui/main_window.py" line="1797"/>
+        <location filename="../../ui/main_window.py" line="1840"/>
         <source>Hedef disk yok</source>
         <translation>Aucun disque cible</translation>
     </message>
@@ -4666,12 +4737,12 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Cible :</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1190"/>
+        <location filename="../../core/platform.py" line="1248"/>
         <source>Hedefte yalnizca {} bos alan var; {} goruntu sigmaz.</source>
         <translation>Seulement {} libres sur la destination ; une image de {} ne tiendra pas.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1186"/>
+        <location filename="../../core/platform.py" line="1244"/>
         <source>Hedefte {} bos alan var, goruntu {}. Seyrek goruntu doldukca yer biter ve islemler yarida kalabilir.</source>
         <translation>La destination dispose de {} libres, l&apos;image fait {}. À mesure que l&apos;image fragmentée (sparse) se remplit, l&apos;espace va manquer et les opérations risquent de s&apos;arrêter à mi-chemin.</translation>
     </message>
@@ -4707,17 +4778,17 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Rien n&apos;a encore été exécuté ; le disque n&apos;a pas été touché.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1695"/>
+        <location filename="../../ui/main_window.py" line="1738"/>
         <source>Hizalama</source>
         <translation>Alignement</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1705"/>
+        <location filename="../../ui/main_window.py" line="1748"/>
         <source>Hizalama Denetimi</source>
         <translation>Vérification de l&apos;alignement</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="641"/>
+        <location filename="../../ui/main_window.py" line="656"/>
         <source>Hizalama denetimi (4K)</source>
         <translation>Vérification de l&apos;alignement (4K)</translation>
     </message>
@@ -4799,12 +4870,12 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Fichier binaire</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="549"/>
+        <location filename="../../ui/main_window.py" line="561"/>
         <source>Ikon seti</source>
         <translation>Jeu d&apos;icônes</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="790"/>
+        <location filename="../../ui/main_window.py" line="807"/>
         <source>Ikon seti degistirildi: {}</source>
         <translation>Jeu d&apos;icônes modifié : {}</translation>
     </message>
@@ -4829,17 +4900,17 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Récupération de fichiers par signature</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="662"/>
+        <location filename="../../ui/main_window.py" line="677"/>
         <source>Imza tabanli dosya kurtarma...</source>
         <translation>Récupération de fichiers par signature...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2047"/>
+        <location filename="../../ui/main_window.py" line="2090"/>
         <source>Imza taramasi</source>
         <translation>Analyse des signatures</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2057"/>
+        <location filename="../../ui/main_window.py" line="2100"/>
         <source>Imza taramasi ({}): {} dosya bulundu</source>
         <translation>Analyse des signatures ({}) : {} fichiers trouvés</translation>
     </message>
@@ -4892,8 +4963,8 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="289"/>
-        <location filename="../../ui/main_window.py" line="850"/>
+        <location filename="../../ui/main_window.py" line="293"/>
+        <location filename="../../ui/main_window.py" line="893"/>
         <source>Islem Gunlugu</source>
         <translation>Journal des opérations</translation>
     </message>
@@ -4904,8 +4975,8 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Échec de l&apos;opération</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1657"/>
-        <location filename="../../ui/main_window.py" line="1662"/>
+        <location filename="../../ui/main_window.py" line="1700"/>
+        <location filename="../../ui/main_window.py" line="1705"/>
         <source>Islem basarisiz.</source>
         <translation>L&apos;opération a échoué.</translation>
     </message>
@@ -4947,8 +5018,8 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
     </message>
     <message>
         <location filename="../../ui/dialogs/bootloader.py" line="92"/>
-        <location filename="../../ui/main_window.py" line="570"/>
-        <location filename="../../ui/main_window.py" line="845"/>
+        <location filename="../../ui/main_window.py" line="585"/>
+        <location filename="../../ui/main_window.py" line="888"/>
         <source>Islemler</source>
         <translation>Opérations</translation>
     </message>
@@ -4960,25 +5031,25 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Système d&apos;exploitation</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="645"/>
+        <location filename="../../core/bootloader.py" line="647"/>
         <source>Isletim sistemi bulunamadi</source>
         <translation>Aucun système d&apos;exploitation trouvé</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="351"/>
-        <location filename="../../core/bootloader.py" line="354"/>
+        <location filename="../../core/bootloader.py" line="353"/>
+        <location filename="../../core/bootloader.py" line="356"/>
         <source>Isletim sistemi kurulamayan bir dosya sistemi</source>
         <translation>Un système de fichiers sur lequel aucun OS ne peut être installé</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="324"/>
-        <location filename="../../core/bootloader.py" line="336"/>
-        <location filename="../../core/bootloader.py" line="344"/>
+        <location filename="../../core/bootloader.py" line="326"/>
+        <location filename="../../core/bootloader.py" line="338"/>
+        <location filename="../../core/bootloader.py" line="346"/>
         <source>Isletim sistemi kurulu degil (veri bolumu)</source>
         <translation>Aucun système d&apos;exploitation installé (partition de données)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3341"/>
+        <location filename="../../ui/main_window.py" line="3384"/>
         <location filename="../../ui/widgets/disk_map.py" line="456"/>
         <source>Isletim sistemi: {}</source>
         <translation>Système d&apos;exploitation : {}</translation>
@@ -5022,7 +5093,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Fermer</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1044"/>
+        <location filename="../../ui/main_window.py" line="1087"/>
         <source>Kapatildi: {}</source>
         <translation>Fermé : {}</translation>
     </message>
@@ -5052,17 +5123,17 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Résultats de la recherche de partitions perdues</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2013"/>
+        <location filename="../../ui/main_window.py" line="2056"/>
         <source>Kayip bolum taramasi: {} aday bulundu</source>
         <translation>Recherche de partitions perdues : {} candidates trouvées</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2003"/>
+        <location filename="../../ui/main_window.py" line="2046"/>
         <source>Kayip bolumler taraniyor</source>
         <translation>Recherche de partitions perdues</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="661"/>
+        <location filename="../../ui/main_window.py" line="676"/>
         <source>Kayip bolumleri tara...</source>
         <translation>Rechercher les partitions perdues...</translation>
     </message>
@@ -5178,7 +5249,7 @@ Emplacement : {}</translation>
         <translation>La source est uniquement lue ; rien n&apos;est écrit à part le fichier de sauvegarde.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1732"/>
+        <location filename="../../ui/main_window.py" line="1775"/>
         <source>Kaynak yok</source>
         <translation>Aucune source</translation>
     </message>
@@ -5342,18 +5413,18 @@ Emplacement : {}</translation>
         <translation>Dossiers</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1831"/>
-        <location filename="../../ui/main_window.py" line="1855"/>
+        <location filename="../../ui/main_window.py" line="1874"/>
+        <location filename="../../ui/main_window.py" line="1898"/>
         <source>Klon hazir</source>
         <translation>Clone prêt</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1839"/>
+        <location filename="../../ui/main_window.py" line="1882"/>
         <source>Klon hedefi</source>
         <translation>Cible du clone</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1855"/>
+        <location filename="../../ui/main_window.py" line="1898"/>
         <source>Klon olusturuldu:
 {}
 
@@ -5369,8 +5440,8 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Cloner</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1822"/>
-        <location filename="../../ui/main_window.py" line="1851"/>
+        <location filename="../../ui/main_window.py" line="1865"/>
+        <location filename="../../ui/main_window.py" line="1894"/>
         <source>Klonlama basarisiz</source>
         <translation>Échec du clonage</translation>
     </message>
@@ -5413,12 +5484,12 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Impossible d&apos;agir sur le répertoire racine</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="331"/>
+        <location filename="../../core/bootloader.py" line="333"/>
         <source>Kok dosya sistemi degil ({} yok)</source>
         <translation>Ce n&apos;est pas un système de fichiers racine (pas de {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3852"/>
+        <location filename="../../ui/main_window.py" line="3895"/>
         <source>Konum</source>
         <translation>Emplacement</translation>
     </message>
@@ -5473,7 +5544,7 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Non disponible</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3866"/>
+        <location filename="../../ui/main_window.py" line="3909"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Kullanilan</source>
         <translation>Utilisé</translation>
@@ -5514,7 +5585,7 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Examen de la carte des clusters...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3859"/>
+        <location filename="../../ui/main_window.py" line="3902"/>
         <source>Kume/blok boyutu</source>
         <translation>Taille de cluster/bloc</translation>
     </message>
@@ -5524,12 +5595,12 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Récupérabilité</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1973"/>
+        <location filename="../../ui/main_window.py" line="2016"/>
         <source>Kurtariliyor: {}</source>
         <translation>Récupération : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1985"/>
+        <location filename="../../ui/main_window.py" line="2028"/>
         <source>Kurtarma basarisiz</source>
         <translation>Échec de la récupération</translation>
     </message>
@@ -5539,12 +5610,12 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>La récupération n&apos;est pas prise en charge</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1966"/>
+        <location filename="../../ui/main_window.py" line="2009"/>
         <source>Kurtarma hedefi</source>
         <translation>Cible de la récupération</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1988"/>
+        <location filename="../../ui/main_window.py" line="2031"/>
         <source>Kurtarma tamamlandi</source>
         <translation>Récupération terminée</translation>
     </message>
@@ -5559,13 +5630,13 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Ajouter à la file d&apos;attente</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1437"/>
-        <location filename="../../ui/main_window.py" line="2480"/>
+        <location filename="../../ui/main_window.py" line="1480"/>
+        <location filename="../../ui/main_window.py" line="2523"/>
         <source>Kuyruga eklendi: {}</source>
         <translation>Ajouté à la file d&apos;attente : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2551"/>
+        <location filename="../../ui/main_window.py" line="2594"/>
         <source>Kuyruktan cikarildi: {}</source>
         <translation>Retiré de la file d&apos;attente : {}</translation>
     </message>
@@ -5581,7 +5652,7 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>LBA {} - {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1703"/>
+        <location filename="../../ui/main_window.py" line="1746"/>
         <source>LBA {} — {}</source>
         <translation>LBA {} — {}</translation>
     </message>
@@ -5668,7 +5739,12 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Linux refuse de monter un volume NTFS dans cet état (ntfs3 : volume sale, ntfs-3g : métadonnées conservées dans le cache de Windows).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1798"/>
+        <location filename="../../ui/main_window.py" line="4136"/>
+        <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt5 ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
+        <translation>Licence : GNU GPL version 3. Licences de Qt, PyQt5 et Python fournis avec l&apos;application : Aide &gt; Licences tierces.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1841"/>
         <source>Listede fiziksel disk yok. Diskleri yenileyin; Linux&apos;ta ve Windows&apos;ta disk listesi yonetici yetkisi ister.</source>
         <translation>La liste ne contient aucun disque physique. Actualisez les disques ; sous Linux et Windows, la liste des disques nécessite des droits administrateur.</translation>
     </message>
@@ -5683,7 +5759,7 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>MBR dépasse la limite de 2 TiB ; utilisez GPT</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="616"/>
+        <location filename="../../ui/main_window.py" line="631"/>
         <source>MBR bolum tablosu olustur</source>
         <translation>Créer une table de partitions MBR</translation>
     </message>
@@ -5699,7 +5775,7 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>MBR contient au plus 4 partitions principales ; la table en a {}. Réduisez d&apos;abord le nombre de partitions.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1182"/>
+        <location filename="../../ui/main_window.py" line="1225"/>
         <source>MBR tablosunda 4 birincil bolum dolu.
 Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</source>
         <translation>Les 4 partitions principales de la table MBR sont utilisées.
@@ -5757,7 +5833,7 @@ Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une p
         <translation>Mac OS X HFS+</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1638"/>
+        <location filename="../../core/platform.py" line="1696"/>
         <source>Makine BIOS (eski) kipinde acilmis; UEFI onyukleme degiskenleri yok.</source>
         <translation>La machine a démarré en mode BIOS (hérité) ; il n&apos;y a pas de variables de démarrage UEFI.</translation>
     </message>
@@ -5767,7 +5843,7 @@ Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une p
         <translation>Logique</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3853"/>
+        <location filename="../../ui/main_window.py" line="3896"/>
         <source>Mantiksal (EBR: LBA {})</source>
         <translation>Logique (EBR : LBA {})</translation>
     </message>
@@ -5853,7 +5929,7 @@ Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une p
         <translation>Les partitions existantes seront perdues</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1088"/>
+        <location filename="../../ui/main_window.py" line="1131"/>
         <source>Mevcut boyut: {}
 
 Yeni boyut (orn. 4 GB, 512 MB):</source>
@@ -5872,7 +5948,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Données de base Microsoft</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1281"/>
+        <location filename="../../core/platform.py" line="1339"/>
         <source>Mimari</source>
         <translation>Architecture</translation>
     </message>
@@ -5892,17 +5968,17 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Vérification du volume NTFS...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1873"/>
+        <location filename="../../ui/main_window.py" line="1916"/>
         <source>NTFS degil</source>
         <translation>Pas NTFS</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1891"/>
+        <location filename="../../ui/main_window.py" line="1934"/>
         <source>NTFS denetlenemedi</source>
         <translation>Impossible de vérifier NTFS</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1887"/>
+        <location filename="../../ui/main_window.py" line="1930"/>
         <source>NTFS denetleniyor — Bolum {}</source>
         <translation>Vérification de NTFS — partition {}</translation>
     </message>
@@ -5949,7 +6025,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Vérifier et réparer NTFS</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="649"/>
+        <location filename="../../ui/main_window.py" line="664"/>
         <source>NTFS&apos;i denetle ve onar...</source>
         <translation>Vérifier et réparer NTFS...</translation>
     </message>
@@ -5981,12 +6057,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Normale</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="877"/>
+        <location filename="../../ui/main_window.py" line="920"/>
         <source>Normal kullanici</source>
         <translation>Utilisateur standard</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1283"/>
+        <location filename="../../core/platform.py" line="1341"/>
         <source>Normal kullanici — fiziksel disk icin {} gerekir</source>
         <translation>Utilisateur standard — les disques physiques nécessitent {}</translation>
     </message>
@@ -6085,8 +6161,8 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Hex</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="284"/>
-        <location filename="../../ui/main_window.py" line="849"/>
+        <location filename="../../ui/main_window.py" line="288"/>
+        <location filename="../../ui/main_window.py" line="892"/>
         <source>Onaltilik Goruntuleyici</source>
         <translation>Visionneuse hexadécimale</translation>
     </message>
@@ -6126,7 +6202,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Réparation terminée</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1690"/>
+        <location filename="../../ui/main_window.py" line="1733"/>
         <source>Once bir bolum tablosu acin.</source>
         <translation>Ouvrez d&apos;abord une table de partitions.</translation>
     </message>
@@ -6141,14 +6217,14 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Créez d&apos;abord une table de partitions (MBR ou GPT)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3931"/>
+        <location filename="../../ui/main_window.py" line="3974"/>
         <source>Once bir disk goruntusu acin veya olusturun.</source>
         <translation>Ouvrez ou créez d&apos;abord une image disque.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1766"/>
-        <location filename="../../ui/main_window.py" line="1993"/>
-        <location filename="../../ui/main_window.py" line="2033"/>
+        <location filename="../../ui/main_window.py" line="1809"/>
+        <location filename="../../ui/main_window.py" line="2036"/>
+        <location filename="../../ui/main_window.py" line="2076"/>
         <source>Once bir goruntu acin.</source>
         <translation>Ouvrez d&apos;abord une image.</translation>
     </message>
@@ -6158,7 +6234,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Sélectionnez d&apos;abord une source.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3913"/>
+        <location filename="../../ui/main_window.py" line="3956"/>
         <source>Once listeden veya haritadan bir bolum secin.</source>
         <translation>Sélectionnez d&apos;abord une partition dans la liste ou sur la carte.</translation>
     </message>
@@ -6199,12 +6275,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Indicateur de démarrage</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="90"/>
+        <location filename="../../ui/main_window.py" line="94"/>
         <source>Onyukleme bayragini kaldir</source>
         <translation>Retirer l&apos;indicateur de démarrage</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="89"/>
+        <location filename="../../ui/main_window.py" line="93"/>
         <source>Onyukleme bayragini koy</source>
         <translation>Définir l&apos;indicateur de démarrage</translation>
     </message>
@@ -6220,7 +6296,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Examen de l&apos;état du démarrage</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2135"/>
+        <location filename="../../ui/main_window.py" line="2178"/>
         <source>Onyukleme durumunu incelemek icin once bir disk ya da goruntu acin.</source>
         <translation>Ouvrez d&apos;abord un disque ou une image pour examiner l&apos;état du démarrage.</translation>
     </message>
@@ -6348,7 +6424,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Secteur d&apos;amorçage restauré depuis sa copie de secours</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3849"/>
+        <location filename="../../ui/main_window.py" line="3892"/>
         <source>Onyuklenebilir</source>
         <translation>Amorçable</translation>
     </message>
@@ -6363,12 +6439,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Gestionnaire de chargeurs d&apos;amorçage</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="653"/>
+        <location filename="../../ui/main_window.py" line="668"/>
         <source>Onyukleyici yoneticisi...</source>
         <translation>Gestionnaire de chargeurs d&apos;amorçage...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2706"/>
+        <location filename="../../ui/main_window.py" line="2749"/>
         <source>Oturum gunlugu</source>
         <translation>Journal de session</translation>
     </message>
@@ -6390,7 +6466,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Attribut introuvable dans l&apos;enregistrement</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3857"/>
+        <location filename="../../ui/main_window.py" line="3900"/>
         <source>Oznitelikler</source>
         <translation>Attributs</translation>
     </message>
@@ -6427,17 +6503,22 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Plan</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2449"/>
+        <location filename="../../ui/main_window.py" line="2492"/>
         <source>Planlanani goster</source>
         <translation>Afficher la disposition prévue</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1279"/>
+        <location filename="../../core/platform.py" line="1337"/>
         <source>Platform</source>
         <translation>Plateforme</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1280"/>
+        <location filename="../../ui/main_window.py" line="4135"/>
+        <source>Proje sayfasi: {}</source>
+        <translation>Page du projet : {}</translation>
+    </message>
+    <message>
+        <location filename="../../core/platform.py" line="1338"/>
         <source>Python</source>
         <translation>Python</translation>
     </message>
@@ -6457,7 +6538,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Aucune signature QCOW2 trouvée</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2155"/>
+        <location filename="../../ui/main_window.py" line="2198"/>
         <source>Qt platformu</source>
         <translation>Plateforme Qt</translation>
     </message>
@@ -6472,7 +6553,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Aléatoire (1 passe)</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1318"/>
+        <location filename="../../core/platform.py" line="1376"/>
         <source>ReFS yalnizca Windows&apos;un kendi araciyla olusturulabilir; {} uzerinde arac yok</source>
         <translation>ReFS ne peut être créé qu&apos;avec l&apos;outil propre à Windows ; aucun outil sur {}</translation>
     </message>
@@ -6499,7 +6580,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>DISQUE SYSTÈME</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2842"/>
+        <location filename="../../ui/main_window.py" line="2885"/>
         <source>SISTEMDEKI DISKLER</source>
         <translation>DISQUES DE CE SYSTÈME</translation>
     </message>
@@ -6529,13 +6610,13 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Écriture des tables fixes ($UpCase, $AttrDef)...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3956"/>
-        <location filename="../../ui/main_window.py" line="3965"/>
+        <location filename="../../ui/main_window.py" line="3999"/>
+        <location filename="../../ui/main_window.py" line="4008"/>
         <source>Salt okunur acildi</source>
         <translation>Ouvert en lecture seule</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3959"/>
+        <location filename="../../ui/main_window.py" line="4002"/>
         <source>Salt okunur devam et</source>
         <translation>Continuer en lecture seule</translation>
     </message>
@@ -6545,17 +6626,17 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Lecture seule — les modifications sont écrites avec Appliquer</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2122"/>
+        <location filename="../../ui/main_window.py" line="2165"/>
         <source>Sanal disk olusturulamadi</source>
         <translation>Impossible de créer le disque virtuel</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2120"/>
+        <location filename="../../ui/main_window.py" line="2163"/>
         <source>Sanal disk olusturuluyor</source>
         <translation>Création du disque virtuel</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2102"/>
+        <location filename="../../ui/main_window.py" line="2145"/>
         <source>Sanal disk olusturuluyor...</source>
         <translation>Création du disque virtuel...</translation>
     </message>
@@ -6575,7 +6656,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Options</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2055"/>
+        <location filename="../../ui/main_window.py" line="2098"/>
         <source>Secilen turlerde dosya imzasi bulunamadi.</source>
         <translation>Aucune signature de fichier des types sélectionnés n&apos;a été trouvée.</translation>
     </message>
@@ -6590,7 +6671,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Récupérer la sélection...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="668"/>
+        <location filename="../../ui/main_window.py" line="683"/>
         <source>Secili diski ac</source>
         <translation>Ouvrir le disque sélectionné</translation>
     </message>
@@ -6600,27 +6681,27 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Entrée sélectionnée</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2958"/>
+        <location filename="../../ui/main_window.py" line="3001"/>
         <source>Secili: Bolum {} — {} ({})</source>
         <translation>Sélection : partition {} — {} ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2967"/>
+        <location filename="../../ui/main_window.py" line="3010"/>
         <source>Secili: Bolum {} — {} ({}) — planlanan, henuz olusturulmadi</source>
         <translation>Sélection : partition {} — {} ({}) — prévue, pas encore créée</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2993"/>
+        <location filename="../../ui/main_window.py" line="3036"/>
         <source>Secili: Bos alan — {}</source>
         <translation>Sélection : espace libre — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2837"/>
+        <location filename="../../ui/main_window.py" line="2880"/>
         <source>Secili: {} ({})</source>
         <translation>Sélection : {} ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2043"/>
+        <location filename="../../ui/main_window.py" line="2086"/>
         <source>Secim yok</source>
         <translation>Rien n&apos;est sélectionné</translation>
     </message>
@@ -6651,7 +6732,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Écriture non alignée sur une limite de secteur</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3838"/>
+        <location filename="../../ui/main_window.py" line="3881"/>
         <source>Sema</source>
         <translation>Schéma</translation>
     </message>
@@ -6786,12 +6867,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Fichiers supprimés</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1949"/>
+        <location filename="../../ui/main_window.py" line="1992"/>
         <source>Silinmis dosyalar taraniyor</source>
         <translation>Recherche de fichiers supprimés</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="660"/>
+        <location filename="../../ui/main_window.py" line="675"/>
         <source>Silinmis dosyalari tara...</source>
         <translation>Rechercher les fichiers supprimés...</translation>
     </message>
@@ -6822,12 +6903,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Méthode d&apos;effacement :</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="693"/>
+        <location filename="../../ui/main_window.py" line="708"/>
         <source>Simdi yigin dokumu al</source>
         <translation>Faire un vidage de pile maintenant</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1030"/>
+        <location filename="../../ui/main_window.py" line="1073"/>
         <source>Simdilik gez</source>
         <translation>Simplement parcourir pour l&apos;instant</translation>
     </message>
@@ -6868,12 +6949,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Sys</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2159"/>
+        <location filename="../../ui/main_window.py" line="2202"/>
         <source>Sistem Bilgisi</source>
         <translation>Informations système</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="687"/>
+        <location filename="../../ui/main_window.py" line="702"/>
         <source>Sistem bilgisi</source>
         <translation>Informations système</translation>
     </message>
@@ -6883,17 +6964,17 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Disque système</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2912"/>
+        <location filename="../../ui/main_window.py" line="2955"/>
         <source>Sistem diski korumasi</source>
         <translation>Protection du disque système</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2631"/>
+        <location filename="../../ui/main_window.py" line="2674"/>
         <source>Sistem diski onayi</source>
         <translation>Confirmation du disque système</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2637"/>
+        <location filename="../../ui/main_window.py" line="2680"/>
         <source>Sistem diski onayi verilmedi, uygulama iptal</source>
         <translation>La confirmation du disque système n&apos;a pas été donnée, application annulée</translation>
     </message>
@@ -6929,12 +7010,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Étendre la dernière partition</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="692"/>
+        <location filename="../../ui/main_window.py" line="707"/>
         <source>Son donma raporunu goster...</source>
         <translation>Afficher le dernier rapport de blocage...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="678"/>
+        <location filename="../../ui/main_window.py" line="693"/>
         <source>Son eklenen bekleyen adimi kaldirir</source>
         <translation>Supprime la dernière étape en attente ajoutée</translation>
     </message>
@@ -6945,7 +7026,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Le dernier groupe est trop petit pour ses métadonnées</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2712"/>
+        <location filename="../../ui/main_window.py" line="2755"/>
         <source>Son rapor</source>
         <translation>Dernier rapport</translation>
     </message>
@@ -6981,9 +7062,9 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Vérification du résultat...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1955"/>
-        <location filename="../../ui/main_window.py" line="2010"/>
-        <location filename="../../ui/main_window.py" line="2054"/>
+        <location filename="../../ui/main_window.py" line="1998"/>
+        <location filename="../../ui/main_window.py" line="2053"/>
+        <location filename="../../ui/main_window.py" line="2097"/>
         <source>Sonuc yok</source>
         <translation>Aucun résultat</translation>
     </message>
@@ -6998,7 +7079,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Démarré actuellement</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2714"/>
+        <location filename="../../ui/main_window.py" line="2757"/>
         <source>Su an calisan</source>
         <translation>En cours d&apos;exécution</translation>
     </message>
@@ -7026,7 +7107,7 @@ Continuer ?</translation>
         <translation>Écriture des superblocs...</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1760"/>
+        <location filename="../../core/platform.py" line="1818"/>
         <source>Surec belirteci acilamadi.</source>
         <translation>Impossible d&apos;ouvrir le jeton du processus.</translation>
     </message>
@@ -7036,17 +7117,17 @@ Continuer ?</translation>
         <translation>Entrée de pilote</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="594"/>
+        <location filename="../../core/platform.py" line="595"/>
         <source>Surucu harfi</source>
         <translation>Lettre de lecteur</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="588"/>
+        <location filename="../../core/platform.py" line="589"/>
         <source>Surucu harfi ata</source>
         <translation>Attribuer une lettre de lecteur</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="588"/>
+        <location filename="../../core/platform.py" line="589"/>
         <source>Surucu harfini kaldir</source>
         <translation>Retirer la lettre de lecteur</translation>
     </message>
@@ -7061,6 +7142,11 @@ Continuer ?</translation>
         <translation>Version</translation>
     </message>
     <message>
+        <location filename="../../core/updates.py" line="108"/>
+        <source>Surum listesi alinamadi: {}</source>
+        <translation>Impossible d&apos;obtenir la liste des versions : {}</translation>
+    </message>
+    <message>
         <location filename="../../ui/qt_i18n.py" line="45"/>
         <source>T&amp;umune hayir</source>
         <translation>Non pour to&amp;ut</translation>
@@ -7071,12 +7157,12 @@ Continuer ?</translation>
         <translation>La table est déjà au format {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1695"/>
+        <location filename="../../ui/main_window.py" line="1738"/>
         <source>Tabloda bolum yok.</source>
         <translation>La table ne contient aucune partition.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1131"/>
+        <location filename="../../ui/main_window.py" line="1174"/>
         <source>Tablosuz disk</source>
         <translation>Disque sans table de partitions</translation>
     </message>
@@ -7107,7 +7193,7 @@ Continuer ?</translation>
         <translation>OK</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="706"/>
+        <location filename="../../core/bootloader.py" line="708"/>
         <location filename="../../core/clone.py" line="168"/>
         <location filename="../../core/clone.py" line="387"/>
         <location filename="../../core/clone.py" line="421"/>
@@ -7133,7 +7219,7 @@ Continuer ?</translation>
         <location filename="../../core/xfsformat.py" line="325"/>
         <location filename="../../core/xfsgrow.py" line="398"/>
         <location filename="../../ui/dialogs/apply.py" line="226"/>
-        <location filename="../../ui/main_window.py" line="2083"/>
+        <location filename="../../ui/main_window.py" line="2126"/>
         <source>Tamamlandi</source>
         <translation>Terminé</translation>
     </message>
@@ -7153,28 +7239,28 @@ Continuer ?</translation>
         <translation>Finalisation...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2716"/>
-        <location filename="../../ui/main_window.py" line="555"/>
+        <location filename="../../ui/main_window.py" line="2759"/>
+        <location filename="../../ui/main_window.py" line="567"/>
         <source>Tanilama</source>
         <translation>Diagnostic</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2701"/>
+        <location filename="../../ui/main_window.py" line="2744"/>
         <source>Tanilama DISKULTIMATE_DIAG=0 ile kapatilmis.</source>
         <translation>Le diagnostic se désactive avec DISKULTIMATE_DIAG=0.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="688"/>
+        <location filename="../../ui/main_window.py" line="703"/>
         <source>Tanilama durumu...</source>
         <translation>État du diagnostic...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="145"/>
+        <location filename="../../ui/main_window.py" line="149"/>
         <source>Tanilama gunlugu: {}</source>
         <translation>Journal de diagnostic : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2700"/>
+        <location filename="../../ui/main_window.py" line="2743"/>
         <source>Tanilama kapali</source>
         <translation>Diagnostic désactivé</translation>
     </message>
@@ -7184,9 +7270,9 @@ Continuer ?</translation>
         <translation>Code d&apos;amorçage non reconnu</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1952"/>
-        <location filename="../../ui/main_window.py" line="2006"/>
-        <location filename="../../ui/main_window.py" line="2051"/>
+        <location filename="../../ui/main_window.py" line="1995"/>
+        <location filename="../../ui/main_window.py" line="2049"/>
+        <location filename="../../ui/main_window.py" line="2094"/>
         <source>Tarama basarisiz</source>
         <translation>L&apos;analyse a échoué</translation>
     </message>
@@ -7201,7 +7287,7 @@ Continuer ?</translation>
         <translation>Analyse terminée : {} fichiers</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1997"/>
+        <location filename="../../ui/main_window.py" line="2040"/>
         <source>Tarama derinligi</source>
         <translation>Profondeur d&apos;analyse</translation>
     </message>
@@ -7216,27 +7302,32 @@ Continuer ?</translation>
         <translation>Analyse... {} / {} — {} candidates</translation>
     </message>
     <message>
+        <location filename="../../ui/updatecheck.py" line="71"/>
+        <source>Tarayici acilamadi. Adres: {}</source>
+        <translation>Impossible d&apos;ouvrir le navigateur. Adresse : {}</translation>
+    </message>
+    <message>
         <location filename="../../ui/dialogs/backup.py" line="748"/>
         <source>Tek bolum yedegi</source>
         <translation>Sauvegarde d&apos;une seule partition</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="552"/>
+        <location filename="../../ui/main_window.py" line="564"/>
         <source>Tema</source>
         <translation>Thème</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="775"/>
+        <location filename="../../ui/main_window.py" line="792"/>
         <source>Tema degistirildi: {}</source>
         <translation>Thème modifié : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3891"/>
+        <location filename="../../ui/main_window.py" line="3934"/>
         <source>Temiz</source>
         <translation>Propre</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3889"/>
+        <location filename="../../ui/main_window.py" line="3932"/>
         <source>Temiz kapatilmamis — Linux baglamaz; Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>Pas arrêté proprement — Linux ne le montera pas ; Partition &gt; Vérifier et réparer NTFS</translation>
     </message>
@@ -7271,7 +7362,7 @@ Continuer ?</translation>
         <translation>Effacer toute la zone (tout ce qu&apos;elle contient est détruit)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1706"/>
+        <location filename="../../ui/main_window.py" line="1749"/>
         <source>Tum bolumler 4K sinirinda hizali.</source>
         <translation>Toutes les partitions sont alignées sur une limite de 4K.</translation>
     </message>
@@ -7281,16 +7372,16 @@ Continuer ?</translation>
         <translation>Toutes les partitions seront perdues</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1909"/>
+        <location filename="../../ui/main_window.py" line="1952"/>
         <source>Tum disk ({})</source>
         <translation>Disque entier ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2037"/>
-        <location filename="../../ui/main_window.py" line="2965"/>
-        <location filename="../../ui/main_window.py" line="3001"/>
-        <location filename="../../ui/main_window.py" line="3065"/>
-        <location filename="../../ui/main_window.py" line="3633"/>
+        <location filename="../../ui/main_window.py" line="2080"/>
+        <location filename="../../ui/main_window.py" line="3008"/>
+        <location filename="../../ui/main_window.py" line="3044"/>
+        <location filename="../../ui/main_window.py" line="3108"/>
+        <location filename="../../ui/main_window.py" line="3676"/>
         <source>Tum goruntu</source>
         <translation>Image entière</translation>
     </message>
@@ -7318,7 +7409,7 @@ Continuer ?</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3839"/>
+        <location filename="../../ui/main_window.py" line="3882"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
@@ -7326,13 +7417,13 @@ Continuer ?</translation>
         <translation>Type</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3855"/>
+        <location filename="../../ui/main_window.py" line="3898"/>
         <source>Tur GUID</source>
         <translation>GUID de type</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1519"/>
-        <location filename="../../ui/main_window.py" line="1531"/>
+        <location filename="../../ui/main_window.py" line="1562"/>
+        <location filename="../../ui/main_window.py" line="1574"/>
         <source>Tur:</source>
         <translation>Type :</translation>
     </message>
@@ -7465,7 +7556,7 @@ Continuer ?</translation>
         <translation>Éditeur de démarrage UEFI</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="657"/>
+        <location filename="../../ui/main_window.py" line="672"/>
         <source>UEFI onyukleme duzenleyici...</source>
         <translation>Éditeur de démarrage UEFI...</translation>
     </message>
@@ -7480,22 +7571,22 @@ Continuer ?</translation>
         <translation>Périphérique USB</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3861"/>
+        <location filename="../../ui/main_window.py" line="3904"/>
         <source>UUID / Seri no</source>
         <translation>UUID / N° de série</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2833"/>
+        <location filename="../../ui/main_window.py" line="2876"/>
         <source>UYARI: Uygulama yonetici/root yetkisi olmadan calisiyor; disk icerigi okunamayabilir.</source>
         <translation>ATTENTION : l&apos;application s&apos;exécute sans privilèges administrateur/root ; le contenu des disques peut être illisible.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="810"/>
+        <location filename="../../ui/main_window.py" line="852"/>
         <source>Ucuncu taraf lisanslari</source>
         <translation>Licences tierces</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="697"/>
+        <location filename="../../ui/main_window.py" line="712"/>
         <source>Ucuncu taraf lisanslari...</source>
         <translation>Licences tierces...</translation>
     </message>
@@ -7532,14 +7623,14 @@ Continuer ?</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="166"/>
-        <location filename="../../ui/main_window.py" line="2513"/>
-        <location filename="../../ui/main_window.py" line="673"/>
+        <location filename="../../ui/main_window.py" line="2556"/>
+        <location filename="../../ui/main_window.py" line="688"/>
         <location filename="../../ui/qt_i18n.py" line="51"/>
         <source>Uygula</source>
         <translation>Appliquer</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2512"/>
+        <location filename="../../ui/main_window.py" line="2555"/>
         <source>Uygula ({})</source>
         <translation>Appliquer ({})</translation>
     </message>
@@ -7549,7 +7640,7 @@ Continuer ?</translation>
         <translation>Application</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2604"/>
+        <location filename="../../ui/main_window.py" line="2647"/>
         <source>Uygulama basarisiz: {}</source>
         <translation>Échec de l&apos;application : {}</translation>
     </message>
@@ -7559,7 +7650,7 @@ Continuer ?</translation>
         <translation>L&apos;application n&apos;a pas été lancée.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2241"/>
+        <location filename="../../ui/main_window.py" line="2284"/>
         <source>Uygulama kapatilip &lt;b&gt;{} yetkisiyle&lt;/b&gt; yeniden baslatilacak.&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>L&apos;application va être fermée et redémarrée &lt;b&gt;avec les privilèges {}&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Continuer ?</translation>
     </message>
@@ -7569,7 +7660,7 @@ Continuer ?</translation>
         <translation>L&apos;application s&apos;exécute déjà avec les privilèges {}.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="874"/>
+        <location filename="../../ui/main_window.py" line="917"/>
         <source>Uygulama {} yetkisiyle calisiyor; fiziksel disklere erisebilir.</source>
         <translation>L&apos;application s&apos;exécute avec les privilèges {} ; elle peut accéder aux disques physiques.</translation>
     </message>
@@ -7579,7 +7670,7 @@ Continuer ?</translation>
         <translation>Impossible de déterminer le chemin du script pour redémarrer l&apos;application.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2610"/>
+        <location filename="../../ui/main_window.py" line="2653"/>
         <source>Uygulandi: {}</source>
         <translation>Appliqué : {}</translation>
     </message>
@@ -7599,7 +7690,7 @@ Continuer ?</translation>
         <translation>Emplacement inadapté</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2844"/>
+        <location filename="../../ui/main_window.py" line="2887"/>
         <source>VAR</source>
         <translation>OUI</translation>
     </message>
@@ -7629,7 +7720,7 @@ Continuer ?</translation>
         <translation>Aucune signature VHD trouvée</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2125"/>
+        <location filename="../../ui/main_window.py" line="2168"/>
         <source>VHD olusturuldu: {} ({})</source>
         <translation>VHD créé : {} ({})</translation>
     </message>
@@ -7665,8 +7756,8 @@ Continuer ?</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="169"/>
-        <location filename="../../ui/main_window.py" line="2277"/>
-        <location filename="../../ui/main_window.py" line="679"/>
+        <location filename="../../ui/main_window.py" line="2320"/>
+        <location filename="../../ui/main_window.py" line="694"/>
         <location filename="../../ui/qt_i18n.py" line="50"/>
         <source>Vazgec</source>
         <translation>Annuler</translation>
@@ -7734,7 +7825,7 @@ Continuer ?</translation>
         <translation>L&apos;outil de formatage de Windows a signalé une erreur : {}</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1408"/>
+        <location filename="../../core/platform.py" line="1466"/>
         <source>Windows bicimlendiricisi kullanildi</source>
         <translation>L&apos;outil de formatage de Windows a été utilisé</translation>
     </message>
@@ -7749,7 +7840,7 @@ Continuer ?</translation>
         <translation>L&apos;outil de redimensionnement de Windows est en cours d&apos;exécution...</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1465"/>
+        <location filename="../../core/platform.py" line="1523"/>
         <source>Windows boyutlandiricisi kullanildi</source>
         <translation>L&apos;outil de redimensionnement de Windows a été utilisé</translation>
     </message>
@@ -7759,7 +7850,7 @@ Continuer ?</translation>
         <translation>Exécutable Windows</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1936"/>
+        <location filename="../../core/platform.py" line="1994"/>
         <source>Windows hata kodu {}</source>
         <translation>Code d&apos;erreur Windows {}</translation>
     </message>
@@ -7774,7 +7865,7 @@ Continuer ?</translation>
         <translation>Windows est en veille prolongée (y compris le démarrage rapide). Écrire sur ce volume puis reprendre Windows le corrompt. Démarrez Windows et arrêtez-le avec « Redémarrer », ou choisissez d&apos;invalider le fichier d&apos;hibernation lors de la réparation.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3886"/>
+        <location filename="../../ui/main_window.py" line="3929"/>
         <source>Windows hazirda bekletmede — Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>Windows est en veille prolongée — Partition &gt; Vérifier et réparer NTFS</translation>
     </message>
@@ -7789,7 +7880,7 @@ Continuer ?</translation>
         <translation>Windows ne reprendra pas la session enregistrée mais redémarrera à neuf ; le travail non enregistré est perdu.</translation>
     </message>
     <message>
-        <location filename="../../core/bootloader.py" line="321"/>
+        <location filename="../../core/bootloader.py" line="323"/>
         <source>Windows onyukleme bolumu</source>
         <translation>Partition de démarrage Windows</translation>
     </message>
@@ -7809,7 +7900,7 @@ Continuer ?</translation>
         <translation>chkdsk s&apos;exécutera au prochain démarrage de Windows</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="650"/>
+        <location filename="../../ui/main_window.py" line="665"/>
         <source>Windows&apos;un temiz kapatmadigi NTFS birimini baglanabilir hale getirir (ntfsfix gibi)</source>
         <translation>Rend à nouveau montable un volume NTFS que Windows n&apos;a pas arrêté proprement (comme ntfsfix)</translation>
     </message>
@@ -7910,19 +8001,19 @@ Continuer ?</translation>
         <translation>NOUVEAU VOLUME</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2845"/>
+        <location filename="../../ui/main_window.py" line="2888"/>
         <source>YOK</source>
         <translation>NON</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2710"/>
+        <location filename="../../ui/main_window.py" line="2753"/>
         <source>Yakalanan donma</source>
         <translation>Blocages détectés</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1397"/>
-        <location filename="../../core/platform.py" line="1428"/>
-        <location filename="../../core/platform.py" line="1454"/>
+        <location filename="../../core/platform.py" line="1455"/>
+        <location filename="../../core/platform.py" line="1486"/>
+        <location filename="../../core/platform.py" line="1512"/>
         <source>Yalnizca Windows</source>
         <translation>Windows uniquement</translation>
     </message>
@@ -7958,8 +8049,8 @@ Continuer ?</translation>
         <translation>Écriture impossible</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2596"/>
-        <location filename="../../ui/main_window.py" line="3084"/>
+        <location filename="../../ui/main_window.py" line="2639"/>
+        <location filename="../../ui/main_window.py" line="3127"/>
         <source>Yazilamaz kaynak</source>
         <translation>La source n&apos;est pas accessible en écriture</translation>
     </message>
@@ -8020,12 +8111,12 @@ Continuer ?</translation>
         <translation>Le mode écriture doit être confirmé explicitement (confirm=True)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2687"/>
+        <location filename="../../ui/main_window.py" line="2730"/>
         <source>Yazma modu acilamadi</source>
         <translation>Impossible d&apos;activer le mode écriture</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2689"/>
+        <location filename="../../ui/main_window.py" line="2732"/>
         <source>Yazma modu acildi: {}</source>
         <translation>Mode écriture activé : {}</translation>
     </message>
@@ -8035,7 +8126,7 @@ Continuer ?</translation>
         <translation>L&apos;écriture dépasse la limite du disque virtuel</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2646"/>
+        <location filename="../../ui/main_window.py" line="2689"/>
         <source>Yazma sirasinda bu birimler &lt;b&gt;gecici olarak cikarilacak&lt;/b&gt; (kilitlenip ayrilir).</source>
         <translation>Ces volumes seront &lt;b&gt;temporairement démontés&lt;/b&gt; pendant l&apos;écriture (verrouillés et détachés).</translation>
     </message>
@@ -8050,7 +8141,7 @@ Continuer ?</translation>
         <translation>Effectuer la sauvegarde</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="682"/>
+        <location filename="../../ui/main_window.py" line="697"/>
         <source>Yedegi diske yaz...</source>
         <translation>Écrire la sauvegarde sur un disque...</translation>
     </message>
@@ -8090,7 +8181,7 @@ Continuer ?</translation>
         <translation>Sauvegarde ouverte</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1008"/>
+        <location filename="../../ui/main_window.py" line="1051"/>
         <source>Yedek acildi (salt okunur): {} — kaynak {}, yedek {}</source>
         <translation>Sauvegarde ouverte (lecture seule) : {} — source {}, sauvegarde {}</translation>
     </message>
@@ -8164,12 +8255,12 @@ Continuer ?</translation>
         <translation>Un fichier de sauvegarde (.dub) est une archive ; il ne peut pas être écrasé. Écrivez la sauvegarde sur un disque ou dans une nouvelle image.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1014"/>
+        <location filename="../../ui/main_window.py" line="1057"/>
         <source>Yedek dosyasi acildi</source>
         <translation>Fichier de sauvegarde ouvert</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="686"/>
+        <location filename="../../ui/main_window.py" line="701"/>
         <source>Yedek dosyasi bilgisi...</source>
         <translation>Informations sur le fichier de sauvegarde...</translation>
     </message>
@@ -8274,7 +8365,7 @@ Continuer ?</translation>
         <translation>Sauvegarde et restauration</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1733"/>
+        <location filename="../../ui/main_window.py" line="1776"/>
         <source>Yedeklenecek bir goruntu veya disk bulunamadi.
 
 Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
@@ -8338,7 +8429,7 @@ Ouvrez une image ou utilisez Disque &gt; Actualiser les disques physiques.</tran
         <translation>Nouvelle capacité :</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2092"/>
+        <location filename="../../ui/main_window.py" line="2135"/>
         <source>Yeni Sanal Disk (VHD)</source>
         <translation>Nouveau disque virtuel (VHD)</translation>
     </message>
@@ -8354,7 +8445,7 @@ Ouvrez une image ou utilisez Disque &gt; Actualiser les disques physiques.</tran
         <translation>Le nouveau nom ne doit pas contenir de chemin</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1505"/>
+        <location filename="../../ui/main_window.py" line="1548"/>
         <location filename="../../ui/widgets/file_browser.py" line="397"/>
         <source>Yeni ad:</source>
         <translation>Nouveau nom :</translation>
@@ -8365,7 +8456,7 @@ Ouvrez une image ou utilisez Disque &gt; Actualiser les disques physiques.</tran
         <translation>Nouvelle partition</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1154"/>
+        <location filename="../../ui/main_window.py" line="1197"/>
         <source>Yeni bolum icin yeterli bos alan bulunamadi.
 
 Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
@@ -8379,7 +8470,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Créer une nouvelle partition</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="621"/>
+        <location filename="../../ui/main_window.py" line="636"/>
         <source>Yeni bolum...</source>
         <translation>Nouvelle partition...</translation>
     </message>
@@ -8424,12 +8515,12 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>La nouvelle taille est inférieure à l&apos;utilisation actuelle ; les données tiennent quand même car la zone de gestion propre au système de fichiers est également réduite</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="952"/>
+        <location filename="../../ui/main_window.py" line="995"/>
         <source>Yeni disk goruntusu</source>
         <translation>Nouvelle image disque</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1550"/>
+        <location filename="../../ui/main_window.py" line="1593"/>
         <source>Yeni etiket:</source>
         <translation>Nouveau nom de volume :</translation>
     </message>
@@ -8444,7 +8535,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Nouveau fichier image...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="612"/>
+        <location filename="../../ui/main_window.py" line="627"/>
         <source>Yeni goruntu...</source>
         <translation>Nouvelle image...</translation>
     </message>
@@ -8462,12 +8553,23 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Nouveau dossier</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="681"/>
+        <location filename="../../ui/main_window.py" line="696"/>
         <source>Yeni sanal disk (VHD)...</source>
         <translation>Nouveau disque virtuel (VHD)...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1433"/>
+        <location filename="../../ui/updatecheck.py" line="59"/>
+        <location filename="../../ui/updatecheck.py" line="70"/>
+        <source>Yeni surum var</source>
+        <translation>Nouvelle version disponible</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="4182"/>
+        <source>Yeni surum var: {} (kullanilan: {})</source>
+        <translation>Nouvelle version disponible : {} (utilisée : {})</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1476"/>
         <source>Yeni yerlesim gecersiz</source>
         <translation>La nouvelle disposition est invalide</translation>
     </message>
@@ -8490,19 +8592,19 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Impossible de renommer</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2262"/>
-        <location filename="../../ui/main_window.py" line="2309"/>
+        <location filename="../../ui/main_window.py" line="2305"/>
+        <location filename="../../ui/main_window.py" line="2352"/>
         <source>Yeniden baslatilamadi</source>
         <translation>Impossible de redémarrer</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="559"/>
+        <location filename="../../core/platform.py" line="560"/>
         <source>Yeniden baslatilamadi (ShellExecute hatasi {}).</source>
         <translation>Impossible de redémarrer (erreur ShellExecute {}).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2261"/>
-        <location filename="../../ui/main_window.py" line="2308"/>
+        <location filename="../../ui/main_window.py" line="2304"/>
+        <location filename="../../ui/main_window.py" line="2351"/>
         <source>Yeniden baslatilamadi: {}</source>
         <translation>Impossible de redémarrer : {}</translation>
     </message>
@@ -8512,14 +8614,14 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Le redimensionnement nécessite une confirmation (confirm=True)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3958"/>
+        <location filename="../../ui/main_window.py" line="4001"/>
         <location filename="../../ui/qt_i18n.py" line="46"/>
         <source>Yeniden dene</source>
         <translation>Réessayer</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/bootloader.py" line="149"/>
-        <location filename="../../ui/main_window.py" line="620"/>
+        <location filename="../../ui/main_window.py" line="635"/>
         <location filename="../../ui/widgets/file_browser.py" line="113"/>
         <location filename="../../ui/widgets/file_browser.py" line="51"/>
         <location filename="../../ui/widgets/file_browser.py" line="539"/>
@@ -8527,7 +8629,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Actualiser</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3025"/>
+        <location filename="../../ui/main_window.py" line="3068"/>
         <source>Yenileme hatasi</source>
         <translation>Erreur d&apos;actualisation</translation>
     </message>
@@ -8563,22 +8665,22 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Espace libre insuffisant : {} blocs requis, {} libres</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1282"/>
+        <location filename="../../core/platform.py" line="1340"/>
         <source>Yetki</source>
         <translation>Privilèges</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2186"/>
+        <location filename="../../ui/main_window.py" line="2229"/>
         <source>Yetki eksik ({}) — yukseltme yapilamiyor: {}</source>
         <translation>Privilèges manquants ({}) — élévation impossible : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2276"/>
+        <location filename="../../ui/main_window.py" line="2319"/>
         <source>Yetki penceresi bekleniyor. Parola sorulursa girin.</source>
         <translation>En attente de la boîte de dialogue d&apos;autorisation. Saisissez votre mot de passe si demandé.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="558"/>
+        <location filename="../../core/platform.py" line="559"/>
         <source>Yetki verilmedi (UAC penceresinde iptal edildi).</source>
         <translation>L&apos;autorisation n&apos;a pas été accordée (annulée dans l&apos;invite UAC).</translation>
     </message>
@@ -8589,14 +8691,14 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>L&apos;autorisation n&apos;a pas été accordée (la boîte de dialogue du mot de passe a été annulée).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2224"/>
-        <location filename="../../ui/main_window.py" line="2227"/>
-        <location filename="../../ui/main_window.py" line="2684"/>
+        <location filename="../../ui/main_window.py" line="2267"/>
+        <location filename="../../ui/main_window.py" line="2270"/>
+        <location filename="../../ui/main_window.py" line="2727"/>
         <source>Yetki yetersiz</source>
         <translation>Privilèges insuffisants</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3242"/>
+        <location filename="../../ui/main_window.py" line="3285"/>
         <source>Yetki: normal kullanici — fiziksel disk icin {} gerekir</source>
         <translation>Privilèges : utilisateur standard — les disques physiques nécessitent {}</translation>
     </message>
@@ -8611,7 +8713,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Impossible de démarrer la copie avec privilèges élevés (code de sortie {}).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2295"/>
+        <location filename="../../ui/main_window.py" line="2338"/>
         <source>Yetkili kopya beklenmekten vazgecildi; acilirsa iki kopyadan birini kapatin.</source>
         <translation>Fin de l&apos;attente de la copie avec privilèges élevés ; si elle s&apos;ouvre, fermez l&apos;une des deux copies.</translation>
     </message>
@@ -8621,12 +8723,12 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Continuer sans privilèges</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2749"/>
+        <location filename="../../ui/main_window.py" line="2792"/>
         <source>Yigin dokumu</source>
         <translation>Vidage de pile</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2748"/>
+        <location filename="../../ui/main_window.py" line="2791"/>
         <source>Yigin dokumu yazildi: {}</source>
         <translation>Vidage de pile écrit : {}</translation>
     </message>
@@ -8663,12 +8765,12 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Chemin :</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1272"/>
+        <location filename="../../core/platform.py" line="1330"/>
         <source>Yonetici</source>
         <translation>Administrateur</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2843"/>
+        <location filename="../../ui/main_window.py" line="2886"/>
         <source>Yonetici/root yetkisi: {}</source>
         <translation>Privilèges administrateur/root : {}</translation>
     </message>
@@ -8683,7 +8785,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Vers le haut</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2539"/>
+        <location filename="../../ui/main_window.py" line="2582"/>
         <source>Yukari tasi</source>
         <translation>Déplacer vers le haut</translation>
     </message>
@@ -8699,7 +8801,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>ZIP / document Office</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="974"/>
+        <location filename="../../ui/main_window.py" line="1017"/>
         <source>Zaten acik, one getirildi: {}</source>
         <translation>Déjà ouvert, mis au premier plan : {}</translation>
     </message>
@@ -8726,27 +8828,27 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Existe déjà : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3405"/>
+        <location filename="../../ui/main_window.py" line="3448"/>
         <source>[SISTEM DISKI]</source>
         <translation>[DISQUE SYSTÈME]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3413"/>
+        <location filename="../../ui/main_window.py" line="3456"/>
         <source>[bagli bolum var]</source>
         <translation>[contient des partitions montées]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3303"/>
+        <location filename="../../ui/main_window.py" line="3346"/>
         <source>[degistirilemez]</source>
         <translation>[non modifiable]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3402"/>
+        <location filename="../../ui/main_window.py" line="3445"/>
         <source>[{} SISTEM DISKI]</source>
         <translation>[{} DISQUE SYSTÈME]</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="608"/>
+        <location filename="../../core/platform.py" line="609"/>
         <source>`diskutil` bulunamadi.</source>
         <translation>`diskutil` est introuvable.</translation>
     </message>
@@ -8756,12 +8858,12 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>`grub-install` a échoué.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1538"/>
+        <location filename="../../core/platform.py" line="1596"/>
         <source>`grub-install` bulunamadi (grub-pc ya da grub-efi paketi kurulu degil).</source>
         <translation>`grub-install` est introuvable (le paquet grub-pc ou grub-efi n&apos;est pas installé).</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="604"/>
+        <location filename="../../core/platform.py" line="605"/>
         <source>`mount` veya `udisksctl` bulunamadi.</source>
         <translation>`mount` ou `udisksctl` est introuvable.</translation>
     </message>
@@ -8776,7 +8878,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Ni `update-grub` ni `grub-mkconfig` n&apos;ont été trouvés.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1642"/>
+        <location filename="../../core/platform.py" line="1700"/>
         <source>`{}` bagli degil; `efivarfs` cekirdek modulu yuklu olmayabilir.</source>
         <translation>`{}` n&apos;est pas monté ; le module noyau `efivarfs` n&apos;est peut-être pas chargé.</translation>
     </message>
@@ -8833,8 +8935,8 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>inconnu</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1338"/>
-        <location filename="../../ui/main_window.py" line="1476"/>
+        <location filename="../../core/platform.py" line="1396"/>
+        <location filename="../../ui/main_window.py" line="1519"/>
         <source>bilinmiyor</source>
         <translation>inconnu</translation>
     </message>
@@ -9052,8 +9154,8 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="564"/>
-        <location filename="../../ui/main_window.py" line="2977"/>
-        <location filename="../../ui/main_window.py" line="3482"/>
+        <location filename="../../ui/main_window.py" line="3020"/>
+        <location filename="../../ui/main_window.py" line="3525"/>
         <location filename="../../ui/widgets/disk_overview.py" line="184"/>
         <source>ham</source>
         <translation>brut</translation>
@@ -9109,7 +9211,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>recovered_{:012X}.{}</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1658"/>
+        <location filename="../../core/platform.py" line="1716"/>
         <source>macOS bellenim degiskenlerine erisim vermiyor.</source>
         <translation>macOS ne donne pas accès aux variables du micrologiciel.</translation>
     </message>
@@ -9160,7 +9262,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>ouvert dans l&apos;application</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1286"/>
+        <location filename="../../core/platform.py" line="1344"/>
         <source>var</source>
         <translation>oui</translation>
     </message>
@@ -9188,7 +9290,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <location filename="../../core/clone.py" line="84"/>
         <location filename="../../core/grub.py" line="106"/>
         <location filename="../../core/physical.py" line="134"/>
-        <location filename="../../core/platform.py" line="1286"/>
+        <location filename="../../core/platform.py" line="1344"/>
         <location filename="../../ui/dialogs/backup.py" line="777"/>
         <location filename="../../ui/dialogs/backup.py" line="796"/>
         <location filename="../../ui/dialogs/bootloader.py" line="235"/>
@@ -9332,7 +9434,7 @@ Le ou les volumes suivants n&apos;ont pas pu être verrouillés : {}
 Fermez les programmes qui utilisent le volume (fenêtre de l&apos;Explorateur, antivirus, sauvegarde) et rouvrez le disque ; ou éjectez le volume depuis Windows.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1654"/>
+        <location filename="../../ui/main_window.py" line="1697"/>
         <source>{}
 
 Windows bu NTFS birimini temiz kapatmamis olabilir (Hizli baslatma, hazirda bekletme, elektrik kesintisi). Birimi simdi denetlemek ister misiniz?</source>
@@ -9350,7 +9452,7 @@ Yine de bu konumda olusturulsun mu?</source>
 Le créer à cet emplacement quand même ?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3421"/>
+        <location filename="../../ui/main_window.py" line="3464"/>
         <source>{}
 {}
 Sektor: {} B | Baglanti: {}</source>
@@ -9379,7 +9481,7 @@ Secteur : {} B | Bus : {}</translation>
         <translation>{} (verrouillage impossible — le volume est utilisé)</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1282"/>
+        <location filename="../../core/platform.py" line="1340"/>
         <source>{} (tam erisim)</source>
         <translation>{} (accès complet)</translation>
     </message>
@@ -9394,7 +9496,7 @@ Secteur : {} B | Bus : {}</translation>
         <translation>{} ({} passes)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3843"/>
+        <location filename="../../ui/main_window.py" line="3886"/>
         <source>{} ({} sektor)</source>
         <translation>{} ({} secteurs)</translation>
     </message>
@@ -9404,7 +9506,7 @@ Secteur : {} B | Bus : {}</translation>
         <translation>{} / {} octets</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2632"/>
+        <location filename="../../ui/main_window.py" line="2675"/>
         <source>{} ISLETIM SISTEMI DISKIDIR.
 
 Bu diske yazmak isletim sistemini acilamaz hale getirebilir.
@@ -9420,7 +9522,7 @@ Saisissez le nom du disque pour continuer : {}</translation>
         <translation>Bloc de {} KB</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1399"/>
+        <location filename="../../core/platform.py" line="1457"/>
         <source>{} Windows araciyla olusturulamaz</source>
         <translation>{} ne peut pas être créé avec l&apos;outil de Windows</translation>
     </message>
@@ -9464,7 +9566,7 @@ Saisissez le nom du disque pour continuer : {}</translation>
         <translation>{} monté(s)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1647"/>
+        <location filename="../../ui/main_window.py" line="1690"/>
         <source>{} basarisiz: {}</source>
         <translation>Échec de {} : {}</translation>
     </message>
@@ -9474,7 +9576,7 @@ Saisissez le nom du disque pour continuer : {}</translation>
         <translation>{} octets</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../ui/main_window.py" line="2580"/>
+        <location filename="../../ui/main_window.py" line="2623"/>
         <source>{} bekleyen adim iptal edildi</source>
         <extra-po-msgid_plural>{} bekleyen adim iptal edildi</extra-po-msgid_plural>
         <translation>
@@ -9483,12 +9585,12 @@ Saisissez le nom du disque pour continuer : {}</translation>
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2573"/>
+        <location filename="../../ui/main_window.py" line="2616"/>
         <source>{} bekleyen adim silinecek.&lt;br&gt;&lt;br&gt;Diskte hicbir degisiklik yapilmadigi icin bu islem &lt;b&gt;zararsizdir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>{} étapes en attente seront supprimées.&lt;br&gt;&lt;br&gt;Comme rien n&apos;a été modifié sur le disque, c&apos;est &lt;b&gt;sans danger&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Continuer ?</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1177"/>
+        <location filename="../../core/platform.py" line="1235"/>
         <source>{} bellekte tutulan bir dosya sistemi ({}); goruntu RAM kullanir ve yeniden baslatmada silinir.</source>
         <translation>{} est un système de fichiers conservé en mémoire ({}) ; l&apos;image utilise la RAM et est supprimée au redémarrage.</translation>
     </message>
@@ -9508,12 +9610,12 @@ Saisissez le nom du disque pour continuer : {}</translation>
         <translation>{} est un conteneur ; les volumes qu&apos;il contient ne peuvent pas être ouverts dans cette version.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1173"/>
+        <location filename="../../core/platform.py" line="1231"/>
         <source>{} bir sistem/aygit dosya sistemi ({}); goruntu buraya olusturulamaz.</source>
         <translation>{} est un système de fichiers système/de périphériques ({}) ; impossible d&apos;y créer une image.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1707"/>
+        <location filename="../../ui/main_window.py" line="1750"/>
         <source>{} bolum 4K sinirinda hizali degil; SSD ve ileri bicim disklerde basarim dusebilir.</source>
         <translation>{} partitions ne sont pas alignées sur une limite de 4K ; les performances peuvent baisser sur les SSD et les disques Advanced Format.</translation>
     </message>
@@ -9584,7 +9686,7 @@ Saisissez le nom du disque pour continuer : {}</translation>
         <translation>Exportation de {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1832"/>
+        <location filename="../../ui/main_window.py" line="1875"/>
         <source>{} diskine klonlandi ({}).
 
 Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin isletim sistemi birini cevrimdisi yapabilir.</source>
@@ -9593,27 +9695,27 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
 Si les deux disques restent connectés au même ordinateur, le système d&apos;exploitation peut mettre l&apos;un d&apos;eux hors ligne car ils portent le même identifiant de disque.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2713"/>
+        <location filename="../../ui/main_window.py" line="2756"/>
         <source>{} dk</source>
         <translation>{} min</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1683"/>
+        <location filename="../../ui/main_window.py" line="1726"/>
         <source>{} donusumu kuyruga alindi: {}</source>
         <translation>Conversion {} ajoutée à la file d&apos;attente : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1681"/>
+        <location filename="../../ui/main_window.py" line="1724"/>
         <source>{} donusumu yapilamaz</source>
         <translation>La conversion {} est impossible</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2082"/>
+        <location filename="../../ui/main_window.py" line="2125"/>
         <source>{} dosya cikarildi -&gt; {}</source>
         <translation>{} fichiers extraits -&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2084"/>
+        <location filename="../../ui/main_window.py" line="2127"/>
         <source>{} dosya cikarildi:
 {}</source>
         <translation>{} fichiers extraits :
@@ -9629,7 +9731,7 @@ Si les deux disques restent connectés au même ordinateur, le système d&apos;e
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1989"/>
+        <location filename="../../ui/main_window.py" line="2032"/>
         <source>{} dosya kurtarildi:
 {}</source>
         <translation>{} fichiers récupérés :
@@ -9656,7 +9758,7 @@ Si les deux disques restent connectés au même ordinateur, le système d&apos;e
         <translation>{} mis à jour : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4072"/>
+        <location filename="../../ui/main_window.py" line="4119"/>
         <source>{} hakkinda</source>
         <translation>À propos de {}</translation>
     </message>
@@ -9678,7 +9780,7 @@ Si les deux disques restent connectés au même ordinateur, le système d&apos;e
         <translation>{} nécessite au moins {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="807"/>
+        <location filename="../../ui/main_window.py" line="849"/>
         <source>{} ikon</source>
         <translation>Icônes {}</translation>
     </message>
@@ -9753,18 +9855,18 @@ Emplacement : {}</translation>
         <translation>Lecture de {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2248"/>
-        <location filename="../../ui/main_window.py" line="2278"/>
+        <location filename="../../ui/main_window.py" line="2291"/>
+        <location filename="../../ui/main_window.py" line="2321"/>
         <source>{} olarak yeniden baslat</source>
         <translation>Redémarrer en tant que {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="664"/>
+        <location filename="../../ui/main_window.py" line="679"/>
         <source>{} olarak yeniden baslat...</source>
         <translation>Redémarrer en tant que {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2201"/>
+        <location filename="../../ui/main_window.py" line="2244"/>
         <source>{} olarak yeniden baslatma reddedildi; fiziksel diskler acilamaz</source>
         <translation>Le redémarrage en tant que {} a été refusé ; les disques physiques ne peuvent pas être ouverts</translation>
     </message>
@@ -9800,8 +9902,8 @@ Emplacement : {}</translation>
         <translation>{} entrées supprimées trouvées</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2708"/>
-        <location filename="../../ui/main_window.py" line="2711"/>
+        <location filename="../../ui/main_window.py" line="2751"/>
+        <location filename="../../ui/main_window.py" line="2754"/>
         <source>{} sn</source>
         <translation>{} s</translation>
     </message>
@@ -9847,12 +9949,12 @@ Emplacement : {}</translation>
         <translation>Préparation de la disposition {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2238"/>
+        <location filename="../../ui/main_window.py" line="2281"/>
         <source>{} yetkisi</source>
         <translation>privilèges {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2189"/>
+        <location filename="../../ui/main_window.py" line="2232"/>
         <source>{} yetkisi gerekiyor</source>
         <translation>Les privilèges {} sont requis</translation>
     </message>
@@ -9862,17 +9964,17 @@ Emplacement : {}</translation>
         <translation>Demande des privilèges {}. Saisissez votre mot de passe si demandé.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="143"/>
+        <location filename="../../ui/main_window.py" line="147"/>
         <source>{} {} baslatildi</source>
         <translation>{} {} démarré</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3039"/>
+        <location filename="../../ui/main_window.py" line="3082"/>
         <source>{} | {} | {} bolum</source>
         <translation>{} | {} | {} partitions</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3410"/>
+        <location filename="../../ui/main_window.py" line="3453"/>
         <source>{} — (yetki yok, bilgi okunamadi)</source>
         <translation>{} — (pas de privilèges, impossible de lire les informations)</translation>
     </message>
@@ -9887,12 +9989,12 @@ Emplacement : {}</translation>
         <translation>{} — les 440 premiers octets sont mis à zéro</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3338"/>
+        <location filename="../../ui/main_window.py" line="3381"/>
         <source>{} — {}</source>
         <translation>{} — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3487"/>
+        <location filename="../../ui/main_window.py" line="3530"/>
         <source>{} — {}
 LBA {} - {}
 Acmak icin tiklayin (salt okunur)</source>
@@ -9931,7 +10033,7 @@ Cliquer pour ouvrir (lecture seule)</translation>
         <translation>{}, {} — les données sont conservées</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1987"/>
+        <location filename="../../ui/main_window.py" line="2030"/>
         <source>{}/{} dosya kurtarildi -&gt; {}</source>
         <translation>{}/{} fichiers récupérés -&gt; {}</translation>
     </message>
@@ -9952,7 +10054,7 @@ Cliquer pour ouvrir (lecture seule)</translation>
         <translation>{} : l&apos;affichage du contenu n&apos;est pas pris en charge</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2228"/>
+        <location filename="../../ui/main_window.py" line="2271"/>
         <source>{}&lt;br&gt;&lt;br&gt;Uygulama &lt;b&gt;{} yetkisiyle&lt;/b&gt; yeniden baslatilsin mi?</source>
         <translation>{}&lt;br&gt;&lt;br&gt;Redémarrer l&apos;application &lt;b&gt;avec les privilèges {}&lt;/b&gt; ?</translation>
     </message>

@@ -30,6 +30,8 @@ def _qt_platformu() -> str:
 os.environ["QT_QPA_PLATFORM"] = _qt_platformu()
 # Yetki yukseltme teklifi modal bir penceredir; otomatik kosumu kilitler.
 os.environ["DISKULTIMATE_NO_ELEVATION_PROMPT"] = "1"
+# Duman testi aga cikmaz (acilistaki guncelleme denetimi, ADR 0090)
+os.environ["DISKULTIMATE_UPDATE_CHECK"] = "0"
 
 from PyQt5.QtCore import QRect, Qt  # noqa: E402
 from PyQt5.QtWidgets import QApplication  # noqa: E402
@@ -410,6 +412,15 @@ def main() -> int:
     assert hucre is not None and hucre.text() == esp.os_name, \
         (hucre.text() if hucre else None, esp.os_name)
     print(f"  (isletim sistemi: bolum 1 -> {esp.os_name!r})")
+
+    # Guncelleme denetimi (ADR 0090): ortam degiskeni kapatir; Yardim
+    # menusunde elle denetim ve "acilista denetle" secenegi var.
+    from diskultimate.ui import updatecheck
+    assert not updatecheck.auto_enabled(), "DISKULTIMATE_UPDATE_CHECK=0 yok sayildi"
+    assert pencere.act_auto_updates.isCheckable()
+    assert pencere.act_check_updates.text() and pencere.act_auto_updates.text()
+    yardim_eylemleri = [a for m, _k in pencere._menus for a in m.actions()]
+    assert pencere.act_check_updates in yardim_eylemleri, "denetim menude yok"
 
     def kaydet(widget, ad: str) -> None:
         app.processEvents()

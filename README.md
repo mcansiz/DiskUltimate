@@ -212,6 +212,9 @@ start: right-click the app → **Open**.
   The French, Italian, Spanish, Russian, Chinese, Japanese and Korean
   translations are new in this version and have not yet been reviewed by
   native speakers — corrections are welcome
+- **Update check**: on start-up the app checks GitHub for a newer release in the
+  background and offers to open the download page (*Help → Check for updates*;
+  can be turned off, or set `DISKULTIMATE_UPDATE_CHECK=0`)
 - **Installed operating system per partition**: Windows version (e.g. Windows 11),
   Linux distribution, macOS version, and which systems an EFI partition boots,
   shown in the tree, the partition table and the disk map
@@ -355,5 +358,9 @@ The README screenshots are regenerated with `python3 tools/readme_screenshots.py
 
 [GNU General Public License v3.0](LICENSE) — you may use, modify and
 distribute this software; derived works must stay open source under the same
-license. Licenses of the bundled icon sets are listed under
-*Help → Third-party licenses*.
+license. The downloadable builds include Qt (LGPL-3.0), PyQt5 (GPL-3.0),
+PyQt5-sip (BSD-2-Clause), Python (PSF) and several icon sets; their licenses
+and notices are listed under *Help → Third-party licenses*
+(`src/diskultimate/licenses/`).
+
+Developed by **Mikail Cansız** — https://github.com/mcansiz/DiskUltimate

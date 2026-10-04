@@ -7006,6 +7006,65 @@ def t89_bolum_basina_isletim_sistemi():
     s.close()
 
 
+@test
+def t90_guncelleme_denetimi_ve_lisanslar():
+    """Guncelleme denetimi (agsiz) ve dagitilan bilesenlerin lisans metinleri (ADR 0090)
+
+    Butun surumler on surum: `/releases/latest` 404 verir, liste okunur.
+    En yeni surum numarayla secilir, tarihle degil; taslak sayilmaz. Exe ve
+    AppImage Qt (LGPLv3), PyQt5 (GPLv3), sip (BSD-2) ve Python'u (PSF) icinde
+    tasir: lisans metinleri pakette olmali.
+    """
+    from diskultimate import licenses as lic
+    from diskultimate.core import platform as pf
+    from diskultimate.core import updates as up
+
+    sira = ["0.5.9", "0.6.0-beta", "0.6.1-beta", "v0.6.1-rc1", "0.6.1",
+            "0.6.2-beta"]
+    for i in range(len(sira) - 1):
+        assert up.is_newer(sira[i + 1], sira[i]), (sira[i + 1], sira[i])
+        assert not up.is_newer(sira[i], sira[i + 1]), (sira[i], sira[i + 1])
+    assert not up.is_newer("v0.6.1-beta", "0.6.1-beta")
+    assert not up.is_newer("nightly", "0.6.1-beta"), "taninmayan surum yeni sayilmaz"
+
+    liste = [
+        {"tag_name": "v0.7.0-beta", "draft": True, "html_url": "u-taslak"},
+        {"tag_name": "v0.6.2-beta", "prerelease": True, "html_url": "u-062",
+         "published_at": "2026-10-05"},
+        # eski dal icin sonradan cikan duzeltme: tarihce en yeni ama surumce degil
+        {"tag_name": "v0.5.3-beta", "prerelease": True, "html_url": "u-053",
+         "published_at": "2026-10-09"},
+        {"tag_name": "gecersiz", "html_url": "u-x"},
+    ]
+    en_yeni = up.newest(liste)
+    assert en_yeni.tag == "v0.6.2-beta" and en_yeni.url == "u-062", en_yeni
+    yeni, son = up.check("0.6.1-beta", fetcher=lambda: liste)
+    assert yeni is not None and yeni.version == "0.6.2-beta", yeni
+    yeni, son = up.check("0.6.2-beta", fetcher=lambda: liste)
+    assert yeni is None and son.tag == "v0.6.2-beta"
+
+    def kopuk():
+        raise up.UpdateError("ag yok")
+    try:
+        up.check("0.6.1-beta", fetcher=kopuk)
+        raise AssertionError("ag hatasi yutuldu")
+    except up.UpdateError:
+        pass
+
+    assert not pf.open_url("file:///etc/passwd"), "yalnizca https acilmali"
+    assert not pf.open_url("http://example.com"), "yalnizca https acilmali"
+
+    beklenen = {"qt": "GNU LESSER GENERAL PUBLIC LICENSE",
+                "pyqt5": "GNU GENERAL PUBLIC LICENSE",
+                "sip": "Redistribution and use in source and binary forms",
+                "python": "PYTHON SOFTWARE FOUNDATION LICENSE"}
+    for bilesen in lic.COMPONENTS:
+        metin = lic.text(bilesen)
+        assert beklenen[bilesen["key"]] in metin, bilesen["name"]
+    qt = [b for b in lic.COMPONENTS if b["key"] == "qt"][0]
+    assert "{}" in qt["note"], "Qt notu kaynak arsivi baglantisini tasimali"
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

@@ -85,6 +85,8 @@ def main() -> int:
     window.log(f"Qt platformu: {app.platformName()} | stil: "
                 f"{app.style().objectName()} | tema: {theme}")
     window.show()
+    # GitHub'da yeni surum var mi — arka planda, sessiz (ADR 0090)
+    window.schedule_update_check()
     # Yetkili kopya olarak acildiysak, bizi baslatan kopya kapanmak icin bu
     # bildirimi bekliyor (bkz. core.platform.ElevatedLaunch, ADR 0039).
     signal_elevated_ready()

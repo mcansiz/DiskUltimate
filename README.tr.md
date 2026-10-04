@@ -216,6 +216,9 @@ sağ tık → **Aç**.
   bekleyen adımlar korunur). Fransızca, İtalyanca, İspanyolca, Rusça, Çince,
   Japonca ve Korece çeviriler bu sürümde eklendi ve henüz anadili konuşanlarca
   gözden geçirilmedi — düzeltmeler memnuniyetle karşılanır
+- **Güncelleme denetimi**: açılışta GitHub'da daha yeni bir sürüm olup olmadığına
+  arka planda bakar ve indirme sayfasını açmayı önerir (*Yardım → Güncellemeleri
+  denetle*; kapatılabilir ya da `DISKULTIMATE_UPDATE_CHECK=0`)
 - **Bölüm başına kurulu işletim sistemi**: Windows sürümü (ör. Windows 11), Linux
   dağıtımı, macOS sürümü ve EFI bölümünün hangi sistemleri başlattığı; ağaçta,
   bölüm tablosunda ve disk haritasında gösterilir
@@ -363,5 +366,9 @@ README ekran görüntüleri `python3 tools/readme_screenshots.py` ile yeniden
 
 [GNU Genel Kamu Lisansı v3.0](LICENSE) — bu yazılımı kullanabilir, değiştirebilir
 ve dağıtabilirsiniz; türetilen çalışmalar da aynı lisansla açık kaynak kalmak
-zorundadır. Gömülü ikon setlerinin lisansları *Yardim → Ucuncu taraf lisanslari*
-altında listelenir.
+zorundadır. İndirilebilir sürümler Qt (LGPL-3.0), PyQt5 (GPL-3.0), PyQt5-sip
+(BSD-2-Clause), Python (PSF) ve gömülü ikon setlerini içerir; lisansları ve
+bildirimleri *Yardım → Üçüncü taraf lisansları* altında listelenir
+(`src/diskultimate/licenses/`).
+
+Geliştirici: **Mikail Cansız** — https://github.com/mcansiz/DiskUltimate

@@ -61,7 +61,8 @@ def main() -> int:
     # "minimal": pakette her zaman bulunan ekransiz Qt eklentisi. "offscreen"
     # boyut icin PyInstaller paketinden atiliyor (DiskUltimate.spec).
     env = dict(os.environ, QT_QPA_PLATFORM="minimal",
-               DISKULTIMATE_NO_ELEVATION_PROMPT="1")
+               DISKULTIMATE_NO_ELEVATION_PROMPT="1",
+               DISKULTIMATE_UPDATE_CHECK="0")
     start = time.time()
     print(f"baslatiliyor: {' '.join(command)} --no-root")
     # Cikti boruya degil dosyaya: AppImage'in alt sureci boruyu acik tutar ve

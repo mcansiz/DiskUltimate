@@ -442,10 +442,11 @@ def _linux_relaunch(command: List[str]) -> "ElevatedLaunch":
     log = os.path.join(folder, f"stderr-{stamp}.log")
 
     passthrough = {k: os.environ[k]
-                   for k in ("DISPLAY", "XAUTHORITY", "QT_QPA_PLATFORM",
-                             "DISKULTIMATE_QPA", "DISKULTIMATE_LANG",
-                             "DISKULTIMATE_THEME", "DISKULTIMATE_DIAG",
-                             "DISKULTIMATE_DIAG_VERBOSE", "XDG_RUNTIME_DIR")
+                   for k in ("DISPLAY", "XAUTHORITY", "WAYLAND_DISPLAY",
+                             "QT_QPA_PLATFORM", "DISKULTIMATE_QPA",
+                             "DISKULTIMATE_LANG", "DISKULTIMATE_THEME",
+                             "DISKULTIMATE_DIAG", "DISKULTIMATE_DIAG_VERBOSE",
+                             "DISKULTIMATE_UPDATE_CHECK", "XDG_RUNTIME_DIR")
                    if os.environ.get(k)}
     passthrough[HANDOFF_ENV] = handoff
     passthrough["DISKULTIMATE_LOG_DIR"] = (os.environ.get("DISKULTIMATE_LOG_DIR")
@@ -1079,6 +1080,63 @@ def open_folder(path: str) -> bool:
     # explorer.exe basarili durumda bile 1 dondurebilir; cagrinin yapilmis
     # olmasi yeterlidir.
     return True
+
+
+# Paketlenmis kopyanin (AppImage) kendi kutuphane yollari tarayiciya
+# sizarsa tarayici baslamaz; dis programa bunlar verilmez.
+_PRIVATE_ENV = ("LD_LIBRARY_PATH", "LD_PRELOAD", "PYTHONHOME", "PYTHONPATH",
+                "QT_PLUGIN_PATH", "QT_QPA_PLATFORM_PLUGIN_PATH")
+
+
+def open_url(url: str) -> bool:
+    """Bir https baglantisini varsayilan tarayicida acar.
+
+    Linux'ta uygulama acilista root olur (pkexec, ADR 0042); tarayiciyi root
+    olarak acmak hem calismaz (kullanicinin oturumuna baglanamaz) hem de
+    guvensizdir. Yetkiyi veren kullanici biliniyorsa tarayici **onun**
+    kimligi ve oturum ortamiyla (XDG_RUNTIME_DIR, oturum D-Bus'i) baslatilir.
+    Yalnizca https kabul edilir.
+    """
+    if not url.startswith("https://"):
+        return False
+    try:
+        if IS_WINDOWS:
+            os.startfile(url)                     # noqa: S606 — kabuk degil
+            return True
+        if IS_MACOS:
+            subprocess.Popen(["open", url], stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, start_new_session=True)
+            return True
+        exe = shutil.which("xdg-open")
+        if not exe:
+            return False
+        env = {k: v for k, v in os.environ.items() if k not in _PRIVATE_ENV}
+        preexec = None
+        who = invoking_user()
+        if who is not None:
+            import pwd
+            uid, gid = who
+            account = pwd.getpwuid(uid)
+            runtime = f"/run/user/{uid}"
+            env = {k: os.environ[k] for k in ("DISPLAY", "XAUTHORITY",
+                                              "WAYLAND_DISPLAY", "LANG")
+                   if os.environ.get(k)}
+            env.update(HOME=account.pw_dir, USER=account.pw_name,
+                       LOGNAME=account.pw_name,
+                       PATH="/usr/local/bin:/usr/bin:/bin",
+                       XDG_RUNTIME_DIR=runtime,
+                       DBUS_SESSION_BUS_ADDRESS=f"unix:path={runtime}/bus")
+
+            def preexec():
+                os.setgroups([])
+                os.setgid(gid)
+                os.setuid(uid)
+        subprocess.Popen([exe, url], env=env, preexec_fn=preexec,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+        return True
+    except Exception:                                  # noqa: BLE001
+        return False
 
 
 def user_home() -> str:

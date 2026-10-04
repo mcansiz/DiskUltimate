@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QDialog,
 
 from ..core.fsregistry import fs_display
 from ..core import diagnostics
+from ..core import settings
 from ..core import platform
 from ..core import operations as ops
 from ..core.formatter import FS_BY_KEY
@@ -64,6 +65,8 @@ from .dialogs.tools import (CarveOptionsDialog,
 from .theme import (OS_LOGOS, THEMES, apply_theme, current_theme, fs_color,
                     os_icon, palette_color, theme_label)
 from .osinfo import OsInfoService
+from . import updatecheck
+from ..core.updates import PROJECT_URL
 from .widgets.disk_map import DiskMapWidget
 from .widgets.disk_overview import DiskOverviewWidget
 from .widgets.file_browser import FileBrowser
@@ -73,6 +76,7 @@ from .. import i18n
 from ..i18n import mark, tr, trn
 
 APP_NAME = "DiskUltimate"
+APP_AUTHOR = "Mikail Cansız"
 # Surumun tek kaynagi burasidir. Degistirildiginde README.md'deki surum rozeti
 # ve .claude/docs/project-overview.md "Durum" satiri da guncellenir.
 APP_VERSION = "0.6.1-beta"
@@ -467,6 +471,14 @@ class MainWindow(QMainWindow):
         self.act_about.triggered.connect(self.about)
         self.act_licenses = QAction("", self)
         self.act_licenses.triggered.connect(self.show_licenses)
+        # Guncelleme denetimi (ADR 0090)
+        self.act_check_updates = QAction("", self)
+        self.act_check_updates.triggered.connect(self.check_updates)
+        self.act_auto_updates = QAction("", self)
+        self.act_auto_updates.setCheckable(True)
+        self.act_auto_updates.setChecked(bool(settings.get(updatecheck.AUTO_KEY, True)))
+        self.act_auto_updates.toggled.connect(
+            lambda on: settings.set_value(updatecheck.AUTO_KEY, bool(on)))
 
         menu = self.menuBar()
         m_file = menu.addMenu(tr("&Dosya"))
@@ -561,6 +573,9 @@ class MainWindow(QMainWindow):
 
         m_yardim = menu.addMenu(tr("&Yardim"))
         m_yardim.addAction(self.act_diag_status)
+        m_yardim.addSeparator()
+        m_yardim.addAction(self.act_check_updates)
+        m_yardim.addAction(self.act_auto_updates)
         m_yardim.addSeparator()
         m_yardim.addAction(self.act_licenses)
         m_yardim.addAction(self.act_about)
@@ -695,6 +710,8 @@ class MainWindow(QMainWindow):
             tr("Butun is parcaciklarinin o anki yiginini dosyaya yazar"))
         self.act_about.setText(tr("Hakkinda"))
         self.act_licenses.setText(tr("Ucuncu taraf lisanslari..."))
+        self.act_check_updates.setText(tr("Guncellemeleri denetle..."))
+        self.act_auto_updates.setText(tr("Acilista guncellemeleri denetle"))
 
     # ==================================================================
     # Dil
@@ -796,10 +813,35 @@ class MainWindow(QMainWindow):
         verilmesini ister; metinler paket modullerinde durur ve burada
         gosterilir.
         """
-        parts = [tr("<p>Bu uygulama asagidaki ikon paketlerinden secilmis "
+        import platform as _py_platform
+        from PyQt5.QtCore import PYQT_VERSION_STR, QT_VERSION_STR
+        from .. import licenses as lic
+        try:
+            from PyQt5.sip import SIP_VERSION_STR
+        except Exception:                          # noqa: BLE001
+            SIP_VERSION_STR = ""
+        surumler = {"qt": QT_VERSION_STR, "pyqt5": PYQT_VERSION_STR,
+                    "sip": SIP_VERSION_STR, "python": _py_platform.python_version()}
+        parts = [tr("<p>Bu uygulamanin indirilebilir surumleri (Windows exe, "
+                    "Linux AppImage, macOS) asagidaki bilesenleri icinde "
+                    "tasir. Uygulamanin kendisi GNU GPL surum 3 ile "
+                    "lisanslidir; kaynak kodu: {}</p>",
+                    f"<a href='{PROJECT_URL}'>{PROJECT_URL}</a>")]
+        for item in lic.COMPONENTS:
+            not_metni = (tr(item["note"], f"<a href='{lic.QT_SOURCE_URL}'>"
+                            f"{lic.QT_SOURCE_URL}</a>") if item["note"] else "")
+            parts.append(
+                f"<h4>{item['name']} {surumler.get(item['key'], '')} — "
+                f"{item['license']}</h4>"
+                f"<p>{html.escape(item['copyright'])} · "
+                f"<a href='{item['url']}'>{item['url']}</a></p>"
+                + (f"<p>{not_metni}</p>" if not_metni else "")
+                + f"<pre style='white-space:pre-wrap'>"
+                  f"{html.escape(lic.text(item))}</pre>")
+        parts.append(tr("<p>Bu uygulama asagidaki ikon paketlerinden secilmis "
                     "ikonlari gomulu olarak icerir. Isletim sistemi "
                     "amblemleri sahiplerinin ticari markasidir; yalnizca "
-                    "diski tanitmak icin gosterilir.</p>")]
+                    "diski tanitmak icin gosterilir.</p>"))
         for info in iconpacks.notices():
             parts.append(
                 f"<h4>{info['title']} {info['version']} — {info['license']}</h4>"
@@ -811,7 +853,8 @@ class MainWindow(QMainWindow):
         dialog.resize(720, 560)
         layout = QVBoxLayout(dialog)
         view = QTextBrowser()
-        view.setOpenExternalLinks(True)
+        view.setOpenLinks(False)               # Qt degil open_url acar (root)
+        view.anchorClicked.connect(lambda url: platform.open_url(url.toString()))
         view.setHtml("".join(parts))
         layout.addWidget(view)
         box = QDialogButtonBox(QDialogButtonBox.Close)
@@ -4068,8 +4111,14 @@ class MainWindow(QMainWindow):
         self.act_carve.setEnabled(acik)
 
     def about(self) -> None:
-        QMessageBox.about(
-            self, tr("{} hakkinda", APP_NAME),
+        # Baglantilar Qt'ye birakilmaz: Linux'ta uygulama root calisir ve
+        # QDesktopServices tarayiciyi root olarak acmaya calisirdi.
+        # `platform.open_url` yetkiyi veren kullanici olarak acar (ADR 0090).
+        box = QMessageBox(self)
+        box.setIconPixmap(self.windowIcon().pixmap(64, 64))
+        box.setWindowTitle(tr("{} hakkinda", APP_NAME))
+        box.setTextFormat(Qt.RichText)
+        box.setText(
             tr("<h3>{} {}</h3><p>Disk goruntusu, sanal disk ve <b>sistemdeki "
                "gercek diskler</b> uzerinde bolumleme, bicimlendirme, "
                "yedekleme ve kurtarma araci.</p><p><b>Teknoloji:</b> Python 3 "
@@ -4081,7 +4130,66 @@ class MainWindow(QMainWindow):
                "okuma/yazma</p><p>Goruntu dosyalari yonetici yetkisi "
                "gerektirmez. Fiziksel disk erisimi yonetici/root ister ve "
                "<b>varsayilan olarak salt okunurdur</b>; yazma ayrica onay "
-               "ister.</p>", APP_NAME, APP_VERSION))
+               "ister.</p>", APP_NAME, APP_VERSION)
+            + "<p>" + tr("Gelistirici: {}", APP_AUTHOR) + "<br>"
+            + tr("Proje sayfasi: {}", f"<a href='{PROJECT_URL}'>{PROJECT_URL}</a>")
+            + "<br>" + tr("Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt5 "
+                          "ve Python'un lisanslari: Yardim > Ucuncu taraf "
+                          "lisanslari.") + "</p>")
+        label = box.findChild(QLabel, "qt_msgbox_label")
+        if label is not None:
+            label.setOpenExternalLinks(False)
+            label.setTextInteractionFlags(Qt.TextBrowserInteraction)
+            label.linkActivated.connect(platform.open_url)
+        box.exec_()
+
+    # ==================================================================
+    # Guncelleme denetimi (ADR 0090)
+    # ==================================================================
+    def schedule_update_check(self) -> None:
+        """Acilista, pencere gorundukten sonra sessiz denetim (ayar aciksa)."""
+        if updatecheck.auto_enabled():
+            QTimer.singleShot(4000, lambda: self._start_update_check(silent=True))
+
+    def check_updates(self) -> None:
+        """Yardim > Guncellemeleri denetle: sonuc her durumda gosterilir."""
+        self._start_update_check(silent=False)
+
+    def _start_update_check(self, silent: bool) -> None:
+        if getattr(self, "_update_worker", None) is not None:
+            return
+        worker = updatecheck.UpdateWorker(APP_VERSION, self)
+        worker.done.connect(lambda newer, latest, error, s=silent:
+                            self._on_update_done(newer, latest, error, s))
+        self._update_worker = worker
+        if not silent:
+            self.status_sel.setText(tr("Guncellemeler denetleniyor..."))
+        worker.start()
+
+    def _on_update_done(self, newer, latest, error: str, silent: bool) -> None:
+        worker, self._update_worker = self._update_worker, None
+        if worker is not None:
+            worker.wait()
+        if not silent:
+            self.status_sel.setText("")
+        if error:
+            diagnostics.info(f"guncelleme denetimi: {error}")
+            if not silent:
+                QMessageBox.warning(self, tr("Guncellemeleri denetle"),
+                                    tr("Denetlenemedi: {}", error))
+            return
+        if newer is not None:
+            self.log(tr("Yeni surum var: {} (kullanilan: {})", newer.version,
+                        APP_VERSION))
+            if silent and settings.get(updatecheck.SKIP_KEY, "") == newer.tag:
+                return
+            updatecheck.offer(self, newer, APP_VERSION, silent)
+            return
+        diagnostics.info(f"guncelleme denetimi: en son {latest.tag if latest else '-'}")
+        if not silent:
+            QMessageBox.information(
+                self, tr("Guncellemeleri denetle"),
+                tr("En guncel surumu kullaniyorsunuz ({}).", APP_VERSION))
 
     def closeEvent(self, event) -> None:
         # Arka plandaki sinir hesaplari biter (kisa surer); yarida kalan is

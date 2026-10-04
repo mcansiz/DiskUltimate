@@ -44,6 +44,13 @@ if not os.path.isfile(ICON_ICO):
                      % ICON_ICO)
 datas.append((ICON_ICO, os.path.join('diskultimate', 'ui', 'resources')))
 
+# Ucuncu taraf lisans metinleri (Qt LGPLv3, PyQt5 GPLv3, sip, Python PSF —
+# ADR 0090). Exe bu bilesenleri icinde tasir; metinler de onunla gitmeli.
+_LICENSE_FILES = sorted(glob.glob(os.path.join(SRC, 'diskultimate', 'licenses', '*.txt')))
+if len(_LICENSE_FILES) < 4:
+    raise SystemExit('DiskUltimate.spec: diskultimate/licenses/*.txt eksik')
+datas += [(p, os.path.join('diskultimate', 'licenses')) for p in _LICENSE_FILES]
+
 # Gömülü ikon paketleri (ADR 0046). `ui/iconpacks/__init__.py` bunları
 # çalışma anında ADIYLA yükler (`importlib.import_module`); PyInstaller'ın
 # statik çözümlemesi bunu göremez ve modülleri pakete almaz. O durumda exe'de

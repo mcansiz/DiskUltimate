@@ -5834,3 +5834,15 @@ calismiyordu.
 - Sürüm 0.6.1-beta (kullanıcı kararı): bölüm başına işletim sistemi.
 - **v0.6.1-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.6.1-beta
   — sürüm koşusu 37223512268: 3 platform test + Windows exe, Linux AppImage, macOS zip.
+
+## 2026-10-04 (10) — Lisanslar, Hakkında, güncelleme denetimi (ADR 0090)
+
+- Araştırma: exe/AppImage Qt (LGPLv3), PyQt5 (GPLv3), PyQt5-sip (BSD-2) ve
+  Python'u (PSF) içinde dağıtıyor; lisans penceresi yalnızca ikon paketlerini
+  gösteriyordu. `diskultimate/licenses/` metinler + bileşen listesi; Qt için
+  bildirim ve yazılı kaynak teklifi; `.spec` metinleri exe'ye alır.
+- Hakkında: geliştirici Mikail Cansız, proje sayfası (tıklanabilir), lisans.
+- Güncelleme denetimi: `core/updates.py` (GitHub Releases, ön sürümler dahil,
+  numarayla sıralama), açılışta sessiz + Yardım menüsünde elle; atlanan sürüm;
+  `platform.open_url` Linux'ta tarayıcıyı root değil kullanıcı olarak açar.
+- t90, ui_smoke; 20 yeni metin 9 dilde. run_all 88/90, platform 0, diag 13/13.

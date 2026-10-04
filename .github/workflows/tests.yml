@@ -22,6 +22,7 @@ jobs:
     env:
       PYTHONIOENCODING: utf-8
       DISKULTIMATE_NO_ELEVATION_PROMPT: "1"
+      DISKULTIMATE_UPDATE_CHECK: "0"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
