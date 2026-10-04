@@ -5849,3 +5849,6 @@ calismiyordu.
 - Güncelleme denetimi zaman aşımı (kullanıcı bildirdi): 15 sn, API'yi ikinci
   deneme, `releases.atom` yedeği, anlaşılır hata metni; t90 genişledi.
 - Sürüm 0.6.2-beta (kullanıcı kararı): lisanslar, Hakkında, güncelleme denetimi.
+- **v0.6.2-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.6.2-beta
+  — sürüm koşusu 37226080373. Canlı denetim: 0.6.1-beta için v0.6.2-beta
+  bulundu, 0.6.2-beta için yeni sürüm yok.
