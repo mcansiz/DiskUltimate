@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: DiskUltimate 0.5.1-beta\n"
+"Project-Id-Version: DiskUltimate 0.5.2-beta\n"
 "Report-Msgid-Bugs-To: \n"
 "Language: de\n"
 "MIME-Version: 1.0\n"

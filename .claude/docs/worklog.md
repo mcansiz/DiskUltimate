@@ -5787,3 +5787,5 @@ calismiyordu.
 - Hedefli yeniden koşu (37207695550, full, exfat/fat12/fat32): exFAT ve FAT12
   3 platformda geçti. Linux FAT32 taşımada yedek önyükleme sektörü
   güncellenmiyordu — düzeltildi, t88 (eski kodda düşer).
+- FAT32 tam profil yeniden koşu (37210687468): 19/19. Tam profilin bütün
+  bulguları kapandı; issue #3 kapatıldı. Sürüm 0.5.2-beta.

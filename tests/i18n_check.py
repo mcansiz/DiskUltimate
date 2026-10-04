@@ -44,7 +44,7 @@ PLACEHOLDER = re.compile(r"\{([^{}]*)\}")
 HTML_TAG = re.compile(r"</?[a-zA-Z]+[^>]*>")
 
 VARSAYILAN_BASLIK = {
-    "Project-Id-Version": "DiskUltimate 0.5.1-beta",
+    "Project-Id-Version": "DiskUltimate 0.5.2-beta",
     "Report-Msgid-Bugs-To": "",
     "Language": "",
     "MIME-Version": "1.0",
