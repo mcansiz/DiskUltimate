@@ -5784,3 +5784,6 @@ calismiyordu.
   yeniden yazılmıyordu (uzunluk büyük, zincir 1 küme). Düzeltildi, t87
   (eski kodda 1/5). **0.5.1-beta'da var** — sonraki sürümle düzelir.
 - Uzun test bütçesi küme artığını sayar (`footprint`); FAT12 full yerelde 16/16.
+- Hedefli yeniden koşu (37207695550, full, exfat/fat12/fat32): exFAT ve FAT12
+  3 platformda geçti. Linux FAT32 taşımada yedek önyükleme sektörü
+  güncellenmiyordu — düzeltildi, t88 (eski kodda düşer).

@@ -984,12 +984,30 @@ def _fs_resize(image: BlockDevice, start_lba: int, sector_count: int,
 
 
 def _patch_hidden_sectors(view: BlockDevice, partition_offset: int) -> None:
-    """FAT/NTFS BPB'sindeki 'gizli sektor' alanini (ofset 28) gunceller."""
-    boot = bytearray(view.read(0, 512))
+    """FAT/NTFS BPB'sindeki 'gizli sektor' alanini (ofset 28) gunceller.
+
+    FAT32'de yedek onyukleme sektoru (BPB ofset 50, genelde sektor 6) da
+    guncellenir. Eskiden yalnizca asil sektor yaziliyordu; tasimadan sonra
+    `fsck.fat` "differences between boot sector and its backup (29, 30)"
+    diyordu (uzun testler, full profil, ADR 0087).
+    """
+    ss = view.sector_size
+    boot = bytearray(view.read(0, ss))
     if boot[510:512] != b"\x55\xAA":
         return
     struct.pack_into("<I", boot, 28, partition_offset & 0xFFFFFFFF)
     view.write(0, bytes(boot))
+    fat32 = (struct.unpack_from("<H", boot, 22)[0] == 0
+             and boot[3:11] not in (b"NTFS    ", b"EXFAT   "))
+    if not fat32:
+        return
+    backup = struct.unpack_from("<H", boot, 50)[0]
+    reserved = struct.unpack_from("<H", boot, 14)[0]
+    if 0 < backup < reserved:
+        yedek = bytearray(view.read(backup * ss, ss))
+        if yedek[510:512] == b"\x55\xAA" and yedek[3:11] == boot[3:11]:
+            struct.pack_into("<I", yedek, 28, partition_offset & 0xFFFFFFFF)
+            view.write(backup * ss, bytes(yedek))
 
 
 def _patch_partition_offset(image: BlockDevice, start_lba: int,

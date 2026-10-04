@@ -6888,6 +6888,60 @@ def t87_exfat_kucult_buyut_bitmap_zinciri():
         assert r.returncode == 0, r.stdout[-600:]
 
 
+@test
+def t88_fat32_tasimada_yedek_onyukleme():
+    """FAT32 tasima: yedek onyukleme sektorunun gizli sektor alani da guncellenir (ADR 0087)
+
+    Uzun testler (full profil, Linux): `saga_tasi` sonrasi fsck.fat "There
+    are differences between boot sector and its backup (29:48/08, 30:3c/00)".
+    `_patch_hidden_sectors` yalnizca asil sektoru yaziyordu.
+    """
+    from diskultimate.core import operations as _ops
+
+    yol = img_path("t88.img")
+    s = DiskSession.create(yol, 400 * MIB, scheme="gpt", overwrite=True)
+    k = _ops.OperationQueue()
+    k.add(_ops.create_op(2048, 100 * 2048, 512, fs_key="fat32", label="YEDEK"))
+    assert k.apply(s).ok
+    s.reload()
+    veri = os.urandom(2 * MIB)
+    fs = s.filesystem(1)
+    fs.write_file("/v.bin", veri)
+    fs.flush()
+    s.close_filesystems()
+
+    def denetle(etiket, beklenen_lba):
+        p = s.table.get(1)
+        asil = s.image.read(p.start_lba * 512, 512)
+        yedek_no = struct.unpack_from("<H", asil, 50)[0]
+        yedek = s.image.read((p.start_lba + yedek_no) * 512, 512)
+        assert 0 < yedek_no < 32, (etiket, yedek_no)
+        gizli = struct.unpack_from("<I", asil, 28)[0]
+        assert gizli == beklenen_lba, (etiket, gizli, beklenen_lba)
+        assert asil[:90] == yedek[:90], (etiket, "asil/yedek BPB farkli")
+        assert s.filesystem(1).read("/v.bin") == veri, etiket
+        s.close_filesystems()
+        if shutil.which("fsck.fat"):
+            parca = img_path("t88_bolum.img")
+            with open(parca, "wb") as out:
+                out.write(s.image.read(p.start_lba * 512, p.sector_count * 512))
+            r = subprocess.run(["fsck.fat", "-n", parca], capture_output=True,
+                               text=True)
+            assert r.returncode == 0, (etiket, r.stdout[-600:])
+
+    denetle("baslangic", 2048)
+    s.resize_partition(1, 2048 + 50 * 2048, 100 * 2048, confirm=True)
+    s.reload()
+    denetle("saga tasi", 2048 + 50 * 2048)
+    s.resize_partition(1, 2048, 100 * 2048, confirm=True)
+    s.reload()
+    denetle("sola tasi", 2048)
+    s.resize_partition(1, 2048 + 20 * 2048, 150 * 2048, confirm=True)
+    s.reload()
+    denetle("tasi + buyut", 2048 + 20 * 2048)
+    s.close()
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

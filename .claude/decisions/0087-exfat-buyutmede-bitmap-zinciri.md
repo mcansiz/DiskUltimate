@@ -46,3 +46,15 @@ Karar: `verify._only_fsck_fat_overflow` — fsck.fat ciktisinda **yalnizca**
 bu kalip varsa sonuc "ok + aciklama"; baska herhangi bir satir gercek bulgu.
 Zincirin dogrulugu ayrica kendi okuyucunun ve cekirdegin dosyayi okuyup
 SHA1 ile karsilastirmasiyla kanitlanir.
+
+## 4. FAT32 tasima: yedek onyukleme sektoru guncellenmiyordu
+
+Hedefli yeniden kosu (CI 37207695550, full): exFAT ve FAT12 her platformda
+gecti; Linux FAT32 `saga_tasi` sonrasi fsck.fat "differences between boot
+sector and its backup (29:48/08, 30:3c/00)". `_patch_hidden_sectors` gizli
+sektor alanini (ofset 28) yalnizca asil sektore yaziyordu; FAT32'nin yedek
+sektoru (BPB ofset 50) eski konumu gosteriyordu. Quick'te gorunmedi: fsck.fat
+bu farki tek basina "mostly harmless" deyip 0 ile cikiyor; full'de 4 GiB-1
+tasma satiriyla birlikte cikti ve istisna (madde 3) yalnizca o kalibi kabul
+ettigi icin dogru olarak dustu. Duzeltme: FAT32'de yedek de yazilir. t88
+(eski kodda "asil/yedek BPB farkli").
