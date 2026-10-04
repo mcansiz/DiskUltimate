@@ -5772,3 +5772,6 @@ calismiyordu.
   yoktu. (3) AppImage: niess/python-appimage `python3.12` yuvarlanan etiketi
   3.12.14'ü sildi (404); 3.12.15'e sabitlendi (sha256 GitHub özetiyle aynı),
   404'te ne yapılacağını söyleyen hata. Yerelde AppImage derlendi ve açıldı.
+- **v0.5.1-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.5.1-beta
+  — sürüm koşusu 37203299268: 3 platform test + Windows exe, Linux AppImage,
+  macOS zip; notların başına İngilizce/Türkçe "yenilikler" eklendi.
