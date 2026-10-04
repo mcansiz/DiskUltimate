@@ -1084,7 +1084,7 @@
         <translation>予期しない出力</translation>
     </message>
     <message>
-        <location filename="../../core/updates.py" line="110"/>
+        <location filename="../../core/updates.py" line="161"/>
         <source>Beklenmeyen yanit</source>
         <translation>予期しない応答</translation>
     </message>
@@ -2740,7 +2740,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>ディスクイメージ</translation>
     </message>
     <message>
-        <location filename="../../ui/updatecheck.py" line="65"/>
+        <location filename="../../ui/updatecheck.py" line="66"/>
         <source>Daha sonra</source>
         <translation>後で</translation>
     </message>
@@ -4277,6 +4277,11 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <location filename="../../ui/updatecheck.py" line="63"/>
         <source>GitHub sayfasini ac</source>
         <translation>GitHub のページを開く</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="169"/>
+        <source>GitHub&apos;a ulasilamadi: {}</source>
+        <translation>GitHub に接続できませんでした: {}</translation>
     </message>
     <message>
         <location filename="../../core/ptable.py" line="32"/>
@@ -7142,11 +7147,6 @@ Devam edilsin mi?</source>
         <translation>バージョン</translation>
     </message>
     <message>
-        <location filename="../../core/updates.py" line="108"/>
-        <source>Surum listesi alinamadi: {}</source>
-        <translation>リリース一覧を取得できませんでした: {}</translation>
-    </message>
-    <message>
         <location filename="../../ui/qt_i18n.py" line="45"/>
         <source>T&amp;umune hayir</source>
         <translation>すべていいえ(&amp;O)</translation>
@@ -7302,7 +7302,7 @@ Devam edilsin mi?</source>
         <translation>スキャンしています... {} / {} — {} 個の候補</translation>
     </message>
     <message>
-        <location filename="../../ui/updatecheck.py" line="71"/>
+        <location filename="../../ui/updatecheck.py" line="72"/>
         <source>Tarayici acilamadi. Adres: {}</source>
         <translation>ブラウザーを開けませんでした。アドレス: {}</translation>
     </message>
@@ -8559,7 +8559,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     </message>
     <message>
         <location filename="../../ui/updatecheck.py" line="59"/>
-        <location filename="../../ui/updatecheck.py" line="70"/>
+        <location filename="../../ui/updatecheck.py" line="71"/>
         <source>Yeni surum var</source>
         <translation>新しいバージョンがあります</translation>
     </message>
@@ -9252,6 +9252,11 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>暗号化</translation>
     </message>
     <message>
+        <location filename="../../core/updates.py" line="144"/>
+        <source>sunucu {} dondurdu</source>
+        <translation>サーバーが {} を返しました</translation>
+    </message>
+    <message>
         <location filename="../../core/planview.py" line="340"/>
         <source>toplam {}</source>
         <translation>合計 {}</translation>
@@ -9265,6 +9270,11 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <location filename="../../core/platform.py" line="1344"/>
         <source>var</source>
         <translation>はい</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="142"/>
+        <source>yanit zaman asimina ugradi</source>
+        <translation>応答がタイムアウトしました</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="608"/>
@@ -10058,6 +10068,11 @@ LBA {} - {}
         <location filename="../../ui/widgets/resize_bar.py" line="172"/>
         <source>◀ onunde {}</source>
         <translation>◀ 前方 {}</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="108"/>
+        <source>Surum listesi alinamadi: {}</source>
+        <translation type="vanished">リリース一覧を取得できませんでした: {}</translation>
     </message>
 </context>
 <context>

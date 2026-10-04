@@ -15,7 +15,10 @@ from __future__ import annotations
 
 import json
 import re
+import socket
+import urllib.error
 import urllib.request
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Tuple
 
@@ -24,7 +27,13 @@ from ..i18n import tr
 PROJECT_URL = "https://github.com/mcansiz/DiskUltimate"
 RELEASES_URL = PROJECT_URL + "/releases"
 API_URL = "https://api.github.com/repos/mcansiz/DiskUltimate/releases?per_page=30"
-TIMEOUT = 8
+# Yedek kaynak: surum akisi. API'den farkli sunucudan gelir, saatlik istek
+# sinirina takilmaz; taslaklari zaten icermez.
+ATOM_URL = RELEASES_URL + ".atom"
+# Olculdu (2026-10-04, kullanicinin baglantisi): API bir kez 3.6 sn'de
+# yanitladi, bir kez 8 sn sinirinda "read operation timed out" verdi; ayni
+# anda surum akisi 1.3 sn'de geldi.
+TIMEOUT = 15
 
 # Ortam degiskeni "0" ise acilistaki otomatik denetim yapilmaz (testler, CI).
 ENV_NAME = "DISKULTIMATE_UPDATE_CHECK"
@@ -95,20 +104,69 @@ def newest(entries: List[dict]) -> Optional[Release]:
     return best
 
 
-def fetch(timeout: int = TIMEOUT) -> List[dict]:
-    """GitHub'dan surum listesini okur (ag cagrisi)."""
-    request = urllib.request.Request(API_URL, headers={
-        "Accept": "application/vnd.github+json",
+def _read(url: str, timeout: int) -> bytes:
+    request = urllib.request.Request(url, headers={
+        "Accept": "application/vnd.github+json, application/atom+xml",
         "User-Agent": "DiskUltimate-update-check",
     })
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.read()
+
+
+def parse_atom(data: bytes) -> List[dict]:
+    """GitHub surum akisini (`releases.atom`) API bicimindeki listeye cevirir.
+
+    Etiket girisin kimliginin sonundadir
+    (`tag:github.com,2008:Repository/<no>/v0.6.1-beta`), sayfa `link`tedir.
+    """
+    ns = {"a": "http://www.w3.org/2005/Atom"}
+    root = ET.fromstring(data)
+    out = []
+    for entry in root.findall("a:entry", ns):
+        ident = (entry.findtext("a:id", "", ns) or "").rsplit("/", 1)[-1]
+        link = entry.find("a:link", ns)
+        url = link.get("href", "") if link is not None else ""
+        tag = ident or url.rsplit("/", 1)[-1]
+        out.append({"tag_name": tag, "name": entry.findtext("a:title", tag, ns),
+                    "html_url": url or RELEASES_URL,
+                    "published_at": entry.findtext("a:updated", "", ns)})
+    return out
+
+
+def describe_error(exc: Exception) -> str:
+    """Ag hatasini kullaniciya anlasilir anlatir."""
+    reason = getattr(exc, "reason", exc)
+    if isinstance(exc, (socket.timeout, TimeoutError)) or \
+            isinstance(reason, (socket.timeout, TimeoutError)) or \
+            "timed out" in str(exc):
+        return tr("yanit zaman asimina ugradi")
+    if isinstance(exc, urllib.error.HTTPError):
+        return tr("sunucu {} dondurdu", exc.code)
+    return str(reason)
+
+
+def fetch(timeout: int = TIMEOUT,
+          reader: Callable[[str, int], bytes] = _read) -> List[dict]:
+    """Surum listesini okur (ag cagrisi).
+
+    Sira: API, API (ikinci deneme), surum akisi. Ucu de basarisizsa
+    `UpdateError`; ilk hatanin nedeni mesajda yazar.
+    """
+    first_error: Optional[Exception] = None
+    for attempt in range(2):
+        try:
+            data = json.loads(reader(API_URL, timeout).decode("utf-8"))
+            if isinstance(data, list):
+                return data
+            first_error = first_error or ValueError(tr("Beklenmeyen yanit"))
+            break                              # bicim hatasi: tekrar denemenin anlami yok
+        except Exception as exc:               # noqa: BLE001
+            first_error = first_error or exc
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            data = json.loads(response.read().decode("utf-8"))
-    except Exception as exc:                       # noqa: BLE001
-        raise UpdateError(tr("Surum listesi alinamadi: {}", exc)) from exc
-    if not isinstance(data, list):
-        raise UpdateError(tr("Beklenmeyen yanit"))
-    return data
+        return parse_atom(reader(ATOM_URL, timeout))
+    except Exception:                          # noqa: BLE001
+        pass
+    raise UpdateError(tr("GitHub'a ulasilamadi: {}", describe_error(first_error)))
 
 
 def check(current: str, fetcher: Callable[[], List[dict]] = fetch

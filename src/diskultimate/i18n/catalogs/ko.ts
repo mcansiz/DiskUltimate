@@ -1084,7 +1084,7 @@
         <translation>예기치 않은 출력</translation>
     </message>
     <message>
-        <location filename="../../core/updates.py" line="110"/>
+        <location filename="../../core/updates.py" line="161"/>
         <source>Beklenmeyen yanit</source>
         <translation>예기치 않은 응답</translation>
     </message>
@@ -2740,7 +2740,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>디스크 이미지</translation>
     </message>
     <message>
-        <location filename="../../ui/updatecheck.py" line="65"/>
+        <location filename="../../ui/updatecheck.py" line="66"/>
         <source>Daha sonra</source>
         <translation>나중에</translation>
     </message>
@@ -4277,6 +4277,11 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <location filename="../../ui/updatecheck.py" line="63"/>
         <source>GitHub sayfasini ac</source>
         <translation>GitHub 페이지 열기</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="169"/>
+        <source>GitHub&apos;a ulasilamadi: {}</source>
+        <translation>GitHub에 연결할 수 없습니다: {}</translation>
     </message>
     <message>
         <location filename="../../core/ptable.py" line="32"/>
@@ -7142,11 +7147,6 @@ Devam edilsin mi?</source>
         <translation>버전</translation>
     </message>
     <message>
-        <location filename="../../core/updates.py" line="108"/>
-        <source>Surum listesi alinamadi: {}</source>
-        <translation>릴리스 목록을 가져올 수 없습니다: {}</translation>
-    </message>
-    <message>
         <location filename="../../ui/qt_i18n.py" line="45"/>
         <source>T&amp;umune hayir</source>
         <translation>모두 아니요(&amp;O)</translation>
@@ -7302,7 +7302,7 @@ Devam edilsin mi?</source>
         <translation>검색 중... {} / {} — 후보 {}개</translation>
     </message>
     <message>
-        <location filename="../../ui/updatecheck.py" line="71"/>
+        <location filename="../../ui/updatecheck.py" line="72"/>
         <source>Tarayici acilamadi. Adres: {}</source>
         <translation>브라우저를 열 수 없습니다. 주소: {}</translation>
     </message>
@@ -8559,7 +8559,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     </message>
     <message>
         <location filename="../../ui/updatecheck.py" line="59"/>
-        <location filename="../../ui/updatecheck.py" line="70"/>
+        <location filename="../../ui/updatecheck.py" line="71"/>
         <source>Yeni surum var</source>
         <translation>새 버전이 있습니다</translation>
     </message>
@@ -9252,6 +9252,11 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>암호화됨</translation>
     </message>
     <message>
+        <location filename="../../core/updates.py" line="144"/>
+        <source>sunucu {} dondurdu</source>
+        <translation>서버가 {}을(를) 반환했습니다</translation>
+    </message>
+    <message>
         <location filename="../../core/planview.py" line="340"/>
         <source>toplam {}</source>
         <translation>합계 {}</translation>
@@ -9265,6 +9270,11 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <location filename="../../core/platform.py" line="1344"/>
         <source>var</source>
         <translation>있음</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="142"/>
+        <source>yanit zaman asimina ugradi</source>
+        <translation>응답 시간이 초과되었습니다</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="608"/>
@@ -10058,6 +10068,11 @@ LBA {} - {}
         <location filename="../../ui/widgets/resize_bar.py" line="172"/>
         <source>◀ onunde {}</source>
         <translation>◀ 앞쪽 {}</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="108"/>
+        <source>Surum listesi alinamadi: {}</source>
+        <translation type="vanished">릴리스 목록을 가져올 수 없습니다: {}</translation>
     </message>
 </context>
 <context>

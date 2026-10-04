@@ -7051,6 +7051,43 @@ def t90_guncelleme_denetimi_ve_lisanslar():
     except up.UpdateError:
         pass
 
+    # Ag katmani (sahte okuyucu): API zaman asimina dusunce bir kez daha
+    # denenir, sonra surum akisina (releases.atom) gecilir. Kullanicinin
+    # baglantisinda API "read operation timed out" verdi (2026-10-04).
+    import json as _json
+    import socket as _socket
+    atom = (b'<?xml version="1.0" encoding="UTF-8"?><feed xmlns='
+            b'"http://www.w3.org/2005/Atom"><entry><id>tag:github.com,2008:'
+            b'Repository/1/v0.6.2-beta</id><link rel="alternate" href='
+            b'"https://github.com/mcansiz/DiskUltimate/releases/tag/v0.6.2-beta"/>'
+            b'<title>DiskUltimate 0.6.2-beta</title></entry></feed>')
+    cagrilar = []
+
+    def yavas_api(url, timeout):
+        cagrilar.append(url)
+        if url == up.API_URL:
+            raise _socket.timeout("The read operation timed out")
+        return atom
+    yeni, _son = up.check("0.6.1-beta", fetcher=lambda: up.fetch(reader=yavas_api))
+    assert yeni is not None and yeni.tag == "v0.6.2-beta", yeni
+    assert cagrilar == [up.API_URL, up.API_URL, up.ATOM_URL], cagrilar
+
+    cagrilar.clear()
+
+    def saglam_api(url, timeout):
+        cagrilar.append(url)
+        return _json.dumps(liste).encode()
+    assert up.newest(up.fetch(reader=saglam_api)).tag == "v0.6.2-beta"
+    assert cagrilar == [up.API_URL], "API calisirken akisa gidilmemeli"
+
+    def kopuk_ag(url, timeout):
+        raise _socket.timeout("The read operation timed out")
+    try:
+        up.fetch(reader=kopuk_ag)
+        raise AssertionError("ag yokken hata verilmedi")
+    except up.UpdateError as exc:
+        assert "zaman" in str(exc), str(exc)
+
     assert not pf.open_url("file:///etc/passwd"), "yalnizca https acilmali"
     assert not pf.open_url("http://example.com"), "yalnizca https acilmali"
 

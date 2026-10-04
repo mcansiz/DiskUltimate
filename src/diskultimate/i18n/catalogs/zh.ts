@@ -1084,7 +1084,7 @@
         <translation>意外的输出</translation>
     </message>
     <message>
-        <location filename="../../core/updates.py" line="110"/>
+        <location filename="../../core/updates.py" line="161"/>
         <source>Beklenmeyen yanit</source>
         <translation>意外的响应</translation>
     </message>
@@ -2740,7 +2740,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>磁盘镜像</translation>
     </message>
     <message>
-        <location filename="../../ui/updatecheck.py" line="65"/>
+        <location filename="../../ui/updatecheck.py" line="66"/>
         <source>Daha sonra</source>
         <translation>稍后</translation>
     </message>
@@ -4277,6 +4277,11 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <location filename="../../ui/updatecheck.py" line="63"/>
         <source>GitHub sayfasini ac</source>
         <translation>打开 GitHub 页面</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="169"/>
+        <source>GitHub&apos;a ulasilamadi: {}</source>
+        <translation>无法连接 GitHub：{}</translation>
     </message>
     <message>
         <location filename="../../core/ptable.py" line="32"/>
@@ -7142,11 +7147,6 @@ Devam edilsin mi?</source>
         <translation>版本</translation>
     </message>
     <message>
-        <location filename="../../core/updates.py" line="108"/>
-        <source>Surum listesi alinamadi: {}</source>
-        <translation>无法获取版本列表：{}</translation>
-    </message>
-    <message>
         <location filename="../../ui/qt_i18n.py" line="45"/>
         <source>T&amp;umune hayir</source>
         <translation>全部否(&amp;O)</translation>
@@ -7302,7 +7302,7 @@ Devam edilsin mi?</source>
         <translation>正在扫描... {} / {} — {} 个候选项</translation>
     </message>
     <message>
-        <location filename="../../ui/updatecheck.py" line="71"/>
+        <location filename="../../ui/updatecheck.py" line="72"/>
         <source>Tarayici acilamadi. Adres: {}</source>
         <translation>无法打开浏览器。地址：{}</translation>
     </message>
@@ -8559,7 +8559,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     </message>
     <message>
         <location filename="../../ui/updatecheck.py" line="59"/>
-        <location filename="../../ui/updatecheck.py" line="70"/>
+        <location filename="../../ui/updatecheck.py" line="71"/>
         <source>Yeni surum var</source>
         <translation>有新版本可用</translation>
     </message>
@@ -9252,6 +9252,11 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>已加密</translation>
     </message>
     <message>
+        <location filename="../../core/updates.py" line="144"/>
+        <source>sunucu {} dondurdu</source>
+        <translation>服务器返回 {}</translation>
+    </message>
+    <message>
         <location filename="../../core/planview.py" line="340"/>
         <source>toplam {}</source>
         <translation>共 {}</translation>
@@ -9265,6 +9270,11 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <location filename="../../core/platform.py" line="1344"/>
         <source>var</source>
         <translation>是</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="142"/>
+        <source>yanit zaman asimina ugradi</source>
+        <translation>响应超时</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="608"/>
@@ -10058,6 +10068,11 @@ LBA {} - {}
         <location filename="../../ui/widgets/resize_bar.py" line="172"/>
         <source>◀ onunde {}</source>
         <translation>◀ 之前 {}</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="108"/>
+        <source>Surum listesi alinamadi: {}</source>
+        <translation type="vanished">无法获取版本列表：{}</translation>
     </message>
 </context>
 <context>

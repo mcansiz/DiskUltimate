@@ -1084,7 +1084,7 @@
         <translation>Unexpected output</translation>
     </message>
     <message>
-        <location filename="../../core/updates.py" line="110"/>
+        <location filename="../../core/updates.py" line="161"/>
         <source>Beklenmeyen yanit</source>
         <translation>Unexpected response</translation>
     </message>
@@ -2740,7 +2740,7 @@ If the interface hangs for more than a second, a report is created automatically
         <translation>DISK IMAGE</translation>
     </message>
     <message>
-        <location filename="../../ui/updatecheck.py" line="65"/>
+        <location filename="../../ui/updatecheck.py" line="66"/>
         <source>Daha sonra</source>
         <translation>Later</translation>
     </message>
@@ -4277,6 +4277,11 @@ You can pick a target yourself and use &quot;Install GRUB on this disk&quot;.</t
         <location filename="../../ui/updatecheck.py" line="63"/>
         <source>GitHub sayfasini ac</source>
         <translation>Open GitHub page</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="169"/>
+        <source>GitHub&apos;a ulasilamadi: {}</source>
+        <translation>Could not reach GitHub: {}</translation>
     </message>
     <message>
         <location filename="../../core/ptable.py" line="32"/>
@@ -7142,11 +7147,6 @@ Continue?</translation>
         <translation>Version</translation>
     </message>
     <message>
-        <location filename="../../core/updates.py" line="108"/>
-        <source>Surum listesi alinamadi: {}</source>
-        <translation>Could not get the release list: {}</translation>
-    </message>
-    <message>
         <location filename="../../ui/qt_i18n.py" line="45"/>
         <source>T&amp;umune hayir</source>
         <translation>N&amp;o to All</translation>
@@ -7302,7 +7302,7 @@ Continue?</translation>
         <translation>Scanning... {} / {} — {} candidates</translation>
     </message>
     <message>
-        <location filename="../../ui/updatecheck.py" line="71"/>
+        <location filename="../../ui/updatecheck.py" line="72"/>
         <source>Tarayici acilamadi. Adres: {}</source>
         <translation>Could not open the browser. Address: {}</translation>
     </message>
@@ -8559,7 +8559,7 @@ Pending steps also claim space; clearing the list gives it back.</translation>
     </message>
     <message>
         <location filename="../../ui/updatecheck.py" line="59"/>
-        <location filename="../../ui/updatecheck.py" line="70"/>
+        <location filename="../../ui/updatecheck.py" line="71"/>
         <source>Yeni surum var</source>
         <translation>New version available</translation>
     </message>
@@ -9252,6 +9252,11 @@ Pending steps also claim space; clearing the list gives it back.</translation>
         <translation>encrypted</translation>
     </message>
     <message>
+        <location filename="../../core/updates.py" line="144"/>
+        <source>sunucu {} dondurdu</source>
+        <translation>the server returned {}</translation>
+    </message>
+    <message>
         <location filename="../../core/planview.py" line="340"/>
         <source>toplam {}</source>
         <translation>total {}</translation>
@@ -9265,6 +9270,11 @@ Pending steps also claim space; clearing the list gives it back.</translation>
         <location filename="../../core/platform.py" line="1344"/>
         <source>var</source>
         <translation>yes</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="142"/>
+        <source>yanit zaman asimina ugradi</source>
+        <translation>the response timed out</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="608"/>
@@ -10568,6 +10578,11 @@ Type the disk name to continue: {}</translation>
         <location filename="../../core/resize.py" line="757"/>
         <source>{} {} tasinacak ({} veri kopyalanir)</source>
         <translation type="vanished">will move {} {} ({} of data is copied)</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="108"/>
+        <source>Surum listesi alinamadi: {}</source>
+        <translation type="vanished">Could not get the release list: {}</translation>
     </message>
 </context>
 <context>

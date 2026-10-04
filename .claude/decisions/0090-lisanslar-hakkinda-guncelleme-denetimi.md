@@ -67,3 +67,14 @@ t90 (ağsız: sürüm sırası, taslak/ön sürüm, tarih değil numara, ağ hat
 https dışı reddi, lisans metinleri), ui_smoke (ortam değişkeni, menü), canlı
 API ile elle: en son v0.6.1-beta. Pencereler ekran görüntüsüyle kontrol edildi.
 Linux'ta root kopyadan tarayıcı açma gerçek pkexec oturumunda **denenmedi**.
+
+## Ek (2026-10-04): zaman aşımı, yedek kaynak
+
+Kullanıcı: "Güncellemeleri denetle — sürüm listesi alınamadı". Günlük:
+açılıştaki denetim API'den 3,6 sn'de geldi, elle denetim 8 sn sınırında
+"The read operation timed out" verdi (aynı anda sürüm akışı 1,3 sn'de
+geliyordu). Değişiklik: sınır 15 sn, API bir kez daha denenir, sonra
+`releases.atom` (farklı sunucu, istek sınırı yok, taslak içermez) okunur.
+Hata metni anlaşılır: "GitHub'a ulaşılamadı: yanıt zaman aşımına uğradı".
+t90 sahte okuyucuyla sırayı (API, API, akış) ve API sağlamken akışa
+gidilmediğini sınar.

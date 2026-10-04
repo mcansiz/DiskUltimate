@@ -1084,7 +1084,7 @@
         <translation>Unerwartete Ausgabe</translation>
     </message>
     <message>
-        <location filename="../../core/updates.py" line="110"/>
+        <location filename="../../core/updates.py" line="161"/>
         <source>Beklenmeyen yanit</source>
         <translation>Unerwartete Antwort</translation>
     </message>
@@ -2740,7 +2740,7 @@ Hängt die Oberfläche länger als eine Sekunde, wird automatisch ein Bericht er
         <translation>DATENTRÄGERABBILD</translation>
     </message>
     <message>
-        <location filename="../../ui/updatecheck.py" line="65"/>
+        <location filename="../../ui/updatecheck.py" line="66"/>
         <source>Daha sonra</source>
         <translation>Später</translation>
     </message>
@@ -4277,6 +4277,11 @@ Sie können selbst ein Ziel wählen und &quot;GRUB auf diesem Datenträger insta
         <location filename="../../ui/updatecheck.py" line="63"/>
         <source>GitHub sayfasini ac</source>
         <translation>GitHub-Seite öffnen</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="169"/>
+        <source>GitHub&apos;a ulasilamadi: {}</source>
+        <translation>GitHub nicht erreichbar: {}</translation>
     </message>
     <message>
         <location filename="../../core/ptable.py" line="32"/>
@@ -7142,11 +7147,6 @@ Fortfahren?</translation>
         <translation>Version</translation>
     </message>
     <message>
-        <location filename="../../core/updates.py" line="108"/>
-        <source>Surum listesi alinamadi: {}</source>
-        <translation>Versionsliste konnte nicht abgerufen werden: {}</translation>
-    </message>
-    <message>
         <location filename="../../ui/qt_i18n.py" line="45"/>
         <source>T&amp;umune hayir</source>
         <translation>N&amp;ein, keine</translation>
@@ -7302,7 +7302,7 @@ Fortfahren?</translation>
         <translation>Wird gesucht... {} / {} — {} Kandidaten</translation>
     </message>
     <message>
-        <location filename="../../ui/updatecheck.py" line="71"/>
+        <location filename="../../ui/updatecheck.py" line="72"/>
         <source>Tarayici acilamadi. Adres: {}</source>
         <translation>Browser konnte nicht geöffnet werden. Adresse: {}</translation>
     </message>
@@ -8559,7 +8559,7 @@ Ausstehende Schritte belegen ebenfalls Platz; das Leeren der Liste gibt ihn wied
     </message>
     <message>
         <location filename="../../ui/updatecheck.py" line="59"/>
-        <location filename="../../ui/updatecheck.py" line="70"/>
+        <location filename="../../ui/updatecheck.py" line="71"/>
         <source>Yeni surum var</source>
         <translation>Neue Version verfügbar</translation>
     </message>
@@ -9252,6 +9252,11 @@ Ausstehende Schritte belegen ebenfalls Platz; das Leeren der Liste gibt ihn wied
         <translation>verschlüsselt</translation>
     </message>
     <message>
+        <location filename="../../core/updates.py" line="144"/>
+        <source>sunucu {} dondurdu</source>
+        <translation>der Server antwortete mit {}</translation>
+    </message>
+    <message>
         <location filename="../../core/planview.py" line="340"/>
         <source>toplam {}</source>
         <translation>insgesamt {}</translation>
@@ -9265,6 +9270,11 @@ Ausstehende Schritte belegen ebenfalls Platz; das Leeren der Liste gibt ihn wied
         <location filename="../../core/platform.py" line="1344"/>
         <source>var</source>
         <translation>ja</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="142"/>
+        <source>yanit zaman asimina ugradi</source>
+        <translation>Zeitüberschreitung bei der Antwort</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="608"/>
@@ -10568,6 +10578,11 @@ Geben Sie zum Fortfahren den Datenträgernamen ein: {}</translation>
         <location filename="../../core/resize.py" line="757"/>
         <source>{} {} tasinacak ({} veri kopyalanir)</source>
         <translation type="vanished">wird um {} {} verschoben ({} Daten werden kopiert)</translation>
+    </message>
+    <message>
+        <location filename="../../core/updates.py" line="108"/>
+        <source>Surum listesi alinamadi: {}</source>
+        <translation type="vanished">Versionsliste konnte nicht abgerufen werden: {}</translation>
     </message>
 </context>
 <context>

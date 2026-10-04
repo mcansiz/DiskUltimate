@@ -5846,3 +5846,5 @@ calismiyordu.
   numarayla sıralama), açılışta sessiz + Yardım menüsünde elle; atlanan sürüm;
   `platform.open_url` Linux'ta tarayıcıyı root değil kullanıcı olarak açar.
 - t90, ui_smoke; 20 yeni metin 9 dilde. run_all 88/90, platform 0, diag 13/13.
+- Güncelleme denetimi zaman aşımı (kullanıcı bildirdi): 15 sn, API'yi ikinci
+  deneme, `releases.atom` yedeği, anlaşılır hata metni; t90 genişledi.
