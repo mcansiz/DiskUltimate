@@ -5694,3 +5694,11 @@ calismiyordu.
 - UDF kayip bolum taramasi desteklenmiyor (ADR 0054'te bilincli) — adim
   "atlandi" + neden; kullaniciya bulgu olarak sunulacak.
 - quick: 33/33 (tohum 12).
+- Uzun testler CI ilk kosu (quick, Linux, 37195638819): FAT disi 24/24
+  senaryo CEKIRDEK suruculeriyle (ext4, exfat, ntfs3, hfsplus, udf, xfs)
+  dosya ozetleri ayni. 9 FAT senaryosu: vfat varsayilan iocharset
+  (iso8859-1) s/i/Yunanca/Kiril adlari gostermiyor -> mount `utf8`.
+- Asama 3-4: Windows (sabit VHD + Mount-DiskImage + chkdsk + Windows
+  suruculeriyle ozet) ve macOS (hdiutil + fsck_* + diskutil mount) islari;
+  full profilde bos diskin 1/3'u veri butcesi, sigmayan buyuk dosyalar
+  raporda "SINANMADI" diye yazilir.

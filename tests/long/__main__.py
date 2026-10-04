@@ -81,7 +81,16 @@ def main(argv=None) -> int:
         for table in tables:
             workdir = a.calisma or os.path.join(ROOT, ".tmp", "uzun", f"{key}-{table}")
             os.makedirs(workdir, exist_ok=True)
-            ds = make_dataset(plan, profile, seed, a.butce_gb)
+            budget_gb = a.butce_gb
+            if not budget_gb and profile.name == "full":
+                # Klon ve yedek ayni kadar yer ister: veri bos alanin ucte biri
+                budget_gb = shutil.disk_usage(workdir).free / 3 / GIB
+            ds = make_dataset(plan, profile, seed, budget_gb)
+            wanted = [b for b in profile.big if not plan.max_file or b <= plan.max_file]
+            dropped = [b for b in wanted if not any(f.size == b for f in ds.files)]
+            if dropped and plan.writable:
+                print(f"   UYARI: butceye ({budget_gb:.1f} GiB) sigmayan buyuk dosyalar: "
+                      + ", ".join(f"{b // MIB} MiB" for b in dropped))
             part_sectors, disk = plan_sizes(plan, ds)
             ctx = Ctx(fs=plan, table=table, profile=profile.name, seed=seed,
                       workdir=workdir, dataset=ds,
@@ -92,6 +101,9 @@ def main(argv=None) -> int:
                   f"{len(ds.files)} dosya, {sum(f.size for f in ds.files) // MIB} MiB)",
                   flush=True)
             result = run(ctx, STEPS, stop_on_fail=not a.devam)
+            if dropped and plan.writable:
+                result["dusen_dosyalar_mb"] = [b // MIB for b in dropped]
+                result["butce_gb"] = round(budget_gb, 1)
             if ctx.session is not None:
                 ctx.session.close()
             save(result, os.path.join(report_dir, f"{key}-{table}.json"))

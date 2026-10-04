@@ -178,8 +178,14 @@ def run_verify(ctx: Ctx, rec: dict) -> None:
     if status == "fail":
         raise StepFail("dis denetim: " + detail[-500:])
     if ctx.kernel_check and ctx.fs.writable:
-        status, detail = verify.kernel_mount_check(ctx.fs.key, ctx.image, offset,
-                                                   size, ctx.manifest)
+        # Windows acik dosyayi yeniden adlandirmaz (VHD'ye cevirme); macOS'ta
+        # hdiutil ayni dosyayi baglar — oturum kapatilip sonra yeniden acilir.
+        ctx.session.close()
+        try:
+            status, detail = verify.kernel_mount_check(ctx.fs.key, ctx.image, offset,
+                                                       size, ctx.manifest)
+        finally:
+            ctx.session = DiskSession.open(ctx.image)
         rec["cekirdek"] = {"durum": status, "ayrinti": detail[-300:]}
         if status == "fail":
             raise StepFail("cekirdek: " + detail[-500:])

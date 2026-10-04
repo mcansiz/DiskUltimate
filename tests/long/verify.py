@@ -115,6 +115,8 @@ def _partition_device(image_path: str, offset: int, size: int):
 
 def external_fsck(fs_key: str, image_path: str, offset: int, size: int) -> Tuple[str, str]:
     """('ok'|'fail'|'skip', ayrinti)."""
+    if sys.platform == "darwin" and os.environ.get("DU_UZUN_CEKIRDEK") == "1":
+        return "skip", "macOS'ta fsck aygit uzerinden (surucu denetimi icinde)"
     table = FSCK_MAC if sys.platform == "darwin" else FSCK
     if fs_key not in table:
         return "skip", f"{fs_key} icin dis denetim araci yok"
@@ -133,15 +135,42 @@ def external_fsck(fs_key: str, image_path: str, offset: int, size: int) -> Tuple
     return "fail", f"{tool} cikis {r.returncode}: {out[-800:]}"
 
 
+def _hash_tree(root: str, manifest: Manifest, sep: str = "/") -> List[str]:
+    """Baglanmis birimdeki dosyalari isletim sisteminin surucusuyle ozetler."""
+    errors: List[str] = []
+    for path, (size_e, sha1) in sorted(manifest.entries.items()):
+        full = root.rstrip("/\\") + sep + path.lstrip("/").replace("/", sep)
+        try:
+            h = hashlib.sha1()
+            n = 0
+            with open(full, "rb") as fh:
+                for block in iter(lambda: fh.read(8 * MIB), b""):
+                    h.update(block)
+                    n += len(block)
+        except OSError as exc:
+            errors.append(f"{path}: {exc}")
+            continue
+        if n != size_e or h.hexdigest() != sha1:
+            errors.append(f"{path}: surucu farkli icerik goruyor ({n} bayt)")
+        if len(errors) > 20:
+            break
+    return errors
+
+
 def kernel_mount_check(fs_key: str, image_path: str, offset: int, size: int,
                        manifest: Manifest) -> Tuple[str, str]:
-    """Cekirdegin kendi surucusuyle salt okunur baglayip ozetleri dogrular.
+    """Isletim sisteminin KENDI surucusuyle salt okunur baglayip ozetleri ve
+    (Windows'ta) chkdsk'i dogrular.
 
-    Yalnizca Linux + sifresiz sudo (CI makinesi; ADR 0080). Ana makinede
-    kosmaz (CLAUDE.md test kurali).
+    Yalnizca CI makinesinde (ADR 0080; CLAUDE.md test kurali): Linux'ta
+    sifresiz sudo + `mount`, Windows'ta yonetici + `Mount-DiskImage`.
     """
     if os.environ.get("DU_UZUN_CEKIRDEK") != "1":
         return "skip", "cekirdek baglama istenmedi (DU_UZUN_CEKIRDEK=1)"
+    if sys.platform.startswith("win"):
+        return windows_mount_check(fs_key, image_path, offset, size, manifest)
+    if sys.platform == "darwin":
+        return mac_mount_check(fs_key, image_path, offset, size, manifest)
     if not sudo_ok():
         return "skip", "sifresiz sudo yok"
     kind = KERNEL_TYPE.get(fs_key)
@@ -151,6 +180,10 @@ def kernel_mount_check(fs_key: str, image_path: str, offset: int, size: int,
     opts = f"ro,loop,offset={offset},sizelimit={size}"
     if kind in ("vfat", "exfat", "ntfs3"):
         opts += f",uid={os.getuid()},gid={os.getgid()}"
+    if kind == "vfat":
+        # vfat varsayilan iocharset'i (iso8859-1) s/i/Yunanca/Kiril adlari
+        # temsil edemez; dosya "yok" gorunur (CI'da olculdu). Uzun adlar UTF-16.
+        opts += ",utf8"
     r = subprocess.run(["sudo", "-n", "mount", "-t", kind, "-o", opts, image_path, mnt],
                        capture_output=True, text=True)
     if r.returncode != 0:
@@ -159,27 +192,139 @@ def kernel_mount_check(fs_key: str, image_path: str, offset: int, size: int,
         if "unknown filesystem type" in msg:
             return "skip", f"cekirdekte {kind} surucusu yok"
         return "fail", f"mount -t {kind}: {msg[-400:]}"
-    errors: List[str] = []
     try:
-        for path, (size_e, sha1) in sorted(manifest.entries.items()):
-            full = os.path.join(mnt, path.lstrip("/"))
-            try:
-                h = hashlib.sha1()
-                n = 0
-                with open(full, "rb") as fh:
-                    for block in iter(lambda: fh.read(8 * MIB), b""):
-                        h.update(block)
-                        n += len(block)
-            except OSError as exc:
-                errors.append(f"{path}: {exc}")
-                continue
-            if n != size_e or h.hexdigest() != sha1:
-                errors.append(f"{path}: cekirdek farkli icerik goruyor")
-            if len(errors) > 20:
-                break
+        errors = _hash_tree(mnt, manifest)
     finally:
         subprocess.run(["sudo", "-n", "umount", mnt], capture_output=True)
         os.rmdir(mnt)
     if errors:
         return "fail", "; ".join(errors[:10])
     return "ok", f"{kind}: {len(manifest.entries)} dosya cekirdekle ayni"
+
+
+# --------------------------------------------------------------------------
+# Windows: ham goruntu + VHD alt bilgisi = sabit VHD -> Mount-DiskImage
+# --------------------------------------------------------------------------
+WINDOWS_FS = {"fat12", "fat16", "fat32", "exfat", "ntfs", "udf"}
+
+
+def _powershell(script: str, timeout: int = 600) -> Tuple[int, str]:
+    r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive",
+                        "-ExecutionPolicy", "Bypass", "-Command", script],
+                       capture_output=True, text=True, timeout=timeout)
+    return r.returncode, (r.stdout + r.stderr).strip()
+
+
+def windows_mount_check(fs_key: str, image_path: str, offset: int, size: int,
+                        manifest: Manifest) -> Tuple[str, str]:
+    """Windows'un kendi surucusu: salt okunur bagla, chkdsk, dosya ozetleri.
+
+    Cagiran goruntuyu KAPATMIS olmali (Windows acik dosyayi yeniden
+    adlandirmaz). Ham goruntunun sonuna 512 baytlik VHD alt bilgisi eklenir
+    (sabit VHD = ham veri + alt bilgi), is bitince kaldirilir.
+    """
+    if fs_key not in WINDOWS_FS:
+        return "skip", f"Windows {fs_key} okumaz"
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__)))), "src"))
+    from diskultimate.core.vdisk import build_vhd_footer
+    disk_size = os.path.getsize(image_path)
+    vhd = os.path.splitext(image_path)[0] + "_kontrol.vhd"
+    with open(image_path, "ab") as fh:
+        fh.write(build_vhd_footer(disk_size))
+    os.replace(image_path, vhd)
+    try:
+        code, out = _powershell(f"""
+$ErrorActionPreference = 'Stop'
+$img = Mount-DiskImage -ImagePath '{vhd}' -Access ReadOnly -PassThru
+Start-Sleep 3
+$disk = $img | Get-Disk
+$p = Get-Partition -DiskNumber $disk.Number | Where-Object {{ $_.Offset -eq {offset} }}
+if (-not $p) {{ throw "bolum yok (ofset {offset}): " + ((Get-Partition -DiskNumber $disk.Number | ForEach-Object {{ $_.Offset }}) -join ',') }}
+$v = $p | Get-Volume
+$yol = if ($p.DriveLetter -and $p.DriveLetter -ne [char]0) {{ "$($p.DriveLetter):" }} else {{ $v.Path.TrimEnd('\') }}
+"YOL=$yol"
+"FS=$($v.FileSystem) SAGLIK=$($v.HealthStatus)"
+""")
+        if code != 0 or "YOL=" not in out:
+            return "fail", f"Windows baglamadi: {out[-500:]}"
+        root = [l for l in out.splitlines() if l.startswith("YOL=")][0][4:].strip()
+        info = [l for l in out.splitlines() if l.startswith("FS=")]
+        errors = _hash_tree(root, manifest, sep="\\")
+        r = subprocess.run(["chkdsk", root], capture_output=True, text=True,
+                           timeout=1800)
+        chk = (r.stdout + r.stderr).strip()
+        if errors:
+            return "fail", f"Windows surucusu: {'; '.join(errors[:8])}"
+        if r.returncode != 0:
+            return "fail", f"chkdsk cikis {r.returncode}: {chk[-600:]}"
+        return "ok", (f"Windows: {info[0] if info else ''}, "
+                      f"{len(manifest.entries)} dosya ayni, chkdsk temiz")
+    finally:
+        _powershell(f"Dismount-DiskImage -ImagePath '{vhd}' | Out-Null")
+        os.replace(vhd, image_path)
+        with open(image_path, "r+b") as fh:
+            fh.truncate(disk_size)
+
+
+# --------------------------------------------------------------------------
+# macOS: hdiutil ile aygit, diskutil ile salt okunur baglama, fsck_*
+# --------------------------------------------------------------------------
+MAC_FS = {"fat12": "msdos", "fat16": "msdos", "fat32": "msdos", "exfat": "exfat",
+          "hfsplus": "hfs", "udf": "udf", "ntfs": "ntfs"}
+
+
+def mac_mount_check(fs_key: str, image_path: str, offset: int, size: int,
+                    manifest: Manifest) -> Tuple[str, str]:
+    """macOS'un kendi surucusu (Asama 4; ADR 0080)."""
+    if fs_key not in MAC_FS:
+        return "skip", f"macOS {fs_key} baglamaz"
+    import plistlib
+    r = subprocess.run(["hdiutil", "attach", "-nomount", "-readonly", "-plist",
+                        "-imagekey", "diskimage-class=CRawDiskImage", image_path],
+                       capture_output=True)
+    if r.returncode != 0:
+        return "fail", f"hdiutil attach: {r.stderr.decode(errors='replace')[-400:]}"
+    entities = plistlib.loads(r.stdout).get("system-entities", [])
+    disk = min((e["dev-entry"] for e in entities), key=len)
+    try:
+        target = None
+        for e in entities:
+            dev = e["dev-entry"]
+            if dev == disk:
+                continue
+            info = subprocess.run(["diskutil", "info", "-plist", dev], capture_output=True)
+            data = plistlib.loads(info.stdout) if info.returncode == 0 else {}
+            if data.get("PartitionMapPartitionOffset") == offset:
+                target = dev
+                break
+        if target is None:
+            return "fail", f"macOS bolumu bulamadi (ofset {offset})"
+        fsck = {"msdos": ["fsck_msdos", "-n"], "exfat": ["fsck_exfat", "-n"],
+                "hfs": ["fsck_hfs", "-fn"]}.get(MAC_FS[fs_key])
+        note = ""
+        if fsck:
+            raw = target.replace("/dev/disk", "/dev/rdisk")
+            fr = subprocess.run(fsck + [raw], capture_output=True, text=True)
+            if fr.returncode != 0:
+                return "fail", f"{fsck[0]} cikis {fr.returncode}: {(fr.stdout + fr.stderr)[-500:]}"
+            note = f", {fsck[0]} temiz"
+        mnt = tempfile.mkdtemp(prefix="du_mnt_")
+        mr = subprocess.run(["diskutil", "mount", "readOnly", "-mountPoint", mnt, target],
+                            capture_output=True, text=True)
+        if mr.returncode != 0:
+            os.rmdir(mnt)
+            return "fail", f"diskutil mount: {(mr.stdout + mr.stderr)[-400:]}"
+        try:
+            errors = _hash_tree(mnt, manifest)
+        finally:
+            subprocess.run(["diskutil", "unmount", "force", mnt], capture_output=True)
+            try:
+                os.rmdir(mnt)
+            except OSError:
+                pass
+        if errors:
+            return "fail", f"macOS surucusu: {'; '.join(errors[:8])}"
+        return "ok", f"macOS {MAC_FS[fs_key]}: {len(manifest.entries)} dosya ayni{note}"
+    finally:
+        subprocess.run(["hdiutil", "detach", disk, "-force"], capture_output=True)

@@ -72,6 +72,14 @@ def summary_md(results: List[dict], run_url: str = "") -> str:
                 lines.append("```")
                 lines.append(f"Tekrar: `{r['tekrar']}`")
                 lines.append("")
+    dropped = [r for r in results if r.get("dusen_dosyalar_mb")]
+    if dropped:
+        lines += ["", "### Disk butcesine sigmayan buyuk dosyalar", ""]
+        for r in dropped:
+            lines.append(f"- {r['senaryo']} ({_platform_short(r)}): "
+                         f"{', '.join(str(x) + ' MiB' for x in r['dusen_dosyalar_mb'])} "
+                         f"yazilmadi (butce {r.get('butce_gb')} GiB) — bu boyut bu "
+                         f"platformda SINANMADI")
     reasons = Counter(s.get("neden", "") for r in results for s in r["adimlar"]
                       if s["durum"] == "atlandi")
     checks = Counter()

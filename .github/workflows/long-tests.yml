@@ -121,9 +121,81 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+  windows:
+    name: Windows ${{ matrix.fs }}-${{ matrix.tablo }}
+    needs: plan
+    if: needs.plan.outputs.windows != '[]'
+    runs-on: windows-2022
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.windows) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            /*
+            !/.claude/sessions/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Disk
+        run: Get-PSDrive -PSProvider FileSystem | Format-Table Name,Used,Free | Out-String
+      - name: Senaryo
+        # Windows'un kendi surucusuyle dogrulama: goruntu sabit VHD'ye cevrilip
+        # Mount-DiskImage ile salt okunur baglanir, chkdsk + dosya ozetleri.
+        run: >
+          python -m tests.long --profil ${{ inputs.profil }} --fs ${{ matrix.fs }}
+          --tablo ${{ matrix.tablo }} --tohum ${{ needs.plan.outputs.tohum }}
+          --cekirdek --calisma D:\du\is --rapor rapor/windows
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rapor-windows-${{ matrix.fs }}-${{ matrix.tablo }}
+          path: rapor/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  macos:
+    name: macOS ${{ matrix.fs }}-${{ matrix.tablo }}
+    needs: plan
+    if: needs.plan.outputs.macos != '[]'
+    runs-on: macos-14
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.macos) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            /*
+            !/.claude/sessions/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Disk
+        run: df -h . | cat
+      - name: Senaryo
+        # macOS'un kendi surucusu: hdiutil ile aygit, fsck_* ve salt okunur
+        # diskutil mount + dosya ozetleri.
+        run: >
+          python -m tests.long --profil ${{ inputs.profil }} --fs ${{ matrix.fs }}
+          --tablo ${{ matrix.tablo }} --tohum ${{ needs.plan.outputs.tohum }}
+          --cekirdek --calisma "$RUNNER_TEMP/du" --rapor rapor/macos
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rapor-macos-${{ matrix.fs }}-${{ matrix.tablo }}
+          path: rapor/
+          if-no-files-found: ignore
+          retention-days: 30
+
   ozet:
     name: Ozet ve issue
-    needs: [plan, linux]
+    needs: [plan, linux, windows, macos]
     if: always() && needs.plan.result == 'success'
     runs-on: ubuntu-24.04
     permissions:
