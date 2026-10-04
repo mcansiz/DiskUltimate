@@ -1218,6 +1218,8 @@ def t21_birim_kilidi_kutukten_etkilenmez():
     disk._volume_handles = []
     disk._locked_letters = []
     disk._unlocked_letters = []
+    disk._locked_devices = set()      # ADR 0084: kilitli birim aygitlari
+    disk._relocking = False
     try:
         physical._register_open(info)        # gercek akista da boyle olur
         try:

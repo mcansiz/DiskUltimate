@@ -34,15 +34,21 @@ import shutil
 import stat
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORK = os.path.join(ROOT, ".tmp", "appimage")
 TOOLS = os.path.join(WORK, "araclar")
 
-PYTHON = ("python3.12.14-cp312-cp312-manylinux2014_x86_64.AppImage",
+# `python3.12` yuvarlanan bir etikettir: yeni yama surumu cikinca eskisi
+# silinir (3.12.14 -> 3.12.15, 2026-10-04; v0.5.1-beta derlemesi 404 aldi).
+# Guncelleme: asagidaki komutun verdigi ad ve sha256 buraya yazilir.
+#   gh api repos/niess/python-appimage/releases/tags/python3.12 --jq \
+#     '.assets[] | select(.name|test("manylinux2014_x86_64")) | .name, .digest'
+PYTHON = ("python3.12.15-cp312-cp312-manylinux2014_x86_64.AppImage",
           "https://github.com/niess/python-appimage/releases/download/python3.12/",
-          "fd6b81d037c786608c7407dd752a2b59381bf172b9c84bc8f0166d9f34cd53c4")
+          "a6a9bf619a3e21c5623be144d8ac4e458e1a5b5c133b1cc99b142d6e71b82c76")
 APPIMAGETOOL = ("appimagetool-x86_64.AppImage",
                 "https://github.com/AppImage/appimagetool/releases/download/1.9.1/",
                 "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0")
@@ -120,8 +126,15 @@ def fetch(item) -> str:
     path = os.path.join(TOOLS, name)
     if not os.path.isfile(path) or sha256(path) != digest:
         log(f"indiriliyor: {name}")
-        with urllib.request.urlopen(base + name) as r, open(path + ".part", "wb") as f:
-            shutil.copyfileobj(r, f)
+        try:
+            with urllib.request.urlopen(base + name) as r, \
+                    open(path + ".part", "wb") as f:
+                shutil.copyfileobj(r, f)
+        except urllib.error.HTTPError as exc:
+            raise SystemExit(
+                f"HATA: {name} indirilemedi ({exc.code}). Yayinci eski surumu "
+                f"kaldirmis olabilir; tools/appimage.py basindaki yorumdaki "
+                f"komutla yeni ad ve sha256 alinip sabitlenir.")
         os.replace(path + ".part", path)
     if sha256(path) != digest:
         raise SystemExit(f"HATA: {name} SHA-256 tutmuyor")

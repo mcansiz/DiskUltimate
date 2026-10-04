@@ -5763,3 +5763,12 @@ calismiyordu.
   Windows numaralari 1/2/3, bizimkiler 1/5/6 (bulgunun kaniti); harf ikinci
   mantiksala atandi ve yalnizca orada gorundu, kaldirildi. BASARILI.
 - Surum 0.5.1-beta (APP_VERSION, README rozetleri, .po basliklari).
+- v0.5.1-beta ilk sürüm koşusu (37202720053) düştü, sürüm oluşmadı:
+  (1) macOS ui_smoke SIGSEGV — `TaskDialog`'un saniyelik sayacı pencere
+  kapanınca hiç durmuyor, pencere silinmiyordu (her run_task arkada çalışan
+  bir sayaç bırakıyordu); sayaç durur, pencere deleteLater. ui_smoke'a
+  denetim eklendi (eski kodda 3/3 sayaç çalışır kalıyordu).
+  (2) Windows t21: testin elle kurduğu PhysicalDisk'te ADR 0084 alanları
+  yoktu. (3) AppImage: niess/python-appimage `python3.12` yuvarlanan etiketi
+  3.12.14'ü sildi (404); 3.12.15'e sabitlendi (sha256 GitHub özetiyle aynı),
+  404'te ne yapılacağını söyleyen hata. Yerelde AppImage derlendi ve açıldı.

@@ -154,7 +154,14 @@ class TaskDialog(QDialog):
         QTimer.singleShot(0, self.update)
         self._tick.start()
         self.worker.start()
-        result = super().exec_()
+        try:
+            result = super().exec_()
+        finally:
+            # Pencere kapandiktan sonra sayac durur: eskiden hic durmuyordu,
+            # her gorev penceresi saniyede bir calisan bir sayac birakiyordu;
+            # macOS'ta silinmis etikete yazip cokuyordu (ui_smoke, SIGSEGV,
+            # 2026-10-04).
+            self._tick.stop()
         self.worker.wait()
         return result
 
@@ -162,5 +169,8 @@ class TaskDialog(QDialog):
 def run_task(parent, title: str, func: Callable):
     """Islemi calistirir; (basarili, sonuc_veya_hata) dondurur."""
     dlg = TaskDialog(parent, title, func)
-    ok = dlg.exec_() == QDialog.Accepted
-    return ok, (dlg.result_value if ok else dlg.error)
+    try:
+        ok = dlg.exec_() == QDialog.Accepted
+        return ok, (dlg.result_value if ok else dlg.error)
+    finally:
+        dlg.deleteLater()           # ebeveyne bagli pencere birikmesin

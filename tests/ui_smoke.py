@@ -600,6 +600,18 @@ def main() -> int:
     d9.close()
     print("  (ilerleme penceresi: yuzde ve belirsiz kip denetlendi)")
 
+    # Gorev penceresi kapaninca saniyelik sayaci durur ve pencere silinir.
+    # Eskiden ikisi de olmuyordu: her run_task arkada calisan bir sayac
+    # birakiyordu, macOS'ta silinmis etikete yazip SIGSEGV veriyordu.
+    from PyQt5.QtCore import QCoreApplication, QEvent
+    from diskultimate.ui.dialogs.task import run_task
+    ok, deger = run_task(pencere, "Sayac denemesi", lambda report: 7)
+    assert ok and deger == 7, (ok, deger)
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+    app.processEvents()
+    calisan = [d for d in pencere.findChildren(TaskDialog) if d._tick.isActive()]
+    assert not calisan, f"{len(calisan)} gorev penceresinin sayaci calisiyor"
+
     # --- onyukleyici yoneticisi (ADR 0028) ---
     # Inceleme pencereden ONCE calisir; pencere hazir sonucu alir. Boylece
     # yapici icinde modal ilerleme penceresi acilmaz.
