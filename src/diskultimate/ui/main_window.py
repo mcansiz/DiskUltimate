@@ -75,7 +75,7 @@ from ..i18n import mark, tr, trn
 APP_NAME = "DiskUltimate"
 # Surumun tek kaynagi burasidir. Degistirildiginde README.md'deki surum rozeti
 # ve .claude/docs/project-overview.md "Durum" satiri da guncellenir.
-APP_VERSION = "0.6.0-beta"
+APP_VERSION = "0.6.1-beta"
 
 # Sekme sirasi tek yerden tanimlanir; `tabs.setCurrentIndex` cagrilari ciplak
 # sayi kullanmaz, boylece sekme sirasi degisince sessizce yanlis sekme acilmaz.

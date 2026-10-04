@@ -5831,3 +5831,4 @@ calismiyordu.
   ve Uygula öncesi beklenir). Ağaç: amblem + ad; tablo: "İşletim sistemi"
   sütunu; harita: blok başında amblem.
 - t89, ui_smoke; run_all 87/89, i18n (9 dil) TAMAM, platform 0, diag 13/13.
+- Sürüm 0.6.1-beta (kullanıcı kararı): bölüm başına işletim sistemi.
