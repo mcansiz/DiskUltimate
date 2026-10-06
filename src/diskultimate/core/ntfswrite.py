@@ -1074,6 +1074,34 @@ class NtfsWriter:
         self.index_add(dir_no, name, rec_no, sequence, FILE_ATTR_DIRECTORY, 0, 0)
         self.fs._cache.clear()
 
+    def _names_of(self, items, dir_no: int, name: str):
+        """Kayittaki $FILE_NAME'lerden `name`e ait olanlar (+ 8.3 esi).
+
+        Ayni dizinde birden cok ad iki anlama gelebilir: uzun ad + 8.3 kisa ad
+        cifti (ayni ad) ya da ayni dosyanin **sabit baglari** (ayri adlar).
+        Eskiden dizindeki butun adlar ayni adin parcasi sayiliyordu: ayni
+        klasordeki iki sabit bagdan biri silinince digeri de kalkiyor, kayit
+        serbest kaliyordu (yabanci matris: ntfs3 ile `ln a b`, b silinince a
+        kayboldu). Artik yalnizca istenen ad ve — dizinde baska uzun ad
+        yoksa — onun DOS (8.3, ad alani 2) esi secilir.
+        """
+        key = self.collation_key(name)
+        here = []
+        for it in items:
+            if it[0] == AT_FILE_NAME:
+                parent, fn, ns = self._fn_info(it[2])
+                if parent == dir_no:
+                    here.append((it, fn, ns))
+        chosen = [h for h in here if self.collation_key(h[1]) == key]
+        if not chosen:
+            return [], here
+        longs = [h for h in here if h[2] != 2]
+        if len(longs) <= 1:
+            # tek uzun ad: DOS/Win32 cifti birlikte gider
+            pair = 2 if any(h[2] != 2 for h in chosen) else 1
+            chosen += [h for h in here if h[2] == pair and h not in chosen]
+        return chosen, here
+
     def remove(self, path: str) -> None:
         """Dosyayi veya **bos** klasoru siler.
 
@@ -1092,20 +1120,21 @@ class NtfsWriter:
         self._check_removable(rec, name)
         target = rec.number
         items, raw = self._record_attrs(target)
-        here, elsewhere = [], []
-        for it in items:
-            if it[0] == AT_FILE_NAME:
-                parent, fn, ns = self._fn_info(it[2])
-                (here if parent == dir_no else elsewhere).append((it, fn, ns))
+        here, _all_here = self._names_of(items, dir_no, name)
+        if not here:
+            raise NtfsError(tr("Bulunamadi: {}", path))
+        # Kalan adlar: baska dizinlerdeki ve BU dizindeki diger sabit baglar
+        remaining = [self._fn_info(it[2]) for it in items if it[0] == AT_FILE_NAME
+                     and not any(it is h[0] for h in here)]
         for _it, fn, _ns in here:
             try:
                 self.index_remove(dir_no, fn)
             except NtfsError:
                 pass                              # zaten yoksa sorun degil
-        if any(ns != 2 for _i, _f, ns in elsewhere):
+        if any(ns != 2 for _p, _f, ns in remaining):
             # sabit bag: kayit yasamaya devam eder
             keep = [it for it in items if not any(it is h[0] for h in here)]
-            links = sum(1 for _i, _f, ns in elsewhere if ns != 2)
+            links = sum(1 for _p, _f, ns in remaining if ns != 2)
             self._write_record_attrs(target, raw, keep, links=links)
             self.fs._cache.clear()
             return
@@ -1146,8 +1175,11 @@ class NtfsWriter:
         file_attr = FILE_ATTR_DIRECTORY if rec.is_dir else 0x20
         sequence = rec.sequence
         items, raw = self._record_attrs(rec.number)
-        here = [it for it in items if it[0] == AT_FILE_NAME
-                and self._fn_info(it[2])[0] == dir_no]
+        # Yalnizca bu adin (ve 8.3 esinin) $FILE_NAME'i degisir; ayni dizindeki
+        # baska sabit baglar yerinde kalir.
+        here = [h[0] for h in self._names_of(items, dir_no, name)[0]]
+        if not here:
+            raise NtfsError(tr("Bulunamadi: {}", path))
         for it in here:
             try:
                 self.index_remove(dir_no, self._fn_info(it[2])[1])

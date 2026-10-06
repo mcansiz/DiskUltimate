@@ -696,6 +696,71 @@ def t15_silme_sizinti_birakmaz():
     ntfsfix_ok(p)
 
 
+def _add_hardlink(w: NtfsWriter, dir_path: str, existing: str, new: str) -> None:
+    """Ayni dizinde ikinci ad (sabit bag): kayda ikinci $FILE_NAME + dizin
+    girisi, bag sayisi 2 — cekirdegin `ln` ile yazdigi yapi."""
+    rec = w.fs.resolve(dir_path.rstrip("/") + "/" + existing)
+    dir_no = w._dir_number(dir_path)
+    items, raw = w._record_attrs(rec.number)
+    data = rec.find(0x80)
+    size = data.data_size
+    alloc = 0 if data.resident else data.allocated_size
+    used_ids = [struct.unpack_from("<H", it[2], 0x0E)[0] for it in items]
+    parent_ref = (w.fs.record(dir_no).sequence << 48) | dir_no
+    fn = w._resident_attr(0x30, w._file_name_value(parent_ref, new, 0x20, size, alloc),
+                          attr_id=max(used_ids) + 1, indexed=1)
+    items.append([0x30, "", bytearray(fn)])
+    w._write_record_attrs(rec.number, raw, items, links=2)
+    w.index_add(dir_no, new, rec.number, rec.sequence, 0x20, size, alloc)
+    w.fs._cache.clear()
+
+
+@test
+def t19_ayni_dizinde_sabit_bag_silme_ve_ad_degistirme():
+    """Ayni klasordeki iki sabit bagdan biri silinince/adi degisince digeri kalir
+
+    Yabanci matris (ntfs3 `ln a b` sonra bizim `remove(b)`): `a` da kayboldu,
+    kayit serbest kaldi. Silme ayni dizindeki BUTUN adlari uzun+8.3 cifti
+    sayiyordu; rename de ayni varsayimla obur bagi siliyordu.
+    """
+    need("ntfscp", "ntfsfix", "ntfsls", "ntfscat")
+    p = mkntfs("t18.img", 32)
+    veri = bytes(range(256)) * 300            # yerlesik olmayan veri
+    ntfscp(p, veri, "/bag_a.bin")
+    d = open_image(p)
+    w = NtfsWriter(NtfsFS(d))
+    _add_hardlink(w, "/", "bag_a.bin", "bag_b.bin")
+    w.flush()
+    d.close()
+    ntfsfix_ok(p)                              # yapi gecerli: referans kabul ediyor
+    assert {"bag_a.bin", "bag_b.bin"} <= ntfsls(p), ntfsls(p)
+    assert ntfscat(p, "/bag_b.bin") == veri
+
+    d = open_image(p)
+    w = NtfsWriter(NtfsFS(d))
+    w.remove("/bag_b.bin")
+    w.flush()
+    fs = NtfsFS(d)
+    assert [e.name for e in fs.listdir("/") if e.name.startswith("bag_")] == ["bag_a.bin"]
+    assert fs.read_file("/bag_a.bin") == veri
+    assert not orphan_clusters(fs), "veri kumeleri serbest birakilmis"
+    d.close()
+    ntfsfix_ok(p)
+    assert ntfscat(p, "/bag_a.bin") == veri
+
+    # ad degistirme: obur bag yerinde kalmali
+    d = open_image(p)
+    w = NtfsWriter(NtfsFS(d))
+    _add_hardlink(w, "/", "bag_a.bin", "bag_c.bin")
+    w.rename("/bag_c.bin", "bag_d.bin")
+    w.flush()
+    names = sorted(e.name for e in NtfsFS(d).listdir("/") if e.name.startswith("bag_"))
+    assert names == ["bag_a.bin", "bag_d.bin"], names
+    d.close()
+    ntfsfix_ok(p)
+    assert ntfscat(p, "/bag_a.bin") == veri and ntfscat(p, "/bag_d.bin") == veri
+
+
 @test
 def t16_4k_birim_512_gorunumde_boyutlandirma():
     """mkntfs -s 4096 birimi 512 B sektorlu gorunumde buyutulup kucultulur"""

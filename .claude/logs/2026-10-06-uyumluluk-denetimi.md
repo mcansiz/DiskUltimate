@@ -89,8 +89,9 @@ stable_inodes, needs_recovery, mmp, s_state=ERROR → yazılabilir (DOĞRULANDI)
 | M4 | c | XFS büyütme 1 KiB blok: yeni AG kökleri başlıkların üstüne; 2048/4096 sektörde süperblok CRC'si 512 bayt | **düzeltildi** |
 | M5 | b | HFS+ çekirdeğin yazdığı Yunanca (tonos U+030D) adlar listede yok | **düzeltildi** (okuma). Yazıcı macOS biçimini (TN1150, Unicode 3.2) korur; Linux çekirdeği bizim yazdığımız tonos'lu adları bulamaz — bilinçli tercih |
 | M6 | c | FAT yazıcısı olmayan klasöre yazınca küme sızdırıyordu (= F0) | **düzeltildi** |
+| M7 | c | NTFS: aynı klasördeki sabit bağlardan biri silinince/yeniden adlandırılınca **öteki de kayboluyordu** (kayıt serbest; 10 turluk matris, 5 varyant × 10 tur). Silme dizindeki bütün adları uzun+8.3 çifti sayıyordu | **düzeltildi** (regress_ntfs t19) |
 
-Doğrulama: `tests/regress_{fat,ext,ntfs,ptable,xfs_hfs}.py` (79 test; eski kodda başarısız, yeni kodda geçer), yabancı matris. **Windows'ta henüz doğrulanmadı:** NTFS 4K sektör fixup'ı chkdsk ile, 64K+ küme ayna, Hızlı Başlangıç kapısı gerçek birimde.
+Doğrulama: `tests/regress_{fat,ext,ntfs,ptable,xfs_hfs}.py` (80 test; eski kodda başarısız, yeni kodda geçer), yabancı matris. **Windows'ta henüz doğrulanmadı:** NTFS 4K sektör fixup'ı chkdsk ile, 64K+ küme ayna, Hızlı Başlangıç kapısı gerçek birimde.
 
 Ayrıntılı alt ajan raporları bu oturumun dökümündedir
 (`.claude/sessions/live/4bbcf40c-...jsonl`).
