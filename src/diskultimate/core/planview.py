@@ -118,8 +118,18 @@ def project(session, queue) -> PlannedLayout:
                 return p
         return None
 
-    def next_index() -> int:
-        return max([p.index for p in parts], default=0) + 1
+    def next_index(logical: bool = False) -> int:
+        """Yeni bolumun alacagi numara — tablo kodunun kuraliyla ayni (P4):
+        birincil/GPT bolumu ilk bos yuvayi, MBR mantiksal bolumu zincirin
+        sonundaki numarayi (5'ten) alir. Eskiden max+1 tahmin ediliyordu;
+        silmeden sonra onizlemedeki numara gercek numaradan sapiyordu."""
+        if logical:
+            return max([p.index for p in parts if p.index >= 5], default=4) + 1
+        used = {p.index for p in parts}
+        index = 1
+        while index in used:
+            index += 1
+        return index
 
     for position, op in enumerate(queue):
         params = op.params
@@ -139,7 +149,8 @@ def project(session, queue) -> PlannedLayout:
                 p.plan_state = p.plan_state or STATE_CHANGED
             layout.disk_notes.append(str(op))
         elif kind == "create":
-            created = _new_partition(params, scheme, sector_size, next_index())
+            created = _new_partition(params, scheme, sector_size,
+                                     next_index(bool(params.get("logical", False))))
             if clashes(created, created.start_lba, created.sector_count):
                 layout.conflicts.append(position)
             parts.append(created)

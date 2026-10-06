@@ -77,6 +77,11 @@ LOG_CLEAN = "clean"              # yeniden baslatma alani "temiz"
 LOG_UNCLEAN = "unclean"          # Windows ayrilmadan kapatildi
 LOG_UNKNOWN = "unknown"          # yeniden baslatma sayfasi okunamadi
 
+# hiberfil.sys durumu (ntfs-3g `ntfs_volume_check_hiberfile`)
+HIBER_NONE = "none"              # dosya yok ya da imza yok/"wake"
+HIBER_ACTIVE = "hibernated"      # "hibr"/"HIBR" ya da baslik kisa
+HIBER_UNKNOWN = "unknown"        # dosya var ama okunamadi
+
 # Onyukleme sektoru durumu
 BOOT_OK = "ok"
 BOOT_DIFFERS = "differs"         # yedek asildan farkli
@@ -153,10 +158,14 @@ class NtfsHealth:
 # ==========================================================================
 def _boot_ok(boot: bytes, dev_bytes: int) -> bool:
     """Bir NTFS onyukleme sektoru akla yatkin mi (ntfs-3g'nin olcutleri)."""
-    if len(boot) < 512 or boot[3:11] != b"NTFS    " or boot[510:512] != b"\x55\xAA":
+    if len(boot) < 512 or boot[3:11] != b"NTFS    ":
         return False
     ss = struct.unpack_from("<H", boot, 0x0B)[0]
     if ss < 256 or ss > 4096 or ss & (ss - 1):
+        return False
+    # Imza 0x1FE'dedir; bu surumden onceki bicimlendiricimiz 4K sektorde onu
+    # yalnizca sektor sonuna yaziyordu (ntfs-3g imzayi zaten zorunlu tutmaz).
+    if boot[510:512] != b"\x55\xAA" and boot[ss - 2:ss] != b"\x55\xAA":
         return False
     spc = boot[0x0D]
     if spc == 0 or (spc <= 0x80 and spc & (spc - 1)):
@@ -197,16 +206,52 @@ def _record_ok(raw: bytes) -> bool:
                for i in range(1, usa_count))
 
 
-def _mirror_count(cs: int, rs: int) -> int:
-    """`$MFTMirr`deki kayit sayisi (ntfs-3g: `mftmirr_size`)."""
-    return 4 if cs <= 4 * rs else cs // rs
+def _mirror_count(cs: int, rs: int, mirror_bytes: int = 0) -> int:
+    """`$MFTMirr`deki kayit sayisi (ntfs-3g: `mftmirr_size`).
+
+    `mirror_bytes` (`$MFTMirr`in veri boyu) biliniyorsa onu asmaz: ntfs-3g
+    de aynayi ancak dosyanin boyu kadar okur ve karsilastirir. Windows'un ve
+    bizim bicimlendiricinin aynasi buyuk kumede de 4 kayittir; eskiden 64
+    KiB kumede 4-63 arasi "uyusmuyor" diye raporlaniyordu.
+    """
+    count = 4 if cs <= 4 * rs else cs // rs
+    if mirror_bytes >= rs:
+        count = min(count, mirror_bytes // rs)
+    return count
+
+
+def _mirror_bytes(raw_mirr_record: bytes) -> int:
+    """$MFT'teki 1 numarali kayittan ($MFTMirr) adsiz $DATA'nin boyu; 0 =
+    bilinmiyor. Fixup uygulanmadan okunur: aranan alanlar ilk 512 bayttadir."""
+    try:
+        if raw_mirr_record[:4] != b"FILE":
+            return 0
+        pos = struct.unpack_from("<H", raw_mirr_record, 0x14)[0]
+        limit = min(len(raw_mirr_record), NTFS_BLOCK) - 0x30
+        while pos + 0x30 <= limit:
+            kind, length = struct.unpack_from("<II", raw_mirr_record, pos)
+            if kind == 0xFFFFFFFF or length < 16:
+                return 0
+            if kind == AT_DATA and raw_mirr_record[pos + 8] and not raw_mirr_record[pos + 9]:
+                return struct.unpack_from("<Q", raw_mirr_record, pos + 0x30)[0]
+            pos += length
+    except struct.error:
+        return 0
+    return 0
+
+
+def _sector_of(boot: bytes) -> int:
+    """Onyukleme sektorunun kendi sektor boyu (512..4096)."""
+    ss = struct.unpack_from("<H", boot, 0x0B)[0] if len(boot) >= 13 else 512
+    return ss if 512 <= ss <= len(boot) else 512
 
 
 def _read_boots(dev: BlockDevice) -> Tuple[bytes, bytes, int]:
     """(asil, yedek, yedegin bayt ofseti). Yedek, asildaki toplam sektor
     sayisinin gosterdigi yerdedir; asil bozuksa aygitin son sektoru denenir."""
     size = dev.size
-    primary = dev.read(0, 512)
+    # Bir tam sektor okunur (4K sektorde imza sektor sonunda olabilir)
+    primary = dev.read(0, min(4096, size))
     if _boot_ok(primary, size):
         ss = struct.unpack_from("<H", primary, 0x0B)[0]
         total = struct.unpack_from("<Q", primary, 0x28)[0]
@@ -214,7 +259,8 @@ def _read_boots(dev: BlockDevice) -> Tuple[bytes, bytes, int]:
     else:
         ss = getattr(dev, "sector_size", 512) or 512
         off = size - ss
-    backup = dev.read(off, 512) if 0 <= off and off + 512 <= size else b""
+    backup = dev.read(off, min(4096, size - off)) \
+        if 0 <= off and off + 512 <= size else b""
     return primary, backup, off
 
 
@@ -307,6 +353,82 @@ def is_hibernated(fs: NtfsFS) -> bool:
     return head in (b"hibr", b"HIBR")
 
 
+def hiberfile_state(fs: NtfsFS) -> str:
+    """`hiberfil.sys`in durumu, ntfs-3g'nin olcutleriyle.
+
+    * dosya yok -> yok;
+    * ilk 4 KiB okunamiyor / dosya 4 KiB'tan kisa -> ntfs-3g bunu "hazirda
+      bekletilmis sistem disi bolum" sayar -> hazirda bekletme;
+    * "hibr" / "HIBR" -> hazirda bekletme; geri kalan ("wake", sifir) yok.
+
+    `is_hibernated` gosterim icindir; yazma karari bunu kullanir, cunku
+    "okunamadi" orada "yok" gibi sayiliyordu (N2).
+    """
+    try:
+        entry = fs.lookup(fs.record(5), "hiberfil.sys")
+    except (NtfsError, AttributeError, struct.error):
+        return HIBER_UNKNOWN
+    if entry is None:
+        return HIBER_NONE
+    try:
+        attr = fs.record(entry.mft_ref & 0xFFFFFFFFFFFF).find(AT_DATA)
+        if attr is None:
+            return HIBER_UNKNOWN
+        head = fs.read_attribute_range(attr, 0, HIBERFILE_HEADER)
+    except NtfsError:
+        return HIBER_UNKNOWN
+    if len(head) < HIBERFILE_HEADER:
+        return HIBER_ACTIVE
+    if head[:4] in (b"hibr", b"HIBR"):
+        return HIBER_ACTIVE
+    return HIBER_NONE
+
+
+def write_block_reason(fs: NtfsFS, check_version: bool = True) -> str:
+    """Birime yazmayi engelleyen durum; temizse "".
+
+    Yazma, boyutlandirma ve onarim (sahipsiz kume) once bunu sorar; disa
+    aktarilan yedek de yalnizca kullanilan alani almadan once (usedmap).
+    Olcutler ntfs-3g'nin okuma-yazma baglama kurallaridir; ek olarak kirli
+    bayrak ve NTFS surumu denetlenir. **Bilinmeyen durum guvenli sayilmaz**:
+    eskiden `$Volume` okunamazsa birim "temiz" donuyordu.
+
+    Windows Hizli baslatma kirli bayragini KAPALI birakir ama gunlugu temiz
+    kapatmaz ve `hiberfil.sys`e oturumu yazar; yalnizca kirli bayraga bakmak
+    tam da bu durumu kaciriyordu (N2).
+    """
+    if getattr(fs, "mft_incomplete", False):
+        return tr("$MFT'nin uzanti kayitlari okunamadi; birimin bir kismi "
+                  "gorunmuyor. Yazma reddedildi (once Windows'ta chkdsk).")
+    attr, flags, version = _volume_info(fs)
+    if attr is None:
+        return tr("NTFS birim bilgisi ($Volume) okunamadi; birimin durumu "
+                  "bilinmiyor. Yazma reddedildi.")
+    try:
+        major = int(version.split(".")[0])
+    except ValueError:
+        major = 0
+    if check_version and major < 3:
+        return tr("NTFS {} surumu yazma icin desteklenmiyor (3.0 ve uzeri "
+                  "gerekir).", version)
+    hiber = hiberfile_state(fs)
+    if hiber != HIBER_NONE:
+        return tr("Windows hazirda bekletmede (Hizli baslatma dahil) ya da "
+                  "hiberfil.sys okunamadi. Bu birime yazip sonra Windows'u "
+                  "kaldigi yerden acmak birimi bozar. Windows'u acip "
+                  "'Yeniden baslat' ile kapatin.")
+    if flags & VOLUME_DIRTY:
+        return tr("Birim 'kirli' isaretli (temiz ayrilmamis). Once Bolum > "
+                  "NTFS'i denetle ve onar (ya da Windows'ta chkdsk) "
+                  "calistirin.")
+    if logfile_state(fs) not in (LOG_EMPTY, LOG_CLEAN):
+        return tr("Islem gunlugu ($LogFile) temiz kapatilmamis ya da "
+                  "okunamadi: Windows'un diske islemedigi degisiklikler "
+                  "olabilir. Windows'u tam kapatin ya da Bolum > NTFS'i "
+                  "denetle ve onar calistirin.")
+    return ""
+
+
 # ==========================================================================
 # Denetim (salt okunur)
 # ==========================================================================
@@ -338,7 +460,7 @@ def ntfs_check(dev: BlockDevice) -> NtfsHealth:
         return health
 
     _ss, cs, _total, mft, mirr, rs = _geometry(boot)
-    count = _mirror_count(cs, rs)
+    count = _mirror_count(cs, rs, _mirror_bytes(dev.read(mft * cs + rs, rs)))
     health.mirror_records = count
     a = dev.read(mft * cs, count * rs)
     b = dev.read(mirr * cs, count * rs)
@@ -416,18 +538,18 @@ def ntfs_fix(dev: BlockDevice, clear_dirty: bool = True,
     report(tr("Onyukleme sektoru denetleniyor..."), 15)
     primary, backup, backup_off = _read_boots(dev)
     if before.primary_boot == BOOT_BAD:
-        dev.write(0, backup[:512])
+        dev.write(0, backup[:_sector_of(backup)])
         result.steps.append(tr("Onyukleme sektoru yedekten geri yazildi"))
         primary, backup, backup_off = _read_boots(dev)
     elif before.backup_boot != BOOT_OK:
         if backup_off + 512 <= dev.size:
-            dev.write(backup_off, primary[:512])
+            dev.write(backup_off, primary[:_sector_of(primary)])
             result.steps.append(tr("Yedek onyukleme sektoru yeniden yazildi"))
 
     # 2. $MFT / $MFTMirr
     report(tr("$MFT ve $MFTMirr karsilastiriliyor..."), 30)
     _ss, cs, _total, mft, mirr, rs = _geometry(primary)
-    count = _mirror_count(cs, rs)
+    count = _mirror_count(cs, rs, _mirror_bytes(dev.read(mft * cs + rs, rs)))
     for i in range(count):
         a = dev.read(mft * cs + i * rs, rs)
         b = dev.read(mirr * cs + i * rs, rs)

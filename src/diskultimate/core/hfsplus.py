@@ -30,12 +30,11 @@ from __future__ import annotations
 import datetime
 import os
 import struct
-import unicodedata
 import zlib
 from dataclasses import dataclass, field
 from typing import Dict, Iterator, List, Optional, Tuple
 
-from .hfsunicode import fold_key, hfs_nfd
+from .hfsunicode import fold_key, hfs_display, hfs_nfd, legacy_tonos
 from .image import BlockDevice, PartitionView
 from ..i18n import tr
 
@@ -353,7 +352,7 @@ class HfsPlusFS:
         uid, gid, _admin, owner_flags, mode, special = \
             struct.unpack_from(">IIBBHI", value, 32)
         finder_flags = struct.unpack_from(">H", value, 48 + 8)[0]
-        name = unicodedata.normalize("NFC", raw_name).replace("/", ":")
+        name = hfs_display(raw_name).replace("/", ":")
         entry = HfsEntry(name=name, cnid=cnid, parent=parent,
                          is_dir=kind == REC_FOLDER, mtime=_date(modify),
                          ctime=_date(create), mode=mode, uid=uid, gid=gid,
@@ -456,7 +455,7 @@ class HfsPlusFS:
         for key, value in self.catalog.leaf_from(not_after):
             if self._key_parent(key) == ROOT_PARENT_ID:
                 name, _ = _decode_name(key, 6)
-                return unicodedata.normalize("NFC", name)
+                return hfs_display(name)
             if self._key_parent(key) > ROOT_PARENT_ID:
                 break
         return ""
@@ -464,7 +463,8 @@ class HfsPlusFS:
     # ---- yol --------------------------------------------------------------
     def _fold(self, name: str):
         """Katalogun esitlik kurali: HFS+ Apple katlamasi, HFSX birebir."""
-        name = hfs_nfd(name.replace(":", "/"))
+        # eski (Unicode 2.1 / Linux) tonos'lu ad da ayni anahtara katlanir
+        name = hfs_nfd(legacy_tonos(name.replace(":", "/")))
         return name if self.case_sensitive else fold_key(name)
 
     def root(self) -> HfsEntry:

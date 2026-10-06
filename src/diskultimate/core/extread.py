@@ -9,6 +9,9 @@ Desteklenen yerlesimler:
   * **dolayli blok** zinciri (ext2/ext3 ve extent'siz ext4) — tek/cift/uc kat
   * 64 bit blok numaralari (`INCOMPAT_64BIT`, 64 baytlik grup tanimlayicisi)
   * hizli sembolik bag (hedef `i_block` icinde) ve blok tabanli sembolik bag
+  * **inline_data**: kucuk dosya/dizin icerigi inode icinde (`i_block` 60
+    bayt + govdedeki "system.data" ek ozniteligi) — yalnizca okuma
+  * yazilmamis (unwritten) extent ve dolayli blok delikleri sifir okunur
 
 Saf Python, harici bagimlilik yok. Tum `struct` bicimleri acik endian tasir.
 """
@@ -39,6 +42,14 @@ S_IFLNK = 0xA000
 
 EXTENT_MAGIC = 0xF30A
 EXTENTS_FL = 0x00080000
+INLINE_DATA_FL = 0x10000000
+HUGE_FILE_FL = 0x00040000
+RO_HUGE_FILE = 0x0008
+# inline dizinde i_block'un ilk 4 bayti ust dizinin inode numarasidir
+INLINE_DIR_PARENT = 4
+INLINE_SIZE = 60                     # i_block boyu (EXT4_MIN_INLINE_DATA_SIZE)
+XATTR_MAGIC = 0xEA020000
+XATTR_INDEX_SYSTEM = 7               # "system." oneki; inline veri adi "data"
 
 # Dizin girisi tur baytlari (INCOMPAT_FILETYPE etkinken anlamli)
 FT_DIR = 2
@@ -76,6 +87,9 @@ class ExtInode:
     uid: int
     gid: int
     raw_block: bytes          # i_block: 60 bayt
+    file_acl: int = 0         # ek oznitelik (xattr) blogu; 0 = yok
+    blocks512: int = 0        # i_blocks (512 baytlik birim)
+    body: bytes = b""         # 128. bayttan sonrasi (govde ici xattr'lar)
 
     @property
     def is_dir(self) -> bool:
@@ -93,12 +107,44 @@ class ExtInode:
     def uses_extents(self) -> bool:
         return bool(self.flags & EXTENTS_FL)
 
+    @property
+    def is_inline(self) -> bool:
+        return bool(self.flags & INLINE_DATA_FL)
+
+    @property
+    def is_fast_symlink(self) -> bool:
+        """Hedef `i_block` icinde mi? (e2fsprogs `ext2fs_is_fast_symlink`).
+
+        Sinir `< 60`'tir: 60 karakterlik hedef sonundaki NUL ile 61 bayt
+        eder ve bloga yazilir. Eskiden `<= 60` idi; 60 karakterlik bagin
+        blok numarasi metin diye okunuyordu.
+        """
+        return self.is_symlink and not self.is_inline and self.size < INLINE_SIZE
+
+    @property
+    def has_block_map(self) -> bool:
+        """`i_block` blok isaretcisi / extent agaci mi tasiyor?
+
+        Aygit, fifo ve soketin `i_block`u aygit numarasi tasir; hizli bag ve
+        inline inode'unki veri. Bunlarin "bloklari" serbest birakilirsa
+        baska dosyalarin bloklari bosa cikar (denetim E3).
+        """
+        kind = self.mode & S_IFMT
+        if kind not in (S_IFREG, S_IFDIR, S_IFLNK):
+            return False
+        if self.is_inline or self.is_fast_symlink:
+            return False
+        return True
+
 
 @dataclass
 class ExtDirEntry:
     inode: int
     name: str
     file_type: int
+    # Diskteki ham ad. `name` UTF-8 olmayan baytlarda "replace" ile cozulur
+    # ve geri kodlanamaz; silme/yeniden adlandirma girisi bu baytlarla bulur.
+    raw_name: bytes = b""
 
 
 class ExtFS:
@@ -202,9 +248,19 @@ class ExtFS:
         flags = struct.unpack_from("<I", raw, 0x20)[0]
         size_hi = struct.unpack_from("<I", raw, 0x6C)[0]
         size = size_lo | (size_hi << 32) if (mode & S_IFMT) == S_IFREG else size_lo
+        acl = struct.unpack_from("<I", raw, 0x68)[0] | (
+            struct.unpack_from("<H", raw, 0x76)[0] << 32
+            if self.feature_incompat & INCOMPAT_64BIT else 0)
+        blocks512 = struct.unpack_from("<I", raw, 0x1C)[0]
+        if self.ro_compat & RO_HUGE_FILE:
+            blocks512 |= struct.unpack_from("<H", raw, 0x74)[0] << 32
+            if flags & HUGE_FILE_FL:
+                blocks512 *= self.block_size // 512
         node = ExtInode(number=number, mode=mode, size=size, atime=atime,
                         ctime=ctime, mtime=mtime, flags=flags, links=links,
-                        uid=uid, gid=gid, raw_block=bytes(raw[0x28:0x28 + 60]))
+                        uid=uid, gid=gid, raw_block=bytes(raw[0x28:0x28 + 60]),
+                        file_acl=acl, blocks512=blocks512,
+                        body=bytes(raw[128:self.inode_size]))
         self._inode_cache[number] = node
         return node
 
@@ -212,8 +268,17 @@ class ExtFS:
     # Blok haritalama
     # ------------------------------------------------------------------
     def _extent_blocks(self, node: ExtInode) -> List[Tuple[int, int, int]]:
-        """Extent agacindan (mantiksal, fiziksel, uzunluk) uclulerini toplar."""
-        out: List[Tuple[int, int, int]] = []
+        """Extent agacindan (mantiksal, fiziksel, uzunluk) uclulerini toplar.
+
+        Yazilmamis (unwritten) araliklar da dahildir: bloklar ayrilmistir
+        (dizin/saglama/serbest birakma icin dogru). Veri okurken
+        `_extent_map` kullanilir; orada bu araliklar sifirdir.
+        """
+        return [(lg, ph, ln) for lg, ph, ln, _u in self._extent_map(node)]
+
+    def _extent_map(self, node: ExtInode) -> List[Tuple[int, int, int, bool]]:
+        """(mantiksal, fiziksel, uzunluk, yazilmamis) dortluleri."""
+        out: List[Tuple[int, int, int, bool]] = []
 
         def walk(buf: bytes) -> None:
             if len(buf) < 12 or struct.unpack_from("<H", buf, 0)[0] != EXTENT_MAGIC:
@@ -226,9 +291,13 @@ class ExtFS:
                 if depth == 0:                       # yaprak: ext4_extent
                     logical, length, start_hi, start_lo = struct.unpack_from(
                         "<IHHI", buf, off)
-                    if length > 32768:               # hazirlanmis (uninit) alan
+                    unwritten = length > 32768       # fallocate: yazilmamis
+                    if unwritten:
+                        # Cekirdek bu araligi SIFIR dondurur; diskte eski
+                        # icerik durur (denetim E12).
                         length -= 32768
-                    out.append((logical, (start_hi << 32) | start_lo, length))
+                    out.append((logical, (start_hi << 32) | start_lo, length,
+                                unwritten))
                 else:                                # ic dugum: ext4_extent_idx
                     logical, leaf_lo, leaf_hi = struct.unpack_from("<IIH", buf, off)
                     block = (leaf_hi << 32) | leaf_lo
@@ -238,33 +307,35 @@ class ExtFS:
         return out
 
     def _indirect_blocks(self, node: ExtInode, needed: int) -> List[int]:
-        """ext2/ext3 dolayli blok zincirini duz bir listeye acar."""
+        """ext2/ext3 dolayli blok zincirini duz bir listeye acar.
+
+        Sifir isaretci (seyrek dosya) kapsadigi blok sayisi kadar **sifir**
+        uretir. Eskiden bos liste ekleniyordu; sonraki veri one kayiyordu
+        (denetim E11: ext3 seyrek dosyada dogrulandi).
+        """
         per = self.block_size // 4
-        direct = list(struct.unpack_from("<12I", node.raw_block, 0))
-        ind, dind, tind = struct.unpack_from("<III", node.raw_block, 48)
-        out = direct[:needed]
+        out = list(struct.unpack_from("<12I", node.raw_block, 0))[:needed]
 
-        def read_table(block: int) -> List[int]:
+        def expand(block: int, level: int) -> None:
+            # level 1: veri isaretcileri tablosu; 2/3: tablo tablolari
+            span = per ** level
             if not block:
-                return []
+                out.extend([0] * min(span, needed - len(out)))
+                return
             raw = self._read_block(block)
-            return list(struct.unpack_from(f"<{len(raw) // 4}I", raw, 0))
+            ptrs = struct.unpack_from(f"<{per}I", raw, 0)
+            if level == 1:
+                out.extend(ptrs[:needed - len(out)])
+                return
+            for ptr in ptrs:
+                if len(out) >= needed:
+                    return
+                expand(ptr, level - 1)
 
-        if len(out) < needed and ind:
-            out += read_table(ind)
-        if len(out) < needed and dind:
-            for b in read_table(dind):
-                if len(out) >= needed:
-                    break
-                out += read_table(b)
-        if len(out) < needed and tind:
-            for b1 in read_table(tind):
-                if len(out) >= needed:
-                    break
-                for b2 in read_table(b1):
-                    if len(out) >= needed:
-                        break
-                    out += read_table(b2)
+        for i, level in ((12, 1), (13, 2), (14, 3)):
+            if len(out) >= needed:
+                break
+            expand(struct.unpack_from("<I", node.raw_block, i * 4)[0], level)
         return out[:needed]
 
     def _read_block(self, block: int) -> bytes:
@@ -289,19 +360,23 @@ class ExtFS:
         size = node.size
         if size <= 0:
             return
+        if node.is_inline:
+            yield self.inline_data(node)[:size]
+            return
         bs = self.block_size
         total = (size + bs - 1) // bs
         runs: List[Tuple[int, int]] = []          # (fiziksel ya da 0=bosluk, blok)
         if node.uses_extents:
             pos = 0
-            for logical, physical, length in sorted(self._extent_blocks(node)):
+            for logical, physical, length, unwritten in sorted(
+                    self._extent_map(node)):
                 if logical >= total or logical + length <= pos:
                     continue
                 if logical > pos:
                     runs.append((0, logical - pos))
                 skip = max(0, pos - logical)
                 n = min(length - skip, total - max(logical, pos))
-                runs.append((physical + skip, n))
+                runs.append((0 if unwritten else physical + skip, n))
                 pos = max(logical, pos) + n
             if pos < total:
                 runs.append((0, total - pos))
@@ -337,17 +412,25 @@ class ExtFS:
             raise ExtError(
                 tr("Sembolik bagin icerigi okunamaz; hedefi icin symlink_target() "
                 "kullanin veya resolve(..., follow=True) ile izleyin"))
+        return self._read_content(node, max_bytes)
+
+    def _read_content(self, node: ExtInode, max_bytes: int = -1) -> bytes:
+        """Inode icerigi (tur denetimi yok; dizin ve yavas bag icin de)."""
         size = node.size if max_bytes < 0 else min(node.size, max_bytes)
         if size <= 0:
             return b""
+        if node.is_inline:
+            return self.inline_data(node)[:size]
         bs = self.block_size
         out = bytearray()
 
         if node.uses_extents:
             # Extent'ler mantiksal blok sirasina gore yerlestirilir; bosluklar
-            # (seyrek dosya) sifirla doldurulur.
+            # (seyrek dosya) ve yazilmamis araliklar sifirla doldurulur.
             parts: Dict[int, int] = {}
-            for logical, physical, length in self._extent_blocks(node):
+            for logical, physical, length, unwritten in self._extent_map(node):
+                if unwritten:
+                    continue
                 for k in range(length):
                     parts[logical + k] = physical + k
             block_total = (size + bs - 1) // bs
@@ -370,26 +453,82 @@ class ExtFS:
     def read_dir(self, node: ExtInode) -> List[ExtDirEntry]:
         if not node.is_dir:
             raise ExtError(tr("Dizin degil"))
-        data = self.read_data(node)
+        if node.is_inline:
+            return self._read_inline_dir(node)
+        data = self._read_content(node)
         out: List[ExtDirEntry] = []
+        bs = self.block_size
+        # Her blok kendi icinde ayristirilir: dizin deligi (sifir blok) ya da
+        # bozuk bir kayit yalnizca o blogu atlatir, dizinin geri kalanini degil.
+        for base in range(0, len(data), bs):
+            self._parse_entries(data[base:base + bs], out)
+        return out
+
+    def _parse_entries(self, data: bytes, out: List[ExtDirEntry]) -> None:
         pos = 0
         while pos + 8 <= len(data):
             ino, rec_len, name_len, ftype = struct.unpack_from("<IHBB", data, pos)
-            if rec_len < 8:
-                break                       # bozuk giris: daha ileri gitme
-            if ino:
-                raw_name = data[pos + 8:pos + 8 + name_len]
+            if rec_len < 8 or pos + rec_len > len(data):
+                break                       # bozuk giris: bu blokta ileri gitme
+            if ino and name_len:
+                raw_name = bytes(data[pos + 8:pos + 8 + name_len])
                 out.append(ExtDirEntry(inode=ino,
                                        name=raw_name.decode("utf-8", "replace"),
-                                       file_type=ftype))
+                                       file_type=ftype, raw_name=raw_name))
             pos += rec_len
+
+    # ------------------------------------------------------------------
+    # inline_data (yalnizca okuma)
+    # ------------------------------------------------------------------
+    def _inline_xattr_value(self, node: ExtInode) -> bytes:
+        """Govdedeki "system.data" ek ozniteliginin degeri (yoksa bos).
+
+        Govde ici xattr alani `128 + i_extra_isize`ten baslar: 4 baytlik
+        sihirli sayi, ardindan girisler; deger ofseti ilk girise goredir.
+        """
+        body = node.body
+        if len(body) < 4:
+            return b""
+        extra = struct.unpack_from("<H", body, 0)[0]
+        start = extra
+        if start + 4 > len(body) or \
+                struct.unpack_from("<I", body, start)[0] != XATTR_MAGIC:
+            return b""
+        first = start + 4
+        pos = first
+        while pos + 16 <= len(body):
+            name_len, index, value_offs, value_inum, value_size = \
+                struct.unpack_from("<BBHII", body, pos)
+            if name_len == 0 and index == 0 and value_offs == 0 and \
+                    value_inum == 0:
+                break                                  # son giris
+            name = body[pos + 16:pos + 16 + name_len]
+            if index == XATTR_INDEX_SYSTEM and name == b"data" and not value_inum:
+                begin = first + value_offs
+                return bytes(body[begin:begin + value_size])
+            pos += (16 + name_len + 3) & ~3
+        return b""
+
+    def inline_data(self, node: ExtInode) -> bytes:
+        """inline inode'un ham icerigi: `i_block` (60 bayt) + xattr devami."""
+        return bytes(node.raw_block[:INLINE_SIZE]) + self._inline_xattr_value(node)
+
+    def _read_inline_dir(self, node: ExtInode) -> List[ExtDirEntry]:
+        """inline dizin: ilk 4 bayt ust dizin, sonra girisler (i_block'ta 56
+        bayt, devami xattr degerinde; her bolum kendi icinde ayristirilir).
+        "." ve ".." diskte yoktur, tutarlilik icin uretilir."""
+        parent = struct.unpack_from("<I", node.raw_block, 0)[0]
+        out = [ExtDirEntry(node.number, ".", FT_DIR, b"."),
+               ExtDirEntry(parent, "..", FT_DIR, b"..")]
+        self._parse_entries(node.raw_block[INLINE_DIR_PARENT:INLINE_SIZE], out)
+        self._parse_entries(self._inline_xattr_value(node), out)
         return out
 
     def symlink_target(self, node: ExtInode) -> str:
         """Sembolik bagin hedefini dondurur (hizli bag `i_block` icindedir)."""
-        if node.size <= 60:
+        if node.is_fast_symlink:
             return node.raw_block[:node.size].decode("utf-8", "replace")
-        return self.read_data(node).decode("utf-8", "replace")
+        return self._read_content(node).decode("utf-8", "replace")
 
     # ------------------------------------------------------------------
     # Yol cozumleme

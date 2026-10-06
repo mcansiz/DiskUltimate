@@ -159,10 +159,12 @@ class EditableLayout:
     def first_usable(self) -> int:
         if self.usable_override:
             return self.usable_override[0]
-        # GPTTable.first_usable_lba ile ayni: baslik bu degeri yazar
+        # GPTTable.first_usable_lba ile ayni: baslik bu degeri yazar. Mevcut
+        # tablonun degeri (sfdisk/gdisk: 34) korunur; 1 MiB yalnizca yeni
+        # tablonun varsayilanidir (P6). Yeni yerlesimler zaten hizalanir.
         if self.scheme == "gpt":
-            return max(self.gpt_first_usable or 2 + self.gpt_entry_sectors,
-                       self.align)
+            return self.gpt_first_usable or max(2 + self.gpt_entry_sectors,
+                                                self.align)
         return 1
 
     def last_usable(self) -> int:
@@ -188,8 +190,18 @@ class EditableLayout:
         raise LayoutError(tr("{} numarali bolum yok", index))
 
     def _reserved_before(self, part: Slot) -> int:
-        """Bolumun onunde ayrilmasi gereken sektor (mantiksalda EBR)."""
-        return self.align if part.logical else 0
+        """Bolumun onunde ayrilmasi gereken sektor (mantiksalda EBR).
+
+        Yerinde duran mantiksal bolumde gercek EBR araligi kullanilir: baska
+        araclarin (fdisk/sfdisk) EBR'yi bolumun hemen onune koydugu zincir
+        1 MiB varsayimiyla "onceki bolumle cakisiyor" diye reddediliyordu.
+        """
+        if not part.logical:
+            return 0
+        ebr = getattr(part.part, "ebr_lba", 0)
+        if ebr and not part.moves and 0 < part.old_start - ebr < self.align:
+            return part.old_start - ebr
+        return self.align
 
     # -- durum ---------------------------------------------------------------
     @property

@@ -269,7 +269,8 @@ class FatAccess(FileSystemAccess):
         self.fs = FatFS(view)
         self.fs_type = self.fs.fs_type_name
         self.label = self.fs.label
-        self.writable = not self.fs.readonly
+        # Tutarsiz FAT (fat_problem) okunur ama yazilmaz
+        self.writable = not self.fs.readonly and not self.fs.write_block_reason
 
     @staticmethod
     def _node(entry: DirEntry, parent: str) -> FileNode:
@@ -312,6 +313,8 @@ class FatAccess(FileSystemAccess):
     def write_reason(self) -> str:
         if self.writable:
             return ""
+        if self.fs.write_block_reason:
+            return self.fs.write_block_reason
         return (tr("Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda "
                 "acarsaniz bu bolume yazabilirsiniz."))
 
@@ -331,7 +334,7 @@ class ExFatAccess(FileSystemAccess):
         self.fs = ExFatFS(view)
         self.fs_type = "exFAT"
         self.label = self.fs.label
-        self.writable = not self.fs.readonly
+        self.writable = not self.fs.readonly and not self.fs.write_block_reason
 
     @staticmethod
     def _node(entry: ExEntry, parent: str) -> FileNode:
@@ -374,6 +377,8 @@ class ExFatAccess(FileSystemAccess):
     def write_reason(self) -> str:
         if self.writable:
             return ""
+        if self.fs.write_block_reason:
+            return self.fs.write_block_reason
         return (tr("Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda "
                 "acarsaniz bu bolume yazabilirsiniz."))
 

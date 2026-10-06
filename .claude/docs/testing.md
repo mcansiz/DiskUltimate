@@ -567,6 +567,26 @@ e2fsck temiz. Cekirdek baglamasi yapilmadi (root yok).
 - ui_smoke: is surerken alanlar kilitli, dugme "Durdur"; yavas iste
   "Gecen/Kalan" etiketi, Durdur -> "durduruldu", pencere toparlanir.
 
+## 2026-10-06 — ADR 0094 (yabanci girdi matrisi, uyumluluk regresyonlari)
+
+```bash
+python3 -m tests.yabanci --liste                 # 68 varyant
+python3 -m tests.yabanci --sec fat32,ext4-b1024  # yerelde (doldurma: mtools/debugfs)
+python3 -m tests.regress_fat    # 16  (mkfs.fat, mkfs.exfat, fsck.*)
+python3 -m tests.regress_ext    # 14  (mke2fs, debugfs, e2fsck)
+python3 -m tests.regress_ntfs   # 18  (mkntfs, ntfscp, ntfsfix, ntfsls)
+python3 -m tests.regress_ptable # 17  (sfdisk; sgdisk varsa)
+python3 -m tests.regress_xfs_hfs # 14 (mkfs.xfs, xfs_repair)
+```
+
+- CI (her push): regress_* ayri adimda; arac yoksa ATLANDI.
+- GitHub "Yabanci girdi testleri" (elle): grup basina is, cekirdekle
+  doldurma ve dogrulama; `tur` ile saatlerce. Ilk tur (3 tur): 2/8 grup temiz,
+  bulunanlar duzeltildi (denetim notu).
+- Sonuc (2026-10-06, ana makine): run_all 92/94, regress 78 tamam + 1
+  atlandi, ext_write 4/4, ext_resize 32/32, ntfs_write 2/2, diag 13/13,
+  platform 0, i18n ve ui_smoke tamam.
+
 ## Harici dogrulama (elle)
 
 ```bash

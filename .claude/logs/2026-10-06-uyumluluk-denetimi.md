@@ -21,63 +21,76 @@ stable_inodes, needs_recovery, mmp, s_state=ERROR → yazılabilir (DOĞRULANDI)
 
 | # | Sınıf | Bulgu | Durum |
 |---|---|---|---|
-| E1 | c | Günlüğü işlenmemiş (needs_recovery) birime yazma: kernel günlüğü oynatınca yazdıklarımız geri alınır | açık |
-| E2 | c | `remove()` bağ sayısına bakmıyor: sabit bağlı dosyada inode ve veri serbest kalır (DOĞRULANDI); üzerine yazma links=1, uid/gid=0, 0644 dayatıyor | açık |
-| E3 | c | Aygıt/fifo/soket ve hızlı symlink inode'larının i_block'u blok işaretçisi sanılıp serbest bırakılıyor (DOĞRULANDI: c 1:3 → blok 259) | açık |
-| E4 | c | Silmede veri dizin girişinden önce serbest; UTF-8 olmayan adda giriş bulunamayınca bloklar boşta kalıyor (DOĞRULANDI) | açık |
-| E5 | c | casefold dizinleri: htree karması katlanmamış adla; aynı ad farklı harfle eklenebiliyor | açık |
-| E6 | c | stable_inodes'lu birimde küçültme inode numarasını değiştiriyor (resize2fs reddeder) | açık |
-| E7 | c | xattr bloğu / EA inode silme ve üzerine yazmada sızıyor | açık |
-| E8 | c | usedmap ve yazıcı s_state (temiz kapatılmamış) denetlemiyor | açık |
-| E9 | c | MMP ve journal_dev yazıcıda reddedilmiyor; journal_dev "ext2" görünüyor | açık |
-| E10 | c | rename tür baytı FT_REG; dir_nlink; dizin delikleri | açık |
-| E11 | b | Dolaylı blok delikleri sonraki verileri kaydırıyor (DOĞRULANDI ext3) | açık |
-| E12 | b | Yazılmamış (unwritten) extent eski disk içeriği döndürüyor (DOĞRULANDI) | açık |
-| E13 | b | Hızlı symlink sınırı `<= 60`, doğrusu `< 60` (DOĞRULANDI) | açık |
-| E14 | b | inline_data inode'ları blok haritası sanılıyor (yabancı matris: ext4-inline dosyalar listede yok) | açık |
-| E15 | a | ext4/ext3 ayrımı yalnızca extents/huge_file'a göre | açık |
+| E1 | c | Günlüğü işlenmemiş (needs_recovery) birime yazma: kernel günlüğü oynatınca yazdıklarımız geri alınır | **düzeltildi** (yazıcı reddeder) |
+| E2 | c | `remove()` bağ sayısına bakmıyor: sabit bağlı dosyada inode ve veri serbest kalır (DOĞRULANDI); üzerine yazma links=1, uid/gid=0, 0644 dayatıyor | **düzeltildi** |
+| E3 | c | Aygıt/fifo/soket ve hızlı symlink inode'larının i_block'u blok işaretçisi sanılıp serbest bırakılıyor (DOĞRULANDI: c 1:3 → blok 259) | **düzeltildi** |
+| E4 | c | Silmede veri dizin girişinden önce serbest; UTF-8 olmayan adda giriş bulunamayınca bloklar boşta kalıyor (DOĞRULANDI) | **düzeltildi** |
+| E5 | c | casefold dizinleri: htree karması katlanmamış adla; aynı ad farklı harfle eklenebiliyor | **ret kapısı** (casefold dizinine ad eklenmez) |
+| E6 | c | stable_inodes'lu birimde küçültme inode numarasını değiştiriyor (resize2fs reddeder) | **düzeltildi** (küçültme reddedilir) |
+| E7 | c | xattr bloğu / EA inode silme ve üzerine yazmada sızıyor | **düzeltildi** (xattr bloğu); ea_inode birimi **ret kapısı** |
+| E8 | c | usedmap ve yazıcı s_state (temiz kapatılmamış) denetlemiyor | **düzeltildi** |
+| E9 | c | MMP ve journal_dev yazıcıda reddedilmiyor; journal_dev "ext2" görünüyor | **düzeltildi** ("jbd" olarak görünür) |
+| E10 | c | rename tür baytı FT_REG; dir_nlink; dizin delikleri | **düzeltildi** |
+| E11 | b | Dolaylı blok delikleri sonraki verileri kaydırıyor (DOĞRULANDI ext3) | **düzeltildi** |
+| E12 | b | Yazılmamış (unwritten) extent eski disk içeriği döndürüyor (DOĞRULANDI) | **düzeltildi** |
+| E13 | b | Hızlı symlink sınırı `<= 60`, doğrusu `< 60` (DOĞRULANDI) | **düzeltildi** |
+| E14 | b | inline_data inode'ları blok haritası sanılıyor (yabancı matris: ext4-inline dosyalar listede yok) | **düzeltildi** (okuma); yazma **ret kapısı** |
+| E15 | a | ext4/ext3 ayrımı yalnızca extents/huge_file'a göre | **düzeltildi** |
 
 ## FAT / exFAT
 
 | # | Sınıf | Bulgu | Durum |
 |---|---|---|---|
-| F0 | c | FAT yazıcısı olmayan klasöre yazınca kümeleri ayırıp hata veriyor: 586 küme sızıntısı + FSInfo yanlış (DOĞRULANDI, matris) | açık |
-| X1 | c | exFAT NoFatChain dizinleri FAT üzerinden okunuyor/yazılıyor: 127 dosyalık dizinde 42 görünüyor, yazınca 85'e iniyor (DOĞRULANDI). Linux ve Windows böyle dizin üretir | açık |
-| X2 | c | exFAT NameLength UTF-16 birimi değil kod noktası (DOĞRULANDI: emoji ad kesiliyor; okumada sonda NUL) | açık |
-| X3 | c | exFAT ValidDataLength yok sayılıyor; rename VDL=DataLength yazıp çöpü içerik yapıyor | açık |
-| X4 | c | exFAT iki FAT / TexFAT / ActiveFat yok sayılıyor | açık |
-| F5 | c | FAT12/16'da dizin girişinin üst küme sözcüğü (OS/2 EA) kullanılıyor; rename içeriği siliyor | açık |
-| F6 | c | FAT32 ExtFlags (aynalama kapalı, etkin FAT) yok sayılıyor | açık |
-| F7 | c | Kayıp bölüm taramasında sektör birimi karışıyor (bps 4096 / exFAT shift) | açık |
-| F8 | a | FAT etiketi: kök dizin etiket girişi okunmuyor/yazılmıyor ("NO NAME"); yedek önyükleme sabit 6 | açık |
-| F9 | a | Kısa adlar latin-1 (CP437 olmalı) | açık |
-| X10 | a | exFAT ad karşılaştırması upcase tablosu yerine str.lower | açık |
-| X11 | b | exFAT silinmiş dosya kurtarma hep bitişik varsayıyor | açık |
+| F0 | c | FAT yazıcısı olmayan klasöre yazınca kümeleri ayırıp hata veriyor: 586 küme sızıntısı + FSInfo yanlış (DOĞRULANDI, matris) | **düzeltildi** |
+| X1 | c | exFAT NoFatChain dizinleri FAT üzerinden okunuyor/yazılıyor: 127 dosyalık dizinde 42 görünüyor, yazınca 85'e iniyor (DOĞRULANDI). Linux ve Windows böyle dizin üretir | **düzeltildi** (okuma+yazma, gerekirse zincire çevrilir) |
+| X2 | c | exFAT NameLength UTF-16 birimi değil kod noktası (DOĞRULANDI: emoji ad kesiliyor; okumada sonda NUL) | **düzeltildi** |
+| X3 | c | exFAT ValidDataLength yok sayılıyor; rename VDL=DataLength yazıp çöpü içerik yapıyor | **düzeltildi** |
+| X4 | c | exFAT iki FAT / TexFAT / ActiveFat yok sayılıyor | **ret kapısı** (doğru bitmap okunur) |
+| F5 | c | FAT12/16'da dizin girişinin üst küme sözcüğü (OS/2 EA) kullanılıyor; rename içeriği siliyor | **düzeltildi** |
+| F6 | c | FAT32 ExtFlags (aynalama kapalı, etkin FAT) yok sayılıyor | **düzeltildi** |
+| F7 | c | Kayıp bölüm taramasında sektör birimi karışıyor (bps 4096 / exFAT shift) | **düzeltildi** |
+| F8 | a | FAT etiketi: kök dizin etiket girişi okunmuyor/yazılmıyor ("NO NAME"); yedek önyükleme sabit 6 | **düzeltildi** |
+| F9 | a | Kısa adlar latin-1 (CP437 olmalı) | **düzeltildi** |
+| X10 | a | exFAT ad karşılaştırması upcase tablosu yerine str.lower | **düzeltildi** |
+| X11 | b | exFAT silinmiş dosya kurtarma hep bitişik varsayıyor | **düzeltildi** |
 
 ## NTFS
 
 | # | Sınıf | Bulgu | Durum |
 |---|---|---|---|
-| N1 | c | Düzeltme (fixup) adımı sektör boyutu; Windows/ntfs-3g hep 512 (DOĞRULANDI: mkntfs -s 4096 + bizim yazma → ntfs-3g bağlamıyor) | açık |
-| N2 | c | Hazırda bekleme / temiz olmayan $LogFile için yazma kapısı yok; resize $LogFile'ı siliyor; "bilinmiyor" temiz sayılıyor (Hızlı Başlangıç!) | açık |
-| N3 | c | $ATTRIBUTE_LIST'li $MFT: uzantı kayıtları kayboluyor; küçültme veriyi kesiyor | açık |
-| N4 | c/b | Çok uzantılı öznitelik yalnızca ilk uzantı okunuyor; silmede sızıntı | açık |
-| N5 | c | $MFTMirr yalnızca 0-3 senkron (DOĞRULANDI: -c 131072 sonrası ntfs-3g reddediyor) | açık |
-| N6 | c | INDX bloğu tek bitişik koşu varsayımıyla yazılıyor (küme < 4K) | açık |
-| N7 | b | EFS şifreli dosya şifreli metin olarak dışa aktarılıyor | açık |
+| N1 | c | Düzeltme (fixup) adımı sektör boyutu; Windows/ntfs-3g hep 512 (DOĞRULANDI: mkntfs -s 4096 + bizim yazma → ntfs-3g bağlamıyor) | **düzeltildi** (okuma da düzeldi) |
+| N2 | c | Hazırda bekleme / temiz olmayan $LogFile için yazma kapısı yok; resize $LogFile'ı siliyor; "bilinmiyor" temiz sayılıyor (Hızlı Başlangıç!) | **düzeltildi** |
+| N3 | c | $ATTRIBUTE_LIST'li $MFT: uzantı kayıtları kayboluyor; küçültme veriyi kesiyor | **düzeltildi** (okuma); yazma/boyut **ret kapısı** |
+| N4 | c/b | Çok uzantılı öznitelik yalnızca ilk uzantı okunuyor; silmede sızıntı | **düzeltildi** (okuma); yazma **ret kapısı** |
+| N5 | c | $MFTMirr yalnızca 0-3 senkron (DOĞRULANDI: -c 131072 sonrası ntfs-3g reddediyor) | **düzeltildi** |
+| N6 | c | INDX bloğu tek bitişik koşu varsayımıyla yazılıyor (küme < 4K) | **düzeltildi** |
+| N7 | b | EFS şifreli dosya şifreli metin olarak dışa aktarılıyor | **ret kapısı** (EFS okuma); silme sızıntıları **düzeltildi** |
 
 ## Bölüm tabloları
 
 | # | Sınıf | Bulgu | Durum |
 |---|---|---|---|
-| P1 | c | 4Kn diskte GPT→MBR tabloyu siliyor (MBR 512 bayt yazılıyor) | açık |
-| P2 | c | Bayat GPT geçerli MBR'ye üstün geliyor (koruyucu 0xEE ve CRC denetimi yok) (DOĞRULANDI); usedmap canlı veriyi atlıyor | açık |
-| P3 | c | GPT CRC sonuçları kullanılmıyor; bozuk birincil iyi yedeğin üstüne yazılıyor | açık |
-| P4 | c | Her tablo yazımında yuvalar yeniden numaralanıyor (fstab/GRUB kırılır) (DOĞRULANDI) | açık |
-| P5 | c | Hibrit MBR her GPT yazımında siliniyor | açık |
-| P6 | c | FirstUsableLBA 2048'e zorlanıyor (34/40'taki bölüm dışarıda kalıyor) (DOĞRULANDI) | açık |
-| P7 | c | GPT yazımı yedek konumunu son bölüme karşı denetlemiyor | açık |
-| P8 | a | Görüntüler hep 512 B sektörle açılıyor (4Kn görüntü) | açık |
+| P1 | c | 4Kn diskte GPT→MBR tabloyu siliyor (MBR 512 bayt yazılıyor) | **düzeltildi** |
+| P2 | c | Bayat GPT geçerli MBR'ye üstün geliyor (koruyucu 0xEE ve CRC denetimi yok) (DOĞRULANDI); usedmap canlı veriyi atlıyor | **düzeltildi** |
+| P3 | c | GPT CRC sonuçları kullanılmıyor; bozuk birincil iyi yedeğin üstüne yazılıyor | **düzeltildi** |
+| P4 | c | Her tablo yazımında yuvalar yeniden numaralanıyor (fstab/GRUB kırılır) (DOĞRULANDI) | **düzeltildi** |
+| P5 | c | Hibrit MBR her GPT yazımında siliniyor | **korunur** + **ret kapısı** |
+| P6 | c | FirstUsableLBA 2048'e zorlanıyor (34/40'taki bölüm dışarıda kalıyor) (DOĞRULANDI) | **düzeltildi** |
+| P7 | c | GPT yazımı yedek konumunu son bölüme karşı denetlemiyor | **düzeltildi** |
+| P8 | a | Görüntüler hep 512 B sektörle açılıyor (4Kn görüntü) | **düzeltildi** |
+
+## Matris ve sonraki analizde çıkanlar (2026-10-06)
+
+| # | Sınıf | Bulgu | Durum |
+|---|---|---|---|
+| M1 | c | **picozed.img FAT32'si yapısal olarak bozuk** (her iki FAT'in ilk sektöründe eski önyükleme sektörü baytları; kök zincir 29542 > azami küme). fsck.fat ve 7-Zip reddediyor, biz sessizce "sağlam" gösteriyorduk. Bozulma dosyalardan önce var (zincirler çöp girdileri atlıyor; görüntü tarihi depodan eski) — DiskUltimate kaynaklı görünmüyor | **tutarlılık kapısı**: okunur, yazma/boyut reddedilir, kullanılan alan haritası yok (tam yedek), arayüzde "Yapı tutarsız" |
+| M2 | c | FAT/exFAT boyutlandırma BPB sektörü ≠ aygıt sektörü (-S 2048/4096): birimi bozuyordu (matris) | **düzeltildi** |
+| M3 | c | NTFS boyutlandırma/taşıma -s 4096'da birim karışımı (toplam sektör 8 kat) | **düzeltildi** |
+| M4 | c | XFS büyütme 1 KiB blok: yeni AG kökleri başlıkların üstüne; 2048/4096 sektörde süperblok CRC'si 512 bayt | **düzeltildi** |
+| M5 | b | HFS+ çekirdeğin yazdığı Yunanca (tonos U+030D) adlar listede yok | **düzeltildi** (okuma). Yazıcı macOS biçimini (TN1150, Unicode 3.2) korur; Linux çekirdeği bizim yazdığımız tonos'lu adları bulamaz — bilinçli tercih |
+| M6 | c | FAT yazıcısı olmayan klasöre yazınca küme sızdırıyordu (= F0) | **düzeltildi** |
+
+Doğrulama: `tests/regress_{fat,ext,ntfs,ptable,xfs_hfs}.py` (79 test; eski kodda başarısız, yeni kodda geçer), yabancı matris. **Windows'ta henüz doğrulanmadı:** NTFS 4K sektör fixup'ı chkdsk ile, 64K+ küme ayna, Hızlı Başlangıç kapısı gerçek birimde.
 
 Ayrıntılı alt ajan raporları bu oturumun dökümündedir
 (`.claude/sessions/live/4bbcf40c-...jsonl`).

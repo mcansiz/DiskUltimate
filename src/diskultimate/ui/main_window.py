@@ -3860,6 +3860,15 @@ class MainWindow(QMainWindow):
         satirlar = [tr("DISK GORUNTUSU"), "=" * 52]
         for key, value in self.session.summary().items():
             satirlar.append(f"{key:<16}: {value}")
+        # Tablo belirsizligi (bayat GPT, bozuk birincil baslik, hibrit MBR):
+        # cekirdek baska bir tablo gorebilir; kullanici yazmadan once bilmeli.
+        belirsiz = getattr(self.session.table, "ambiguity", "") \
+            if self.session.table else ""
+        if belirsiz:
+            satirlar.append("")
+            satirlar.append(tr("UYARI: {}", belirsiz))
+            satirlar.append(tr("  Yalnizca kullanilan alan yedegi bu diskte tum "
+                               "sektorleri alir."))
         satirlar.append("")
         satirlar.append(tr("BOLUMLER"))
         satirlar.append("-" * 52)
@@ -3904,6 +3913,12 @@ class MainWindow(QMainWindow):
             alanlar.append((tr("UUID / Seri no"), info.uuid))
         if part.fs_type == "NTFS":
             alanlar.append((tr("Durum"), self._ntfs_state_text(part, info)))
+        elif getattr(info, "damaged", False):
+            # FAT tablosu tutarsiz (picozed.img gibi): fsck.fat birimi
+            # reddeder; biz okuruz ama yazmayiz (ADR 0094).
+            alanlar.append((tr("Durum"),
+                            tr("Yapi tutarsiz — okunabilir, yazilamaz; once "
+                               "fsck.fat / chkdsk ile onarin")))
         if info.total_bytes >= 0 and info.used_bytes >= 0:
             oran = 100 * info.used_bytes / max(1, info.total_bytes)
             alanlar.append((tr("Kullanilan"),

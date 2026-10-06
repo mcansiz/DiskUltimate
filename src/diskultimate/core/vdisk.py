@@ -544,11 +544,32 @@ def detect_format(path: str) -> str:
     return "raw"
 
 
+def _raw_sector_size(path: str) -> int:
+    """Ham goruntunun sektor boyu: 4Kn GPT goruntusu 4096, gerisi 512.
+
+    4Kn diskte GPT basligi 4096. baytta durur (LBA 1 x 4096). 512'de imza
+    yoksa ve 4096'da varsa, dosya 4096'nin kati ise goruntu 4Kn'dir (P8).
+    Eskiden hep 512 ile aciliyor, 4Kn goruntu tek bir 0xEE MBR bolumu gibi
+    gorunuyordu.
+    """
+    try:
+        with open(path, "rb") as fh:
+            head = fh.read(4096 + 8)
+            size = os.fstat(fh.fileno()).st_size
+    except OSError:
+        return 512
+    if len(head) >= 4104 and head[512:520] != b"EFI PART" \
+            and head[4096:4104] == b"EFI PART" and size % 4096 == 0:
+        return 4096
+    return 512
+
+
 def open_disk(path: str, readonly: bool = False) -> BlockDevice:
     """Yola gore uygun aygit nesnesini acar (ham veya sanal disk)."""
     fmt = detect_format(path)
     if fmt == "raw":
-        return DiskImage(path, readonly=readonly)
+        return DiskImage(path, readonly=readonly,
+                         sector_size=_raw_sector_size(path))
     if fmt == "vhd":
         return VhdImage(path, readonly=readonly)
     if fmt == "vdi":

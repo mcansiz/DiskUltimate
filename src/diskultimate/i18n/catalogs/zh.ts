@@ -12,7 +12,7 @@
 （此步骤可能导致数据丢失）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3872"/>
+        <location filename="../../ui/main_window.py" line="3881"/>
         <source>  (bolum yok)</source>
         <translation>  （无分区）</translation>
     </message>
@@ -20,6 +20,11 @@
         <location filename="../../ui/main_window.py" line="2896"/>
         <source>  (disk bulunamadi)</source>
         <translation>  （未找到磁盘）</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3870"/>
+        <source>  Yalnizca kullanilan alan yedegi bu diskte tum sektorleri alir.</source>
+        <translation>  在此磁盘上，仅备份已用空间也会包含所有扇区。</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/bootloader.py" line="364"/>
@@ -58,64 +63,75 @@
         <translation> · EFI</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="739"/>
+        <location filename="../../core/ntfsresize.py" line="837"/>
         <source>$BadClus guncelleniyor...</source>
         <translation>正在更新 $BadClus...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="160"/>
-        <location filename="../../core/ntfswrite.py" line="113"/>
+        <location filename="../../core/ntfsresize.py" line="209"/>
+        <location filename="../../core/ntfswrite.py" line="158"/>
         <source>$Bitmap okunamadi</source>
         <translation>无法读取 $Bitmap</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="495"/>
+        <location filename="../../core/ntfsfix.py" line="617"/>
         <source>$LogFile okunamadi</source>
         <translation>无法读取 $LogFile</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="338"/>
+        <location filename="../../core/ntfsresize.py" line="196"/>
+        <source>$MFT birden cok MFT kaydina dagilmis ($ATTRIBUTE_LIST); bu surum boyle bir birimi boyutlandiramaz</source>
+        <translation>$MFT 分散在多个 MFT 记录中（$ATTRIBUTE_LIST）；此版本无法调整此类卷的大小</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfswrite.py" line="383"/>
         <source>$MFT bitmap&apos;i okunamadi</source>
         <translation>无法读取 $MFT 位图</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="413"/>
+        <location filename="../../core/ntfswrite.py" line="447"/>
+        <location filename="../../core/ntfswrite.py" line="461"/>
         <source>$MFT buyutulemedi: kayit dolu</source>
         <translation>无法扩展 $MFT：记录已满</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="441"/>
+        <location filename="../../core/ntfsfix.py" line="563"/>
         <source>$MFT kaydi {} $MFTMirr&apos;den duzeltildi</source>
         <translation>已从 $MFTMirr 还原 $MFT 记录 {}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="443"/>
+        <location filename="../../core/ntfsfix.py" line="565"/>
         <source>$MFT kaydi {} her iki kopyada da bozuk; Windows&apos;ta chkdsk gerekli</source>
         <translation>$MFT 记录 {} 的两个副本均已损坏；需要在 Windows 上运行 chkdsk</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="428"/>
+        <location filename="../../core/ntfsfix.py" line="550"/>
         <source>$MFT ve $MFTMirr karsilastiriliyor...</source>
         <translation>正在比较 $MFT 和 $MFTMirr...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="349"/>
+        <location filename="../../core/ntfsfix.py" line="471"/>
         <source>$MFT ve $MFTMirr&apos;in ilk kaydi bozuk</source>
         <translation>$MFT 和 $MFTMirr 的第一条记录均已损坏</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="315"/>
-        <location filename="../../core/ntfswrite.py" line="376"/>
+        <location filename="../../core/ntfsread.py" line="398"/>
+        <location filename="../../core/ntfswrite.py" line="423"/>
         <source>$MFT veri oznitelugu okunamadi</source>
         <translation>无法读取 $MFT 数据属性</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="438"/>
+        <location filename="../../core/ntfsfix.py" line="401"/>
+        <source>$MFT&apos;nin uzanti kayitlari okunamadi; birimin bir kismi gorunmuyor. Yazma reddedildi (once Windows&apos;ta chkdsk).</source>
+        <translation>无法读取 $MFT 的扩展记录；卷的一部分不可见。已拒绝写入（请先在 Windows 中运行 chkdsk）。</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsfix.py" line="560"/>
         <source>$MFTMirr kaydi {} $MFT&apos;den duzeltildi</source>
         <translation>已根据 $MFT 修复 $MFTMirr 记录 {}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="136"/>
+        <location filename="../../core/ntfsfix.py" line="141"/>
         <source>$MFTMirr, $MFT ile uyusmuyor (kayit {})</source>
         <translation>$MFTMirr 与 $MFT 不一致（记录 {}）</translation>
     </message>
@@ -199,6 +215,11 @@
         <location filename="../../core/operations.py" line="745"/>
         <source>&apos;{}&apos;</source>
         <translation>“{}”</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfswrite.py" line="964"/>
+        <source>&apos;{}&apos; Windows&apos;a ozgu bir baglanti tasiyor (nesne kimligi ya da yeniden ayristirma noktasi); bu surum onu temiz silemez. Windows&apos;ta silin.</source>
+        <translation>“{}”带有 Windows 特有的链接（对象 ID 或重分析点）；此版本无法干净地删除它。请在 Windows 中删除。</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/resize.py" line="82"/>
@@ -303,17 +324,18 @@
         <translation>0x00、0xFF 和随机数据。常见于企业级数据销毁标准。</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="287"/>
+        <location filename="../../core/mbr.py" line="257"/>
+        <location filename="../../core/mbr.py" line="347"/>
         <source>4 birincil bolum dolu; genisletilmis bolum kullanin</source>
         <translation>4 个主分区均已使用；请使用扩展分区</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="128"/>
+        <location filename="../../core/extwrite.py" line="204"/>
         <source>64bit (4 milyar bloktan buyuk birim)</source>
         <translation>64bit（超过 40 亿个块的卷）</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="468"/>
+        <location filename="../../core/recovery.py" line="544"/>
         <source>7-Zip arsivi</source>
         <translation>7-Zip 压缩包</translation>
     </message>
@@ -454,12 +476,12 @@
         <translation>要将 &lt;b&gt;{}&lt;/b&gt; 克隆到哪里？</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4022"/>
+        <location filename="../../ui/main_window.py" line="4037"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acik — bu &lt;b&gt;normaldir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Yaptiginiz degisiklikler bekleyen islem olarak birikir ve diske ancak &lt;b&gt;Uygula&lt;/b&gt; dediginizde yazilir.</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; 以只读方式打开 — 这是&lt;b&gt;正常&lt;/b&gt;的。&lt;br&gt;&lt;br&gt;您的更改会作为待执行操作收集起来，仅在您选择&lt;b&gt;应用&lt;/b&gt;时才写入磁盘。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3991"/>
+        <location filename="../../ui/main_window.py" line="4006"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acildi; bu dosyada degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;&lt;b&gt;Neden:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Yol:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Bicim:&lt;/b&gt; {}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; 以只读方式打开；无法修改此文件。&lt;br&gt;&lt;br&gt;&lt;b&gt;原因：&lt;/b&gt;{}&lt;br&gt;&lt;b&gt;路径：&lt;/b&gt;{}&lt;br&gt;&lt;b&gt;格式：&lt;/b&gt;{}</translation>
     </message>
@@ -469,7 +491,7 @@
         <translation>找到 &lt;b&gt;{}&lt;/b&gt; 个已删除条目 — 其中 &lt;b&gt;{}&lt;/b&gt; 个看起来可以完整恢复。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4029"/>
+        <location filename="../../ui/main_window.py" line="4044"/>
         <source>&lt;b&gt;{}&lt;/b&gt; uzerinde degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;{}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; 无法修改。&lt;br&gt;&lt;br&gt;{}</translation>
     </message>
@@ -499,12 +521,12 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; — {}（显示前 {}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3996"/>
+        <location filename="../../ui/main_window.py" line="4011"/>
         <source>&lt;br&gt;&lt;br&gt;Dosyayi kullanan diger programi (baska bir disk araci, yedekleme yazilimi vb.) kapatip &lt;b&gt;Yeniden dene&lt;/b&gt;ye basin.</source>
         <translation>&lt;br&gt;&lt;br&gt;请关闭正在使用该文件的其他程序（其他磁盘工具、备份软件等），然后按&lt;b&gt;重试&lt;/b&gt;。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4122"/>
+        <location filename="../../ui/main_window.py" line="4137"/>
         <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt5, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
         <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;用于对磁盘镜像、虚拟磁盘和&lt;b&gt;本系统中的真实磁盘&lt;/b&gt;进行分区、格式化、备份和恢复的工具。&lt;/p&gt;&lt;p&gt;&lt;b&gt;技术：&lt;/b&gt;Python 3 + PyQt5，无外部依赖&lt;br&gt;&lt;b&gt;分区表：&lt;/b&gt;MBR（含逻辑分区）、GPT、MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT 转换&lt;br&gt;&lt;b&gt;格式化：&lt;/b&gt;FAT12/16/32、exFAT、ext2/3/4 和 NTFS — 全部八种均以纯 Python 实现，支持三个平台&lt;br&gt;&lt;b&gt;文件访问：&lt;/b&gt;FAT 和 exFAT 完整读写&lt;/p&gt;&lt;p&gt;镜像文件不需要管理员权限。访问物理磁盘需要管理员/root 权限，且&lt;b&gt;默认只读&lt;/b&gt;；写入需另行确认。&lt;/p&gt;</translation>
     </message>
@@ -584,7 +606,7 @@
         <translation>APFS 压缩属性已损坏</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="821"/>
+        <location filename="../../core/filesystem.py" line="826"/>
         <source>APFS yazma desteklenmiyor; birim salt okunur acildi.</source>
         <translation>不支持写入 APFS；该卷已以只读方式打开。</translation>
     </message>
@@ -644,7 +666,7 @@
     <message>
         <location filename="../../ui/dialogs/backup.py" line="360"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3880"/>
+        <location filename="../../ui/main_window.py" line="3889"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <source>Ad</source>
@@ -769,7 +791,7 @@
     </message>
     <message>
         <location filename="../../core/physical.py" line="119"/>
-        <location filename="../../core/session.py" line="1281"/>
+        <location filename="../../core/session.py" line="1324"/>
         <source>Aygit</source>
         <translation>设备</translation>
     </message>
@@ -784,7 +806,7 @@
         <translation>设备已被硬件写保护</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="358"/>
+        <location filename="../../core/xfsgrow.py" line="366"/>
         <source>Aygit istenen boydan kucuk</source>
         <translation>设备小于所请求的大小</translation>
     </message>
@@ -815,17 +837,22 @@
         <translation>设备路径</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="667"/>
+        <location filename="../../core/resize.py" line="716"/>
         <source>Ayirma bitmap&apos;i icin yeterli ardisik bos alan bulunamadi</source>
         <translation>没有足够的连续空闲空间用于分配位图</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="1040"/>
+        <location filename="../../core/exfat.py" line="1296"/>
         <source>Ayirma bitmap&apos;i yaziliyor...</source>
         <translation>正在写入分配位图...</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1177"/>
+        <location filename="../../core/extwrite.py" line="1295"/>
+        <source>Ayni adda dosya olmayan bir oge var: {}</source>
+        <translation>已存在同名的非文件项目：{}</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="1291"/>
         <source>Ayni adda klasor var: {}</source>
         <translation>已存在同名文件夹：{}</translation>
     </message>
@@ -845,7 +872,7 @@
         <translation>显示详细信息...</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="141"/>
+        <location filename="../../core/hfsplus.py" line="140"/>
         <source>B-agaci basligi okunamadi</source>
         <translation>无法读取 B 树头</translation>
     </message>
@@ -861,7 +888,7 @@
         <translation>B 树节点映射太小</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="160"/>
+        <location filename="../../core/hfsplus.py" line="159"/>
         <source>B-agaci dugumu okunamadi: {}</source>
         <translation>无法读取 B 树节点：{}</translation>
     </message>
@@ -887,7 +914,7 @@
         <translation>B 树记录无法放入节点</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="213"/>
+        <location filename="../../core/hfsplus.py" line="212"/>
         <source>B-agaci yaprak zinciri dongude</source>
         <translation>B 树叶节点链中存在循环</translation>
     </message>
@@ -928,12 +955,12 @@
         <translation>分区设备</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3878"/>
+        <location filename="../../ui/main_window.py" line="3887"/>
         <source>BOLUM {}</source>
         <translation>分区 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3864"/>
+        <location filename="../../ui/main_window.py" line="3873"/>
         <source>BOLUMLER</source>
         <translation>分区</translation>
     </message>
@@ -996,12 +1023,12 @@
         <translation>已挂载的分区</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3885"/>
+        <location filename="../../ui/main_window.py" line="3894"/>
         <source>Bagli degil</source>
         <translation>未挂载</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3927"/>
+        <location filename="../../ui/main_window.py" line="3942"/>
         <source>Bagli — isletim sistemi kullaniyor</source>
         <translation>已挂载 — 正被操作系统使用</translation>
     </message>
@@ -1011,7 +1038,7 @@
         <translation>失败</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1310"/>
+        <location filename="../../ui/dialogs/backup.py" line="1311"/>
         <source>Basarisiz: {}</source>
         <translation>失败：{}</translation>
     </message>
@@ -1032,18 +1059,18 @@
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3888"/>
+        <location filename="../../ui/main_window.py" line="3897"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Baslangic LBA</source>
         <translation>起始 LBA</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="228"/>
+        <location filename="../../core/ptable.py" line="233"/>
         <source>Baslangic cok erken (en az LBA {})</source>
         <translation>起始位置过早（至少为 LBA {}）</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="800"/>
+        <location filename="../../core/resize.py" line="851"/>
         <source>Baslangic kapsayici alanin disinda (en erken LBA {})</source>
         <translation>起始位置超出周边区域（最早为 LBA {}）</translation>
     </message>
@@ -1069,7 +1096,7 @@
         <translation>该标志保持设置状态；Windows 会在下次启动时检查该卷。在此之前 Linux 不会挂载它。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3890"/>
+        <location filename="../../ui/main_window.py" line="3899"/>
         <source>Bayt ofseti</source>
         <translation>字节偏移</translation>
     </message>
@@ -1214,7 +1241,7 @@
         <translation>正在写入固件</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1271"/>
+        <location filename="../../core/session.py" line="1314"/>
         <source>Bicim</source>
         <translation>格式化</translation>
     </message>
@@ -1232,7 +1259,7 @@
     <message>
         <location filename="../../ui/main_window.py" line="3381"/>
         <location filename="../../ui/main_window.py" line="3532"/>
-        <location filename="../../ui/main_window.py" line="3883"/>
+        <location filename="../../ui/main_window.py" line="3892"/>
         <location filename="../../ui/widgets/disk_map.py" line="194"/>
         <location filename="../../ui/widgets/disk_overview.py" line="240"/>
         <source>Bicimlendirilmemis</source>
@@ -1296,7 +1323,7 @@
         <translation>未知的 btrfs 压缩方式：{}</translation>
     </message>
     <message>
-        <location filename="../../core/vdisk.py" line="564"/>
+        <location filename="../../core/vdisk.py" line="585"/>
         <source>Bilinmeyen disk bicimi: {}</source>
         <translation>未知的磁盘格式：{}</translation>
     </message>
@@ -1317,9 +1344,9 @@
         <translation>未知的操作类型：{}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="392"/>
-        <location filename="../../core/session.py" line="811"/>
-        <location filename="../../core/session.py" line="823"/>
+        <location filename="../../core/session.py" line="412"/>
+        <location filename="../../core/session.py" line="854"/>
+        <location filename="../../core/session.py" line="866"/>
         <source>Bilinmeyen sema: {}</source>
         <translation>未知的分区方案：{}</translation>
     </message>
@@ -1356,18 +1383,22 @@
         <translation>请输入文件路径。</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="141"/>
+        <location filename="../../core/ntfsfix.py" line="146"/>
         <source>Birim &apos;kirli&apos; isaretli (temiz ayrilmamis)</source>
         <translation>卷被标记为“脏”（未正常卸载）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="429"/>
-        <location filename="../../core/ntfsresize.py" line="713"/>
+        <location filename="../../core/ntfsfix.py" line="421"/>
+        <source>Birim &apos;kirli&apos; isaretli (temiz ayrilmamis). Once Bolum &gt; NTFS&apos;i denetle ve onar (ya da Windows&apos;ta chkdsk) calistirin.</source>
+        <translation>该卷被标记为“脏”（未正常卸载）。请先运行 分区 &gt; 检查并修复 NTFS（或在 Windows 中运行 chkdsk）。</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsresize.py" line="187"/>
         <source>Birim &apos;kirli&apos; isaretli. Once Bolum &gt; NTFS&apos;i denetle ve onar (ya da Windows&apos;ta chkdsk) calistirin; kirli bir birimi boyutlandirmak veri kaybettirebilir.</source>
         <translation>该卷被标记为“脏”。请先运行“分区 &gt; 检查并修复 NTFS”（或在 Windows 上运行 chkdsk）；调整脏卷的大小可能会丢失数据。</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="129"/>
+        <location filename="../../core/ntfsresize.py" line="134"/>
         <source>Birim &apos;kirli&apos; isaretli; once chkdsk / ntfsfix calistirilmali</source>
         <translation>该卷被标记为脏；请先运行 chkdsk / ntfsfix</translation>
     </message>
@@ -1397,14 +1428,19 @@
         <translation>该卷太小，无法容纳 XFS 日志</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="458"/>
+        <location filename="../../core/ntfsfix.py" line="580"/>
         <source>Birim bayraklari ayarlaniyor...</source>
         <translation>正在设置卷标志...</translation>
     </message>
     <message>
+        <location filename="../../core/extwrite.py" line="182"/>
+        <source>Birim coklu baglama korumasi (mmp) kullaniyor; baska bir makinede bagli olabilir. Yazma reddedildi.</source>
+        <translation>该卷使用多重挂载保护（mmp）；它可能已挂载在另一台机器上。已拒绝写入。</translation>
+    </message>
+    <message>
         <location filename="../../core/operations.py" line="81"/>
         <location filename="../../ui/main_window.py" line="1593"/>
-        <location filename="../../ui/main_window.py" line="3884"/>
+        <location filename="../../ui/main_window.py" line="3893"/>
         <source>Birim etiketi</source>
         <translation>卷标</translation>
     </message>
@@ -1425,39 +1461,56 @@
         <translation>更改卷标...</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="757"/>
-        <location filename="../../core/exfat.py" line="808"/>
-        <location filename="../../core/exfat.py" line="832"/>
-        <location filename="../../core/fat.py" line="726"/>
-        <location filename="../../core/fat.py" line="792"/>
-        <location filename="../../core/fat.py" line="829"/>
+        <location filename="../../core/exfat.py" line="366"/>
+        <location filename="../../core/fat.py" line="343"/>
         <source>Birim salt okunur</source>
         <translation>该卷为只读</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="142"/>
+        <location filename="../../core/extwrite.py" line="188"/>
+        <source>Birim temiz degil (temiz kapatilmamis, hata kaydi ya da islenmemis yetim inode var); bitmap&apos;lere guvenilemez. Once e2fsck ile denetleyin.</source>
+        <translation>该卷不干净（未正常卸载、有错误记录或有未处理的孤立 inode）；其位图不可信。请先用 e2fsck 检查。</translation>
+    </message>
+    <message>
+        <location filename="../../core/extresize.py" line="172"/>
         <source>Birim temiz degil veya hata kaydi var. Boyutlandirmadan once e2fsck ile denetlenmeli.</source>
         <translation>该卷状态不干净或记录有错误。调整大小前请用 e2fsck 检查。</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="322"/>
+        <location filename="../../core/fat.py" line="479"/>
         <source>Birimde bos kume kalmadi</source>
         <translation>卷上没有剩余的空闲簇</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="743"/>
+        <location filename="../../core/extmove.py" line="397"/>
+        <source>Birimde stable_inodes ozelligi var: inode numaralari degistirilemez. Birimi, silinecek gruplarda dosya kalmayacak boyuta kucultun.</source>
+        <translation>该卷启用了 stable_inodes：inode 编号不能改变。只能将卷缩小到要删除的组中没有文件的大小。</translation>
+    </message>
+    <message>
+        <location filename="../../core/fat.py" line="936"/>
         <source>Birimde yer yok: {} kume gerekli, {} bos</source>
         <translation>卷上空间不足：需要 {} 个簇，空闲 {} 个</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="419"/>
+        <location filename="../../core/exfat.py" line="1002"/>
+        <location filename="../../core/exfat.py" line="507"/>
         <source>Birimde yeterli bos alan yok</source>
         <translation>卷上没有足够的空闲空间</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="136"/>
+        <location filename="../../core/extwrite.py" line="176"/>
+        <source>Birimin gunlugunde islenmemis kayitlar var (needs_recovery: temiz kapatilmamis). Yazilirsa cekirdek baglarken gunlugu yazdiklarimizin uzerine oynatir. Once birimi Linux&apos;ta baglayip duzgun ayirin veya e2fsck ile onarin.</source>
+        <translation>该卷的日志中有未处理的记录（needs_recovery：未正常卸载）。若写入，内核挂载时会在我们的修改之上重放日志。请先在 Linux 中挂载并正常卸载该卷，或用 e2fsck 修复。</translation>
+    </message>
+    <message>
+        <location filename="../../core/extresize.py" line="162"/>
         <source>Birimin gunlugunde islenmemis kayitlar var (temiz kapatilmamis). Once birimi baglayip duzgun ayirin veya e2fsck ile onarin.</source>
         <translation>该卷的日志中有未处理的条目（未正常卸载）。请先挂载并正常卸载该卷，或使用 e2fsck 修复。</translation>
+    </message>
+    <message>
+        <location filename="../../core/gpt.py" line="346"/>
+        <source>Birincil GPT basligi bozuk; tablo yedek basliktan okundu</source>
+        <translation>主 GPT 头已损坏；分区表已从备份头读取</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/partition.py" line="94"/>
@@ -1470,7 +1523,7 @@
         <translation>结束扇区：</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3889"/>
+        <location filename="../../ui/main_window.py" line="3898"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Bitis LBA</source>
         <translation>结束 LBA</translation>
@@ -1491,8 +1544,8 @@
         <translation>块大小必须为 1024、2048 或 4096</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="87"/>
-        <location filename="../../core/extwrite.py" line="149"/>
+        <location filename="../../core/extresize.py" line="109"/>
+        <location filename="../../core/extwrite.py" line="225"/>
         <source>Blok boyutu uyusmuyor</source>
         <translation>块大小不匹配</translation>
     </message>
@@ -1537,17 +1590,17 @@
         <translation>分区布局</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="970"/>
+        <location filename="../../core/fat.py" line="1230"/>
         <source>Bolum FAT icin cok kucuk</source>
         <translation>该分区对于 FAT 来说太小</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="994"/>
+        <location filename="../../core/fat.py" line="1254"/>
         <source>Bolum FAT{} icin cok kucuk (kume sayisi {})</source>
         <translation>该分区对于 FAT{} 来说太小（簇数 {}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3899"/>
+        <location filename="../../ui/main_window.py" line="3908"/>
         <source>Bolum GUID</source>
         <translation>分区 GUID</translation>
     </message>
@@ -1568,7 +1621,7 @@
         <translation>分区名称</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="557"/>
+        <location filename="../../core/session.py" line="586"/>
         <source>Bolum adi yalnizca GPT semasinda desteklenir</source>
         <translation>仅 GPT 方案支持分区名称</translation>
     </message>
@@ -1605,9 +1658,10 @@ MBR icin birim etiketini degistirin.</source>
         <translation>分区已挂载</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="334"/>
-        <location filename="../../core/ptable.py" line="225"/>
-        <location filename="../../core/resize.py" line="797"/>
+        <location filename="../../core/gpt.py" line="408"/>
+        <location filename="../../core/mbr.py" line="400"/>
+        <location filename="../../core/ptable.py" line="230"/>
+        <location filename="../../core/resize.py" line="848"/>
         <source>Bolum boyutu sifir olamaz</source>
         <translation>分区大小不能为零</translation>
     </message>
@@ -1617,14 +1671,14 @@ MBR icin birim etiketini degistirin.</source>
         <translation>分区无法缩小这么多</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1158"/>
-        <location filename="../../core/session.py" line="843"/>
-        <location filename="../../core/session.py" line="873"/>
+        <location filename="../../core/session.py" line="1201"/>
+        <location filename="../../core/session.py" line="886"/>
+        <location filename="../../core/session.py" line="916"/>
         <source>Bolum bulunamadi</source>
         <translation>未找到分区</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="828"/>
+        <location filename="../../core/resize.py" line="879"/>
         <source>Bolum buyutuluyor ama dosya sistemi buyutulemiyor; eklenen alan kullanilamaz</source>
         <translation>分区正在扩大，但文件系统无法扩展；增加的空间将无法使用</translation>
     </message>
@@ -1634,7 +1688,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>分区超出磁盘范围</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="230"/>
+        <location filename="../../core/ptable.py" line="235"/>
         <source>Bolum disk sonunu asiyor</source>
         <translation>分区超出了磁盘末尾</translation>
     </message>
@@ -1654,18 +1708,18 @@ MBR icin birim etiketini degistirin.</source>
         <translation>无法添加分区</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="954"/>
-        <location filename="../../core/exfat.py" line="966"/>
+        <location filename="../../core/exfat.py" line="1210"/>
+        <location filename="../../core/exfat.py" line="1222"/>
         <source>Bolum exFAT icin cok kucuk</source>
         <translation>该分区对于 exFAT 来说太小</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="938"/>
+        <location filename="../../core/exfat.py" line="1194"/>
         <source>Bolum exFAT icin cok kucuk (en az 1 MB)</source>
         <translation>该分区对于 exFAT 来说太小（至少 1 MB）</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="984"/>
+        <location filename="../../core/exfat.py" line="1240"/>
         <source>Bolum exFAT metaverisi icin yetersiz</source>
         <translation>该分区太小，无法容纳 exFAT 元数据</translation>
     </message>
@@ -1678,7 +1732,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>该分区对于 ext 来说太小</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="804"/>
+        <location filename="../../core/resize.py" line="855"/>
         <source>Bolum kapsayici alani asiyor (en gec LBA {})</source>
         <translation>分区超出了周边区域（最晚为 LBA {}）</translation>
     </message>
@@ -1689,22 +1743,22 @@ MBR icin birim etiketini degistirin.</source>
         <translation>正在创建分区...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="886"/>
+        <location filename="../../core/resize.py" line="937"/>
         <source>Bolum plan hazirlandiktan sonra degismis; yenileyin</source>
         <translation>准备计划后分区已发生变化；请刷新</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1275"/>
+        <location filename="../../core/session.py" line="1318"/>
         <source>Bolum sayisi</source>
         <translation>分区数</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3955"/>
+        <location filename="../../ui/main_window.py" line="3970"/>
         <source>Bolum secili degil</source>
         <translation>未选择分区</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1274"/>
+        <location filename="../../core/session.py" line="1317"/>
         <source>Bolum tablosu</source>
         <translation>分区表</translation>
     </message>
@@ -1729,21 +1783,21 @@ MBR icin birim etiketini degistirin.</source>
         <translation>分区表已擦除</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="935"/>
+        <location filename="../../core/resize.py" line="986"/>
         <source>Bolum tablosu yazilamadi: {}</source>
         <translation>无法写入分区表：{}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="923"/>
+        <location filename="../../core/resize.py" line="974"/>
         <location filename="../../core/restoreplan.py" line="311"/>
         <source>Bolum tablosu yaziliyor...</source>
         <translation>正在写入分区表...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="790"/>
-        <location filename="../../core/resize.py" line="882"/>
-        <location filename="../../core/session.py" line="174"/>
-        <location filename="../../core/session.py" line="338"/>
+        <location filename="../../core/resize.py" line="841"/>
+        <location filename="../../core/resize.py" line="933"/>
+        <location filename="../../core/session.py" line="191"/>
+        <location filename="../../core/session.py" line="355"/>
         <location filename="../../ui/main_window.py" line="1182"/>
         <source>Bolum tablosu yok</source>
         <translation>无分区表</translation>
@@ -1853,7 +1907,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>分区 {}（{}）</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="151"/>
+        <location filename="../../core/convert.py" line="177"/>
         <source>Bolum {} 2 TiB sinirinin otesinde bitiyor; MBR bu yerlesimi tasiyamaz</source>
         <translation>分区 {} 的结束位置超出 2 TiB 限制；MBR 无法表示此布局</translation>
     </message>
@@ -1863,7 +1917,17 @@ MBR icin birim etiketini degistirin.</source>
         <translation>格式化分区 {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1193"/>
+        <location filename="../../core/gpt.py" line="410"/>
+        <source>Bolum {} GPT giris dizisiyle cakisiyor (ilk kullanilabilir LBA {}); tablo yazilmadi</source>
+        <translation>分区 {} 与 GPT 条目数组重叠（第一个可用 LBA {}）；未写入分区表</translation>
+    </message>
+    <message>
+        <location filename="../../core/convert.py" line="174"/>
+        <source>Bolum {} LBA 0&apos;da basliyor; MBR bu yerlesimi tasiyamaz</source>
+        <translation>分区 {} 从 LBA 0 开始；MBR 无法表示此布局</translation>
+    </message>
+    <message>
+        <location filename="../../core/session.py" line="1236"/>
         <source>Bolum {} NTFS degil</source>
         <translation>分区 {} 不是 NTFS</translation>
     </message>
@@ -1908,6 +1972,11 @@ MBR icin birim etiketini degistirin.</source>
         <translation>正在卸载分区 {}...</translation>
     </message>
     <message>
+        <location filename="../../core/gpt.py" line="414"/>
+        <source>Bolum {} disk sonundaki yedek GPT alanina tasiyor (son kullanilabilir LBA {}); tablo yazilmadi</source>
+        <translation>分区 {} 延伸到磁盘末尾的备份 GPT 区域（最后可用 LBA {}）；未写入分区表</translation>
+    </message>
+    <message>
         <location filename="../../ui/main_window.py" line="1515"/>
         <source>Bolum {} en az {} olabilir (dolu: {}); istenen {}.
 
@@ -1922,17 +1991,22 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>分区 {} 卷标</translation>
     </message>
     <message>
+        <location filename="../../core/mbr.py" line="214"/>
+        <source>Bolum {} gecersiz konumda (LBA {})</source>
+        <translation>分区 {} 位置无效（LBA {}）</translation>
+    </message>
+    <message>
         <location filename="../../core/operations.py" line="783"/>
         <source>Bolum {} guvenli sil</source>
         <translation>安全擦除分区 {}</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="238"/>
+        <location filename="../../core/layoutedit.py" line="250"/>
         <source>Bolum {} hedef diskin sonunu asiyor (hedef {}, gereken en az {})</source>
         <translation>分区 {} 超出了目标磁盘的末尾（目标 {}，至少需要 {}）</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="227"/>
+        <location filename="../../core/mbr.py" line="282"/>
         <source>Bolum {} icin EBR&apos;ye yer yok (onceki bolume bitisik)</source>
         <translation>没有空间容纳分区 {} 的 EBR（与前一个分区相邻）</translation>
     </message>
@@ -1942,12 +2016,12 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>正在检查分区 {}...</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="254"/>
+        <location filename="../../core/layoutedit.py" line="266"/>
         <source>Bolum {} mantiksal bolumlerin arasina giremez</source>
         <translation>分区 {} 不能放在逻辑分区之间</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="236"/>
+        <location filename="../../core/layoutedit.py" line="248"/>
         <source>Bolum {} onceki bolumle cakisiyor</source>
         <translation>分区 {} 与前一个分区重叠</translation>
     </message>
@@ -1972,6 +2046,11 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>分区 {} 类型</translation>
     </message>
     <message>
+        <location filename="../../core/session.py" line="694"/>
+        <source>Bolum {} yeni boyutun disinda kaliyor; goruntu kucultulmedi</source>
+        <translation>分区 {} 会超出新大小；未缩小映像</translation>
+    </message>
+    <message>
         <location filename="../../ui/main_window.py" line="2002"/>
         <source>Bolum {} — Silinmis Dosyalar</source>
         <translation>分区 {} — 已删除文件</translation>
@@ -1983,7 +2062,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>分区 {} — {}</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="222"/>
+        <location filename="../../core/layoutedit.py" line="234"/>
         <source>Bolum {}: boyut sifir olamaz</source>
         <translation>分区 {}：大小不能为零</translation>
     </message>
@@ -1993,7 +2072,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>分区 {}：正在扩展文件系统...</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="228"/>
+        <location filename="../../core/layoutedit.py" line="240"/>
         <source>Bolum {}: dosya sistemi en fazla {} olabilir</source>
         <translation>分区 {}：文件系统最大为 {}</translation>
     </message>
@@ -2003,7 +2082,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>分区 {}：正在收缩文件系统...</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="524"/>
+        <location filename="../../core/layoutedit.py" line="536"/>
         <source>Bolum {}: yeri degisiyor</source>
         <translation>分区 {}：位置变化</translation>
     </message>
@@ -2019,18 +2098,18 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>分区 {}：{}（{}）</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="520"/>
-        <location filename="../../core/resize.py" line="759"/>
+        <location filename="../../core/layoutedit.py" line="532"/>
+        <location filename="../../core/resize.py" line="810"/>
         <source>Bolum {}: {} -&gt; {}</source>
         <translation>分区 {}：{} -&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="224"/>
+        <location filename="../../core/layoutedit.py" line="236"/>
         <source>Bolum {}: {} altina inemez (veri kaybi olurdu)</source>
         <translation>分区 {}：不能小于 {}（否则会丢失数据）</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="233"/>
+        <location filename="../../core/layoutedit.py" line="245"/>
         <source>Bolum {}: {} boyutlandirilamaz</source>
         <translation>分区 {}：{} 无法调整大小</translation>
     </message>
@@ -2045,7 +2124,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>该分区没有支持写入卷标的文件系统</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1208"/>
+        <location filename="../../core/session.py" line="1251"/>
         <source>Bolumde okunabilir dosya sistemi yok</source>
         <translation>该分区没有可读取的文件系统</translation>
     </message>
@@ -2084,7 +2163,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
 您可以在此区域创建新分区（分区 &gt; 新建分区）。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1276"/>
+        <location filename="../../core/session.py" line="1319"/>
         <source>Bolumlenmis</source>
         <translation>已分区</translation>
     </message>
@@ -2178,7 +2257,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
     <message>
         <location filename="../../core/ptable.py" line="22"/>
         <location filename="../../core/ptable.py" line="53"/>
-        <location filename="../../ui/main_window.py" line="3911"/>
+        <location filename="../../ui/main_window.py" line="3926"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Bos</source>
         <translation>空闲</translation>
@@ -2189,7 +2268,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>空（无引导代码）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="357"/>
+        <location filename="../../core/ntfswrite.py" line="402"/>
         <source>Bos MFT kaydi yok ve $MFT buyutulemedi</source>
         <translation>没有空闲的 MFT 记录，且无法扩展 $MFT</translation>
     </message>
@@ -2225,17 +2304,17 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>擦除空闲空间</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="443"/>
+        <location filename="../../core/extwrite.py" line="519"/>
         <source>Bos blok kalmadi</source>
         <translation>没有剩余的空闲块</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="396"/>
+        <location filename="../../core/extwrite.py" line="472"/>
         <source>Bos blok yetersiz: {} istendi, {} bulundu</source>
         <translation>空闲块不足：请求 {} 个，找到 {} 个</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="265"/>
+        <location filename="../../core/ptable.py" line="270"/>
         <source>Bos boyut</source>
         <translation>大小为空</translation>
     </message>
@@ -2245,8 +2324,8 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>没有剩余的空闲条目编号</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1149"/>
-        <location filename="../../core/extwrite.py" line="487"/>
+        <location filename="../../core/extwrite.py" line="1267"/>
+        <location filename="../../core/extwrite.py" line="563"/>
         <source>Bos inode kalmadi</source>
         <translation>没有剩余的空闲 inode</translation>
     </message>
@@ -2257,7 +2336,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
     </message>
     <message>
         <location filename="../../core/physical.py" line="124"/>
-        <location filename="../../core/session.py" line="1272"/>
+        <location filename="../../core/session.py" line="1315"/>
         <location filename="../../ui/dialogs/backup.py" line="360"/>
         <location filename="../../ui/dialogs/backup.py" line="453"/>
         <location filename="../../ui/dialogs/backup.py" line="686"/>
@@ -2265,7 +2344,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3886"/>
+        <location filename="../../ui/main_window.py" line="3895"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
@@ -2305,12 +2384,16 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>无法准备调整大小</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="359"/>
+        <location filename="../../core/exfat.py" line="560"/>
+        <location filename="../../core/exfat.py" line="592"/>
+        <location filename="../../core/exfat.py" line="620"/>
+        <location filename="../../core/exfat.py" line="658"/>
+        <location filename="../../core/fat.py" line="516"/>
         <source>Bozuk dizin kume zinciri</source>
         <translation>目录簇链已损坏</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="260"/>
+        <location filename="../../core/ntfsread.py" line="317"/>
         <source>Bozuk veri kosulu: uzunluk {}</source>
         <translation>数据运行已损坏：长度 {}</translation>
     </message>
@@ -2333,6 +2416,16 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <location filename="../../ui/main_window.py" line="2425"/>
         <source>Bu alan &lt;b&gt;{}&lt;/b&gt; ile cakisiyor. O bolum henuz diske yazilmadi ama bekleyen islemler arasinda ve bu alani tutuyor.&lt;br&gt;&lt;br&gt;Once bekleyen adimi kaldirin ya da baska bir alan secin.</source>
         <translation>此区域与 &lt;b&gt;{}&lt;/b&gt; 重叠。该分区尚未写入磁盘，但它位于待执行列表中，已占用此空间。&lt;br&gt;&lt;br&gt;请移除该待执行步骤或选择其他区域。</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="173"/>
+        <source>Bu bir ext gunluk aygiti (journal_dev); dosya sistemi degildir, icine yazilamaz.</source>
+        <translation>这是 ext 日志设备（journal_dev）；它不是文件系统，无法写入。</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="206"/>
+        <source>Bu birim su ozellikleri kullaniyor ve bu surumde yazma desteklenmiyor: {}. Yanlis yazip birimi bozmamak icin islem reddedildi.</source>
+        <translation>此卷使用以下特性，本版本不支持写入：{}。为避免损坏卷，操作已被拒绝。</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="1281"/>
@@ -2369,7 +2462,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>在此分区上未找到已删除的文件条目。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1221"/>
+        <location filename="../../core/session.py" line="1264"/>
         <source>Bu bolumde silinmis dosya taramasi desteklenmiyor (yalnizca FAT ve exFAT)</source>
         <translation>此分区不支持扫描已删除文件（仅限 FAT 和 exFAT）</translation>
     </message>
@@ -2415,17 +2508,17 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>此磁盘没有分区表；文件系统（{}）覆盖整个磁盘。创建 GPT 将擦除此文件系统。是否继续？</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="301"/>
+        <location filename="../../core/ptable.py" line="306"/>
         <source>Bu diskte bolum tablosu yok; dosya sistemi tum diski kapliyor. Bolum eklemek/silmek icin once bolum tablosu olusturun (icindeki dosya sistemi silinir).</source>
         <translation>此磁盘没有分区表；文件系统覆盖整个磁盘。要添加或删除分区，请先创建分区表（其上的文件系统将被擦除）。</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="814"/>
+        <location filename="../../core/extwrite.py" line="1211"/>
         <source>Bu dizin sifreli (fscrypt); adlar anahtar olmadan yazilamaz.</source>
         <translation>此目录已加密（fscrypt）；没有密钥无法写入名称。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1017"/>
+        <location filename="../../core/session.py" line="1060"/>
         <source>Bu dosya bir DiskUltimate yedegi degil</source>
         <translation>此文件不是 DiskUltimate 备份</translation>
     </message>
@@ -2435,17 +2528,17 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>此文件系统</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="833"/>
+        <location filename="../../core/resize.py" line="884"/>
         <source>Bu dosya sistemi tasinamaz — {}</source>
         <translation>此文件系统无法移动 — {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="893"/>
+        <location filename="../../core/resize.py" line="944"/>
         <source>Bu dosya sistemi yalnizca isletim sisteminin kendi araciyla boyutlandirilabilir; bolum tablosu tek basina degistirilmez</source>
         <translation>此文件系统只能由操作系统自带的工具调整大小；分区表不会自行更改</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="819"/>
+        <location filename="../../core/resize.py" line="870"/>
         <source>Bu dosya sistemi {} altina inemez (veri kaybi olurdu)</source>
         <translation>此文件系统不能小于 {}（否则会丢失数据）</translation>
     </message>
@@ -2457,12 +2550,17 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
 您可以通过重新格式化分区来设置卷标。</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="63"/>
+        <location filename="../../core/recovery.py" line="64"/>
         <source>Bu dosya sisteminde silinmis dosya taramasi desteklenmiyor</source>
         <translation>此文件系统不支持扫描已删除文件</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="132"/>
+        <location filename="../../core/exfat.py" line="360"/>
+        <source>Bu exFAT birimi iki FAT kopyasi (TexFAT) kullaniyor; yazma ve boyutlandirma desteklenmiyor</source>
+        <translation>此 exFAT 卷使用两个 FAT 副本（TexFAT）；不支持写入和调整大小</translation>
+    </message>
+    <message>
+        <location filename="../../core/extresize.py" line="158"/>
         <source>Bu ext birimi su ozellikleri kullaniyor ve boyutlandirmasi desteklenmiyor: {}</source>
         <translation>此 ext 卷使用了以下不支持调整大小的特性：{}</translation>
     </message>
@@ -2472,7 +2570,7 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>此启动项不在启动顺序中，因此无法移动。</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="226"/>
+        <location filename="../../core/recovery.py" line="257"/>
         <source>Bu giriste kurtarilabilir veri yok</source>
         <translation>此条目没有可恢复的数据</translation>
     </message>
@@ -2502,9 +2600,14 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>不支持写入此分配描述符类型：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3979"/>
+        <location filename="../../ui/main_window.py" line="3994"/>
         <source>Bu kaynak degistirilemez</source>
         <translation>无法修改此源</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="1216"/>
+        <source>Bu klasor buyuk/kucuk harf duyarsiz (casefold); bu surumde icine ad eklenemez.</source>
+        <translation>此文件夹不区分大小写（casefold）；此版本无法在其中添加名称。</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/efiboot.py" line="193"/>
@@ -2563,19 +2666,23 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
     <message>
         <location filename="../../core/apfs.py" line="405"/>
         <location filename="../../core/btrfs.py" line="263"/>
-        <location filename="../../core/exfat.py" line="559"/>
-        <location filename="../../core/extread.py" line="417"/>
-        <location filename="../../core/extwrite.py" line="1253"/>
-        <location filename="../../core/extwrite.py" line="1290"/>
+        <location filename="../../core/exfat.py" line="1087"/>
+        <location filename="../../core/exfat.py" line="1118"/>
+        <location filename="../../core/exfat.py" line="759"/>
+        <location filename="../../core/extread.py" line="556"/>
+        <location filename="../../core/extwrite.py" line="1456"/>
+        <location filename="../../core/extwrite.py" line="1535"/>
         <location filename="../../core/f2fs.py" line="410"/>
-        <location filename="../../core/fat.py" line="507"/>
+        <location filename="../../core/fat.py" line="1057"/>
+        <location filename="../../core/fat.py" line="1091"/>
+        <location filename="../../core/fat.py" line="691"/>
         <location filename="../../core/hfsplus.py" line="486"/>
         <location filename="../../core/hfswrite.py" line="813"/>
         <location filename="../../core/hfswrite.py" line="847"/>
         <location filename="../../core/hfswrite.py" line="868"/>
         <location filename="../../core/iso9660.py" line="236"/>
-        <location filename="../../core/ntfsindex.py" line="472"/>
-        <location filename="../../core/ntfsread.py" line="609"/>
+        <location filename="../../core/ntfsindex.py" line="470"/>
+        <location filename="../../core/ntfsread.py" line="738"/>
         <location filename="../../core/udf.py" line="456"/>
         <location filename="../../core/udfwrite.py" line="681"/>
         <location filename="../../core/udfwrite.py" line="719"/>
@@ -2609,7 +2716,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>将所有线程的当前堆栈写入文件</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="1050"/>
+        <location filename="../../core/exfat.py" line="1306"/>
         <source>Buyuk harf tablosu yaziliyor...</source>
         <translation>正在写入大写转换表...</translation>
     </message>
@@ -2649,7 +2756,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>未运行</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="337"/>
+        <location filename="../../core/hfsplus.py" line="336"/>
         <location filename="../../core/hfswrite.py" line="527"/>
         <source>Catal kapsamlari eksik (dosya kimligi {})</source>
         <translation>分支区段不完整（文件 ID {}）</translation>
@@ -2720,7 +2827,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>警告：缩小会擦除末尾的数据（应用时会再次询问）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3987"/>
+        <location filename="../../ui/main_window.py" line="4002"/>
         <source>DIKKAT: salt okunur acildi — {}</source>
         <translation>警告：已以只读方式打开 — {}</translation>
     </message>
@@ -2776,7 +2883,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>更改会作为待执行操作收集起来；仅在“应用”时才写入磁盘。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4021"/>
+        <location filename="../../ui/main_window.py" line="4036"/>
         <source>Degisiklikler bekliyor</source>
         <translation>有待执行的更改</translation>
     </message>
@@ -2801,12 +2908,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>无法更改</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4028"/>
+        <location filename="../../ui/main_window.py" line="4043"/>
         <source>Degistirilemez kaynak</source>
         <translation>源不可修改</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1367"/>
+        <location filename="../../core/session.py" line="1410"/>
         <source>Degistirilemez — {}</source>
         <translation>不可修改 — {}</translation>
     </message>
@@ -2827,7 +2934,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>检查结果</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4179"/>
+        <location filename="../../ui/main_window.py" line="4194"/>
         <source>Denetlenemedi: {}</source>
         <translation>无法检查：{}</translation>
     </message>
@@ -2927,7 +3034,8 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>磁盘</translation>
     </message>
     <message>
-        <location filename="../../core/gpt.py" line="156"/>
+        <location filename="../../core/gpt.py" line="360"/>
+        <location filename="../../core/gpt.py" line="502"/>
         <source>Disk GPT icin cok kucuk</source>
         <translation>该磁盘对于 GPT 来说太小</translation>
     </message>
@@ -2993,7 +3101,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>磁盘镜像</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1416"/>
+        <location filename="../../ui/dialogs/backup.py" line="1417"/>
         <source>Disk goruntusu (*.img *.raw *.dd);;Tum dosyalar (*)</source>
         <translation>磁盘镜像 (*.img *.raw *.dd);;所有文件 (*)</translation>
     </message>
@@ -3057,7 +3165,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>无法获取磁盘列表：{}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="762"/>
+        <location filename="../../core/session.py" line="805"/>
         <source>Disk numarasi bilinmiyor</source>
         <translation>磁盘编号未知</translation>
     </message>
@@ -3094,7 +3202,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>未选择磁盘</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="90"/>
+        <location filename="../../core/convert.py" line="100"/>
         <source>Disk sonunda yedek GPT icin {} bos alan gerekiyor; son bolum LBA {} konumunda bitiyor</source>
         <translation>磁盘末尾需要 {} 的空闲空间来存放备份 GPT；最后一个分区结束于 LBA {}</translation>
     </message>
@@ -3115,7 +3223,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>DiskUltimate 备份 (*.dub);;所有文件 (*)</translation>
     </message>
     <message>
-        <location filename="../../core/vdisk.py" line="571"/>
+        <location filename="../../core/vdisk.py" line="592"/>
         <source>DiskUltimate yedegi (.dub)</source>
         <translation>DiskUltimate 备份 (.dub)</translation>
     </message>
@@ -3175,7 +3283,22 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>磁盘上</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="235"/>
+        <location filename="../../core/session.py" line="161"/>
+        <source>Diskte MBR&apos;nin yaninda eski bir GPT kalintisi var</source>
+        <translation>磁盘上 MBR 旁边残留有旧的 GPT</translation>
+    </message>
+    <message>
+        <location filename="../../core/gpt.py" line="469"/>
+        <source>Diskte hibrit MBR var ve bu degisiklik hibrit MBR&apos;de de kayitli bir bolumu (LBA {}) etkiliyor. Hibrit MBR&apos;yi bozmamak icin tablo yazilmadi; once hibrit MBR&apos;yi kaldirin (gdisk).</source>
+        <translation>磁盘带有混合 MBR，此更改影响一个也记录在混合 MBR 中的分区（LBA {}）。为避免破坏混合 MBR，未写入分区表；请先移除混合 MBR（gdisk）。</translation>
+    </message>
+    <message>
+        <location filename="../../core/convert.py" line="88"/>
+        <source>Diskte koruyucu/hibrit MBR girisi (0xEE) var; MBR&apos;den GPT&apos;ye donusturulemez</source>
+        <translation>磁盘带有保护性/混合 MBR 条目（0xEE）；无法从 MBR 转换为 GPT</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfswrite.py" line="280"/>
         <source>Diskte yeterli bos kume yok</source>
         <translation>磁盘上没有足够的空闲簇</translation>
     </message>
@@ -3215,13 +3338,13 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>正在写入目录块...</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1090"/>
+        <location filename="../../core/extwrite.py" line="1164"/>
         <source>Dizin cok buyuk</source>
         <translation>目录太大</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="372"/>
-        <location filename="../../core/ntfsread.py" line="426"/>
+        <location filename="../../core/extread.py" line="455"/>
+        <location filename="../../core/ntfsread.py" line="555"/>
         <source>Dizin degil</source>
         <translation>不是目录</translation>
     </message>
@@ -3230,19 +3353,19 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../core/apfs.py" line="412"/>
         <location filename="../../core/btrfs.py" line="260"/>
         <location filename="../../core/btrfs.py" line="270"/>
-        <location filename="../../core/exfat.py" line="538"/>
-        <location filename="../../core/extread.py" line="411"/>
-        <location filename="../../core/extwrite.py" line="1167"/>
-        <location filename="../../core/extwrite.py" line="1218"/>
+        <location filename="../../core/exfat.py" line="732"/>
+        <location filename="../../core/extread.py" line="550"/>
+        <location filename="../../core/extwrite.py" line="1285"/>
+        <location filename="../../core/extwrite.py" line="1400"/>
         <location filename="../../core/f2fs.py" line="407"/>
         <location filename="../../core/f2fs.py" line="417"/>
-        <location filename="../../core/fat.py" line="470"/>
+        <location filename="../../core/fat.py" line="654"/>
         <location filename="../../core/hfsplus.py" line="478"/>
         <location filename="../../core/hfsplus.py" line="493"/>
         <location filename="../../core/hfswrite.py" line="673"/>
         <location filename="../../core/iso9660.py" line="218"/>
-        <location filename="../../core/ntfsread.py" line="606"/>
-        <location filename="../../core/ntfswrite.py" line="867"/>
+        <location filename="../../core/ntfsread.py" line="735"/>
+        <location filename="../../core/ntfswrite.py" line="946"/>
         <location filename="../../core/udf.py" line="449"/>
         <location filename="../../core/udf.py" line="464"/>
         <location filename="../../core/udfwrite.py" line="571"/>
@@ -3252,41 +3375,46 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>不是目录：{}</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="572"/>
-        <location filename="../../core/exfat.py" line="579"/>
-        <location filename="../../core/fat.py" line="520"/>
-        <location filename="../../core/fat.py" line="527"/>
+        <location filename="../../core/exfat.py" line="773"/>
+        <location filename="../../core/exfat.py" line="818"/>
+        <location filename="../../core/fat.py" line="704"/>
+        <location filename="../../core/fat.py" line="711"/>
         <source>Dizin dosya olarak okunamaz</source>
         <translation>无法将目录作为文件读取</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1119"/>
+        <location filename="../../core/extwrite.py" line="1201"/>
         <source>Dizin girisi bulunamadi: {}</source>
         <translation>未找到目录项：{}</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="764"/>
+        <location filename="../../core/extmove.py" line="773"/>
         <source>Dizin girisleri duzeltiliyor...</source>
         <translation>正在修复目录项...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsindex.py" line="144"/>
-        <location filename="../../core/ntfswrite.py" line="696"/>
+        <location filename="../../core/extwrite.py" line="1071"/>
+        <source>Dizin indeksi bozuk: inode {}</source>
+        <translation>目录索引已损坏：inode {}</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsindex.py" line="147"/>
+        <location filename="../../core/ntfswrite.py" line="771"/>
         <source>Dizin indeksi bulunamadi</source>
         <translation>未找到目录索引</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsindex.py" line="374"/>
+        <location filename="../../core/ntfsindex.py" line="372"/>
         <source>Dizin indeksi cok derin (bozuk olabilir)</source>
         <translation>目录索引层级过深（可能已损坏）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="746"/>
+        <location filename="../../core/ntfswrite.py" line="821"/>
         <source>Dizin kaydi doldu: bu surumde indeks $INDEX_ALLOCATION&apos;a tasinamaz. Daha az giris deneyin.</source>
         <translation>目录记录已满：此版本无法将索引移至 $INDEX_ALLOCATION。请减少条目数量。</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="783"/>
+        <location filename="../../core/ntfswrite.py" line="860"/>
         <source>Dizin kaydi doldu: oznitelik kayda sigmiyor</source>
         <translation>目录记录已满：属性无法放入记录</translation>
     </message>
@@ -3294,7 +3422,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../core/apfs.py" line="420"/>
         <location filename="../../core/btrfs.py" line="315"/>
         <location filename="../../core/f2fs.py" line="423"/>
-        <location filename="../../core/filesystem.py" line="660"/>
+        <location filename="../../core/filesystem.py" line="665"/>
         <location filename="../../core/hfsplus.py" line="565"/>
         <location filename="../../core/hfsplus.py" line="577"/>
         <location filename="../../core/iso9660.py" line="252"/>
@@ -3339,7 +3467,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>转换期间分区数据保持原位；中断可能会损坏分区表，因此请先备份重要数据</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1270"/>
+        <location filename="../../core/session.py" line="1313"/>
         <location filename="../../ui/dialogs/efiboot.py" line="279"/>
         <location filename="../../ui/widgets/file_browser.py" line="243"/>
         <source>Dosya</source>
@@ -3359,7 +3487,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>文件系统</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="811"/>
+        <location filename="../../core/extwrite.py" line="1209"/>
         <source>Dosya adi cok uzun</source>
         <translation>文件名太长</translation>
     </message>
@@ -3374,12 +3502,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>未找到文件：{}</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="588"/>
+        <location filename="../../core/extwrite.py" line="664"/>
         <source>Dosya cok buyuk: en fazla {} GB</source>
         <translation>文件太大：最大 {} GB</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="680"/>
+        <location filename="../../core/ntfswrite.py" line="755"/>
         <source>Dosya cok parcali: veri kosullari tek MFT kaydina sigmiyor ($ATTRIBUTE_LIST bu surumde yok)</source>
         <translation>文件碎片过多：其数据运行无法放入单个 MFT 记录（此版本不支持 $ATTRIBUTE_LIST）</translation>
     </message>
@@ -3408,7 +3536,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../core/clone.py" line="121"/>
         <location filename="../../ui/dialogs/bootloader.py" line="76"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3883"/>
+        <location filename="../../ui/main_window.py" line="3892"/>
         <source>Dosya sistemi</source>
         <translation>文件系统</translation>
     </message>
@@ -3423,27 +3551,27 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>无法打开文件系统：{}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="885"/>
+        <location filename="../../core/session.py" line="928"/>
         <source>Dosya sistemi bolumu dolduracak kadar buyutuluyor...</source>
         <translation>正在扩展文件系统以填满分区...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="947"/>
+        <location filename="../../core/resize.py" line="998"/>
         <source>Dosya sistemi buyutulemedi: {}</source>
         <translation>无法扩展文件系统：{}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="939"/>
+        <location filename="../../core/resize.py" line="990"/>
         <source>Dosya sistemi buyutuluyor...</source>
         <translation>正在扩展文件系统...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="824"/>
+        <location filename="../../core/resize.py" line="875"/>
         <source>Dosya sistemi en fazla {} olabilir; kalan alan bolum icinde **kullanilmadan** kalir</source>
         <translation>文件系统最大为 {}；剩余空间将在分区内保持**未使用**</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="902"/>
+        <location filename="../../core/resize.py" line="953"/>
         <source>Dosya sistemi kucultuluyor...</source>
         <translation>正在收缩文件系统...</translation>
     </message>
@@ -3492,8 +3620,8 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>文件路径</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="764"/>
-        <location filename="../../core/fat.py" line="737"/>
+        <location filename="../../core/exfat.py" line="998"/>
+        <location filename="../../core/fat.py" line="932"/>
         <location filename="../../core/image.py" line="223"/>
         <location filename="../../core/vdisk.py" line="261"/>
         <source>Dosya zaten var: {}</source>
@@ -3510,23 +3638,24 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>正在恢复文件</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1202"/>
+        <location filename="../../ui/dialogs/backup.py" line="1203"/>
         <location filename="../../ui/qt_i18n.py" line="46"/>
         <source>Durdur</source>
         <translation>中止</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1249"/>
+        <location filename="../../ui/dialogs/backup.py" line="1250"/>
         <source>Durduruluyor...</source>
         <translation>正在停止...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1282"/>
+        <location filename="../../core/session.py" line="1325"/>
         <location filename="../../ui/dialogs/apply.py" line="121"/>
         <location filename="../../ui/dialogs/backup.py" line="453"/>
         <location filename="../../ui/dialogs/backup.py" line="686"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3906"/>
+        <location filename="../../ui/main_window.py" line="3915"/>
+        <location filename="../../ui/main_window.py" line="3919"/>
         <source>Durum</source>
         <translation>状态</translation>
     </message>
@@ -3558,7 +3687,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>不完整（无权限）</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="473"/>
+        <location filename="../../core/recovery.py" line="549"/>
         <source>ELF calistirilabilir</source>
         <translation>ELF 可执行文件</translation>
     </message>
@@ -3615,7 +3744,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>请至少选择一种文件类型。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4192"/>
+        <location filename="../../ui/main_window.py" line="4207"/>
         <source>En guncel surumu kullaniyorsunuz ({}).</source>
         <translation>您正在使用最新版本（{}）。</translation>
     </message>
@@ -3625,7 +3754,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>最长冻结时间</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1277"/>
+        <location filename="../../core/session.py" line="1320"/>
         <source>Erisim</source>
         <translation>访问方式</translation>
     </message>
@@ -3650,13 +3779,13 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
     <message>
         <location filename="../../core/physical.py" line="127"/>
         <location filename="../../core/physical.py" line="128"/>
-        <location filename="../../ui/main_window.py" line="3892"/>
+        <location filename="../../ui/main_window.py" line="3901"/>
         <location filename="../../ui/qt_i18n.py" line="42"/>
         <source>Evet</source>
         <translation>是</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="75"/>
+        <location filename="../../core/extmove.py" line="76"/>
         <source>Extent basligi bozuk</source>
         <translation>区段头已损坏</translation>
     </message>
@@ -3681,24 +3810,29 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>未找到 F2FS 超级块</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="778"/>
+        <location filename="../../core/filesystem.py" line="783"/>
         <source>F2FS yazma bu surumde yok; birim salt okunur acildi.</source>
         <translation>此版本不支持写入 F2FS；该卷已以只读方式打开。</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="1027"/>
+        <location filename="../../core/exfat.py" line="1283"/>
         <source>FAT bolgesi hazirlaniyor...</source>
         <translation>正在准备 FAT 区域...</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="731"/>
+        <location filename="../../core/fat.py" line="918"/>
         <source>FAT en fazla 4 GiB - 1 bayt dosya alir ({} bayt istendi)</source>
         <translation>FAT 允许的文件最大为 4 GiB - 1 字节（请求 {} 字节）</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="137"/>
+        <location filename="../../core/fat.py" line="138"/>
         <source>FAT onyukleme sektoru imzasi yok</source>
         <translation>缺少 FAT 引导扇区签名</translation>
+    </message>
+    <message>
+        <location filename="../../core/fat.py" line="337"/>
+        <source>FAT tablosu tutarsiz; birime yazilamaz. Once fsck.fat veya chkdsk ile onarin</source>
+        <translation>FAT 表不一致；无法写入该卷。请先用 fsck.fat 或 chkdsk 修复</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="489"/>
@@ -3741,22 +3875,22 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>FAT32 (LBA)</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="985"/>
+        <location filename="../../core/fat.py" line="1245"/>
         <source>FAT{} bu boyut icin uygun degil; FAT32 secin</source>
         <translation>FAT{} 不适合此大小；请选择 FAT32</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="373"/>
+        <location filename="../../core/resize.py" line="408"/>
         <source>FAT{} icin gecersiz kume sayisi</source>
         <translation>FAT{} 的簇数无效</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="499"/>
+        <location filename="../../core/ntfswrite.py" line="566"/>
         <source>FILE imzasi yok</source>
         <translation>没有 FILE 签名</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="140"/>
+        <location filename="../../core/ntfsread.py" line="152"/>
         <source>FILE imzasi yok: kayit {}</source>
         <translation>没有 FILE 签名：记录 {}</translation>
     </message>
@@ -3771,7 +3905,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>不支持差分 VHD</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="337"/>
+        <location filename="../../core/ntfsread.py" line="464"/>
         <source>Fixup imzasi tutmuyor (kayit bozuk)</source>
         <translation>修正签名不匹配（记录已损坏）</translation>
     </message>
@@ -3812,17 +3946,17 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>正在扫描物理磁盘列表...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="277"/>
+        <location filename="../../core/session.py" line="294"/>
         <source>Fiziksel disk — {}</source>
         <translation>物理磁盘 — {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="838"/>
+        <location filename="../../core/resize.py" line="889"/>
         <source>Fiziksel disk: islem oncesi yedek alin</source>
         <translation>物理磁盘：操作前请先备份</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="648"/>
+        <location filename="../../core/session.py" line="677"/>
         <source>Fiziksel diskin boyutu degistirilemez</source>
         <translation>无法调整物理磁盘的大小</translation>
     </message>
@@ -3832,7 +3966,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>物理磁盘</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="318"/>
+        <location filename="../../core/session.py" line="335"/>
         <source>Fiziksel diskler guvenlik gerekcesiyle salt okunur acilir. Degisiklikler bekleyen islem olarak birikir ve diske ancak Uygula ile yazilir.</source>
         <translation>为安全起见，物理磁盘以只读方式打开。更改会作为待执行操作收集起来，仅在“应用”时才写入磁盘。</translation>
     </message>
@@ -3858,7 +3992,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>FreeBSD 引导程序</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="464"/>
+        <location filename="../../core/recovery.py" line="540"/>
         <source>GIF goruntu</source>
         <translation>GIF 图像</translation>
     </message>
@@ -3883,19 +4017,29 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>创建 GPT 分区表</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="80"/>
+        <location filename="../../core/convert.py" line="86"/>
         <source>GPT en fazla 128 bolum tasiyabilir</source>
         <translation>GPT 最多可容纳 128 个分区</translation>
     </message>
     <message>
-        <location filename="../../core/gpt.py" line="170"/>
+        <location filename="../../core/gpt.py" line="390"/>
         <source>GPT en fazla {} bolum destekler</source>
         <translation>GPT 最多支持 {} 个分区</translation>
     </message>
     <message>
-        <location filename="../../core/gpt.py" line="252"/>
+        <location filename="../../core/gpt.py" line="377"/>
         <source>GPT giris dizisi dolu</source>
         <translation>GPT 分区项数组已满</translation>
+    </message>
+    <message>
+        <location filename="../../core/convert.py" line="125"/>
+        <source>GPT olusturuluyor...</source>
+        <translation>正在创建 GPT...</translation>
+    </message>
+    <message>
+        <location filename="../../core/convert.py" line="234"/>
+        <source>GPT yapilari siliniyor...</source>
+        <translation>正在清除 GPT 结构...</translation>
     </message>
     <message>
         <location filename="../../core/bootloader.py" line="48"/>
@@ -3998,12 +4142,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>GUID 需要 16 字节，可用 {} 字节</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="469"/>
+        <location filename="../../core/recovery.py" line="545"/>
         <source>GZIP arsivi</source>
         <translation>GZIP 压缩包</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1284"/>
+        <location filename="../../ui/dialogs/backup.py" line="1285"/>
         <location filename="../../ui/dialogs/task.py" line="81"/>
         <source>Gecen: {}</source>
         <translation>已用时间：{}</translation>
@@ -4029,7 +4173,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>未找到有效的 F2FS 检查点</translation>
     </message>
     <message>
-        <location filename="../../core/gpt.py" line="109"/>
+        <location filename="../../core/gpt.py" line="281"/>
         <source>Gecerli GPT basligi bulunamadi</source>
         <translation>未找到有效的 GPT 头</translation>
     </message>
@@ -4050,17 +4194,17 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>无效的 APFS 块大小：{}</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="147"/>
+        <location filename="../../core/hfsplus.py" line="146"/>
         <source>Gecersiz B-agaci dugum boyutu: {}</source>
         <translation>无效的 B 树节点大小：{}</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="150"/>
+        <location filename="../../core/fat.py" line="151"/>
         <source>Gecersiz BPB</source>
         <translation>无效的 BPB</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="160"/>
+        <location filename="../../core/fat.py" line="161"/>
         <source>Gecersiz FAT yerlesimi</source>
         <translation>无效的 FAT 布局</translation>
     </message>
@@ -4071,7 +4215,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>无效的 GUID：{}</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="244"/>
+        <location filename="../../core/hfsplus.py" line="243"/>
         <source>Gecersiz HFS+ blok boyutu: {}</source>
         <translation>无效的 HFS+ 块大小：{}</translation>
     </message>
@@ -4091,6 +4235,8 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>无效的 XFS 块大小：{}</translation>
     </message>
     <message>
+        <location filename="../../core/exfat.py" line="170"/>
+        <location filename="../../core/fat.py" line="971"/>
         <location filename="../../core/hfswrite.py" line="661"/>
         <source>Gecersiz ad: {}</source>
         <translation>无效的名称：{}</translation>
@@ -4113,26 +4259,28 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>无效的大小</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="760"/>
-        <location filename="../../core/fat.py" line="729"/>
+        <location filename="../../core/exfat.py" line="1111"/>
+        <location filename="../../core/exfat.py" line="988"/>
+        <location filename="../../core/fat.py" line="1086"/>
+        <location filename="../../core/fat.py" line="916"/>
         <location filename="../../core/hfswrite.py" line="670"/>
         <location filename="../../core/udfwrite.py" line="568"/>
         <source>Gecersiz dosya yolu</source>
         <translation>无效的文件路径</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="288"/>
+        <location filename="../../core/exfat.py" line="339"/>
         <source>Gecersiz exFAT parametreleri</source>
         <translation>无效的 exFAT 参数</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="193"/>
+        <location filename="../../core/extread.py" line="239"/>
         <source>Gecersiz inode numarasi: {}</source>
         <translation>无效的 inode 编号：{}</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="811"/>
-        <location filename="../../core/fat.py" line="795"/>
+        <location filename="../../core/exfat.py" line="1051"/>
+        <location filename="../../core/fat.py" line="1011"/>
         <source>Gecersiz klasor yolu</source>
         <translation>无效的文件夹路径</translation>
     </message>
@@ -4152,7 +4300,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>无效的页面大小：{}</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="148"/>
+        <location filename="../../core/fat.py" line="149"/>
         <source>Gecersiz sektor boyutu</source>
         <translation>无效的扇区大小</translation>
     </message>
@@ -4167,7 +4315,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>第 {}/{} 遍（{}）— {} / {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4134"/>
+        <location filename="../../ui/main_window.py" line="4149"/>
         <source>Gelistirici: {}</source>
         <translation>开发者：{}</translation>
     </message>
@@ -4197,7 +4345,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>扩展分区（容器）</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="89"/>
+        <location filename="../../core/xfsgrow.py" line="90"/>
         <source>Gercek zamanli alt birimli XFS buyutulemiyor</source>
         <translation>无法扩展带实时子卷的 XFS</translation>
     </message>
@@ -4212,7 +4360,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>已撤销：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1253"/>
+        <location filename="../../ui/dialogs/backup.py" line="1254"/>
         <location filename="../../ui/dialogs/backup.py" line="306"/>
         <source>Geri yukle</source>
         <translation>还原</translation>
@@ -4224,12 +4372,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>正在开始还原...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1326"/>
+        <location filename="../../ui/dialogs/backup.py" line="1327"/>
         <source>Geri yukleme durduruldu. Hedef tutarsiz durumda: yeniden geri yukleyin ya da bicimlendirin.</source>
         <translation>还原已停止。目标处于不一致状态：请重新还原或将其格式化。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1324"/>
+        <location filename="../../ui/dialogs/backup.py" line="1325"/>
         <source>Geri yukleme durduruldu; yarim kalan goruntu dosyasi silindi.</source>
         <translation>还原已停止；未完成的映像文件已删除。</translation>
     </message>
@@ -4239,22 +4387,22 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>还原确认</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1479"/>
+        <location filename="../../ui/dialogs/backup.py" line="1480"/>
         <source>Geri yukleme tamamlandi.</source>
         <translation>还原完成。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1242"/>
+        <location filename="../../ui/dialogs/backup.py" line="1243"/>
         <source>Geri yukleme yarida kesilirse hedef tutarsiz kalir ve yeniden geri yuklenene ya da bicimlendirilene kadar kullanilamaz. Yine de durdurulsun mu?</source>
         <translation>如果中断还原，目标将处于不一致状态，在重新还原或格式化之前无法使用。仍要停止吗？</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1477"/>
+        <location filename="../../ui/dialogs/backup.py" line="1478"/>
         <source>Geri yuklendi: {}</source>
         <translation>已还原：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1415"/>
+        <location filename="../../ui/dialogs/backup.py" line="1416"/>
         <source>Geri yuklenecek goruntu dosyasi</source>
         <translation>要还原到的镜像文件</translation>
     </message>
@@ -4331,7 +4479,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>隐藏的 FAT32 (LBA)</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="268"/>
+        <location filename="../../core/hfsplus.py" line="267"/>
         <source>Gomulu HFS+ birimi sektor sinirinda degil</source>
         <translation>嵌入的 HFS+ 卷未按扇区对齐</translation>
     </message>
@@ -4426,7 +4574,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <location filename="../../ui/main_window.py" line="1809"/>
         <location filename="../../ui/main_window.py" line="2036"/>
         <location filename="../../ui/main_window.py" line="2076"/>
-        <location filename="../../ui/main_window.py" line="3973"/>
+        <location filename="../../ui/main_window.py" line="3988"/>
         <source>Goruntu yok</source>
         <translation>无镜像</translation>
     </message>
@@ -4436,7 +4584,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>未选择要显示的设备。</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="914"/>
+        <location filename="../../core/resize.py" line="965"/>
         <source>Goruntunun bulundugu yerde yeterli bos alan yok: tasima {} yeni alan gerektiriyor, {} bos. Hicbir sey yazilmadi.</source>
         <translation>镜像所在位置的空闲空间不足：移动需要 {} 的新空间，当前空闲 {}。未写入任何内容。</translation>
     </message>
@@ -4461,33 +4609,33 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>图形化权限提示需要 `pkexec`（polkit 软件包）。您可以使用 `sudo python3 main.py` 启动应用程序。</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="704"/>
+        <location filename="../../core/extmove.py" line="713"/>
         <source>Grup metaverisi yerlestiriliyor...</source>
         <translation>正在放置块组元数据...</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="774"/>
+        <location filename="../../core/extmove.py" line="783"/>
         <source>Grup tanimlayicilari guncelleniyor...</source>
         <translation>正在更新块组描述符...</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="369"/>
+        <location filename="../../core/extresize.py" line="399"/>
         <source>Grup tanimlayicilari yaziliyor...</source>
         <translation>正在写入块组描述符...</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="179"/>
+        <location filename="../../core/extread.py" line="225"/>
         <source>Grup tanimlayicisi yok: {}</source>
         <translation>没有块组描述符：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4166"/>
+        <location filename="../../ui/main_window.py" line="4181"/>
         <source>Guncellemeler denetleniyor...</source>
         <translation>正在检查更新...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4178"/>
-        <location filename="../../ui/main_window.py" line="4191"/>
+        <location filename="../../ui/main_window.py" line="4193"/>
+        <location filename="../../ui/main_window.py" line="4206"/>
         <source>Guncellemeleri denetle</source>
         <translation>检查更新</translation>
     </message>
@@ -4563,7 +4711,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>HFS+ 名称最多 255 个字符</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="234"/>
+        <location filename="../../core/hfsplus.py" line="233"/>
         <source>HFS+ birim basligi bulunamadi</source>
         <translation>未找到 HFS+ 卷头</translation>
     </message>
@@ -4623,7 +4771,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>关于</translation>
     </message>
     <message>
-        <location filename="../../core/vdisk.py" line="568"/>
+        <location filename="../../core/vdisk.py" line="589"/>
         <source>Ham disk goruntusu (.img)</source>
         <translation>原始磁盘镜像 (.img)</translation>
     </message>
@@ -4633,7 +4781,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>外部工具</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="96"/>
+        <location filename="../../core/xfsgrow.py" line="97"/>
         <source>Harici gunluklu XFS buyutulemiyor</source>
         <translation>无法扩展使用外部日志的 XFS</translation>
     </message>
@@ -4646,13 +4794,13 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <location filename="../../core/physical.py" line="127"/>
         <location filename="../../core/physical.py" line="128"/>
         <location filename="../../core/physical.py" line="130"/>
-        <location filename="../../ui/main_window.py" line="3892"/>
+        <location filename="../../ui/main_window.py" line="3901"/>
         <location filename="../../ui/qt_i18n.py" line="44"/>
         <source>Hayir</source>
         <translation>否</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="476"/>
+        <location filename="../../core/ntfsfix.py" line="598"/>
         <source>Hazirda bekletme dosyasi gecersiz kiliniyor...</source>
         <translation>正在使休眠文件失效...</translation>
     </message>
@@ -4692,7 +4840,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>目标大小不能小于源</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="218"/>
+        <location filename="../../core/layoutedit.py" line="230"/>
         <source>Hedef boyutu bilinmiyor</source>
         <translation>目标大小未知</translation>
     </message>
@@ -4712,7 +4860,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>目标太小：备份 {}，目标 {}。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="957"/>
+        <location filename="../../core/session.py" line="1000"/>
         <source>Hedef disk kaynaktan kucuk: kaynak {}, hedef {}</source>
         <translation>目标磁盘小于源：源 {}，目标 {}</translation>
     </message>
@@ -4759,7 +4907,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>目标为只读</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1420"/>
+        <location filename="../../ui/dialogs/backup.py" line="1421"/>
         <source>Hedef, yedek dosyasinin kendisi olamaz.</source>
         <translation>目标不能是备份文件本身。</translation>
     </message>
@@ -4789,9 +4937,14 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>目标上的数据将被备份替换。</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="386"/>
+        <location filename="../../core/resize.py" line="421"/>
         <source>Hesaplanan yerlesim bolume sigmiyor</source>
         <translation>计算出的布局无法放入分区</translation>
+    </message>
+    <message>
+        <location filename="../../core/gpt.py" line="351"/>
+        <source>Hibrit MBR&apos;de GPT&apos;de olmayan bir alan var (LBA {})</source>
+        <translation>混合 MBR 中有一个不在 GPT 中的区域（LBA {}）</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="620"/>
@@ -4800,7 +4953,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>不会触及任何磁盘</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="502"/>
+        <location filename="../../core/recovery.py" line="578"/>
         <source>Hicbir dosya turu secilmedi</source>
         <translation>未选择文件类型</translation>
     </message>
@@ -4836,18 +4989,18 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>快速格式化（不擦除数据区）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsindex.py" line="248"/>
+        <location filename="../../core/ntfsindex.py" line="246"/>
         <source>INDX blogu diskte bulunamadi (VCN {})</source>
         <translation>在磁盘上未找到 INDX 块（VCN {}）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsindex.py" line="183"/>
-        <location filename="../../core/ntfsindex.py" line="187"/>
+        <location filename="../../core/ntfsindex.py" line="186"/>
+        <location filename="../../core/ntfsindex.py" line="190"/>
         <source>INDX blogu okunamadi (VCN {})</source>
         <translation>无法读取 INDX 块（VCN {}）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsindex.py" line="223"/>
+        <location filename="../../core/ntfsindex.py" line="226"/>
         <source>INDX blogu tasti (ic hata)</source>
         <translation>INDX 块溢出（内部错误）</translation>
     </message>
@@ -4872,7 +5025,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>未找到 ISO 9660 主卷描述符</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="562"/>
+        <location filename="../../core/filesystem.py" line="567"/>
         <source>ISO 9660 salt okunur bir bicimdir; yazilmaz, bastan uretilir.</source>
         <translation>ISO 9660 是只读格式；不能写入，只能从头创建。</translation>
     </message>
@@ -4882,7 +5035,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>ISO 镜像</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="418"/>
+        <location filename="../../core/resize.py" line="455"/>
         <source>Ic hata: geri kaydirma istendi ({} sektor); hicbir sey yazilmadi</source>
         <translation>内部错误：请求了反向移动（{} 个扇区）；未写入任何内容</translation>
     </message>
@@ -4922,7 +5075,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>将前 440 字节清零；保留分区表和数据。作为待执行操作加入队列。</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="84"/>
+        <location filename="../../core/convert.py" line="94"/>
         <source>Ilk bolum LBA {} konumunda basliyor; GPT giris dizisi icin disk basinda en az {} sektor bos olmalidir</source>
         <translation>第一个分区起始于 LBA {}；磁盘开头至少需要 {} 个空闲扇区来存放 GPT 分区项数组</translation>
     </message>
@@ -4947,7 +5100,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>签名扫描（{}）：找到 {} 个文件</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="533"/>
+        <location filename="../../core/recovery.py" line="609"/>
         <source>Imza taraniyor... {} / {} — {} dosya</source>
         <translation>正在扫描签名... {} / {} — {} 个文件</translation>
     </message>
@@ -4962,12 +5115,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>检查失败：{}</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="199"/>
+        <location filename="../../core/extread.py" line="245"/>
         <source>Inode okunamadi: {}</source>
         <translation>无法读取 inode：{}</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="263"/>
+        <location filename="../../core/extmove.py" line="264"/>
         <source>Inode tablosu icin bitisik bos alan yok</source>
         <translation>没有连续的空闲空间用于 inode 表</translation>
     </message>
@@ -4977,7 +5130,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>正在写入 inode 表...</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="749"/>
+        <location filename="../../core/extmove.py" line="758"/>
         <source>Inode&apos;lar yaziliyor...</source>
         <translation>正在写入 inode...</translation>
     </message>
@@ -5013,13 +5166,13 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>操作失败。</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="455"/>
+        <location filename="../../core/ntfsfix.py" line="577"/>
         <source>Islem gunlugu ($LogFile) bosaltildi</source>
         <translation>日志（$LogFile）已清空</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="451"/>
-        <location filename="../../core/ntfsfix.py" line="498"/>
+        <location filename="../../core/ntfsfix.py" line="573"/>
+        <location filename="../../core/ntfsfix.py" line="620"/>
         <source>Islem gunlugu ($LogFile) bosaltiliyor...</source>
         <translation>正在清空日志（$LogFile）...</translation>
     </message>
@@ -5029,17 +5182,22 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>正在准备事务日志（$LogFile）...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="145"/>
+        <location filename="../../core/ntfsfix.py" line="150"/>
         <source>Islem gunlugu ($LogFile) okunamadi</source>
         <translation>无法读取日志（$LogFile）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="143"/>
+        <location filename="../../core/ntfsfix.py" line="148"/>
         <source>Islem gunlugu ($LogFile) temiz kapatilmamis</source>
         <translation>日志（$LogFile）未正常关闭</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="741"/>
+        <location filename="../../core/ntfsfix.py" line="425"/>
+        <source>Islem gunlugu ($LogFile) temiz kapatilmamis ya da okunamadi: Windows&apos;un diske islemedigi degisiklikler olabilir. Windows&apos;u tam kapatin ya da Bolum &gt; NTFS&apos;i denetle ve onar calistirin.</source>
+        <translation>事务日志（$LogFile）未正常关闭或无法读取：可能存在 Windows 尚未写入磁盘的更改。请完全关闭 Windows，或运行 分区 &gt; 检查并修复 NTFS。</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsresize.py" line="839"/>
         <source>Islem gunlugu sifirlaniyor...</source>
         <translation>正在重置日志...</translation>
     </message>
@@ -5049,7 +5207,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>操作：</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1241"/>
+        <location filename="../../ui/dialogs/backup.py" line="1242"/>
         <source>Islemi durdur</source>
         <translation>停止操作</translation>
     </message>
@@ -5092,24 +5250,24 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>操作系统：{}</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="462"/>
+        <location filename="../../core/recovery.py" line="538"/>
         <location filename="../../ui/widgets/file_browser.py" line="236"/>
         <location filename="../../ui/widgets/file_browser.py" line="237"/>
         <source>JPEG goruntu</source>
         <translation>JPEG 图像</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="425"/>
+        <location filename="../../core/extmove.py" line="434"/>
         <source>Kalan gruplarda yeterli bos inode yok</source>
         <translation>剩余块组中没有足够的空闲 inode</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1289"/>
+        <location filename="../../ui/dialogs/backup.py" line="1290"/>
         <source>Kalan: hesaplaniyor...</source>
         <translation>剩余：正在计算...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1287"/>
+        <location filename="../../ui/dialogs/backup.py" line="1288"/>
         <source>Kalan: ~{}</source>
         <translation>剩余：约 {}</translation>
     </message>
@@ -5208,6 +5366,13 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>记录已存在</translation>
     </message>
     <message>
+        <location filename="../../core/ntfsresize.py" line="201"/>
+        <location filename="../../core/ntfsresize.py" line="340"/>
+        <location filename="../../core/ntfswrite.py" line="136"/>
+        <source>Kayit {} birden cok MFT kaydina dagilmis ($ATTRIBUTE_LIST); bu surum boyle kayitlari degistiremez</source>
+        <translation>记录 {} 分散在多个 MFT 记录中（$ATTRIBUTE_LIST）；此版本无法修改此类记录</translation>
+    </message>
+    <message>
         <location filename="../../ui/dialogs/bootloader.py" line="376"/>
         <source>Kayitli yedek bulunamadi. Once &quot;Ayarlari yedekle&quot;yi kullanin.
 
@@ -5258,15 +5423,15 @@ Konum: {}</source>
         <translation>源文件比预期短（缺少 {} 字节）；它可能在写入过程中发生了变化</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="116"/>
-        <location filename="../../core/ntfsfix.py" line="400"/>
-        <location filename="../../core/ntfswrite.py" line="92"/>
+        <location filename="../../core/extwrite.py" line="167"/>
+        <location filename="../../core/ntfsfix.py" line="522"/>
+        <location filename="../../core/ntfswrite.py" line="115"/>
         <source>Kaynak salt okunur acildi.</source>
         <translation>源已以只读方式打开。</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="315"/>
-        <location filename="../../core/filesystem.py" line="377"/>
+        <location filename="../../core/filesystem.py" line="318"/>
+        <location filename="../../core/filesystem.py" line="382"/>
         <source>Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda acarsaniz bu bolume yazabilirsiniz.</source>
         <translation>源已以只读方式打开。如果以写入模式打开镜像/磁盘，即可写入此分区。</translation>
     </message>
@@ -5276,23 +5441,23 @@ Konum: {}</source>
         <translation>源以只读方式打开；不会擦除任何内容。</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="144"/>
+        <location filename="../../core/convert.py" line="167"/>
         <source>Kaynak tablo GPT degil</source>
         <translation>源分区表不是 GPT</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="77"/>
+        <location filename="../../core/convert.py" line="83"/>
         <source>Kaynak tablo MBR degil</source>
         <translation>源分区表不是 MBR</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="992"/>
+        <location filename="../../core/session.py" line="1035"/>
         <source>Kaynak ve hedef ayni bolum</source>
         <translation>源和目标是同一个分区</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="941"/>
-        <location filename="../../core/session.py" line="954"/>
+        <location filename="../../core/session.py" line="984"/>
+        <location filename="../../core/session.py" line="997"/>
         <source>Kaynak ve hedef ayni disk</source>
         <translation>源和目标是同一个磁盘</translation>
     </message>
@@ -5322,17 +5487,17 @@ Konum: {}</source>
         <translation>节省空间</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="737"/>
+        <location filename="../../core/extmove.py" line="746"/>
         <source>Kesilen bolgede kotu blok kaydi var</source>
         <translation>要截去的区域包含坏块记录</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="397"/>
+        <location filename="../../core/ntfsfix.py" line="519"/>
         <source>Kirli bayragi ayni anda hem temizlenip hem acilamaz</source>
         <translation>不能同时清除和设置脏标志</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="471"/>
+        <location filename="../../core/ntfsfix.py" line="593"/>
         <source>Kirli bayragi temizlendi</source>
         <translation>已清除脏标志</translation>
     </message>
@@ -5342,7 +5507,7 @@ Konum: {}</source>
         <translation>清除脏标志（ntfsfix -d）</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="623"/>
+        <location filename="../../core/fat.py" line="807"/>
         <source>Kisa ad uretilemedi</source>
         <translation>无法生成短文件名</translation>
     </message>
@@ -5387,20 +5552,20 @@ Konum: {}</source>
         <translation>文件夹名称：</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="840"/>
-        <location filename="../../core/fat.py" line="837"/>
+        <location filename="../../core/exfat.py" line="1092"/>
+        <location filename="../../core/fat.py" line="1062"/>
         <source>Klasor bos degil</source>
         <translation>文件夹不为空</translation>
     </message>
     <message>
         <location filename="../../core/hfswrite.py" line="819"/>
-        <location filename="../../core/ntfswrite.py" line="992"/>
+        <location filename="../../core/ntfswrite.py" line="1091"/>
         <location filename="../../core/udfwrite.py" line="689"/>
         <source>Klasor bos degil: {}</source>
         <translation>文件夹不为空：{}</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1260"/>
+        <location filename="../../core/extwrite.py" line="1467"/>
         <source>Klasor bos degil: {} ({} giris)</source>
         <translation>文件夹不为空：{}（{} 个条目）</translation>
     </message>
@@ -5410,6 +5575,11 @@ Konum: {}</source>
 {}</source>
         <translation>未找到文件夹：
 {}</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="1220"/>
+        <source>Klasor degistirilemez (immutable) olarak isaretli.</source>
+        <translation>该文件夹被标记为不可更改（immutable）。</translation>
     </message>
     <message>
         <location filename="../../ui/widgets/file_browser.py" line="116"/>
@@ -5449,8 +5619,8 @@ Konum: {}</source>
         <translation>正在复制文件夹</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="620"/>
-        <location filename="../../core/ntfsread.py" line="637"/>
+        <location filename="../../core/ntfsread.py" line="749"/>
+        <location filename="../../core/ntfsread.py" line="766"/>
         <source>Klasor okunamaz</source>
         <translation>无法读取文件夹</translation>
     </message>
@@ -5458,6 +5628,11 @@ Konum: {}</source>
         <location filename="../../ui/widgets/file_browser.py" line="386"/>
         <source>Klasor olusturulamadi</source>
         <translation>无法创建文件夹</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="1439"/>
+        <source>Klasorde en fazla {} alt klasor olabilir</source>
+        <translation>一个文件夹最多可包含 {} 个子文件夹</translation>
     </message>
     <message>
         <location filename="../../ui/widgets/file_browser.py" line="121"/>
@@ -5509,30 +5684,30 @@ Simdi acilsin mi?</source>
         <translation>正在克隆... {} / {}</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="673"/>
+        <location filename="../../core/fat.py" line="861"/>
         <source>Kok dizin dolu</source>
         <translation>根目录已满</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="370"/>
+        <location filename="../../core/fat.py" line="527"/>
         <source>Kok dizin dolu (FAT16 giris siniri)</source>
         <translation>根目录已满（FAT16 条目数限制）</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="1054"/>
+        <location filename="../../core/exfat.py" line="1310"/>
         <location filename="../../core/ntfs.py" line="859"/>
         <source>Kok dizin olusturuluyor...</source>
         <translation>正在创建根目录...</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="835"/>
-        <location filename="../../core/fat.py" line="832"/>
+        <location filename="../../core/exfat.py" line="1081"/>
+        <location filename="../../core/fat.py" line="1052"/>
         <source>Kok dizin silinemez</source>
         <translation>无法删除根目录</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1128"/>
-        <location filename="../../core/ntfswrite.py" line="860"/>
+        <location filename="../../core/extwrite.py" line="1246"/>
+        <location filename="../../core/ntfswrite.py" line="939"/>
         <source>Kok dizin uzerinde islem yapilamaz</source>
         <translation>无法对根目录执行此操作</translation>
     </message>
@@ -5542,7 +5717,7 @@ Simdi acilsin mi?</source>
         <translation>不是根文件系统（没有 {}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3895"/>
+        <location filename="../../ui/main_window.py" line="3904"/>
         <source>Konum</source>
         <translation>位置</translation>
     </message>
@@ -5562,27 +5737,32 @@ Simdi acilsin mi?</source>
         <translation>正在复制 — {}</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="393"/>
+        <location filename="../../core/session.py" line="158"/>
+        <source>Koruyucu MBR (0xEE) var ama gecerli GPT basligi bulunamadi</source>
+        <translation>存在保护性 MBR（0xEE），但未找到有效的 GPT 头</translation>
+    </message>
+    <message>
+        <location filename="../../core/extmove.py" line="402"/>
         <source>Kotali (quota) ext biriminde inode tasinamaz; birimi silinecek gruplarda dosya kalmayacak boyuta kucultun</source>
         <translation>在启用配额的 ext 卷上无法移动 inode；只能将卷缩小到被移除的块组中不再有文件的大小</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="241"/>
+        <location filename="../../core/extmove.py" line="242"/>
         <source>Kucultme icin yeterli bos alan yok</source>
         <translation>没有足够的空闲空间用于收缩</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="354"/>
+        <location filename="../../core/resize.py" line="389"/>
         <source>Kucultme veri kaybina yol acar: dosyalar yeni sinirin otesinde. Once dosyalari tasiyin.</source>
         <translation>收缩会导致数据丢失：有文件位于新边界之外。请先移动这些文件。</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="530"/>
+        <location filename="../../core/resize.py" line="579"/>
         <source>Kucultme veri kaybina yol acar: kumeler yeni sinirin otesinde</source>
         <translation>收缩会导致数据丢失：有簇位于新边界之外</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="816"/>
+        <location filename="../../core/resize.py" line="867"/>
         <source>Kucultme yapilamaz — {}</source>
         <translation>无法缩小 — {}</translation>
     </message>
@@ -5597,7 +5777,7 @@ Simdi acilsin mi?</source>
         <translation>不可用</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3909"/>
+        <location filename="../../ui/main_window.py" line="3924"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Kullanilan</source>
         <translation>已用</translation>
@@ -5608,12 +5788,12 @@ Simdi acilsin mi?</source>
         <translation>正在计算已用空间...</translation>
     </message>
     <message>
-        <location filename="../../core/usedmap.py" line="288"/>
+        <location filename="../../core/usedmap.py" line="321"/>
         <source>Kullanilan alan hesaplaniyor: bolum {}</source>
         <translation>正在计算已用空间：分区 {}</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="697"/>
+        <location filename="../../core/extmove.py" line="706"/>
         <source>Kullanilan inode&apos;lar taraniyor...</source>
         <translation>正在扫描已使用的 inode...</translation>
     </message>
@@ -5638,17 +5818,17 @@ Simdi acilsin mi?</source>
         <translation>簇大小：</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="737"/>
+        <location filename="../../core/ntfsresize.py" line="835"/>
         <source>Kume haritasi guncelleniyor...</source>
         <translation>正在更新簇映射...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="729"/>
+        <location filename="../../core/ntfsresize.py" line="827"/>
         <source>Kume haritasi inceleniyor...</source>
         <translation>正在检查簇映射...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3902"/>
+        <location filename="../../ui/main_window.py" line="3911"/>
         <source>Kume/blok boyutu</source>
         <translation>簇/块大小</translation>
     </message>
@@ -5668,7 +5848,7 @@ Simdi acilsin mi?</source>
         <translation>恢复失败</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1228"/>
+        <location filename="../../core/session.py" line="1271"/>
         <source>Kurtarma desteklenmiyor</source>
         <translation>不支持恢复</translation>
     </message>
@@ -5802,7 +5982,7 @@ Simdi acilsin mi?</source>
         <translation>Linux 拒绝挂载处于此状态的 NTFS 卷（ntfs3：脏卷；ntfs-3g：元数据保留在 Windows 缓存中）。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4136"/>
+        <location filename="../../ui/main_window.py" line="4151"/>
         <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt5 ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
         <translation>许可证：GNU GPL 第 3 版。随附的 Qt、PyQt5 和 Python 的许可证：帮助 &gt; 第三方许可证。</translation>
     </message>
@@ -5827,13 +6007,13 @@ Simdi acilsin mi?</source>
         <translation>创建 MBR 分区表</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="247"/>
-        <location filename="../../core/mbr.py" line="193"/>
+        <location filename="../../core/layoutedit.py" line="259"/>
+        <location filename="../../core/mbr.py" line="210"/>
         <source>MBR en fazla 4 birincil bolum destekler</source>
         <translation>MBR 最多支持 4 个主分区</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="147"/>
+        <location filename="../../core/convert.py" line="170"/>
         <source>MBR en fazla 4 birincil bolum tasir; tabloda {} bolum var. Once bolum sayisini azaltin.</source>
         <translation>MBR 最多容纳 4 个主分区；该分区表有 {} 个。请先减少分区数量。</translation>
     </message>
@@ -5845,19 +6025,31 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
 要添加更多分区，请在扩展分区中创建逻辑分区。</translation>
     </message>
     <message>
+        <location filename="../../core/convert.py" line="230"/>
+        <source>MBR yaziliyor...</source>
+        <translation>正在写入 MBR...</translation>
+    </message>
+    <message>
         <location filename="../../core/ntfs.py" line="1331"/>
         <source>MFT alani yetersiz</source>
         <translation>MFT 空间不足</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="480"/>
+        <location filename="../../core/ntfswrite.py" line="573"/>
+        <location filename="../../core/ntfswrite.py" line="596"/>
         <source>MFT kaydi diskte bulunamadi: {}</source>
         <translation>在磁盘上未找到 MFT 记录：{}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="414"/>
+        <location filename="../../core/ntfsread.py" line="543"/>
         <source>MFT kaydi okunamadi: {}</source>
         <translation>无法读取 MFT 记录：{}</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsresize.py" line="596"/>
+        <location filename="../../core/ntfsresize.py" line="647"/>
+        <source>MFT kaydi {} kullanimda ama okunamadi; kucultme guvenli degil (once Windows&apos;ta chkdsk): {}</source>
+        <translation>MFT 记录 {} 正在使用但无法读取；缩小不安全（请先在 Windows 中运行 chkdsk）：{}</translation>
     </message>
     <message>
         <location filename="../../core/ntfs.py" line="772"/>
@@ -5870,8 +6062,9 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>正在创建 MFT 记录...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="413"/>
-        <location filename="../../core/ntfsresize.py" line="549"/>
+        <location filename="../../core/ntfsresize.py" line="468"/>
+        <location filename="../../core/ntfsresize.py" line="589"/>
+        <location filename="../../core/ntfsresize.py" line="640"/>
         <source>MFT taraniyor... {}/{} kayit</source>
         <translation>正在扫描 MFT... {}/{} 条记录</translation>
     </message>
@@ -5881,12 +6074,12 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>正在写入 MFT 镜像...</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="470"/>
+        <location filename="../../core/recovery.py" line="546"/>
         <source>MP3 ses</source>
         <translation>MP3 音频</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="471"/>
+        <location filename="../../core/recovery.py" line="547"/>
         <source>MP4 video</source>
         <translation>MP4 视频</translation>
     </message>
@@ -5906,7 +6099,7 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>逻辑</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3896"/>
+        <location filename="../../ui/main_window.py" line="3905"/>
         <source>Mantiksal (EBR: LBA {})</source>
         <translation>逻辑（EBR：LBA {}）</translation>
     </message>
@@ -5916,17 +6109,17 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>逻辑分区</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="310"/>
+        <location filename="../../core/mbr.py" line="376"/>
         <source>Mantiksal bolum genisletilmis bolumun disinda</source>
         <translation>逻辑分区位于扩展分区之外</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="278"/>
+        <location filename="../../core/mbr.py" line="338"/>
         <source>Mantiksal bolum icin once genisletilmis bolum olusturun</source>
         <translation>创建逻辑分区前请先创建扩展分区</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="332"/>
+        <location filename="../../core/mbr.py" line="398"/>
         <location filename="../../core/resize.py" line="84"/>
         <source>Mantiksal bolumun genisletilmis bolumu bulunamadi</source>
         <translation>未找到该逻辑分区所属的扩展分区</translation>
@@ -5992,6 +6185,12 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>现有分区将丢失</translation>
     </message>
     <message>
+        <location filename="../../core/convert.py" line="121"/>
+        <location filename="../../core/convert.py" line="211"/>
+        <source>Mevcut bolumler okunuyor...</source>
+        <translation>正在读取现有分区...</translation>
+    </message>
+    <message>
         <location filename="../../ui/main_window.py" line="1131"/>
         <source>Mevcut boyut: {}
 
@@ -6026,9 +6225,19 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>NTFS / exFAT</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="403"/>
+        <location filename="../../core/ntfsfix.py" line="405"/>
+        <source>NTFS birim bilgisi ($Volume) okunamadi; birimin durumu bilinmiyor. Yazma reddedildi.</source>
+        <translation>无法读取 NTFS 卷信息（$Volume）；卷状态未知。已拒绝写入。</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsfix.py" line="525"/>
         <source>NTFS birimi denetleniyor...</source>
         <translation>正在检查 NTFS 卷...</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfswrite.py" line="121"/>
+        <source>NTFS biriminin durumu okunamadi; yazma reddedildi: {}</source>
+        <translation>无法读取 NTFS 卷状态；已拒绝写入：{}</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="1916"/>
@@ -6046,24 +6255,24 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>正在检查 NTFS — 分区 {}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="710"/>
+        <location filename="../../core/ntfsresize.py" line="813"/>
         <source>NTFS en fazla {} kume adresler</source>
         <translation>NTFS 最多可寻址 {} 个簇</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="286"/>
+        <location filename="../../core/ntfsread.py" line="359"/>
         <source>NTFS imzasi yok</source>
         <translation>没有 NTFS 签名</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="337"/>
-        <location filename="../../core/ntfsfix.py" line="407"/>
+        <location filename="../../core/ntfsfix.py" line="459"/>
+        <location filename="../../core/ntfsfix.py" line="529"/>
         <location filename="../../ui/dialogs/ntfsfix.py" line="135"/>
         <source>NTFS onyukleme sektoru bulunamadi</source>
         <translation>未找到 NTFS 引导扇区</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="669"/>
+        <location filename="../../core/ntfsresize.py" line="765"/>
         <source>NTFS onyukleme sektoru taninmadi</source>
         <translation>无法识别 NTFS 引导扇区</translation>
     </message>
@@ -6073,7 +6282,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>NTFS 版本：{}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="533"/>
+        <location filename="../../core/ntfsresize.py" line="619"/>
         <source>NTFS verisi tasiniyor... {}/{} kume</source>
         <translation>正在移动 NTFS 数据... {}/{} 个簇</translation>
     </message>
@@ -6081,6 +6290,11 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <location filename="../../core/ntfs.py" line="851"/>
         <source>NTFS yerlesimi hazirlaniyor...</source>
         <translation>正在准备 NTFS 布局...</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsfix.py" line="412"/>
+        <source>NTFS {} surumu yazma icin desteklenmiyor (3.0 ve uzeri gerekir).</source>
+        <translation>不支持写入 NTFS {} 版本（需要 3.0 或更高版本）。</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/ntfsfix.py" line="22"/>
@@ -6150,6 +6364,13 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>偏移</translation>
     </message>
     <message>
+        <location filename="../../core/extwrite.py" line="1226"/>
+        <location filename="../../core/extwrite.py" line="1460"/>
+        <location filename="../../core/extwrite.py" line="1539"/>
+        <source>Oge degistirilemez (immutable/append-only) olarak isaretli: {}</source>
+        <translation>该项目被标记为不可更改/仅追加（immutable/append-only）：{}</translation>
+    </message>
+    <message>
         <location filename="../../core/image.py" line="341"/>
         <location filename="../../core/restoreplan.py" line="169"/>
         <source>Okuma bolum sinirini asiyor</source>
@@ -6186,7 +6407,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>读取超出了虚拟磁盘边界</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1363"/>
+        <location filename="../../core/session.py" line="1406"/>
         <source>Okuma/Yazma (acik)</source>
         <translation>读写（已打开）</translation>
     </message>
@@ -6270,17 +6491,17 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>请先打开分区表。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="801"/>
+        <location filename="../../core/session.py" line="844"/>
         <source>Once bir bolum tablosu olusturun</source>
         <translation>请先创建分区表</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1354"/>
+        <location filename="../../core/session.py" line="1397"/>
         <source>Once bir bolum tablosu olusturun (MBR veya GPT)</source>
         <translation>请先创建分区表（MBR 或 GPT）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3974"/>
+        <location filename="../../ui/main_window.py" line="3989"/>
         <source>Once bir disk goruntusu acin veya olusturun.</source>
         <translation>请先打开或创建磁盘镜像。</translation>
     </message>
@@ -6297,7 +6518,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>请先选择源。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3956"/>
+        <location filename="../../ui/main_window.py" line="3971"/>
         <source>Once listeden veya haritadan bir bolum secin.</source>
         <translation>请先从列表或分区图中选择一个分区。</translation>
     </message>
@@ -6445,24 +6666,24 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>重新生成引导菜单</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="130"/>
+        <location filename="../../core/ntfsfix.py" line="135"/>
         <source>Onyukleme sektoru bozuk; yedegi saglam</source>
         <translation>引导扇区已损坏；其备份完好</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="299"/>
+        <location filename="../../core/ntfsread.py" line="372"/>
         <source>Onyukleme sektoru degerleri tutarsiz</source>
         <translation>引导扇区的值不一致</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="416"/>
+        <location filename="../../core/ntfsfix.py" line="538"/>
         <source>Onyukleme sektoru denetleniyor...</source>
         <translation>正在检查引导扇区...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="722"/>
-        <location filename="../../core/ntfsresize.py" line="743"/>
-        <location filename="../../core/resize.py" line="951"/>
+        <location filename="../../core/ntfsresize.py" line="820"/>
+        <location filename="../../core/ntfsresize.py" line="841"/>
+        <location filename="../../core/resize.py" line="1002"/>
         <source>Onyukleme sektoru guncelleniyor...</source>
         <translation>正在更新引导扇区...</translation>
     </message>
@@ -6472,7 +6693,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>检查引导扇区和 $MFTMirr 并在需要时修复，同时清空日志（$LogFile）。这与 Linux 上 “ntfsfix” 的作用相同。</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="132"/>
+        <location filename="../../core/ntfsfix.py" line="137"/>
         <source>Onyukleme sektoru ve yedegi okunamiyor</source>
         <translation>引导扇区及其备份均无法读取</translation>
     </message>
@@ -6482,12 +6703,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>正在写入引导扇区...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="420"/>
+        <location filename="../../core/ntfsfix.py" line="542"/>
         <source>Onyukleme sektoru yedekten geri yazildi</source>
         <translation>已从备份还原引导扇区</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3892"/>
+        <location filename="../../ui/main_window.py" line="3901"/>
         <source>Onyuklenebilir</source>
         <translation>可引导</translation>
     </message>
@@ -6519,17 +6740,23 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>属性</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="328"/>
+        <location filename="../../core/ntfsresize.py" line="383"/>
         <source>Oznitelik kayboldu (kayit {})</source>
         <translation>属性消失（记录 {}）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="559"/>
+        <location filename="../../core/ntfswrite.py" line="634"/>
         <source>Oznitelik kayitta bulunamadi</source>
         <translation>在记录中未找到该属性</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3900"/>
+        <location filename="../../core/ntfsread.py" line="275"/>
+        <location filename="../../core/ntfsread.py" line="280"/>
+        <source>Oznitelik parcalari tutarsiz (kayit {})</source>
+        <translation>属性片段不一致（记录 {}）</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3909"/>
         <source>Oznitelikler</source>
         <translation>属性</translation>
     </message>
@@ -6539,13 +6766,13 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>PCI 设备</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="465"/>
+        <location filename="../../core/recovery.py" line="541"/>
         <location filename="../../ui/widgets/file_browser.py" line="237"/>
         <source>PDF belgesi</source>
         <translation>PDF 文档</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="463"/>
+        <location filename="../../core/recovery.py" line="539"/>
         <location filename="../../ui/widgets/file_browser.py" line="236"/>
         <source>PNG goruntu</source>
         <translation>PNG 图像</translation>
@@ -6576,7 +6803,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>平台</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4135"/>
+        <location filename="../../ui/main_window.py" line="4150"/>
         <source>Proje sayfasi: {}</source>
         <translation>项目页面：{}</translation>
     </message>
@@ -6606,7 +6833,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Qt 平台</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="467"/>
+        <location filename="../../core/recovery.py" line="543"/>
         <source>RAR arsivi</source>
         <translation>RAR 压缩包</translation>
     </message>
@@ -6648,7 +6875,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>本系统中的磁盘</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="474"/>
+        <location filename="../../core/recovery.py" line="550"/>
         <source>SQLite veritabani</source>
         <translation>SQLite 数据库</translation>
     </message>
@@ -6673,18 +6900,18 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>正在写入固定表（$UpCase、$AttrDef）...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3999"/>
-        <location filename="../../ui/main_window.py" line="4008"/>
+        <location filename="../../ui/main_window.py" line="4014"/>
+        <location filename="../../ui/main_window.py" line="4023"/>
         <source>Salt okunur acildi</source>
         <translation>已以只读方式打开</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4002"/>
+        <location filename="../../ui/main_window.py" line="4017"/>
         <source>Salt okunur devam et</source>
         <translation>以只读方式继续</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1366"/>
+        <location filename="../../core/session.py" line="1409"/>
         <source>Salt okunur — degisiklikler Uygula ile yazilir</source>
         <translation>只读 — 更改通过“应用”写入</translation>
     </message>
@@ -6769,7 +6996,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>未选择任何内容</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1273"/>
+        <location filename="../../core/session.py" line="1316"/>
         <source>Sektor</source>
         <translation>扇区</translation>
     </message>
@@ -6795,22 +7022,22 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>未按扇区边界对齐的写入</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3881"/>
+        <location filename="../../ui/main_window.py" line="3890"/>
         <source>Sema</source>
         <translation>分区方案</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="406"/>
+        <location filename="../../core/extread.py" line="545"/>
         <source>Sembolik bag dongusu: {}</source>
         <translation>符号链接循环：{}</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="288"/>
+        <location filename="../../core/extread.py" line="359"/>
         <source>Sembolik bagin icerigi okunamaz</source>
         <translation>无法读取符号链接的内容</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="338"/>
+        <location filename="../../core/extread.py" line="413"/>
         <source>Sembolik bagin icerigi okunamaz; hedefi icin symlink_target() kullanin veya resolve(..., follow=True) ile izleyin</source>
         <translation>无法读取符号链接的内容；请使用 symlink_target() 获取其目标，或使用 resolve(..., follow=True) 跟随链接</translation>
     </message>
@@ -6830,12 +7057,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>此版本无法读取条带化 btrfs（RAID0/10/5/6）</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1308"/>
+        <location filename="../../core/session.py" line="1351"/>
         <source>Seyrek (sparse) VMDK bu surumde salt okunur.</source>
         <translation>稀疏 VMDK 在此版本中为只读。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="326"/>
+        <location filename="../../core/session.py" line="343"/>
         <source>Seyrek (sparse) VMDK bu surumde salt okunur. Duz (flat) VMDK ve VHD yazilabilir.</source>
         <translation>稀疏 VMDK 在此版本中为只读。平面 VMDK 和 VHD 可写。</translation>
     </message>
@@ -6860,6 +7087,11 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>填零（1 遍）</translation>
     </message>
     <message>
+        <location filename="../../core/ntfsread.py" line="337"/>
+        <source>Sifrelenmis (EFS) NTFS dosyasi okunamaz: icerik yalnizca Windows&apos;ta, sahibinin hesabiyla cozulur</source>
+        <translation>无法读取加密（EFS）的 NTFS 文件：内容只能在 Windows 中使用所有者账户解密</translation>
+    </message>
+    <message>
         <location filename="../../core/apfs.py" line="209"/>
         <source>Sifreli APFS birimi ({}); anahtar olmadan okunamaz.</source>
         <translation>加密的 APFS 卷（{}）；没有密钥无法读取。</translation>
@@ -6880,8 +7112,8 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>无法读取加密的 btrfs 数据</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="380"/>
-        <location filename="../../core/ntfsread.py" line="397"/>
+        <location filename="../../core/ntfsread.py" line="508"/>
+        <location filename="../../core/ntfsread.py" line="526"/>
         <source>Sikistirilmis NTFS akisi bu surumde okunamaz</source>
         <translation>此版本无法读取压缩的 NTFS 数据流</translation>
     </message>
@@ -6896,7 +7128,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>压缩包</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="465"/>
+        <location filename="../../core/ntfsresize.py" line="516"/>
         <source>Sikistirilmis/sifrelenmis akis tasinamaz (kayit {})</source>
         <translation>无法移动压缩/加密的数据流（记录 {}）</translation>
     </message>
@@ -6976,8 +7208,8 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>暂时只浏览</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="151"/>
-        <location filename="../../core/extwrite.py" line="164"/>
+        <location filename="../../core/extwrite.py" line="227"/>
+        <location filename="../../core/extwrite.py" line="240"/>
         <source>Sinir disi blok yazimi: {}</source>
         <translation>块写入越界：{}</translation>
     </message>
@@ -7007,7 +7239,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>将按顺序执行以下步骤：&lt;br&gt;1. 备份当前设置&lt;br&gt;2. 启用对其他系统的扫描&lt;br&gt;3. 在磁盘 &lt;b&gt;{}&lt;/b&gt; 上重新安装 GRUB&lt;br&gt;4. 重新生成引导菜单&lt;br&gt;&lt;br&gt;不会触及其他磁盘。是否继续？</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="525"/>
+        <location filename="../../core/filesystem.py" line="530"/>
         <source>Sis</source>
         <translation>系统</translation>
     </message>
@@ -7058,12 +7290,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>系统准备项</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="270"/>
+        <location filename="../../core/xfsgrow.py" line="278"/>
         <source>Son ayirma grubunun bos alan agaci cok duzeyli; bu surumde uzatilamiyor</source>
         <translation>最后一个分配组的空闲空间树有多个层级；此版本无法扩展</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="292"/>
+        <location filename="../../core/xfsgrow.py" line="300"/>
         <source>Son ayirma grubunun bos alan agaci dolu</source>
         <translation>最后一个分配组的空闲空间树已满</translation>
     </message>
@@ -7083,8 +7315,8 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>移除最近添加的待执行步骤</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="383"/>
-        <location filename="../../core/extresize.py" line="335"/>
+        <location filename="../../core/extmove.py" line="384"/>
+        <location filename="../../core/extresize.py" line="365"/>
         <source>Son grup metaveri icin cok kucuk</source>
         <translation>最后一个块组太小，无法容纳其元数据</translation>
     </message>
@@ -7120,7 +7352,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>下次启动：Boot{}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="484"/>
+        <location filename="../../core/ntfsfix.py" line="606"/>
         <source>Sonuc denetleniyor...</source>
         <translation>正在检查结果...</translation>
     </message>
@@ -7170,7 +7402,7 @@ Devam edilsin mi?</source>
         <translation>正在写入超级块...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1297"/>
+        <location filename="../../ui/dialogs/backup.py" line="1298"/>
         <source>Sure: {}</source>
         <translation>用时：{}</translation>
     </message>
@@ -7215,7 +7447,7 @@ Devam edilsin mi?</source>
         <translation>全部否(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="806"/>
+        <location filename="../../core/session.py" line="849"/>
         <source>Tablo zaten {} biciminde</source>
         <translation>分区表已是 {} 格式</translation>
     </message>
@@ -7230,12 +7462,12 @@ Devam edilsin mi?</source>
         <translation>无分区表的磁盘</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="803"/>
+        <location filename="../../core/session.py" line="846"/>
         <source>Tablosuz disk donusturulemez; dosya sistemi tum diski kapliyor</source>
         <translation>无法转换没有分区表的磁盘；文件系统覆盖整个磁盘</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="851"/>
+        <location filename="../../core/resize.py" line="902"/>
         <source>Tablosuz disk: dosya sistemi tum diski kapliyor</source>
         <translation>无分区表的磁盘：文件系统覆盖整个磁盘</translation>
     </message>
@@ -7260,27 +7492,29 @@ Devam edilsin mi?</source>
         <location filename="../../core/clone.py" line="284"/>
         <location filename="../../core/clone.py" line="521"/>
         <location filename="../../core/clone.py" line="555"/>
+        <location filename="../../core/convert.py" line="158"/>
+        <location filename="../../core/convert.py" line="244"/>
         <location filename="../../core/efistore.py" line="233"/>
         <location filename="../../core/efistore.py" line="490"/>
-        <location filename="../../core/exfat.py" line="1078"/>
+        <location filename="../../core/exfat.py" line="1334"/>
         <location filename="../../core/ext.py" line="441"/>
         <location filename="../../core/formatter.py" line="254"/>
         <location filename="../../core/formatter.py" line="285"/>
         <location filename="../../core/grub.py" line="517"/>
         <location filename="../../core/hfsformat.py" line="294"/>
         <location filename="../../core/ntfs.py" line="882"/>
-        <location filename="../../core/ntfsfix.py" line="486"/>
-        <location filename="../../core/ntfsresize.py" line="725"/>
-        <location filename="../../core/ntfsresize.py" line="747"/>
+        <location filename="../../core/ntfsfix.py" line="608"/>
+        <location filename="../../core/ntfsresize.py" line="823"/>
+        <location filename="../../core/ntfsresize.py" line="845"/>
         <location filename="../../core/operations.py" line="622"/>
-        <location filename="../../core/resize.py" line="956"/>
+        <location filename="../../core/resize.py" line="1007"/>
         <location filename="../../core/restoreplan.py" line="340"/>
-        <location filename="../../core/session.py" line="792"/>
+        <location filename="../../core/session.py" line="835"/>
         <location filename="../../core/udfformat.py" line="358"/>
         <location filename="../../core/wipe.py" line="157"/>
         <location filename="../../core/wipe.py" line="96"/>
         <location filename="../../core/xfsformat.py" line="325"/>
-        <location filename="../../core/xfsgrow.py" line="398"/>
+        <location filename="../../core/xfsgrow.py" line="407"/>
         <location filename="../../ui/dialogs/apply.py" line="226"/>
         <location filename="../../ui/main_window.py" line="2126"/>
         <source>Tamamlandi</source>
@@ -7340,12 +7574,12 @@ Devam edilsin mi?</source>
         <translation>扫描失败</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="444"/>
+        <location filename="../../core/recovery.py" line="520"/>
         <source>Tarama bitti: {} aday bolum</source>
         <translation>扫描完成：{} 个候选分区</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="536"/>
+        <location filename="../../core/recovery.py" line="612"/>
         <source>Tarama bitti: {} dosya</source>
         <translation>扫描完成：{} 个文件</translation>
     </message>
@@ -7360,7 +7594,7 @@ Devam edilsin mi?</source>
         <translation>开始扫描</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="439"/>
+        <location filename="../../core/recovery.py" line="515"/>
         <source>Taraniyor... {} / {} — {} aday</source>
         <translation>正在扫描... {} / {} — {} 个候选项</translation>
     </message>
@@ -7385,12 +7619,12 @@ Devam edilsin mi?</source>
         <translation>主题已更改：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3934"/>
+        <location filename="../../ui/main_window.py" line="3949"/>
         <source>Temiz</source>
         <translation>正常</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3932"/>
+        <location filename="../../ui/main_window.py" line="3947"/>
         <source>Temiz kapatilmamis — Linux baglamaz; Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>未正常关闭 — Linux 不会挂载它；请使用“分区 &gt; 检查并修复 NTFS”</translation>
     </message>
@@ -7478,7 +7712,7 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3882"/>
+        <location filename="../../ui/main_window.py" line="3891"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
@@ -7486,7 +7720,7 @@ Devam edilsin mi?</source>
         <translation>类型</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3898"/>
+        <location filename="../../ui/main_window.py" line="3907"/>
         <source>Tur GUID</source>
         <translation>类型 GUID</translation>
     </message>
@@ -7640,7 +7874,7 @@ Devam edilsin mi?</source>
         <translation>USB 设备</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3904"/>
+        <location filename="../../ui/main_window.py" line="3913"/>
         <source>UUID / Seri no</source>
         <translation>UUID / 序列号</translation>
     </message>
@@ -7648,6 +7882,11 @@ Devam edilsin mi?</source>
         <location filename="../../ui/main_window.py" line="2876"/>
         <source>UYARI: Uygulama yonetici/root yetkisi olmadan calisiyor; disk icerigi okunamayabilir.</source>
         <translation>警告：应用程序在没有管理员/root 权限的情况下运行；可能无法读取磁盘内容。</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3869"/>
+        <source>UYARI: {}</source>
+        <translation>警告：{}</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="852"/>
@@ -7671,17 +7910,17 @@ Devam edilsin mi?</source>
         <translation>上级文件夹</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="154"/>
+        <location filename="../../core/extread.py" line="200"/>
         <source>Ustblok degerleri tutarsiz</source>
         <translation>超级块的值不一致</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="118"/>
+        <location filename="../../core/extread.py" line="164"/>
         <source>Ustblok okunamadi</source>
         <translation>无法读取超级块</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="393"/>
+        <location filename="../../core/extresize.py" line="423"/>
         <source>Ustblok yaziliyor...</source>
         <translation>正在写入超级块...</translation>
     </message>
@@ -7749,7 +7988,7 @@ Devam edilsin mi?</source>
         <translation>正在应用...</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="998"/>
+        <location filename="../../core/fat.py" line="1258"/>
         <source>Uygun FAT yerlesimi hesaplanamadi</source>
         <translation>无法计算出合适的 FAT 布局</translation>
     </message>
@@ -7832,43 +8071,43 @@ Devam edilsin mi?</source>
         <translation>放弃</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="299"/>
+        <location filename="../../core/ntfsresize.py" line="354"/>
         <source>Veri kosullari FILE kaydina sigmadi (kayit {})</source>
         <translation>数据运行无法放入 FILE 记录（记录 {}）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="221"/>
-        <location filename="../../core/ntfswrite.py" line="1105"/>
+        <location filename="../../core/ntfsresize.py" line="270"/>
+        <location filename="../../core/ntfswrite.py" line="1208"/>
         <source>Veri kosulu degeri cok buyuk</source>
         <translation>数据运行值过大</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1143"/>
+        <location filename="../../core/resize.py" line="1210"/>
         <source>Veri tasinirken hata: {}. {} / {} kopyalanmisti ve kaynak bolumun basi ezildi: bolum su an BOZUK (ne eski ne yeni yerinde tam). Tasima: sektor {} -&gt; {}, {} sektor, {} sektor tamamlandi (tanilama gunlugunde). Yedekten geri yukleyin ya da bos alan acip tasimayi bu sayilarla tamamlatin.</source>
         <translation>移动数据时出错：{}。已复制 {} / {}，且源分区的开头已被覆盖：该分区现已损坏（在旧位置和新位置都不完整）。移动：扇区 {} -&gt; {}，共 {} 个扇区，已完成 {} 个扇区（已记录在诊断日志中）。请从备份还原，或释放空间后使用这些数值完成移动。</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1139"/>
+        <location filename="../../core/resize.py" line="1206"/>
         <source>Veri tasinirken hata: {}. {} / {} kopyalanmisti; kaynak bolum henuz ezilmedi, bolum eski yerinde saglam ve tablo degismedi.</source>
         <translation>移动数据时出错：{}。已复制 {} / {}；源分区尚未被覆盖，因此该分区在旧位置完好无损，分区表未更改。</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="918"/>
+        <location filename="../../core/resize.py" line="969"/>
         <source>Veri tasiniyor...</source>
         <translation>正在移动数据...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1127"/>
+        <location filename="../../core/resize.py" line="1194"/>
         <source>Veri tasiniyor... {}</source>
         <translation>正在移动数据... {}</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="718"/>
+        <location filename="../../core/extmove.py" line="727"/>
         <source>Veri tasiniyor... {} / {}</source>
         <translation>正在移动数据... {} / {}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="733"/>
+        <location filename="../../core/ntfsresize.py" line="831"/>
         <source>Veri yeni boyuta sigmiyor: {} kume dolu, yeni boyut {} kume</source>
         <translation>数据无法放入新大小：已使用 {} 个簇，新大小为 {} 个簇</translation>
     </message>
@@ -7884,12 +8123,12 @@ Devam edilsin mi?</source>
         <translation>Windows 恢复分区</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="492"/>
+        <location filename="../../core/session.py" line="521"/>
         <source>Windows bicimlendiricisi cagriliyor...</source>
         <translation>正在调用 Windows 格式化程序...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="503"/>
+        <location filename="../../core/session.py" line="532"/>
         <source>Windows bicimlendiricisi hata verdi: {}</source>
         <translation>Windows 格式化程序报告错误：{}</translation>
     </message>
@@ -7899,12 +8138,12 @@ Devam edilsin mi?</source>
         <translation>已使用 Windows 格式化程序</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="787"/>
+        <location filename="../../core/session.py" line="830"/>
         <source>Windows boyutlandiricisi basarisiz: {}</source>
         <translation>Windows 调整大小工具失败：{}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="781"/>
+        <location filename="../../core/session.py" line="824"/>
         <source>Windows boyutlandiricisi calisiyor...</source>
         <translation>Windows 调整大小工具正在运行...</translation>
     </message>
@@ -7914,7 +8153,7 @@ Devam edilsin mi?</source>
         <translation>已使用 Windows 调整大小工具</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="472"/>
+        <location filename="../../core/recovery.py" line="548"/>
         <source>Windows calistirilabilir</source>
         <translation>Windows 可执行文件</translation>
     </message>
@@ -7924,17 +8163,22 @@ Devam edilsin mi?</source>
         <translation>Windows 错误代码 {}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="147"/>
+        <location filename="../../core/ntfsfix.py" line="152"/>
         <source>Windows hazirda bekletmede (Hizli baslatma dahil)</source>
         <translation>Windows 处于休眠状态（包括快速启动）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="410"/>
+        <location filename="../../core/ntfsfix.py" line="416"/>
+        <source>Windows hazirda bekletmede (Hizli baslatma dahil) ya da hiberfil.sys okunamadi. Bu birime yazip sonra Windows&apos;u kaldigi yerden acmak birimi bozar. Windows&apos;u acip &apos;Yeniden baslat&apos; ile kapatin.</source>
+        <translation>Windows 处于休眠状态（包括快速启动），或无法读取 hiberfil.sys。写入此卷后再恢复 Windows 会损坏它。请启动 Windows 并用“重启”关闭。</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsfix.py" line="532"/>
         <source>Windows hazirda bekletmede (Hizli baslatma dahil). Bu birime yazip sonra Windows&apos;u kaldigi yerden acmak birimi bozar. Windows&apos;u acip &apos;Yeniden baslat&apos; ile kapatin ya da onarimda hazirda bekletme dosyasini gecersiz kilmayi secin.</source>
         <translation>Windows 处于休眠状态（包括快速启动）。写入此卷后再恢复 Windows 会损坏该卷。请启动 Windows 并通过“重启”将其关闭，或在修复中选择使休眠文件失效。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3929"/>
+        <location filename="../../ui/main_window.py" line="3944"/>
         <source>Windows hazirda bekletmede — Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>Windows 处于休眠状态 — 请使用“分区 &gt; 检查并修复 NTFS”</translation>
     </message>
@@ -7964,7 +8208,7 @@ Devam edilsin mi?</source>
         <translation>请求在 Windows 上运行 chkdsk</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="472"/>
+        <location filename="../../core/ntfsfix.py" line="594"/>
         <source>Windows&apos;un bir sonraki acilisinda chkdsk calisacak</source>
         <translation>chkdsk 将在下次启动 Windows 时运行</translation>
     </message>
@@ -7974,7 +8218,7 @@ Devam edilsin mi?</source>
         <translation>使 Windows 未正常关闭的 NTFS 卷可以再次挂载（类似 ntfsfix）</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="266"/>
+        <location filename="../../core/xfsgrow.py" line="274"/>
         <source>XFS ayirma grubu basligi bozuk: {}</source>
         <translation>XFS 分配组头已损坏：{}</translation>
     </message>
@@ -7989,22 +8233,22 @@ Devam edilsin mi?</source>
         <translation>仅支持在 512 字节扇区的设备上进行 XFS 格式化</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="93"/>
+        <location filename="../../core/xfsgrow.py" line="94"/>
         <source>XFS birimi bu surumun tanimadigi ozellikler tasiyor; buyutulemiyor</source>
         <translation>该 XFS 卷使用了此版本未知的特性；无法扩展</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="91"/>
+        <location filename="../../core/xfsgrow.py" line="92"/>
         <source>XFS birimi onarim bekliyor (xfs_repair)</source>
         <translation>该 XFS 卷需要修复（xfs_repair）</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="390"/>
+        <location filename="../../core/xfsgrow.py" line="399"/>
         <source>XFS buyutuluyor...</source>
         <translation>正在扩展 XFS...</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="351"/>
+        <location filename="../../core/xfsgrow.py" line="359"/>
         <source>XFS gunlugu temiz degil; birim Linux&apos;ta baglanip duzgun ayrilmadan buyutulemez</source>
         <translation>XFS 日志不干净；在 Linux 上挂载并正常卸载之前，无法扩展该卷</translation>
     </message>
@@ -8034,7 +8278,7 @@ Devam edilsin mi?</source>
         <translation>正在写入 XFS 根目录和日志...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="990"/>
+        <location filename="../../core/resize.py" line="1041"/>
         <source>XFS kucultulemez</source>
         <translation>无法缩小 XFS</translation>
     </message>
@@ -8045,17 +8289,17 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../core/xfs.py" line="68"/>
-        <location filename="../../core/xfsgrow.py" line="59"/>
+        <location filename="../../core/xfsgrow.py" line="60"/>
         <source>XFS ustblogu bulunamadi</source>
         <translation>未找到 XFS 超级块</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="87"/>
+        <location filename="../../core/xfsgrow.py" line="88"/>
         <source>XFS v4 birimleri bu surumde buyutulemiyor</source>
         <translation>此版本无法扩展 XFS v4 卷</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="685"/>
+        <location filename="../../core/filesystem.py" line="690"/>
         <source>XFS yazma bu surumde yok; birim salt okunur acildi.</source>
         <translation>此版本不支持写入 XFS；该卷已以只读方式打开。</translation>
     </message>
@@ -8101,6 +8345,11 @@ Devam edilsin mi?</source>
         <location filename="../../ui/dialogs/backup.py" line="487"/>
         <source>Yalnizca kullanilan alani yedekle (hizli)</source>
         <translation>仅备份已用空间（快速）</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3920"/>
+        <source>Yapi tutarsiz — okunabilir, yazilamaz; once fsck.fat / chkdsk ile onarin</source>
+        <translation>结构不一致 — 可读，不可写；请先用 fsck.fat / chkdsk 修复</translation>
     </message>
     <message>
         <location filename="../../core/grub.py" line="103"/>
@@ -8216,7 +8465,7 @@ Devam edilsin mi?</source>
         <translation>无法写入</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1253"/>
+        <location filename="../../ui/dialogs/backup.py" line="1254"/>
         <source>Yedegi al</source>
         <translation>开始备份</translation>
     </message>
@@ -8282,7 +8531,7 @@ Devam edilsin mi?</source>
         <translation>已创建备份：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1399"/>
+        <location filename="../../ui/dialogs/backup.py" line="1400"/>
         <source>Yedek alindi: {} — {} (kaynak {}, kazanc %{:.0f})</source>
         <translation>备份完成：{} — {}（源 {}，节省 {:.0f}%）</translation>
     </message>
@@ -8330,7 +8579,7 @@ Devam edilsin mi?</source>
         <translation>备份文件 (.dub)</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1298"/>
+        <location filename="../../core/session.py" line="1341"/>
         <source>Yedek dosyasi (.dub) bir arsivdir; uzerine yazilamaz. Yedegi bir diske veya yeni bir goruntuye yazin.</source>
         <translation>备份文件（.dub）是一个归档，不能覆盖写入。请将备份写入磁盘或新镜像。</translation>
     </message>
@@ -8415,12 +8664,12 @@ Devam edilsin mi?</source>
         <translation>正在读取备份...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="134"/>
+        <location filename="../../core/ntfsfix.py" line="139"/>
         <source>Yedek onyukleme sektoru eksik veya farkli</source>
         <translation>备份引导扇区缺失或不一致</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="425"/>
+        <location filename="../../core/ntfsfix.py" line="547"/>
         <source>Yedek onyukleme sektoru yeniden yazildi</source>
         <translation>已重写备份引导扇区</translation>
     </message>
@@ -8440,7 +8689,7 @@ Devam edilsin mi?</source>
         <translation>正在开始备份...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1321"/>
+        <location filename="../../ui/dialogs/backup.py" line="1322"/>
         <source>Yedekleme durduruldu; yarim kalan yedek dosyasi silindi.</source>
         <translation>备份已停止；未完成的备份文件已删除。</translation>
     </message>
@@ -8519,13 +8768,13 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
         <translation>新建虚拟磁盘 (VHD)</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="198"/>
+        <location filename="../../core/xfsgrow.py" line="205"/>
         <source>Yeni XFS ayirma grubu cok kucuk</source>
         <translation>新的 XFS 分配组太小</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1281"/>
-        <location filename="../../core/ntfswrite.py" line="1035"/>
+        <location filename="../../core/extwrite.py" line="1526"/>
+        <location filename="../../core/ntfswrite.py" line="1137"/>
         <source>Yeni ad yol icermemeli</source>
         <translation>新名称不能包含路径</translation>
     </message>
@@ -8565,32 +8814,32 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>新大小</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="346"/>
+        <location filename="../../core/resize.py" line="381"/>
         <source>Yeni boyut FAT ust verisinden kucuk</source>
         <translation>新大小小于 FAT 元数据</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="350"/>
+        <location filename="../../core/resize.py" line="385"/>
         <source>Yeni boyut FAT{} icin cok kucuk (en az {} kume gerekir)</source>
         <translation>新大小对于 FAT{} 来说太小（至少需要 {} 个簇）</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="708"/>
+        <location filename="../../core/ntfsresize.py" line="811"/>
         <source>Yeni boyut NTFS icin cok kucuk</source>
         <translation>新大小对于 NTFS 来说太小</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="527"/>
+        <location filename="../../core/resize.py" line="576"/>
         <source>Yeni boyut exFAT icin cok kucuk</source>
         <translation>新大小对于 exFAT 来说太小</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="523"/>
+        <location filename="../../core/resize.py" line="572"/>
         <source>Yeni boyut exFAT ust verisinden kucuk</source>
         <translation>新大小小于 exFAT 元数据</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="483"/>
+        <location filename="../../core/resize.py" line="520"/>
         <source>Yeni boyut exFAT yerlesimi icin cok kucuk</source>
         <translation>新大小对于 exFAT 布局来说太小</translation>
     </message>
@@ -8625,7 +8874,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>新建镜像...</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="325"/>
+        <location filename="../../core/extresize.py" line="355"/>
         <source>Yeni grup {} / {}</source>
         <translation>新块组 {} / {}</translation>
     </message>
@@ -8649,7 +8898,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>有新版本可用</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4182"/>
+        <location filename="../../ui/main_window.py" line="4197"/>
         <source>Yeni surum var: {} (kullanilan: {})</source>
         <translation>有新版本可用：{}（当前使用：{}）</translation>
     </message>
@@ -8694,12 +8943,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>无法重新启动：{}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="714"/>
+        <location filename="../../core/session.py" line="757"/>
         <source>Yeniden boyutlandirma icin onay gerekli (confirm=True)</source>
         <translation>调整大小需要确认（confirm=True）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4001"/>
+        <location filename="../../ui/main_window.py" line="4016"/>
         <location filename="../../ui/qt_i18n.py" line="46"/>
         <source>Yeniden dene</source>
         <translation>重试</translation>
@@ -8719,23 +8968,23 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>刷新错误</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="954"/>
-        <location filename="../../core/session.py" line="789"/>
+        <location filename="../../core/resize.py" line="1005"/>
+        <location filename="../../core/session.py" line="832"/>
         <source>Yenileniyor...</source>
         <translation>正在刷新...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="759"/>
+        <location filename="../../core/session.py" line="802"/>
         <source>Yerel boyutlandirici yok</source>
         <translation>没有原生的调整大小工具</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="530"/>
+        <location filename="../../core/ntfswrite.py" line="605"/>
         <source>Yerlesik oznitelik boyutu degisemez</source>
         <translation>常驻属性的大小不能更改</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="126"/>
+        <location filename="../../core/ntfswrite.py" line="171"/>
         <source>Yerlesik oznitelik bu yoldan yazilamaz</source>
         <translation>不能以这种方式写入常驻属性</translation>
     </message>
@@ -8745,7 +8994,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>该布局是为不同的目标大小准备的；请刷新</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1146"/>
+        <location filename="../../core/extwrite.py" line="1264"/>
         <source>Yeterli bos alan yok: {} blok gerekli, {} bos</source>
         <translation>空闲空间不足：需要 {} 个块，空闲 {} 个</translation>
     </message>
@@ -8833,8 +9082,8 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>路径</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="536"/>
-        <location filename="../../core/fat.py" line="468"/>
+        <location filename="../../core/exfat.py" line="730"/>
+        <location filename="../../core/fat.py" line="652"/>
         <source>Yol bulunamadi: {}</source>
         <translation>未找到路径：{}</translation>
     </message>
@@ -8881,7 +9130,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>高</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="466"/>
+        <location filename="../../core/recovery.py" line="542"/>
         <source>ZIP / Office belgesi</source>
         <translation>ZIP / Office 文档</translation>
     </message>
@@ -8891,20 +9140,22 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>已打开，已切换到前台：{}</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="302"/>
+        <location filename="../../core/mbr.py" line="368"/>
         <source>Zaten bir genisletilmis bolum var</source>
         <translation>扩展分区已存在</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="814"/>
-        <location filename="../../core/extwrite.py" line="1220"/>
-        <location filename="../../core/extwrite.py" line="1286"/>
-        <location filename="../../core/fat.py" line="799"/>
+        <location filename="../../core/exfat.py" line="1056"/>
+        <location filename="../../core/exfat.py" line="1121"/>
+        <location filename="../../core/extwrite.py" line="1402"/>
+        <location filename="../../core/extwrite.py" line="1531"/>
+        <location filename="../../core/fat.py" line="1019"/>
+        <location filename="../../core/fat.py" line="1094"/>
         <location filename="../../core/hfswrite.py" line="731"/>
         <location filename="../../core/hfswrite.py" line="755"/>
         <location filename="../../core/hfswrite.py" line="857"/>
-        <location filename="../../core/ntfsindex.py" line="412"/>
-        <location filename="../../core/ntfswrite.py" line="1038"/>
+        <location filename="../../core/ntfsindex.py" line="410"/>
+        <location filename="../../core/ntfswrite.py" line="1140"/>
         <location filename="../../core/udfwrite.py" line="596"/>
         <location filename="../../core/udfwrite.py" line="631"/>
         <location filename="../../core/udfwrite.py" line="731"/>
@@ -8973,7 +9224,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>无法读取 `{}`。</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="737"/>
+        <location filename="../../core/filesystem.py" line="742"/>
         <source>alt hacim</source>
         <translation>子卷</translation>
     </message>
@@ -8983,12 +9234,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>之后 {} ▶</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="126"/>
+        <location filename="../../core/extresize.py" line="151"/>
         <source>ayri gunluk aygiti</source>
         <translation>外部日志设备</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="420"/>
+        <location filename="../../core/filesystem.py" line="425"/>
         <source>bag</source>
         <translation>链接</translation>
     </message>
@@ -9026,7 +9277,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>未知</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="829"/>
+        <location filename="../../core/filesystem.py" line="834"/>
         <source>birim</source>
         <translation>卷</translation>
     </message>
@@ -9081,12 +9332,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>部分 btrfs 数据位于另一个设备上；仅凭单个设备无法读取</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="729"/>
+        <location filename="../../core/filesystem.py" line="734"/>
         <source>btrfs yazma bu surumde yok; birim salt okunur acildi.</source>
         <translation>此版本不支持写入 btrfs；该卷已以只读方式打开。</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="234"/>
+        <location filename="../../core/layoutedit.py" line="246"/>
         <source>bu dosya sistemi</source>
         <translation>此文件系统</translation>
     </message>
@@ -9113,7 +9364,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>无法读取磁盘信息（无权限）</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="121"/>
+        <location filename="../../core/extwrite.py" line="197"/>
         <source>disk kotasi (quota)</source>
         <translation>磁盘配额</translation>
     </message>
@@ -9166,38 +9417,38 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>非活动</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="273"/>
+        <location filename="../../core/exfat.py" line="324"/>
         <source>exFAT imzasi bulunamadi</source>
         <translation>未找到 exFAT 签名</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="707"/>
+        <location filename="../../core/resize.py" line="756"/>
         <source>exFAT onyukleme bolgesi taninmadi</source>
         <translation>无法识别 exFAT 引导区域</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="986"/>
+        <location filename="../../core/exfat.py" line="1242"/>
         <source>exFAT onyukleme bolgesi yaziliyor...</source>
         <translation>正在写入 exFAT 引导区域...</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="955"/>
+        <location filename="../../core/extmove.py" line="964"/>
         <source>ext birimi bu boyuta kucultulemez; en az {} blok gerekli</source>
         <translation>无法将 ext 卷缩小到此大小；至少需要 {} 个块</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="398"/>
+        <location filename="../../core/extresize.py" line="428"/>
         <source>ext buyutuldu</source>
         <translation>ext 已扩大</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="120"/>
-        <location filename="../../core/extresize.py" line="71"/>
+        <location filename="../../core/extread.py" line="166"/>
+        <location filename="../../core/extresize.py" line="93"/>
         <source>ext imzasi yok</source>
         <translation>没有 ext 签名</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="272"/>
+        <location filename="../../core/extresize.py" line="302"/>
         <source>ext yerlesimi hesaplaniyor...</source>
         <translation>正在计算 ext 布局...</translation>
     </message>
@@ -9212,7 +9463,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>所需工具：{}</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="422"/>
+        <location filename="../../core/filesystem.py" line="427"/>
         <location filename="../../ui/dialogs/efiboot.py" line="275"/>
         <source>gizli</source>
         <translation>隐藏</translation>
@@ -9246,22 +9497,27 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>原始</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="518"/>
+        <location filename="../../core/ntfsfix.py" line="640"/>
         <source>hiberfil.sys beklenmeyen bicimde</source>
         <translation>hiberfil.sys 的布局异常</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="478"/>
+        <location filename="../../core/ntfsfix.py" line="600"/>
         <source>hiberfil.sys gecersiz kilindi; Windows soguk acilacak</source>
         <translation>hiberfil.sys 已失效；Windows 将重新启动</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="378"/>
+        <location filename="../../core/extmove.py" line="379"/>
         <source>inline_data / ea_inode kullanan ext birimi kucultulemez</source>
         <translation>无法缩小使用 inline_data / ea_inode 的 ext 卷</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="729"/>
+        <location filename="../../core/extwrite.py" line="808"/>
+        <source>inline_data dizinine yazma desteklenmiyor</source>
+        <translation>不支持写入 inline_data 目录</translation>
+    </message>
+    <message>
+        <location filename="../../core/extmove.py" line="738"/>
         <source>inline_data inode&apos;u: {}</source>
         <translation>inline_data inode：{}</translation>
     </message>
@@ -9291,7 +9547,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>已锁定</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="489"/>
+        <location filename="../../core/recovery.py" line="565"/>
         <source>kurtarilan_{:012X}.{}</source>
         <translation>recovered_{:012X}.{}</translation>
     </message>
@@ -9327,12 +9583,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>已禁用 os-prober</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="511"/>
+        <location filename="../../core/extresize.py" line="541"/>
         <source>resize inode&apos;un cift dolayli blogu yok</source>
         <translation>resize inode 没有二级间接块</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="831"/>
+        <location filename="../../core/filesystem.py" line="836"/>
         <source>sifreli</source>
         <translation>已加密</translation>
     </message>
@@ -9342,7 +9598,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>服务器返回 {}</translation>
     </message>
     <message>
-        <location filename="../../core/planview.py" line="340"/>
+        <location filename="../../core/planview.py" line="351"/>
         <source>toplam {}</source>
         <translation>共 {}</translation>
     </message>
@@ -9591,7 +9847,7 @@ Sektor: {} B | Baglanti: {}</source>
         <translation>{}（{} 遍）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3886"/>
+        <location filename="../../ui/main_window.py" line="3895"/>
         <source>{} ({} sektor)</source>
         <translation>{}（{} 个扇区）</translation>
     </message>
@@ -9698,7 +9954,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>无法读取 {} 的信息（无权限）；无法确定是否为系统磁盘。已拒绝写入未知磁盘。</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="950"/>
+        <location filename="../../core/filesystem.py" line="955"/>
         <source>{} bir kapsayicidir; icindeki birimler bu surumde acilamiyor.</source>
         <translation>{} 是一个容器；此版本无法打开其中的卷。</translation>
     </message>
@@ -9713,12 +9969,12 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} 个分区未按 4K 边界对齐；在 SSD 和高级格式磁盘上性能可能下降。</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="92"/>
+        <location filename="../../core/convert.py" line="102"/>
         <source>{} bolum GPT&apos;ye tasinabilir</source>
         <translation>可以将 {} 个分区迁移到 GPT</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="153"/>
+        <location filename="../../core/convert.py" line="179"/>
         <source>{} bolum MBR&apos;ye tasinabilir</source>
         <translation>可以将 {} 个分区迁移到 MBR</translation>
     </message>
@@ -9743,8 +9999,8 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>此版本以只读方式打开 {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1305"/>
-        <location filename="../../core/session.py" line="323"/>
+        <location filename="../../core/session.py" line="1348"/>
+        <location filename="../../core/session.py" line="340"/>
         <source>{} bu surumde yalnizca okunabilir; yazma destegi yol haritasinda.</source>
         <translation>{} 在此版本中为只读；写入支持已列入开发计划。</translation>
     </message>
@@ -9754,7 +10010,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>增大 {}</translation>
     </message>
     <message>
-        <location filename="../../core/planview.py" line="338"/>
+        <location filename="../../core/planview.py" line="349"/>
         <source>{} degisen bolum</source>
         <translation>{} 个分区已更改</translation>
     </message>
@@ -9830,7 +10086,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
 {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="651"/>
+        <location filename="../../core/session.py" line="680"/>
         <source>{} dosyalarinin boyutu bu surumde degistirilemez</source>
         <translation>此版本无法更改 {} 文件的大小</translation>
     </message>
@@ -9840,7 +10096,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>{} 文件</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="770"/>
+        <location filename="../../core/resize.py" line="821"/>
         <source>{} geri tasinacak ({} veri kopyalanir)</source>
         <translation>将向磁盘开头方向移动 {}（复制 {} 数据）</translation>
     </message>
@@ -9850,7 +10106,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>{} 已更新：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4119"/>
+        <location filename="../../ui/main_window.py" line="4134"/>
         <source>{} hakkinda</source>
         <translation>关于 {}</translation>
     </message>
@@ -9862,7 +10118,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
 {}</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="953"/>
+        <location filename="../../core/filesystem.py" line="958"/>
         <source>{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya sistemleri: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, APFS, UDF, XFS, btrfs, F2FS, ISO 9660.</source>
         <translation>此版本无法显示 {} 的内容。可读取的文件系统：FAT12/16/32、exFAT、NTFS、ext2/3/4、HFS+、APFS、UDF、XFS、btrfs、F2FS、ISO 9660。</translation>
     </message>
@@ -9877,7 +10133,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>{} 图标</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="768"/>
+        <location filename="../../core/resize.py" line="819"/>
         <source>{} ileri tasinacak ({} veri kopyalanir)</source>
         <translation>将向磁盘末尾方向移动 {}（复制 {} 数据）</translation>
     </message>
@@ -9902,8 +10158,8 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>未安装 {}</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="315"/>
-        <location filename="../../core/ptable.py" line="236"/>
+        <location filename="../../core/mbr.py" line="381"/>
+        <location filename="../../core/ptable.py" line="241"/>
         <source>{} numarali bolum ile cakisiyor</source>
         <translation>与分区 {} 重叠</translation>
     </message>
@@ -9913,8 +10169,8 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>与分区 {} 存在重叠</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="188"/>
-        <location filename="../../core/ptable.py" line="192"/>
+        <location filename="../../core/layoutedit.py" line="190"/>
+        <location filename="../../core/ptable.py" line="197"/>
         <source>{} numarali bolum yok</source>
         <translation>不存在分区 {}</translation>
     </message>
@@ -9977,7 +10233,7 @@ Konum: {}</source>
         <translation>{} 秒</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="947"/>
+        <location filename="../../core/filesystem.py" line="952"/>
         <source>{} sifreli bir birimdir; icerigi anahtar olmadan okunamaz.</source>
         <translation>{} 是加密卷；没有密钥无法读取其内容。</translation>
     </message>
@@ -9988,7 +10244,7 @@ Konum: {}</source>
     </message>
     <message>
         <location filename="../../core/recovery.py" line="152"/>
-        <location filename="../../core/recovery.py" line="215"/>
+        <location filename="../../core/recovery.py" line="221"/>
         <source>{} silinmis giris bulundu</source>
         <translation>找到 {} 个已删除条目</translation>
     </message>
@@ -10009,13 +10265,19 @@ Konum: {}</source>
         <translation>{} 上没有用于 {} 的外部工具</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="835"/>
+        <location filename="../../core/gpt.py" line="421"/>
+        <location filename="../../core/mbr.py" line="219"/>
+        <source>{} ve {} numarali bolumler cakisiyor</source>
+        <translation>分区 {} 与 {} 重叠</translation>
+    </message>
+    <message>
+        <location filename="../../core/resize.py" line="886"/>
         <source>{} veri kopyalanacak; islem yarida kesilirse bolum bozulur</source>
         <translation>将复制 {} 数据；如果操作中断，分区将会损坏</translation>
     </message>
     <message>
         <location filename="../../core/formatter.py" line="206"/>
-        <location filename="../../core/session.py" line="483"/>
+        <location filename="../../core/session.py" line="512"/>
         <source>{} yalnizca fiziksel diskte, Windows&apos;un kendi araciyla olusturulabilir; goruntu dosyasinda kullanilamaz.</source>
         <translation>{} 只能使用 Windows 自带的工具在物理磁盘上创建；不能用于镜像文件。</translation>
     </message>
@@ -10030,7 +10292,7 @@ Konum: {}</source>
         <translation>正在写入 {}...</translation>
     </message>
     <message>
-        <location filename="../../core/planview.py" line="336"/>
+        <location filename="../../core/planview.py" line="347"/>
         <source>{} yeni bolum</source>
         <translation>{} 个新分区</translation>
     </message>

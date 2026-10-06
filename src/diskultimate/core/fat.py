@@ -128,6 +128,7 @@ class FatFS:
         self._fat_dirty = False
         self._free_count: Optional[int] = None
         self._next_free = 2
+        self._fat_problem: Optional[str] = None
         self._mount()
 
     # ---- baglama -----------------------------------------------------------
@@ -172,10 +173,83 @@ class FatFS:
             self.fat_type = 16
         self.root_cluster = struct.unpack_from("<I", boot, 44)[0] if self.fat_type == 32 else 0
         self.fsinfo_sector = struct.unpack_from("<H", boot, 48)[0] if self.fat_type == 32 else 0
+        # FAT32 BPB_ExtFlags: bit 7 = aynalama kapali, bit 0-3 = etkin FAT.
+        # Aynalama kapaliyken surucu yalnizca etkin FAT'i okur/yazar; digerleri
+        # bayat olabilir (Microsoft FAT spec, BPB_ExtFlags).
+        ext_flags = struct.unpack_from("<H", boot, 40)[0] if self.fat_type == 32 else 0
+        self.fat_mirroring = not (ext_flags & 0x80)
+        self.active_fat = 0 if self.fat_mirroring else (ext_flags & 0x0F)
+        if self.active_fat >= self.num_fats:
+            # gecersiz etkin FAT: okuma FAT0'dan, yazma kapali (fat_problem)
+            self.active_fat = 0
+            self._fat_problem = "ExtFlags etkin FAT %d >= FAT sayisi %d" % (
+                ext_flags & 0x0F, self.num_fats)
+        # Yedek onyukleme sektoru BPB_BkBootSec'ten okunur (sabit 6 degil)
+        self.backup_boot_sector = (struct.unpack_from("<H", boot, 50)[0]
+                                   if self.fat_type == 32 else 0)
+        sig_off = 0x42 if self.fat_type == 32 else 0x26
+        self.has_ext_bpb = boot[sig_off] in (0x28, 0x29)
         label_off = 0x47 if self.fat_type == 32 else 0x2B
-        self.label = boot[label_off:label_off + 11].decode("latin-1").strip()
+        # Etiket ve kimlik yalnizca genisletilmis BPB (imza 0x29) varsa vardir
+        bpb_label = ""
+        if boot[sig_off] == 0x29:
+            bpb_label = boot[label_off:label_off + 11].decode("cp437").strip()
+        if bpb_label == "NO NAME":
+            bpb_label = ""
         vid_off = 0x43 if self.fat_type == 32 else 0x27
-        self.volume_id = struct.unpack_from("<I", boot, vid_off)[0]
+        self.volume_id = struct.unpack_from("<I", boot, vid_off)[0] if self.has_ext_bpb else 0
+        # Kok dizindeki etiket girisi once gelir (Windows, blkid, fsck.fat da
+        # oyle okur); yoksa BPB'deki etiket.
+        root_label = self._root_label_entry()
+        self.label = root_label[1] if root_label else bpb_label
+
+    def _root_label_entry(self) -> Optional[Tuple[int, str]]:
+        """Kok dizindeki birim etiketi girisi: (dizin verisindeki ofset, ad).
+
+        Kok dizin bastan okunur, ilk etiket ya da dizin sonu bulununca durur;
+        cogu birimde ilk kume yeter, FAT tablosu yuklenmez.
+        """
+        try:
+            if self.fat_type == 32:
+                clusters = self._iter_root_clusters()
+            else:
+                clusters = iter([None])
+            taban = 0
+            for c in clusters:
+                if c is None:
+                    veri = self.dev.read(self.root_dir_offset,
+                                         self.root_dir_sectors * self.bytes_per_sector)
+                else:
+                    veri = self.read_cluster(c)
+                for off in range(0, len(veri) - 31, 32):
+                    first = veri[off]
+                    if first == END_OF_DIR:
+                        return None
+                    if first == FREE_ENTRY:
+                        continue
+                    attr = veri[off + 11]
+                    if attr == ATTR_LFN or not (attr & ATTR_VOLUME_ID) \
+                            or attr & ATTR_DIRECTORY:
+                        continue
+                    ham = bytes(veri[off:off + 11])
+                    if ham[0] == 0x05:
+                        ham = b"\xE5" + ham[1:]
+                    return taban + off, ham.decode("cp437").rstrip()
+                taban += len(veri)
+        except Exception:                    # noqa: BLE001 - etiket ikincil bilgi
+            return None
+        return None
+
+    def _iter_root_clusters(self):
+        """FAT32 kok dizin kumeleri; FAT ancak ikinci kumeye gecilirse yuklenir."""
+        cur = self.root_cluster
+        guard = 0
+        while 2 <= cur <= self.max_cluster and guard <= self.cluster_count:
+            yield cur
+            guard += 1
+            cur = self.get_fat(cur)
+            if cur >= self.eoc or cur == 0:
+                return
 
     @property
     def cluster_bytes(self) -> int:
@@ -198,10 +272,87 @@ class FatFS:
         return getattr(self.dev, "readonly", False)
 
     # ---- FAT tablosu -------------------------------------------------------
+    # ---- tutarlilik kapisi --------------------------------------------------
+    def fat_problem(self) -> str:
+        """FAT tablosunun yapisal sorunu (bos: tutarli). Sonuc onbellekte.
+
+        fsck.fat'in (dosfstools fat.c read_fat) kurallari: FAT[0]'in ust
+        bitleri hep 1 olmali (FAT12 0xFF?, FAT16 0xFFF?, FAT32 0x0FFFFFF?) —
+        degilse "FATs appear to be corrupt"; 2..azami kumelerdeki girdi 1 ya da
+        azami kume ile kotu kume isareti arasinda olamaz ("out of range").
+        FAT32'de kok dizin kumesi aralikta ve ayrilmis olmali. Okuma yine
+        serbesttir (zincir gecersiz baglantida durur, cekirdek gibi); yazma,
+        boyutlandirma ve yalnizca dolu alan yedegi reddedilir.
+        """
+        if self._fat_problem is None:
+            try:
+                self._fat_problem = self._check_fat()
+            except Exception as exc:                 # noqa: BLE001
+                self._fat_problem = "FAT okunamadi: %s" % exc
+        return self._fat_problem
+
+    def _check_fat(self) -> str:
+        import array
+        import sys as _sys
+        fat = self._load_fat()
+        bits = self.fat_type
+        maxc = self.max_cluster
+        if len(fat) < ((maxc + 1) * bits + 7) // 8:
+            return "FAT tablosu kume sayisina yetmiyor"
+        extd = {12: 0xFF0, 16: 0xFFF0, 32: 0x0FFFFFF0}[bits]
+        min_bad = {12: 0xFF7, 16: 0xFFF7, 32: 0x0FFFFFF7}[bits]
+        first = self.get_fat(0)
+        if first & extd != extd:
+            return "FAT[0]=0x%X (ortam/EOC isareti degil)" % first
+        if bits == 12:
+            values = [self.get_fat(c) for c in range(2, maxc + 1)]
+        else:
+            size = bits // 8
+            values = array.array("I" if bits == 32 else "H")
+            if values.itemsize != size:
+                values = array.array("L" if bits == 32 else "H")
+            values.frombytes(bytes(fat[2 * size:(maxc + 1) * size]))
+            if _sys.byteorder != "little":
+                values.byteswap()
+        bad = values.count(1)
+        for v in filter(maxc.__lt__, values):    # C hizinda on eleme
+            if bits == 32:
+                v &= 0x0FFFFFFF
+            if v == 1 or maxc < v < min_bad:
+                bad += 1
+        if bad:
+            return "%d FAT girdisi birim disina isaret ediyor" % bad
+        if bits == 32:
+            root = self.root_cluster
+            if not 2 <= root <= maxc:
+                return "kok dizin kumesi aralik disi: %d" % root
+            if self.get_fat(root) == 0:
+                return "kok dizin kumesi FAT'te bos"
+        return ""
+
+    @property
+    def write_block_reason(self) -> str:
+        """Bu birime yazmamak icin neden (bos: yazilabilir)."""
+        if self.fat_problem():
+            return tr("FAT tablosu tutarsiz; birime yazilamaz. Once fsck.fat "
+                      "veya chkdsk ile onarin")
+        return ""
+
+    def _check_writable(self) -> None:
+        if self.readonly:
+            raise FatError(tr("Birim salt okunur"))
+        reason = self.write_block_reason
+        if reason:
+            raise FatError(reason)
+
+    def fat_offset(self, index: int) -> int:
+        """`index`. FAT kopyasinin bayt ofseti."""
+        return (self.reserved_sectors + index * self.fat_size) * self.bytes_per_sector
+
     def _load_fat(self) -> bytearray:
         if self._fat_cache is None:
             self._fat_cache = bytearray(self.dev.read(
-                self.reserved_sectors * self.bytes_per_sector,
+                self.fat_offset(self.active_fat),
                 self.fat_size * self.bytes_per_sector))
         return self._fat_cache
 
@@ -234,11 +385,17 @@ class FatFS:
         self._fat_dirty = True
 
     def flush(self) -> None:
-        """FAT onbellegini tum kopyalara yazar."""
+        """FAT onbellegini kopyalara yazar.
+
+        Aynalama acikken tum kopyalara; kapaliyken (ExtFlags bit 7) yalnizca
+        etkin FAT'e — diger kopyalar surucu icin anlamsizdir ve etkin FAT'i
+        bayat bir kopyayla ezmek dosya sistemini bozar.
+        """
         if self._fat_dirty and self._fat_cache is not None:
-            for i in range(self.num_fats):
-                off = (self.reserved_sectors + i * self.fat_size) * self.bytes_per_sector
-                self.dev.write(off, bytes(self._fat_cache))
+            kopyalar = (range(self.num_fats) if self.fat_mirroring
+                        else [self.active_fat])
+            for i in kopyalar:
+                self.dev.write(self.fat_offset(i), bytes(self._fat_cache))
             self._fat_dirty = False
             self._update_fsinfo()
         f = getattr(self.dev, "flush", None)
@@ -371,8 +528,20 @@ class FatFS:
             self.dev.write(self.root_dir_offset, bytes(data).ljust(cap, b"\x00"))
             return
         need = max(1, (len(data) + self.cluster_bytes - 1) // self.cluster_bytes)
-        while len(chain) < need:
-            chain.append(self.alloc_cluster(chain[-1]))
+        if len(chain) < need:
+            # Yeni kumeler once kendi aralarinda zincirlenir, dizine ancak
+            # hepsi ayrilinca baglanir: yer biterse dizin yarim buyumez ve
+            # ayrilanlar geri birakilir.
+            new: List[int] = []
+            try:
+                while len(chain) + len(new) < need:
+                    new.append(self.alloc_cluster(new[-1] if new else None))
+            except BaseException:
+                if new:
+                    self.free_chain(new[0])
+                raise
+            self.set_fat(chain[-1], new[0])
+            chain.extend(new)
         padded = bytes(data).ljust(need * self.cluster_bytes, b"\x00")
         for i, c in enumerate(chain[:need]):
             self.write_cluster(c, padded[i * self.cluster_bytes:(i + 1) * self.cluster_bytes])
@@ -422,10 +591,9 @@ class FatFS:
             lfn_parts = {}
             lfn_start = -1
 
-            cluster = (struct.unpack_from("<H", raw, 20)[0] << 16) | \
-                struct.unpack_from("<H", raw, 26)[0]
+            cluster = self.entry_cluster(raw)
             size = struct.unpack_from("<I", raw, 28)[0]
-            mdate, mtime = struct.unpack_from("<HH", raw, 24)[1], struct.unpack_from("<H", raw, 22)[0]
+            mtime = struct.unpack_from("<H", raw, 22)[0]
             mdate = struct.unpack_from("<H", raw, 24)[0]
             cdate = struct.unpack_from("<H", raw, 16)[0]
             ctime = struct.unpack_from("<H", raw, 14)[0]
@@ -438,12 +606,28 @@ class FatFS:
             out.append(entry)
         return out
 
+    def entry_cluster(self, raw: bytes) -> int:
+        """Dizin girisinin ilk kumesi.
+
+        Ust sozcuk (ofset 0x14) yalnizca FAT32'de kume numarasinin parcasidir;
+        FAT12/16'da OS/2 orada genisletilmis oznitelik tutamacini saklar
+        (cekirdekte fat_get_start da yalnizca FAT32'de okur).
+        """
+        lo = struct.unpack_from("<H", raw, 26)[0]
+        if self.fat_type != 32:
+            return lo
+        return (struct.unpack_from("<H", raw, 20)[0] << 16) | lo
+
     @staticmethod
     def _decode_short(short11: bytes, nt_flags: int = 0) -> str:
-        base = short11[:8].decode("latin-1").rstrip()
-        ext = short11[8:].decode("latin-1").rstrip()
-        if short11[0] == 0x05:
-            base = "\xE5" + base[1:]
+        # Kisa adlar OEM kod sayfasindadir (CP437: Linux/mkfs.fat varsayilani);
+        # ilk bayt 0x05, silinmis isaretiyle karismasin diye 0xE5'in yerine
+        # yazilir.
+        short11 = bytes(short11)
+        if short11[:1] == b"\x05":
+            short11 = b"\xE5" + short11[1:]
+        base = short11[:8].decode("cp437").rstrip()
+        ext = short11[8:].decode("cp437").rstrip()
         if nt_flags & 0x08:
             base = base.lower()
         if nt_flags & 0x10:
@@ -666,6 +850,10 @@ class FatFS:
     def _insert_entry(self, dir_path: str, blob: bytes) -> None:
         cluster = self._dir_cluster(dir_path)
         data, chain = self._read_dir(cluster)
+        self._place_entry(cluster, data, chain, blob)
+
+    def _place_entry(self, cluster: Optional[int], data: bytearray,
+                     chain: List[int], blob: bytes) -> None:
         need = len(blob) // 32
         pos = self._find_free_slots(data, need)
         if pos < 0:
@@ -722,8 +910,7 @@ class FatFS:
         tamamen yazilip dizin girisinde hata veriyor, kumeler bosa
         cikmiyordu.
         """
-        if self.readonly:
-            raise FatError(tr("Birim salt okunur"))
+        self._check_writable()
         parts = _norm(path)
         if not parts:
             raise FatError(tr("Gecersiz dosya yolu"))
@@ -732,37 +919,67 @@ class FatFS:
                               "istendi)", size))
         name = parts[-1]
         parent = "/" + "/".join(parts[:-1])
-        if self.exists(path):
+        self._check_name(name)
+        # Ust dizin kume ayrilmadan once cozulur: eskiden olmayan klasore
+        # yazma kumeleri ayirip sonra "Yol bulunamadi" veriyordu, kumeler
+        # sizip FSInfo yanlis kaliyordu (fsck.vfat: "Reclaimed ... clusters").
+        parent_cluster = self._dir_cluster(parent)
+        need = (size + self.cluster_bytes - 1) // self.cluster_bytes
+        existing = self._find_in(parent_cluster, parent, name)
+        free = self.free_clusters()
+        if existing is not None:
             if not overwrite:
                 raise FatError(tr("Dosya zaten var: {}", path))
-            self.remove(path)
+            if existing.cluster:
+                free += len(self.chain(existing.cluster))
+        if need > free:
+            raise FatError(tr("Birimde yer yok: {} kume gerekli, {} bos",
+                              need, free))
+        if existing is not None:
+            self.remove(parent.rstrip("/") + "/" + existing.name)
         first_cluster = 0
-        if size:
-            need = (size + self.cluster_bytes - 1) // self.cluster_bytes
-            if need > self.free_clusters():
-                raise FatError(tr("Birimde yer yok: {} kume gerekli, {} bos",
-                                  need, self.free_clusters()))
-            clusters = []
+        clusters: List[int] = []
+        try:
             prev = None
-            try:
-                for _ in range(need):
-                    c = self.alloc_cluster(prev)
-                    clusters.append(c)
-                    prev = c
+            for _ in range(need):
+                c = self.alloc_cluster(prev)
+                clusters.append(c)
+                prev = c
+            if clusters:
                 first_cluster = clusters[0]
                 write_runs(src, size, group_runs(clusters), self.cluster_bytes,
                            lambda start, off, data: self.dev.write(
                                self.cluster_offset(start) + off, data))
-            except Exception:
-                if clusters:
-                    self.free_chain(clusters[0])      # yarim dosya kume sizdirmasin
-                raise
-        short11, need_lfn = self._make_short_name(name, self._existing_names(parent))
-        blob = self._build_entry_bytes(name, short11, ATTR_ARCHIVE,
-                                       first_cluster, size, need_lfn=need_lfn)
-        self._insert_entry(parent, blob)
+            short11, need_lfn = self._make_short_name(name, self._existing_names(parent))
+            blob = self._build_entry_bytes(name, short11, ATTR_ARCHIVE,
+                                           first_cluster, size, need_lfn=need_lfn)
+            self._insert_entry(parent, blob)
+        except BaseException:
+            if clusters:
+                self.free_chain(clusters[0])      # yarim dosya kume sizdirmasin
+            raise
         self.flush()
         return self.find(path)
+
+    @staticmethod
+    def _check_name(name: str) -> None:
+        """Uzun ad kurallari: yasak karakter, denetim karakteri, 255 UTF-16
+        birimi. Gecersiz ad hicbir sey ayrilmadan reddedilir."""
+        if (not name or name.strip(". ") == "" or
+                len(name.encode("utf-16-le", "surrogatepass")) // 2 > 255 or
+                any(ch in '"*/:<>?\\|' or ord(ch) < 0x20 for ch in name)):
+            raise FatError(tr("Gecersiz ad: {}", name))
+
+    def _find_in(self, cluster: Optional[int], dir_path: str,
+                 name: str) -> Optional[DirEntry]:
+        """Dizinde ada (uzun ya da kisa, harf duyarsiz) gore giris."""
+        key = name.lower()
+        for e in self._list_raw(cluster, dir_path):
+            if e.is_volume:
+                continue
+            if e.name.lower() == key or e.short_name.lower() == key:
+                return e
+        return None
 
     def import_file(self, local_path: str, dest_dir: str = "/",
                     name: Optional[str] = None) -> DirEntry:
@@ -788,31 +1005,35 @@ class FatFS:
         return count
 
     def mkdir(self, path: str) -> DirEntry:
-        if self.readonly:
-            raise FatError(tr("Birim salt okunur"))
+        self._check_writable()
         parts = _norm(path)
         if not parts:
             raise FatError(tr("Gecersiz klasor yolu"))
         name = parts[-1]
         parent = "/" + "/".join(parts[:-1])
-        if self.exists(path):
-            raise FatError(tr("Zaten var: {}", path))
-        cluster = self.alloc_cluster()
-        self.write_cluster(cluster, b"\x00" * self.cluster_bytes)
-        # "." ve ".." girisleri
+        self._check_name(name)
+        # ust dizin kume ayrilmadan once cozulur (bkz. write_stream)
         parent_cluster = self._dir_cluster(parent) or 0
+        if self._find_in(parent_cluster or (self.root_cluster if self.fat_type == 32
+                                            else None), parent, name) is not None:
+            raise FatError(tr("Zaten var: {}", path))
         if self.fat_type == 32 and parent_cluster == self.root_cluster:
             parent_cluster = 0
-        now = datetime.datetime.now()
-        dot = self._build_entry_bytes(".", b".          ", ATTR_DIRECTORY,
-                                      cluster, 0, now, need_lfn=False)
-        dotdot = self._build_entry_bytes("..", b"..         ", ATTR_DIRECTORY,
-                                         parent_cluster, 0, now, need_lfn=False)
-        self.write_cluster(cluster, dot + dotdot)
-        short11, need_lfn = self._make_short_name(name, self._existing_names(parent))
-        blob = self._build_entry_bytes(name, short11, ATTR_DIRECTORY, cluster, 0,
-                                       now, need_lfn=need_lfn)
-        self._insert_entry(parent, blob)
+        cluster = self.alloc_cluster()
+        try:
+            now = datetime.datetime.now()
+            dot = self._build_entry_bytes(".", b".          ", ATTR_DIRECTORY,
+                                          cluster, 0, now, need_lfn=False)
+            dotdot = self._build_entry_bytes("..", b"..         ", ATTR_DIRECTORY,
+                                             parent_cluster, 0, now, need_lfn=False)
+            self.write_cluster(cluster, dot + dotdot)
+            short11, need_lfn = self._make_short_name(name, self._existing_names(parent))
+            blob = self._build_entry_bytes(name, short11, ATTR_DIRECTORY, cluster, 0,
+                                           now, need_lfn=need_lfn)
+            self._insert_entry(parent, blob)
+        except BaseException:
+            self.free_chain(cluster)
+            raise
         self.flush()
         return self.find(path)
 
@@ -825,26 +1046,24 @@ class FatFS:
 
     def remove(self, path: str, recursive: bool = False) -> None:
         """Dosya veya (bos) klasoru siler."""
-        if self.readonly:
-            raise FatError(tr("Birim salt okunur"))
+        self._check_writable()
         parts = _norm(path)
         if not parts:
             raise FatError(tr("Kok dizin silinemez"))
-        entry = self.find(path)
+        parent = "/" + "/".join(parts[:-1])
+        cluster = self._dir_cluster(parent)
+        entry = self._find_in(cluster, parent, parts[-1])
+        if entry is None:
+            raise FatError(tr("Bulunamadi: {}", path))
         if entry.is_dir:
-            children = self.listdir(path)
+            own = parent.rstrip("/") + "/" + entry.name
+            children = self.listdir(own)
             if children and not recursive:
                 raise FatError(tr("Klasor bos degil"))
             for child in children:
-                self.remove(path.rstrip("/") + "/" + child.name, recursive=True)
-        parent = "/" + "/".join(parts[:-1])
-        cluster = self._dir_cluster(parent)
+                self.remove(own + "/" + child.name, recursive=True)
+            entry = self._find_in(cluster, parent, parts[-1]) or entry
         data, chain = self._read_dir(cluster)
-        # girisi yeniden bul (ofsetler degismis olabilir)
-        for e in self._parse_dir(data, parent):
-            if e.name.lower() == parts[-1].lower():
-                entry = e
-                break
         for i in range(entry.slot_count):
             data[entry.slot_offset + i * 32] = FREE_ENTRY
         self._write_dir(cluster, data, chain)
@@ -853,44 +1072,85 @@ class FatFS:
         self.flush()
 
     def rename(self, path: str, new_name: str) -> DirEntry:
-        entry = self.find(path)
+        """Yalnizca dizin girisini degistirir; veri ve kume zinciri yerinde kalir.
+
+        Kisa girisin 32 bayti (oznitelik, zamanlar, kume, boyut, FAT12/16'da
+        OS/2'nin 0x14'teki EA tutamaci) korunur, yalnizca ad alanlari yenilenir.
+        Eskiden dosya silinip icerigi yeniden yaziliyordu: okunamayan ya da
+        yanlis okunan zincirde icerik kayboluyordu.
+        """
+        self._check_writable()
+        self._check_name(new_name)
         parts = _norm(path)
+        if not parts:
+            raise FatError(tr("Gecersiz dosya yolu"))
         parent = "/" + "/".join(parts[:-1])
-        data = self.read_entry(entry) if not entry.is_dir else b""
-        if entry.is_dir:
-            # klasorde yalnizca giris degistirilir, veri yerinde kalir
-            cluster = self._dir_cluster(parent)
-            buf, chain = self._read_dir(cluster)
-            for i in range(entry.slot_count):
-                buf[entry.slot_offset + i * 32] = FREE_ENTRY
-            self._write_dir(cluster, buf, chain)
-            short11, need_lfn = self._make_short_name(new_name, self._existing_names(parent))
-            blob = self._build_entry_bytes(new_name, short11, entry.attr,
-                                           entry.cluster, 0, entry.mtime,
-                                           need_lfn=need_lfn)
-            self._insert_entry(parent, blob)
-            self.flush()
-        else:
-            self.remove(path)
-            self.write_file(parent.rstrip("/") + "/" + new_name, data)
+        cluster = self._dir_cluster(parent)
+        entry = self._find_in(cluster, parent, parts[-1])
+        if entry is None:
+            raise FatError(tr("Bulunamadi: {}", path))
+        other = self._find_in(cluster, parent, new_name)
+        if other is not None and other.slot_offset != entry.slot_offset:
+            raise FatError(tr("Zaten var: {}", parent.rstrip("/") + "/" + new_name))
+        data, chain = self._read_dir(cluster)
+        short_off = entry.slot_offset + (entry.slot_count - 1) * 32
+        raw = bytearray(data[short_off:short_off + 32])
+        names = []
+        for e in self._parse_dir(data, parent):
+            if e.slot_offset != entry.slot_offset:
+                names += [e.name, e.short_name]
+        for i in range(entry.slot_count):
+            data[entry.slot_offset + i * 32] = FREE_ENTRY
+        short11, need_lfn = self._make_short_name(new_name, names)
+        raw[0:11] = short11
+        raw[12] &= 0xE7                  # kucuk harf bayraklari yeni ada ait degil
+        blob = self._build_entry_bytes(new_name, short11, entry.attr, 0, 0,
+                                       need_lfn=need_lfn)
+        blob = blob[:-32] + bytes(raw)
+        self._place_entry(cluster, data, chain, blob)
+        self.flush()
         return self.find(parent.rstrip("/") + "/" + new_name)
 
     def set_label(self, label: str) -> None:
-        """Birim etiketini onyukleme sektorunde gunceller."""
-        label11 = label.upper().encode("latin-1", "replace")[:11].ljust(11, b" ")
+        """Birim etiketini kok dizindeki etiket girisinde ve BPB'de gunceller.
+
+        Windows, blkid ve fsck.fat etiketi once kok dizinden okur; yalnizca
+        BPB'yi degistirmek etiketi degistirmez (fsck.fat kok etiketini geri
+        kopyalar). Yedek onyukleme sektoru BPB_BkBootSec'tedir.
+        """
+        self._check_writable()
+        label = label.strip()
+        label11 = label.upper().encode("cp437", "replace")[:11].ljust(11, b" ")
+        bpb11 = label11 if label else b"NO NAME    "
+        bps = self.bytes_per_sector
+        sig_off = 0x42 if self.fat_type == 32 else 0x26
         off = 0x47 if self.fat_type == 32 else 0x2B
-        boot = bytearray(self.dev.read(0, 512))
-        boot[off:off + 11] = label11
-        self.dev.write(0, bytes(boot))
-        if self.fat_type == 32:
-            try:
-                backup = bytearray(self.dev.read(6 * self.bytes_per_sector, 512))
-                if backup[510:512] == b"\x55\xAA":
-                    backup[off:off + 11] = label11
-                    self.dev.write(6 * self.bytes_per_sector, bytes(backup))
-            except Exception:
-                pass
-        self.label = label.strip()
+        boot = bytearray(self.dev.read(0, bps))
+        if boot[sig_off] == 0x29:
+            boot[off:off + 11] = bpb11
+            self.dev.write(0, bytes(boot))
+            yedek = self.backup_boot_sector
+            if 0 < yedek < self.reserved_sectors:
+                try:
+                    backup = bytearray(self.dev.read(yedek * bps, bps))
+                    if backup[510:512] == b"\x55\xAA" and backup[sig_off] == 0x29:
+                        backup[off:off + 11] = bpb11
+                        self.dev.write(yedek * bps, bytes(backup))
+                except Exception:          # noqa: BLE001 - yedek ikincil
+                    pass
+        root = self.root_cluster if self.fat_type == 32 else None
+        found = self._root_label_entry()
+        if found is not None:
+            data, chain = self._read_dir(root)
+            pos = found[0]
+            if label:
+                data[pos:pos + 11] = label11
+            else:
+                data[pos] = FREE_ENTRY
+            self._write_dir(root, data, chain)
+        elif label:
+            self._write_volume_label(label)
+        self.label = label
         self.flush()
 
     # ---- istatistik --------------------------------------------------------
@@ -1095,7 +1355,7 @@ class FatFS:
 
     def _write_volume_label(self, label: str) -> None:
         """Kok dizine birim etiketi girisi ekler."""
-        name11 = label.upper().encode("latin-1", "replace")[:11].ljust(11, b" ")
+        name11 = label.upper().encode("cp437", "replace")[:11].ljust(11, b" ")
         blob = self._build_entry_bytes(label, name11, ATTR_VOLUME_ID, 0, 0,
                                        need_lfn=False)
         self._insert_entry("/", blob)

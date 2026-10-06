@@ -46,6 +46,72 @@ RO_GDT_CSUM = 0x0010
 RO_BIGALLOC = 0x0200
 RO_METADATA_CSUM = 0x0400
 
+# Bilinen ozellik bitlerinin adlari ("c"=compat, "i"=incompat, "r"=ro_compat)
+FEATURE_NAMES = {
+    ("c", 0x0001): "dir_prealloc", ("c", 0x0002): "imagic_inodes",
+    ("c", 0x0004): "has_journal", ("c", 0x0008): "ext_attr",
+    ("c", 0x0010): "resize_inode", ("c", 0x0020): "dir_index",
+    ("c", 0x0040): "lazy_bg", ("c", 0x0080): "snapshot_bitmap",
+    ("c", 0x0100): "exclude_bitmap", ("c", 0x0200): "sparse_super2",
+    ("c", 0x0400): "fast_commit", ("c", 0x0800): "stable_inodes",
+    ("c", 0x1000): "orphan_file",
+    ("i", 0x0001): "compression", ("i", 0x0002): "filetype",
+    ("i", 0x0004): "needs_recovery", ("i", 0x0008): "journal_dev",
+    ("i", 0x0010): "meta_bg", ("i", 0x0040): "extent",
+    ("i", 0x0080): "64bit", ("i", 0x0100): "mmp", ("i", 0x0200): "flex_bg",
+    ("i", 0x0400): "ea_inode", ("i", 0x1000): "dirdata",
+    ("i", 0x2000): "metadata_csum_seed", ("i", 0x4000): "large_dir",
+    ("i", 0x8000): "inline_data", ("i", 0x10000): "encrypt",
+    ("i", 0x20000): "casefold",
+    ("r", 0x0001): "sparse_super", ("r", 0x0002): "large_file",
+    ("r", 0x0004): "btree_dir", ("r", 0x0008): "huge_file",
+    ("r", 0x0010): "uninit_bg", ("r", 0x0020): "dir_nlink",
+    ("r", 0x0040): "extra_isize", ("r", 0x0080): "has_snapshot",
+    ("r", 0x0100): "quota", ("r", 0x0200): "bigalloc",
+    ("r", 0x0400): "metadata_csum", ("r", 0x0800): "replica",
+    ("r", 0x1000): "read-only", ("r", 0x2000): "project",
+    ("r", 0x4000): "shared_blocks", ("r", 0x8000): "verity",
+    ("r", 0x10000): "orphan_present",
+}
+
+
+def unsupported_features(compat: int, incompat: int, ro_compat: int,
+                         allow_compat: int, allow_incompat: int,
+                         allow_ro: int) -> List[str]:
+    """Izin listesi disinda kalan ozellik bitlerinin adlari (bilinmeyenler
+    "i:0x40000" bicimiyle). Bos liste = hepsi destekleniyor."""
+    out: List[str] = []
+    for kind, value, allowed in (("c", compat, allow_compat),
+                                 ("i", incompat, allow_incompat),
+                                 ("r", ro_compat, allow_ro)):
+        extra = value & ~allowed & 0xFFFFFFFF
+        bit = 1
+        while extra:
+            if extra & bit:
+                out.append(FEATURE_NAMES.get((kind, bit), "%s:0x%X" % (kind, bit)))
+                extra &= ~bit
+            bit <<= 1
+    return out
+
+
+def ext_kind(compat: int, incompat: int, ro_compat: int) -> str:
+    """ext2 / ext3 / ext4 / jbd ayrimi (blkid kurali).
+
+    Eskiden yalnizca extents/huge_file'a bakiliyordu (denetim E15): ornegin
+    `-O ^extent,^huge_file` ile yapilmis flex_bg/metadata_csum'lu birim ext3
+    goruluyordu. ext3 yalnizca gunluk + ext3'un bildigi bitleri tasir;
+    disinda bir bit varsa ext4'tur. Ayri gunluk aygiti (journal_dev) bir
+    dosya sistemi degildir: "jbd" doner ve ext erisimine yonlenmez.
+    """
+    if incompat & INCOMPAT_JOURNAL_DEV:
+        return "jbd"
+    ext3_incompat = 0x0002 | INCOMPAT_RECOVER | INCOMPAT_META_BG
+    ext3_ro = RO_SPARSE_SUPER | 0x0002 | 0x0004
+    if incompat & ~ext3_incompat or ro_compat & ~ext3_ro:
+        return "ext4"
+    return "ext3" if compat & COMPAT_HAS_JOURNAL else "ext2"
+
+
 # grup tanimlayici bayraklari
 BG_INODE_UNINIT = 0x0001
 BG_BLOCK_UNINIT = 0x0002

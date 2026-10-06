@@ -5899,3 +5899,36 @@ calismiyordu.
   yüklemeyi durdurmadan önce onay.
 - t94, ui_smoke senaryosu; 9 yeni metin 9 dilde.
 
+## 2026-10-06 (2) — Kök neden, yabancı girdi matrisi, uyumluluk düzeltmeleri (ADR 0094)
+
+- Kullanıcı: "o kadar uzun test yaptık, bu kritik hata nasıl olabiliyor; benzer
+  hataları analiz et, gerekirse saatlerce test et." Kök neden: testler birimi
+  hep kendi biçimlendiricimizle üretiyordu (okuyucu ile aynı varsayım);
+  yazıcılar yasak listesiyle korunuyordu.
+- `tests/yabanci` + `.github/workflows/yabanci.yml`: 68 varyant gerçek mkfs
+  araçlarıyla, çekirdekle doldurma (özel nesneler: sabit bağ, symlink 59/60/61,
+  aygıt, seyrek, fallocate, xattr, casefold), tespit/okuma/iki kipli yedek
+  (çöplü hedef)/yazma/boyut → fsck (taban çizgisine göre) + çekirdek.
+  `tests/long` yedek adımı iki kipli + çöplü hedef.
+- Dört alan denetimi (alt ajanlar) + matris: ~45 bulgu
+  (`.claude/logs/2026-10-06-uyumluluk-denetimi.md`). Beş düzeltme ajanı:
+  ext (izin listesi, needs_recovery/mmp/journal_dev/kirli durum reddi, sabit
+  bağ, aygıt/hızlı symlink, inline_data okuma, delikler, unwritten extent),
+  FAT/exFAT (küme sızıntısı, NoFatChain, UTF-16 ad uzunluğu, VDL, ExtFlags,
+  OS/2 starthi, bps≠512 boyutlandırma, etiket, CP437, **picozed tutarlılık
+  kapısı**), NTFS (512 B fixup, hazırda bekleme/$LogFile kapısı, attribute
+  list okuma + yazma reddi, $MFTMirr aralığı, INDX çok koşu, EFS, 4K birim
+  karışımı), bölüm tabloları (yuva numarası korunur, koruyucu MBR + CRC, yedek
+  başlık, hibrit MBR, FirstUsableLBA, 4Kn GPT↔MBR), XFS büyütme 1 KiB/4K
+  sektör, HFS+ Linux tonos adları.
+- picozed.img: içerik referans okuyucularla birebir (FAT 4, ext4 4370 dosya);
+  FAT32 yapısal bozuk (iki FAT'in ilk sektöründe eski önyükleme baytları),
+  DiskUltimate kaynaklı görünmüyor; artık "tutarsız" işaretlenir, yazılmaz.
+- Arayüz: bölüm bilgisinde "Yapı tutarsız", disk özetinde tablo belirsizliği;
+  plan önizlemesi yuva numarası kuralına uyar. 47 yeni metin 9 dilde.
+- Testler: regress_{fat,ext,ntfs,ptable,xfs_hfs} 79 test (eski kodda
+  başarısız, yeni kodda geçer), CI'a bağlandı; run_all 92/94, ext_write 4/4,
+  ext_resize 32/32, ntfs_write 2/2, diag 13/13, platform 0, i18n, ui_smoke.
+- Windows'ta doğrulanmadı: NTFS 4K fixup chkdsk, 64K+ küme aynası, Hızlı
+  Başlangıç kapısı gerçek birimde.
+

@@ -118,17 +118,38 @@ def ntfs_size_info(view: BlockDevice) -> NtfsSizeInfo:
     spc = fs.sectors_per_cluster
     info = NtfsSizeInfo(
         sector_size=fs.sector_size, cluster_size=fs.cluster_size,
-        sectors_per_cluster=spc, volume_sectors=fs.total_sectors + 1,
+        sectors_per_cluster=spc,
+        volume_sectors=_to_view(view, fs, fs.total_sectors + 1),
         cluster_count=cluster_count, used_clusters=used, highest_used=highest,
         dirty=_is_dirty(fs))
+    # Hazirda bekletme / temiz olmayan gunluk / NTFS < 3 de "kirli" gibi
+    # boyutlandirmayi engeller; neden dogrudan gosterilir (N2).
+    from .ntfsfix import write_block_reason
+    reason = write_block_reason(fs)
     # Tasima payi: veriyi sinirin altina sigdirmak icin bos yer de gerekir.
     needed = max(MIN_CLUSTERS, int(used * 1.05) + 16)
-    info.min_sectors = needed * spc + 1
-    info.max_sectors = MAX_CLUSTERS * spc + 1
+    info.min_sectors = _to_view(view, fs, needed * spc + 1, up=True)
+    info.max_sectors = _to_view(view, fs, MAX_CLUSTERS * spc + 1)
     if info.dirty:
         info.note = tr("Birim 'kirli' isaretli; once chkdsk / ntfsfix "
                        "calistirilmali")
+    elif reason:
+        info.dirty = True
+        info.note = reason
     return info
+
+
+def _to_view(view: BlockDevice, fs: NtfsFS, sectors: int, up: bool = False) -> int:
+    """Birim sektoru (onyukleme sektorundeki boy) -> gorunum sektoru.
+
+    `mkntfs -s 4096` 512 baytlik sektorlu bir diskte de kullanilabilir;
+    cagiran taraf (bolum tablosu) gorunumun sektoruyle sayar. Eskiden iki
+    birim karistiriliyordu: 4K sektorlu birim buyutulunce toplam sektor
+    sayisi 8 kat yaziliyordu (ntfsfix: "file system overflow").
+    """
+    vss = getattr(view, "sector_size", fs.sector_size) or fs.sector_size
+    total = sectors * fs.sector_size
+    return -(-total // vss) if up else total // vss
 
 
 def _cluster_count(fs: NtfsFS, total_sectors: int) -> int:
@@ -139,19 +160,47 @@ def _is_dirty(fs: NtfsFS) -> bool:
     """`$Volume` icindeki "kirli" bayragi.
 
     Temiz ayrilmamis bir birimde yapilan boyutlandirma, bir sonraki chkdsk
-    "duzeltmesinde" veri kaybettirebilir. Alan okunamazsa kirli sayilmaz;
-    karar tek basina buna dayanmaz, kullaniciya da gosterilir.
+    "duzeltmesinde" veri kaybettirebilir. Alan okunamazsa **kirli sayilir**:
+    "bilinmiyor" guvenli degildir (eskiden False donuyordu, N2).
     """
     try:
         attr = fs.record(VOLUME_RECORD).find(AT_VOLUME_INFORMATION)
     except NtfsError:
-        return False
+        return True
     # VOLUME_INFORMATION: 8 bayt ayrilmis, surum (2 bayt), bayraklar ofset 10.
     # 2026-10-03'e kadar ofset 12 okunuyordu; deger 12 bayt oldugu icin
     # uzunluk denetimi hep "temiz" donduruyor, kirli birim boyutlandiriliyordu.
     if attr is None or not attr.resident or len(attr.value) < 12:
-        return False
+        return True
     return bool(struct.unpack_from("<H", attr.value, 10)[0] & VOLUME_DIRTY)
+
+
+def _require_clean(fs: NtfsFS) -> None:
+    """Kirli, hazirda bekletilmis ya da gunlugu temiz olmayan birim
+    boyutlandirilmaz/onarilmaz. `_reset_logfile` bekleyen islemleri olan bir
+    gunlugu silerdi; Hizli baslatmada kirli bayrak kapali oldugu icin eski
+    denetim bunu kaciriyordu (N2). $MFT'si dagilmis birim de reddedilir:
+    uzanti parcalarinin tasinmasi $MFT zincirini bu surumde guvenle
+    guncelleyemez (N3)."""
+    if _is_dirty(fs):
+        raise NtfsResizeError(
+            tr("Birim 'kirli' isaretli. Once Bolum > NTFS'i denetle ve onar "
+               "(ya da Windows'ta chkdsk) calistirin; kirli bir birimi "
+               "boyutlandirmak veri kaybettirebilir."))
+    from .ntfsfix import write_block_reason
+    reason = write_block_reason(fs)
+    if reason:
+        raise NtfsResizeError(reason)
+    if fs.mft_has_attr_list:
+        raise NtfsResizeError(
+            tr("$MFT birden cok MFT kaydina dagilmis ($ATTRIBUTE_LIST); bu "
+               "surum boyle bir birimi boyutlandiramaz"))
+    for rec_no in (BITMAP_RECORD, BADCLUS_RECORD):
+        if fs.record(rec_no).has_attribute_list:
+            raise NtfsResizeError(
+                tr("Kayit {} birden cok MFT kaydina dagilmis "
+                   "($ATTRIBUTE_LIST); bu surum boyle kayitlari degistiremez",
+                   rec_no))
 
 
 def _bitmap_attr(fs: NtfsFS) -> Attribute:
@@ -285,6 +334,12 @@ def _set_nonresident(writer: NtfsWriter, rec_no: int, attr: Attribute,
     boyut alanlari yalnizca ilk parcada anlamlidir; orada duran degerlere
     dokunulmaz.
     """
+    if getattr(attr, "extents", 1) > 1:
+        # Birlesik (cok parcali) oznitelik tek kayda yazilamaz (N3/N4)
+        raise NtfsResizeError(
+            tr("Kayit {} birden cok MFT kaydina dagilmis "
+               "($ATTRIBUTE_LIST); bu surum boyle kayitlari degistiremez",
+               rec_no))
     runs = merge_runs(runs)
     raw = writer._raw_record(rec_no)
     pos = writer._find_attr_offset(raw, attr)
@@ -423,12 +478,8 @@ def ntfs_repair(view: BlockDevice, progress: Progress = None) -> int:
     """Birimi acip `repair_orphan_low_clusters` uygular ve yazar."""
     fs = NtfsFS(view)
     writer = NtfsWriter(fs)
+    _require_clean(fs)
     writer._require_writable()
-    if _is_dirty(fs):
-        raise NtfsResizeError(
-            tr("Birim 'kirli' isaretli. Once Bolum > NTFS'i denetle ve onar "
-               "(ya da Windows'ta chkdsk) calistirin; kirli bir birimi "
-               "boyutlandirmak veri kaybettirebilir."))
     count = repair_orphan_low_clusters(writer, progress)
     if count:
         writer.flush()
@@ -503,14 +554,48 @@ def _relocate_attr(writer: NtfsWriter, rec_no: int, attr: Attribute,
         fs._mft_runs = list(new_runs)
         fs.mft_lcn = new_runs[0][0]
 
-    _set_nonresident(writer, rec_no, attr, new_runs,
-                     keep_sizes=attr.start_vcn > 0)
+    # Tasima boyutlari degistirmez (ayni sayida kume). Boyut alanlarina hic
+    # dokunulmaz: parcali bir akisin ($ATTRIBUTE_LIST) ilk parcasi butun
+    # akisin ayrilmis boyunu tasir; eskiden yalnizca bu parcanin kumeleriyle
+    # yeniden yaziliyordu.
+    _set_nonresident(writer, rec_no, attr, new_runs, keep_sizes=True)
 
     if rec_no == MFT_RECORD and attr.kind == AT_DATA:
         _reload_mft(writer)
     elif rec_no == MFTMIRR_RECORD and attr.kind == AT_DATA:
         fs.mftmirr_lcn = new_runs[0][0]
     return moved
+
+
+def _in_use(bitmap: bytes, rec_no: int) -> bool:
+    return rec_no >> 3 < len(bitmap) and bool(bitmap[rec_no >> 3] >> (rec_no & 7) & 1)
+
+
+def _check_records_readable(writer: NtfsWriter, progress: Progress) -> None:
+    """Kucultmeden ONCE: `$MFT:$BITMAP`te dolu her kayit okunabilmeli.
+
+    Okunamayan bir kaydin kumeleri bilinemez; tasinmadan bitmap kesilirse
+    o dosyanin verisi birimin disinda kalir. Eskiden boyle kayit sessizce
+    atlaniyordu (N3). Denetim hicbir sey yazilmadan yapilir: yarida kalan bir
+    tasima birimde iz birakmasin.
+    """
+    fs = writer.fs
+    in_use_map = bytes(fs.read_attribute(writer._mft_bitmap()))
+    record_count = max(1, fs.mft_size // fs.record_size)
+    for rec_no in range(record_count):
+        if rec_no % 4096 == 0:
+            fs._cache.clear()
+            if progress:
+                progress(tr("MFT taraniyor... {}/{} kayit", rec_no, record_count), -1)
+        if not _in_use(in_use_map, rec_no):
+            continue
+        try:
+            fs.record(rec_no)
+        except NtfsError as exc:
+            raise NtfsResizeError(
+                tr("MFT kaydi {} kullanimda ama okunamadi; kucultme "
+                   "guvenli degil (once Windows'ta chkdsk): {}", rec_no, exc))
+    fs._cache.clear()
 
 
 def _relocate_beyond(writer: NtfsWriter, boundary: int, old_clusters: int,
@@ -522,6 +607,7 @@ def _relocate_beyond(writer: NtfsWriter, boundary: int, old_clusters: int,
     bitmap zaten kucultulecektir.
     """
     fs = writer.fs
+    _check_records_readable(writer, progress)
     _mark_range(writer, boundary, old_clusters, True)
 
     total = max(1, old_clusters - boundary)
@@ -539,6 +625,11 @@ def _relocate_beyond(writer: NtfsWriter, boundary: int, old_clusters: int,
     order = [MFT_RECORD]
     record_count = max(1, fs.mft_size // fs.record_size)
     order += [n for n in range(record_count) if n != MFT_RECORD]
+    # Kullanimdaki kayitlar $MFT:$BITMAP'ten bilinir. Okunamayan bir kayit
+    # bitmap'te doluysa ATLANMAZ, islem durur: eskiden `continue` ile
+    # geciliyordu; o dosyanin sinir otesindeki kumeleri tasinmiyor, bitmap
+    # kesilince veri kayboluyordu (N3).
+    in_use_map = bytes(fs.read_attribute(writer._mft_bitmap()))
 
     for position, rec_no in enumerate(order):
         # Kayit onbellegi sinirsiz buyumemeli: milyonlarca kayitli bir MFT
@@ -550,7 +641,12 @@ def _relocate_beyond(writer: NtfsWriter, boundary: int, old_clusters: int,
                             position, record_count), -1)
         try:
             rec = fs.record(rec_no)
-        except NtfsError:
+        except NtfsError as exc:
+            if _in_use(in_use_map, rec_no):
+                raise NtfsResizeError(
+                    tr("MFT kaydi {} kullanimda ama okunamadi; kucultme "
+                       "guvenli degil (once Windows'ta chkdsk): {}",
+                       rec_no, exc))
             continue
         if not rec.in_use:
             continue
@@ -671,7 +767,10 @@ def _write_boot(view: BlockDevice, fs: NtfsFS, volume_sectors: int,
     struct.pack_into("<Q", boot, 0x30, fs.mft_lcn)
     struct.pack_into("<Q", boot, 0x38, fs.mftmirr_lcn)
     if partition_offset is not None:
-        struct.pack_into("<I", boot, 28, partition_offset & 0xFFFFFFFF)
+        # Gizli sektor BPB sektoru birimindedir; cagiran aygit sektoruyle verir
+        vss = getattr(view, "sector_size", ss) or ss
+        hidden = partition_offset * vss // ss
+        struct.pack_into("<I", boot, 28, hidden & 0xFFFFFFFF)
     view.write(0, bytes(boot))
     view.write((volume_sectors - 1) * ss, bytes(boot))
     flush = getattr(view, "flush", None)
@@ -697,22 +796,21 @@ def ntfs_resize(view: BlockDevice, new_sector_count: int,
 
     fs = NtfsFS(view)
     writer = NtfsWriter(fs)
+    _require_clean(fs)
     writer._require_writable()
 
     ss, cs = fs.sector_size, fs.cluster_size
     spc = cs // ss
     old_clusters = _cluster_count(fs, fs.total_sectors)
-    new_total = new_sector_count - 1                 # son sektor yedek onyukleme
+    # Cagiran gorunumun sektoruyle sayar; birim kendi sektoruyle (4K olabilir)
+    vss = getattr(view, "sector_size", ss) or ss
+    fs_sectors = new_sector_count * vss // ss
+    new_total = fs_sectors - 1                       # son sektor yedek onyukleme
     new_clusters = new_total * ss // cs
     if new_clusters < MIN_CLUSTERS:
         raise NtfsResizeError(tr("Yeni boyut NTFS icin cok kucuk"))
     if new_clusters > MAX_CLUSTERS:
         raise NtfsResizeError(tr("NTFS en fazla {} kume adresler", MAX_CLUSTERS))
-    if _is_dirty(fs):
-        raise NtfsResizeError(
-            tr("Birim 'kirli' isaretli. Once Bolum > NTFS'i denetle ve onar "
-               "(ya da Windows'ta chkdsk) calistirin; kirli bir birimi "
-               "boyutlandirmak veri kaybettirebilir."))
 
     # Eski bicimlendiricinin sahipsiz kumeleri (ADR 0074): boyutlandirma
     # zaten yaziyor, birim tutarli birakilir.
@@ -720,7 +818,7 @@ def ntfs_resize(view: BlockDevice, new_sector_count: int,
 
     if new_clusters == old_clusters:
         report(tr("Onyukleme sektoru guncelleniyor..."), 90)
-        _write_boot(view, fs, new_sector_count, partition_offset)
+        _write_boot(view, fs, fs_sectors, partition_offset)
         writer.flush()
         report(tr("Tamamlandi"), 100)
         return
@@ -742,6 +840,6 @@ def ntfs_resize(view: BlockDevice, new_sector_count: int,
     _reset_logfile(writer)
     report(tr("Onyukleme sektoru guncelleniyor..."), 92)
     fs.total_sectors = new_total
-    _write_boot(view, fs, new_sector_count, partition_offset)
+    _write_boot(view, fs, fs_sectors, partition_offset)
     writer.flush()
     report(tr("Tamamlandi"), 100)

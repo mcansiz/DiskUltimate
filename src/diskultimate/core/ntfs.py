@@ -759,7 +759,7 @@ class NtfsFormatter:
                      baglanti: int = 1) -> bytes:
         record = bytearray(MFT_RECORD_SIZE)
         usa_offset = 0x30
-        usa_count = MFT_RECORD_SIZE // self.sector_size + 1
+        usa_count = MFT_RECORD_SIZE // NTFS_BLOCK_SIZE + 1   # 4K sektorde de 512 (N1)
         attrs_offset = (usa_offset + usa_count * 2 + 7) & ~7
         record[0:4] = FILE_MAGIC
         struct.pack_into("<HH", record, 4, usa_offset, usa_count)
@@ -785,7 +785,7 @@ class NtfsFormatter:
         struct.pack_into("<Q", record, 0x20, 0)              # taban kayit
         struct.pack_into("<H", record, 0x28, len(oznitelikler) + 1)
         struct.pack_into("<I", record, 0x2C, rec_no)
-        self._apply_fixup(record, usa_offset, usa_count, 1, self.sector_size)
+        self._apply_fixup(record, usa_offset, usa_count, 1, NTFS_BLOCK_SIZE)
         return bytes(record)
 
 
@@ -963,7 +963,7 @@ class _NtfsBuilder(NtfsFormatter):
         girisler = self._root_index_entries()
         record = bytearray(INDEX_RECORD_SIZE)
         usa_offset = 0x28
-        usa_count = INDEX_RECORD_SIZE // L.sector_size + 1
+        usa_count = INDEX_RECORD_SIZE // NTFS_BLOCK_SIZE + 1  # 4K sektorde de 512 (N1)
         girisler_ofseti = (usa_offset + usa_count * 2 + 7) & ~7
 
         record[0:4] = INDX_MAGIC
@@ -977,7 +977,7 @@ class _NtfsBuilder(NtfsFormatter):
                          INDEX_RECORD_SIZE - 0x18)
         record[0x24] = 0                                        # yaprak dugum
         record[girisler_ofseti:girisler_ofseti + len(girisler)] = girisler
-        self._apply_fixup(record, usa_offset, usa_count, 1, L.sector_size)
+        self._apply_fixup(record, usa_offset, usa_count, 1, NTFS_BLOCK_SIZE)
         self._write_clusters(L.root_index_lcn, bytes(record))
 
     def _used_clusters(self) -> List[Tuple[int, int]]:
@@ -1370,6 +1370,10 @@ class _NtfsBuilder(NtfsFormatter):
             struct.pack_into("<b", boot, 0x44,
                              -(INDEX_RECORD_SIZE.bit_length() - 1))
         struct.pack_into("<Q", boot, 0x48, self.serial)
+        # Imza 0x1FE'dedir (mkntfs, Windows); 4K sektorde eskiden yalnizca
+        # sektor sonuna yaziliyordu ve kendi denetleyicimiz (ntfsfix) birimi
+        # "onyukleme sektoru bozuk" sayiyordu. Sektor sonundaki kopya zararsiz.
+        struct.pack_into("<H", boot, 0x1FE, 0xAA55)
         struct.pack_into("<H", boot, ss - 2, 0xAA55)
         return bytes(boot)
 

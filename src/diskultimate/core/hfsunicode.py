@@ -19,6 +19,15 @@ Tablo burada **uretilir**, Apple'in verisi kopyalanmaz. Kural (olculdu,
 
 Ayristirma Unicode 3.2 NFD'sidir; Apple U+2000-2FFF, U+F900-FAFF ve
 U+2F800-2FAFF araliklarini ayristirmaz.
+
+Eski ayristirma (TN1150): Mac OS 8.1-10.2 Unicode 2.1 tablosunu kullanir;
+Linux hfsplus surucusu (fs/hfsplus/tables.c) bugun de o tabloyu kullanir.
+Okumada tek onemli fark Yunanca **tonos**'tur: 2.1'de U+030D (dikey cizgi),
+3.2'de U+0301 (akut). "ά" Linux'ta 03B1 030D, macOS 10.3+'ta 03B1 0301
+saklanir; 030D NFC ile birlesmedigi icin ad bozuk gorunur ve yol aramasi
+tutmaz. `legacy_tonos` okurken 030D'yi 0301'e cevirir. (Diger 2.1 farklari
+ya NFC'nin zaten duzelttigi isaret sirasi ya da 2.1'de hic ayristirilmayan,
+yani birlesik kalan karakterlerdir.)
 """
 from __future__ import annotations
 
@@ -121,3 +130,35 @@ def hfs_nfd(text: str) -> str:
     if run:
         out.append(_UCD.normalize("NFD", "".join(run)))
     return "".join(out)
+
+
+def _greek_base(ch: str) -> bool:
+    cp = ord(ch)
+    return 0x0370 <= cp <= 0x03FF or 0x1F00 <= cp <= 0x1FFF or cp == 0x00A8
+
+
+def legacy_tonos(text: str) -> str:
+    """Unicode 2.1 tonos'unu (U+030D) 3.2 bicimine (U+0301) cevirir.
+
+    Yalnizca Yunanca taban harften (araya diyeresis U+0308 girebilir) ya da
+    U+00A8'den sonra gelen 030D degisir; Latin harf uzerindeki gercek 030D
+    oldugu gibi kalir.
+    """
+    if "\u030d" not in text:
+        return text
+    out: List[str] = []
+    for ch in text:
+        if ch == "\u030d":
+            j = len(out) - 1
+            while j >= 0 and out[j] == "\u0308":
+                j -= 1
+            if j >= 0 and _greek_base(out[j]):
+                ch = "\u0301"
+        out.append(ch)
+    return "".join(out)
+
+
+def hfs_display(raw: str) -> str:
+    """Diskteki (ayristirilmis) adi gosterim bicimine (NFC) cevirir; eski
+    (Unicode 2.1 / Linux) ayristirmayi da tanir."""
+    return unicodedata.normalize("NFC", legacy_tonos(raw))

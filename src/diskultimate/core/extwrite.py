@@ -7,12 +7,24 @@ dosya olusturma, klasor olusturma, silme ve yeniden adlandirma.
 
 Bir ext birimine yazmak, veriyi yazmaktan ibaret degildir: blok ve inode
 bitmap'leri, grup tanimlayici sayaclari ve ustblok sayaclari **ayni anda**
-tutarli kalmalidir. Birim ayrica su ozellikleri tasiyorsa yazma daha da
-genisler ve bu surumde **reddedilir**:
+tutarli kalmalidir.
 
-  * `bigalloc`, `inline_data` — farkli tahsis/yerlesim kurallari.
-  * `64bit` **yalnizca** birim 4 milyar bloktan buyukse (blok numarasi 32 biti
-    asarsa). Kucuk birimlerde 64bit sorun degildir.
+Ozellik denetimi bir **izin listesidir** (e2fsprogs `EXT2_LIB_FEATURE_*_SUPP`
+gibi): yalnizca yazicinin dogru isledigi bilinen bitler kabul edilir;
+bilinmeyen (gelecekteki) her bit ve su ozellikler yazmayi reddettirir:
+`bigalloc`, `inline_data`, kota, `encrypt`, `verity`, `ea_inode`, `mmp`,
+ayri gunluk aygiti, sikistirma, `dirdata`, `shared_blocks`. Eskiden bir yasak
+listesiydi; casefold, encrypt, ea_inode, verity, mmp yazilabiliyordu
+(denetim 2026-10-06, E1/E9).
+
+Ayrica birim **temiz** olmalidir: `s_state` VALID, hata biti yok, gunlukte
+islenmemis kayit (needs_recovery) yok, yetim listesi bos. Aksi halde cekirdek
+baglarken gunlugu bizim yazdiklarimizin uzerine oynatir ya da bitmap'ler
+guvenilmezdir.
+
+`64bit` **yalnizca** birim 4 milyar bloktan buyukse reddedilir.
+casefold birimde yalnizca casefold **olmayan** dizinlere ad eklenir
+(katlanmis ad karmasi uygulanmadi).
 
 Desteklenenler:
   * `metadata_csum` — ustblok, grup tanimlayici, inode, bitmap ve dizin blogu
@@ -42,24 +54,63 @@ from .extcsum import (DIRENT_TAIL_FT, DIRENT_TAIL_SIZE, GD_CHECKSUM_OFFSET,
                       INODE_CSUM_HI, INODE_CSUM_LO, SB_CHECKSUM_OFFSET,
                       ExtChecksums)
 from . import exthtree
-from .extlayout import ExtCsum, ExtGeometry
+from .extlayout import ExtCsum, ExtGeometry, unsupported_features
 from .extread import (EXTENTS_FL, INO_ROOT, S_IFDIR, S_IFMT, S_IFREG,
                       ExtError, ExtFS, ExtInode, _normalize)
 from .streamio import group_runs, write_runs
 from ..i18n import tr
 
-# Desteklenmeyen ozellikler
+# Ozellik bitleri
+INCOMPAT_RECOVER = 0x0004
+INCOMPAT_JOURNAL_DEV = 0x0008
+INCOMPAT_FILETYPE = 0x0002
 INCOMPAT_64BIT = 0x0080
+INCOMPAT_MMP = 0x0100
+INCOMPAT_EA_INODE = 0x0400
 INCOMPAT_INLINE_DATA = 0x8000
+INCOMPAT_ENCRYPT = 0x10000
+INCOMPAT_CASEFOLD = 0x20000
 RO_METADATA_CSUM = 0x0400
 RO_BIGALLOC = 0x0200
+RO_DIR_NLINK = 0x0020
 # Kota dosyalari yazmada guncellenmez; e2fsck kullanimi "guncellenmeli" der.
 # (Eskiden RO_BIGALLOC yanlislikla 0x0100 idi ve kotayi tesadufen reddediyordu.)
 RO_QUOTA = 0x0100
 RO_PROJECT = 0x2000
+RO_VERITY = 0x8000
+RO_ORPHAN_PRESENT = 0x10000
+
+# --- Yazicinin dogru isledigi ozellikler (izin listesi) ---------------------
+# compat: dir_prealloc, imagic_inodes, has_journal, ext_attr, resize_inode,
+# dir_index, sparse_super2, fast_commit, stable_inodes (yazici inode
+# numarasi degistirmez), orphan_file (bos olmasi ayrica denetlenir)
+WRITE_COMPAT = 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | \
+    0x0200 | 0x0400 | 0x0800 | 0x1000
+# incompat: filetype, meta_bg, extents, 64bit, flex_bg, csum_seed, largedir,
+# casefold (dizin duzeyinde ayrica korunur)
+WRITE_INCOMPAT = 0x0002 | 0x0010 | 0x0040 | 0x0080 | 0x0200 | 0x2000 | \
+    0x4000 | INCOMPAT_CASEFOLD
+# ro_compat: sparse_super, large_file, huge_file, gdt_csum, dir_nlink,
+# extra_isize, metadata_csum, orphan_present (ayrica denetlenir: bos olmali)
+WRITE_RO_COMPAT = 0x0001 | 0x0002 | 0x0008 | 0x0010 | 0x0020 | 0x0040 | \
+    0x0400 | RO_ORPHAN_PRESENT
+
+STATE_VALID = 0x0001
+STATE_ERROR = 0x0002
+STATE_ORPHAN = 0x0004
+SB_STATE = 0x3A
+SB_LAST_ORPHAN = 0xE8
+
+# inode bayraklari
+IMMUTABLE_FL = 0x00000010
+APPEND_FL = 0x00000020
+CASEFOLD_FL = 0x40000000
+HUGE_FILE_FL = 0x00040000
+LINK_MAX = 65000                       # EXT4_LINK_MAX
 
 FT_REG = 1
 FT_DIR = 2
+FT_SYMLINK = 7
 
 # Dizin girisi basligi: inode(4) + rec_len(2) + name_len(1) + file_type(1)
 DIRENT_HEAD = 8
@@ -114,23 +165,48 @@ class ExtWriter:
         fs = self.fs
         if getattr(self.dev, "readonly", False):
             return False, tr("Kaynak salt okunur acildi.")
+        sb = self.dev.read(1024, 1024)
+        state = struct.unpack_from("<H", sb, SB_STATE)[0]
+        # Ayri gunluk aygiti bir dosya sistemi degildir: ustblogu ext'e benzer
+        # ama icinde dizin/inode yoktur.
+        if fs.feature_incompat & INCOMPAT_JOURNAL_DEV:
+            return False, tr("Bu bir ext gunluk aygiti (journal_dev); dosya "
+                             "sistemi degildir, icine yazilamaz.")
+        if fs.feature_incompat & INCOMPAT_RECOVER:
+            return False, tr(
+                "Birimin gunlugunde islenmemis kayitlar var (needs_recovery: "
+                "temiz kapatilmamis). Yazilirsa cekirdek baglarken gunlugu "
+                "yazdiklarimizin uzerine oynatir. Once birimi Linux'ta baglayip "
+                "duzgun ayirin veya e2fsck ile onarin.")
+        if fs.feature_incompat & INCOMPAT_MMP:
+            return False, tr(
+                "Birim coklu baglama korumasi (mmp) kullaniyor; baska bir "
+                "makinede bagli olabilir. Yazma reddedildi.")
+        if not state & STATE_VALID or state & (STATE_ERROR | STATE_ORPHAN) \
+                or struct.unpack_from("<I", sb, SB_LAST_ORPHAN)[0] \
+                or fs.ro_compat & RO_ORPHAN_PRESENT:
+            return False, tr(
+                "Birim temiz degil (temiz kapatilmamis, hata kaydi ya da "
+                "islenmemis yetim inode var); bitmap'lere guvenilemez. Once "
+                "e2fsck ile denetleyin.")
         missing = []
-        if fs.ro_compat & RO_BIGALLOC:
-            missing.append("bigalloc")
-        if fs.ro_compat & (RO_QUOTA | RO_PROJECT):
-            missing.append(tr("disk kotasi (quota)"))
-        if fs.feature_incompat & INCOMPAT_INLINE_DATA:
-            missing.append("inline_data")
+        for name in unsupported_features(fs.compat, fs.feature_incompat,
+                                         fs.ro_compat, WRITE_COMPAT,
+                                         WRITE_INCOMPAT, WRITE_RO_COMPAT):
+            if name in ("quota", "project"):
+                name = tr("disk kotasi (quota)")
+            if name not in missing:
+                missing.append(name)
         if fs.feature_incompat & INCOMPAT_64BIT and fs.blocks_count > 0xFFFFFFFF:
             # `64bit` ozelligi tek basina engel degil: sorun ancak blok numarasi
             # 32 biti asarsa cikar. Saglamalar ve 64 baytlik grup tanimlayicisi
             # desteklenir.
             missing.append(tr("64bit (4 milyar bloktan buyuk birim)"))
         if missing:
-            return False, (
+            return False, tr(
                 "Bu birim su ozellikleri kullaniyor ve bu surumde yazma "
-                "desteklenmiyor: " + ", ".join(missing)
-                + ". Yanlis yazip birimi bozmamak icin islem reddedildi.")
+                "desteklenmiyor: {}. Yanlis yazip birimi bozmamak icin islem "
+                "reddedildi.", ", ".join(missing))
         return True, ""
 
     def _require_writable(self) -> None:
@@ -672,6 +748,8 @@ class ExtWriter:
         Dolayli tablolar da serbest birakilir: yalnizca veri bloklarini
         birakmak, tablolari sizdirip disk alanini kaybettirir.
         """
+        if not node.has_block_map:
+            return                  # aygit/fifo/soket, hizli bag, inline
         if node.uses_extents:
             # Extent'li inode: veri bloklari VE agacin ic/yaprak dugumleri
             # birakilir. Eskiden yalnizca veri birakiliyordu; derinligi > 0
@@ -719,28 +797,24 @@ class ExtWriter:
     # Dizin girisleri
     # ------------------------------------------------------------------
     def _dir_blocks(self, node: ExtInode) -> List[int]:
-        """Dizinin veri bloklari, mantiksal sirayla (liste sirasi = mantiksal blok).
+        """Dizinin veri bloklari: liste sirasi = mantiksal blok, delik = 0.
 
-        Dizinlerde delik olmaz; dolayli duzende dogrudan + tek + cift kat
-        dolayli tablolar okunur (dizin artik cift kata buyuyebilir).
+        Dizinde delik olabilir (e2fsck kabul eder, cekirdek atlar). Eskiden
+        delikler listeden atiliyordu; htree'nin mantiksal blok numaralari
+        bir kayiyor, yanlis bloga yaziliyordu (denetim E10). Cagiranlar 0'i
+        atlar.
         """
-        if node.uses_extents:
-            out: List[int] = []
-            for _logical, physical, length in self.fs._extent_blocks(node):
-                out.extend(range(physical, physical + length))
-            return out
-        n = self.bs // 4
+        if node.is_inline:
+            raise ExtError(tr("inline_data dizinine yazma desteklenmiyor"))
         count = (node.size + self.bs - 1) // self.bs
-        out = [b for b in struct.unpack_from("<12I", node.raw_block, 0)][:count]
-        ind, dind = struct.unpack_from("<II", node.raw_block, 48)
-        if len(out) < count and ind:
-            out.extend(struct.unpack_from("<%dI" % n, self._read_block(ind)))
-        if len(out) < count and dind:
-            for mid in struct.unpack_from("<%dI" % n, self._read_block(dind)):
-                if len(out) >= count or not mid:
-                    break
-                out.extend(struct.unpack_from("<%dI" % n, self._read_block(mid)))
-        return [b for b in out[:count] if b]
+        if node.uses_extents:
+            out = [0] * count
+            for logical, physical, length in self.fs._extent_blocks(node):
+                for k in range(length):
+                    if logical + k < count:
+                        out[logical + k] = physical + k
+            return out
+        return self.fs._indirect_blocks(node, count)
 
     def _inode_generation(self, ino: int) -> int:
         raw = self.dev.read(self._inode_offset(ino), self.fs.inode_size)
@@ -806,13 +880,9 @@ class ExtWriter:
         directory ... invalid"; olculdu 2026-09-29).
         """
         raw_name = name.encode("utf-8")
-        if _align4(DIRENT_HEAD + len(raw_name)) > self._dir_usable_size() or \
-                len(raw_name) > 255:
-            raise ExtError(tr("Dosya adi cok uzun"))
         node = self.fs.read_inode(parent)
-        if node.flags & ENCRYPT_FL:
-            raise ExtError(tr("Bu dizin sifreli (fscrypt); adlar anahtar "
-                              "olmadan yazilamaz."))
+        self._check_can_add(node, raw_name)
+        ftype = self._entry_ftype(ftype)
         if node.flags & INDEX_FL:
             if self._htree_add(parent, node, raw_name, ino, ftype):
                 return
@@ -821,6 +891,8 @@ class ExtWriter:
             node = self.fs.read_inode(parent)
 
         for blk in self._dir_blocks(node):
+            if not blk:
+                continue                       # dizin deligi
             buf = self._read_block(blk)
             if self._insert_in_block(buf, raw_name, ino, ftype):
                 self._write_dir_block(parent, blk, buf)
@@ -896,7 +968,7 @@ class ExtWriter:
     def _htree_add(self, dir_ino: int, node: ExtInode, raw_name: bytes,
                    ino: int, ftype: int) -> bool:
         phys = self._dir_map(node)
-        if not phys:
+        if not phys or not phys[0]:
             return False
         root = self._read_block(phys[0])
         version, seed = self._hash_params(root)
@@ -915,10 +987,10 @@ class ExtWriter:
             frames.append((lblk, buf, off, items, pos))
             lblk = items[pos][1]
             if _lvl < levels:
-                if lblk >= len(phys):
+                if lblk >= len(phys) or not phys[lblk]:
                     return False
                 buf, off = bytearray(self._read_block(phys[lblk])), exthtree.DX_NODE_COUNT
-        if lblk >= len(phys):
+        if lblk >= len(phys) or not phys[lblk]:
             return False
         leaf_blk = phys[lblk]
         leaf = self._read_block(leaf_blk)
@@ -995,6 +1067,8 @@ class ExtWriter:
         bloklarinda kuyruk yoktur, bu yuzden yeniden yazilirlar.
         """
         phys = self._dir_map(node)
+        if not phys or not phys[0]:
+            raise ExtError(tr("Dizin indeksi bozuk: inode {}", dir_ino))
         root = self._read_block(phys[0])
         levels = root[0x1E]
         info_len = root[0x1D]
@@ -1004,7 +1078,7 @@ class ExtWriter:
             nxt = []
             for buf, off in frontier:
                 for _h, lb in exthtree.entries(buf, off):
-                    if lb < len(phys) and lb not in dx_lblocks:
+                    if lb < len(phys) and phys[lb] and lb not in dx_lblocks:
                         dx_lblocks.add(lb)
                         nxt.append((bytearray(self._read_block(phys[lb])),
                                     exthtree.DX_NODE_COUNT))
@@ -1094,11 +1168,18 @@ class ExtWriter:
         self.dev.write(self._inode_offset(ino), bytes(raw))
         self.fs._inode_cache.pop(ino, None)
 
-    def dir_remove(self, parent: int, name: str) -> None:
-        """Girisi siler: onceki kaydin `rec_len` degeri uzerine alinir."""
+    def dir_remove(self, parent: int, name, ino: int = 0) -> None:
+        """Girisi siler: onceki kaydin `rec_len` degeri uzerine alinir.
+
+        `name` str ya da diskteki ham bayt olabilir (UTF-8 olmayan adlar
+        yalnizca ham baytla bulunur — denetim E4). `ino` verilirse giris
+        ayrica inode numarasiyla eslesmelidir.
+        """
         node = self.fs.read_inode(parent)
-        target = name.encode("utf-8")
+        target = name if isinstance(name, bytes) else name.encode("utf-8")
         for blk in self._dir_blocks(node):
+            if not blk:
+                continue                       # dizin deligi
             buf = self._read_block(blk)
             pos, prev = 0, -1
             limit = self._dir_usable_size()
@@ -1106,7 +1187,8 @@ class ExtWriter:
                 e_ino, rec_len, name_len, _ft = struct.unpack_from("<IHBB", buf, pos)
                 if rec_len < DIRENT_HEAD:
                     break
-                if e_ino and buf[pos + DIRENT_HEAD:pos + DIRENT_HEAD + name_len] == target:
+                if e_ino and (not ino or e_ino == ino) and \
+                        buf[pos + DIRENT_HEAD:pos + DIRENT_HEAD + name_len] == target:
                     if prev >= 0:
                         prev_len = struct.unpack_from("<H", buf, prev + 4)[0]
                         struct.pack_into("<H", buf, prev + 4, prev_len + rec_len)
@@ -1116,7 +1198,43 @@ class ExtWriter:
                     return
                 prev = pos
                 pos += rec_len
-        raise ExtError(tr("Dizin girisi bulunamadi: {}", name))
+        raise ExtError(tr("Dizin girisi bulunamadi: {}",
+                          target.decode("utf-8", "replace")))
+
+    def _check_can_add(self, dir_node: ExtInode, raw_name: bytes) -> None:
+        """Dizine ad eklenebilir mi? Yazmadan ONCE cagrilir (yarim islem
+        birakmamak icin)."""
+        if _align4(DIRENT_HEAD + len(raw_name)) > self._dir_usable_size() or \
+                len(raw_name) > 255:
+            raise ExtError(tr("Dosya adi cok uzun"))
+        if dir_node.flags & ENCRYPT_FL:
+            raise ExtError(tr("Bu dizin sifreli (fscrypt); adlar anahtar "
+                              "olmadan yazilamaz."))
+        if dir_node.flags & CASEFOLD_FL:
+            # Karma katlanmis (casefold) adla hesaplanir ve ayni ad farkli
+            # harfle tekrar eklenemez; ikisi de uygulanmadi (denetim E5).
+            raise ExtError(tr(
+                "Bu klasor buyuk/kucuk harf duyarsiz (casefold); bu surumde "
+                "icine ad eklenemez."))
+        if dir_node.flags & IMMUTABLE_FL:
+            raise ExtError(tr("Klasor degistirilemez (immutable) olarak "
+                              "isaretli."))
+
+    @staticmethod
+    def _check_mutable(node: ExtInode, name: str) -> None:
+        if node.flags & (IMMUTABLE_FL | APPEND_FL):
+            raise ExtError(tr("Oge degistirilemez (immutable/append-only) "
+                              "olarak isaretli: {}", name))
+
+    def _find_entry(self, parent: ExtInode, name: str):
+        for e in self.fs.read_dir(parent):
+            if e.name == name and e.name not in (".", ".."):
+                return e
+        return None
+
+    def _entry_ftype(self, ftype: int) -> int:
+        # filetype ozelligi yoksa bu bayt ad uzunlugunun ust yarisidir.
+        return ftype if self.fs.feature_incompat & INCOMPAT_FILETYPE else 0
 
     # ------------------------------------------------------------------
     # Ust duzey islemler
@@ -1166,32 +1284,96 @@ class ExtWriter:
         if not parent.is_dir:
             raise ExtError(tr("Dizin degil: {}", parent_path))
 
-        existing = None
-        for e in self.fs.read_dir(parent):
-            if e.name == name:
-                existing = e
-                break
+        existing = self._find_entry(parent, name)
         if existing is not None:
             old = self.fs.read_inode(existing.inode)
             if old.is_dir:
                 raise ExtError(tr("Ayni adda klasor var: {}", name))
-            self._require_space(self._blocks_needed(size)
-                                - (old.size + self.bs - 1) // self.bs)
-            self._release_data(old)
-            ino = existing.inode
-        else:
-            self._require_space(self._blocks_needed(size), inodes=1)
-            ino = self.alloc_inode(is_dir=False)
+            if not old.is_regular or not old.has_block_map:
+                # Bag/aygit/fifo ustune "dosya" yazmak tur baytini ve inode'u
+                # tutarsiz birakirdi.
+                raise ExtError(tr("Ayni adda dosya olmayan bir oge var: {}",
+                                  name))
+            self._check_mutable(old, name)
+            self._overwrite(old, src, size)
+            return
+        self._check_can_add(parent, name.encode("utf-8"))
+        self._require_space(self._blocks_needed(size), inodes=1)
+        ino = self.alloc_inode(is_dir=False)
         try:
-            self._write_file_body(ino, src, size, existing is None, parent, name)
+            self._write_file_body(ino, src, size, True, parent, name)
         except Exception:
-            if existing is None:
-                # ayrilan inode geri verilir; bitmap'te sahipsiz kalmasin
-                try:
-                    self.free_inode(ino, was_dir=False)
-                except Exception:              # noqa: BLE001
-                    pass
+            # ayrilan inode geri verilir; bitmap'te sahipsiz kalmasin
+            try:
+                self.free_inode(ino, was_dir=False)
+            except Exception:              # noqa: BLE001
+                pass
             raise
+
+    def _overwrite(self, old: ExtInode, src, size: int) -> None:
+        """Var olan dosyanin icerigini degistirir; **inode ustverisi korunur**.
+
+        Eskiden inode bastan yaziliyordu: bag sayisi 1, uid/gid 0, kip 0644,
+        govde ici xattr'lar ve xattr blogu kayboluyordu (denetim E2/E7).
+        Simdi yalnizca boyut, blok sayisi, esleme ve zamanlar degisir.
+
+        Yer yetiyorsa yeni veri ONCE yazilir, inode ona cevrilir, eski bloklar
+        en son birakilir: yarida kalan yazma eski icerigi bozmaz. Yer
+        yetmiyorsa dosya once bosaltilir (tutarli ama bos kalir).
+        """
+        ino = old.number
+        old_blocks = (old.blocks512 * 512 + self.bs - 1) // self.bs
+        need = self._blocks_needed(size)
+        sb = self.dev.read(1024, 1024)
+        free = struct.unpack_from("<I", sb, 0x0C)[0]
+        if self.fs.feature_incompat & INCOMPAT_64BIT:
+            free |= struct.unpack_from("<I", sb, 0x158)[0] << 32
+        if need > free:
+            self._require_space(need - old_blocks)
+            self._set_content(ino, 0, b"", 0)          # once bosalt
+            self._release_data(old)
+            old = self.fs.read_inode(ino)
+        if self.uses_extents:
+            root, sectors = self._store_extents(ino, src, size)
+            self._set_content(ino, size, root, sectors, extents=True)
+        else:
+            i_block, sectors = self._store_data(src, size)
+            raw = b"".join(struct.pack("<I", b) for b in i_block)
+            self._set_content(ino, size, raw, sectors)
+        self._release_data(old)
+        self.fs._inode_cache.clear()
+
+    def _set_content(self, ino: int, size: int, i_block: bytes, sectors: int,
+                     extents: bool = False) -> None:
+        """Inode'un yalnizca icerikle ilgili alanlarini degistirir."""
+        off = self._inode_offset(ino)
+        raw = bytearray(self.dev.read(off, self.fs.inode_size))
+        now = int(time.time())
+        acl = struct.unpack_from("<I", raw, 0x68)[0]
+        if self.fs.feature_incompat & INCOMPAT_64BIT:
+            acl |= struct.unpack_from("<H", raw, 0x76)[0] << 32
+        if acl:
+            sectors += self.bs // 512          # xattr blogu i_blocks'a dahil
+        if not extents and not i_block:
+            i_block = bytes(60)
+            if self.uses_extents and struct.unpack_from(
+                    "<I", raw, 0x20)[0] & EXTENTS_FL:
+                # bos extent koku: cekirdek ve e2fsck bunu bekler
+                i_block = struct.pack("<HHHHI", 0xF30A, 0, 4, 0, 0) + bytes(48)
+                extents = True
+        struct.pack_into("<I", raw, 0x04, size & 0xFFFFFFFF)
+        struct.pack_into("<I", raw, 0x6C, (size >> 32) & 0xFFFFFFFF)
+        struct.pack_into("<I", raw, 0x1C, sectors & 0xFFFFFFFF)
+        struct.pack_into("<H", raw, 0x74, 0)                 # i_blocks_hi
+        struct.pack_into("<II", raw, 0x0C, now, now)          # ctime, mtime
+        flags = struct.unpack_from("<I", raw, 0x20)[0] & ~(EXTENTS_FL | HUGE_FILE_FL)
+        if extents:
+            flags |= EXTENTS_FL
+        struct.pack_into("<I", raw, 0x20, flags)
+        raw[0x28:0x28 + 60] = i_block[:60].ljust(60, b"\x00")
+        self._stamp_inode_csum(ino, raw)
+        self.dev.write(off, bytes(raw))
+        self.fs._inode_cache.pop(ino, None)
 
     def _write_file_body(self, ino: int, src, size: int, is_new: bool,
                          parent, name: str) -> None:
@@ -1218,17 +1400,20 @@ class ExtWriter:
             raise ExtError(tr("Dizin degil: {}", parent_path))
         if any(e.name == name for e in self.fs.read_dir(parent)):
             raise ExtError(tr("Zaten var: {}", name))
+        self._check_can_add(parent, name.encode("utf-8"))
+        parent_links = self._parent_links_after_mkdir(parent)
 
         self._require_space(4, inodes=1)
         ino = self.alloc_inode(is_dir=True)
         blk, buf = self._new_dir_block()
         # "." kaydi
-        struct.pack_into("<IHBB", buf, 0, ino, 12, 1, FT_DIR)
+        struct.pack_into("<IHBB", buf, 0, ino, 12, 1, self._entry_ftype(FT_DIR))
         buf[8:9] = b"."
         # ".." kaydi kullanilabilir alanin sonuna kadar uzanir (saglama
         # kuyrugu varsa onun oncesine kadar)
         struct.pack_into("<IHBB", buf, 12, parent.number,
-                         self._dir_usable_size() - 12, 2, FT_DIR)
+                         self._dir_usable_size() - 12, 2,
+                         self._entry_ftype(FT_DIR))
         buf[20:22] = b".."
         # Inode ONCE yazilir: dizin blogu saglamasi i_generation'a baglidir.
         self.write_inode(ino, mode=S_IFDIR | 0o755, size=self.bs, links=2,
@@ -1236,62 +1421,137 @@ class ExtWriter:
         self._write_dir_block(ino, blk, buf)
         self.dir_add(parent.number, name, ino, FT_DIR)
         # ust dizinin baglanti sayisi ".." yuzunden bir artar
-        self._patch_inode(parent.number, 0x1A, "<H", parent.links + 1)
+        self._patch_inode(parent.number, 0x1A, "<H", parent_links)
         self.fs._inode_cache.clear()
 
+    def _parent_links_after_mkdir(self, parent: ExtInode) -> int:
+        """Alt klasor eklenince ust dizinin yeni bag sayisi.
+
+        `dir_nlink`: 65000'i asan (ya da zaten 1 olan) sayac 1 olur ("sayilmiyor"
+        — cekirdek `ext4_inc_count`). Ozellik yoksa sinir asilamaz.
+        """
+        links = parent.links
+        if self.fs.ro_compat & RO_DIR_NLINK:
+            if links == 1 or links + 1 > LINK_MAX:
+                return 1
+            return links + 1
+        if links + 1 > LINK_MAX:
+            raise ExtError(tr("Klasorde en fazla {} alt klasor olabilir",
+                              LINK_MAX - 2))
+        return links + 1
+
     def remove(self, path: str) -> None:
-        """Dosyayi veya **bos** klasoru siler."""
+        """Dosyayi veya **bos** klasoru siler.
+
+        Sira: once dizin girisi kaldirilir, sonra (bag sayisi sifira inerse)
+        veri ve inode birakilir. Eskiden veri once birakiliyordu; giris
+        bulunamazsa (UTF-8 olmayan ad) bloklar bos ama giris duruyordu (E4).
+        Sabit bagli dosyada yalnizca bag sayisi azalir (E2).
+        """
         self._require_writable()
         parent_path, name = self._split(path)
         parent = self.fs.resolve(parent_path)
-        target = None
-        for e in self.fs.read_dir(parent):
-            if e.name == name:
-                target = e
-                break
+        target = self._find_entry(parent, name)
         if target is None:
             raise ExtError(tr("Bulunamadi: {}", path))
         node = self.fs.read_inode(target.inode)
+        self._check_mutable(node, name)
+        if parent.flags & (IMMUTABLE_FL | APPEND_FL):
+            raise ExtError(tr("Oge degistirilemez (immutable/append-only) "
+                              "olarak isaretli: {}", parent_path))
 
         if node.is_dir:
             remaining = [e.name for e in self.fs.read_dir(node)
-                     if e.name not in (".", "..")]
+                         if e.name not in (".", "..")]
             if remaining:
                 raise ExtError(tr("Klasor bos degil: {} ({} giris)",
                                   name, len(remaining)))
 
-        # Hizli sembolik bagin hedefi `i_block` icindedir, blok tutmaz;
-        # yalnizca blok tabanli baglar ve normal dosyalar serbest birakilir.
-        if not (node.is_symlink and node.size <= 60):
-            self._release_data(node)
+        self.dir_remove(parent.number, target.raw_name or name, target.inode)
+        now = int(time.time())
+        if not node.is_dir and node.links > 1:
+            self._patch_inode(target.inode, 0x1A, "<H", node.links - 1)
+            self._patch_inode(target.inode, 0x0C, "<I", now)       # ctime
+            self.fs._inode_cache.clear()
+            return
 
-        self.dir_remove(parent.number, name)
+        # Hizli bag, aygit/fifo/soket: i_block blok numarasi degildir (E3).
+        if node.has_block_map:
+            self._release_data(node)
+        self._release_xattr_block(node)
         self._patch_inode(target.inode, 0x1A, "<H", 0)          # links = 0
-        self._patch_inode(target.inode, 0x14, "<I", int(time.time()))  # dtime
+        self._patch_inode(target.inode, 0x14, "<I", now)        # dtime
         self.free_inode(target.inode, was_dir=node.is_dir)
-        if node.is_dir:
-            self._patch_inode(parent.number, 0x1A, "<H", max(2, parent.links - 1))
+        if node.is_dir and parent.links > 2:
+            # dir_nlink'te 1 "sayilmiyor" demektir ve oyle kalir
+            self._patch_inode(parent.number, 0x1A, "<H", parent.links - 1)
         self.fs._inode_cache.clear()
 
+    def _release_xattr_block(self, node: ExtInode) -> None:
+        """Ek oznitelik blogunun referans sayisini azaltir; 0'a inerse birakir.
+
+        Eskiden silinen inode'un xattr blogu bitmap'te dolu kaliyordu (E7).
+        Blok birden cok inode'ca paylasilabilir (h_refcount).
+        """
+        acl = node.file_acl
+        if not acl or acl >= self.fs.blocks_count:
+            return
+        buf = self._read_block(acl)
+        if struct.unpack_from("<I", buf, 0)[0] != 0xEA020000:
+            return                              # bozuk/tanimsiz: dokunma
+        refcount = struct.unpack_from("<I", buf, 4)[0]
+        if refcount > 1:
+            struct.pack_into("<I", buf, 4, refcount - 1)
+            if self.csum.enabled:
+                from .extcsum import raw_crc32c
+                struct.pack_into("<I", buf, 0x10, 0)
+                crc = raw_crc32c(self.csum.seed, struct.pack("<Q", acl))
+                crc = raw_crc32c(crc, bytes(buf))
+                struct.pack_into("<I", buf, 0x10, crc)
+            self._write_block(acl, buf)
+        else:
+            self.free_blocks([acl])
+
     def rename(self, path: str, new_name: str) -> None:
-        """Ayni dizin icinde yeniden adlandirir."""
+        """Ayni dizin icinde yeniden adlandirir.
+
+        Yeni giris ONCE eklenir, eski giris sonra kaldirilir: ekleme yer
+        bulamazsa birim degismemis olur (eskiden once siliniyordu; ekleme
+        basarisiz olunca dosya hicbir dizinde kalmiyordu). Dizin girisinin
+        tur bayti korunur (eskiden bag/aygit da FT_REG yaziliyordu — E10).
+        """
         self._require_writable()
         parent_path, name = self._split(path)
-        if "/" in new_name:
+        if "/" in new_name or new_name in ("", ".", ".."):
             raise ExtError(tr("Yeni ad yol icermemeli"))
         parent = self.fs.resolve(parent_path)
         target = None
         for e in self.fs.read_dir(parent):
             if e.name == new_name:
                 raise ExtError(tr("Zaten var: {}", new_name))
-            if e.name == name:
+            if e.name == name and target is None and name not in (".", ".."):
                 target = e
         if target is None:
             raise ExtError(tr("Bulunamadi: {}", path))
-        ftype = FT_DIR if self.fs.read_inode(target.inode).is_dir else FT_REG
-        self.dir_remove(parent.number, name)
+        node = self.fs.read_inode(target.inode)
+        self._check_mutable(node, name)
+        if parent.flags & (IMMUTABLE_FL | APPEND_FL):
+            raise ExtError(tr("Oge degistirilemez (immutable/append-only) "
+                              "olarak isaretli: {}", parent_path))
+        self._check_can_add(parent, new_name.encode("utf-8"))
+        ftype = target.file_type
+        if self.fs.feature_incompat & INCOMPAT_FILETYPE and not ftype:
+            ftype = self._ftype_for(node)
+        self._require_space(3)
         self.dir_add(parent.number, new_name, target.inode, ftype)
+        self.dir_remove(parent.number, target.raw_name or name, target.inode)
         self.fs._inode_cache.clear()
+
+    @staticmethod
+    def _ftype_for(node: ExtInode) -> int:
+        """inode kipinden dizin girisi tur bayti (EXT2_FT_*)."""
+        return {0x8000: 1, 0x4000: 2, 0x2000: 3, 0x6000: 4, 0x1000: 5,
+                0xC000: 6, 0xA000: 7}.get(node.mode & S_IFMT, 0)
 
     def flush(self) -> None:
         f = getattr(self.dev, "flush", None)

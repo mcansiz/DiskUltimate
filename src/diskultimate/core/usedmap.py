@@ -88,13 +88,16 @@ def _table_ranges(table: bytes, entry_bits: int, first: int, count: int,
 # --------------------------------------------------------------------------
 # Dosya sistemleri
 # --------------------------------------------------------------------------
-def _fat(view: BlockDevice) -> Ranges:
+def _fat(view: BlockDevice) -> Optional[Ranges]:
     from .fat import FatFS
 
     fs = FatFS(view)
+    if fs.fat_problem():
+        return None          # tutarsiz FAT: "bos" sanilan kume dolu olabilir
     bps = fs.bytes_per_sector
     data_start = fs.first_data_sector * bps
-    raw = view.read(fs.reserved_sectors * bps, fs.fat_size * bps)
+    # etkin FAT (FAT32 ExtFlags aynalama kapaliysa FAT0 bayat olabilir)
+    raw = view.read(fs.fat_offset(fs.active_fat), fs.fat_size * bps)
     bits = {12: 12, 16: 16, 32: 32}[fs.fat_type]
     need = ((fs.cluster_count + 2) * bits + 7) // 8
     if len(raw) < need:
@@ -106,10 +109,12 @@ def _fat(view: BlockDevice) -> Ranges:
     return out
 
 
-def _exfat(view: BlockDevice) -> Ranges:
+def _exfat(view: BlockDevice) -> Optional[Ranges]:
     from .exfat import ExFatFS
 
     fs = ExFatFS(view)
+    if fs.num_fats != 1:
+        return None          # TexFAT: iki bitmap; hangisinin tam oldugu belirsiz
     heap = fs.cluster_offset(2)
     bitmap = bytes(fs._load_bitmap())
     count = fs.cluster_count
@@ -125,6 +130,20 @@ def _ext(view: BlockDevice) -> Optional[Ranges]:
                             GD_INODE_BITMAP, GD_INODE_TABLE, INCOMPAT_RECOVER,
                             RO_BIGALLOC, desc_field)
     from .extread import ExtFS
+    import struct
+
+    # Ayri gunluk aygiti: grup/bitmap yapisi yoktur; ustblok alanlari
+    # baska anlam tasir (denetim E9). Temiz kapatilmamis (VALID biti yok) ya
+    # da hata kaydi olan birimde bitmap'ler eskimis olabilir: kullanilan blok
+    # bos gorunebilir (E8). Ikisi de ExtFS kurulmadan, ham ustbloktan bakilir.
+    sb = view.read(1024, 1024)
+    if len(sb) < 1024:
+        return None
+    if struct.unpack_from("<I", sb, 0x60)[0] & 0x0008:     # JOURNAL_DEV
+        return None
+    state = struct.unpack_from("<H", sb, 0x3A)[0]
+    if not state & 0x0001 or state & 0x0002:
+        return None
 
     fs = ExtFS(view)
     g = fs.geometry
@@ -174,6 +193,13 @@ def _ntfs(view: BlockDevice) -> Optional[Ranges]:
     from .ntfsread import AT_DATA, NtfsFS
 
     fs = NtfsFS(view)
+    # Hazirda bekletilmis / temiz kapatilmamis birimde diskteki $Bitmap
+    # guncel degildir (Windows'un bellegindeki tahsisler yazilmamistir);
+    # yalnizca isaretli kumeleri almak veri kaybettirir. Durum bilinmiyorsa
+    # da tamami alinir (N2).
+    from .ntfsfix import write_block_reason
+    if write_block_reason(fs, check_version=False):
+        return None
     count = fs.cluster_count
     need = (count + 7) // 8
     attr = fs.record(6).find(AT_DATA)              # $Bitmap
@@ -237,6 +263,13 @@ def disk_used_ranges(device: BlockDevice,
     with diagnostics.span("usedmap.disk", size=device.size):
         table = read_partition_table(device)
         if table is None:
+            return None
+        if getattr(table, "ambiguity", ""):
+            # Tablo kuskulu (bayat GPT + MBR, bozuk birincil GPT, hibrit MBR'de
+            # GPT disi alan): hangi bolumlerin canli oldugu kesin degil;
+            # atlanan alan canli veri olabilir. Tamami alinir (P2).
+            diagnostics.warn("usedmap: bolum tablosu kuskulu, tamami "
+                             "alinacak: %s" % table.ambiguity)
             return None
         if isinstance(table, WholeDiskTable):
             return fs_used_ranges(device)

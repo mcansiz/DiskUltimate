@@ -17,6 +17,7 @@ from typing import Callable, Dict, Iterator, List, Optional, Tuple
 
 from .exfat import (ATTR_DIRECTORY as EX_DIR, E_FILE, E_NAME, E_STREAM,
                     ExFatFS, ExFatError)
+from .exfat import decode_name as decode_exfat_name
 from .fat import ATTR_DIRECTORY, ATTR_LFN, ATTR_VOLUME_ID, FatFS, FatError
 from .image import BlockDevice, PartitionView
 from .platform import restore_owner
@@ -123,8 +124,7 @@ def _scan_deleted_fat(fs: FatFS, progress: Progress = None,
                 if birlesik:
                     name = birlesik
             lfn_parcalari = []
-            cluster_no = (struct.unpack_from("<H", ham, 20)[0] << 16) | \
-                struct.unpack_from("<H", ham, 26)[0]
+            cluster_no = fs.entry_cluster(ham)     # FAT12/16'da ust sozcuk OS/2 EA
             size = struct.unpack_from("<I", ham, 28)[0]
             klasor_mu = bool(attr & ATTR_DIRECTORY)
             gereken = max(1, (size + fs.cluster_bytes - 1) // fs.cluster_bytes)
@@ -159,8 +159,7 @@ def _scan_deleted_exfat(fs: ExFatFS, progress: Progress = None,
     if depth > 12:
         return bulunan
     try:
-        cluster = fs._dir_cluster(path)
-        veri = fs._read_chain_data(cluster)
+        veri = fs._read_dir_path(path)     # NoFatChain dizinler dahil
     except ExFatError:
         return bulunan
 
@@ -183,18 +182,25 @@ def _scan_deleted_exfat(fs: ExFatFS, progress: Progress = None,
                 name_length = stream[3]
                 first_cluster = struct.unpack_from("<I", stream, 20)[0]
                 size = struct.unpack_from("<Q", stream, 24)[0]
-                name = ""
+                raw_name = bytearray()
                 for n in range(2, ikincil + 1):
                     entry = cluster_data[n * 32:(n + 1) * 32]
                     if entry and entry[0] in (E_NAME, E_NAME & 0x7F):
-                        name += entry[2:32].decode("utf-16-le", "ignore")
-                name = name[:name_length] or f"(adsiz@{first_cluster})"
+                        raw_name += entry[2:32]
+                name = (decode_exfat_name(raw_name, name_length)
+                        or f"(adsiz@{first_cluster})")
                 gereken = max(1, (size + fs.cluster_bytes - 1) // fs.cluster_bytes)
-                saglam = _cluster_free_run(fs, first_cluster, gereken)
+                bitisik = bool(bayraklar & 0x02)
+                zincir = None if bitisik else _exfat_deleted_chain(fs, first_cluster,
+                                                                   gereken)
+                if zincir is not None:
+                    saglam = gereken
+                else:
+                    saglam = _cluster_free_run(fs, first_cluster, gereken)
                 bulunan.append(DeletedFile(
                     name=name, path=path.rstrip("/") + "/" + name, size=size,
                     cluster=first_cluster, is_dir=bool(attr & EX_DIR),
-                    contiguous=bool(bayraklar & 0x02),
+                    contiguous=zincir is None,
                     recoverable_bytes=min(size, saglam * fs.cluster_bytes),
                     condition=("iyi" if saglam >= gereken else
                                ("kismen uzerine yazilmis" if saglam else "kayip")),
@@ -216,6 +222,31 @@ def _scan_deleted_exfat(fs: ExFatFS, progress: Progress = None,
     return bulunan
 
 
+def _exfat_deleted_chain(fs: ExFatFS, start: int, needed: int) -> Optional[List[int]]:
+    """Silinmis FAT zincirli exFAT dosyasinin hala izlenebilen zinciri.
+
+    exFAT surucusu silmede yalnizca bitmap bitlerini temizler; FAT girisleri
+    cogunlukla kalir. Zincir tam uzunlukta, aralik icinde, tekrarsiz ve
+    butun kumeleri **bos** ise kullanilir; aksi halde None (bitisik varsayim).
+    """
+    if start < 2 or needed <= 1:
+        return None
+    try:
+        zincir = fs.chain(start, needed, False)
+    except Exception:                # noqa: BLE001
+        return None
+    if len(zincir) != needed or len(set(zincir)) != needed:
+        return None
+    if zincir == list(range(start, start + needed)):
+        return None                  # bitisik ile ayni; ozel yol gereksiz
+    try:
+        if any(fs.is_used(c) for c in zincir):
+            return None
+    except Exception:                # noqa: BLE001
+        return None
+    return zincir
+
+
 def recover_deleted(fs, item: DeletedFile, dest_path: str) -> int:
     """Silinmis dosyayi yerel diske kurtarir. Yazilan bayt sayisini dondurur.
 
@@ -229,10 +260,12 @@ def recover_deleted(fs, item: DeletedFile, dest_path: str) -> int:
     os.makedirs(os.path.dirname(os.path.abspath(dest_path)), exist_ok=True)
     cluster_bytes = fs.cluster_bytes
     gereken = (item.size + cluster_bytes - 1) // cluster_bytes
+    clusters = list(range(item.cluster, item.cluster + gereken))
+    if isinstance(fs, ExFatFS) and not item.contiguous:
+        clusters = _exfat_deleted_chain(fs, item.cluster, gereken) or clusters
     yazilan = 0
     with open(dest_path, "wb") as fh:
-        for i in range(gereken):
-            c = item.cluster + i
+        for c in clusters:
             try:
                 block = fs.read_cluster(c) if isinstance(fs, FatFS) else \
                     fs.dev.read(fs.cluster_offset(c), cluster_bytes)
@@ -270,14 +303,24 @@ def _probe_signature(block: bytes, dev: BlockDevice, lba: int) -> Optional[LostP
     ss = dev.sector_size
     if len(block) < 512:
         return None
-    # exFAT
+    # exFAT: VolumeLength 2^BytesPerSectorShift biriminde; aygit sektorune
+    # cevrilir (4K sektorlu exFAT 512 B'lik aygitta 8 kat buyuktur).
     if block[3:11] == b"EXFAT   ":
-        total = struct.unpack_from("<Q", block, 72)[0]
-        if 0 < total <= dev.sector_count:
-            return LostPartition(lba, total, "exFAT", "", ss)
+        shift = block[108]
+        if 9 <= shift <= 12:
+            total = _to_device_sectors(struct.unpack_from("<Q", block, 72)[0],
+                                       1 << shift, ss)
+            if 0 < total <= dev.sector_count:
+                return LostPartition(lba, total, "exFAT", "", ss)
     # NTFS
     if block[3:11] == b"NTFS    ":
-        total = struct.unpack_from("<Q", block, 40)[0] + 1
+        # Toplam sektor (+1 yedek onyukleme) BPB sektorundedir; mkntfs -s 4096
+        # 512 B'lik aygitta 8 kat kucuk gorunuyordu.
+        bps = struct.unpack_from("<H", block, 11)[0]
+        if bps not in (512, 1024, 2048, 4096):
+            bps = ss
+        total = _to_device_sectors(struct.unpack_from("<Q", block, 40)[0] + 1,
+                                   bps, ss)
         if 0 < total <= dev.sector_count:
             return LostPartition(lba, total, "NTFS", "", ss)
     extra = _probe_modern(block, dev)
@@ -295,15 +338,48 @@ def _probe_signature(block: bytes, dev: BlockDevice, lba: int) -> Optional[LostP
         fat_count = block[16]
         if (bps in (512, 1024, 2048, 4096) and spc in (1, 2, 4, 8, 16, 32, 64, 128)
                 and rezerve and fat_count in (1, 2)):
-            total = (struct.unpack_from("<H", block, 19)[0]
-                      or struct.unpack_from("<I", block, 32)[0])
-            if 0 < total <= dev.sector_count:
-                root = struct.unpack_from("<H", block, 17)[0]
-                kind = "FAT32" if root == 0 else "FAT16"
-                etiket_off = 0x47 if root == 0 else 0x2B
-                etiket = block[etiket_off:etiket_off + 11].decode("latin-1", "ignore").strip()
+            # Toplam sektor BPB_BytsPerSec biriminde; aygit sektorune cevrilir.
+            bpb_total = (struct.unpack_from("<H", block, 19)[0]
+                         or struct.unpack_from("<I", block, 32)[0])
+            total = _to_device_sectors(bpb_total, bps, ss)
+            kind = _fat_kind(block, bpb_total)
+            if kind and 0 < total <= dev.sector_count:
+                etiket_off = 0x47 if kind == "FAT32" else 0x2B
+                sig_off = 0x42 if kind == "FAT32" else 0x26
+                etiket = ""
+                if block[sig_off] == 0x29:
+                    etiket = block[etiket_off:etiket_off + 11].decode(
+                        "cp437", "ignore").strip()
+                if etiket == "NO NAME":
+                    etiket = ""
                 return LostPartition(lba, total, kind, etiket, ss)
     return None
+
+
+def _to_device_sectors(count: int, unit: int, device_sector: int) -> int:
+    """`unit` baytlik `count` birimi aygit sektorune cevirir (yukari yuvarlar)."""
+    return (count * unit + device_sector - 1) // device_sector
+
+
+def _fat_kind(block: bytes, total: int) -> str:
+    """FAT turu, cekirdek ve fsdetect ile ayni kural: BPB_FATSz16 == 0 ise
+    FAT32, degilse kume sayisi 4085'ten azsa FAT12, yoksa FAT16."""
+    bps = struct.unpack_from("<H", block, 11)[0]
+    spc = block[13]
+    rezerve = struct.unpack_from("<H", block, 14)[0]
+    fat_count = block[16]
+    root = struct.unpack_from("<H", block, 17)[0]
+    fat16 = struct.unpack_from("<H", block, 22)[0]
+    fat_size = fat16 or struct.unpack_from("<I", block, 36)[0]
+    if not fat_size or not spc:
+        return ""
+    if fat16 == 0:
+        return "FAT32"
+    root_sectors = (root * 32 + bps - 1) // bps
+    data = total - (rezerve + fat_count * fat_size + root_sectors)
+    if data <= 0:
+        return ""
+    return "FAT12" if data // spc < 4085 else "FAT16"
 
 
 # Adaydan itibaren okunan pencere: btrfs ustblogu 64 KiB'dedir.
@@ -329,8 +405,8 @@ def _probe_modern(head: bytes, dev: BlockDevice) -> Optional[Tuple[str, int, str
                 blocks |= struct.unpack_from("<I", sb, 0x150)[0] << 32
             compat = struct.unpack_from("<I", sb, 0x5C)[0]
             ro = struct.unpack_from("<I", sb, 0x64)[0]
-            kind_name = "ext4" if incompat & 0x0040 or ro & 0x0008 else \
-                ("ext3" if compat & 0x0004 else "ext2")
+            from .extlayout import ext_kind
+            kind_name = ext_kind(compat, incompat, ro)
             label = sb[0x78:0x88].split(b"\x00")[0].decode("utf-8", "ignore")
             return kind_name, blocks * (1024 << log_bs), label
     # XFS (buyuk sonlu)

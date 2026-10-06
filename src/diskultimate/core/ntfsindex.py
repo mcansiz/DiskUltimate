@@ -139,6 +139,9 @@ class DirIndex:
         self._collate = collate
         self.cs = self.fs.cluster_size
         rec = self.fs.record(dir_no)
+        # Dagilmis kayitta ($ATTRIBUTE_LIST) indeks oznitelikleri uzanti
+        # kaydinda olabilir; bu surum listeyi guncellemez (N3/N4).
+        writer._refuse_attr_list(dir_no, rec.has_attribute_list)
         root = rec.find(AT_INDEX_ROOT, name)
         if root is None:
             raise NtfsError(tr("Dizin indeksi bulunamadi"))
@@ -237,15 +240,10 @@ class DirIndex:
         alloc = self._alloc_attr()
         usn = (struct.unpack_from("<H", block, 0x28)[0] + 1) & 0xFFFF or 1
         self.w._apply_fixup_out(block, usn)
-        target = vcn * self.vcn_unit
-        pos = 0
-        for lcn, count in alloc.runs:
-            span = count * self.cs
-            if target < pos + span and lcn >= 0:
-                self.fs.dev.write(lcn * self.cs + (target - pos), bytes(block))
-                return
-            pos += span
-        raise NtfsError(tr("INDX blogu diskte bulunamadi (VCN {})", vcn))
+        # Kume indeks blogundan kucukse (512 B / 1 KiB / 2 KiB kume) blok
+        # birden cok kosuya bolunebilir; kume zinciri uzerinden yazilir (N6).
+        self.w._write_mapped(alloc.runs, vcn * self.vcn_unit, bytes(block),
+                             tr("INDX blogu diskte bulunamadi (VCN {})", vcn))
 
     # ------------------------------------------------------------------
     # $INDEX_ALLOCATION / $BITMAP tahsisi

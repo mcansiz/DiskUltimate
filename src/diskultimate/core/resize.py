@@ -255,7 +255,10 @@ def _fat_layout_for(total: int, fs: FatFS) -> Tuple[int, int]:
     num_fats = fs.num_fats
     spc = fs.sectors_per_cluster
     tmp1 = total - (reserved + root_sectors)
-    tmp2 = (256 * spc) + num_fats
+    # 256 = 512 baytlik sektordeki FAT16 girisi; formul sektor boyutuyla
+    # olceklenir (512'de ayni sonuc). Sabit 256, 4K sektorde FAT'i 8 kat
+    # buyuk hesapliyordu.
+    tmp2 = ((fs.bytes_per_sector // 2) * spc) + num_fats
     if fs.fat_type == 32:
         tmp2 //= 2
     if tmp1 <= 0 or tmp2 <= 0:
@@ -308,8 +311,31 @@ def _fat_highest_used(fs: FatFS) -> int:
     return 1
 
 
+def _to_dev(count: int, unit: int, view: BlockDevice, round_up: bool) -> int:
+    """Dosya sistemi sektoru (`unit` bayt) -> aygit sektoru (view.sector_size).
+
+    FAT'in BPB_BytsPerSec'i ve exFAT'in BytesPerSectorShift'i aygitin
+    sektorunden farkli olabilir (mkfs.fat -S 4096, mkfs.exfat -s 4096).
+    Plan ve arayuz aygit sektoruyle calisir; karistirmak birimi 8 kat
+    yanlis boyutlandiriyordu (fsck.vfat: "Seek to ...: Invalid argument").
+    """
+    ss = view.sector_size
+    if round_up:
+        return (count * unit + ss - 1) // ss
+    return count * unit // ss
+
+
+def _from_dev(count: int, unit: int, view: BlockDevice) -> int:
+    """Aygit sektoru -> dosya sistemi sektoru (asagi yuvarlar)."""
+    return count * view.sector_size // unit
+
+
 def _fat_info(view: BlockDevice) -> FsResizeInfo:
     fs = FatFS(view)
+    reason = fs.write_block_reason
+    if reason:
+        return FsResizeInfo(kind="unsupported", fs_type=fs.fs_type_name,
+                            movable=False, note=reason)
     lower_cluster, _ = _fat_bounds(fs)
     tepe = _fat_highest_used(fs)
     needed_clusters = max(tepe - 1, lower_cluster)
@@ -319,8 +345,10 @@ def _fat_info(view: BlockDevice) -> FsResizeInfo:
     note = ""
     if azami <= fs.total_sectors:
         note = f"FAT{fs.fat_type} kume siniri doldu; bu bolum buyutulemez"
+    bps = fs.bytes_per_sector
     return FsResizeInfo(kind="fat", fs_type=fs.fs_type_name,
-                        min_sectors=asgari, max_sectors=azami,
+                        min_sectors=_to_dev(asgari, bps, view, True),
+                        max_sectors=_to_dev(azami, bps, view, False),
                         movable=True, note=note)
 
 
@@ -332,9 +360,16 @@ def fat_resize(view: BlockDevice, new_sector_count: int) -> None:
     FAT tablosu gerektirebilir; tablo buyudugunde kok dizin ve veri bolgesi
     tumuyle `num_fats * fark` sektor **ileri kaydirilir**. Kume numaralari
     degismedigi icin FAT icerigi oldugu gibi tasinir.
+
+    `new_sector_count` aygit sektorudur (view.sector_size); hesap BPB
+    sektorunde yapilir.
     """
     fs = FatFS(view)
+    reason = fs.write_block_reason
+    if reason:
+        raise ResizeError(reason)
     bps = fs.bytes_per_sector
+    new_sector_count = _from_dev(new_sector_count, bps, view)
     spc = fs.sectors_per_cluster
     lower_cluster, upper_cluster = _fat_bounds(fs)
     tepe = _fat_highest_used(fs)
@@ -391,8 +426,10 @@ def fat_resize(view: BlockDevice, new_sector_count: int) -> None:
         kullanilan = fs.root_dir_sectors + max(0, tepe - 1) * spc
         _shift_forward(view, bolge_bas, kaydirma, kullanilan, bps)
 
-    # FAT kopyalari yeni boyutta yeniden yazilir (kume numaralari degismez)
-    old_fat = view.read(fs.reserved_sectors * bps, fs.fat_size * bps)
+    # FAT kopyalari yeni boyutta yeniden yazilir (kume numaralari degismez).
+    # Kaynak etkin FAT'tir (ExtFlags aynalama kapaliysa FAT0 bayat olabilir);
+    # tum kopyalara yazmak zararsizdir, surucu yalnizca etkin olani okur.
+    old_fat = view.read(fs.fat_offset(fs.active_fat), fs.fat_size * bps)
     tampon = bytearray(new_fat * bps)
     tampon[:len(old_fat)] = old_fat
     for i in range(fs.num_fats):
@@ -495,14 +532,21 @@ def _exfat_layout_for(total: int, fs: ExFatFS) -> Tuple[int, int, int]:
 
 def _exfat_info(view: BlockDevice) -> FsResizeInfo:
     fs = ExFatFS(view)
+    reason = fs.write_block_reason
+    if reason:
+        return FsResizeInfo(kind="unsupported", fs_type="exFAT", movable=False,
+                            note=reason)
     tepe = _exfat_highest_used(fs)
     spc = fs.sectors_per_cluster
     asgari = fs.cluster_heap_offset + max(1, tepe - 1) * spc
     # buyutmede FAT bolgesi ve bitmap yeniden yerlestirilir; sinir 32 bitlik
     # kume numarasi ve 64 bitlik VolumeLength alanidir
     azami = min((1 << 32) - 1, fs.cluster_heap_offset + (0xFFFFFFF5 - 2) * spc)
+    bps = fs.bytes_per_sector
     return FsResizeInfo(kind="exfat", fs_type="exFAT",
-                        min_sectors=asgari, max_sectors=azami, movable=True)
+                        min_sectors=_to_dev(asgari, bps, view, True),
+                        max_sectors=_to_dev(azami, bps, view, False),
+                        movable=True)
 
 
 def exfat_resize(view: BlockDevice, new_sector_count: int,
@@ -514,6 +558,11 @@ def exfat_resize(view: BlockDevice, new_sector_count: int,
     ileri kaydirilir ve gerekirse ayirma bitmap'i yeni kumelere tasinir.
     """
     fs = ExFatFS(view)
+    reason = fs.write_block_reason
+    if reason:
+        raise ResizeError(reason)
+    # aygit sektoru -> exFAT sektoru (2^BytesPerSectorShift)
+    new_sector_count = _from_dev(new_sector_count, fs.bytes_per_sector, view)
     spc = fs.sectors_per_cluster
     tepe = _exfat_highest_used(fs)
 
@@ -706,7 +755,9 @@ def _exfat_write_boot(view: BlockDevice, fs: ExFatFS, total_sectors: int,
     if bolge[3:11] != b"EXFAT   ":
         raise ResizeError(tr("exFAT onyukleme bolgesi taninmadi"))
     if partition_offset is not None:
-        struct.pack_into("<Q", bolge, 64, partition_offset)
+        # PartitionOffset exFAT sektorudur; cagiran aygit LBA'si verir
+        struct.pack_into("<Q", bolge, 64,
+                         _from_dev(partition_offset, bps, view))
     struct.pack_into("<Q", bolge, 72, total_sectors)
     struct.pack_into("<I", bolge, 84, fat_length)
     struct.pack_into("<I", bolge, 88, heap_offset)
@@ -1006,19 +1057,26 @@ def _patch_hidden_sectors(view: BlockDevice, partition_offset: int) -> None:
     boot = bytearray(view.read(0, ss))
     if boot[510:512] != b"\x55\xAA":
         return
-    struct.pack_into("<I", boot, 28, partition_offset & 0xFFFFFFFF)
-    view.write(0, bytes(boot))
     fat32 = (struct.unpack_from("<H", boot, 22)[0] == 0
              and boot[3:11] not in (b"NTFS    ", b"EXFAT   "))
+    # Yedek sektor numarasi ve gizli sektor sayisi BPB sektorundedir
+    # (BPB_BytsPerSec); aygit sektoru 512 iken -S 4096 FAT'te yedek
+    # onyukleme 6*4096'dadir, 6*512'de degil.
+    bps = struct.unpack_from("<H", boot, 11)[0]
+    if bps not in (512, 1024, 2048, 4096):
+        bps = ss
+    hidden = _from_dev(partition_offset, bps, view) if bps != ss else partition_offset
+    struct.pack_into("<I", boot, 28, hidden & 0xFFFFFFFF)
+    view.write(0, bytes(boot))
     if not fat32:
         return
     backup = struct.unpack_from("<H", boot, 50)[0]
     reserved = struct.unpack_from("<H", boot, 14)[0]
     if 0 < backup < reserved:
-        yedek = bytearray(view.read(backup * ss, ss))
+        yedek = bytearray(view.read(backup * bps, ss))
         if yedek[510:512] == b"\x55\xAA" and yedek[3:11] == boot[3:11]:
-            struct.pack_into("<I", yedek, 28, partition_offset & 0xFFFFFFFF)
-            view.write(backup * ss, bytes(yedek))
+            struct.pack_into("<I", yedek, 28, hidden & 0xFFFFFFFF)
+            view.write(backup * bps, bytes(yedek))
 
 
 def _patch_partition_offset(image: BlockDevice, start_lba: int,
@@ -1050,13 +1108,22 @@ def _patch_partition_offset(image: BlockDevice, start_lba: int,
     if boot[510:512] == b"\x55\xAA":
         _patch_hidden_sectors(view, start_lba)
         if boot[3:11] == b"NTFS    ":
-            # NTFS'in son sektordeki yedek onyukleme kopyasi
+            # NTFS'in yedek onyukleme kopyasi: birimin son BPB sektorunde
+            # (toplam sektor x BPB sektoru). mkntfs -s 4096 birimde aygitin
+            # son 512 baytinda degildir; eskiden oraya bakiliyor, yedek
+            # guncellenmiyordu (ntfsfix: "alternate boot sector BAD").
+            # Gizli sektor degeri asildan aynen kopyalanir (BPB biriminde).
             try:
-                yedek = bytearray(view.read((sector_count - 1) * view.sector_size,
-                                            view.sector_size))
-                if yedek[3:11] == b"NTFS    ":
-                    struct.pack_into("<I", yedek, 28, start_lba & 0xFFFFFFFF)
-                    view.write((sector_count - 1) * view.sector_size, bytes(yedek))
+                bps = struct.unpack_from("<H", boot, 11)[0]
+                if bps not in (512, 1024, 2048, 4096):
+                    bps = view.sector_size
+                off = struct.unpack_from("<Q", boot, 0x28)[0] * bps
+                hidden = struct.unpack_from("<I", view.read(0, 512), 28)[0]
+                if off + bps <= sector_count * view.sector_size:
+                    yedek = bytearray(view.read(off, bps))
+                    if yedek[3:11] == b"NTFS    ":
+                        struct.pack_into("<I", yedek, 28, hidden)
+                        view.write(off, bytes(yedek))
             except Exception:   # noqa: BLE001
                 pass
 

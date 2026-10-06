@@ -25,8 +25,11 @@ Kesilen bolgedeki bloklar ve inode'lar kullanilmiyorsa dogrudan yapilir;
 kullaniliyorsa once `extmove` ile tasinir.
 
 ## Reddedilenler (nedeniyle)
-`bigalloc`, ayri gunluk aygiti, `mmp`, `sparse_super2`, gunlugu
-tekrar oynatilmamis (temiz kapatilmamis) birim.
+Ozellik denetimi bir izin listesidir (`RESIZE_*`): listede olmayan her bit
+(bilinmeyen gelecek ozellikler dahil) reddedilir — ornegin `bigalloc`, ayri
+gunluk aygiti, `mmp`, `sparse_super2`. Gunlugu tekrar oynatilmamis, hata
+kayitli ya da bekleyen yetim inode'u olan birim de reddedilir. Kucultmede
+`stable_inodes` birimde inode tasinmasi gerekiyorsa reddedilir (`extmove`).
 
 Dogrulama: `tests/ext_resize_check.py` — mkfs.ext4 ve kendi bicimlendiricimizin
 urettigi birimler buyutulur/kucultulur, her adimda `e2fsck -fn` temiz ve
@@ -45,11 +48,30 @@ from .extlayout import (BG_BLOCK_UNINIT, BG_INODE_UNINIT,
                         GD_ITABLE_UNUSED, GD_USED_DIRS, INCOMPAT_64BIT,
                         INCOMPAT_JOURNAL_DEV, INCOMPAT_META_BG, INCOMPAT_MMP,
                         INCOMPAT_RECOVER, RO_BIGALLOC, SUPERBLOCK_OFFSET,
-                        ExtCsum, ExtGeometry, desc_field, set_desc_field)
+                        ExtCsum, ExtGeometry, desc_field, set_desc_field,
+                        unsupported_features)
 from .image import BlockDevice
 from ..i18n import tr
 
 INO_RESIZE = 7
+RO_ORPHAN_PRESENT = 0x10000
+COMPAT_STABLE_INODES = 0x0800
+
+# Boyutlandiricinin (buyutme + kucultme) dogru isledigi ozellikler.
+# compat: dir_prealloc, imagic_inodes, has_journal, ext_attr, resize_inode,
+#   dir_index, fast_commit, stable_inodes (kucultmede ayrica), orphan_file
+RESIZE_COMPAT = 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | \
+    0x0400 | 0x0800 | 0x1000
+# incompat: filetype, meta_bg, extent, 64bit, flex_bg, ea_inode ve
+#   inline_data (yalnizca buyutme; kucultme `extmove.check`te reddeder),
+#   csum_seed, large_dir, encrypt, casefold
+RESIZE_INCOMPAT = 0x0002 | 0x0010 | 0x0040 | 0x0080 | 0x0200 | 0x0400 | \
+    0x2000 | 0x4000 | 0x8000 | 0x10000 | 0x20000 | INCOMPAT_RECOVER
+# ro_compat: sparse_super, large_file, huge_file, gdt_csum, dir_nlink,
+#   extra_isize, quota/project (kucultmede inode tasima ayrica reddedilir),
+#   metadata_csum, verity
+RESIZE_RO_COMPAT = 0x0001 | 0x0002 | 0x0008 | 0x0010 | 0x0020 | 0x0040 | \
+    0x0100 | 0x2000 | 0x0400 | 0x8000 | RO_ORPHAN_PRESENT
 MIN_LAST_GROUP_FREE = 50         # resize2fs ile ayni: son grup bundan kucukse atilir
 
 
@@ -118,16 +140,20 @@ class _Volume:
 
     # --- denetim ------------------------------------------------------
     def check_supported(self) -> None:
+        """Izin listesi: yalnizca boyutlandiricinin bildigi ozellikler.
+
+        Eskiden yalnizca bigalloc/journal_dev/mmp/sparse_super2 reddediliyordu;
+        bilinmeyen (gelecekteki) bir ozellik sessizce kabul ediliyordu.
+        """
         g = self.geo
         missing = []
-        if g.ro_compat & RO_BIGALLOC:
-            missing.append("bigalloc")
         if g.incompat & INCOMPAT_JOURNAL_DEV:
             missing.append(tr("ayri gunluk aygiti"))
-        if g.incompat & INCOMPAT_MMP:
-            missing.append("mmp")
-        if g.compat & COMPAT_SPARSE_SUPER2:
-            missing.append("sparse_super2")
+        for name in unsupported_features(g.compat, g.incompat, g.ro_compat,
+                                         RESIZE_COMPAT, RESIZE_INCOMPAT,
+                                         RESIZE_RO_COMPAT):
+            if name not in ("journal_dev", "needs_recovery", "orphan_present"):
+                missing.append(name)
         if missing:
             raise ExtResizeError(tr(
                 "Bu ext birimi su ozellikleri kullaniyor ve boyutlandirmasi "
@@ -138,7 +164,11 @@ class _Volume:
                 "kapatilmamis). Once birimi baglayip duzgun ayirin veya "
                 "e2fsck ile onarin."))
         state = struct.unpack_from("<H", g.sb, 0x3A)[0]
-        if not state & 0x0001 or state & 0x0002:
+        # 0x0004: yetim inode'lar isleniyor; s_last_orphan/orphan_present:
+        # bekleyen yetim inode'lar (cekirdek baglarken siler)
+        if not state & 0x0001 or state & 0x0006 or \
+                struct.unpack_from("<I", g.sb, 0xE8)[0] or \
+                g.ro_compat & RO_ORPHAN_PRESENT:
             raise ExtResizeError(tr(
                 "Birim temiz degil veya hata kaydi var. Boyutlandirmadan once "
                 "e2fsck ile denetlenmeli."))

@@ -1,7 +1,7 @@
 # 0094 — Kök neden: kendi kendini doğrulayan testler; yabancı girdi matrisi
 
 Tarih: 2026-10-06
-Durum: **uygulandı** (test altyapısı); bulguların düzeltmesi sürüyor —
+Durum: **uygulandı** — test altyapısı ve bulguların düzeltmeleri (79 regresyon testi);
 [denetim notu](../logs/2026-10-06-uyumluluk-denetimi.md).
 İlgili: [0080](0080-uzun-testler-plani.md), [0091](0091-fat32-yapisal-tespit-ve-hizli-yedek.md).
 

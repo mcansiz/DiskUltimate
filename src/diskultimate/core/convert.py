@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Tuple
 
-from .gpt import GPTTable
+from .gpt import GPTTable, gpt_reserved
 from .image import BlockDevice
 from .mbr import MAX_MBR_SECTORS, MBRTable
 from .ptable import (GPT_UNUSED, MBR_EXTENDED_TYPES, Partition, PartitionTable,
@@ -54,6 +54,8 @@ GPT_TO_MBR = {
 FS_TO_MBR = fsregistry.mbr_types()
 FS_TO_GPT = fsregistry.gpt_types()
 
+# 512 bayt sektorde gecerli eski sabitler (geri uyumluluk). Gercek deger
+# sektor boyuna gore `gpt_reserved(...)` ile hesaplanir: 4Kn'de (6, 5).
 GPT_RESERVED_HEAD = 34      # koruyucu MBR + baslik + 128 giris
 GPT_RESERVED_TAIL = 33      # yedek giris dizisi + yedek baslik
 
@@ -68,6 +70,10 @@ def _partitions_for_convert(table: PartitionTable) -> List[Partition]:
             if not (p.scheme == "mbr" and p.type_id in MBR_EXTENDED_TYPES)]
 
 
+def _inside_partition(lba: int, parts) -> bool:
+    return any(p.start_lba <= lba <= p.end_lba for p in parts)
+
+
 # --------------------------------------------------------------------------
 # MBR -> GPT
 # --------------------------------------------------------------------------
@@ -78,15 +84,19 @@ def check_mbr_to_gpt(device: BlockDevice, table: PartitionTable) -> Tuple[bool, 
     parts = _partitions_for_convert(table)
     if len(parts) > 128:
         return False, tr("GPT en fazla 128 bolum tasiyabilir")
+    if any(p.type_id == 0xEE for p in parts):
+        return False, tr("Diskte koruyucu/hibrit MBR girisi (0xEE) var; "
+                         "MBR'den GPT'ye donusturulemez")
+    head, tail = gpt_reserved(device.sector_size)
 
     first = min((p.start_lba for p in parts), default=device.sector_count)
-    if first < GPT_RESERVED_HEAD:
+    if first < head:
         return False, (tr("Ilk bolum LBA {} konumunda basliyor; GPT giris "
                           "dizisi icin disk basinda en az {} sektor bos "
-                          "olmalidir", first, GPT_RESERVED_HEAD))
+                          "olmalidir", first, head))
     last = max((p.end_lba for p in parts), default=0)
-    if last >= device.sector_count - GPT_RESERVED_TAIL:
-        gerekli = human_size(GPT_RESERVED_TAIL * device.sector_size)
+    if last >= device.sector_count - tail:
+        gerekli = human_size(tail * device.sector_size)
         return False, (tr("Disk sonunda yedek GPT icin {} bos alan gerekiyor; "
                           "son bolum LBA {} konumunda bitiyor", gerekli, last))
     return True, tr("{} bolum GPT'ye tasinabilir", len(parts))
@@ -94,7 +104,12 @@ def check_mbr_to_gpt(device: BlockDevice, table: PartitionTable) -> Tuple[bool, 
 
 def mbr_to_gpt(device: BlockDevice, table: PartitionTable,
                progress=None) -> GPTTable:
-    """MBR tablosunu GPT'ye donusturur. Bolum verileri yerinde kalir."""
+    """MBR tablosunu GPT'ye donusturur. Bolum verileri yerinde kalir.
+
+    Yeni tablo once bellekte kurulur ve dogrulanir; GPT yapilari yazilir,
+    koruyucu MBR **en son** yazilir. Yarida kalirsa eski MBR gecerlidir
+    (0xEE olmadan GPT yok sayilir).
+    """
     uygun, reason = check_mbr_to_gpt(device, table)
     if not uygun:
         raise ConvertError(reason)
@@ -103,36 +118,44 @@ def mbr_to_gpt(device: BlockDevice, table: PartitionTable,
         if progress:
             progress(message, percent)
 
-    report("Mevcut bolumler okunuyor...", 10)
+    report(tr("Mevcut bolumler okunuyor..."), 10)
     kaynak = _partitions_for_convert(table)
-    tanimlar = [(p.start_lba, p.sector_count,
-                 MBR_TO_GPT.get(p.type_id) or FS_TO_GPT.get(p.fs_type) or MSBASIC,
-                 p.fs_label or p.name or "", p.bootable)
-                for p in kaynak]
-
-    report("Eski tablo temizleniyor...", 30)
     ebr_sektorleri = [p.ebr_lba for p in table.partitions if p.logical and p.ebr_lba]
-    device.zero_sectors(0, 1)
 
-    report("GPT olusturuluyor...", 50)
-    gpt = GPTTable.create(device)
-    for i, (lba, adet, guid, name, onyukleme) in enumerate(tanimlar):
+    report(tr("GPT olusturuluyor..."), 50)
+    gpt = GPTTable(device)
+    gpt._fresh_pmbr = True
+    gpt._zero_bootcode = True       # eski DOS onyukleme kodu GPT'de anlamsiz
+    first = min((p.start_lba for p in kaynak), default=gpt.default_first_usable())
+    gpt._first_usable = min(gpt.default_first_usable(), first)
+    # Numaralar korunur (gdisk gibi): birincil 1-4, mantiksal 5+. Boylece
+    # sda5 donusumden sonra da sda5'tir.
+    for p in kaynak:
         gpt.partitions.append(Partition(
-            index=i + 1, start_lba=lba, sector_count=adet, scheme="gpt",
-            type_guid=guid, part_guid=GPT_UNUSED, name=name[:36],
-            bootable=onyukleme, sector_size=device.sector_size))
-    gpt._renumber()
+            index=p.index, start_lba=p.start_lba, sector_count=p.sector_count,
+            scheme="gpt",
+            type_guid=(MBR_TO_GPT.get(p.type_id) or FS_TO_GPT.get(p.fs_type)
+                       or MSBASIC),
+            part_guid=GPT_UNUSED, name=(p.fs_label or p.name or "")[:36],
+            bootable=p.bootable, sector_size=device.sector_size))
+    try:
+        gpt.build()                  # dogrulama: hicbir sey yazilmaz
+    except PartitionTableError as exc:
+        raise ConvertError(str(exc)) from exc
     gpt.write()
 
     # EBR sektorleri artik anlamsiz; bolum verisinin disinda kaldiklari icin
     # temizlenmeleri guvenli ve tabloyu yanlis okumayi onler
+    head, tail = gpt_reserved(device.sector_size, gpt.entry_count, gpt.entry_size)
     for lba in ebr_sektorleri:
-        if not any(p.start_lba <= lba <= p.end_lba for p in gpt.partitions):
+        if lba < head or lba >= device.sector_count - tail:
+            continue
+        if not _inside_partition(lba, gpt.partitions):
             try:
                 device.zero_sectors(lba, 1)
             except Exception:
                 pass
-    report("Tamamlandi", 100)
+    report(tr("Tamamlandi"), 100)
     return gpt
 
 
@@ -147,15 +170,36 @@ def check_gpt_to_mbr(device: BlockDevice, table: PartitionTable) -> Tuple[bool, 
         return False, (tr("MBR en fazla 4 birincil bolum tasir; tabloda {} "
                           "bolum var. Once bolum sayisini azaltin.", len(parts)))
     for p in parts:
-        if p.end_lba > MAX_MBR_SECTORS:
+        if p.start_lba < 1:
+            return False, tr("Bolum {} LBA 0'da basliyor; MBR bu yerlesimi "
+                             "tasiyamaz", p.index)
+        if p.end_lba > MAX_MBR_SECTORS or p.sector_count > MAX_MBR_SECTORS:
             return False, (tr("Bolum {} 2 TiB sinirinin otesinde bitiyor; MBR "
                               "bu yerlesimi tasiyamaz", p.index))
     return True, tr("{} bolum MBR'ye tasinabilir", len(parts))
 
 
+def _gpt_structures(device: BlockDevice, table: PartitionTable) -> List[tuple]:
+    """Silinecek GPT yapilari: (LBA, sektor) — sektor boyuna gore."""
+    head, tail = gpt_reserved(device.sector_size,
+                              getattr(table, "entry_count", 128),
+                              getattr(table, "entry_size", 128))
+    n = device.sector_count
+    out = [(1, head - 1), (max(1, n - tail), min(tail, n - 1))]
+    out += list(getattr(table, "found_structures", []))
+    return out
+
+
 def gpt_to_mbr(device: BlockDevice, table: PartitionTable,
                progress=None) -> MBRTable:
-    """GPT tablosunu MBR'ye donusturur. Bolum verileri yerinde kalir."""
+    """GPT tablosunu MBR'ye donusturur. Bolum verileri yerinde kalir.
+
+    Sira (P1): her sey once denetlenir ve yeni MBR bellekte kurulur; once
+    MBR yazilir, GPT yapilari **ondan sonra** silinir. Eskiden GPT once
+    siliniyor, MBR 4Kn diskte yazilamadiginda disk tablosuz kaliyordu.
+    Silme hicbir bolumun icine degmez (4Kn'de 34/33 sektor sabiti son
+    bolumun kuyruguna denk gelebiliyordu).
+    """
     uygun, reason = check_gpt_to_mbr(device, table)
     if not uygun:
         raise ConvertError(reason)
@@ -164,29 +208,40 @@ def gpt_to_mbr(device: BlockDevice, table: PartitionTable,
         if progress:
             progress(message, percent)
 
-    report("Mevcut bolumler okunuyor...", 10)
+    report(tr("Mevcut bolumler okunuyor..."), 10)
+    parts = table.sorted_partitions()
+    import random
+    mbr = MBRTable(device)
+    mbr.disk_signature = random.getrandbits(32)
     # Dosya sistemi biliniyorsa tip bayti ondan secilir: "Microsoft Temel Veri"
     # GUID'i FAT32'yi de NTFS'i de kapsadigi icin tek basina yeterince belirgin degil.
-    tanimlar = [(p.start_lba, p.sector_count,
-                 FS_TO_MBR.get(p.fs_type) or GPT_TO_MBR.get(p.type_guid.upper()) or 0x83,
-                 p.bootable)
-                for p in table.sorted_partitions()]
-
-    report("GPT yapilari siliniyor...", 35)
-    device.zero_sectors(1, GPT_RESERVED_HEAD - 1)
-    kuyruk = device.sector_count - GPT_RESERVED_TAIL
-    if kuyruk > 0:
-        device.zero_sectors(kuyruk, GPT_RESERVED_TAIL)
-
-    report("MBR olusturuluyor...", 60)
-    mbr = MBRTable.create(device)
-    for i, (lba, adet, tip, onyukleme) in enumerate(tanimlar):
+    for p in parts:
         mbr.partitions.append(Partition(
-            index=i + 1, start_lba=lba, sector_count=adet, scheme="mbr",
-            type_id=tip, bootable=onyukleme, sector_size=device.sector_size))
-    mbr._renumber_mbr()
-    mbr.write()
-    report("Tamamlandi", 100)
+            index=p.index if 1 <= p.index <= 4 else 0,
+            start_lba=p.start_lba, sector_count=p.sector_count, scheme="mbr",
+            type_id=(FS_TO_MBR.get(p.fs_type)
+                     or GPT_TO_MBR.get(p.type_guid.upper()) or 0x83),
+            bootable=p.bootable, sector_size=device.sector_size))
+    try:
+        writes = mbr.build()         # dogrulama: hicbir sey yazilmaz
+    except PartitionTableError as exc:
+        raise ConvertError(str(exc)) from exc
+
+    report(tr("MBR yaziliyor..."), 40)
+    for lba, data in writes:
+        device.write_sectors(lba, data)
+
+    report(tr("GPT yapilari siliniyor..."), 70)
+    n = device.sector_count
+    for start, count in _gpt_structures(device, table):
+        for lba in range(start, min(start + count, n)):
+            if lba == 0 or _inside_partition(lba, parts):
+                continue
+            device.zero_sectors(lba, 1)
+    flush = getattr(device, "flush", None)
+    if flush:
+        flush()
+    report(tr("Tamamlandi"), 100)
     return mbr
 
 

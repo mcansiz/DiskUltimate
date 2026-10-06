@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import struct
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple
 
 from . import diagnostics
 from .image import BlockDevice
@@ -26,6 +26,7 @@ class FSInfo:
     # gunluk). Linux suruculeri boyle bir birimi baglamayi reddeder.
     unclean: bool = False
     hibernated: bool = False     # Windows hazirda bekletmede (hiberfil.sys)
+    damaged: bool = False        # yapisal tutarsizlik (FAT: fat_problem); yazma kapali
 
     @property
     def free_bytes(self) -> int:
@@ -434,11 +435,39 @@ def _fat(dev: BlockDevice, boot: bytes) -> Optional[FSInfo]:
         fs_type, label_off = "FAT12", 0x2B
     else:
         fs_type, label_off = "FAT16", 0x2B
-    label = _clean(boot[label_off:label_off + 11])
+    label, damaged = _fat_label(dev, boot, fs_type)
     info = FSInfo(fs_type=fs_type, label=label,
-                  total_bytes=total * bps, cluster_size=spc * bps)
-    info.used_bytes = _fat_used(dev, bps, spc, reserved, fat_size, clusters, fs_type)
+                  total_bytes=total * bps, cluster_size=spc * bps,
+                  damaged=damaged)
+    # FAT32 ExtFlags: aynalama kapaliysa (bit 7) etkin FAT bit 0-3'tedir
+    active = 0
+    if fs_type == "FAT32":
+        ext_flags = struct.unpack_from("<H", boot, 40)[0]
+        if ext_flags & 0x80 and (ext_flags & 0x0F) < num_fats:
+            active = ext_flags & 0x0F
+    info.used_bytes = _fat_used(dev, bps, spc, reserved + active * fat_size,
+                                fat_size, clusters, fs_type)
     return info
+
+
+def _fat_label(dev: BlockDevice, boot: bytes, fs_type: str) -> Tuple[str, bool]:
+    """(etiket, tutarsiz_mi). Etiket: kok dizindeki etiket girisi, yoksa BPB
+    etiketi (blkid ile ayni sira). Tutarsizlik FatFS.fat_problem'dir.
+
+    BPB etiketi yalnizca genisletilmis imza 0x29 varsa gecerlidir; "NO NAME"
+    etiket yok demektir.
+    """
+    try:
+        from .fat import FatFS
+        fs = FatFS(dev)
+        return fs.label, bool(fs.fat_problem())
+    except Exception:                      # noqa: BLE001
+        pass
+    sig_off, label_off = (0x42, 0x47) if fs_type == "FAT32" else (0x26, 0x2B)
+    if boot[sig_off] != 0x29:
+        return "", False
+    label = _clean(boot[label_off:label_off + 11])
+    return ("" if label == "NO NAME" else label), False
 
 
 def _fat_used(dev, bps, spc, reserved, fat_size, clusters, fs_type) -> int:
@@ -565,6 +594,8 @@ def _ntfs(dev: BlockDevice, boot: bytes) -> FSInfo:
     spc = boot[13]
     total = struct.unpack_from("<Q", boot, 40)[0]
     serial = struct.unpack_from("<Q", boot, 72)[0]
+    # 0x80 ustu deger 2'nin kuvvetidir (2 MiB'a kadar kume; ntfsread ile ayni)
+    spc = spc if spc <= 0x80 else 1 << (256 - spc)
     info = FSInfo(fs_type="NTFS", total_bytes=(total + 1) * bps,
                   cluster_size=bps * spc, uuid=f"{serial:016X}")
     # Doluluk ve etiket onyukleme sektorunde YOKTUR: ikisi de ustveri
@@ -600,12 +631,10 @@ def _ext(sb: bytes) -> FSInfo:
     feat_compat = struct.unpack_from("<I", sb, 92)[0]
     feat_incompat = struct.unpack_from("<I", sb, 96)[0]
     feat_ro = struct.unpack_from("<I", sb, 100)[0]
-    if feat_incompat & 0x0040 or feat_ro & 0x0008:   # EXTENTS / HUGE_FILE
-        fs_type = "ext4"
-    elif feat_compat & 0x0004:                        # HAS_JOURNAL
-        fs_type = "ext3"
-    else:
-        fs_type = "ext2"
+    # blkid kurali (E15); ayri gunluk aygiti "jbd" olur ve ext erisimine
+    # (startswith("ext")) yonlenmez: dosya sistemi degildir (E9).
+    from .extlayout import ext_kind
+    fs_type = ext_kind(feat_compat, feat_incompat, feat_ro)
     blocks_hi = struct.unpack_from("<I", sb, 0x150)[0] if len(sb) > 0x154 else 0
     if not feat_incompat & 0x0080:                    # 64bit yoksa ust yari anlamsiz
         blocks_hi = 0

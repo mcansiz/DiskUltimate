@@ -17,7 +17,7 @@ from . import wipe as wipe_mod
 from .filesystem import FileSystemAccess, open_filesystem
 from .formatter import FS_BY_KEY, format_partition, wipe_partition
 from .fsdetect import FSInfo, detect
-from .gpt import GPTTable
+from .gpt import GPTTable, gpt_signature_present
 from .image import BlockDevice, DiskImage, PartitionView
 from .mbr import MBRTable
 from .physical import (DiskInfo, PhysicalDisk, PhysicalDiskError,
@@ -120,13 +120,20 @@ def read_partition_table(device: BlockDevice) -> Optional[PartitionTable]:
 
     Eskiden 0x55AA gorulen her sektor MBR sayiliyordu: FAT onyukleme
     sektorunun kodu bolum girisi diye okunuyordu.
+
+    GPT ancak LBA 0'da koruyucu MBR (0xEE) ve CRC'si dogru bir baslik
+    varsa GPT sayilir (cekirdek `efi.c` gibi, P2). Kuskulu durumlar
+    `table.ambiguity` ile bildirilir (bayat GPT kalintisi, bozuk birincil
+    baslik, hibrit MBR'de GPT disi alan).
     """
     try:
         if GPTTable.is_present(device):
-            return GPTTable.read(device)
+            table = GPTTable.read(device)
+            table.ambiguity = table.trust_problem()
+            return table
         mbr = MBRTable.is_present(device)
         if mbr and MBRTable.entries_plausible(device):
-            return MBRTable.read(device)
+            return _mark_mbr(device, MBRTable.read(device))
     except PartitionTableError:
         return None
     try:
@@ -137,12 +144,22 @@ def read_partition_table(device: BlockDevice) -> Optional[PartitionTable]:
         if whole.fs_type in _VBR_FS:
             return WholeDiskTable(device)
         try:
-            return MBRTable.read(device)
+            return _mark_mbr(device, MBRTable.read(device))
         except PartitionTableError:
             return None
     if whole.known:
         return WholeDiskTable(device)
     return None
+
+
+def _mark_mbr(device: BlockDevice, table: MBRTable) -> MBRTable:
+    """MBR okundu; yaninda GPT izi varsa tablo kuskulu sayilir."""
+    if any(p.type_id == 0xEE for p in table.partitions if not p.logical):
+        table.ambiguity = tr("Koruyucu MBR (0xEE) var ama gecerli GPT basligi "
+                             "bulunamadi")
+    elif gpt_signature_present(device):
+        table.ambiguity = tr("Diskte MBR'nin yaninda eski bir GPT kalintisi var")
+    return table
 
 
 @dataclass
@@ -385,6 +402,9 @@ class DiskSession:
         scheme = scheme.lower()
         self.close_filesystems()
         if scheme == "mbr":
+            # Onceki GPT'nin baslik ve giris dizileri silinir: kalirsa yeni
+            # MBR'nin yaninda "bayat GPT" olarak tablo kuskulu gorunur.
+            self._zero_gpt_remnants()
             self.table = MBRTable.create(self.image)
         elif scheme == "gpt":
             self.table = GPTTable.create(self.image)
@@ -392,6 +412,15 @@ class DiskSession:
             raise SessionError(tr("Bilinmeyen sema: {}", scheme))
         self.reload()
         return self.table
+
+    def _zero_gpt_remnants(self) -> None:
+        """Yeni tablo kurulurken eski GPT basliklarini/giris dizilerini siler."""
+        from .gpt import gpt_reserved
+        n = self.image.sector_count
+        head, tail = gpt_reserved(self.image.sector_size)
+        if n > head + tail:
+            self.image.zero_sectors(1, head - 1)
+            self.image.zero_sectors(n - tail, tail)
 
     def clear_table(self) -> None:
         """Bolum tablosunu tamamen siler."""
@@ -651,6 +680,20 @@ class DiskSession:
                 tr("{} dosyalarinin boyutu bu surumde degistirilemez",
                    self.format_name))
         self.close_filesystems()
+        if self.table is not None and self.table.scheme in ("gpt", "mbr"):
+            # Kucultmeden ONCE: bolum yeni sonu (GPT'de yedek yapilari)
+            # asiyorsa reddedilir; sonra yazilan yedek GPT son bolumun
+            # kuyrugunu ezerdi (P7).
+            ss = self.image.sector_size
+            count = (new_size - new_size % ss) // ss
+            limit = count - 1
+            if self.table.scheme == "gpt":
+                limit = count - 2 - self.table.entry_sectors
+            for part in self.table.partitions:
+                if part.end_lba > limit:
+                    raise SessionError(tr(
+                        "Bolum {} yeni boyutun disinda kaliyor; goruntu "
+                        "kucultulmedi", part.index))
         self.image.resize(new_size)
         if self.scheme == "gpt" and self.table:
             self.table.write()   # yedek GPT yeni sona tasinir

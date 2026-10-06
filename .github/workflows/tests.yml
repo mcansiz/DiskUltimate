@@ -42,7 +42,7 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q --no-install-recommends \
             dosfstools exfatprogs ntfs-3g e2fsprogs xfsprogs btrfs-progs \
-            f2fs-tools hfsprogs udftools zstd binutils \
+            f2fs-tools hfsprogs udftools zstd binutils mtools gdisk \
             libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
 
       - name: PyQt5
@@ -56,6 +56,18 @@ jobs:
         run: python -m tests.diag_check
       - name: Cekirdek testleri
         run: python -m tests.run_all
+      # Yabanci girdi regresyonlari (ADR 0094): gercek mkfs/sfdisk ciktisina
+      # karsi; arac olmayan platformda ATLANDI yazar, gecmis sayilmaz.
+      - name: Uyumluluk regresyonlari
+        shell: bash
+        run: |
+          kod=0
+          for m in regress_fat regress_ext regress_ntfs regress_ptable regress_xfs_hfs; do
+            echo "::group::$m"
+            python -m tests.$m || kod=1
+            echo "::endgroup::"
+          done
+          exit $kod
       - name: Arayuz duman testi
         env:
           QT_QPA_PLATFORM: offscreen

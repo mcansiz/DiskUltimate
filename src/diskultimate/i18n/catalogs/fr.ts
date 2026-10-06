@@ -12,7 +12,7 @@
 (Cette étape peut entraîner une perte de données)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3872"/>
+        <location filename="../../ui/main_window.py" line="3881"/>
         <source>  (bolum yok)</source>
         <translation>  (aucune partition)</translation>
     </message>
@@ -20,6 +20,11 @@
         <location filename="../../ui/main_window.py" line="2896"/>
         <source>  (disk bulunamadi)</source>
         <translation>  (aucun disque trouvé)</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3870"/>
+        <source>  Yalnizca kullanilan alan yedegi bu diskte tum sektorleri alir.</source>
+        <translation>  Sur ce disque, une sauvegarde de l&apos;espace utilisé uniquement prend tous les secteurs.</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/bootloader.py" line="364"/>
@@ -58,64 +63,75 @@
         <translation> · EFI</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="739"/>
+        <location filename="../../core/ntfsresize.py" line="837"/>
         <source>$BadClus guncelleniyor...</source>
         <translation>Mise à jour de $BadClus...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="160"/>
-        <location filename="../../core/ntfswrite.py" line="113"/>
+        <location filename="../../core/ntfsresize.py" line="209"/>
+        <location filename="../../core/ntfswrite.py" line="158"/>
         <source>$Bitmap okunamadi</source>
         <translation>Impossible de lire $Bitmap</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="495"/>
+        <location filename="../../core/ntfsfix.py" line="617"/>
         <source>$LogFile okunamadi</source>
         <translation>Impossible de lire $LogFile</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="338"/>
+        <location filename="../../core/ntfsresize.py" line="196"/>
+        <source>$MFT birden cok MFT kaydina dagilmis ($ATTRIBUTE_LIST); bu surum boyle bir birimi boyutlandiramaz</source>
+        <translation>$MFT est réparti sur plusieurs enregistrements MFT ($ATTRIBUTE_LIST) ; cette version ne peut pas redimensionner un tel volume</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfswrite.py" line="383"/>
         <source>$MFT bitmap&apos;i okunamadi</source>
         <translation>Impossible de lire le bitmap de $MFT</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="413"/>
+        <location filename="../../core/ntfswrite.py" line="447"/>
+        <location filename="../../core/ntfswrite.py" line="461"/>
         <source>$MFT buyutulemedi: kayit dolu</source>
         <translation>Impossible d&apos;agrandir $MFT : l&apos;enregistrement est plein</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="441"/>
+        <location filename="../../core/ntfsfix.py" line="563"/>
         <source>$MFT kaydi {} $MFTMirr&apos;den duzeltildi</source>
         <translation>Enregistrement $MFT {} restauré depuis $MFTMirr</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="443"/>
+        <location filename="../../core/ntfsfix.py" line="565"/>
         <source>$MFT kaydi {} her iki kopyada da bozuk; Windows&apos;ta chkdsk gerekli</source>
         <translation>L&apos;enregistrement $MFT {} est endommagé dans les deux copies ; chkdsk sous Windows est nécessaire</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="428"/>
+        <location filename="../../core/ntfsfix.py" line="550"/>
         <source>$MFT ve $MFTMirr karsilastiriliyor...</source>
         <translation>Comparaison de $MFT et $MFTMirr...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="349"/>
+        <location filename="../../core/ntfsfix.py" line="471"/>
         <source>$MFT ve $MFTMirr&apos;in ilk kaydi bozuk</source>
         <translation>Le premier enregistrement de $MFT et de $MFTMirr est endommagé</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="315"/>
-        <location filename="../../core/ntfswrite.py" line="376"/>
+        <location filename="../../core/ntfsread.py" line="398"/>
+        <location filename="../../core/ntfswrite.py" line="423"/>
         <source>$MFT veri oznitelugu okunamadi</source>
         <translation>Impossible de lire l&apos;attribut de données de $MFT</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="438"/>
+        <location filename="../../core/ntfsfix.py" line="401"/>
+        <source>$MFT&apos;nin uzanti kayitlari okunamadi; birimin bir kismi gorunmuyor. Yazma reddedildi (once Windows&apos;ta chkdsk).</source>
+        <translation>Les enregistrements d&apos;extension de $MFT sont illisibles ; une partie du volume n&apos;est pas visible. Écriture refusée (lancez d&apos;abord chkdsk sous Windows).</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsfix.py" line="560"/>
         <source>$MFTMirr kaydi {} $MFT&apos;den duzeltildi</source>
         <translation>Enregistrement $MFTMirr {} réparé depuis $MFT</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="136"/>
+        <location filename="../../core/ntfsfix.py" line="141"/>
         <source>$MFTMirr, $MFT ile uyusmuyor (kayit {})</source>
         <translation>$MFTMirr ne correspond pas à $MFT (enregistrement {})</translation>
     </message>
@@ -199,6 +215,11 @@
         <location filename="../../core/operations.py" line="745"/>
         <source>&apos;{}&apos;</source>
         <translation>« {} »</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfswrite.py" line="964"/>
+        <source>&apos;{}&apos; Windows&apos;a ozgu bir baglanti tasiyor (nesne kimligi ya da yeniden ayristirma noktasi); bu surum onu temiz silemez. Windows&apos;ta silin.</source>
+        <translation>« {} » porte un lien propre à Windows (ID d&apos;objet ou point d&apos;analyse) ; cette version ne peut pas le supprimer proprement. Supprimez-le sous Windows.</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/resize.py" line="82"/>
@@ -303,17 +324,18 @@
         <translation>0x00, 0xFF et données aléatoires. Courant dans les normes de destruction de données en entreprise.</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="287"/>
+        <location filename="../../core/mbr.py" line="257"/>
+        <location filename="../../core/mbr.py" line="347"/>
         <source>4 birincil bolum dolu; genisletilmis bolum kullanin</source>
         <translation>Les 4 partitions principales sont utilisées ; utilisez une partition étendue</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="128"/>
+        <location filename="../../core/extwrite.py" line="204"/>
         <source>64bit (4 milyar bloktan buyuk birim)</source>
         <translation>64bit (volumes de plus de 4 milliards de blocs)</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="468"/>
+        <location filename="../../core/recovery.py" line="544"/>
         <source>7-Zip arsivi</source>
         <translation>Archive 7-Zip</translation>
     </message>
@@ -454,12 +476,12 @@
         <translation>Où &lt;b&gt;{}&lt;/b&gt; doit-il être cloné ?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4022"/>
+        <location filename="../../ui/main_window.py" line="4037"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acik — bu &lt;b&gt;normaldir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Yaptiginiz degisiklikler bekleyen islem olarak birikir ve diske ancak &lt;b&gt;Uygula&lt;/b&gt; dediginizde yazilir.</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; est ouvert en lecture seule — c&apos;est &lt;b&gt;normal&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Vos modifications sont regroupées en opérations en attente et ne sont écrites sur le disque que lorsque vous choisissez &lt;b&gt;Appliquer&lt;/b&gt;.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3991"/>
+        <location filename="../../ui/main_window.py" line="4006"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acildi; bu dosyada degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;&lt;b&gt;Neden:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Yol:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Bicim:&lt;/b&gt; {}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; a été ouvert en lecture seule ; ce fichier ne peut pas être modifié.&lt;br&gt;&lt;br&gt;&lt;b&gt;Raison :&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Chemin :&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Format :&lt;/b&gt; {}</translation>
     </message>
@@ -469,7 +491,7 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; entrées supprimées trouvées — &lt;b&gt;{}&lt;/b&gt; d&apos;entre elles semblent entièrement récupérables.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4029"/>
+        <location filename="../../ui/main_window.py" line="4044"/>
         <source>&lt;b&gt;{}&lt;/b&gt; uzerinde degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;{}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; ne peut pas être modifié.&lt;br&gt;&lt;br&gt;{}</translation>
     </message>
@@ -499,12 +521,12 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; — {} (affichage des {} premiers)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3996"/>
+        <location filename="../../ui/main_window.py" line="4011"/>
         <source>&lt;br&gt;&lt;br&gt;Dosyayi kullanan diger programi (baska bir disk araci, yedekleme yazilimi vb.) kapatip &lt;b&gt;Yeniden dene&lt;/b&gt;ye basin.</source>
         <translation>&lt;br&gt;&lt;br&gt;Fermez l&apos;autre programme qui utilise le fichier (autre outil de disque, logiciel de sauvegarde, etc.) et appuyez sur &lt;b&gt;Réessayer&lt;/b&gt;.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4122"/>
+        <location filename="../../ui/main_window.py" line="4137"/>
         <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt5, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
         <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Un outil pour partitionner, formater, sauvegarder et récupérer des images disque, des disques virtuels et les &lt;b&gt;disques réels de ce système&lt;/b&gt;.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Technologie :&lt;/b&gt; Python 3 + PyQt5, sans dépendance externe&lt;br&gt;&lt;b&gt;Tables de partitions :&lt;/b&gt; MBR (y compris les partitions logiques), GPT, conversion MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT&lt;br&gt;&lt;b&gt;Formatage :&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 et NTFS — les huit en Python pur, sur trois plateformes&lt;br&gt;&lt;b&gt;Accès aux fichiers :&lt;/b&gt; lecture/écriture complète pour FAT et exFAT&lt;/p&gt;&lt;p&gt;Les fichiers image ne nécessitent pas de privilèges administrateur. L&apos;accès aux disques physiques nécessite les droits administrateur/root et se fait &lt;b&gt;en lecture seule par défaut&lt;/b&gt; ; l&apos;écriture demande une confirmation distincte.&lt;/p&gt;</translation>
     </message>
@@ -584,7 +606,7 @@
         <translation>L&apos;attribut de compression APFS est corrompu</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="821"/>
+        <location filename="../../core/filesystem.py" line="826"/>
         <source>APFS yazma desteklenmiyor; birim salt okunur acildi.</source>
         <translation>L&apos;écriture sur APFS n&apos;est pas prise en charge ; le volume a été ouvert en lecture seule.</translation>
     </message>
@@ -644,7 +666,7 @@
     <message>
         <location filename="../../ui/dialogs/backup.py" line="360"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3880"/>
+        <location filename="../../ui/main_window.py" line="3889"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <source>Ad</source>
@@ -769,7 +791,7 @@
     </message>
     <message>
         <location filename="../../core/physical.py" line="119"/>
-        <location filename="../../core/session.py" line="1281"/>
+        <location filename="../../core/session.py" line="1324"/>
         <source>Aygit</source>
         <translation>Périphérique</translation>
     </message>
@@ -784,7 +806,7 @@
         <translation>Le périphérique est protégé en écriture par le matériel</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="358"/>
+        <location filename="../../core/xfsgrow.py" line="366"/>
         <source>Aygit istenen boydan kucuk</source>
         <translation>Le périphérique est plus petit que la taille demandée</translation>
     </message>
@@ -815,17 +837,22 @@
         <translation>Chemin du périphérique</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="667"/>
+        <location filename="../../core/resize.py" line="716"/>
         <source>Ayirma bitmap&apos;i icin yeterli ardisik bos alan bulunamadi</source>
         <translation>Espace libre contigu insuffisant pour le bitmap d&apos;allocation</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="1040"/>
+        <location filename="../../core/exfat.py" line="1296"/>
         <source>Ayirma bitmap&apos;i yaziliyor...</source>
         <translation>Écriture du bitmap d&apos;allocation...</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1177"/>
+        <location filename="../../core/extwrite.py" line="1295"/>
+        <source>Ayni adda dosya olmayan bir oge var: {}</source>
+        <translation>Un élément du même nom existe et ce n&apos;est pas un fichier : {}</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="1291"/>
         <source>Ayni adda klasor var: {}</source>
         <translation>Un dossier portant le même nom existe : {}</translation>
     </message>
@@ -845,7 +872,7 @@
         <translation>Afficher les détails...</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="141"/>
+        <location filename="../../core/hfsplus.py" line="140"/>
         <source>B-agaci basligi okunamadi</source>
         <translation>Impossible de lire l&apos;en-tête de l&apos;arbre B</translation>
     </message>
@@ -861,7 +888,7 @@
         <translation>La table des nœuds de l&apos;arbre B est trop petite</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="160"/>
+        <location filename="../../core/hfsplus.py" line="159"/>
         <source>B-agaci dugumu okunamadi: {}</source>
         <translation>Impossible de lire le nœud de l&apos;arbre B : {}</translation>
     </message>
@@ -887,7 +914,7 @@
         <translation>L&apos;enregistrement de l&apos;arbre B ne tient pas dans un nœud</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="213"/>
+        <location filename="../../core/hfsplus.py" line="212"/>
         <source>B-agaci yaprak zinciri dongude</source>
         <translation>La chaîne de feuilles de l&apos;arbre B contient une boucle</translation>
     </message>
@@ -928,12 +955,12 @@
         <translation>PÉRIPHÉRIQUES DE PARTITION</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3878"/>
+        <location filename="../../ui/main_window.py" line="3887"/>
         <source>BOLUM {}</source>
         <translation>PARTITION {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3864"/>
+        <location filename="../../ui/main_window.py" line="3873"/>
         <source>BOLUMLER</source>
         <translation>PARTITIONS</translation>
     </message>
@@ -996,12 +1023,12 @@
         <translation>Partitions montées</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3885"/>
+        <location filename="../../ui/main_window.py" line="3894"/>
         <source>Bagli degil</source>
         <translation>Non monté</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3927"/>
+        <location filename="../../ui/main_window.py" line="3942"/>
         <source>Bagli — isletim sistemi kullaniyor</source>
         <translation>Monté — utilisé par le système d&apos;exploitation</translation>
     </message>
@@ -1011,7 +1038,7 @@
         <translation>Échec</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1310"/>
+        <location filename="../../ui/dialogs/backup.py" line="1311"/>
         <source>Basarisiz: {}</source>
         <translation>Échec : {}</translation>
     </message>
@@ -1032,18 +1059,18 @@
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3888"/>
+        <location filename="../../ui/main_window.py" line="3897"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Baslangic LBA</source>
         <translation>LBA de début</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="228"/>
+        <location filename="../../core/ptable.py" line="233"/>
         <source>Baslangic cok erken (en az LBA {})</source>
         <translation>Le début est trop tôt (au moins LBA {})</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="800"/>
+        <location filename="../../core/resize.py" line="851"/>
         <source>Baslangic kapsayici alanin disinda (en erken LBA {})</source>
         <translation>Le début est en dehors de la zone environnante (LBA minimal {})</translation>
     </message>
@@ -1069,7 +1096,7 @@
         <translation>L&apos;indicateur reste activé ; Windows vérifie le volume à son prochain démarrage. Linux ne le montera pas d&apos;ici là.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3890"/>
+        <location filename="../../ui/main_window.py" line="3899"/>
         <source>Bayt ofseti</source>
         <translation>Décalage en octets</translation>
     </message>
@@ -1214,7 +1241,7 @@
         <translation>Écriture dans le micrologiciel</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1271"/>
+        <location filename="../../core/session.py" line="1314"/>
         <source>Bicim</source>
         <translation>Formater</translation>
     </message>
@@ -1232,7 +1259,7 @@
     <message>
         <location filename="../../ui/main_window.py" line="3381"/>
         <location filename="../../ui/main_window.py" line="3532"/>
-        <location filename="../../ui/main_window.py" line="3883"/>
+        <location filename="../../ui/main_window.py" line="3892"/>
         <location filename="../../ui/widgets/disk_map.py" line="194"/>
         <location filename="../../ui/widgets/disk_overview.py" line="240"/>
         <source>Bicimlendirilmemis</source>
@@ -1296,7 +1323,7 @@
         <translation>Compression btrfs inconnue : {}</translation>
     </message>
     <message>
-        <location filename="../../core/vdisk.py" line="564"/>
+        <location filename="../../core/vdisk.py" line="585"/>
         <source>Bilinmeyen disk bicimi: {}</source>
         <translation>Format de disque inconnu : {}</translation>
     </message>
@@ -1317,9 +1344,9 @@
         <translation>Type d&apos;opération inconnu : {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="392"/>
-        <location filename="../../core/session.py" line="811"/>
-        <location filename="../../core/session.py" line="823"/>
+        <location filename="../../core/session.py" line="412"/>
+        <location filename="../../core/session.py" line="854"/>
+        <location filename="../../core/session.py" line="866"/>
         <source>Bilinmeyen sema: {}</source>
         <translation>Schéma inconnu : {}</translation>
     </message>
@@ -1356,18 +1383,22 @@
         <translation>Saisissez un chemin de fichier.</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="141"/>
+        <location filename="../../core/ntfsfix.py" line="146"/>
         <source>Birim &apos;kirli&apos; isaretli (temiz ayrilmamis)</source>
         <translation>Le volume est marqué « sale » (non démonté proprement)</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="429"/>
-        <location filename="../../core/ntfsresize.py" line="713"/>
+        <location filename="../../core/ntfsfix.py" line="421"/>
+        <source>Birim &apos;kirli&apos; isaretli (temiz ayrilmamis). Once Bolum &gt; NTFS&apos;i denetle ve onar (ya da Windows&apos;ta chkdsk) calistirin.</source>
+        <translation>Le volume est marqué « sale » (non démonté proprement). Lancez d&apos;abord Partition &gt; Vérifier et réparer NTFS (ou chkdsk sous Windows).</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsresize.py" line="187"/>
         <source>Birim &apos;kirli&apos; isaretli. Once Bolum &gt; NTFS&apos;i denetle ve onar (ya da Windows&apos;ta chkdsk) calistirin; kirli bir birimi boyutlandirmak veri kaybettirebilir.</source>
         <translation>Le volume est marqué « sale ». Exécutez d&apos;abord Partition &gt; Vérifier et réparer NTFS (ou chkdsk sous Windows) ; redimensionner un volume sale peut entraîner une perte de données.</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="129"/>
+        <location filename="../../core/ntfsresize.py" line="134"/>
         <source>Birim &apos;kirli&apos; isaretli; once chkdsk / ntfsfix calistirilmali</source>
         <translation>Le volume est marqué sale ; exécutez d&apos;abord chkdsk / ntfsfix</translation>
     </message>
@@ -1397,14 +1428,19 @@
         <translation>Le volume est trop petit pour le journal XFS</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="458"/>
+        <location filename="../../core/ntfsfix.py" line="580"/>
         <source>Birim bayraklari ayarlaniyor...</source>
         <translation>Définition des indicateurs du volume...</translation>
     </message>
     <message>
+        <location filename="../../core/extwrite.py" line="182"/>
+        <source>Birim coklu baglama korumasi (mmp) kullaniyor; baska bir makinede bagli olabilir. Yazma reddedildi.</source>
+        <translation>Le volume utilise la protection contre le montage multiple (mmp) ; il peut être monté sur une autre machine. Écriture refusée.</translation>
+    </message>
+    <message>
         <location filename="../../core/operations.py" line="81"/>
         <location filename="../../ui/main_window.py" line="1593"/>
-        <location filename="../../ui/main_window.py" line="3884"/>
+        <location filename="../../ui/main_window.py" line="3893"/>
         <source>Birim etiketi</source>
         <translation>Nom de volume</translation>
     </message>
@@ -1425,39 +1461,56 @@
         <translation>Modifier le nom de volume...</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="757"/>
-        <location filename="../../core/exfat.py" line="808"/>
-        <location filename="../../core/exfat.py" line="832"/>
-        <location filename="../../core/fat.py" line="726"/>
-        <location filename="../../core/fat.py" line="792"/>
-        <location filename="../../core/fat.py" line="829"/>
+        <location filename="../../core/exfat.py" line="366"/>
+        <location filename="../../core/fat.py" line="343"/>
         <source>Birim salt okunur</source>
         <translation>Le volume est en lecture seule</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="142"/>
+        <location filename="../../core/extwrite.py" line="188"/>
+        <source>Birim temiz degil (temiz kapatilmamis, hata kaydi ya da islenmemis yetim inode var); bitmap&apos;lere guvenilemez. Once e2fsck ile denetleyin.</source>
+        <translation>Le volume n&apos;est pas propre (non démonté proprement, erreur enregistrée ou inodes orphelins non traités) ; ses bitmaps ne sont pas fiables. Vérifiez-le d&apos;abord avec e2fsck.</translation>
+    </message>
+    <message>
+        <location filename="../../core/extresize.py" line="172"/>
         <source>Birim temiz degil veya hata kaydi var. Boyutlandirmadan once e2fsck ile denetlenmeli.</source>
         <translation>Le volume n&apos;est pas propre ou comporte des erreurs enregistrées. Vérifiez-le avec e2fsck avant de le redimensionner.</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="322"/>
+        <location filename="../../core/fat.py" line="479"/>
         <source>Birimde bos kume kalmadi</source>
         <translation>Plus aucun cluster libre sur le volume</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="743"/>
+        <location filename="../../core/extmove.py" line="397"/>
+        <source>Birimde stable_inodes ozelligi var: inode numaralari degistirilemez. Birimi, silinecek gruplarda dosya kalmayacak boyuta kucultun.</source>
+        <translation>Le volume a la fonctionnalité stable_inodes : les numéros d&apos;inode ne peuvent pas changer. Réduisez le volume seulement jusqu&apos;à une taille où aucun fichier ne reste dans les groupes supprimés.</translation>
+    </message>
+    <message>
+        <location filename="../../core/fat.py" line="936"/>
         <source>Birimde yer yok: {} kume gerekli, {} bos</source>
         <translation>Espace insuffisant sur le volume : {} clusters nécessaires, {} libres</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="419"/>
+        <location filename="../../core/exfat.py" line="1002"/>
+        <location filename="../../core/exfat.py" line="507"/>
         <source>Birimde yeterli bos alan yok</source>
         <translation>Espace libre insuffisant sur le volume</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="136"/>
+        <location filename="../../core/extwrite.py" line="176"/>
+        <source>Birimin gunlugunde islenmemis kayitlar var (needs_recovery: temiz kapatilmamis). Yazilirsa cekirdek baglarken gunlugu yazdiklarimizin uzerine oynatir. Once birimi Linux&apos;ta baglayip duzgun ayirin veya e2fsck ile onarin.</source>
+        <translation>Le journal du volume contient des enregistrements non traités (needs_recovery : non démonté proprement). En cas d&apos;écriture, le noyau rejouerait le journal par-dessus nos modifications au montage. Montez d&apos;abord le volume sous Linux et démontez-le proprement, ou réparez-le avec e2fsck.</translation>
+    </message>
+    <message>
+        <location filename="../../core/extresize.py" line="162"/>
         <source>Birimin gunlugunde islenmemis kayitlar var (temiz kapatilmamis). Once birimi baglayip duzgun ayirin veya e2fsck ile onarin.</source>
         <translation>Le journal du volume contient des entrées non traitées (non démonté proprement). Montez puis démontez correctement le volume d&apos;abord, ou réparez-le avec e2fsck.</translation>
+    </message>
+    <message>
+        <location filename="../../core/gpt.py" line="346"/>
+        <source>Birincil GPT basligi bozuk; tablo yedek basliktan okundu</source>
+        <translation>L&apos;en-tête GPT principal est endommagé ; la table a été lue depuis l&apos;en-tête de secours</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/partition.py" line="94"/>
@@ -1470,7 +1523,7 @@
         <translation>Secteur de fin :</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3889"/>
+        <location filename="../../ui/main_window.py" line="3898"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Bitis LBA</source>
         <translation>LBA de fin</translation>
@@ -1491,8 +1544,8 @@
         <translation>La taille de bloc doit être 1024, 2048 ou 4096</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="87"/>
-        <location filename="../../core/extwrite.py" line="149"/>
+        <location filename="../../core/extresize.py" line="109"/>
+        <location filename="../../core/extwrite.py" line="225"/>
         <source>Blok boyutu uyusmuyor</source>
         <translation>Tailles de bloc différentes</translation>
     </message>
@@ -1537,17 +1590,17 @@
         <translation>Disposition des partitions</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="970"/>
+        <location filename="../../core/fat.py" line="1230"/>
         <source>Bolum FAT icin cok kucuk</source>
         <translation>La partition est trop petite pour FAT</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="994"/>
+        <location filename="../../core/fat.py" line="1254"/>
         <source>Bolum FAT{} icin cok kucuk (kume sayisi {})</source>
         <translation>La partition est trop petite pour FAT{} (nombre de clusters {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3899"/>
+        <location filename="../../ui/main_window.py" line="3908"/>
         <source>Bolum GUID</source>
         <translation>GUID de partition</translation>
     </message>
@@ -1568,7 +1621,7 @@
         <translation>Nom de partition</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="557"/>
+        <location filename="../../core/session.py" line="586"/>
         <source>Bolum adi yalnizca GPT semasinda desteklenir</source>
         <translation>Les noms de partition ne sont pris en charge que dans le schéma GPT</translation>
     </message>
@@ -1605,9 +1658,10 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>La partition est montée</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="334"/>
-        <location filename="../../core/ptable.py" line="225"/>
-        <location filename="../../core/resize.py" line="797"/>
+        <location filename="../../core/gpt.py" line="408"/>
+        <location filename="../../core/mbr.py" line="400"/>
+        <location filename="../../core/ptable.py" line="230"/>
+        <location filename="../../core/resize.py" line="848"/>
         <source>Bolum boyutu sifir olamaz</source>
         <translation>La taille de la partition ne peut pas être nulle</translation>
     </message>
@@ -1617,14 +1671,14 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>La partition ne peut pas être réduite autant</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1158"/>
-        <location filename="../../core/session.py" line="843"/>
-        <location filename="../../core/session.py" line="873"/>
+        <location filename="../../core/session.py" line="1201"/>
+        <location filename="../../core/session.py" line="886"/>
+        <location filename="../../core/session.py" line="916"/>
         <source>Bolum bulunamadi</source>
         <translation>Partition introuvable</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="828"/>
+        <location filename="../../core/resize.py" line="879"/>
         <source>Bolum buyutuluyor ama dosya sistemi buyutulemiyor; eklenen alan kullanilamaz</source>
         <translation>La partition est agrandie mais le système de fichiers ne peut pas l&apos;être ; l&apos;espace ajouté sera inutilisable</translation>
     </message>
@@ -1634,7 +1688,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>La partition est en dehors des limites du disque</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="230"/>
+        <location filename="../../core/ptable.py" line="235"/>
         <source>Bolum disk sonunu asiyor</source>
         <translation>La partition dépasse la fin du disque</translation>
     </message>
@@ -1654,18 +1708,18 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Impossible d&apos;ajouter une partition</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="954"/>
-        <location filename="../../core/exfat.py" line="966"/>
+        <location filename="../../core/exfat.py" line="1210"/>
+        <location filename="../../core/exfat.py" line="1222"/>
         <source>Bolum exFAT icin cok kucuk</source>
         <translation>La partition est trop petite pour exFAT</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="938"/>
+        <location filename="../../core/exfat.py" line="1194"/>
         <source>Bolum exFAT icin cok kucuk (en az 1 MB)</source>
         <translation>La partition est trop petite pour exFAT (au moins 1 MB)</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="984"/>
+        <location filename="../../core/exfat.py" line="1240"/>
         <source>Bolum exFAT metaverisi icin yetersiz</source>
         <translation>La partition est trop petite pour les métadonnées exFAT</translation>
     </message>
@@ -1678,7 +1732,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>La partition est trop petite pour ext</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="804"/>
+        <location filename="../../core/resize.py" line="855"/>
         <source>Bolum kapsayici alani asiyor (en gec LBA {})</source>
         <translation>La partition dépasse la zone environnante (LBA maximal {})</translation>
     </message>
@@ -1689,22 +1743,22 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Création de la partition...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="886"/>
+        <location filename="../../core/resize.py" line="937"/>
         <source>Bolum plan hazirlandiktan sonra degismis; yenileyin</source>
         <translation>La partition a changé après la préparation du plan ; actualisez</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1275"/>
+        <location filename="../../core/session.py" line="1318"/>
         <source>Bolum sayisi</source>
         <translation>Nombre de partitions</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3955"/>
+        <location filename="../../ui/main_window.py" line="3970"/>
         <source>Bolum secili degil</source>
         <translation>Aucune partition sélectionnée</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1274"/>
+        <location filename="../../core/session.py" line="1317"/>
         <source>Bolum tablosu</source>
         <translation>Table de partitions</translation>
     </message>
@@ -1729,21 +1783,21 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Table de partitions effacée</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="935"/>
+        <location filename="../../core/resize.py" line="986"/>
         <source>Bolum tablosu yazilamadi: {}</source>
         <translation>Impossible d&apos;écrire la table de partitions : {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="923"/>
+        <location filename="../../core/resize.py" line="974"/>
         <location filename="../../core/restoreplan.py" line="311"/>
         <source>Bolum tablosu yaziliyor...</source>
         <translation>Écriture de la table de partitions...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="790"/>
-        <location filename="../../core/resize.py" line="882"/>
-        <location filename="../../core/session.py" line="174"/>
-        <location filename="../../core/session.py" line="338"/>
+        <location filename="../../core/resize.py" line="841"/>
+        <location filename="../../core/resize.py" line="933"/>
+        <location filename="../../core/session.py" line="191"/>
+        <location filename="../../core/session.py" line="355"/>
         <location filename="../../ui/main_window.py" line="1182"/>
         <source>Bolum tablosu yok</source>
         <translation>Aucune table de partitions</translation>
@@ -1853,7 +1907,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Partition {} ({})</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="151"/>
+        <location filename="../../core/convert.py" line="177"/>
         <source>Bolum {} 2 TiB sinirinin otesinde bitiyor; MBR bu yerlesimi tasiyamaz</source>
         <translation>La partition {} se termine au-delà de la limite de 2 TiB ; MBR ne peut pas représenter cette disposition</translation>
     </message>
@@ -1863,7 +1917,17 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Formater la partition {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1193"/>
+        <location filename="../../core/gpt.py" line="410"/>
+        <source>Bolum {} GPT giris dizisiyle cakisiyor (ilk kullanilabilir LBA {}); tablo yazilmadi</source>
+        <translation>La partition {} chevauche le tableau d&apos;entrées GPT (premier LBA utilisable {}) ; la table n&apos;a pas été écrite</translation>
+    </message>
+    <message>
+        <location filename="../../core/convert.py" line="174"/>
+        <source>Bolum {} LBA 0&apos;da basliyor; MBR bu yerlesimi tasiyamaz</source>
+        <translation>La partition {} commence au LBA 0 ; le MBR ne peut pas représenter cette disposition</translation>
+    </message>
+    <message>
+        <location filename="../../core/session.py" line="1236"/>
         <source>Bolum {} NTFS degil</source>
         <translation>La partition {} n&apos;est pas NTFS</translation>
     </message>
@@ -1908,6 +1972,11 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Démontage de la partition {}...</translation>
     </message>
     <message>
+        <location filename="../../core/gpt.py" line="414"/>
+        <source>Bolum {} disk sonundaki yedek GPT alanina tasiyor (son kullanilabilir LBA {}); tablo yazilmadi</source>
+        <translation>La partition {} déborde sur la zone GPT de secours en fin de disque (dernier LBA utilisable {}) ; la table n&apos;a pas été écrite</translation>
+    </message>
+    <message>
         <location filename="../../ui/main_window.py" line="1515"/>
         <source>Bolum {} en az {} olabilir (dolu: {}); istenen {}.
 
@@ -1922,17 +1991,22 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Nom de volume de la partition {}</translation>
     </message>
     <message>
+        <location filename="../../core/mbr.py" line="214"/>
+        <source>Bolum {} gecersiz konumda (LBA {})</source>
+        <translation>La partition {} est à une position invalide (LBA {})</translation>
+    </message>
+    <message>
         <location filename="../../core/operations.py" line="783"/>
         <source>Bolum {} guvenli sil</source>
         <translation>Effacer de manière sécurisée la partition {}</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="238"/>
+        <location filename="../../core/layoutedit.py" line="250"/>
         <source>Bolum {} hedef diskin sonunu asiyor (hedef {}, gereken en az {})</source>
         <translation>La partition {} dépasse la fin du disque cible (cible {}, au moins {} requis)</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="227"/>
+        <location filename="../../core/mbr.py" line="282"/>
         <source>Bolum {} icin EBR&apos;ye yer yok (onceki bolume bitisik)</source>
         <translation>Pas de place pour l&apos;EBR de la partition {} (adjacente à la partition précédente)</translation>
     </message>
@@ -1942,12 +2016,12 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Examen de la partition {}...</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="254"/>
+        <location filename="../../core/layoutedit.py" line="266"/>
         <source>Bolum {} mantiksal bolumlerin arasina giremez</source>
         <translation>La partition {} ne peut pas être placée entre des partitions logiques</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="236"/>
+        <location filename="../../core/layoutedit.py" line="248"/>
         <source>Bolum {} onceki bolumle cakisiyor</source>
         <translation>La partition {} chevauche la partition précédente</translation>
     </message>
@@ -1972,6 +2046,11 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Type de la partition {}</translation>
     </message>
     <message>
+        <location filename="../../core/session.py" line="694"/>
+        <source>Bolum {} yeni boyutun disinda kaliyor; goruntu kucultulmedi</source>
+        <translation>La partition {} sortirait de la nouvelle taille ; l&apos;image n&apos;a pas été réduite</translation>
+    </message>
+    <message>
         <location filename="../../ui/main_window.py" line="2002"/>
         <source>Bolum {} — Silinmis Dosyalar</source>
         <translation>Partition {} — Fichiers supprimés</translation>
@@ -1983,7 +2062,7 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Partition {} — {}</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="222"/>
+        <location filename="../../core/layoutedit.py" line="234"/>
         <source>Bolum {}: boyut sifir olamaz</source>
         <translation>Partition {} : la taille ne peut pas être nulle</translation>
     </message>
@@ -1993,7 +2072,7 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Partition {} : agrandissement du système de fichiers...</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="228"/>
+        <location filename="../../core/layoutedit.py" line="240"/>
         <source>Bolum {}: dosya sistemi en fazla {} olabilir</source>
         <translation>Partition {} : le système de fichiers peut faire au plus {}</translation>
     </message>
@@ -2003,7 +2082,7 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Partition {} : réduction du système de fichiers...</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="524"/>
+        <location filename="../../core/layoutedit.py" line="536"/>
         <source>Bolum {}: yeri degisiyor</source>
         <translation>Partition {} : la position change</translation>
     </message>
@@ -2019,18 +2098,18 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>Partition {} : {} ({})</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="520"/>
-        <location filename="../../core/resize.py" line="759"/>
+        <location filename="../../core/layoutedit.py" line="532"/>
+        <location filename="../../core/resize.py" line="810"/>
         <source>Bolum {}: {} -&gt; {}</source>
         <translation>Partition {} : {} -&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="224"/>
+        <location filename="../../core/layoutedit.py" line="236"/>
         <source>Bolum {}: {} altina inemez (veri kaybi olurdu)</source>
         <translation>Partition {} : impossible de descendre sous {} (des données seraient perdues)</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="233"/>
+        <location filename="../../core/layoutedit.py" line="245"/>
         <source>Bolum {}: {} boyutlandirilamaz</source>
         <translation>Partition {} : {} ne peut pas être redimensionné</translation>
     </message>
@@ -2045,7 +2124,7 @@ La limite vient d&apos;être mesurée à nouveau sur le disque ; l&apos;étape n
         <translation>La partition n&apos;a pas de système de fichiers permettant d&apos;écrire un nom de volume</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1208"/>
+        <location filename="../../core/session.py" line="1251"/>
         <source>Bolumde okunabilir dosya sistemi yok</source>
         <translation>La partition n&apos;a pas de système de fichiers lisible</translation>
     </message>
@@ -2084,7 +2163,7 @@ Taille          : {}
 Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvelle partition).</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1276"/>
+        <location filename="../../core/session.py" line="1319"/>
         <source>Bolumlenmis</source>
         <translation>Partitionné</translation>
     </message>
@@ -2178,7 +2257,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
     <message>
         <location filename="../../core/ptable.py" line="22"/>
         <location filename="../../core/ptable.py" line="53"/>
-        <location filename="../../ui/main_window.py" line="3911"/>
+        <location filename="../../ui/main_window.py" line="3926"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Bos</source>
         <translation>Libre</translation>
@@ -2189,7 +2268,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Vide (pas de code d&apos;amorçage)</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="357"/>
+        <location filename="../../core/ntfswrite.py" line="402"/>
         <source>Bos MFT kaydi yok ve $MFT buyutulemedi</source>
         <translation>Aucun enregistrement MFT libre et impossible d&apos;agrandir $MFT</translation>
     </message>
@@ -2225,17 +2304,17 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Effacer l&apos;espace libre</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="443"/>
+        <location filename="../../core/extwrite.py" line="519"/>
         <source>Bos blok kalmadi</source>
         <translation>Plus aucun bloc libre</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="396"/>
+        <location filename="../../core/extwrite.py" line="472"/>
         <source>Bos blok yetersiz: {} istendi, {} bulundu</source>
         <translation>Blocs libres insuffisants : {} demandés, {} trouvés</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="265"/>
+        <location filename="../../core/ptable.py" line="270"/>
         <source>Bos boyut</source>
         <translation>Taille vide</translation>
     </message>
@@ -2245,8 +2324,8 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Plus aucun numéro d&apos;entrée libre</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1149"/>
-        <location filename="../../core/extwrite.py" line="487"/>
+        <location filename="../../core/extwrite.py" line="1267"/>
+        <location filename="../../core/extwrite.py" line="563"/>
         <source>Bos inode kalmadi</source>
         <translation>Plus aucun inode libre</translation>
     </message>
@@ -2257,7 +2336,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
     </message>
     <message>
         <location filename="../../core/physical.py" line="124"/>
-        <location filename="../../core/session.py" line="1272"/>
+        <location filename="../../core/session.py" line="1315"/>
         <location filename="../../ui/dialogs/backup.py" line="360"/>
         <location filename="../../ui/dialogs/backup.py" line="453"/>
         <location filename="../../ui/dialogs/backup.py" line="686"/>
@@ -2265,7 +2344,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <location filename="../../ui/dialogs/tools.py" line="123"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3886"/>
+        <location filename="../../ui/main_window.py" line="3895"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
@@ -2305,12 +2384,16 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Impossible de préparer le redimensionnement</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="359"/>
+        <location filename="../../core/exfat.py" line="560"/>
+        <location filename="../../core/exfat.py" line="592"/>
+        <location filename="../../core/exfat.py" line="620"/>
+        <location filename="../../core/exfat.py" line="658"/>
+        <location filename="../../core/fat.py" line="516"/>
         <source>Bozuk dizin kume zinciri</source>
         <translation>Chaîne de clusters du répertoire corrompue</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="260"/>
+        <location filename="../../core/ntfsread.py" line="317"/>
         <source>Bozuk veri kosulu: uzunluk {}</source>
         <translation>Plage de données (data run) corrompue : longueur {}</translation>
     </message>
@@ -2333,6 +2416,16 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <location filename="../../ui/main_window.py" line="2425"/>
         <source>Bu alan &lt;b&gt;{}&lt;/b&gt; ile cakisiyor. O bolum henuz diske yazilmadi ama bekleyen islemler arasinda ve bu alani tutuyor.&lt;br&gt;&lt;br&gt;Once bekleyen adimi kaldirin ya da baska bir alan secin.</source>
         <translation>Cette zone chevauche &lt;b&gt;{}&lt;/b&gt;. Cette partition n&apos;a pas encore été écrite sur le disque, mais elle figure dans la liste des opérations en attente et occupe déjà cet espace.&lt;br&gt;&lt;br&gt;Supprimez l&apos;étape en attente ou choisissez une autre zone.</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="173"/>
+        <source>Bu bir ext gunluk aygiti (journal_dev); dosya sistemi degildir, icine yazilamaz.</source>
+        <translation>Ceci est un périphérique de journal ext (journal_dev) ; ce n&apos;est pas un système de fichiers et on ne peut pas y écrire.</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="206"/>
+        <source>Bu birim su ozellikleri kullaniyor ve bu surumde yazma desteklenmiyor: {}. Yanlis yazip birimi bozmamak icin islem reddedildi.</source>
+        <translation>Ce volume utilise les fonctionnalités suivantes et l&apos;écriture n&apos;est pas prise en charge dans cette version : {}. L&apos;opération a été refusée pour ne pas endommager le volume.</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="1281"/>
@@ -2369,7 +2462,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Aucune entrée de fichier supprimé n&apos;a été trouvée sur cette partition.</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1221"/>
+        <location filename="../../core/session.py" line="1264"/>
         <source>Bu bolumde silinmis dosya taramasi desteklenmiyor (yalnizca FAT ve exFAT)</source>
         <translation>La recherche de fichiers supprimés n&apos;est pas prise en charge sur cette partition (FAT et exFAT uniquement)</translation>
     </message>
@@ -2415,17 +2508,17 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Ce disque n&apos;a pas de table de partitions ; le système de fichiers ({}) couvre tout le disque. La création d&apos;une table GPT effacera ce système de fichiers. Continuer ?</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="301"/>
+        <location filename="../../core/ptable.py" line="306"/>
         <source>Bu diskte bolum tablosu yok; dosya sistemi tum diski kapliyor. Bolum eklemek/silmek icin once bolum tablosu olusturun (icindeki dosya sistemi silinir).</source>
         <translation>Ce disque n&apos;a pas de table de partitions ; le système de fichiers couvre tout le disque. Pour ajouter ou supprimer des partitions, créez d&apos;abord une table de partitions (le système de fichiers existant sera effacé).</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="814"/>
+        <location filename="../../core/extwrite.py" line="1211"/>
         <source>Bu dizin sifreli (fscrypt); adlar anahtar olmadan yazilamaz.</source>
         <translation>Ce répertoire est chiffré (fscrypt) ; les noms ne peuvent pas être écrits sans la clé.</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1017"/>
+        <location filename="../../core/session.py" line="1060"/>
         <source>Bu dosya bir DiskUltimate yedegi degil</source>
         <translation>Ce fichier n&apos;est pas une sauvegarde DiskUltimate</translation>
     </message>
@@ -2435,17 +2528,17 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <translation>Ce système de fichiers</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="833"/>
+        <location filename="../../core/resize.py" line="884"/>
         <source>Bu dosya sistemi tasinamaz — {}</source>
         <translation>Ce système de fichiers ne peut pas être déplacé — {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="893"/>
+        <location filename="../../core/resize.py" line="944"/>
         <source>Bu dosya sistemi yalnizca isletim sisteminin kendi araciyla boyutlandirilabilir; bolum tablosu tek basina degistirilmez</source>
         <translation>Ce système de fichiers ne peut être redimensionné que par l&apos;outil propre au système d&apos;exploitation ; la table de partitions n&apos;est pas modifiée seule</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="819"/>
+        <location filename="../../core/resize.py" line="870"/>
         <source>Bu dosya sistemi {} altina inemez (veri kaybi olurdu)</source>
         <translation>Ce système de fichiers ne peut pas descendre sous {} (des données seraient perdues)</translation>
     </message>
@@ -2457,12 +2550,17 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
 Vous pouvez définir un nom de volume en reformatant la partition.</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="63"/>
+        <location filename="../../core/recovery.py" line="64"/>
         <source>Bu dosya sisteminde silinmis dosya taramasi desteklenmiyor</source>
         <translation>La recherche de fichiers supprimés n&apos;est pas prise en charge sur ce système de fichiers</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="132"/>
+        <location filename="../../core/exfat.py" line="360"/>
+        <source>Bu exFAT birimi iki FAT kopyasi (TexFAT) kullaniyor; yazma ve boyutlandirma desteklenmiyor</source>
+        <translation>Ce volume exFAT utilise deux copies de la FAT (TexFAT) ; l&apos;écriture et le redimensionnement ne sont pas pris en charge</translation>
+    </message>
+    <message>
+        <location filename="../../core/extresize.py" line="158"/>
         <source>Bu ext birimi su ozellikleri kullaniyor ve boyutlandirmasi desteklenmiyor: {}</source>
         <translation>Ce volume ext utilise les fonctionnalités suivantes, non prises en charge pour le redimensionnement : {}</translation>
     </message>
@@ -2472,7 +2570,7 @@ Vous pouvez définir un nom de volume en reformatant la partition.</translation>
         <translation>Cette entrée ne fait pas partie de l&apos;ordre de démarrage ; elle ne peut donc pas être déplacée.</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="226"/>
+        <location filename="../../core/recovery.py" line="257"/>
         <source>Bu giriste kurtarilabilir veri yok</source>
         <translation>Cette entrée n&apos;a aucune donnée récupérable</translation>
     </message>
@@ -2502,9 +2600,14 @@ Vous pouvez définir un nom de volume en reformatant la partition.</translation>
         <translation>Ce type de descripteur d&apos;allocation n&apos;est pas pris en charge en écriture : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3979"/>
+        <location filename="../../ui/main_window.py" line="3994"/>
         <source>Bu kaynak degistirilemez</source>
         <translation>Cette source ne peut pas être modifiée</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="1216"/>
+        <source>Bu klasor buyuk/kucuk harf duyarsiz (casefold); bu surumde icine ad eklenemez.</source>
+        <translation>Ce dossier est insensible à la casse (casefold) ; cette version ne peut pas y ajouter de noms.</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/efiboot.py" line="193"/>
@@ -2563,19 +2666,23 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
     <message>
         <location filename="../../core/apfs.py" line="405"/>
         <location filename="../../core/btrfs.py" line="263"/>
-        <location filename="../../core/exfat.py" line="559"/>
-        <location filename="../../core/extread.py" line="417"/>
-        <location filename="../../core/extwrite.py" line="1253"/>
-        <location filename="../../core/extwrite.py" line="1290"/>
+        <location filename="../../core/exfat.py" line="1087"/>
+        <location filename="../../core/exfat.py" line="1118"/>
+        <location filename="../../core/exfat.py" line="759"/>
+        <location filename="../../core/extread.py" line="556"/>
+        <location filename="../../core/extwrite.py" line="1456"/>
+        <location filename="../../core/extwrite.py" line="1535"/>
         <location filename="../../core/f2fs.py" line="410"/>
-        <location filename="../../core/fat.py" line="507"/>
+        <location filename="../../core/fat.py" line="1057"/>
+        <location filename="../../core/fat.py" line="1091"/>
+        <location filename="../../core/fat.py" line="691"/>
         <location filename="../../core/hfsplus.py" line="486"/>
         <location filename="../../core/hfswrite.py" line="813"/>
         <location filename="../../core/hfswrite.py" line="847"/>
         <location filename="../../core/hfswrite.py" line="868"/>
         <location filename="../../core/iso9660.py" line="236"/>
-        <location filename="../../core/ntfsindex.py" line="472"/>
-        <location filename="../../core/ntfsread.py" line="609"/>
+        <location filename="../../core/ntfsindex.py" line="470"/>
+        <location filename="../../core/ntfsread.py" line="738"/>
         <location filename="../../core/udf.py" line="456"/>
         <location filename="../../core/udfwrite.py" line="681"/>
         <location filename="../../core/udfwrite.py" line="719"/>
@@ -2609,7 +2716,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Écrit la pile actuelle de tous les threads dans un fichier</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="1050"/>
+        <location filename="../../core/exfat.py" line="1306"/>
         <source>Buyuk harf tablosu yaziliyor...</source>
         <translation>Écriture de la table des majuscules (upcase)...</translation>
     </message>
@@ -2649,7 +2756,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Non exécuté</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="337"/>
+        <location filename="../../core/hfsplus.py" line="336"/>
         <location filename="../../core/hfswrite.py" line="527"/>
         <source>Catal kapsamlari eksik (dosya kimligi {})</source>
         <translation>Les extents de la branche (fork) sont incomplets (ID de fichier {})</translation>
@@ -2720,7 +2827,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>ATTENTION : la réduction efface les données situées à la fin (une confirmation sera redemandée lors de l&apos;application)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3987"/>
+        <location filename="../../ui/main_window.py" line="4002"/>
         <source>DIKKAT: salt okunur acildi — {}</source>
         <translation>ATTENTION : ouvert en lecture seule — {}</translation>
     </message>
@@ -2776,7 +2883,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Les modifications sont regroupées en opérations en attente ; elles ne sont écrites sur le disque qu&apos;avec Appliquer.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4021"/>
+        <location filename="../../ui/main_window.py" line="4036"/>
         <source>Degisiklikler bekliyor</source>
         <translation>Des modifications sont en attente</translation>
     </message>
@@ -2801,12 +2908,12 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Modification impossible</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4028"/>
+        <location filename="../../ui/main_window.py" line="4043"/>
         <source>Degistirilemez kaynak</source>
         <translation>La source ne peut pas être modifiée</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1367"/>
+        <location filename="../../core/session.py" line="1410"/>
         <source>Degistirilemez — {}</source>
         <translation>Non modifiable — {}</translation>
     </message>
@@ -2827,7 +2934,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Résultat de la vérification</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4179"/>
+        <location filename="../../ui/main_window.py" line="4194"/>
         <source>Denetlenemedi: {}</source>
         <translation>Vérification impossible : {}</translation>
     </message>
@@ -2927,7 +3034,8 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Disque</translation>
     </message>
     <message>
-        <location filename="../../core/gpt.py" line="156"/>
+        <location filename="../../core/gpt.py" line="360"/>
+        <location filename="../../core/gpt.py" line="502"/>
         <source>Disk GPT icin cok kucuk</source>
         <translation>Le disque est trop petit pour GPT</translation>
     </message>
@@ -2993,7 +3101,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Image disque</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1416"/>
+        <location filename="../../ui/dialogs/backup.py" line="1417"/>
         <source>Disk goruntusu (*.img *.raw *.dd);;Tum dosyalar (*)</source>
         <translation>Image disque (*.img *.raw *.dd);;Tous les fichiers (*)</translation>
     </message>
@@ -3057,7 +3165,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Impossible d&apos;obtenir la liste des disques : {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="762"/>
+        <location filename="../../core/session.py" line="805"/>
         <source>Disk numarasi bilinmiyor</source>
         <translation>Le numéro du disque est inconnu</translation>
     </message>
@@ -3094,7 +3202,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Aucun disque sélectionné</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="90"/>
+        <location filename="../../core/convert.py" line="100"/>
         <source>Disk sonunda yedek GPT icin {} bos alan gerekiyor; son bolum LBA {} konumunda bitiyor</source>
         <translation>{} d&apos;espace libre sont nécessaires à la fin du disque pour la GPT de secours ; la dernière partition se termine au LBA {}</translation>
     </message>
@@ -3115,7 +3223,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Sauvegarde DiskUltimate (*.dub);;Tous les fichiers (*)</translation>
     </message>
     <message>
-        <location filename="../../core/vdisk.py" line="571"/>
+        <location filename="../../core/vdisk.py" line="592"/>
         <source>DiskUltimate yedegi (.dub)</source>
         <translation>Sauvegarde DiskUltimate (.dub)</translation>
     </message>
@@ -3175,7 +3283,22 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Sur le disque</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="235"/>
+        <location filename="../../core/session.py" line="161"/>
+        <source>Diskte MBR&apos;nin yaninda eski bir GPT kalintisi var</source>
+        <translation>Le disque contient un reste de GPT obsolète à côté du MBR</translation>
+    </message>
+    <message>
+        <location filename="../../core/gpt.py" line="469"/>
+        <source>Diskte hibrit MBR var ve bu degisiklik hibrit MBR&apos;de de kayitli bir bolumu (LBA {}) etkiliyor. Hibrit MBR&apos;yi bozmamak icin tablo yazilmadi; once hibrit MBR&apos;yi kaldirin (gdisk).</source>
+        <translation>Le disque a un MBR hybride et cette modification touche une partition qui y figure aussi (LBA {}). La table n&apos;a pas été écrite pour ne pas casser le MBR hybride ; supprimez d&apos;abord le MBR hybride (gdisk).</translation>
+    </message>
+    <message>
+        <location filename="../../core/convert.py" line="88"/>
+        <source>Diskte koruyucu/hibrit MBR girisi (0xEE) var; MBR&apos;den GPT&apos;ye donusturulemez</source>
+        <translation>Le disque contient une entrée MBR protectrice/hybride (0xEE) ; il ne peut pas être converti de MBR en GPT</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfswrite.py" line="280"/>
         <source>Diskte yeterli bos kume yok</source>
         <translation>Clusters libres insuffisants sur le disque</translation>
     </message>
@@ -3215,13 +3338,13 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Écriture des blocs de répertoire...</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1090"/>
+        <location filename="../../core/extwrite.py" line="1164"/>
         <source>Dizin cok buyuk</source>
         <translation>Le répertoire est trop grand</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="372"/>
-        <location filename="../../core/ntfsread.py" line="426"/>
+        <location filename="../../core/extread.py" line="455"/>
+        <location filename="../../core/ntfsread.py" line="555"/>
         <source>Dizin degil</source>
         <translation>Ce n&apos;est pas un répertoire</translation>
     </message>
@@ -3230,19 +3353,19 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <location filename="../../core/apfs.py" line="412"/>
         <location filename="../../core/btrfs.py" line="260"/>
         <location filename="../../core/btrfs.py" line="270"/>
-        <location filename="../../core/exfat.py" line="538"/>
-        <location filename="../../core/extread.py" line="411"/>
-        <location filename="../../core/extwrite.py" line="1167"/>
-        <location filename="../../core/extwrite.py" line="1218"/>
+        <location filename="../../core/exfat.py" line="732"/>
+        <location filename="../../core/extread.py" line="550"/>
+        <location filename="../../core/extwrite.py" line="1285"/>
+        <location filename="../../core/extwrite.py" line="1400"/>
         <location filename="../../core/f2fs.py" line="407"/>
         <location filename="../../core/f2fs.py" line="417"/>
-        <location filename="../../core/fat.py" line="470"/>
+        <location filename="../../core/fat.py" line="654"/>
         <location filename="../../core/hfsplus.py" line="478"/>
         <location filename="../../core/hfsplus.py" line="493"/>
         <location filename="../../core/hfswrite.py" line="673"/>
         <location filename="../../core/iso9660.py" line="218"/>
-        <location filename="../../core/ntfsread.py" line="606"/>
-        <location filename="../../core/ntfswrite.py" line="867"/>
+        <location filename="../../core/ntfsread.py" line="735"/>
+        <location filename="../../core/ntfswrite.py" line="946"/>
         <location filename="../../core/udf.py" line="449"/>
         <location filename="../../core/udf.py" line="464"/>
         <location filename="../../core/udfwrite.py" line="571"/>
@@ -3252,41 +3375,46 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Ce n&apos;est pas un répertoire : {}</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="572"/>
-        <location filename="../../core/exfat.py" line="579"/>
-        <location filename="../../core/fat.py" line="520"/>
-        <location filename="../../core/fat.py" line="527"/>
+        <location filename="../../core/exfat.py" line="773"/>
+        <location filename="../../core/exfat.py" line="818"/>
+        <location filename="../../core/fat.py" line="704"/>
+        <location filename="../../core/fat.py" line="711"/>
         <source>Dizin dosya olarak okunamaz</source>
         <translation>Un répertoire ne peut pas être lu comme un fichier</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1119"/>
+        <location filename="../../core/extwrite.py" line="1201"/>
         <source>Dizin girisi bulunamadi: {}</source>
         <translation>Entrée de répertoire introuvable : {}</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="764"/>
+        <location filename="../../core/extmove.py" line="773"/>
         <source>Dizin girisleri duzeltiliyor...</source>
         <translation>Correction des entrées de répertoire...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsindex.py" line="144"/>
-        <location filename="../../core/ntfswrite.py" line="696"/>
+        <location filename="../../core/extwrite.py" line="1071"/>
+        <source>Dizin indeksi bozuk: inode {}</source>
+        <translation>Index de répertoire endommagé : inode {}</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsindex.py" line="147"/>
+        <location filename="../../core/ntfswrite.py" line="771"/>
         <source>Dizin indeksi bulunamadi</source>
         <translation>Index du répertoire introuvable</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsindex.py" line="374"/>
+        <location filename="../../core/ntfsindex.py" line="372"/>
         <source>Dizin indeksi cok derin (bozuk olabilir)</source>
         <translation>L&apos;index du répertoire est trop profond (peut-être corrompu)</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="746"/>
+        <location filename="../../core/ntfswrite.py" line="821"/>
         <source>Dizin kaydi doldu: bu surumde indeks $INDEX_ALLOCATION&apos;a tasinamaz. Daha az giris deneyin.</source>
         <translation>L&apos;enregistrement du répertoire est plein : cette version ne peut pas déplacer l&apos;index vers $INDEX_ALLOCATION. Essayez avec moins d&apos;entrées.</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="783"/>
+        <location filename="../../core/ntfswrite.py" line="860"/>
         <source>Dizin kaydi doldu: oznitelik kayda sigmiyor</source>
         <translation>L&apos;enregistrement du répertoire est plein : l&apos;attribut ne tient pas dans l&apos;enregistrement</translation>
     </message>
@@ -3294,7 +3422,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <location filename="../../core/apfs.py" line="420"/>
         <location filename="../../core/btrfs.py" line="315"/>
         <location filename="../../core/f2fs.py" line="423"/>
-        <location filename="../../core/filesystem.py" line="660"/>
+        <location filename="../../core/filesystem.py" line="665"/>
         <location filename="../../core/hfsplus.py" line="565"/>
         <location filename="../../core/hfsplus.py" line="577"/>
         <location filename="../../core/iso9660.py" line="252"/>
@@ -3339,7 +3467,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Les données des partitions restent en place pendant la conversion ; une interruption peut corrompre la table, sauvegardez donc d&apos;abord les données importantes</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1270"/>
+        <location filename="../../core/session.py" line="1313"/>
         <location filename="../../ui/dialogs/efiboot.py" line="279"/>
         <location filename="../../ui/widgets/file_browser.py" line="243"/>
         <source>Dosya</source>
@@ -3359,7 +3487,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Système de fichiers</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="811"/>
+        <location filename="../../core/extwrite.py" line="1209"/>
         <source>Dosya adi cok uzun</source>
         <translation>Le nom de fichier est trop long</translation>
     </message>
@@ -3374,12 +3502,12 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Fichier introuvable : {}</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="588"/>
+        <location filename="../../core/extwrite.py" line="664"/>
         <source>Dosya cok buyuk: en fazla {} GB</source>
         <translation>Le fichier est trop volumineux : au plus {} GB</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="680"/>
+        <location filename="../../core/ntfswrite.py" line="755"/>
         <source>Dosya cok parcali: veri kosullari tek MFT kaydina sigmiyor ($ATTRIBUTE_LIST bu surumde yok)</source>
         <translation>Le fichier est trop fragmenté : ses plages de données ne tiennent pas dans un seul enregistrement MFT ($ATTRIBUTE_LIST n&apos;est pas pris en charge dans cette version)</translation>
     </message>
@@ -3408,7 +3536,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <location filename="../../core/clone.py" line="121"/>
         <location filename="../../ui/dialogs/bootloader.py" line="76"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3883"/>
+        <location filename="../../ui/main_window.py" line="3892"/>
         <source>Dosya sistemi</source>
         <translation>Système de fichiers</translation>
     </message>
@@ -3423,27 +3551,27 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Impossible d&apos;ouvrir le système de fichiers : {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="885"/>
+        <location filename="../../core/session.py" line="928"/>
         <source>Dosya sistemi bolumu dolduracak kadar buyutuluyor...</source>
         <translation>Agrandissement du système de fichiers pour remplir la partition...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="947"/>
+        <location filename="../../core/resize.py" line="998"/>
         <source>Dosya sistemi buyutulemedi: {}</source>
         <translation>Impossible d&apos;agrandir le système de fichiers : {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="939"/>
+        <location filename="../../core/resize.py" line="990"/>
         <source>Dosya sistemi buyutuluyor...</source>
         <translation>Agrandissement du système de fichiers...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="824"/>
+        <location filename="../../core/resize.py" line="875"/>
         <source>Dosya sistemi en fazla {} olabilir; kalan alan bolum icinde **kullanilmadan** kalir</source>
         <translation>Le système de fichiers peut faire au plus {} ; l&apos;espace restant reste **inutilisé** dans la partition</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="902"/>
+        <location filename="../../core/resize.py" line="953"/>
         <source>Dosya sistemi kucultuluyor...</source>
         <translation>Réduction du système de fichiers...</translation>
     </message>
@@ -3492,8 +3620,8 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Chemin du fichier</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="764"/>
-        <location filename="../../core/fat.py" line="737"/>
+        <location filename="../../core/exfat.py" line="998"/>
+        <location filename="../../core/fat.py" line="932"/>
         <location filename="../../core/image.py" line="223"/>
         <location filename="../../core/vdisk.py" line="261"/>
         <source>Dosya zaten var: {}</source>
@@ -3510,23 +3638,24 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Récupération des fichiers</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1202"/>
+        <location filename="../../ui/dialogs/backup.py" line="1203"/>
         <location filename="../../ui/qt_i18n.py" line="46"/>
         <source>Durdur</source>
         <translation>Abandonner</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1249"/>
+        <location filename="../../ui/dialogs/backup.py" line="1250"/>
         <source>Durduruluyor...</source>
         <translation>Arrêt en cours...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1282"/>
+        <location filename="../../core/session.py" line="1325"/>
         <location filename="../../ui/dialogs/apply.py" line="121"/>
         <location filename="../../ui/dialogs/backup.py" line="453"/>
         <location filename="../../ui/dialogs/backup.py" line="686"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3906"/>
+        <location filename="../../ui/main_window.py" line="3915"/>
+        <location filename="../../ui/main_window.py" line="3919"/>
         <source>Durum</source>
         <translation>État</translation>
     </message>
@@ -3558,7 +3687,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>INCOMPLET (pas de privilèges)</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="473"/>
+        <location filename="../../core/recovery.py" line="549"/>
         <source>ELF calistirilabilir</source>
         <translation>Exécutable ELF</translation>
     </message>
@@ -3615,7 +3744,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Sélectionnez au moins un type de fichier.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4192"/>
+        <location filename="../../ui/main_window.py" line="4207"/>
         <source>En guncel surumu kullaniyorsunuz ({}).</source>
         <translation>Vous utilisez la dernière version ({}).</translation>
     </message>
@@ -3625,7 +3754,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Blocage le plus long</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1277"/>
+        <location filename="../../core/session.py" line="1320"/>
         <source>Erisim</source>
         <translation>Accès</translation>
     </message>
@@ -3650,13 +3779,13 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
     <message>
         <location filename="../../core/physical.py" line="127"/>
         <location filename="../../core/physical.py" line="128"/>
-        <location filename="../../ui/main_window.py" line="3892"/>
+        <location filename="../../ui/main_window.py" line="3901"/>
         <location filename="../../ui/qt_i18n.py" line="42"/>
         <source>Evet</source>
         <translation>Oui</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="75"/>
+        <location filename="../../core/extmove.py" line="76"/>
         <source>Extent basligi bozuk</source>
         <translation>L&apos;en-tête d&apos;extent est corrompu</translation>
     </message>
@@ -3681,24 +3810,29 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Superbloc F2FS introuvable</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="778"/>
+        <location filename="../../core/filesystem.py" line="783"/>
         <source>F2FS yazma bu surumde yok; birim salt okunur acildi.</source>
         <translation>L&apos;écriture sur F2FS n&apos;est pas disponible dans cette version ; le volume a été ouvert en lecture seule.</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="1027"/>
+        <location filename="../../core/exfat.py" line="1283"/>
         <source>FAT bolgesi hazirlaniyor...</source>
         <translation>Préparation de la zone FAT...</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="731"/>
+        <location filename="../../core/fat.py" line="918"/>
         <source>FAT en fazla 4 GiB - 1 bayt dosya alir ({} bayt istendi)</source>
         <translation>FAT autorise des fichiers d&apos;au plus 4 GiB - 1 octet ({} octets demandés)</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="137"/>
+        <location filename="../../core/fat.py" line="138"/>
         <source>FAT onyukleme sektoru imzasi yok</source>
         <translation>La signature du secteur d&apos;amorçage FAT est absente</translation>
+    </message>
+    <message>
+        <location filename="../../core/fat.py" line="337"/>
+        <source>FAT tablosu tutarsiz; birime yazilamaz. Once fsck.fat veya chkdsk ile onarin</source>
+        <translation>La table FAT est incohérente ; impossible d&apos;écrire sur le volume. Réparez-le d&apos;abord avec fsck.fat ou chkdsk</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="489"/>
@@ -3741,22 +3875,22 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>FAT32 (LBA)</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="985"/>
+        <location filename="../../core/fat.py" line="1245"/>
         <source>FAT{} bu boyut icin uygun degil; FAT32 secin</source>
         <translation>FAT{} ne convient pas à cette taille ; choisissez FAT32</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="373"/>
+        <location filename="../../core/resize.py" line="408"/>
         <source>FAT{} icin gecersiz kume sayisi</source>
         <translation>Nombre de clusters invalide pour FAT{}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="499"/>
+        <location filename="../../core/ntfswrite.py" line="566"/>
         <source>FILE imzasi yok</source>
         <translation>Pas de signature FILE</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="140"/>
+        <location filename="../../core/ntfsread.py" line="152"/>
         <source>FILE imzasi yok: kayit {}</source>
         <translation>Pas de signature FILE : enregistrement {}</translation>
     </message>
@@ -3771,7 +3905,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Les VHD de différenciation ne sont pas pris en charge</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="337"/>
+        <location filename="../../core/ntfsread.py" line="464"/>
         <source>Fixup imzasi tutmuyor (kayit bozuk)</source>
         <translation>La signature de correction (fixup) ne correspond pas (l&apos;enregistrement est corrompu)</translation>
     </message>
@@ -3812,17 +3946,17 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Analyse de la liste des disques physiques...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="277"/>
+        <location filename="../../core/session.py" line="294"/>
         <source>Fiziksel disk — {}</source>
         <translation>Disque physique — {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="838"/>
+        <location filename="../../core/resize.py" line="889"/>
         <source>Fiziksel disk: islem oncesi yedek alin</source>
         <translation>Disque physique : faites une sauvegarde avant l&apos;opération</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="648"/>
+        <location filename="../../core/session.py" line="677"/>
         <source>Fiziksel diskin boyutu degistirilemez</source>
         <translation>Un disque physique ne peut pas être redimensionné</translation>
     </message>
@@ -3832,7 +3966,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Disques physiques</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="318"/>
+        <location filename="../../core/session.py" line="335"/>
         <source>Fiziksel diskler guvenlik gerekcesiyle salt okunur acilir. Degisiklikler bekleyen islem olarak birikir ve diske ancak Uygula ile yazilir.</source>
         <translation>Par sécurité, les disques physiques sont ouverts en lecture seule. Les modifications sont regroupées en opérations en attente et ne sont écrites sur le disque qu&apos;avec Appliquer.</translation>
     </message>
@@ -3858,7 +3992,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Chargeur d&apos;amorçage FreeBSD</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="464"/>
+        <location filename="../../core/recovery.py" line="540"/>
         <source>GIF goruntu</source>
         <translation>Image GIF</translation>
     </message>
@@ -3883,19 +4017,29 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Créer une table de partitions GPT</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="80"/>
+        <location filename="../../core/convert.py" line="86"/>
         <source>GPT en fazla 128 bolum tasiyabilir</source>
         <translation>GPT peut contenir au plus 128 partitions</translation>
     </message>
     <message>
-        <location filename="../../core/gpt.py" line="170"/>
+        <location filename="../../core/gpt.py" line="390"/>
         <source>GPT en fazla {} bolum destekler</source>
         <translation>GPT prend en charge au plus {} partitions</translation>
     </message>
     <message>
-        <location filename="../../core/gpt.py" line="252"/>
+        <location filename="../../core/gpt.py" line="377"/>
         <source>GPT giris dizisi dolu</source>
         <translation>Le tableau d&apos;entrées GPT est plein</translation>
+    </message>
+    <message>
+        <location filename="../../core/convert.py" line="125"/>
+        <source>GPT olusturuluyor...</source>
+        <translation>Création de la GPT...</translation>
+    </message>
+    <message>
+        <location filename="../../core/convert.py" line="234"/>
+        <source>GPT yapilari siliniyor...</source>
+        <translation>Effacement des structures GPT...</translation>
     </message>
     <message>
         <location filename="../../core/bootloader.py" line="48"/>
@@ -3998,12 +4142,12 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Un GUID nécessite 16 octets, {} disponibles</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="469"/>
+        <location filename="../../core/recovery.py" line="545"/>
         <source>GZIP arsivi</source>
         <translation>Archive GZIP</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1284"/>
+        <location filename="../../ui/dialogs/backup.py" line="1285"/>
         <location filename="../../ui/dialogs/task.py" line="81"/>
         <source>Gecen: {}</source>
         <translation>Écoulé : {}</translation>
@@ -4029,7 +4173,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Aucun point de contrôle F2FS valide trouvé</translation>
     </message>
     <message>
-        <location filename="../../core/gpt.py" line="109"/>
+        <location filename="../../core/gpt.py" line="281"/>
         <source>Gecerli GPT basligi bulunamadi</source>
         <translation>Aucun en-tête GPT valide trouvé</translation>
     </message>
@@ -4050,17 +4194,17 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Taille de bloc APFS invalide : {}</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="147"/>
+        <location filename="../../core/hfsplus.py" line="146"/>
         <source>Gecersiz B-agaci dugum boyutu: {}</source>
         <translation>Taille de nœud de l&apos;arbre B invalide : {}</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="150"/>
+        <location filename="../../core/fat.py" line="151"/>
         <source>Gecersiz BPB</source>
         <translation>BPB invalide</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="160"/>
+        <location filename="../../core/fat.py" line="161"/>
         <source>Gecersiz FAT yerlesimi</source>
         <translation>Disposition FAT invalide</translation>
     </message>
@@ -4071,7 +4215,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>GUID invalide : {}</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="244"/>
+        <location filename="../../core/hfsplus.py" line="243"/>
         <source>Gecersiz HFS+ blok boyutu: {}</source>
         <translation>Taille de bloc HFS+ invalide : {}</translation>
     </message>
@@ -4091,6 +4235,8 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Taille de bloc XFS invalide : {}</translation>
     </message>
     <message>
+        <location filename="../../core/exfat.py" line="170"/>
+        <location filename="../../core/fat.py" line="971"/>
         <location filename="../../core/hfswrite.py" line="661"/>
         <source>Gecersiz ad: {}</source>
         <translation>Nom invalide : {}</translation>
@@ -4113,26 +4259,28 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Taille invalide</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="760"/>
-        <location filename="../../core/fat.py" line="729"/>
+        <location filename="../../core/exfat.py" line="1111"/>
+        <location filename="../../core/exfat.py" line="988"/>
+        <location filename="../../core/fat.py" line="1086"/>
+        <location filename="../../core/fat.py" line="916"/>
         <location filename="../../core/hfswrite.py" line="670"/>
         <location filename="../../core/udfwrite.py" line="568"/>
         <source>Gecersiz dosya yolu</source>
         <translation>Chemin de fichier invalide</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="288"/>
+        <location filename="../../core/exfat.py" line="339"/>
         <source>Gecersiz exFAT parametreleri</source>
         <translation>Paramètres exFAT invalides</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="193"/>
+        <location filename="../../core/extread.py" line="239"/>
         <source>Gecersiz inode numarasi: {}</source>
         <translation>Numéro d&apos;inode invalide : {}</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="811"/>
-        <location filename="../../core/fat.py" line="795"/>
+        <location filename="../../core/exfat.py" line="1051"/>
+        <location filename="../../core/fat.py" line="1011"/>
         <source>Gecersiz klasor yolu</source>
         <translation>Chemin de dossier invalide</translation>
     </message>
@@ -4152,7 +4300,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Taille de page invalide : {}</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="148"/>
+        <location filename="../../core/fat.py" line="149"/>
         <source>Gecersiz sektor boyutu</source>
         <translation>Taille de secteur invalide</translation>
     </message>
@@ -4167,7 +4315,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Passe {}/{} ({}) — {} / {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4134"/>
+        <location filename="../../ui/main_window.py" line="4149"/>
         <source>Gelistirici: {}</source>
         <translation>Développeur : {}</translation>
     </message>
@@ -4197,7 +4345,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Partition étendue (conteneur)</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="89"/>
+        <location filename="../../core/xfsgrow.py" line="90"/>
         <source>Gercek zamanli alt birimli XFS buyutulemiyor</source>
         <translation>Un XFS avec sous-volume temps réel ne peut pas être agrandi</translation>
     </message>
@@ -4212,7 +4360,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Annulé : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1253"/>
+        <location filename="../../ui/dialogs/backup.py" line="1254"/>
         <location filename="../../ui/dialogs/backup.py" line="306"/>
         <source>Geri yukle</source>
         <translation>Restaurer</translation>
@@ -4224,12 +4372,12 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Démarrage de la restauration...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1326"/>
+        <location filename="../../ui/dialogs/backup.py" line="1327"/>
         <source>Geri yukleme durduruldu. Hedef tutarsiz durumda: yeniden geri yukleyin ya da bicimlendirin.</source>
         <translation>Restauration arrêtée. La cible est dans un état incohérent : restaurez-la à nouveau ou formatez-la.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1324"/>
+        <location filename="../../ui/dialogs/backup.py" line="1325"/>
         <source>Geri yukleme durduruldu; yarim kalan goruntu dosyasi silindi.</source>
         <translation>Restauration arrêtée ; le fichier image incomplet a été supprimé.</translation>
     </message>
@@ -4239,22 +4387,22 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Confirmation de la restauration</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1479"/>
+        <location filename="../../ui/dialogs/backup.py" line="1480"/>
         <source>Geri yukleme tamamlandi.</source>
         <translation>Restauration terminée.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1242"/>
+        <location filename="../../ui/dialogs/backup.py" line="1243"/>
         <source>Geri yukleme yarida kesilirse hedef tutarsiz kalir ve yeniden geri yuklenene ya da bicimlendirilene kadar kullanilamaz. Yine de durdurulsun mu?</source>
-        <translation>Si la restauration est interrompue, la cible reste incohérente et inutilisable jusqu'à une nouvelle restauration ou un formatage. Arrêter quand même ?</translation>
+        <translation>Si la restauration est interrompue, la cible reste incohérente et inutilisable jusqu&apos;à une nouvelle restauration ou un formatage. Arrêter quand même ?</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1477"/>
+        <location filename="../../ui/dialogs/backup.py" line="1478"/>
         <source>Geri yuklendi: {}</source>
         <translation>Restauré : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1415"/>
+        <location filename="../../ui/dialogs/backup.py" line="1416"/>
         <source>Geri yuklenecek goruntu dosyasi</source>
         <translation>Fichier image dans lequel restaurer</translation>
     </message>
@@ -4331,7 +4479,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>FAT32 masqué (LBA)</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="268"/>
+        <location filename="../../core/hfsplus.py" line="267"/>
         <source>Gomulu HFS+ birimi sektor sinirinda degil</source>
         <translation>Le volume HFS+ intégré n&apos;est pas aligné sur un secteur</translation>
     </message>
@@ -4426,7 +4574,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <location filename="../../ui/main_window.py" line="1809"/>
         <location filename="../../ui/main_window.py" line="2036"/>
         <location filename="../../ui/main_window.py" line="2076"/>
-        <location filename="../../ui/main_window.py" line="3973"/>
+        <location filename="../../ui/main_window.py" line="3988"/>
         <source>Goruntu yok</source>
         <translation>Aucune image</translation>
     </message>
@@ -4436,7 +4584,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Aucun périphérique sélectionné à afficher.</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="914"/>
+        <location filename="../../core/resize.py" line="965"/>
         <source>Goruntunun bulundugu yerde yeterli bos alan yok: tasima {} yeni alan gerektiriyor, {} bos. Hicbir sey yazilmadi.</source>
         <translation>Espace libre insuffisant à l&apos;emplacement de l&apos;image : le déplacement nécessite {} d&apos;espace supplémentaire, {} est libre. Rien n&apos;a été écrit.</translation>
     </message>
@@ -4461,33 +4609,33 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Une demande graphique de privilèges nécessite `pkexec` (le paquet polkit). Vous pouvez lancer l&apos;application avec `sudo python3 main.py`.</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="704"/>
+        <location filename="../../core/extmove.py" line="713"/>
         <source>Grup metaverisi yerlestiriliyor...</source>
         <translation>Placement des métadonnées de groupe...</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="774"/>
+        <location filename="../../core/extmove.py" line="783"/>
         <source>Grup tanimlayicilari guncelleniyor...</source>
         <translation>Mise à jour des descripteurs de groupe...</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="369"/>
+        <location filename="../../core/extresize.py" line="399"/>
         <source>Grup tanimlayicilari yaziliyor...</source>
         <translation>Écriture des descripteurs de groupe...</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="179"/>
+        <location filename="../../core/extread.py" line="225"/>
         <source>Grup tanimlayicisi yok: {}</source>
         <translation>Pas de descripteur de groupe : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4166"/>
+        <location filename="../../ui/main_window.py" line="4181"/>
         <source>Guncellemeler denetleniyor...</source>
         <translation>Recherche de mises à jour...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4178"/>
-        <location filename="../../ui/main_window.py" line="4191"/>
+        <location filename="../../ui/main_window.py" line="4193"/>
+        <location filename="../../ui/main_window.py" line="4206"/>
         <source>Guncellemeleri denetle</source>
         <translation>Rechercher les mises à jour</translation>
     </message>
@@ -4563,7 +4711,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Un nom HFS+ peut comporter au plus 255 caractères</translation>
     </message>
     <message>
-        <location filename="../../core/hfsplus.py" line="234"/>
+        <location filename="../../core/hfsplus.py" line="233"/>
         <source>HFS+ birim basligi bulunamadi</source>
         <translation>En-tête de volume HFS+ introuvable</translation>
     </message>
@@ -4623,7 +4771,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>À propos</translation>
     </message>
     <message>
-        <location filename="../../core/vdisk.py" line="568"/>
+        <location filename="../../core/vdisk.py" line="589"/>
         <source>Ham disk goruntusu (.img)</source>
         <translation>Image disque brute (.img)</translation>
     </message>
@@ -4633,7 +4781,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Outils externes</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="96"/>
+        <location filename="../../core/xfsgrow.py" line="97"/>
         <source>Harici gunluklu XFS buyutulemiyor</source>
         <translation>Un XFS avec journal externe ne peut pas être agrandi</translation>
     </message>
@@ -4646,13 +4794,13 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <location filename="../../core/physical.py" line="127"/>
         <location filename="../../core/physical.py" line="128"/>
         <location filename="../../core/physical.py" line="130"/>
-        <location filename="../../ui/main_window.py" line="3892"/>
+        <location filename="../../ui/main_window.py" line="3901"/>
         <location filename="../../ui/qt_i18n.py" line="44"/>
         <source>Hayir</source>
         <translation>Non</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="476"/>
+        <location filename="../../core/ntfsfix.py" line="598"/>
         <source>Hazirda bekletme dosyasi gecersiz kiliniyor...</source>
         <translation>Invalidation du fichier d&apos;hibernation...</translation>
     </message>
@@ -4692,7 +4840,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>La taille de la cible ne peut pas être inférieure à celle de la source</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="218"/>
+        <location filename="../../core/layoutedit.py" line="230"/>
         <source>Hedef boyutu bilinmiyor</source>
         <translation>Taille de la cible inconnue</translation>
     </message>
@@ -4712,7 +4860,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Cible trop petite : sauvegarde {}, cible {}.</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="957"/>
+        <location filename="../../core/session.py" line="1000"/>
         <source>Hedef disk kaynaktan kucuk: kaynak {}, hedef {}</source>
         <translation>Le disque cible est plus petit que la source : source {}, cible {}</translation>
     </message>
@@ -4759,7 +4907,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>La cible est en lecture seule</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1420"/>
+        <location filename="../../ui/dialogs/backup.py" line="1421"/>
         <source>Hedef, yedek dosyasinin kendisi olamaz.</source>
         <translation>La cible ne peut pas être le fichier de sauvegarde lui-même.</translation>
     </message>
@@ -4789,9 +4937,14 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Les données de la cible sont remplacées par la sauvegarde.</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="386"/>
+        <location filename="../../core/resize.py" line="421"/>
         <source>Hesaplanan yerlesim bolume sigmiyor</source>
         <translation>La disposition calculée ne tient pas dans la partition</translation>
+    </message>
+    <message>
+        <location filename="../../core/gpt.py" line="351"/>
+        <source>Hibrit MBR&apos;de GPT&apos;de olmayan bir alan var (LBA {})</source>
+        <translation>Le MBR hybride contient une zone absente de la GPT (LBA {})</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="620"/>
@@ -4800,7 +4953,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Aucun disque n&apos;est touché</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="502"/>
+        <location filename="../../core/recovery.py" line="578"/>
         <source>Hicbir dosya turu secilmedi</source>
         <translation>Aucun type de fichier n&apos;a été sélectionné</translation>
     </message>
@@ -4836,18 +4989,18 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Formatage rapide (la zone de données n&apos;est pas effacée)</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsindex.py" line="248"/>
+        <location filename="../../core/ntfsindex.py" line="246"/>
         <source>INDX blogu diskte bulunamadi (VCN {})</source>
         <translation>Bloc INDX introuvable sur le disque (VCN {})</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsindex.py" line="183"/>
-        <location filename="../../core/ntfsindex.py" line="187"/>
+        <location filename="../../core/ntfsindex.py" line="186"/>
+        <location filename="../../core/ntfsindex.py" line="190"/>
         <source>INDX blogu okunamadi (VCN {})</source>
         <translation>Impossible de lire le bloc INDX (VCN {})</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsindex.py" line="223"/>
+        <location filename="../../core/ntfsindex.py" line="226"/>
         <source>INDX blogu tasti (ic hata)</source>
         <translation>Débordement du bloc INDX (erreur interne)</translation>
     </message>
@@ -4872,7 +5025,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Descripteur de volume primaire ISO 9660 introuvable</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="562"/>
+        <location filename="../../core/filesystem.py" line="567"/>
         <source>ISO 9660 salt okunur bir bicimdir; yazilmaz, bastan uretilir.</source>
         <translation>ISO 9660 est un format en lecture seule ; on n&apos;y écrit pas, il est créé de zéro.</translation>
     </message>
@@ -4882,7 +5035,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Image ISO</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="418"/>
+        <location filename="../../core/resize.py" line="455"/>
         <source>Ic hata: geri kaydirma istendi ({} sektor); hicbir sey yazilmadi</source>
         <translation>Erreur interne : un décalage vers l&apos;arrière a été demandé ({} secteurs) ; rien n&apos;a été écrit</translation>
     </message>
@@ -4922,7 +5075,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Met à zéro les 440 premiers octets ; la table de partitions et les données sont conservées. Ajouté à la file d&apos;attente comme opération en attente.</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="84"/>
+        <location filename="../../core/convert.py" line="94"/>
         <source>Ilk bolum LBA {} konumunda basliyor; GPT giris dizisi icin disk basinda en az {} sektor bos olmalidir</source>
         <translation>La première partition commence au LBA {} ; au moins {} secteurs doivent être libres au début du disque pour le tableau d&apos;entrées GPT</translation>
     </message>
@@ -4947,7 +5100,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Analyse des signatures ({}) : {} fichiers trouvés</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="533"/>
+        <location filename="../../core/recovery.py" line="609"/>
         <source>Imza taraniyor... {} / {} — {} dosya</source>
         <translation>Analyse des signatures... {} / {} — {} fichiers</translation>
     </message>
@@ -4962,12 +5115,12 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Échec de l&apos;examen : {}</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="199"/>
+        <location filename="../../core/extread.py" line="245"/>
         <source>Inode okunamadi: {}</source>
         <translation>Impossible de lire l&apos;inode : {}</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="263"/>
+        <location filename="../../core/extmove.py" line="264"/>
         <source>Inode tablosu icin bitisik bos alan yok</source>
         <translation>Aucun espace libre contigu pour la table des inodes</translation>
     </message>
@@ -4977,7 +5130,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Écriture de la table des inodes...</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="749"/>
+        <location filename="../../core/extmove.py" line="758"/>
         <source>Inode&apos;lar yaziliyor...</source>
         <translation>Écriture des inodes...</translation>
     </message>
@@ -5013,13 +5166,13 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>L&apos;opération a échoué.</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="455"/>
+        <location filename="../../core/ntfsfix.py" line="577"/>
         <source>Islem gunlugu ($LogFile) bosaltildi</source>
         <translation>Journal ($LogFile) vidé</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="451"/>
-        <location filename="../../core/ntfsfix.py" line="498"/>
+        <location filename="../../core/ntfsfix.py" line="573"/>
+        <location filename="../../core/ntfsfix.py" line="620"/>
         <source>Islem gunlugu ($LogFile) bosaltiliyor...</source>
         <translation>Vidage du journal ($LogFile)...</translation>
     </message>
@@ -5029,17 +5182,22 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Préparation du journal des transactions ($LogFile)...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="145"/>
+        <location filename="../../core/ntfsfix.py" line="150"/>
         <source>Islem gunlugu ($LogFile) okunamadi</source>
         <translation>Impossible de lire le journal ($LogFile)</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="143"/>
+        <location filename="../../core/ntfsfix.py" line="148"/>
         <source>Islem gunlugu ($LogFile) temiz kapatilmamis</source>
         <translation>Le journal ($LogFile) n&apos;a pas été fermé proprement</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="741"/>
+        <location filename="../../core/ntfsfix.py" line="425"/>
+        <source>Islem gunlugu ($LogFile) temiz kapatilmamis ya da okunamadi: Windows&apos;un diske islemedigi degisiklikler olabilir. Windows&apos;u tam kapatin ya da Bolum &gt; NTFS&apos;i denetle ve onar calistirin.</source>
+        <translation>Le journal des transactions ($LogFile) n&apos;a pas été fermé proprement ou est illisible : des modifications pourraient ne pas avoir été écrites par Windows. Arrêtez complètement Windows ou lancez Partition &gt; Vérifier et réparer NTFS.</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsresize.py" line="839"/>
         <source>Islem gunlugu sifirlaniyor...</source>
         <translation>Réinitialisation du journal...</translation>
     </message>
@@ -5049,9 +5207,9 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Opération :</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1241"/>
+        <location filename="../../ui/dialogs/backup.py" line="1242"/>
         <source>Islemi durdur</source>
-        <translation>Arrêter l'opération</translation>
+        <translation>Arrêter l&apos;opération</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/bootloader.py" line="92"/>
@@ -5092,24 +5250,24 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Système d&apos;exploitation : {}</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="462"/>
+        <location filename="../../core/recovery.py" line="538"/>
         <location filename="../../ui/widgets/file_browser.py" line="236"/>
         <location filename="../../ui/widgets/file_browser.py" line="237"/>
         <source>JPEG goruntu</source>
         <translation>Image JPEG</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="425"/>
+        <location filename="../../core/extmove.py" line="434"/>
         <source>Kalan gruplarda yeterli bos inode yok</source>
         <translation>Inodes libres insuffisants dans les groupes restants</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1289"/>
+        <location filename="../../ui/dialogs/backup.py" line="1290"/>
         <source>Kalan: hesaplaniyor...</source>
         <translation>Restant : calcul en cours...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1287"/>
+        <location filename="../../ui/dialogs/backup.py" line="1288"/>
         <source>Kalan: ~{}</source>
         <translation>Restant : ~{}</translation>
     </message>
@@ -5208,6 +5366,13 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>L&apos;enregistrement existe déjà</translation>
     </message>
     <message>
+        <location filename="../../core/ntfsresize.py" line="201"/>
+        <location filename="../../core/ntfsresize.py" line="340"/>
+        <location filename="../../core/ntfswrite.py" line="136"/>
+        <source>Kayit {} birden cok MFT kaydina dagilmis ($ATTRIBUTE_LIST); bu surum boyle kayitlari degistiremez</source>
+        <translation>L&apos;enregistrement {} est réparti sur plusieurs enregistrements MFT ($ATTRIBUTE_LIST) ; cette version ne peut pas modifier de tels enregistrements</translation>
+    </message>
+    <message>
         <location filename="../../ui/dialogs/bootloader.py" line="376"/>
         <source>Kayitli yedek bulunamadi. Once &quot;Ayarlari yedekle&quot;yi kullanin.
 
@@ -5258,15 +5423,15 @@ Emplacement : {}</translation>
         <translation>Le fichier source est plus court que prévu ({} octets manquants) ; il a peut-être changé pendant l&apos;écriture</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="116"/>
-        <location filename="../../core/ntfsfix.py" line="400"/>
-        <location filename="../../core/ntfswrite.py" line="92"/>
+        <location filename="../../core/extwrite.py" line="167"/>
+        <location filename="../../core/ntfsfix.py" line="522"/>
+        <location filename="../../core/ntfswrite.py" line="115"/>
         <source>Kaynak salt okunur acildi.</source>
         <translation>La source a été ouverte en lecture seule.</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="315"/>
-        <location filename="../../core/filesystem.py" line="377"/>
+        <location filename="../../core/filesystem.py" line="318"/>
+        <location filename="../../core/filesystem.py" line="382"/>
         <source>Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda acarsaniz bu bolume yazabilirsiniz.</source>
         <translation>La source a été ouverte en lecture seule. Si vous ouvrez l&apos;image/le disque en mode écriture, vous pourrez écrire sur cette partition.</translation>
     </message>
@@ -5276,23 +5441,23 @@ Emplacement : {}</translation>
         <translation>La source est ouverte en lecture seule ; rien n&apos;est effacé.</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="144"/>
+        <location filename="../../core/convert.py" line="167"/>
         <source>Kaynak tablo GPT degil</source>
         <translation>La table source n&apos;est pas GPT</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="77"/>
+        <location filename="../../core/convert.py" line="83"/>
         <source>Kaynak tablo MBR degil</source>
         <translation>La table source n&apos;est pas MBR</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="992"/>
+        <location filename="../../core/session.py" line="1035"/>
         <source>Kaynak ve hedef ayni bolum</source>
         <translation>La source et la cible sont la même partition</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="941"/>
-        <location filename="../../core/session.py" line="954"/>
+        <location filename="../../core/session.py" line="984"/>
+        <location filename="../../core/session.py" line="997"/>
         <source>Kaynak ve hedef ayni disk</source>
         <translation>La source et la cible sont le même disque</translation>
     </message>
@@ -5322,17 +5487,17 @@ Emplacement : {}</translation>
         <translation>Gain</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="737"/>
+        <location filename="../../core/extmove.py" line="746"/>
         <source>Kesilen bolgede kotu blok kaydi var</source>
         <translation>La zone retranchée contient des enregistrements de blocs défectueux</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="397"/>
+        <location filename="../../core/ntfsfix.py" line="519"/>
         <source>Kirli bayragi ayni anda hem temizlenip hem acilamaz</source>
         <translation>L&apos;indicateur « sale » ne peut pas être effacé et défini en même temps</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="471"/>
+        <location filename="../../core/ntfsfix.py" line="593"/>
         <source>Kirli bayragi temizlendi</source>
         <translation>Indicateur « sale » effacé</translation>
     </message>
@@ -5342,7 +5507,7 @@ Emplacement : {}</translation>
         <translation>Effacer l&apos;indicateur « sale » (ntfsfix -d)</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="623"/>
+        <location filename="../../core/fat.py" line="807"/>
         <source>Kisa ad uretilemedi</source>
         <translation>Impossible de générer un nom court</translation>
     </message>
@@ -5387,20 +5552,20 @@ Emplacement : {}</translation>
         <translation>Nom du dossier :</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="840"/>
-        <location filename="../../core/fat.py" line="837"/>
+        <location filename="../../core/exfat.py" line="1092"/>
+        <location filename="../../core/fat.py" line="1062"/>
         <source>Klasor bos degil</source>
         <translation>Le dossier n&apos;est pas vide</translation>
     </message>
     <message>
         <location filename="../../core/hfswrite.py" line="819"/>
-        <location filename="../../core/ntfswrite.py" line="992"/>
+        <location filename="../../core/ntfswrite.py" line="1091"/>
         <location filename="../../core/udfwrite.py" line="689"/>
         <source>Klasor bos degil: {}</source>
         <translation>Le dossier n&apos;est pas vide : {}</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1260"/>
+        <location filename="../../core/extwrite.py" line="1467"/>
         <source>Klasor bos degil: {} ({} giris)</source>
         <translation>Le dossier n&apos;est pas vide : {} ({} entrées)</translation>
     </message>
@@ -5410,6 +5575,11 @@ Emplacement : {}</translation>
 {}</source>
         <translation>Dossier introuvable :
 {}</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="1220"/>
+        <source>Klasor degistirilemez (immutable) olarak isaretli.</source>
+        <translation>Le dossier est marqué comme immuable (immutable).</translation>
     </message>
     <message>
         <location filename="../../ui/widgets/file_browser.py" line="116"/>
@@ -5449,8 +5619,8 @@ Emplacement : {}</translation>
         <translation>Copie du dossier</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="620"/>
-        <location filename="../../core/ntfsread.py" line="637"/>
+        <location filename="../../core/ntfsread.py" line="749"/>
+        <location filename="../../core/ntfsread.py" line="766"/>
         <source>Klasor okunamaz</source>
         <translation>Impossible de lire le dossier</translation>
     </message>
@@ -5458,6 +5628,11 @@ Emplacement : {}</translation>
         <location filename="../../ui/widgets/file_browser.py" line="386"/>
         <source>Klasor olusturulamadi</source>
         <translation>Impossible de créer le dossier</translation>
+    </message>
+    <message>
+        <location filename="../../core/extwrite.py" line="1439"/>
+        <source>Klasorde en fazla {} alt klasor olabilir</source>
+        <translation>Un dossier peut contenir au plus {} sous-dossiers</translation>
     </message>
     <message>
         <location filename="../../ui/widgets/file_browser.py" line="121"/>
@@ -5509,30 +5684,30 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Clonage... {} / {}</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="673"/>
+        <location filename="../../core/fat.py" line="861"/>
         <source>Kok dizin dolu</source>
         <translation>Le répertoire racine est plein</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="370"/>
+        <location filename="../../core/fat.py" line="527"/>
         <source>Kok dizin dolu (FAT16 giris siniri)</source>
         <translation>Le répertoire racine est plein (limite d&apos;entrées FAT16)</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="1054"/>
+        <location filename="../../core/exfat.py" line="1310"/>
         <location filename="../../core/ntfs.py" line="859"/>
         <source>Kok dizin olusturuluyor...</source>
         <translation>Création du répertoire racine...</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="835"/>
-        <location filename="../../core/fat.py" line="832"/>
+        <location filename="../../core/exfat.py" line="1081"/>
+        <location filename="../../core/fat.py" line="1052"/>
         <source>Kok dizin silinemez</source>
         <translation>Le répertoire racine ne peut pas être supprimé</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1128"/>
-        <location filename="../../core/ntfswrite.py" line="860"/>
+        <location filename="../../core/extwrite.py" line="1246"/>
+        <location filename="../../core/ntfswrite.py" line="939"/>
         <source>Kok dizin uzerinde islem yapilamaz</source>
         <translation>Impossible d&apos;agir sur le répertoire racine</translation>
     </message>
@@ -5542,7 +5717,7 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Ce n&apos;est pas un système de fichiers racine (pas de {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3895"/>
+        <location filename="../../ui/main_window.py" line="3904"/>
         <source>Konum</source>
         <translation>Emplacement</translation>
     </message>
@@ -5562,27 +5737,32 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Copie — {}</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="393"/>
+        <location filename="../../core/session.py" line="158"/>
+        <source>Koruyucu MBR (0xEE) var ama gecerli GPT basligi bulunamadi</source>
+        <translation>Un MBR protecteur (0xEE) existe, mais aucun en-tête GPT valide n&apos;a été trouvé</translation>
+    </message>
+    <message>
+        <location filename="../../core/extmove.py" line="402"/>
         <source>Kotali (quota) ext biriminde inode tasinamaz; birimi silinecek gruplarda dosya kalmayacak boyuta kucultun</source>
         <translation>Les inodes ne peuvent pas être déplacés sur un volume ext avec quotas ; réduisez le volume uniquement jusqu&apos;à une taille où aucun fichier ne reste dans les groupes supprimés</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="241"/>
+        <location filename="../../core/extmove.py" line="242"/>
         <source>Kucultme icin yeterli bos alan yok</source>
         <translation>Espace libre insuffisant pour la réduction</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="354"/>
+        <location filename="../../core/resize.py" line="389"/>
         <source>Kucultme veri kaybina yol acar: dosyalar yeni sinirin otesinde. Once dosyalari tasiyin.</source>
         <translation>La réduction entraînerait une perte de données : des fichiers se trouvent au-delà de la nouvelle limite. Déplacez d&apos;abord les fichiers.</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="530"/>
+        <location filename="../../core/resize.py" line="579"/>
         <source>Kucultme veri kaybina yol acar: kumeler yeni sinirin otesinde</source>
         <translation>La réduction entraînerait une perte de données : des clusters se trouvent au-delà de la nouvelle limite</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="816"/>
+        <location filename="../../core/resize.py" line="867"/>
         <source>Kucultme yapilamaz — {}</source>
         <translation>Réduction impossible — {}</translation>
     </message>
@@ -5597,7 +5777,7 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Non disponible</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3909"/>
+        <location filename="../../ui/main_window.py" line="3924"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Kullanilan</source>
         <translation>Utilisé</translation>
@@ -5608,12 +5788,12 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Calcul de l&apos;espace utilisé...</translation>
     </message>
     <message>
-        <location filename="../../core/usedmap.py" line="288"/>
+        <location filename="../../core/usedmap.py" line="321"/>
         <source>Kullanilan alan hesaplaniyor: bolum {}</source>
         <translation>Calcul de l&apos;espace utilisé : partition {}</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="697"/>
+        <location filename="../../core/extmove.py" line="706"/>
         <source>Kullanilan inode&apos;lar taraniyor...</source>
         <translation>Analyse des inodes utilisés...</translation>
     </message>
@@ -5638,17 +5818,17 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Taille de cluster :</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="737"/>
+        <location filename="../../core/ntfsresize.py" line="835"/>
         <source>Kume haritasi guncelleniyor...</source>
         <translation>Mise à jour de la carte des clusters...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="729"/>
+        <location filename="../../core/ntfsresize.py" line="827"/>
         <source>Kume haritasi inceleniyor...</source>
         <translation>Examen de la carte des clusters...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3902"/>
+        <location filename="../../ui/main_window.py" line="3911"/>
         <source>Kume/blok boyutu</source>
         <translation>Taille de cluster/bloc</translation>
     </message>
@@ -5668,7 +5848,7 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Échec de la récupération</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1228"/>
+        <location filename="../../core/session.py" line="1271"/>
         <source>Kurtarma desteklenmiyor</source>
         <translation>La récupération n&apos;est pas prise en charge</translation>
     </message>
@@ -5802,7 +5982,7 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Linux refuse de monter un volume NTFS dans cet état (ntfs3 : volume sale, ntfs-3g : métadonnées conservées dans le cache de Windows).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4136"/>
+        <location filename="../../ui/main_window.py" line="4151"/>
         <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt5 ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
         <translation>Licence : GNU GPL version 3. Licences de Qt, PyQt5 et Python fournis avec l&apos;application : Aide &gt; Licences tierces.</translation>
     </message>
@@ -5827,13 +6007,13 @@ L&apos;ouvrir maintenant ?</translation>
         <translation>Créer une table de partitions MBR</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="247"/>
-        <location filename="../../core/mbr.py" line="193"/>
+        <location filename="../../core/layoutedit.py" line="259"/>
+        <location filename="../../core/mbr.py" line="210"/>
         <source>MBR en fazla 4 birincil bolum destekler</source>
         <translation>MBR prend en charge au plus 4 partitions principales</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="147"/>
+        <location filename="../../core/convert.py" line="170"/>
         <source>MBR en fazla 4 birincil bolum tasir; tabloda {} bolum var. Once bolum sayisini azaltin.</source>
         <translation>MBR contient au plus 4 partitions principales ; la table en a {}. Réduisez d&apos;abord le nombre de partitions.</translation>
     </message>
@@ -5845,19 +6025,31 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
 Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une partition étendue.</translation>
     </message>
     <message>
+        <location filename="../../core/convert.py" line="230"/>
+        <source>MBR yaziliyor...</source>
+        <translation>Écriture du MBR...</translation>
+    </message>
+    <message>
         <location filename="../../core/ntfs.py" line="1331"/>
         <source>MFT alani yetersiz</source>
         <translation>Espace MFT insuffisant</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="480"/>
+        <location filename="../../core/ntfswrite.py" line="573"/>
+        <location filename="../../core/ntfswrite.py" line="596"/>
         <source>MFT kaydi diskte bulunamadi: {}</source>
         <translation>Enregistrement MFT introuvable sur le disque : {}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="414"/>
+        <location filename="../../core/ntfsread.py" line="543"/>
         <source>MFT kaydi okunamadi: {}</source>
         <translation>Impossible de lire l&apos;enregistrement MFT : {}</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsresize.py" line="596"/>
+        <location filename="../../core/ntfsresize.py" line="647"/>
+        <source>MFT kaydi {} kullanimda ama okunamadi; kucultme guvenli degil (once Windows&apos;ta chkdsk): {}</source>
+        <translation>L&apos;enregistrement MFT {} est utilisé mais illisible ; la réduction n&apos;est pas sûre (lancez d&apos;abord chkdsk sous Windows) : {}</translation>
     </message>
     <message>
         <location filename="../../core/ntfs.py" line="772"/>
@@ -5870,8 +6062,9 @@ Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une p
         <translation>Création des enregistrements MFT...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="413"/>
-        <location filename="../../core/ntfsresize.py" line="549"/>
+        <location filename="../../core/ntfsresize.py" line="468"/>
+        <location filename="../../core/ntfsresize.py" line="589"/>
+        <location filename="../../core/ntfsresize.py" line="640"/>
         <source>MFT taraniyor... {}/{} kayit</source>
         <translation>Analyse de la MFT... {}/{} enregistrements</translation>
     </message>
@@ -5881,12 +6074,12 @@ Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une p
         <translation>Écriture du miroir de la MFT...</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="470"/>
+        <location filename="../../core/recovery.py" line="546"/>
         <source>MP3 ses</source>
         <translation>Audio MP3</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="471"/>
+        <location filename="../../core/recovery.py" line="547"/>
         <source>MP4 video</source>
         <translation>Vidéo MP4</translation>
     </message>
@@ -5906,7 +6099,7 @@ Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une p
         <translation>Logique</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3896"/>
+        <location filename="../../ui/main_window.py" line="3905"/>
         <source>Mantiksal (EBR: LBA {})</source>
         <translation>Logique (EBR : LBA {})</translation>
     </message>
@@ -5916,17 +6109,17 @@ Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une p
         <translation>Partition logique</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="310"/>
+        <location filename="../../core/mbr.py" line="376"/>
         <source>Mantiksal bolum genisletilmis bolumun disinda</source>
         <translation>La partition logique est en dehors de la partition étendue</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="278"/>
+        <location filename="../../core/mbr.py" line="338"/>
         <source>Mantiksal bolum icin once genisletilmis bolum olusturun</source>
         <translation>Créez d&apos;abord une partition étendue pour une partition logique</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="332"/>
+        <location filename="../../core/mbr.py" line="398"/>
         <location filename="../../core/resize.py" line="84"/>
         <source>Mantiksal bolumun genisletilmis bolumu bulunamadi</source>
         <translation>La partition étendue de la partition logique est introuvable</translation>
@@ -5992,6 +6185,12 @@ Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une p
         <translation>Les partitions existantes seront perdues</translation>
     </message>
     <message>
+        <location filename="../../core/convert.py" line="121"/>
+        <location filename="../../core/convert.py" line="211"/>
+        <source>Mevcut bolumler okunuyor...</source>
+        <translation>Lecture des partitions existantes...</translation>
+    </message>
+    <message>
         <location filename="../../ui/main_window.py" line="1131"/>
         <source>Mevcut boyut: {}
 
@@ -6026,9 +6225,19 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>NTFS / exFAT</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="403"/>
+        <location filename="../../core/ntfsfix.py" line="405"/>
+        <source>NTFS birim bilgisi ($Volume) okunamadi; birimin durumu bilinmiyor. Yazma reddedildi.</source>
+        <translation>Les informations du volume NTFS ($Volume) sont illisibles ; l&apos;état du volume est inconnu. Écriture refusée.</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsfix.py" line="525"/>
         <source>NTFS birimi denetleniyor...</source>
         <translation>Vérification du volume NTFS...</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfswrite.py" line="121"/>
+        <source>NTFS biriminin durumu okunamadi; yazma reddedildi: {}</source>
+        <translation>L&apos;état du volume NTFS est illisible ; écriture refusée : {}</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="1916"/>
@@ -6046,24 +6255,24 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Vérification de NTFS — partition {}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="710"/>
+        <location filename="../../core/ntfsresize.py" line="813"/>
         <source>NTFS en fazla {} kume adresler</source>
         <translation>NTFS adresse au plus {} clusters</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="286"/>
+        <location filename="../../core/ntfsread.py" line="359"/>
         <source>NTFS imzasi yok</source>
         <translation>Pas de signature NTFS</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="337"/>
-        <location filename="../../core/ntfsfix.py" line="407"/>
+        <location filename="../../core/ntfsfix.py" line="459"/>
+        <location filename="../../core/ntfsfix.py" line="529"/>
         <location filename="../../ui/dialogs/ntfsfix.py" line="135"/>
         <source>NTFS onyukleme sektoru bulunamadi</source>
         <translation>Aucun secteur d&apos;amorçage NTFS trouvé</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="669"/>
+        <location filename="../../core/ntfsresize.py" line="765"/>
         <source>NTFS onyukleme sektoru taninmadi</source>
         <translation>Secteur d&apos;amorçage NTFS non reconnu</translation>
     </message>
@@ -6073,7 +6282,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Version NTFS : {}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="533"/>
+        <location filename="../../core/ntfsresize.py" line="619"/>
         <source>NTFS verisi tasiniyor... {}/{} kume</source>
         <translation>Déplacement des données NTFS... {}/{} clusters</translation>
     </message>
@@ -6081,6 +6290,11 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <location filename="../../core/ntfs.py" line="851"/>
         <source>NTFS yerlesimi hazirlaniyor...</source>
         <translation>Préparation de la disposition NTFS...</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsfix.py" line="412"/>
+        <source>NTFS {} surumu yazma icin desteklenmiyor (3.0 ve uzeri gerekir).</source>
+        <translation>La version NTFS {} n&apos;est pas prise en charge en écriture (3.0 ou ultérieure requise).</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/ntfsfix.py" line="22"/>
@@ -6150,6 +6364,13 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Décalage</translation>
     </message>
     <message>
+        <location filename="../../core/extwrite.py" line="1226"/>
+        <location filename="../../core/extwrite.py" line="1460"/>
+        <location filename="../../core/extwrite.py" line="1539"/>
+        <source>Oge degistirilemez (immutable/append-only) olarak isaretli: {}</source>
+        <translation>L&apos;élément est marqué immuable/ajout seul (immutable/append-only) : {}</translation>
+    </message>
+    <message>
         <location filename="../../core/image.py" line="341"/>
         <location filename="../../core/restoreplan.py" line="169"/>
         <source>Okuma bolum sinirini asiyor</source>
@@ -6186,7 +6407,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>La lecture dépasse la limite du disque virtuel</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1363"/>
+        <location filename="../../core/session.py" line="1406"/>
         <source>Okuma/Yazma (acik)</source>
         <translation>Lecture/écriture (ouvert)</translation>
     </message>
@@ -6270,17 +6491,17 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Ouvrez d&apos;abord une table de partitions.</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="801"/>
+        <location filename="../../core/session.py" line="844"/>
         <source>Once bir bolum tablosu olusturun</source>
         <translation>Créez d&apos;abord une table de partitions</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1354"/>
+        <location filename="../../core/session.py" line="1397"/>
         <source>Once bir bolum tablosu olusturun (MBR veya GPT)</source>
         <translation>Créez d&apos;abord une table de partitions (MBR ou GPT)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3974"/>
+        <location filename="../../ui/main_window.py" line="3989"/>
         <source>Once bir disk goruntusu acin veya olusturun.</source>
         <translation>Ouvrez ou créez d&apos;abord une image disque.</translation>
     </message>
@@ -6297,7 +6518,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Sélectionnez d&apos;abord une source.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3956"/>
+        <location filename="../../ui/main_window.py" line="3971"/>
         <source>Once listeden veya haritadan bir bolum secin.</source>
         <translation>Sélectionnez d&apos;abord une partition dans la liste ou sur la carte.</translation>
     </message>
@@ -6445,24 +6666,24 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Régénérer le menu de démarrage</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="130"/>
+        <location filename="../../core/ntfsfix.py" line="135"/>
         <source>Onyukleme sektoru bozuk; yedegi saglam</source>
         <translation>Le secteur d&apos;amorçage est endommagé ; sa copie de secours est intacte</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="299"/>
+        <location filename="../../core/ntfsread.py" line="372"/>
         <source>Onyukleme sektoru degerleri tutarsiz</source>
         <translation>Les valeurs du secteur d&apos;amorçage sont incohérentes</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="416"/>
+        <location filename="../../core/ntfsfix.py" line="538"/>
         <source>Onyukleme sektoru denetleniyor...</source>
         <translation>Vérification du secteur d&apos;amorçage...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="722"/>
-        <location filename="../../core/ntfsresize.py" line="743"/>
-        <location filename="../../core/resize.py" line="951"/>
+        <location filename="../../core/ntfsresize.py" line="820"/>
+        <location filename="../../core/ntfsresize.py" line="841"/>
+        <location filename="../../core/resize.py" line="1002"/>
         <source>Onyukleme sektoru guncelleniyor...</source>
         <translation>Mise à jour du secteur d&apos;amorçage...</translation>
     </message>
@@ -6472,7 +6693,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Le secteur d&apos;amorçage et $MFTMirr sont vérifiés et réparés si nécessaire, et le journal ($LogFile) est vidé. C&apos;est le même travail que &apos;ntfsfix&apos; sous Linux.</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="132"/>
+        <location filename="../../core/ntfsfix.py" line="137"/>
         <source>Onyukleme sektoru ve yedegi okunamiyor</source>
         <translation>Ni le secteur d&apos;amorçage ni sa copie de secours ne peuvent être lus</translation>
     </message>
@@ -6482,12 +6703,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Écriture du secteur d&apos;amorçage...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="420"/>
+        <location filename="../../core/ntfsfix.py" line="542"/>
         <source>Onyukleme sektoru yedekten geri yazildi</source>
         <translation>Secteur d&apos;amorçage restauré depuis sa copie de secours</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3892"/>
+        <location filename="../../ui/main_window.py" line="3901"/>
         <source>Onyuklenebilir</source>
         <translation>Amorçable</translation>
     </message>
@@ -6519,17 +6740,23 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Attributs</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="328"/>
+        <location filename="../../core/ntfsresize.py" line="383"/>
         <source>Oznitelik kayboldu (kayit {})</source>
         <translation>Attribut disparu (enregistrement {})</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="559"/>
+        <location filename="../../core/ntfswrite.py" line="634"/>
         <source>Oznitelik kayitta bulunamadi</source>
         <translation>Attribut introuvable dans l&apos;enregistrement</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3900"/>
+        <location filename="../../core/ntfsread.py" line="275"/>
+        <location filename="../../core/ntfsread.py" line="280"/>
+        <source>Oznitelik parcalari tutarsiz (kayit {})</source>
+        <translation>Les extensions d&apos;attribut sont incohérentes (enregistrement {})</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3909"/>
         <source>Oznitelikler</source>
         <translation>Attributs</translation>
     </message>
@@ -6539,13 +6766,13 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Périphérique PCI</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="465"/>
+        <location filename="../../core/recovery.py" line="541"/>
         <location filename="../../ui/widgets/file_browser.py" line="237"/>
         <source>PDF belgesi</source>
         <translation>Document PDF</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="463"/>
+        <location filename="../../core/recovery.py" line="539"/>
         <location filename="../../ui/widgets/file_browser.py" line="236"/>
         <source>PNG goruntu</source>
         <translation>Image PNG</translation>
@@ -6576,7 +6803,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Plateforme</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4135"/>
+        <location filename="../../ui/main_window.py" line="4150"/>
         <source>Proje sayfasi: {}</source>
         <translation>Page du projet : {}</translation>
     </message>
@@ -6606,7 +6833,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Plateforme Qt</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="467"/>
+        <location filename="../../core/recovery.py" line="543"/>
         <source>RAR arsivi</source>
         <translation>Archive RAR</translation>
     </message>
@@ -6648,7 +6875,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>DISQUES DE CE SYSTÈME</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="474"/>
+        <location filename="../../core/recovery.py" line="550"/>
         <source>SQLite veritabani</source>
         <translation>Base de données SQLite</translation>
     </message>
@@ -6673,18 +6900,18 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Écriture des tables fixes ($UpCase, $AttrDef)...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3999"/>
-        <location filename="../../ui/main_window.py" line="4008"/>
+        <location filename="../../ui/main_window.py" line="4014"/>
+        <location filename="../../ui/main_window.py" line="4023"/>
         <source>Salt okunur acildi</source>
         <translation>Ouvert en lecture seule</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4002"/>
+        <location filename="../../ui/main_window.py" line="4017"/>
         <source>Salt okunur devam et</source>
         <translation>Continuer en lecture seule</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1366"/>
+        <location filename="../../core/session.py" line="1409"/>
         <source>Salt okunur — degisiklikler Uygula ile yazilir</source>
         <translation>Lecture seule — les modifications sont écrites avec Appliquer</translation>
     </message>
@@ -6769,7 +6996,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Rien n&apos;est sélectionné</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1273"/>
+        <location filename="../../core/session.py" line="1316"/>
         <source>Sektor</source>
         <translation>Secteurs</translation>
     </message>
@@ -6795,22 +7022,22 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Écriture non alignée sur une limite de secteur</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3881"/>
+        <location filename="../../ui/main_window.py" line="3890"/>
         <source>Sema</source>
         <translation>Schéma</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="406"/>
+        <location filename="../../core/extread.py" line="545"/>
         <source>Sembolik bag dongusu: {}</source>
         <translation>Boucle de liens symboliques : {}</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="288"/>
+        <location filename="../../core/extread.py" line="359"/>
         <source>Sembolik bagin icerigi okunamaz</source>
         <translation>Le contenu d&apos;un lien symbolique ne peut pas être lu</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="338"/>
+        <location filename="../../core/extread.py" line="413"/>
         <source>Sembolik bagin icerigi okunamaz; hedefi icin symlink_target() kullanin veya resolve(..., follow=True) ile izleyin</source>
         <translation>Le contenu d&apos;un lien symbolique ne peut pas être lu ; utilisez symlink_target() pour sa cible ou suivez-le avec resolve(..., follow=True)</translation>
     </message>
@@ -6830,12 +7057,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Un btrfs réparti (RAID0/10/5/6) ne peut pas être lu dans cette version</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1308"/>
+        <location filename="../../core/session.py" line="1351"/>
         <source>Seyrek (sparse) VMDK bu surumde salt okunur.</source>
         <translation>Un VMDK fragmenté (sparse) est en lecture seule dans cette version.</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="326"/>
+        <location filename="../../core/session.py" line="343"/>
         <source>Seyrek (sparse) VMDK bu surumde salt okunur. Duz (flat) VMDK ve VHD yazilabilir.</source>
         <translation>Un VMDK fragmenté (sparse) est en lecture seule dans cette version. Les VMDK plats et VHD sont accessibles en écriture.</translation>
     </message>
@@ -6860,6 +7087,11 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Remplissage par des zéros (1 passe)</translation>
     </message>
     <message>
+        <location filename="../../core/ntfsread.py" line="337"/>
+        <source>Sifrelenmis (EFS) NTFS dosyasi okunamaz: icerik yalnizca Windows&apos;ta, sahibinin hesabiyla cozulur</source>
+        <translation>Fichier NTFS chiffré (EFS) illisible : son contenu ne peut être déchiffré que sous Windows avec le compte de son propriétaire</translation>
+    </message>
+    <message>
         <location filename="../../core/apfs.py" line="209"/>
         <source>Sifreli APFS birimi ({}); anahtar olmadan okunamaz.</source>
         <translation>Volume APFS chiffré ({}) ; il ne peut pas être lu sans la clé.</translation>
@@ -6880,8 +7112,8 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Les données btrfs chiffrées ne peuvent pas être lues</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsread.py" line="380"/>
-        <location filename="../../core/ntfsread.py" line="397"/>
+        <location filename="../../core/ntfsread.py" line="508"/>
+        <location filename="../../core/ntfsread.py" line="526"/>
         <source>Sikistirilmis NTFS akisi bu surumde okunamaz</source>
         <translation>Un flux NTFS compressé ne peut pas être lu dans cette version</translation>
     </message>
@@ -6896,7 +7128,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Archive compressée</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="465"/>
+        <location filename="../../core/ntfsresize.py" line="516"/>
         <source>Sikistirilmis/sifrelenmis akis tasinamaz (kayit {})</source>
         <translation>Un flux compressé/chiffré ne peut pas être déplacé (enregistrement {})</translation>
     </message>
@@ -6976,8 +7208,8 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Simplement parcourir pour l&apos;instant</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="151"/>
-        <location filename="../../core/extwrite.py" line="164"/>
+        <location filename="../../core/extwrite.py" line="227"/>
+        <location filename="../../core/extwrite.py" line="240"/>
         <source>Sinir disi blok yazimi: {}</source>
         <translation>Écriture de bloc hors limites : {}</translation>
     </message>
@@ -7007,7 +7239,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Les étapes suivantes seront appliquées dans l&apos;ordre :&lt;br&gt;1. Les paramètres actuels sont sauvegardés&lt;br&gt;2. La recherche d&apos;autres systèmes est activée&lt;br&gt;3. GRUB est réinstallé sur le disque &lt;b&gt;{}&lt;/b&gt;&lt;br&gt;4. Le menu de démarrage est régénéré&lt;br&gt;&lt;br&gt;Aucun autre disque n&apos;est touché. Continuer ?</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="525"/>
+        <location filename="../../core/filesystem.py" line="530"/>
         <source>Sis</source>
         <translation>Sys</translation>
     </message>
@@ -7058,12 +7290,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Entrée de préparation du système</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="270"/>
+        <location filename="../../core/xfsgrow.py" line="278"/>
         <source>Son ayirma grubunun bos alan agaci cok duzeyli; bu surumde uzatilamiyor</source>
         <translation>L&apos;arbre d&apos;espace libre du dernier groupe d&apos;allocation comporte plusieurs niveaux ; il ne peut pas être étendu dans cette version</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="292"/>
+        <location filename="../../core/xfsgrow.py" line="300"/>
         <source>Son ayirma grubunun bos alan agaci dolu</source>
         <translation>L&apos;arbre d&apos;espace libre du dernier groupe d&apos;allocation est plein</translation>
     </message>
@@ -7083,8 +7315,8 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Supprime la dernière étape en attente ajoutée</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="383"/>
-        <location filename="../../core/extresize.py" line="335"/>
+        <location filename="../../core/extmove.py" line="384"/>
+        <location filename="../../core/extresize.py" line="365"/>
         <source>Son grup metaveri icin cok kucuk</source>
         <translation>Le dernier groupe est trop petit pour ses métadonnées</translation>
     </message>
@@ -7120,7 +7352,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Prochain démarrage : Boot{}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="484"/>
+        <location filename="../../core/ntfsfix.py" line="606"/>
         <source>Sonuc denetleniyor...</source>
         <translation>Vérification du résultat...</translation>
     </message>
@@ -7170,7 +7402,7 @@ Continuer ?</translation>
         <translation>Écriture des superblocs...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1297"/>
+        <location filename="../../ui/dialogs/backup.py" line="1298"/>
         <source>Sure: {}</source>
         <translation>Durée : {}</translation>
     </message>
@@ -7215,7 +7447,7 @@ Continuer ?</translation>
         <translation>Non pour to&amp;ut</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="806"/>
+        <location filename="../../core/session.py" line="849"/>
         <source>Tablo zaten {} biciminde</source>
         <translation>La table est déjà au format {}</translation>
     </message>
@@ -7230,12 +7462,12 @@ Continuer ?</translation>
         <translation>Disque sans table de partitions</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="803"/>
+        <location filename="../../core/session.py" line="846"/>
         <source>Tablosuz disk donusturulemez; dosya sistemi tum diski kapliyor</source>
         <translation>Un disque sans table de partitions ne peut pas être converti ; le système de fichiers couvre tout le disque</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="851"/>
+        <location filename="../../core/resize.py" line="902"/>
         <source>Tablosuz disk: dosya sistemi tum diski kapliyor</source>
         <translation>Disque sans table de partitions : le système de fichiers couvre tout le disque</translation>
     </message>
@@ -7260,27 +7492,29 @@ Continuer ?</translation>
         <location filename="../../core/clone.py" line="284"/>
         <location filename="../../core/clone.py" line="521"/>
         <location filename="../../core/clone.py" line="555"/>
+        <location filename="../../core/convert.py" line="158"/>
+        <location filename="../../core/convert.py" line="244"/>
         <location filename="../../core/efistore.py" line="233"/>
         <location filename="../../core/efistore.py" line="490"/>
-        <location filename="../../core/exfat.py" line="1078"/>
+        <location filename="../../core/exfat.py" line="1334"/>
         <location filename="../../core/ext.py" line="441"/>
         <location filename="../../core/formatter.py" line="254"/>
         <location filename="../../core/formatter.py" line="285"/>
         <location filename="../../core/grub.py" line="517"/>
         <location filename="../../core/hfsformat.py" line="294"/>
         <location filename="../../core/ntfs.py" line="882"/>
-        <location filename="../../core/ntfsfix.py" line="486"/>
-        <location filename="../../core/ntfsresize.py" line="725"/>
-        <location filename="../../core/ntfsresize.py" line="747"/>
+        <location filename="../../core/ntfsfix.py" line="608"/>
+        <location filename="../../core/ntfsresize.py" line="823"/>
+        <location filename="../../core/ntfsresize.py" line="845"/>
         <location filename="../../core/operations.py" line="622"/>
-        <location filename="../../core/resize.py" line="956"/>
+        <location filename="../../core/resize.py" line="1007"/>
         <location filename="../../core/restoreplan.py" line="340"/>
-        <location filename="../../core/session.py" line="792"/>
+        <location filename="../../core/session.py" line="835"/>
         <location filename="../../core/udfformat.py" line="358"/>
         <location filename="../../core/wipe.py" line="157"/>
         <location filename="../../core/wipe.py" line="96"/>
         <location filename="../../core/xfsformat.py" line="325"/>
-        <location filename="../../core/xfsgrow.py" line="398"/>
+        <location filename="../../core/xfsgrow.py" line="407"/>
         <location filename="../../ui/dialogs/apply.py" line="226"/>
         <location filename="../../ui/main_window.py" line="2126"/>
         <source>Tamamlandi</source>
@@ -7340,12 +7574,12 @@ Continuer ?</translation>
         <translation>L&apos;analyse a échoué</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="444"/>
+        <location filename="../../core/recovery.py" line="520"/>
         <source>Tarama bitti: {} aday bolum</source>
         <translation>Analyse terminée : {} partitions candidates</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="536"/>
+        <location filename="../../core/recovery.py" line="612"/>
         <source>Tarama bitti: {} dosya</source>
         <translation>Analyse terminée : {} fichiers</translation>
     </message>
@@ -7360,7 +7594,7 @@ Continuer ?</translation>
         <translation>Lancer l&apos;analyse</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="439"/>
+        <location filename="../../core/recovery.py" line="515"/>
         <source>Taraniyor... {} / {} — {} aday</source>
         <translation>Analyse... {} / {} — {} candidates</translation>
     </message>
@@ -7385,12 +7619,12 @@ Continuer ?</translation>
         <translation>Thème modifié : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3934"/>
+        <location filename="../../ui/main_window.py" line="3949"/>
         <source>Temiz</source>
         <translation>Propre</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3932"/>
+        <location filename="../../ui/main_window.py" line="3947"/>
         <source>Temiz kapatilmamis — Linux baglamaz; Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>Pas arrêté proprement — Linux ne le montera pas ; Partition &gt; Vérifier et réparer NTFS</translation>
     </message>
@@ -7478,7 +7712,7 @@ Continuer ?</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3882"/>
+        <location filename="../../ui/main_window.py" line="3891"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
@@ -7486,7 +7720,7 @@ Continuer ?</translation>
         <translation>Type</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3898"/>
+        <location filename="../../ui/main_window.py" line="3907"/>
         <source>Tur GUID</source>
         <translation>GUID de type</translation>
     </message>
@@ -7640,7 +7874,7 @@ Continuer ?</translation>
         <translation>Périphérique USB</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3904"/>
+        <location filename="../../ui/main_window.py" line="3913"/>
         <source>UUID / Seri no</source>
         <translation>UUID / N° de série</translation>
     </message>
@@ -7648,6 +7882,11 @@ Continuer ?</translation>
         <location filename="../../ui/main_window.py" line="2876"/>
         <source>UYARI: Uygulama yonetici/root yetkisi olmadan calisiyor; disk icerigi okunamayabilir.</source>
         <translation>ATTENTION : l&apos;application s&apos;exécute sans privilèges administrateur/root ; le contenu des disques peut être illisible.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3869"/>
+        <source>UYARI: {}</source>
+        <translation>AVERTISSEMENT : {}</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="852"/>
@@ -7671,17 +7910,17 @@ Continuer ?</translation>
         <translation>Dossier parent</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="154"/>
+        <location filename="../../core/extread.py" line="200"/>
         <source>Ustblok degerleri tutarsiz</source>
         <translation>Les valeurs du superbloc sont incohérentes</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="118"/>
+        <location filename="../../core/extread.py" line="164"/>
         <source>Ustblok okunamadi</source>
         <translation>Impossible de lire le superbloc</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="393"/>
+        <location filename="../../core/extresize.py" line="423"/>
         <source>Ustblok yaziliyor...</source>
         <translation>Écriture du superbloc...</translation>
     </message>
@@ -7749,7 +7988,7 @@ Continuer ?</translation>
         <translation>Application en cours...</translation>
     </message>
     <message>
-        <location filename="../../core/fat.py" line="998"/>
+        <location filename="../../core/fat.py" line="1258"/>
         <source>Uygun FAT yerlesimi hesaplanamadi</source>
         <translation>Impossible de calculer une disposition FAT adaptée</translation>
     </message>
@@ -7832,43 +8071,43 @@ Continuer ?</translation>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="299"/>
+        <location filename="../../core/ntfsresize.py" line="354"/>
         <source>Veri kosullari FILE kaydina sigmadi (kayit {})</source>
         <translation>Les plages de données ne tenaient pas dans l&apos;enregistrement FILE (enregistrement {})</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="221"/>
-        <location filename="../../core/ntfswrite.py" line="1105"/>
+        <location filename="../../core/ntfsresize.py" line="270"/>
+        <location filename="../../core/ntfswrite.py" line="1208"/>
         <source>Veri kosulu degeri cok buyuk</source>
         <translation>La valeur de la plage de données est trop grande</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1143"/>
+        <location filename="../../core/resize.py" line="1210"/>
         <source>Veri tasinirken hata: {}. {} / {} kopyalanmisti ve kaynak bolumun basi ezildi: bolum su an BOZUK (ne eski ne yeni yerinde tam). Tasima: sektor {} -&gt; {}, {} sektor, {} sektor tamamlandi (tanilama gunlugunde). Yedekten geri yukleyin ya da bos alan acip tasimayi bu sayilarla tamamlatin.</source>
         <translation>Erreur lors du déplacement des données : {}. {} / {} avaient été copiés et le début de la partition source a été écrasé : la partition est maintenant ENDOMMAGÉE (incomplète à son ancien comme à son nouvel emplacement). Déplacement : secteur {} -&gt; {}, {} secteurs, {} secteurs effectués (consigné dans le journal de diagnostic). Restaurez depuis une sauvegarde, ou libérez de l&apos;espace et faites terminer le déplacement à l&apos;aide de ces valeurs.</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1139"/>
+        <location filename="../../core/resize.py" line="1206"/>
         <source>Veri tasinirken hata: {}. {} / {} kopyalanmisti; kaynak bolum henuz ezilmedi, bolum eski yerinde saglam ve tablo degismedi.</source>
         <translation>Erreur lors du déplacement des données : {}. {} / {} avaient été copiés ; la partition source n&apos;avait pas encore été écrasée, la partition est donc intacte à son ancien emplacement et la table n&apos;a pas changé.</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="918"/>
+        <location filename="../../core/resize.py" line="969"/>
         <source>Veri tasiniyor...</source>
         <translation>Déplacement des données...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1127"/>
+        <location filename="../../core/resize.py" line="1194"/>
         <source>Veri tasiniyor... {}</source>
         <translation>Déplacement des données... {}</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="718"/>
+        <location filename="../../core/extmove.py" line="727"/>
         <source>Veri tasiniyor... {} / {}</source>
         <translation>Déplacement des données... {} / {}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="733"/>
+        <location filename="../../core/ntfsresize.py" line="831"/>
         <source>Veri yeni boyuta sigmiyor: {} kume dolu, yeni boyut {} kume</source>
         <translation>Les données ne tiennent pas dans la nouvelle taille : {} clusters utilisés, la nouvelle taille est de {} clusters</translation>
     </message>
@@ -7884,12 +8123,12 @@ Continuer ?</translation>
         <translation>Récupération Windows</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="492"/>
+        <location filename="../../core/session.py" line="521"/>
         <source>Windows bicimlendiricisi cagriliyor...</source>
         <translation>Appel de l&apos;outil de formatage de Windows...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="503"/>
+        <location filename="../../core/session.py" line="532"/>
         <source>Windows bicimlendiricisi hata verdi: {}</source>
         <translation>L&apos;outil de formatage de Windows a signalé une erreur : {}</translation>
     </message>
@@ -7899,12 +8138,12 @@ Continuer ?</translation>
         <translation>L&apos;outil de formatage de Windows a été utilisé</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="787"/>
+        <location filename="../../core/session.py" line="830"/>
         <source>Windows boyutlandiricisi basarisiz: {}</source>
         <translation>Échec de l&apos;outil de redimensionnement de Windows : {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="781"/>
+        <location filename="../../core/session.py" line="824"/>
         <source>Windows boyutlandiricisi calisiyor...</source>
         <translation>L&apos;outil de redimensionnement de Windows est en cours d&apos;exécution...</translation>
     </message>
@@ -7914,7 +8153,7 @@ Continuer ?</translation>
         <translation>L&apos;outil de redimensionnement de Windows a été utilisé</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="472"/>
+        <location filename="../../core/recovery.py" line="548"/>
         <source>Windows calistirilabilir</source>
         <translation>Exécutable Windows</translation>
     </message>
@@ -7924,17 +8163,22 @@ Continuer ?</translation>
         <translation>Code d&apos;erreur Windows {}</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="147"/>
+        <location filename="../../core/ntfsfix.py" line="152"/>
         <source>Windows hazirda bekletmede (Hizli baslatma dahil)</source>
         <translation>Windows est en veille prolongée (y compris le démarrage rapide)</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="410"/>
+        <location filename="../../core/ntfsfix.py" line="416"/>
+        <source>Windows hazirda bekletmede (Hizli baslatma dahil) ya da hiberfil.sys okunamadi. Bu birime yazip sonra Windows&apos;u kaldigi yerden acmak birimi bozar. Windows&apos;u acip &apos;Yeniden baslat&apos; ile kapatin.</source>
+        <translation>Windows est en veille prolongée (démarrage rapide compris) ou hiberfil.sys est illisible. Écrire sur ce volume puis reprendre Windows l&apos;endommagerait. Démarrez Windows et arrêtez-le avec « Redémarrer ».</translation>
+    </message>
+    <message>
+        <location filename="../../core/ntfsfix.py" line="532"/>
         <source>Windows hazirda bekletmede (Hizli baslatma dahil). Bu birime yazip sonra Windows&apos;u kaldigi yerden acmak birimi bozar. Windows&apos;u acip &apos;Yeniden baslat&apos; ile kapatin ya da onarimda hazirda bekletme dosyasini gecersiz kilmayi secin.</source>
         <translation>Windows est en veille prolongée (y compris le démarrage rapide). Écrire sur ce volume puis reprendre Windows le corrompt. Démarrez Windows et arrêtez-le avec « Redémarrer », ou choisissez d&apos;invalider le fichier d&apos;hibernation lors de la réparation.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3929"/>
+        <location filename="../../ui/main_window.py" line="3944"/>
         <source>Windows hazirda bekletmede — Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>Windows est en veille prolongée — Partition &gt; Vérifier et réparer NTFS</translation>
     </message>
@@ -7964,7 +8208,7 @@ Continuer ?</translation>
         <translation>Demander chkdsk sous Windows</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="472"/>
+        <location filename="../../core/ntfsfix.py" line="594"/>
         <source>Windows&apos;un bir sonraki acilisinda chkdsk calisacak</source>
         <translation>chkdsk s&apos;exécutera au prochain démarrage de Windows</translation>
     </message>
@@ -7974,7 +8218,7 @@ Continuer ?</translation>
         <translation>Rend à nouveau montable un volume NTFS que Windows n&apos;a pas arrêté proprement (comme ntfsfix)</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="266"/>
+        <location filename="../../core/xfsgrow.py" line="274"/>
         <source>XFS ayirma grubu basligi bozuk: {}</source>
         <translation>L&apos;en-tête du groupe d&apos;allocation XFS est corrompu : {}</translation>
     </message>
@@ -7989,22 +8233,22 @@ Continuer ?</translation>
         <translation>Le formatage XFS n&apos;est pris en charge que sur les périphériques à secteurs de 512 octets</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="93"/>
+        <location filename="../../core/xfsgrow.py" line="94"/>
         <source>XFS birimi bu surumun tanimadigi ozellikler tasiyor; buyutulemiyor</source>
         <translation>Le volume XFS utilise des fonctionnalités inconnues de cette version ; il ne peut pas être agrandi</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="91"/>
+        <location filename="../../core/xfsgrow.py" line="92"/>
         <source>XFS birimi onarim bekliyor (xfs_repair)</source>
         <translation>Le volume XFS doit être réparé (xfs_repair)</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="390"/>
+        <location filename="../../core/xfsgrow.py" line="399"/>
         <source>XFS buyutuluyor...</source>
         <translation>Agrandissement de XFS...</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="351"/>
+        <location filename="../../core/xfsgrow.py" line="359"/>
         <source>XFS gunlugu temiz degil; birim Linux&apos;ta baglanip duzgun ayrilmadan buyutulemez</source>
         <translation>Le journal XFS n&apos;est pas propre ; le volume ne peut pas être agrandi tant qu&apos;il n&apos;a pas été monté puis démonté proprement sous Linux</translation>
     </message>
@@ -8034,7 +8278,7 @@ Continuer ?</translation>
         <translation>Écriture du répertoire racine et du journal XFS...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="990"/>
+        <location filename="../../core/resize.py" line="1041"/>
         <source>XFS kucultulemez</source>
         <translation>XFS ne peut pas être réduit</translation>
     </message>
@@ -8045,17 +8289,17 @@ Continuer ?</translation>
     </message>
     <message>
         <location filename="../../core/xfs.py" line="68"/>
-        <location filename="../../core/xfsgrow.py" line="59"/>
+        <location filename="../../core/xfsgrow.py" line="60"/>
         <source>XFS ustblogu bulunamadi</source>
         <translation>Superbloc XFS introuvable</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="87"/>
+        <location filename="../../core/xfsgrow.py" line="88"/>
         <source>XFS v4 birimleri bu surumde buyutulemiyor</source>
         <translation>Les volumes XFS v4 ne peuvent pas être agrandis dans cette version</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="685"/>
+        <location filename="../../core/filesystem.py" line="690"/>
         <source>XFS yazma bu surumde yok; birim salt okunur acildi.</source>
         <translation>L&apos;écriture sur XFS n&apos;est pas disponible dans cette version ; le volume a été ouvert en lecture seule.</translation>
     </message>
@@ -8101,6 +8345,11 @@ Continuer ?</translation>
         <location filename="../../ui/dialogs/backup.py" line="487"/>
         <source>Yalnizca kullanilan alani yedekle (hizli)</source>
         <translation>Sauvegarder uniquement l&apos;espace utilisé (rapide)</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3920"/>
+        <source>Yapi tutarsiz — okunabilir, yazilamaz; once fsck.fat / chkdsk ile onarin</source>
+        <translation>Structure incohérente — lisible, non inscriptible ; réparez d&apos;abord avec fsck.fat / chkdsk</translation>
     </message>
     <message>
         <location filename="../../core/grub.py" line="103"/>
@@ -8216,7 +8465,7 @@ Continuer ?</translation>
         <translation>Écriture impossible</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1253"/>
+        <location filename="../../ui/dialogs/backup.py" line="1254"/>
         <source>Yedegi al</source>
         <translation>Effectuer la sauvegarde</translation>
     </message>
@@ -8282,7 +8531,7 @@ Continuer ?</translation>
         <translation>Sauvegarde créée : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1399"/>
+        <location filename="../../ui/dialogs/backup.py" line="1400"/>
         <source>Yedek alindi: {} — {} (kaynak {}, kazanc %{:.0f})</source>
         <translation>Sauvegarde effectuée : {} — {} (source {}, {:.0f}% économisé)</translation>
     </message>
@@ -8330,7 +8579,7 @@ Continuer ?</translation>
         <translation>Fichier de sauvegarde (.dub)</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1298"/>
+        <location filename="../../core/session.py" line="1341"/>
         <source>Yedek dosyasi (.dub) bir arsivdir; uzerine yazilamaz. Yedegi bir diske veya yeni bir goruntuye yazin.</source>
         <translation>Un fichier de sauvegarde (.dub) est une archive ; il ne peut pas être écrasé. Écrivez la sauvegarde sur un disque ou dans une nouvelle image.</translation>
     </message>
@@ -8415,12 +8664,12 @@ Continuer ?</translation>
         <translation>Lecture de la sauvegarde...</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="134"/>
+        <location filename="../../core/ntfsfix.py" line="139"/>
         <source>Yedek onyukleme sektoru eksik veya farkli</source>
         <translation>Le secteur d&apos;amorçage de secours est manquant ou différent</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="425"/>
+        <location filename="../../core/ntfsfix.py" line="547"/>
         <source>Yedek onyukleme sektoru yeniden yazildi</source>
         <translation>Secteur d&apos;amorçage de secours réécrit</translation>
     </message>
@@ -8440,7 +8689,7 @@ Continuer ?</translation>
         <translation>Démarrage de la sauvegarde...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1321"/>
+        <location filename="../../ui/dialogs/backup.py" line="1322"/>
         <source>Yedekleme durduruldu; yarim kalan yedek dosyasi silindi.</source>
         <translation>Sauvegarde arrêtée ; le fichier de sauvegarde incomplet a été supprimé.</translation>
     </message>
@@ -8519,13 +8768,13 @@ Ouvrez une image ou utilisez Disque &gt; Actualiser les disques physiques.</tran
         <translation>Nouveau disque virtuel (VHD)</translation>
     </message>
     <message>
-        <location filename="../../core/xfsgrow.py" line="198"/>
+        <location filename="../../core/xfsgrow.py" line="205"/>
         <source>Yeni XFS ayirma grubu cok kucuk</source>
         <translation>Le nouveau groupe d&apos;allocation XFS est trop petit</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1281"/>
-        <location filename="../../core/ntfswrite.py" line="1035"/>
+        <location filename="../../core/extwrite.py" line="1526"/>
+        <location filename="../../core/ntfswrite.py" line="1137"/>
         <source>Yeni ad yol icermemeli</source>
         <translation>Le nouveau nom ne doit pas contenir de chemin</translation>
     </message>
@@ -8565,32 +8814,32 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Nouvelle taille</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="346"/>
+        <location filename="../../core/resize.py" line="381"/>
         <source>Yeni boyut FAT ust verisinden kucuk</source>
         <translation>La nouvelle taille est inférieure aux métadonnées FAT</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="350"/>
+        <location filename="../../core/resize.py" line="385"/>
         <source>Yeni boyut FAT{} icin cok kucuk (en az {} kume gerekir)</source>
         <translation>La nouvelle taille est trop petite pour FAT{} (au moins {} clusters sont requis)</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsresize.py" line="708"/>
+        <location filename="../../core/ntfsresize.py" line="811"/>
         <source>Yeni boyut NTFS icin cok kucuk</source>
         <translation>La nouvelle taille est trop petite pour NTFS</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="527"/>
+        <location filename="../../core/resize.py" line="576"/>
         <source>Yeni boyut exFAT icin cok kucuk</source>
         <translation>La nouvelle taille est trop petite pour exFAT</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="523"/>
+        <location filename="../../core/resize.py" line="572"/>
         <source>Yeni boyut exFAT ust verisinden kucuk</source>
         <translation>La nouvelle taille est inférieure aux métadonnées exFAT</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="483"/>
+        <location filename="../../core/resize.py" line="520"/>
         <source>Yeni boyut exFAT yerlesimi icin cok kucuk</source>
         <translation>La nouvelle taille est trop petite pour la disposition exFAT</translation>
     </message>
@@ -8625,7 +8874,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Nouvelle image...</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="325"/>
+        <location filename="../../core/extresize.py" line="355"/>
         <source>Yeni grup {} / {}</source>
         <translation>Nouveau groupe {} / {}</translation>
     </message>
@@ -8649,7 +8898,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Nouvelle version disponible</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4182"/>
+        <location filename="../../ui/main_window.py" line="4197"/>
         <source>Yeni surum var: {} (kullanilan: {})</source>
         <translation>Nouvelle version disponible : {} (utilisée : {})</translation>
     </message>
@@ -8694,12 +8943,12 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Impossible de redémarrer : {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="714"/>
+        <location filename="../../core/session.py" line="757"/>
         <source>Yeniden boyutlandirma icin onay gerekli (confirm=True)</source>
         <translation>Le redimensionnement nécessite une confirmation (confirm=True)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4001"/>
+        <location filename="../../ui/main_window.py" line="4016"/>
         <location filename="../../ui/qt_i18n.py" line="46"/>
         <source>Yeniden dene</source>
         <translation>Réessayer</translation>
@@ -8719,23 +8968,23 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Erreur d&apos;actualisation</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="954"/>
-        <location filename="../../core/session.py" line="789"/>
+        <location filename="../../core/resize.py" line="1005"/>
+        <location filename="../../core/session.py" line="832"/>
         <source>Yenileniyor...</source>
         <translation>Actualisation...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="759"/>
+        <location filename="../../core/session.py" line="802"/>
         <source>Yerel boyutlandirici yok</source>
         <translation>Pas d&apos;outil de redimensionnement natif</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="530"/>
+        <location filename="../../core/ntfswrite.py" line="605"/>
         <source>Yerlesik oznitelik boyutu degisemez</source>
         <translation>La taille d&apos;un attribut résident ne peut pas changer</translation>
     </message>
     <message>
-        <location filename="../../core/ntfswrite.py" line="126"/>
+        <location filename="../../core/ntfswrite.py" line="171"/>
         <source>Yerlesik oznitelik bu yoldan yazilamaz</source>
         <translation>Un attribut résident ne peut pas être écrit de cette manière</translation>
     </message>
@@ -8745,7 +8994,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>La disposition a été préparée pour une autre taille de cible ; actualisez-la</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="1146"/>
+        <location filename="../../core/extwrite.py" line="1264"/>
         <source>Yeterli bos alan yok: {} blok gerekli, {} bos</source>
         <translation>Espace libre insuffisant : {} blocs requis, {} libres</translation>
     </message>
@@ -8833,8 +9082,8 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Chemin</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="536"/>
-        <location filename="../../core/fat.py" line="468"/>
+        <location filename="../../core/exfat.py" line="730"/>
+        <location filename="../../core/fat.py" line="652"/>
         <source>Yol bulunamadi: {}</source>
         <translation>Chemin introuvable : {}</translation>
     </message>
@@ -8881,7 +9130,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Élevée</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="466"/>
+        <location filename="../../core/recovery.py" line="542"/>
         <source>ZIP / Office belgesi</source>
         <translation>ZIP / document Office</translation>
     </message>
@@ -8891,20 +9140,22 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Déjà ouvert, mis au premier plan : {}</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="302"/>
+        <location filename="../../core/mbr.py" line="368"/>
         <source>Zaten bir genisletilmis bolum var</source>
         <translation>Une partition étendue existe déjà</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="814"/>
-        <location filename="../../core/extwrite.py" line="1220"/>
-        <location filename="../../core/extwrite.py" line="1286"/>
-        <location filename="../../core/fat.py" line="799"/>
+        <location filename="../../core/exfat.py" line="1056"/>
+        <location filename="../../core/exfat.py" line="1121"/>
+        <location filename="../../core/extwrite.py" line="1402"/>
+        <location filename="../../core/extwrite.py" line="1531"/>
+        <location filename="../../core/fat.py" line="1019"/>
+        <location filename="../../core/fat.py" line="1094"/>
         <location filename="../../core/hfswrite.py" line="731"/>
         <location filename="../../core/hfswrite.py" line="755"/>
         <location filename="../../core/hfswrite.py" line="857"/>
-        <location filename="../../core/ntfsindex.py" line="412"/>
-        <location filename="../../core/ntfswrite.py" line="1038"/>
+        <location filename="../../core/ntfsindex.py" line="410"/>
+        <location filename="../../core/ntfswrite.py" line="1140"/>
         <location filename="../../core/udfwrite.py" line="596"/>
         <location filename="../../core/udfwrite.py" line="631"/>
         <location filename="../../core/udfwrite.py" line="731"/>
@@ -8973,7 +9224,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Impossible de lire `{}`.</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="737"/>
+        <location filename="../../core/filesystem.py" line="742"/>
         <source>alt hacim</source>
         <translation>sous-volume</translation>
     </message>
@@ -8983,12 +9234,12 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>{} après ▶</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="126"/>
+        <location filename="../../core/extresize.py" line="151"/>
         <source>ayri gunluk aygiti</source>
         <translation>périphérique de journal externe</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="420"/>
+        <location filename="../../core/filesystem.py" line="425"/>
         <source>bag</source>
         <translation>lien</translation>
     </message>
@@ -9026,7 +9277,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>inconnu</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="829"/>
+        <location filename="../../core/filesystem.py" line="834"/>
         <source>birim</source>
         <translation>volume</translation>
     </message>
@@ -9081,12 +9332,12 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Une partie des données btrfs se trouve sur un autre périphérique ; elles ne peuvent pas être lues avec un seul périphérique</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="729"/>
+        <location filename="../../core/filesystem.py" line="734"/>
         <source>btrfs yazma bu surumde yok; birim salt okunur acildi.</source>
         <translation>L&apos;écriture sur btrfs n&apos;est pas disponible dans cette version ; le volume a été ouvert en lecture seule.</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="234"/>
+        <location filename="../../core/layoutedit.py" line="246"/>
         <source>bu dosya sistemi</source>
         <translation>ce système de fichiers</translation>
     </message>
@@ -9113,7 +9364,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>impossible de lire les informations du disque (pas d&apos;autorisation)</translation>
     </message>
     <message>
-        <location filename="../../core/extwrite.py" line="121"/>
+        <location filename="../../core/extwrite.py" line="197"/>
         <source>disk kotasi (quota)</source>
         <translation>quota de disque</translation>
     </message>
@@ -9166,38 +9417,38 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>inactive</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="273"/>
+        <location filename="../../core/exfat.py" line="324"/>
         <source>exFAT imzasi bulunamadi</source>
         <translation>Aucune signature exFAT trouvée</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="707"/>
+        <location filename="../../core/resize.py" line="756"/>
         <source>exFAT onyukleme bolgesi taninmadi</source>
         <translation>La région d&apos;amorçage exFAT n&apos;a pas été reconnue</translation>
     </message>
     <message>
-        <location filename="../../core/exfat.py" line="986"/>
+        <location filename="../../core/exfat.py" line="1242"/>
         <source>exFAT onyukleme bolgesi yaziliyor...</source>
         <translation>Écriture de la région d&apos;amorçage exFAT...</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="955"/>
+        <location filename="../../core/extmove.py" line="964"/>
         <source>ext birimi bu boyuta kucultulemez; en az {} blok gerekli</source>
         <translation>Le volume ext ne peut pas être réduit à cette taille ; au moins {} blocs sont requis</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="398"/>
+        <location filename="../../core/extresize.py" line="428"/>
         <source>ext buyutuldu</source>
         <translation>ext agrandi</translation>
     </message>
     <message>
-        <location filename="../../core/extread.py" line="120"/>
-        <location filename="../../core/extresize.py" line="71"/>
+        <location filename="../../core/extread.py" line="166"/>
+        <location filename="../../core/extresize.py" line="93"/>
         <source>ext imzasi yok</source>
         <translation>Pas de signature ext</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="272"/>
+        <location filename="../../core/extresize.py" line="302"/>
         <source>ext yerlesimi hesaplaniyor...</source>
         <translation>Calcul de la disposition ext...</translation>
     </message>
@@ -9212,7 +9463,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>outil requis : {}</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="422"/>
+        <location filename="../../core/filesystem.py" line="427"/>
         <location filename="../../ui/dialogs/efiboot.py" line="275"/>
         <source>gizli</source>
         <translation>caché</translation>
@@ -9246,22 +9497,27 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>brut</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="518"/>
+        <location filename="../../core/ntfsfix.py" line="640"/>
         <source>hiberfil.sys beklenmeyen bicimde</source>
         <translation>hiberfil.sys a une structure inattendue</translation>
     </message>
     <message>
-        <location filename="../../core/ntfsfix.py" line="478"/>
+        <location filename="../../core/ntfsfix.py" line="600"/>
         <source>hiberfil.sys gecersiz kilindi; Windows soguk acilacak</source>
         <translation>hiberfil.sys invalidé ; Windows redémarrera à neuf</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="378"/>
+        <location filename="../../core/extmove.py" line="379"/>
         <source>inline_data / ea_inode kullanan ext birimi kucultulemez</source>
         <translation>Un volume ext utilisant inline_data / ea_inode ne peut pas être réduit</translation>
     </message>
     <message>
-        <location filename="../../core/extmove.py" line="729"/>
+        <location filename="../../core/extwrite.py" line="808"/>
+        <source>inline_data dizinine yazma desteklenmiyor</source>
+        <translation>L&apos;écriture dans un répertoire inline_data n&apos;est pas prise en charge</translation>
+    </message>
+    <message>
+        <location filename="../../core/extmove.py" line="738"/>
         <source>inline_data inode&apos;u: {}</source>
         <translation>inode inline_data : {}</translation>
     </message>
@@ -9291,7 +9547,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>verrouillée</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="489"/>
+        <location filename="../../core/recovery.py" line="565"/>
         <source>kurtarilan_{:012X}.{}</source>
         <translation>recovered_{:012X}.{}</translation>
     </message>
@@ -9327,12 +9583,12 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>os-prober désactivé</translation>
     </message>
     <message>
-        <location filename="../../core/extresize.py" line="511"/>
+        <location filename="../../core/extresize.py" line="541"/>
         <source>resize inode&apos;un cift dolayli blogu yok</source>
         <translation>L&apos;inode de redimensionnement n&apos;a pas de bloc doublement indirect</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="831"/>
+        <location filename="../../core/filesystem.py" line="836"/>
         <source>sifreli</source>
         <translation>chiffré</translation>
     </message>
@@ -9342,7 +9598,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>le serveur a renvoyé {}</translation>
     </message>
     <message>
-        <location filename="../../core/planview.py" line="340"/>
+        <location filename="../../core/planview.py" line="351"/>
         <source>toplam {}</source>
         <translation>total {}</translation>
     </message>
@@ -9591,7 +9847,7 @@ Secteur : {} B | Bus : {}</translation>
         <translation>{} ({} passes)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3886"/>
+        <location filename="../../ui/main_window.py" line="3895"/>
         <source>{} ({} sektor)</source>
         <translation>{} ({} secteurs)</translation>
     </message>
@@ -9700,7 +9956,7 @@ Saisissez le nom du disque pour continuer : {}</translation>
         <translation>Impossible de lire les informations de {} (pas de privilèges) ; on ne sait pas s&apos;il s&apos;agit du disque système. L&apos;écriture sur un disque inconnu a été refusée.</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="950"/>
+        <location filename="../../core/filesystem.py" line="955"/>
         <source>{} bir kapsayicidir; icindeki birimler bu surumde acilamiyor.</source>
         <translation>{} est un conteneur ; les volumes qu&apos;il contient ne peuvent pas être ouverts dans cette version.</translation>
     </message>
@@ -9715,12 +9971,12 @@ Saisissez le nom du disque pour continuer : {}</translation>
         <translation>{} partitions ne sont pas alignées sur une limite de 4K ; les performances peuvent baisser sur les SSD et les disques Advanced Format.</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="92"/>
+        <location filename="../../core/convert.py" line="102"/>
         <source>{} bolum GPT&apos;ye tasinabilir</source>
         <translation>{} partitions peuvent être transférées vers GPT</translation>
     </message>
     <message>
-        <location filename="../../core/convert.py" line="153"/>
+        <location filename="../../core/convert.py" line="179"/>
         <source>{} bolum MBR&apos;ye tasinabilir</source>
         <translation>{} partitions peuvent être transférées vers MBR</translation>
     </message>
@@ -9745,8 +10001,8 @@ Saisissez le nom du disque pour continuer : {}</translation>
         <translation>{} est ouvert en lecture seule dans cette version</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1305"/>
-        <location filename="../../core/session.py" line="323"/>
+        <location filename="../../core/session.py" line="1348"/>
+        <location filename="../../core/session.py" line="340"/>
         <source>{} bu surumde yalnizca okunabilir; yazma destegi yol haritasinda.</source>
         <translation>{} est en lecture seule dans cette version ; la prise en charge de l&apos;écriture est prévue.</translation>
     </message>
@@ -9756,7 +10012,7 @@ Saisissez le nom du disque pour continuer : {}</translation>
         <translation>agrandie de {}</translation>
     </message>
     <message>
-        <location filename="../../core/planview.py" line="338"/>
+        <location filename="../../core/planview.py" line="349"/>
         <source>{} degisen bolum</source>
         <translation>{} partitions modifiées</translation>
     </message>
@@ -9833,7 +10089,7 @@ Si les deux disques restent connectés au même ordinateur, le système d&apos;e
 {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="651"/>
+        <location filename="../../core/session.py" line="680"/>
         <source>{} dosyalarinin boyutu bu surumde degistirilemez</source>
         <translation>La taille des fichiers {} ne peut pas être modifiée dans cette version</translation>
     </message>
@@ -9843,7 +10099,7 @@ Si les deux disques restent connectés au même ordinateur, le système d&apos;e
         <translation>Fichier {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="770"/>
+        <location filename="../../core/resize.py" line="821"/>
         <source>{} geri tasinacak ({} veri kopyalanir)</source>
         <translation>sera déplacée de {} vers le début du disque ({} de données copiées)</translation>
     </message>
@@ -9853,7 +10109,7 @@ Si les deux disques restent connectés au même ordinateur, le système d&apos;e
         <translation>{} mis à jour : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4119"/>
+        <location filename="../../ui/main_window.py" line="4134"/>
         <source>{} hakkinda</source>
         <translation>À propos de {}</translation>
     </message>
@@ -9865,7 +10121,7 @@ Si les deux disques restent connectés au même ordinateur, le système d&apos;e
 {}</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="953"/>
+        <location filename="../../core/filesystem.py" line="958"/>
         <source>{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya sistemleri: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, APFS, UDF, XFS, btrfs, F2FS, ISO 9660.</source>
         <translation>Le contenu de {} ne peut pas être affiché dans cette version. Systèmes de fichiers lisibles : FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, APFS, UDF, XFS, btrfs, F2FS, ISO 9660.</translation>
     </message>
@@ -9880,7 +10136,7 @@ Si les deux disques restent connectés au même ordinateur, le système d&apos;e
         <translation>Icônes {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="768"/>
+        <location filename="../../core/resize.py" line="819"/>
         <source>{} ileri tasinacak ({} veri kopyalanir)</source>
         <translation>sera déplacée de {} vers la fin du disque ({} de données copiées)</translation>
     </message>
@@ -9905,8 +10161,8 @@ Si les deux disques restent connectés au même ordinateur, le système d&apos;e
         <translation>{} n&apos;est pas installé</translation>
     </message>
     <message>
-        <location filename="../../core/mbr.py" line="315"/>
-        <location filename="../../core/ptable.py" line="236"/>
+        <location filename="../../core/mbr.py" line="381"/>
+        <location filename="../../core/ptable.py" line="241"/>
         <source>{} numarali bolum ile cakisiyor</source>
         <translation>Chevauche la partition {}</translation>
     </message>
@@ -9916,8 +10172,8 @@ Si les deux disques restent connectés au même ordinateur, le système d&apos;e
         <translation>Il y a un chevauchement avec la partition {}</translation>
     </message>
     <message>
-        <location filename="../../core/layoutedit.py" line="188"/>
-        <location filename="../../core/ptable.py" line="192"/>
+        <location filename="../../core/layoutedit.py" line="190"/>
+        <location filename="../../core/ptable.py" line="197"/>
         <source>{} numarali bolum yok</source>
         <translation>La partition {} n&apos;existe pas</translation>
     </message>
@@ -9981,7 +10237,7 @@ Emplacement : {}</translation>
         <translation>{} secondes</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="947"/>
+        <location filename="../../core/filesystem.py" line="952"/>
         <source>{} sifreli bir birimdir; icerigi anahtar olmadan okunamaz.</source>
         <translation>{} est un volume chiffré ; son contenu ne peut pas être lu sans la clé.</translation>
     </message>
@@ -9992,7 +10248,7 @@ Emplacement : {}</translation>
     </message>
     <message>
         <location filename="../../core/recovery.py" line="152"/>
-        <location filename="../../core/recovery.py" line="215"/>
+        <location filename="../../core/recovery.py" line="221"/>
         <source>{} silinmis giris bulundu</source>
         <translation>{} entrées supprimées trouvées</translation>
     </message>
@@ -10013,13 +10269,19 @@ Emplacement : {}</translation>
         <translation>Aucun outil externe pour {} sur {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="835"/>
+        <location filename="../../core/gpt.py" line="421"/>
+        <location filename="../../core/mbr.py" line="219"/>
+        <source>{} ve {} numarali bolumler cakisiyor</source>
+        <translation>Les partitions {} et {} se chevauchent</translation>
+    </message>
+    <message>
+        <location filename="../../core/resize.py" line="886"/>
         <source>{} veri kopyalanacak; islem yarida kesilirse bolum bozulur</source>
         <translation>{} de données seront copiés ; si l&apos;opération est interrompue, la partition sera corrompue</translation>
     </message>
     <message>
         <location filename="../../core/formatter.py" line="206"/>
-        <location filename="../../core/session.py" line="483"/>
+        <location filename="../../core/session.py" line="512"/>
         <source>{} yalnizca fiziksel diskte, Windows&apos;un kendi araciyla olusturulabilir; goruntu dosyasinda kullanilamaz.</source>
         <translation>{} ne peut être créé que sur un disque physique avec l&apos;outil propre à Windows ; il ne peut pas être utilisé sur un fichier image.</translation>
     </message>
@@ -10034,7 +10296,7 @@ Emplacement : {}</translation>
         <translation>Écriture de {}...</translation>
     </message>
     <message>
-        <location filename="../../core/planview.py" line="336"/>
+        <location filename="../../core/planview.py" line="347"/>
         <source>{} yeni bolum</source>
         <translation>{} nouvelles partitions</translation>
     </message>

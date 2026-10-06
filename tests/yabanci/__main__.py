@@ -399,6 +399,20 @@ def _ascii(path: str) -> bool:
     return all(32 < ord(c) < 127 for c in path)
 
 
+def _debugfs_listing(img: str, dirs) -> Dict[str, int]:
+    """debugfs `ls -p`: yol -> boyut (yalnizca duzenli dosyalar)."""
+    out: Dict[str, int] = {}
+    for d in sorted(dirs):
+        r = run([tool("debugfs"), "-R", f"ls -p {d}", img])
+        for line in r.stdout.splitlines():
+            parts = line.strip().strip("/").split("/")
+            # /ino/mode/uid/gid/ad/boyut/
+            if len(parts) >= 6 and parts[1].startswith("10"):
+                name = "/".join(parts[4:-1])
+                out[(d.rstrip("/") + "/" + name)] = int(parts[-1] or 0)
+    return out
+
+
 def populate_user(v: Variant, img: str, files, dirs, deleted,
                   manifest: Manifest, work: str) -> str:
     """Root olmadan: FAT -> mtools, ext -> debugfs. Yalnizca ASCII, bosluksuz
@@ -448,10 +462,16 @@ def populate_user(v: Variant, img: str, files, dirs, deleted,
         r = run([tool("debugfs"), "-w", "-f", script, img])
         if r.returncode != 0:
             raise Skip(f"debugfs: {r.stderr[-200:]}")
+        # debugfs inode/yer bitince "Could not allocate inode" yazar ama 0
+        # doner (ext4-N64): diskte gercekten olan dosyalar okunarak secilir.
+        present = _debugfs_listing(img, {os.path.dirname(f.path) or "/" for f in chosen})
+        n = 0
         for spec in chosen:
-            manifest.put(spec)
+            if present.get(spec.path) == spec.size:
+                manifest.put(spec)
+                n += 1
         shutil.rmtree(tmp, ignore_errors=True)
-        return f"debugfs: {len(chosen)} dosya (silme/parcalanma yok)"
+        return f"debugfs: {n}/{len(chosen)} dosya (silme/parcalanma yok)"
     raise Skip("root yok ve bu fs icin kullanici alani doldurma araci yok")
 
 

@@ -151,6 +151,11 @@ class PartitionTable:
     def __init__(self, device):
         self.device = device
         self.partitions: List[Partition] = []
+        # Tablo kuskuluysa nedeni (bos = guvenilir): bayat GPT kalintisi,
+        # bozuk birincil GPT, hibrit MBR'de GPT disi alan. Okuyan taraf
+        # (`session.read_partition_table`) doldurur; yalnizca kullanilan
+        # alan yedegi bu durumda diskin tamamini alir.
+        self.ambiguity = ""
 
     # -- alt siniflarin uygulamasi gerekenler --------------------------------
     def write(self) -> None:  # pragma: no cover - arayuz

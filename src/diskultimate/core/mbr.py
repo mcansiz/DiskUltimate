@@ -123,27 +123,33 @@ class MBRTable(PartitionTable):
         table.disk_signature = struct.unpack_from("<I", sector, 440)[0]
 
         extended: Optional[Partition] = None
-        index = 1
         for i in range(MAX_PRIMARY):
             raw = sector[ENTRY_OFFSET + i * ENTRY_SIZE:
                          ENTRY_OFFSET + (i + 1) * ENTRY_SIZE]
             status, type_id, lba, count = _unpack_entry(raw)
             if type_id == 0 or count == 0:
                 continue
-            part = Partition(index=index, start_lba=lba, sector_count=count,
+            # Numara = giris yuvasi (cekirdekteki sdXN): bos yuva
+            # atlanmaz, 2. ve 4. yuvadaki bolumler 2 ve 4 kalir (P4).
+            part = Partition(index=i + 1, start_lba=lba, sector_count=count,
                              scheme="mbr", type_id=type_id,
                              bootable=bool(status & 0x80),
                              sector_size=device.sector_size)
             table.partitions.append(part)
-            if type_id in MBR_EXTENDED_TYPES:
+            if type_id in MBR_EXTENDED_TYPES and extended is None:
                 extended = part
-            index += 1
         if extended is not None:
             table._read_logicals(extended, start_index=5)
         return table
 
     def _read_logicals(self, extended: Partition, start_index: int = 5) -> None:
-        """EBR zincirini takip ederek mantiksal bolumleri okur."""
+        """EBR zincirini takip ederek mantiksal bolumleri okur.
+
+        Cekirdegin `parse_extended`i gibi EBR'nin dort girisi de taranir:
+        veri girisi ilk dolu ve genisletilmis olmayan giris, baglanti ilk
+        genisletilmis tur giris (yalnizca 0. ve 1. yuvaya bakmak baska
+        araclarin yazdigi zincirde bolum kaybettiriyordu).
+        """
         ebr_lba = extended.start_lba
         index = start_index
         seen = set()
@@ -155,19 +161,23 @@ class MBRTable(PartitionTable):
                 return
             if struct.unpack_from("<H", sector, 510)[0] != MBR_SIGNATURE:
                 return
-            e0 = sector[ENTRY_OFFSET:ENTRY_OFFSET + ENTRY_SIZE]
-            e1 = sector[ENTRY_OFFSET + ENTRY_SIZE:ENTRY_OFFSET + 2 * ENTRY_SIZE]
-            status, type_id, rel_lba, count = _unpack_entry(e0)
-            if type_id and count:
+            entries = [_unpack_entry(sector[ENTRY_OFFSET + i * ENTRY_SIZE:
+                                            ENTRY_OFFSET + (i + 1) * ENTRY_SIZE])
+                       for i in range(MAX_PRIMARY)]
+            data = next((e for e in entries if e[1] and e[3]
+                         and e[1] not in MBR_EXTENDED_TYPES), None)
+            if data is not None:
+                status, type_id, rel_lba, count = data
                 self.partitions.append(Partition(
                     index=index, start_lba=ebr_lba + rel_lba, sector_count=count,
                     scheme="mbr", type_id=type_id, bootable=bool(status & 0x80),
                     logical=True, ebr_lba=ebr_lba,
                     sector_size=self.device.sector_size))
                 index += 1
-            _s2, t2, next_rel, next_count = _unpack_entry(e1)
-            if t2 in MBR_EXTENDED_TYPES and next_count:
-                ebr_lba = extended.start_lba + next_rel
+            link = next((e for e in entries if e[1] in MBR_EXTENDED_TYPES
+                         and e[3]), None)
+            if link is not None:
+                ebr_lba = extended.start_lba + link[2]
             else:
                 ebr_lba = 0
 
@@ -184,31 +194,76 @@ class MBRTable(PartitionTable):
         return table
 
     # -- yazma ---------------------------------------------------------------
-    def write(self) -> None:
-        sector = bytearray(512)
+    def build(self) -> List[tuple]:
+        """Yazilacak (LBA, veri) listesi; diske dokunmadan dogrular.
+
+        Sektor tamponu aygitin sektor boyundadir: 4Kn diskte 512 baytlik
+        tampon `write_sectors`ta patliyordu (P1). Birincil bolumler
+        yuvalarinda kalir (P4).
+        """
+        ss = self.sector_size
+        sector = bytearray(ss)
         sector[:ENTRY_OFFSET] = self.bootcode[:ENTRY_OFFSET].ljust(ENTRY_OFFSET, b"\x00")
         struct.pack_into("<I", sector, 440, self.disk_signature & 0xFFFFFFFF)
         primaries = [p for p in self.partitions if not p.logical]
         if len(primaries) > MAX_PRIMARY:
             raise PartitionTableError(tr("MBR en fazla 4 birincil bolum destekler"))
-        primaries.sort(key=lambda p: p.start_lba)
-        for i in range(MAX_PRIMARY):
-            entry = _pack_entry(primaries[i]) if i < len(primaries) else b"\x00" * ENTRY_SIZE
-            sector[ENTRY_OFFSET + i * ENTRY_SIZE:
-                   ENTRY_OFFSET + (i + 1) * ENTRY_SIZE] = entry
+        for p in self.partitions:
+            if p.start_lba < 1 or p.sector_count <= 0:
+                raise PartitionTableError(
+                    tr("Bolum {} gecersiz konumda (LBA {})", p.index, p.start_lba))
+        ordered = sorted(primaries, key=lambda p: p.start_lba)
+        for a, b in zip(ordered, ordered[1:]):
+            if b.start_lba <= a.end_lba:
+                raise PartitionTableError(
+                    tr("{} ve {} numarali bolumler cakisiyor", a.index, b.index))
+        self._assign_primary_slots()
+        for p in primaries:
+            off = ENTRY_OFFSET + (p.index - 1) * ENTRY_SIZE
+            sector[off:off + ENTRY_SIZE] = _pack_entry(p)
         struct.pack_into("<H", sector, 510, MBR_SIGNATURE)
-        self.device.write_sectors(0, bytes(sector))
-        self._write_logicals()
+        writes = [(0, bytes(sector))]
+        writes += self._build_logicals()
+        return writes
+
+    def write(self) -> None:
+        writes = self.build()
+        for lba, data in writes:
+            self.device.write_sectors(lba, data)
         flush = getattr(self.device, "flush", None)
         if flush:
             flush()
 
-    def _write_logicals(self) -> None:
+    def _assign_primary_slots(self) -> None:
+        """Birincil bolum numarasi = MBR yuvasi; yenisi ilk bos yuvayi alir."""
+        taken = set()
+        pending = []
+        for p in sorted([p for p in self.partitions if not p.logical],
+                        key=lambda x: x.start_lba):
+            if 1 <= p.index <= MAX_PRIMARY and p.index not in taken:
+                taken.add(p.index)
+            else:
+                pending.append(p)
+        for p in pending:
+            p.index = next(i for i in range(1, MAX_PRIMARY + 1) if i not in taken)
+            taken.add(p.index)
+
+    def first_free_slot(self) -> int:
+        used = {p.index for p in self.partitions if not p.logical}
+        for i in range(1, MAX_PRIMARY + 1):
+            if i not in used:
+                return i
+        raise PartitionTableError(
+            tr("4 birincil bolum dolu; genisletilmis bolum kullanin"))
+
+    def _build_logicals(self) -> List[tuple]:
+        ss = self.sector_size
         extended = self.extended_partition()
         logicals = sorted([p for p in self.partitions if p.logical],
                           key=lambda p: p.start_lba)
         if extended is None:
-            return
+            return []
+        writes = []
         prev_end = extended.start_lba - 1
         for i, part in enumerate(logicals):
             # Ilk EBR HER ZAMAN genisletilmis bolumun ilk sektorundedir:
@@ -228,7 +283,7 @@ class MBRTable(PartitionTable):
                        part.index))
             part.ebr_lba = ebr_lba
             prev_end = part.end_lba
-            sector = bytearray(512)
+            sector = bytearray(ss)
             sector[ENTRY_OFFSET:ENTRY_OFFSET + ENTRY_SIZE] = _pack_entry(
                 None, start_lba=part.start_lba - ebr_lba,
                 sector_count=part.sector_count, type_id=part.type_id,
@@ -244,7 +299,12 @@ class MBRTable(PartitionTable):
                     sector_count=nxt.sector_count + (nxt.start_lba - next_ebr),
                     type_id=0x0F)
             struct.pack_into("<H", sector, 510, MBR_SIGNATURE)
-            self.device.write_sectors(ebr_lba, bytes(sector))
+            writes.append((ebr_lba, bytes(sector)))
+        # Mantiksal bolumler zincir sirasiyla 5'ten numaralanir (cekirdek de
+        # oyle sayar); zincir baslangica gore siralandigi icin bu kacinilmaz.
+        for no, part in enumerate(logicals, 5):
+            part.index = no
+        return writes
 
     # -- bolum islemleri -----------------------------------------------------
     def extended_partition(self) -> Optional[Partition]:
@@ -287,13 +347,19 @@ class MBRTable(PartitionTable):
                     tr("4 birincil bolum dolu; genisletilmis bolum kullanin"))
             self.check_range(start_lba, sector_count)
             ebr_lba = 0
-        part = Partition(index=0, start_lba=start_lba, sector_count=sector_count,
+        index = 0 if logical else self.first_free_slot()
+        part = Partition(index=index, start_lba=start_lba, sector_count=sector_count,
                          scheme="mbr", type_id=type_id, bootable=bootable,
                          logical=bool(logical), ebr_lba=ebr_lba, name=name,
                          sector_size=self.sector_size)
         self.partitions.append(part)
         self._renumber_mbr()
-        self.write()
+        try:
+            self.write()
+        except PartitionTableError:
+            self.partitions.remove(part)
+            self._renumber_mbr()
+            raise
         return part
 
     def create_extended(self, start_lba: int, sector_count: int) -> Partition:
@@ -383,11 +449,14 @@ class MBRTable(PartitionTable):
         return regions + inner
 
     def _renumber_mbr(self) -> None:
-        primaries = sorted([p for p in self.partitions if not p.logical],
-                           key=lambda p: p.start_lba)
+        """Birincil bolumler yuvasinda kalir (P4); mantiksallar zincir
+        (baslangic) sirasiyla 5'ten numaralanir.
+
+        Eskiden birincil bolumler de her degisiklikte 1'den yeniden
+        numaralaniyordu: 2. ve 4. yuvadaki bolumler 1 ve 2 oluyordu.
+        """
+        self._assign_primary_slots()
         logicals = sorted([p for p in self.partitions if p.logical],
                           key=lambda p: p.start_lba)
-        for i, p in enumerate(primaries, 1):
-            p.index = i
         for i, p in enumerate(logicals, 5):
             p.index = i

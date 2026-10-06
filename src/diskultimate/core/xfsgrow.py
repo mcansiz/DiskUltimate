@@ -7,7 +7,8 @@ XFS kuculmez; buyutme iki adimdir (cekirdekteki `xfs_growfs_data` gibi):
 2. **Yeni AG'ler** eklenir: her birinin basinda ustblok kopyasi, AGF, AGI,
    AGFL, bos B-agaci kokleri ve AGFL bloklari. Ozellige gore yerlesim
    (mkfs.xfs 6.18 ile olculdu):
-       blok 0 basliklar, sonra bnobt, cntbt, inobt, [finobt], [rmapbt],
+       blok 0 basliklar (4 sektor; kucuk blokta 0..XFS_AGFL_BLOCK), sonra
+       bnobt, cntbt, inobt, [finobt], [rmapbt],
        [refcountbt]; AGFL rmapbt varsa 6, yoksa 4 blok; rmapbt kayitlari
        AG'nin kendi meta verisini sahipleriyle (FS -3, AG -5, INOBT -6,
        REFC -8) bitisik ayni sahipler birlestirilerek listeler.
@@ -146,9 +147,13 @@ def _layout(sb: _Sb) -> Dict[str, int]:
     finobt = bool(sb.ro_compat & RO_FINOBT)
     rmap = bool(sb.ro_compat & RO_RMAPBT)
     refc = bool(sb.ro_compat & RO_REFLINK)
-    nxt = 3
-    lay = {"bno": 1, "cnt": 2, "ino": nxt}
-    nxt += 1
+    # Basliklar (ustblok, AGF, AGI, AGFL) sektor boyludur; 1 KiB blokta
+    # birden cok blok kaplar. Cekirdek: XFS_AGFL_BLOCK = (3 sektor) blok
+    # karsiligi, XFS_BNO_BLOCK = XFS_AGFL_BLOCK + 1 (xfs_format.h).
+    agfl_block = (3 * sb.sectsize) // sb.bs
+    lay = {"hdr": agfl_block + 1, "bno": agfl_block + 1, "cnt": agfl_block + 2,
+           "ino": agfl_block + 3}
+    nxt = agfl_block + 4
     lay["fino"] = nxt if finobt else 0
     nxt += finobt
     lay["rmap"] = nxt if rmap else 0
@@ -172,7 +177,9 @@ def _short_block(sb: _Sb, magic: bytes, agno: int, agbno: int, recs: bytes,
 
 
 def _rmap_records(lay: Dict[str, int]) -> List[Tuple[int, int, int]]:
-    items: List[Tuple[int, int, int]] = [(0, 1, OWN_FS), (1, 2, OWN_AG),
+    # xfs_rmaproot_init: OWN_FS [0, XFS_BNO_BLOCK), OWN_AG bnobt+cntbt, ...
+    items: List[Tuple[int, int, int]] = [(0, lay["hdr"], OWN_FS),
+                                         (lay["bno"], 2, OWN_AG),
                                          (lay["ino"], 2 if lay["fino"] else 1, OWN_INOBT),
                                          (lay["rmap"], 1, OWN_AG)]
     if lay["refc"]:
@@ -196,8 +203,9 @@ def new_ag_blocks(sb: _Sb, primary: bytes, agno: int, length: int
     free_len = length - free_start
     if free_len <= 0:
         raise XfsGrowError(tr("Yeni XFS ayirma grubu cok kucuk"))
-    head = bytearray(sb.bs)
-    head[0:512] = primary
+    # baslik sektorleri 4 x sektor; 1 KiB blokta 2+ blok tutar
+    head = bytearray(lay["hdr"] * sb.bs)
+    head[0:len(primary)] = primary
     # AGF
     agf = bytearray(ss)
     struct.pack_into(">4sIII", agf, 0, b"XAGF", 1, agno, length)
@@ -364,21 +372,22 @@ def xfs_grow(dev: BlockDevice, new_bytes: int,
     if new_len > old_len:
         writes += _extend_last_ag(dev, sb, last, old_len, new_len)
         added += new_len - old_len
-    # yeni birincil
-    primary = sb.raw
+    # yeni birincil: CRC ustblok sektorunun tamamini kapsar (sektor 4 KiB
+    # ise 4096 bayt; cekirdek tamponu XFS_FSS_TO_BB(mp, 1) boyludur)
+    primary = bytearray(dev.read(0, sb.sectsize))
     struct.pack_into(">Q", primary, 8, nb)
     struct.pack_into(">I", primary, 88, nag)
     new_ag_writes: List[Tuple[int, bytes]] = []
     for agno in range(sb.agcount, nag):
         length = min(sb.agblocks, nb - agno * sb.agblocks)
-        blocks, free = new_ag_blocks(sb, bytes(primary[:512]), agno, length)
+        blocks, free = new_ag_blocks(sb, bytes(primary), agno, length)
         added += free
         base = agno * sb.agblocks * sb.bs
         new_ag_writes += [(base + b * sb.bs, data) for b, data in blocks]
     struct.pack_into(">Q", primary, 144, sb.fdblocks + added)
-    final = _crc(bytearray(primary[:512]), 224)
+    final = _crc(bytearray(primary), 224)
     # yeni AG'lerin ustbloklari son degerlerle (CRC dahil)
-    new_ag_writes = [(off, final + data[512:]) if (off // sb.bs) % sb.agblocks == 0
+    new_ag_writes = [(off, final + data[len(final):]) if (off // sb.bs) % sb.agblocks == 0
                      and off % (sb.agblocks * sb.bs) == 0 else (off, data)
                      for off, data in new_ag_writes]
     total = len(new_ag_writes) + len(writes) + sb.agcount

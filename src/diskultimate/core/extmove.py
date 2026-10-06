@@ -56,6 +56,7 @@ INCOMPAT_INLINE_DATA = 0x8000
 RO_HUGE_FILE = 0x0008
 RO_QUOTA = 0x0100
 RO_PROJECT = 0x2000
+COMPAT_STABLE_INODES = 0x0800
 
 # ustbloktaki inode numarasi alanlari
 SB_INODE_FIELDS = (0xE0, 0x240, 0x244, 0x268, 0x26C, 0x280)
@@ -389,6 +390,14 @@ class _Shrinker:
         if not movers:
             return
         g = self.vol.geo
+        if g.compat & COMPAT_STABLE_INODES:
+            # stable_inodes: inode numarasi dosya sifreleme anahtarina
+            # (IV_INO_LBLK) baglidir; degisirse veri cozulemez. resize2fs de
+            # reddeder (denetim E6).
+            raise ExtResizeError(tr(
+                "Birimde stable_inodes ozelligi var: inode numaralari "
+                "degistirilemez. Birimi, silinecek gruplarda dosya kalmayacak "
+                "boyuta kucultun."))
         if g.ro_compat & (RO_QUOTA | RO_PROJECT):
             raise ExtResizeError(tr(
                 "Kotali (quota) ext biriminde inode tasinamaz; birimi "

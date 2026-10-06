@@ -62,6 +62,13 @@ NAME_DOS = 2                   # 8.3 kisa ad — listelemede atlanir
 
 MFT_RECORD_ROOT = 5            # kok dizin
 
+# Guncelleme dizisi (fixup) adimi: Windows ve ntfs-3g HER ZAMAN 512 bayt
+# kullanir (`usa_count - 1 == kayit_boyu / 512`), sektor 4096 olsa bile.
+# Eskiden sektor boyutu kullaniliyordu: 4K sektorlu birimde kayitlar yanlis
+# geri konuyor, Windows/ntfs3 yazisi dosyalar eksik ya da bozuk okunuyordu
+# (denetim N1, 2026-10-06).
+NTFS_BLOCK_SIZE = 512
+
 
 # Bayt -> icindeki 1 bit sayisi. `bytes.translate` ile milyonlarca bayt
 # tek cagrida sayilir (bkz. NtfsFS.used_bytes).
@@ -100,6 +107,11 @@ class Attribute:
     allocated_size: int = 0
     initialized_size: int = 0
     runs: List[Tuple[int, int]] = field(default_factory=list)  # (lcn, kume)
+    extents: int = 1                         # $ATTRIBUTE_LIST ile birlesen parca
+
+    @property
+    def encrypted(self) -> bool:
+        return bool(self.flags & ATTR_ENCRYPTED)
 
     @property
     def sparse_or_compressed(self) -> bool:
@@ -190,14 +202,32 @@ class MftRecord:
                          initialized_size=initialized, runs=runs)
 
     # ------------------------------------------------------------------
+    @property
+    def has_attribute_list(self) -> bool:
+        return any(a.kind == AT_ATTRIBUTE_LIST for a in self.attributes)
+
     def find(self, kind: int, name: str = "") -> Optional[Attribute]:
-        for a in self.all_attributes():
-            if a.kind == kind and a.name == name:
-                return a
-        return None
+        """(tur, ad) oznitelugu; parcalari varsa **birlestirilmis** olarak.
+
+        Buyuk/parcali bir akis `$ATTRIBUTE_LIST` ile birden cok kayda
+        dagilir; her kayit VCN araliginin bir parcasini tasir. Eskiden yalnizca
+        ilk parca donuyordu: dosya sessizce kesik disa aktariliyordu (N4).
+        """
+        parts = [a for a in self.all_attributes()
+                 if a.kind == kind and a.name == name]
+        if not parts:
+            return None
+        if len(parts) == 1 or parts[0].resident:
+            return parts[0]
+        return _merge_extents(parts, self.number)
 
     def find_all(self, kind: int) -> List[Attribute]:
-        return [a for a in self.all_attributes() if a.kind == kind]
+        """`kind` turundeki oznitelikler (her ad icin parcalar birlesik)."""
+        names: List[str] = []
+        for a in self.all_attributes():
+            if a.kind == kind and a.name not in names:
+                names.append(a.name)
+        return [self.find(kind, n) for n in names]
 
     def all_attributes(self) -> List[Attribute]:
         """Bu kaydin ve `$ATTRIBUTE_LIST` ile bagli kayitlarin oznitelikleri.
@@ -230,6 +260,33 @@ class MftRecord:
                     pass
             pos += entry_len
         return out
+
+
+def _merge_extents(parts: List[Attribute], number: int) -> Attribute:
+    """Bir akisin parcalarini VCN sirasina dizip tek oznitelik yapar.
+
+    Boyut alanlari yalnizca ilk parcada (start_vcn 0) anlamlidir. VCN'ler
+    bitisik degilse (eksik uzanti kaydi) sessizce kesik okumak yerine hata
+    verilir.
+    """
+    parts = sorted(parts, key=lambda a: a.start_vcn)
+    first = parts[0]
+    if first.start_vcn != 0 or any(p.resident for p in parts):
+        raise NtfsError(tr("Oznitelik parcalari tutarsiz (kayit {})", number))
+    runs: List[Tuple[int, int]] = []
+    next_vcn = 0
+    for p in parts:
+        if p.start_vcn != next_vcn:
+            raise NtfsError(tr("Oznitelik parcalari tutarsiz (kayit {})", number))
+        runs.extend(p.runs)
+        next_vcn = p.start_vcn + sum(c for _l, c in p.runs)
+    return Attribute(kind=first.kind, name=first.name, resident=False,
+                     flags=first.flags, start_vcn=0,
+                     last_vcn=max(0, next_vcn - 1),
+                     data_size=first.data_size,
+                     allocated_size=first.allocated_size,
+                     initialized_size=first.initialized_size,
+                     runs=runs, extents=len(parts))
 
 
 def _decode_runs(data: bytes) -> List[Tuple[int, int]]:
@@ -269,6 +326,18 @@ def _decode_runs(data: bytes) -> List[Tuple[int, int]]:
     return out
 
 
+def _refuse_encrypted(attr: Attribute) -> None:
+    """EFS ile sifrelenmis akis okunmaz.
+
+    Diskteki bayt sifreli metindir; anahtar kullanicinin Windows hesabindadir.
+    Eskiden sifreli metin "dosya" diye disa aktariliyordu (N7) — kullanici
+    yedegini aldigini sanip bos yere guveniyordu.
+    """
+    if attr.flags & ATTR_ENCRYPTED:
+        raise NtfsError(tr("Sifrelenmis (EFS) NTFS dosyasi okunamaz: icerik "
+                           "yalnizca Windows'ta, sahibinin hesabiyla cozulur"))
+
+
 class NtfsFS:
     """NTFS birimini salt okunur acar."""
 
@@ -277,6 +346,10 @@ class NtfsFS:
         self._read_boot()
         self._cache: Dict[int, MftRecord] = {}
         self._mft_runs: List[Tuple[int, int]] = []
+        # $MFT'nin kendisi $ATTRIBUTE_LIST ile dagilmis mi; uzantilari
+        # okunamadiysa `mft_incomplete` (yazma ve boyutlandirma reddedilir)
+        self.mft_has_attr_list = False
+        self.mft_incomplete = False
         self._load_mft()
 
     # ------------------------------------------------------------------
@@ -305,17 +378,71 @@ class NtfsFS:
 
     # ------------------------------------------------------------------
     def _load_mft(self) -> None:
-        """$MFT'nin kendi kaydini okuyup kume zincirini cikarir."""
+        """$MFT'nin kendi kaydini okuyup kume zincirini cikarir.
+
+        Parcali bir `$MFT`in `$DATA`si `$ATTRIBUTE_LIST` ile uzanti
+        kayitlarina dagilir ve o kayitlar **`$MFT`in icindedir**. Zincir once
+        temel kayittaki ilk parcadan kurulur, sonra liste VCN sirasiyla
+        izlenip her uzantinin parcasi eklenir (ntfs-3g ayni yolu izler).
+        Eskiden `find` zincir bosken uzanti kaydini okumaya calisiyor, hata
+        yutuluyor ve yalnizca ilk parcadaki kayitlar gorunuyordu (N3).
+        """
         offset = self.mft_lcn * self.cluster_size
         raw = bytearray(self.dev.read(offset, self.record_size))
         self._apply_fixup(raw)
         rec = MftRecord(0, bytes(raw), self)
-        data = rec.find(AT_DATA)
-        if data is None or data.resident:
+        base = next((a for a in rec.attributes
+                     if a.kind == AT_DATA and a.name == "" and a.start_vcn == 0),
+                    None)
+        if base is None or base.resident:
             raise NtfsError(tr("$MFT veri oznitelugu okunamadi"))
-        self._mft_runs = data.runs
-        self.mft_size = data.data_size
-        self._cache[0] = rec
+        self._mft_runs = list(base.runs)
+        self.mft_size = base.data_size
+        self.mft_has_attr_list = rec.has_attribute_list
+        self.mft_incomplete = False
+        self._cache = {0: rec}
+        if self.mft_has_attr_list:
+            self._load_mft_extents(rec, base)
+
+    def _load_mft_extents(self, rec: MftRecord, base: Attribute) -> None:
+        alist = next(a for a in rec.attributes if a.kind == AT_ATTRIBUTE_LIST)
+        try:
+            data = (alist.value if alist.resident else self.read_attribute(alist))
+        except NtfsError:
+            self.mft_incomplete = True
+            return
+        wanted = []                         # (start_vcn, kayit) — $DATA parcalari
+        pos = 0
+        while pos + 26 <= len(data):
+            kind, entry_len = struct.unpack_from("<IH", data, pos)
+            if entry_len < 26:
+                break
+            name_len, name_off = data[pos + 6], data[pos + 7]
+            name = _utf16(data[pos + name_off:pos + name_off + name_len * 2]) \
+                if name_len else ""
+            vcn = struct.unpack_from("<Q", data, pos + 8)[0]
+            ref = struct.unpack_from("<Q", data, pos + 0x10)[0] & 0xFFFFFFFFFFFF
+            if kind == AT_DATA and name == "" and vcn > 0:
+                wanted.append((vcn, ref))
+            pos += entry_len
+        next_vcn = base.start_vcn + sum(c for _l, c in base.runs)
+        for vcn, ref in sorted(wanted):
+            if vcn != next_vcn:
+                self.mft_incomplete = True
+                return
+            try:
+                ext = self.record(ref)
+            except NtfsError:
+                self.mft_incomplete = True
+                return
+            part = next((a for a in ext.attributes if a.kind == AT_DATA
+                         and a.name == "" and a.start_vcn == vcn
+                         and not a.resident), None)
+            if part is None:
+                self.mft_incomplete = True
+                return
+            self._mft_runs.extend(part.runs)
+            next_vcn = vcn + sum(c for _l, c in part.runs)
 
     def _apply_fixup(self, raw: bytearray) -> None:
         """Guncelleme dizisini geri koyar (FILE ve INDX bloklari icin).
@@ -330,7 +457,7 @@ class NtfsFS:
             return
         marker = raw[usa_off:usa_off + 2]
         for i in range(1, usa_count):
-            last = i * self.sector_size - 2
+            last = i * NTFS_BLOCK_SIZE - 2
             if last + 2 > len(raw):
                 break
             if bytes(raw[last:last + 2]) != bytes(marker):
@@ -374,6 +501,7 @@ class NtfsFS:
         """
         if length <= 0:
             return b""
+        _refuse_encrypted(attr)
         if attr.resident:
             return bytes(attr.value[offset:offset + length])
         if attr.flags & ATTR_COMPRESSED:
@@ -390,6 +518,7 @@ class NtfsFS:
 
     def read_attribute(self, attr: Attribute, max_bytes: int = -1) -> bytes:
         """Bir oznitelugun icerigini dondurur."""
+        _refuse_encrypted(attr)
         if attr.resident:
             return attr.value if max_bytes < 0 else attr.value[:max_bytes]
         if attr.flags & ATTR_COMPRESSED:
