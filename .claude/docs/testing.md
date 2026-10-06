@@ -590,6 +590,8 @@ python3 -m tests.regress_xfs_hfs # 14 (mkfs.xfs, xfs_repair)
   bag), M8 (NTFS buyuk kumede dizin indeksi alani); gerisi matrisin kendi
   kusurlariydi (xattr kaydi, HFS+ gunluk dosyalari, inode bitimi).
 - Uzun testler (eski kod, 37489214815): 102/102 basarili, 3 platform.
+- Uzun testler (tum duzeltmelerle, 37501631074): 102/102 basarili; Windows
+  NTFS isleri (Mount-DiskImage + chkdsk, gercek aygit dahil) temiz.
 - Sonuc (2026-10-06, ana makine): run_all 92/94, regress 78 tamam + 1
   atlandi, ext_write 4/4, ext_resize 32/32, ntfs_write 2/2, diag 13/13,
   platform 0, i18n ve ui_smoke tamam.

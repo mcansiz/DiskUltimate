@@ -5937,4 +5937,5 @@ calismiyordu.
   olusturulan klasorler ntfs3'te bos gorunuyordu (M8; kendi
   bicimlendiricimizde de). Uzun testler eski kodda 102/102; en son kodla
   yeniden kosuyor. regress_* 82 test.
-
+- Uzun testler tum duzeltmelerle 102/102 (37501631074); Windows NTFS isleri
+  chkdsk ile temiz.

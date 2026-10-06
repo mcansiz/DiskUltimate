@@ -92,7 +92,7 @@ stable_inodes, needs_recovery, mmp, s_state=ERROR → yazılabilir (DOĞRULANDI)
 | M7 | c | NTFS: aynı klasördeki sabit bağlardan biri silinince/yeniden adlandırılınca **öteki de kayboluyordu** (kayıt serbest; 10 turluk matris, 5 varyant × 10 tur). Silme dizindeki bütün adları uzun+8.3 çifti sayıyordu | **düzeltildi** (regress_ntfs t19) |
 | M8 | c | NTFS 64 KiB / 2 MiB küme: bizim oluşturduğumuz klasörlerin içi Linux ntfs3'te **boş görünüyordu** ($INDEX_ROOT "dizin bloğu başına küme" alanı küme > 4 KiB'ta 512 B biriminde 8 olmalı, 1 yazılıyordu). Kendi biçimlendiricimizin kök/$Secure/$Extend dizinlerinde de vardı. ntfs-3g ve bizim okuyucu alana bakmadığı için fsck geçiyordu | **düzeltildi** (regress_ntfs t20, t21) |
 
-Doğrulama: `tests/regress_{fat,ext,ntfs,ptable,xfs_hfs}.py` (82 test; eski kodda başarısız, yeni kodda geçer), yabancı matris. **Windows'ta henüz doğrulanmadı:** NTFS 4K sektör fixup'ı chkdsk ile, 64K+ küme ayna, Hızlı Başlangıç kapısı gerçek birimde.
+Doğrulama: `tests/regress_{fat,ext,ntfs,ptable,xfs_hfs}.py` (82 test; eski kodda başarısız, yeni kodda geçer), yabancı matris. Windows (GitHub, uzun testler 37501631074): kendi biçimlendirdiğimiz NTFS birimlerinde yeni yazıcı Mount-DiskImage + chkdsk ile temiz (4 KiB küme, 512 B sektör). **Windows'ta henüz doğrulanmadı:** NTFS 4K sektör fixup'ı chkdsk ile, 64K+ küme ayna, Hızlı Başlangıç kapısı gerçek birimde.
 
 Ayrıntılı alt ajan raporları bu oturumun dökümündedir
 (`.claude/sessions/live/4bbcf40c-...jsonl`).
