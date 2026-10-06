@@ -132,15 +132,24 @@ def make_dataset(seed: int, budget: int) -> Tuple[List[FileSpec], List[str], Lis
 
 
 def write_spec(root: str, spec: FileSpec) -> None:
+    """Dosyayi yazar; yarida kalirsa (ENOSPC, kok dizin dolu) yarim dosyayi
+    siler — yoksa diskte manifestte olmayan 0 baytlik dosya kalir."""
     target = root + spec.path
     os.makedirs(os.path.dirname(target), exist_ok=True)
     src = Content(spec)
-    with open(target, "wb") as fh:
-        while True:
-            piece = src.read(4 * MIB)
-            if not piece:
-                break
-            fh.write(piece)
+    try:
+        with open(target, "wb") as fh:
+            while True:
+                piece = src.read(4 * MIB)
+                if not piece:
+                    break
+                fh.write(piece)
+    except OSError:
+        try:
+            os.remove(target)
+        except OSError:
+            pass
+        raise
 
 
 # --------------------------------------------------------------------------
@@ -154,17 +163,38 @@ def tool(name: str) -> Optional[str]:
     return shutil.which(name) or shutil.which(name, path="/sbin:/usr/sbin")
 
 
+def _udev_unescape(text: str) -> str:
+    """blkid `-o udev` ID_FS_LABEL_ENC: \\xHH kacislari -> UTF-8 metin.
+
+    `-o export` ASCII disi baytlari "M-CM-^G" biciminde verir (exfat-unicode
+    etiketi boyle yanlis karsilastirildi); kodlu alan kayipsizdir.
+    """
+    raw = bytearray()
+    i = 0
+    while i < len(text):
+        if text.startswith("\\x", i) and i + 4 <= len(text):
+            raw.append(int(text[i + 2:i + 4], 16))
+            i += 4
+        else:
+            raw += text[i].encode("utf-8")
+            i += 1
+    return raw.decode("utf-8", "replace")
+
+
 def blkid_info(path: str) -> Dict[str, str]:
     exe = tool("blkid")
     if not exe:
         return {}
-    r = run([exe, "-p", "-o", "export", path])
-    out = {}
+    r = run([exe, "-p", "-o", "udev", path])
+    raw = {}
     for line in r.stdout.splitlines():
         if "=" in line:
             k, v = line.split("=", 1)
-            out[k] = v
-    return out
+            raw[k] = v
+    out = {"TYPE": raw.get("ID_FS_TYPE", ""), "VERSION": raw.get("ID_FS_VERSION", "")}
+    if "ID_FS_LABEL_ENC" in raw:
+        out["LABEL"] = _udev_unescape(raw["ID_FS_LABEL_ENC"])
+    return out if out["TYPE"] else {}
 
 
 def sparse_copy(src: str, dst: str, offset: int) -> None:
@@ -200,8 +230,113 @@ def nfc(text: str) -> str:
 # --------------------------------------------------------------------------
 # Doldurma
 # --------------------------------------------------------------------------
+SPECIAL_FS = ("ext4", "xfs", "btrfs", "f2fs", "hfsplus", "ntfs3")
+
+
+def _sha1_file(path: str) -> Tuple[int, str]:
+    import hashlib
+    h = hashlib.sha1()
+    n = 0
+    with open(path, "rb") as fh:
+        while True:
+            piece = fh.read(4 * MIB)
+            if not piece:
+                break
+            h.update(piece)
+            n += len(piece)
+    return n, h.hexdigest()
+
+
+def add_specials(mnt: str, v: Variant, kind: str, manifest: Manifest,
+                 specials: Dict[str, str]) -> List[str]:
+    """Denetimin hata buldugu nesne turleri (ADR 0094): sabit bag, symlink
+    (59/60/61 karakter siniri), aygit dugumu, fifo, seyrek ve fallocate
+    edilmis dosya, buyuk xattr, casefold dizini. Her biri ayri denenir;
+    surucu desteklemiyorsa atlanir. Duzenli dosyalarin ozeti cekirdekten
+    okunur (referans cekirdegin gordugudur)."""
+    if kind not in SPECIAL_FS:
+        return []
+    base = mnt + "/ozel"
+    os.makedirs(base, exist_ok=True)
+    made: List[str] = []
+
+    def regular(rel: str) -> None:
+        manifest.entries[rel] = _sha1_file(mnt + rel)
+
+    def attempt(name: str, fn) -> None:
+        try:
+            fn()
+            made.append(name)
+        except (OSError, subprocess.SubprocessError, NotImplementedError):
+            pass
+
+    def hardlink():
+        write_spec(mnt, FileSpec("/ozel/bag_a.bin", 70_000, 991))
+        os.link(base + "/bag_a.bin", base + "/bag_b.bin")
+        regular("/ozel/bag_a.bin")
+        regular("/ozel/bag_b.bin")
+
+    def symlinks():
+        for n in (10, 59, 60, 61, 300):
+            target = ("h" * (n - 4)) + ".txt"
+            os.symlink(target, f"{base}/sembol_{n}")
+            specials[f"/ozel/sembol_{n}"] = "symlink"
+
+    def devices():
+        for name, spec in (("aygit_c", "c 1 3"), ("aygit_b", "b 7 0")):
+            r = run(["sudo", "-n", "mknod", f"{base}/{name}"] + spec.split())
+            if r.returncode != 0:
+                raise OSError(r.stderr)
+            specials[f"/ozel/{name}"] = "device"
+        os.mkfifo(base + "/boru")
+        specials["/ozel/boru"] = "fifo"
+
+    def sparse():
+        with open(base + "/seyrek.bin", "wb") as fh:
+            fh.seek(9 * MIB + 123)
+            fh.write(b"son-blok" * 512)
+            fh.seek(3 * MIB)
+            fh.write(b"orta" * 1000)
+        regular("/ozel/seyrek.bin")
+
+    def fallocated():
+        fd = os.open(base + "/ayrilmis.bin", os.O_CREAT | os.O_WRONLY, 0o644)
+        try:
+            os.posix_fallocate(fd, 0, 6 * MIB)
+            os.pwrite(fd, b"basta-yazili" * 100, 0)
+            os.pwrite(fd, b"ortada" * 100, 4 * MIB)
+        finally:
+            os.close(fd)
+        regular("/ozel/ayrilmis.bin")
+
+    def xattr():
+        write_spec(mnt, FileSpec("/ozel/xattrli.bin", 5000, 993))
+        os.setxattr(base + "/xattrli.bin", "user.deneme", b"x" * 3000)
+        regular("/ozel/xattrli.bin")
+
+    def casefold():
+        if v.id != "ext4-casefold":
+            raise OSError("casefold degil")
+        os.makedirs(mnt + "/harf", exist_ok=True)
+        r = run(["sudo", "-n", "chattr", "+F", mnt + "/harf"])
+        if r.returncode != 0:
+            raise OSError(r.stderr)
+        for i in range(220):        # htree'ye gecsin
+            spec = FileSpec(f"/harf/Dosya_{i:03d}_BuyukKucuk.txt", 300 + i, 5000 + i)
+            write_spec(mnt, spec)
+            manifest.put(spec)
+        specials["/harf"] = "casefold-dir"
+
+    for name, fn in (("sabit-bag", hardlink), ("symlink", symlinks),
+                     ("aygit", devices), ("seyrek", sparse),
+                     ("fallocate", fallocated), ("xattr", xattr),
+                     ("casefold", casefold)):
+        attempt(name, fn)
+    return made
+
+
 def populate_kernel(v: Variant, img: str, files, dirs, deleted,
-                    manifest: Manifest) -> str:
+                    manifest: Manifest, specials: Dict[str, str]) -> str:
     kind = verify.KERNEL_TYPE.get(v.fs)
     if not kind or not verify.sudo_ok():
         raise Skip("cekirdek ile doldurma yok (sudo/surucu)")
@@ -248,13 +383,16 @@ def populate_kernel(v: Variant, img: str, files, dirs, deleted,
                     written += 1
                 except OSError:
                     failed += 1
+        made = add_specials(mnt, v, kind, manifest, specials)
         run(["sync"])
     finally:
         u = run(["sudo", "-n", "umount", mnt])
         os.rmdir(mnt)
         if u.returncode != 0:
             raise Fail(f"umount: {u.stderr[-200:]}")
-    return f"cekirdek {kind}: {written} dosya" + (f", {failed} yazilamadi" if failed else "")
+    return (f"cekirdek {kind}: {written} dosya"
+            + (f", {failed} yazilamadi" if failed else "")
+            + (f"; ozel: {', '.join(made)}" if made else ""))
 
 
 def _ascii(path: str) -> bool:
@@ -327,6 +465,7 @@ class Checker:
         self.v = v
         self.kernel = kernel
         self.fsck_baseline = None          # (durum, ayrinti)
+        self.specials: Dict[str, str] = {}  # yol -> tur (duzenli dosya degil)
 
     def walk(self, access, path: str = "/") -> Dict[str, int]:
         out: Dict[str, int] = {}
@@ -357,7 +496,8 @@ class Checker:
             # Kokteki sistem dosyalari (lost+found icerigi, kota) dosya degil;
             # bilinen fazlaliklar disinda fazla dosya bir okuma hatasidir.
             extra = [e for e in extra if not e.startswith(("/lost+found/",
-                                                           "/System Volume"))]
+                                                           "/System Volume"))
+                     and e not in self.specials]
             if exact and extra:
                 raise Fail(f"listede fazla ({len(extra)}): {extra[:5]}")
             wrong = [p for p in expected if p in listed and listed[p] != expected[p]]
@@ -489,7 +629,8 @@ def run_variant(v: Variant, seed: int, budget_mb: int, workroot: str,
 
     def populate():
         try:
-            return populate_kernel(v, part_img, files, dirs, deleted, manifest)
+            return populate_kernel(v, part_img, files, dirs, deleted, manifest,
+                                   checker.specials)
         except Skip as first:
             try:
                 return populate_user(v, part_img, files, dirs, deleted, manifest, work)
@@ -604,6 +745,24 @@ def run_variant(v: Variant, seed: int, budget_mb: int, workroot: str,
                 spec = FileSpec("/yeni_dizin/sonradan.dat", rnd.randint(1, 50_000), seed * 11)
                 access.write_stream(spec.path, Content(spec), spec.size)
                 manifest.put(spec, content_sha1(spec))
+                # Ozel nesneler (denetim E2/E3/E7/E13): sabit bagin bir adi,
+                # aygit/fifo, 59/60 karakterlik symlink, xattr'li dosya silinir;
+                # kalan bag okunabilmeli, fsck sizinti gormemeli.
+                sp = checker.specials
+                for path in ("/ozel/bag_b.bin", "/ozel/xattrli.bin"):
+                    if path in manifest.entries:
+                        access.remove(path)
+                        manifest.drop(path)
+                for path in ("/ozel/aygit_c", "/ozel/boru", "/ozel/sembol_59",
+                             "/ozel/sembol_60"):
+                    if path in sp:
+                        access.remove(path)
+                        sp.pop(path)
+                if "/harf" in sp:              # casefold htree dizinine yaz (E5)
+                    for i in range(3):
+                        spec = FileSpec(f"/harf/YeniKarisik_{i}.TXT", 777 + i, seed * 13 + i)
+                        access.write_stream(spec.path, Content(spec), spec.size)
+                        manifest.put(spec, content_sha1(spec))
                 access.flush()
             except Exception as exc:                      # noqa: BLE001
                 # Yazicinin reddetmesi serbest; ama birim saglam kalmali.
