@@ -359,6 +359,13 @@ class ExFatFS:
         if self.num_fats != 1 or self.active_fat != 0:
             return tr("Bu exFAT birimi iki FAT kopyasi (TexFAT) kullaniyor; "
                       "yazma ve boyutlandirma desteklenmiyor")
+        if self.volume_flags & 0x0006:
+            # VolumeDirty (bit1) / MediaFailure (bit2), spec 3.1.13. Windows
+            # baglarken koyar, duzgun ayirirken kaldirir (VM'de olculdu: guc
+            # kesilince 0x0002 kaldi). Bitmap/FAT yarim guncellenmis olabilir.
+            return tr("exFAT birimi temiz ayrilmamis (VolumeDirty) ya da ortam "
+                      "hatasi isaretli; bitmap ve FAT yarim guncellenmis olabilir. "
+                      "Once Windows'ta chkdsk ya da fsck.exfat ile denetleyin.")
         return ""
 
     def _check_writable(self) -> None:

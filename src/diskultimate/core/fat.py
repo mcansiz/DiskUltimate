@@ -330,12 +330,50 @@ class FatFS:
                 return "kok dizin kumesi FAT'te bos"
         return ""
 
+    def dirty_state(self) -> str:
+        """Birim temiz ayrilmamis mi? Bos: temiz.
+
+        Windows birimi baglarken kirli bayragini koyar, duzgun ayirirken
+        kaldirir (VM'de olculdu: guc kesilince FAT32'de BPB 0x41 = 0x01
+        kaldi, Windows'un son yazdiklari diske inmemisti). Bayraklar:
+          * BS_NTRes (FAT32 0x41, FAT12/16 0x25): bit0 kirli, bit1 yuzey
+            taramasi gerekli — Windows'un kullandigi;
+          * FAT[1] ClnShutBitMask / HrdErrBitMask (FAT16 bit 15/14, FAT32
+            bit 27/26): 0 ise kirli / G/C hatasi (fatgen103).
+        FAT/dizin yarim guncellenmis olabilir: yazma ve kullanilan alan
+        haritasi guvenilmez (ADR 0094).
+        """
+        try:
+            boot = self.dev.read(0, 512)
+        except Exception:                        # noqa: BLE001
+            return "onyukleme sektoru okunamadi"
+        ntres = boot[0x41] if self.fat_type == 32 else boot[0x25]
+        if ntres & 0x03:
+            return "BS_NTRes kirli (0x%02x)" % ntres
+        if self.fat_type == 16:
+            e1 = self.get_fat(1)
+            if not e1 & 0x8000:
+                return "FAT[1] temiz kapatma biti 0"
+            if not e1 & 0x4000:
+                return "FAT[1] G/C hatasi biti 0"
+        elif self.fat_type == 32:
+            e1 = self.get_fat(1)
+            if not e1 & 0x08000000:
+                return "FAT[1] temiz kapatma biti 0"
+            if not e1 & 0x04000000:
+                return "FAT[1] G/C hatasi biti 0"
+        return ""
+
     @property
     def write_block_reason(self) -> str:
         """Bu birime yazmamak icin neden (bos: yazilabilir)."""
         if self.fat_problem():
             return tr("FAT tablosu tutarsiz; birime yazilamaz. Once fsck.fat "
                       "veya chkdsk ile onarin")
+        if self.dirty_state():
+            return tr("Birim temiz ayrilmamis (kirli bayragi); FAT ve dizinler "
+                      "yarim guncellenmis olabilir. Once Windows'ta chkdsk ya da "
+                      "fsck.fat ile denetleyin.")
         return ""
 
     def _check_writable(self) -> None:

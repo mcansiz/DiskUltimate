@@ -439,6 +439,8 @@ def _fat(dev: BlockDevice, boot: bytes) -> Optional[FSInfo]:
     info = FSInfo(fs_type=fs_type, label=label,
                   total_bytes=total * bps, cluster_size=spc * bps,
                   damaged=damaged)
+    # Windows'un kirli bayragi (BS_NTRes bit0-1); FAT[1] bitleri FatFS'te
+    info.unclean = bool((boot[0x41] if fs_type == "FAT32" else boot[0x25]) & 0x03)
     # FAT32 ExtFlags: aynalama kapaliysa (bit 7) etkin FAT bit 0-3'tedir
     active = 0
     if fs_type == "FAT32":
@@ -547,6 +549,8 @@ def _exfat(dev: BlockDevice, boot: bytes) -> FSInfo:
     serial = struct.unpack_from("<I", boot, 100)[0]
     info = FSInfo(fs_type="exFAT", total_bytes=total * bps, cluster_size=bps * spc,
                   uuid=f"{serial:08X}")
+    # VolumeDirty / MediaFailure (spec 3.1.13): temiz ayrilmamis
+    info.unclean = bool(struct.unpack_from("<H", boot, 106)[0] & 0x0006)
     info.used_bytes = _exfat_used(dev, boot, bps, spc, cluster_count)
     info.label = _exfat_label(dev, boot, bps, spc)
     return info

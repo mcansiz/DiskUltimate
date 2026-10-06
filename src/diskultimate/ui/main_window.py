@@ -3913,6 +3913,10 @@ class MainWindow(QMainWindow):
             alanlar.append((tr("UUID / Seri no"), info.uuid))
         if part.fs_type == "NTFS":
             alanlar.append((tr("Durum"), self._ntfs_state_text(part, info)))
+        elif getattr(info, "unclean", False):
+            alanlar.append((tr("Durum"),
+                            tr("Temiz ayrilmamis — okunabilir, yazilamaz; once "
+                               "chkdsk / fsck ile denetleyin")))
         elif getattr(info, "damaged", False):
             # FAT tablosu tutarsiz (picozed.img gibi): fsck.fat birimi
             # reddeder; biz okuruz ama yazmayiz (ADR 0094).

@@ -94,6 +94,8 @@ def _fat(view: BlockDevice) -> Optional[Ranges]:
     fs = FatFS(view)
     if fs.fat_problem():
         return None          # tutarsiz FAT: "bos" sanilan kume dolu olabilir
+    if fs.dirty_state():
+        return None          # temiz ayrilmamis: FAT yarim guncellenmis olabilir
     bps = fs.bytes_per_sector
     data_start = fs.first_data_sector * bps
     # etkin FAT (FAT32 ExtFlags aynalama kapaliysa FAT0 bayat olabilir)
@@ -115,6 +117,8 @@ def _exfat(view: BlockDevice) -> Optional[Ranges]:
     fs = ExFatFS(view)
     if fs.num_fats != 1:
         return None          # TexFAT: iki bitmap; hangisinin tam oldugu belirsiz
+    if fs.volume_flags & 0x0006:
+        return None          # VolumeDirty / MediaFailure: bitmap'e guvenilmez
     heap = fs.cluster_offset(2)
     bitmap = bytes(fs._load_bitmap())
     count = fs.cluster_count

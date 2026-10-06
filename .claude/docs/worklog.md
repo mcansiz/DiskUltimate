@@ -5939,3 +5939,20 @@ calismiyordu.
   yeniden kosuyor. regress_* 82 test.
 - Uzun testler tum duzeltmelerle 102/102 (37501631074); Windows NTFS isleri
   chkdsk ile temiz.
+
+## 2026-10-06 (3) — VirtualBox Windows 10 gidis-donus sinamasi
+
+- Windows'un bicimlendirdigi NTFS 64K/4K/2M, exFAT 128K, FAT32 birimleri
+  (Windows API'leriyle: sabit bag, ADS, seyrek, sikistirilmis, 400 parcali,
+  emoji ad) -> bizim okuma 1532/1533 (yalnizca LZNT1 sikistirilmis dosya:
+  ozellik eksigi, acikca reddediliyor), iki kipli yedek copla dolu hedefe,
+  yazma/silme/sabit bag/ad degistirme, NTFS kucultme + FAT32 buyutme ->
+  Windows chkdsk 10/10 birimde temiz, dosya ozetleri birebir.
+- Temiz kapatilmamis birim (Windows yazarken guc kesildi): NTFS kapisi
+  calisti; FAT32 (BPB 0x41) ve exFAT (VolumeDirty) kirli bayraklari yok
+  sayiliyordu -> ret kapisi + tam yedek + arayuz uyarisi (M9, t17).
+- Hizli Baslangic bu VM'de sinanamiyor (bellenim hazirda bekletmeyi
+  desteklemiyor). Betikler: tests/vm_windows/.
+- run_all 92/94, regress 83 test (82 tamam + 1 atlandi), diag, platform,
+  i18n, ui_smoke tamam.
+

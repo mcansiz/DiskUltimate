@@ -1,8 +1,11 @@
 ---
 name: virtualbox-win10-test
-description: Linux ana makinedeki VirtualBox "win10 " misafiri — guestcontrol ile pc/1234, embeddable Python, testler C:\du-test'te
+description: "Linux ana makinedeki VirtualBox \"win10 \" misafiri — guestcontrol ile pc/1234, embeddable Python, testler C:\\du-test'te"
 metadata:
+  node_type: memory
   type: reference
+  originSessionId: 4bbcf40c-45fc-4987-bb49-97c541c610b1
+  modified: 2026-10-06T19:14:18.690Z
 ---
 
 Linux ana makinede (bu repo /home/pc/Belgeler/GitHub) VirtualBox misafiri
@@ -46,6 +49,15 @@ VMware misafiridir.
 - Exe derleme: `robocopy \\VBoxSvr\GitHub\DiskUltimate C:\du-test\DiskUltimate /MIR
   /XD .git sessions .tmp __pycache__ build dist` + `C:\Python312\python.exe -m
   PyInstaller DiskUltimate.spec --noconfirm --clean` (normal kullanici yeter).
+- **2026-10-06:** misafirde hazirda bekletme / Hizli Baslangic YOK
+  (`powercfg /a`: "firmware does not support hibernation") — hibernation
+  kapisi burada sinanamaz; "temiz kapatilmamis birim" icin disk SATA-2'ye
+  takilip yazarken `VBoxManage controlvm poweroff` kullanildi.
+- Hazirlik denetimi: `guestcontrol run ... cmd /c echo hazir` ciktisi `\r`
+  tasir; `[ "$r" = hazir ]` hic tutmaz (10 dk bosa bekledi) — `grep -q`.
+- Windows'a birim urettirip geri denetletme betikleri: `.tmp/vm/w1006/`
+  (uret.ps1 + doldur.py -> isle.py ana makinede -> dogrula.ps1/dogrula.py).
+  VHD paylasimdan `C:\du-test`e kopyalanip `Mount-DiskImage` ile baglanir.
 - **Misafirdeki X: ana makinenin `/run/media/pc/Data/myiso` paylasimidir**
   (etiket VBOX_myiso; kullanicinin ISO arsivi). 2026-10-04'te bir betik
   `assign letter=X` basarisiz olunca test dosyalarini oraya yazdi. Misafirde

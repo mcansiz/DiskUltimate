@@ -809,6 +809,66 @@ def t16_exfat_boyutlandirma_sektor_boyutu():
         d.close()
 
 
+@test
+def t17_kirli_bayrak_kapisi():
+    """Windows'un temiz ayirmadigi FAT32/FAT16/exFAT: yazma reddedilir, harita yok
+
+    VirtualBox Windows 10'da olculdu: guc kesilince FAT32'de BPB 0x41 = 0x01,
+    exFAT'te VolumeFlags = 0x0002 kaldi; Windows'un son yazdiklari diske
+    inmemisti. Program bu birimlere yaziyor ve kullanilan alan haritasina
+    guveniyordu.
+    """
+    from diskultimate.core.filesystem import ExFatAccess, FatAccess
+    from diskultimate.core.fsdetect import detect
+
+    for ad, args, off in (("k32.img", ("-F", "32"), 0x41), ("k16.img", ("-F", "16"), 0x25)):
+        yol = mkfat(ad, 64, *args)
+        d = DiskImage(yol)
+        FatFS(d).write_file("/a.txt", b"temiz")
+        d.flush()
+        assert FatAccess(d).writable, "temiz birim yazilabilir olmali"
+        assert usedmap.fs_used_ranges(d) is not None
+        boot = bytearray(d.read(0, 512))
+        boot[off] |= 0x01
+        d.write(0, bytes(boot))
+        d.flush()
+        fs = FatFS(d)
+        assert fs.dirty_state() and fs.write_block_reason
+        raises(FatError, fs.write_file, "/b.txt", b"x")
+        assert fs.read_file("/a.txt") == b"temiz"
+        assert not FatAccess(d).writable
+        assert usedmap.fs_used_ranges(d) is None
+        assert detect(d).unclean
+        raises(resize.ResizeError, resize.fat_resize, d, d.sector_count - 2048)
+        # FAT[1] temiz kapatma biti (bayrak temizlenince yine kirli sayilmali)
+        boot[off] &= 0xFE
+        d.write(0, bytes(boot))
+        fs = FatFS(d)
+        assert not fs.dirty_state()
+        fs.set_fat(1, fs.get_fat(1) & ~(0x08000000 if fs.fat_type == 32 else 0x8000))
+        fs.flush()
+        assert FatFS(d).dirty_state(), "FAT[1] ClnShut 0 kirli sayilmali"
+        d.close()
+
+    yol = mkexfat("kx.img", 64)
+    d = DiskImage(yol)
+    ExFatFS(d).write_file("/a.txt", b"temiz")
+    d.flush()
+    assert ExFatAccess(d).writable and usedmap.fs_used_ranges(d) is not None
+    boot = bytearray(d.read(0, 512))
+    boot[106] |= 0x02                          # VolumeDirty (saglama disi alan)
+    d.write(0, bytes(boot))
+    d.flush()
+    fs = ExFatFS(d)
+    assert fs.write_block_reason
+    raises(ExFatError, fs.write_file, "/b.txt", b"x")
+    assert fs.read_file("/a.txt") == b"temiz"
+    assert not ExFatAccess(d).writable
+    assert usedmap.fs_used_ranges(d) is None
+    assert detect(d).unclean
+    d.close()
+
+
 # --------------------------------------------------------------------------
 def main() -> int:
     tamam, basarisiz, atlanan = 0, [], []

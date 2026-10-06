@@ -596,6 +596,14 @@ python3 -m tests.regress_xfs_hfs # 14 (mkfs.xfs, xfs_repair)
   atlandi, ext_write 4/4, ext_resize 32/32, ntfs_write 2/2, diag 13/13,
   platform 0, i18n ve ui_smoke tamam.
 
+## 2026-10-06 — VirtualBox Windows 10 gidis-donus (tests/vm_windows)
+
+- Windows uretir (Format-Volume + Windows API) -> biz okur/yedekler/yazar/
+  boyutlandiririz -> Windows chkdsk + ozet: 10/10 birim temiz.
+- Guc kesintisi benzetimi: NTFS $LogFile kapisi calisti; FAT/exFAT kirli
+  bayragi acigi bulundu ve kapatildi (regress_fat t17).
+- Sinanamayan: Hizli Baslangic (VM bellenimi hazirda bekletme yok).
+
 ## Harici dogrulama (elle)
 
 ```bash
