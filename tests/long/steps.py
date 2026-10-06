@@ -309,34 +309,81 @@ def klonla(ctx: Ctx):
     return f"klon dogrulandi ({need // MIB} MiB)"
 
 
+def _fill_garbage(path: str, size: int) -> None:
+    """Hedef goruntuyu sifir olmayan veriyle doldurur.
+
+    Yalnizca kullanilan alan yedeginde (ADR 0092) atlanan bloga geri
+    yuklemede dokunulmaz. Hedef sifir olsaydi, yanlislikla atlanan bir blok
+    "sifir" okunup dogrulamadan kacabilirdi; copten kacamaz.
+    """
+    chunk = os.urandom(4 * MIB)
+    with open(path, "r+b") as fh:
+        pos = 0
+        while pos < size:
+            n = min(len(chunk), size - pos)
+            fh.write(chunk[:n])
+            pos += n
+
+
 def yedek_geri(ctx: Ctx):
+    """Tam ve yalnizca kullanilan alan yedegi -> copla dolu hedefe geri yukle
+    -> kendi okuyucu + dis fsck + cekirdek baglama."""
+    from diskultimate.core import clone as clone_mod
+    from diskultimate.core.image import DiskImage
+
     need = _image_bytes(ctx.image)
     if ctx.free_disk() < need * 2.2 + 512 * MIB:
         raise StepSkip(f"disk yetmez: yedek + geri yukleme ~{2 * need // MIB} MiB ister")
     ctx.session.close_filesystems()
-    dub = os.path.join(ctx.workdir, "yedek.dub")
-    dest = os.path.join(ctx.workdir, "geri.img")
-    try:
-        ctx.session.backup_disk(dub, compress=True, remark="uzun test")
-        DiskSession.restore_to_new_image(dub, dest)
-        back = DiskSession.open(dest, readonly=True)
+    notes = []
+    for used_only in (False, True):
+        kip = "kullanilan" if used_only else "tam"
+        dub = os.path.join(ctx.workdir, "yedek.dub")
+        dest = os.path.join(ctx.workdir, "geri.img")
         try:
-            part = [p for p in back.partitions if p.start_lba == ctx.part_lba]
-            if not part:
-                raise StepFail("geri yuklenen diskte bolum yok")
-            if ctx.fs.writable:
-                count, _, errors = verify.verify_manifest(
-                    back.filesystem(part[0].index), ctx.manifest)
-                if errors:
-                    raise StepFail("geri yukleme: " + "; ".join(errors[:5]))
+            info = ctx.session.backup_disk(dub, compress=True, remark="uzun test",
+                                           used_only=used_only)
+            total = ctx.session.image.size
+            hedef = DiskImage.create(dest, total, overwrite=True)
+            hedef.close()
+            _fill_garbage(dest, total)
+            hedef = DiskImage(dest)
+            try:
+                clone_mod.restore(dub, hedef)
+            finally:
+                hedef.close()
+            back = DiskSession.open(dest, readonly=True)
+            try:
+                part = [p for p in back.partitions if p.start_lba == ctx.part_lba]
+                if not part:
+                    raise StepFail(f"{kip}: geri yuklenen diskte bolum yok")
+                ss = back.image.sector_size
+                offset = part[0].start_lba * ss
+                size = part[0].sector_count * ss
+                if ctx.fs.writable:
+                    count, _, errors = verify.verify_manifest(
+                        back.filesystem(part[0].index), ctx.manifest)
+                    if errors:
+                        raise StepFail(f"{kip} geri yukleme: " + "; ".join(errors[:5]))
+            finally:
+                back.close()
+            status, detail = verify.external_fsck(ctx.fs.key, dest, offset, size)
+            if status == "fail":
+                raise StepFail(f"{kip} geri yukleme, dis denetim: " + detail[-500:])
+            kernel = "skip"
+            if ctx.kernel_check and ctx.fs.writable:
+                kernel, detail = verify.kernel_mount_check(
+                    ctx.fs.key, dest, offset, size, ctx.manifest)
+                if kernel == "fail":
+                    raise StepFail(f"{kip} geri yukleme, cekirdek: " + detail[-500:])
+            notes.append(f"{kip}: .dub {os.path.getsize(dub) // MIB} MiB, "
+                         f"kapsam={'kullanilan' if info.used_only else 'tum'}, "
+                         f"fsck={status}, cekirdek={kernel}")
         finally:
-            back.close()
-        size = os.path.getsize(dub)
-    finally:
-        for p in (dub, dest):
-            if os.path.exists(p):
-                os.unlink(p)
-    return f".dub {size // MIB} MiB, geri yuklendi"
+            for p in (dub, dest):
+                if os.path.exists(p):
+                    os.unlink(p)
+    return "; ".join(notes)
 
 
 def donustur(ctx: Ctx):

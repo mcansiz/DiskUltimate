@@ -1,0 +1,137 @@
+# Yabanci girdi testleri — ADR 0094. Gercek mkfs araclariyla uretilen,
+# cekirdekle doldurulan birimler uzerinde tespit/okuma/yedek/yazma/boyut;
+# her adim dis fsck ve cekirdek baglamasiyla dogrulanir. Elle baslatilir.
+# GitHub makineleri VM sayilir (ADR 0080): sudo mount burada serbesttir.
+name: Yabanci girdi testleri
+
+on:
+  workflow_dispatch:
+    inputs:
+      tur:
+        description: "Her varyant kac tur (farkli tohum). 1 ~ 20-40 dk/grup; 10+ saatler"
+        type: string
+        default: "3"
+      gruplar:
+        description: "fat32,fat16-12,exfat,ntfs,ext2-3,ext4-a,ext4-b,diger ya da all"
+        type: string
+        default: all
+      butce_mb:
+        description: "Varyant basina en fazla veri (MiB)"
+        type: string
+        default: "192"
+      tohum:
+        description: "0 = kosu numarasindan"
+        type: string
+        default: "0"
+      issue:
+        description: Hata olursa GitHub issue ac
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  PYTHONIOENCODING: utf-8
+  DISKULTIMATE_NO_ELEVATION_PROMPT: "1"
+  DISKULTIMATE_UPDATE_CHECK: "0"
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-24.04
+    outputs:
+      matris: ${{ steps.p.outputs.matris }}
+      tohum: ${{ steps.p.outputs.tohum }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            tests/__init__.py
+            tests/yabanci/variants.py
+          sparse-checkout-cone-mode: false
+      - id: p
+        shell: bash
+        env:
+          GRUPLAR: ${{ inputs.gruplar }}
+          TOHUM: ${{ inputs.tohum }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          sys.path.insert(0, "tests/yabanci")
+          import variants
+          secili = os.environ["GRUPLAR"]
+          gr = [{"ad": a, "sec": s} for a, s in variants.groups()
+                if secili == "all" or a in [x.strip() for x in secili.split(",")]]
+          seed = os.environ["TOHUM"] if os.environ["TOHUM"] != "0" else str(int(os.environ["GITHUB_RUN_ID"]) % 100000)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"matris={json.dumps(gr)}\n")
+              out.write(f"tohum={seed}\n")
+          print(gr, seed)
+          PY
+
+  grup:
+    name: ${{ matrix.ad }}
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.matris) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            /*
+            !/.claude/sessions/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: "3.12" }
+      - name: Araclar ve cekirdek modulleri
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends dosfstools mtools exfatprogs \
+            ntfs-3g e2fsprogs xfsprogs hfsprogs udftools btrfs-progs f2fs-tools util-linux
+          sudo apt-get install -y -q --no-install-recommends "linux-modules-extra-$(uname -r)" || true
+          for m in vfat exfat ntfs3 hfsplus udf xfs btrfs f2fs; do sudo modprobe $m || echo "modul yok: $m"; done
+          sudo mkdir -p /mnt/du && sudo chown "$(id -u):$(id -g)" /mnt/du
+          mkfs.fat 2>&1 | head -1 || true; mkfs.exfat -V | head -1; mke2fs -V 2>&1 | head -1
+          df -h /mnt / | cat
+      - name: Senaryo
+        run: >
+          python -m tests.yabanci --sec "${{ matrix.sec }}" --tur ${{ inputs.tur }}
+          --tohum ${{ needs.plan.outputs.tohum }} --butce-mb ${{ inputs.butce_mb }}
+          --cekirdek --calisma /mnt/du/yab --rapor rapor/${{ matrix.ad }}
+      - name: Ozet
+        if: always()
+        run: |
+          if [ -f rapor/${{ matrix.ad }}/yabanci.md ]; then
+            echo "## ${{ matrix.ad }}" >> "$GITHUB_STEP_SUMMARY"
+            cat rapor/${{ matrix.ad }}/yabanci.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: yabanci-${{ matrix.ad }}
+          path: rapor/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  issue:
+    name: Issue
+    needs: [plan, grup]
+    if: failure() && inputs.issue
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create yabanci-test --repo "${{ github.repository }}" --color B60205 2>/dev/null || true
+          gh issue create --repo "${{ github.repository }}" \
+            --title "Yabanci girdi testleri: hata (tohum ${{ needs.plan.outputs.tohum }})" \
+            --body "Kosu: $RUN_URL — ozet tablolar is ozetlerinde ve yuklenen raporlarda." \
+            --label yabanci-test
