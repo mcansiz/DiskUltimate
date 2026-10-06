@@ -394,6 +394,20 @@ def secure_sds_stream() -> bytes:
     return bytes(stream)
 
 
+def index_block_clusters(index_size: int, cluster_size: int) -> int:
+    """`$INDEX_ROOT`taki "indeks blogu basina kume" alani.
+
+    Blok kumeden kucukse (64 KiB / 2 MiB kume, 4 KiB blok) alan KUME degil
+    512 baytlik blok sayisidir: 4096 / 512 = 8 (mkntfs, Windows). Eskiden
+    `max(1, blok // kume)` = 1 yaziliyordu; Linux ntfs3 surucusu
+    `blok != alan * 512` gorup dizini okumuyor, icindeki dosyalari
+    listelemiyordu (yabanci girdi matrisi, -c 65536 / -c 2097152).
+    """
+    if index_size >= cluster_size:
+        return index_size // cluster_size
+    return index_size // NTFS_BLOCK_SIZE
+
+
 def _view_index_root(collation: int, entries: List[bytes],
                      index_size: int, cluster_size: int) -> bytes:
     """Dolu bir "gorunum indeksi" ($SDH / $SII) kokU.
@@ -406,7 +420,7 @@ def _view_index_root(collation: int, entries: List[bytes],
     body += end
     value = bytearray(0x20 + len(body))
     struct.pack_into("<IIIBBBB", value, 0, 0, collation, index_size,
-                     max(1, index_size // cluster_size), 0, 0, 0)
+                     index_block_clusters(index_size, cluster_size), 0, 0, 0)
     struct.pack_into("<IIII", value, 0x10, 0x10, 0x10 + len(body),
                      0x10 + len(body), 0)
     value[0x20:] = body
@@ -1230,7 +1244,8 @@ class _NtfsBuilder(NtfsFormatter):
         girisler += _index_end_entry()
         value = bytearray(0x20 + len(girisler))
         struct.pack_into("<IIIBBBB", value, 0, AT_FILE_NAME, 1, INDEX_RECORD_SIZE,
-                         max(1, INDEX_RECORD_SIZE // self.layout.cluster_size),
+                         index_block_clusters(INDEX_RECORD_SIZE,
+                                              self.layout.cluster_size),
                          0, 0, 0)
         struct.pack_into("<IIII", value, 0x10, 0x10, 0x10 + len(girisler),
                          0x10 + len(girisler), 0)
@@ -1278,7 +1293,7 @@ class _NtfsBuilder(NtfsFormatter):
         value = bytearray(0x20 + len(girisler))
         struct.pack_into("<IIIBBBB", value, 0, kind, siralama,
                          INDEX_RECORD_SIZE,
-                         max(1, INDEX_RECORD_SIZE // L.cluster_size), 0, 0, 0)
+                         index_block_clusters(INDEX_RECORD_SIZE, L.cluster_size), 0, 0, 0)
         struct.pack_into("<IIII", value, 0x10, 0x10, 0x10 + len(girisler),
                          0x10 + len(girisler), 0)
         value[0x20:] = girisler
@@ -1297,7 +1312,7 @@ class _NtfsBuilder(NtfsFormatter):
         root_value = bytearray(0x20 + len(girisler))
         struct.pack_into("<IIIBBBB", root_value, 0, AT_FILE_NAME, 1,
                          INDEX_RECORD_SIZE,
-                         max(1, INDEX_RECORD_SIZE // L.cluster_size), 0, 0, 0)
+                         index_block_clusters(INDEX_RECORD_SIZE, L.cluster_size), 0, 0, 0)
         struct.pack_into("<IIII", root_value, 0x10, 0x10, 0x10 + len(girisler),
                          0x10 + len(girisler), 1)     # bayrak 1 = alt dugum var
         root_value[0x20:] = girisler
@@ -1314,9 +1329,11 @@ class _NtfsBuilder(NtfsFormatter):
                 indexed=1),
             self._attr_resident(AT_INDEX_ROOT, bytes(root_value), name="$I30",
                                 attr_id=1),
+            # Veri boyu blok sayisi x blok boyudur; kume bloktan buyukse
+            # ayrilan boy (kume) ondan buyuk kalir (mkntfs ile ayni)
             self._attr_nonresident(AT_INDEX_ALLOCATION,
                                    [(L.root_index_lcn, index_clusters)],
-                                   index_clusters * L.cluster_size, name="$I30",
+                                   INDEX_RECORD_SIZE, name="$I30",
                                    attr_id=2),
             self._attr_resident(AT_BITMAP, b"\x01" + bytes(7), name="$I30",
                                 attr_id=3),

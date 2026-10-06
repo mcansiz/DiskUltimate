@@ -293,8 +293,13 @@ class DirIndex:
             bmp[i >> 3] &= ~(1 << (i & 7)) & 0xFF
             self._set_bitmap(bmp)
 
-    def _take_clusters(self, blocks: int = 1, goal: int = -1) -> List[Tuple[int, int]]:
-        clusters = max(1, (self.index_size * blocks + self.cs - 1) // self.cs)
+    def _take_clusters_bytes(self, nbytes: int, goal: int = -1) -> List[Tuple[int, int]]:
+        return self._take_clusters(1, goal, nbytes)
+
+    def _take_clusters(self, blocks: int = 1, goal: int = -1,
+                       nbytes: int = 0) -> List[Tuple[int, int]]:
+        nbytes = nbytes or self.index_size * blocks
+        clusters = max(1, (nbytes + self.cs - 1) // self.cs)
         new_runs = self.w.alloc_clusters_near(goal, clusters)
         # yeni alan sifirlanir (eski veri INDX sanilmasin)
         for lcn, count in new_runs:
@@ -304,8 +309,10 @@ class DirIndex:
     def _install_allocation(self, runs: List[Tuple[int, int]],
                             first_used: bool) -> None:
         """Ilk $INDEX_ALLOCATION ve $BITMAP:$I30 oznitelikleri."""
-        clusters = sum(c for _l, c in runs)
-        size = clusters * self.cs if self.index_size < self.cs else self.index_size
+        # Veri boyu = blok sayisi x blok boyu (ilk kurulumda tek blok). Kume
+        # bloktan buyukse (64 KiB kume) ayrilan boy kumedir, veri boyu degil;
+        # eskiden veri boyu kume boyu yaziliyordu (mkntfs/Windows: blok).
+        size = self.index_size
         attr = self.w._nonresident_attr(AT_INDEX_ALLOCATION, runs, size, name=self.name)
         self.w._set_record_attr(self.dir_no, AT_INDEX_ALLOCATION, self.name, attr)
         bmp = bytearray(8)
@@ -322,17 +329,26 @@ class DirIndex:
         # hemen ardi. Eskiden her seferinde TEK blok, rastgele yere: parcali
         # dizinde kosu listesi kayda sigmiyordu (1670 dosyada olculdu).
         blocks = max(1, min(64, self._block_count() // 2))
-        last = alloc.runs[-1] if alloc.runs else (-1, 0)
-        new_runs = self._take_clusters(blocks, last[0] + last[1] if last[0] >= 0 else -1)
-        clusters = sum(c for _l, c in new_runs)
         runs = list(alloc.runs)
-        size = alloc.data_size
-        for lcn, count in new_runs:
-            if runs and runs[-1][0] >= 0 and runs[-1][0] + runs[-1][1] == lcn:
-                runs[-1] = (runs[-1][0], runs[-1][1] + count)
-            else:
-                runs.append((lcn, count))
-        size += clusters * self.cs
+        allocated = sum(c for _l, c in runs) * self.cs
+        # Veri boyu blok blok buyur (mkntfs/Windows gibi: veri boyu = blok
+        # sayisi x blok); kumenin artan kismi (64 KiB kumede 15 blok) once
+        # kullanilir, yeni kume ancak gerekince alinir.
+        size = (alloc.data_size // self.index_size) * self.index_size
+        if size + self.index_size <= allocated:
+            blocks = min(blocks, (allocated - size) // self.index_size)
+            new_runs: List[Tuple[int, int]] = []
+        else:
+            want = size + blocks * self.index_size - allocated
+            last = alloc.runs[-1] if alloc.runs else (-1, 0)
+            new_runs = self._take_clusters_bytes(
+                want, last[0] + last[1] if last[0] >= 0 else -1)
+            for lcn, count in new_runs:
+                if runs and runs[-1][0] >= 0 and runs[-1][0] + runs[-1][1] == lcn:
+                    runs[-1] = (runs[-1][0], runs[-1][1] + count)
+                else:
+                    runs.append((lcn, count))
+        size += blocks * self.index_size
         attr = self.w._nonresident_attr(AT_INDEX_ALLOCATION, runs, size, name=self.name)
         try:
             self.w._set_record_attr(self.dir_no, AT_INDEX_ALLOCATION, self.name, attr)

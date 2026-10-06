@@ -863,6 +863,99 @@ def t18_4k_ntfs_kayip_bolum_boyu():
     assert p.sector_count == 64 * MIB // 512, p.sector_count
 
 
+def _index_fields(fs: NtfsFS, rec_no: int, name: str = "$I30") -> dict:
+    """$INDEX_ROOT basligi ve $INDEX_ALLOCATION/$BITMAP tutarlilik olculeri."""
+    rec = fs.record(rec_no)
+    v = rec.find(0x90, name).value
+    out = {"tur": struct.unpack_from("<I", v, 0)[0],
+           "siralama": struct.unpack_from("<I", v, 4)[0],
+           "blok": struct.unpack_from("<I", v, 8)[0],
+           "blok_kume": v[12]}
+    alloc = rec.find(0xA0, name)
+    if alloc is not None:
+        clusters = sum(c for _l, c in alloc.runs)
+        bmp = fs.read_attribute(rec.find(0xB0, name))
+        blocks = alloc.data_size // out["blok"]
+        out["ayrilan_kume_kati"] = alloc.allocated_size == clusters * fs.cluster_size
+        out["veri_blok_kati"] = alloc.data_size % out["blok"] == 0
+        out["veri<=ayrilan"] = alloc.data_size <= alloc.allocated_size
+        out["baslatilan==veri"] = alloc.initialized_size == alloc.data_size
+        out["bitmap_kapsar"] = len(bmp) * 8 >= blocks and len(bmp) % 8 == 0
+        out["bitmap_fazla_bit_yok"] = not any(
+            bmp[i >> 3] >> (i & 7) & 1 for i in range(blocks, len(bmp) * 8))
+    return out
+
+
+@test
+def t20_kendi_dizinimiz_indeks_alanlari_mkntfs_ile_ayni():
+    """mkdir'in $INDEX_ROOT/$INDEX_ALLOCATION alanlari mkntfs kokuyle ayni (ntfs3)"""
+    need("ntfscp", "ntfsls", "ntfsfix")
+    for cluster in (512, 4096, 65536, 2097152):
+        p = mkntfs(f"t20_{cluster}.img", 1024 if cluster > 65536 else 256,
+                   "-c", str(cluster))
+        for i in range(60):                       # mkntfs kokunu INDX'e tasir
+            ntfscp(p, b"k", f"/kok_{i:03d}_uzun_bir_dosya_adi.txt")
+        d = open_image(p)
+        w = NtfsWriter(NtfsFS(d))
+        w.mkdir("/yeni_dizin")
+        w.mkdir("/bos_dizin")
+        for i in range(60):
+            w.write_file(f"/yeni_dizin/bizim_{i:03d}_uzun_bir_dosya_adi.txt", b"b")
+        w.flush()
+        fs = NtfsFS(d)
+        ref = _index_fields(fs, 5)
+        ours = _index_fields(fs, fs.resolve("/yeni_dizin").number)
+        empty = _index_fields(fs, fs.resolve("/bos_dizin").number)
+        d.close()
+        assert ref["blok_kume"] == (8 if cluster > 4096 else max(1, 4096 // cluster)), ref
+        for k, v in ref.items():
+            assert ours.get(k) == v, f"-c {cluster}: {k}: mkntfs {v}, bizim {ours.get(k)}"
+        for k in ("tur", "siralama", "blok", "blok_kume"):
+            assert empty[k] == ref[k], f"-c {cluster} bos dizin {k}: {empty[k]} != {ref[k]}"
+        # ntfs-3g de yeni dizine yazabilmeli ve hepsini listelemeli
+        for i in range(40):
+            ntfscp(p, b"n", f"/yeni_dizin/ntfs3g_{i:03d}.txt")
+        ntfsfix_ok(p)
+        listed = ntfsls(p, "/yeni_dizin")
+        want = ({f"bizim_{i:03d}_uzun_bir_dosya_adi.txt" for i in range(60)}
+                | {f"ntfs3g_{i:03d}.txt" for i in range(40)})
+        assert want <= listed, f"-c {cluster}: ntfsls eksik {sorted(want - listed)[:3]}"
+        d = open_image(p)
+        assert want <= {e.name for e in NtfsFS(d).listdir("/yeni_dizin")}
+        d.close()
+        os.remove(p)
+
+
+@test
+def t21_bicimlendirici_buyuk_kume_indeks_alanlari():
+    """Kendi bicimlendiricimiz 64 KiB kumede kok/$Secure/$Extend indeks alani = 8"""
+    from diskultimate.core.ntfs import format_ntfs
+    p = path("t21.img")
+    d = DiskImage.create(p, 256 * MIB, overwrite=True)
+    format_ntfs(d, "DU64K", cluster_size=65536)
+    fs = NtfsFS(d)
+    for rec_no, name in ((5, "$I30"), (9, "$SII"), (9, "$SDH"), (11, "$I30")):
+        f = _index_fields(fs, rec_no, name)
+        assert f["blok"] == 4096 and f["blok_kume"] == 8, (rec_no, name, f)
+        for k, v in f.items():
+            if isinstance(v, bool):
+                assert v, (rec_no, name, k, f)
+    w = NtfsWriter(fs)
+    w.mkdir("/d")
+    for i in range(60):
+        w.write_file(f"/d/dosya_{i:03d}_uzun_bir_ad.txt", b"x")
+    w.flush()
+    fs = NtfsFS(d)
+    f = _index_fields(fs, fs.resolve("/d").number)
+    assert f["blok_kume"] == 8 and all(v for v in f.values() if isinstance(v, bool)), f
+    d.close()
+    if shutil.which("ntfsfix") and shutil.which("ntfsls"):
+        ntfsfix_ok(p)
+        assert len(ntfsls(p, "/d") - {".", ".."}) == 60
+    else:
+        raise Atlandi("ntfsfix/ntfsls yok: yalnizca alan denetimi kostu")
+
+
 # --------------------------------------------------------------------------
 def cleanup(prefix: str) -> None:
     """Testin urettigi dosyalari siler (adlari test onekiyle baslar)."""

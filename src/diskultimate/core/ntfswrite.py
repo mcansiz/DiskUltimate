@@ -796,7 +796,10 @@ class NtfsWriter:
 
         value = bytearray(0x20 + len(body))
         struct.pack_into("<III", value, 0, AT_FILE_NAME, 1, self.fs.index_size)
-        value[0x0C] = max(1, self.fs.index_size // self.cs)
+        from .ntfs import index_block_clusters
+        # Kume bloktan buyukse 512 B birimiyle (4 KiB blok = 8); eskiden 1
+        # yaziliyordu ve ntfs3 bizim olusturdugumuz dizinleri bos gosteriyordu
+        value[0x0C] = index_block_clusters(self.fs.index_size, self.cs)
         struct.pack_into("<IIIB", value, 0x10, 0x10, 0x10 + len(body),
                          0x10 + len(body), 0)
         value[0x20:] = body
