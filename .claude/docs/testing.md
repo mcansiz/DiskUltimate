@@ -583,6 +583,13 @@ python3 -m tests.regress_xfs_hfs # 14 (mkfs.xfs, xfs_repair)
 - GitHub "Yabanci girdi testleri" (elle): grup basina is, cekirdekle
   doldurma ve dogrulama; `tur` ile saatlerce. Ilk tur (3 tur): 2/8 grup temiz,
   bulunanlar duzeltildi (denetim notu).
+- GitHub 10 turluk matris (her varyant 10 tohum, cekirdekle doldurma ve
+  dogrulama): kosu 37496158902 (fat32, fat16-12, exfat temiz), 37499144002
+  (ext2-3, ext4-a, diger temiz), 37503484521 (ntfs temiz, M8 duzeltmesinden
+  sonra). Matrisin buldugu yeni urun hatalari: M7 (NTFS ayni dizinde sabit
+  bag), M8 (NTFS buyuk kumede dizin indeksi alani); gerisi matrisin kendi
+  kusurlariydi (xattr kaydi, HFS+ gunluk dosyalari, inode bitimi).
+- Uzun testler (eski kod, 37489214815): 102/102 basarili, 3 platform.
 - Sonuc (2026-10-06, ana makine): run_all 92/94, regress 78 tamam + 1
   atlandi, ext_write 4/4, ext_resize 32/32, ntfs_write 2/2, diag 13/13,
   platform 0, i18n ve ui_smoke tamam.

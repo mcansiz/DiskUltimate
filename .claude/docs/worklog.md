@@ -5931,4 +5931,10 @@ calismiyordu.
   ext_resize 32/32, ntfs_write 2/2, diag 13/13, platform 0, i18n, ui_smoke.
 - Windows'ta doğrulanmadı: NTFS 4K fixup chkdsk, 64K+ küme aynası, Hızlı
   Başlangıç kapısı gerçek birimde.
+- GitHub: 10 turluk yabanci matris tum gruplarda temiz (ilgili duzeltmeden
+  sonra); matrisin yeni buldugu iki NTFS hatasi duzeltildi: ayni klasorde
+  sabit bag silme/ad degistirme obur bagi yok ediyordu (M7); 64K+ kumede
+  olusturulan klasorler ntfs3'te bos gorunuyordu (M8; kendi
+  bicimlendiricimizde de). Uzun testler eski kodda 102/102; en son kodla
+  yeniden kosuyor. regress_* 82 test.
 
