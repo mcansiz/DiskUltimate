@@ -484,6 +484,13 @@ def populate_user(v: Variant, img: str, files, dirs, deleted,
 # --------------------------------------------------------------------------
 # Denetimler
 # --------------------------------------------------------------------------
+# Dosya sisteminin kendi dosyalari: kullanici verisi degil, cekirdek de
+# listeler (HFS+ gunlugu macOS'ta gizli, Linux'ta gorunur).
+SYSTEM_PREFIXES = ("/lost+found/", "/System Volume", "/\x00\x00\x00\x00HFS+ Private",
+                   "/.HFS+ Private")
+SYSTEM_FILES = {"/.journal", "/.journal_info_block"}
+
+
 class Checker:
     """Kendi okuyucu + dis fsck (taban cizgisine gore) + cekirdek."""
 
@@ -521,9 +528,8 @@ class Checker:
                 raise Fail(f"listede yok ({len(missing)}): {missing[:5]}")
             # Kokteki sistem dosyalari (lost+found icerigi, kota) dosya degil;
             # bilinen fazlaliklar disinda fazla dosya bir okuma hatasidir.
-            extra = [e for e in extra if not e.startswith(("/lost+found/",
-                                                           "/System Volume"))
-                     and e not in self.specials]
+            extra = [e for e in extra if not e.startswith(SYSTEM_PREFIXES)
+                     and e not in SYSTEM_FILES and e not in self.specials]
             if exact and extra:
                 raise Fail(f"listede fazla ({len(extra)}): {extra[:5]}")
             wrong = [p for p in expected if p in listed and listed[p] != expected[p]]
