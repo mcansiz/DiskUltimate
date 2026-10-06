@@ -270,10 +270,13 @@ def add_specials(mnt: str, v: Variant, kind: str, manifest: Manifest,
         except (OSError, subprocess.SubprocessError, NotImplementedError):
             pass
 
+    # Her duzenli dosya OLUSTURULUR OLUSTURMAZ manifeste girer: sonraki adim
+    # (os.link, setxattr) surucude desteklenmezse dosya yine diskte kalir ve
+    # manifestte yoksa "listede fazla" diye yanlis hata verirdi (ext2 xattr).
     def hardlink():
         write_spec(mnt, FileSpec("/ozel/bag_a.bin", 70_000, 991))
-        os.link(base + "/bag_a.bin", base + "/bag_b.bin")
         regular("/ozel/bag_a.bin")
+        os.link(base + "/bag_a.bin", base + "/bag_b.bin")
         regular("/ozel/bag_b.bin")
 
     def symlinks():
@@ -292,12 +295,15 @@ def add_specials(mnt: str, v: Variant, kind: str, manifest: Manifest,
         specials["/ozel/boru"] = "fifo"
 
     def sparse():
-        with open(base + "/seyrek.bin", "wb") as fh:
-            fh.seek(9 * MIB + 123)
-            fh.write(b"son-blok" * 512)
-            fh.seek(3 * MIB)
-            fh.write(b"orta" * 1000)
-        regular("/ozel/seyrek.bin")
+        try:
+            with open(base + "/seyrek.bin", "wb") as fh:
+                fh.seek(9 * MIB + 123)
+                fh.write(b"son-blok" * 512)
+                fh.seek(3 * MIB)
+                fh.write(b"orta" * 1000)
+        finally:
+            if os.path.exists(base + "/seyrek.bin"):
+                regular("/ozel/seyrek.bin")
 
     def fallocated():
         fd = os.open(base + "/ayrilmis.bin", os.O_CREAT | os.O_WRONLY, 0o644)
@@ -307,12 +313,12 @@ def add_specials(mnt: str, v: Variant, kind: str, manifest: Manifest,
             os.pwrite(fd, b"ortada" * 100, 4 * MIB)
         finally:
             os.close(fd)
-        regular("/ozel/ayrilmis.bin")
+            regular("/ozel/ayrilmis.bin")
 
     def xattr():
         write_spec(mnt, FileSpec("/ozel/xattrli.bin", 5000, 993))
-        os.setxattr(base + "/xattrli.bin", "user.deneme", b"x" * 3000)
         regular("/ozel/xattrli.bin")
+        os.setxattr(base + "/xattrli.bin", "user.deneme", b"x" * 3000)
 
     def casefold():
         if v.id != "ext4-casefold":

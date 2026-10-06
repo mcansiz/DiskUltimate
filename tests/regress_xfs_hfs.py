@@ -111,6 +111,33 @@ def _xfs_tree(root: str) -> dict:
     return {"/" + k: v for k, v in files.items()}
 
 
+def _xfs_protofile(root: str, path: str) -> set:
+    """`mkfs.xfs -p <klasor>` bilmeyen surumler (xfsprogs < 6.x, Ubuntu 24.04
+    6.6) icin klasik protofile. Bicim bosluga gore ayrildigi icin bosluklu
+    adlar alinamaz; alinan goreli yollari dondurur."""
+    lines = ["/dev/null", "0 0", "d--755 0 0"]
+    taken = set()
+
+    def walk(directory: str, rel: str) -> None:
+        for name in sorted(os.listdir(directory)):
+            full = os.path.join(directory, name)
+            if any(c.isspace() for c in name):
+                continue
+            if os.path.isdir(full):
+                lines.append(f"{name} d--755 0 0")
+                walk(full, rel + name + "/")
+                lines.append("$")
+            else:
+                lines.append(f"{name} ---644 0 0 {full}")
+                taken.add("/" + rel + name)
+
+    walk(root, "")
+    lines.append("$")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+    return taken
+
+
 XFS_CASES = [
     ("b1024", ["-b", "size=1024"]),
     ("b1024-s1024", ["-b", "size=1024", "-s", "size=1024"]),
@@ -140,6 +167,14 @@ def _xfs_grow_case(tag: str, opts):
     # agsize=100m: 3 tam + 20 MiB'lik kisa son AG -> hem uzatma hem yeni AG
     r = subprocess.run([mkfs, "-q", "-f", *opts, "-d", "agsize=100m", "-p", root, img],
                        capture_output=True, text=True)
+    if r.returncode != 0 and "Is a directory" in r.stderr:
+        # Eski mkfs.xfs klasoru protofile sanar: klasik protofile ile doldur.
+        proto = img + ".proto"
+        taken = _xfs_protofile(root, proto)
+        expected = {k: v for k, v in expected.items() if k in taken}
+        r = subprocess.run([mkfs, "-q", "-f", *opts, "-d", "agsize=100m", "-p", proto, img],
+                           capture_output=True, text=True)
+        os.unlink(proto)
     if r.returncode != 0:
         raise Skip(f"mkfs.xfs {' '.join(opts)} reddetti: {r.stderr.strip()[-200:]}")
     with open(img, "r+b") as fh:
@@ -284,6 +319,8 @@ def test_hfs_linux_written_greek_name():
     assert [e.name for e in fs.listdir("/")].count("Ελληνικά") == 1
 
     # yazici: ayni (NFC) adla ustune yazma eski kaydi bulur, ikinci kayit acmaz
+    fsck = shutil.which("fsck.hfsplus") or shutil.which("fsck.hfsplus", path="/sbin:/usr/sbin")
+    baseline = _hfs_problems(fsck, img) if fsck else set()
     w = HfsWriter(fs)
     w.write_file("/belgeler/alt dizin/" + name, b"yeni\n")
     assert len(w.fs.listdir("/belgeler/alt dizin")) == 3
@@ -299,11 +336,28 @@ def test_hfs_linux_written_greek_name():
     assert names == ["UPPER.TXT", "Русский файл.txt"], names
     assert [e.name for e in fs.listdir("/Ελληνικά")] == ["β.txt"]
     d.close()
-    fsck = shutil.which("fsck.hfsplus") or shutil.which("fsck.hfsplus", path="/sbin:/usr/sbin")
     if fsck:
-        r = subprocess.run([fsck, "-n", "-f", img], capture_output=True, text=True)
-        assert r.returncode == 0, r.stdout[-800:] + r.stderr[-300:]
+        # Cekirdegin yazdigi Unicode 2.1 (U+030D) adlari Apple'in fsck_hfs'i
+        # zaten "Illegal name" sayar — Linux'un yazdigi gercek birimde de.
+        # Bizim islemlerimiz YENI bir sorun eklememeli.
+        after = _hfs_problems(fsck, img)
+        assert after <= baseline, (sorted(after - baseline), sorted(baseline))
     os.unlink(img)
+
+
+def _hfs_problems(fsck: str, img: str) -> set:
+    """fsck_hfs ciktisindaki sorun satirlari (asama basliklari haric)."""
+    r = subprocess.run([fsck, "-n", "-f", img], capture_output=True, text=True)
+    if r.returncode == 0:
+        return set()
+    out = set()
+    for line in (r.stdout + r.stderr).splitlines():
+        t = line.strip()
+        if not t or t.startswith(("** Checking", "Executing", "The volume name",
+                                  "** /", "** The volume")):
+            continue
+        out.add(t)
+    return out or {"cikis kodu %d" % r.returncode}
 
 
 TESTS = [test_xfs_layout_formula] + [_make_xfs_test(t, o) for t, o in XFS_CASES] + [

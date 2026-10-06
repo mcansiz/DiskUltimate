@@ -82,6 +82,10 @@ def _sfdisk(args, path, script=None, ss=None, check=True):
     env = dict(os.environ, LC_ALL="C")
     res = subprocess.run(cmd, input=script, capture_output=True, text=True,
                          env=env)
+    if ss and "--sector-size" in res.stderr and res.returncode != 0:
+        # util-linux < 2.40 (Ubuntu 24.04: 2.39) bu secenegi tanimaz;
+        # 4Kn karsilastirmasi o surumde yapilamaz -> gecmis sayilmaz.
+        raise Skip(f"sfdisk --sector-size desteklemiyor: {res.stderr.strip()[-120:]}")
     if check and res.returncode != 0:
         raise AssertionError(f"sfdisk {args} basarisiz: {res.stderr}{res.stdout}")
     return res
