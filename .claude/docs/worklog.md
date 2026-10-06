@@ -5955,4 +5955,5 @@ calismiyordu.
   desteklemiyor). Betikler: tests/vm_windows/.
 - run_all 92/94, regress 83 test (82 tamam + 1 atlandi), diag, platform,
   i18n, ui_smoke tamam.
-
+- Sürüm 0.7.0-beta (kullanıcı: "release yayınlayalım"): yalnızca kullanılan alan
+  yedeği, Durdur/süre, yabancı girdi uyumluluk ve güvenlik düzeltmeleri.

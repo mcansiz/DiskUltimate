@@ -8,7 +8,7 @@ biçimlendirme, dosya erişimi, yedekleme, klonlama, önyükleme yönetimi ve ve
 kurtarma. Python 3 + PyQt5 ile yazılmıştır; bütün bölüm tabloları ve dosya
 sistemleri **sıfırdan, saf Python ile** yazıldığı için harici araç gerekmez.
 
-![sürüm](https://img.shields.io/badge/s%C3%BCr%C3%BCm-0.6.2--beta-orange)
+![sürüm](https://img.shields.io/badge/s%C3%BCr%C3%BCm-0.7.0--beta-orange)
 ![python](https://img.shields.io/badge/python-3.8%2B-green)
 ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen)
 ![dil](https://img.shields.io/badge/dil-tr%20%7C%20en%20%7C%20de%20%7C%20fr%20%7C%20it%20%7C%20es%20%7C%20ru%20%7C%20zh%20%7C%20ja%20%7C%20ko-blue)

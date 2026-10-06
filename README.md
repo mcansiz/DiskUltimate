@@ -8,7 +8,7 @@ formatting, file access, backup, cloning, boot management and data recovery.
 Written in Python 3 + PyQt5; every partition table and file system is
 implemented **from scratch in pure Python**, so it needs no external tools.
 
-![version](https://img.shields.io/badge/version-0.6.2--beta-orange)
+![version](https://img.shields.io/badge/version-0.7.0--beta-orange)
 ![python](https://img.shields.io/badge/python-3.8%2B-green)
 ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-brightgreen)
 ![languages](https://img.shields.io/badge/languages-tr%20%7C%20en%20%7C%20de%20%7C%20fr%20%7C%20it%20%7C%20es%20%7C%20ru%20%7C%20zh%20%7C%20ja%20%7C%20ko-blue)
