@@ -36,4 +36,6 @@ durur ve depoya girer; VS Code eklentisinin "gecmis" listesi de orayi okur
 | 2026-10-02 | [830884b0-70f2-43db-9e72-aa796ddccb5a](2026-10-02-830884b0-70f2-43db-9e72-aa796ddccb5a.jsonl) | other | 6.9 MB |
 | 2026-10-03 | [830884b0-70f2-43db-9e72-aa796ddccb5a](2026-10-03-830884b0-70f2-43db-9e72-aa796ddccb5a.jsonl) | other | 12.0 MB |
 | 2026-10-04 | [e9b61dfd-4c83-414e-89e0-82f701e6adf1](2026-10-04-e9b61dfd-4c83-414e-89e0-82f701e6adf1.jsonl) | other | 280.8 KB |
-| 2026-10-04 | [830884b0-70f2-43db-9e72-aa796ddccb5a](2026-10-04-830884b0-70f2-43db-9e72-aa796ddccb5a.jsonl) | other | 25.0 MB |
+| 2026-10-04 | [830884b0-70f2-43db-9e72-aa796ddccb5a](2026-10-04-830884b0-70f2-43db-9e72-aa796ddccb5a.jsonl) | other | 26.7 MB |
+| 2026-10-05 | [830884b0-70f2-43db-9e72-aa796ddccb5a](2026-10-05-830884b0-70f2-43db-9e72-aa796ddccb5a.jsonl) | other | 26.7 MB |
+| 2026-10-06 | [0c0b6249-c4ca-4f71-a76c-0f5ceae7220e](2026-10-06-0c0b6249-c4ca-4f71-a76c-0f5ceae7220e.jsonl) | other | 227.8 KB |
