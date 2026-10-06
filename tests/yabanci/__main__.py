@@ -257,7 +257,10 @@ def add_specials(mnt: str, v: Variant, kind: str, manifest: Manifest,
     if kind not in SPECIAL_FS:
         return []
     base = mnt + "/ozel"
-    os.makedirs(base, exist_ok=True)
+    try:
+        os.makedirs(base, exist_ok=True)
+    except OSError:
+        return []                    # yer/inode bitti (ext4-N64): ozel nesne yok
     made: List[str] = []
 
     def regular(rel: str) -> None:
