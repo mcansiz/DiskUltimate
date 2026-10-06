@@ -537,6 +537,36 @@ Kullanici senaryosu (20 GB diskin seyrek kopyasi, ext4 7,75 -> 9,77 GB sola
 tasima): goruntu 1,0 -> 1,5 GB (eskiden 21 GB), 8,6 sn, 1963 dosya birebir,
 e2fsck temiz. Cekirdek baglamasi yapilmadi (root yok).
 
+## 2026-10-05 — ADR 0091 (az kumeli FAT32, paralel yedek)
+
+- t91: `mkdosfs -F 32 -s 8` yerlesimli 100 MB FAT32 (25 199 kume) FAT32 ve
+  "BOOT" taninir, dosya yazilir/okunur, fsck.vfat temiz. Eski kodla
+  `(16, 25199)` ile basarisiz.
+- t92: `DISKULTIMATE_BACKUP_THREADS=1` ve `=4` yedekleri bayt bayt ayni
+  (zaman damgasi haric), geri yukleme ozdes; `is_zero` sinir durumlari.
+- Olcum (picozed.img, 512 MB, 16 cekirdek): yedek 3.3 s -> 0.71 s.
+- Sonuc: run_all 90/92 (t20, t21 yalnizca Windows), diag 13/13,
+  platform 0, i18n TAMAM.
+
+## 2026-10-05 — ADR 0092 (yalnizca kullanilan alan yedegi)
+
+- t93: MBR uzerinde FAT32/exFAT/ext4/NTFS; bos kumelerde ve bolumlenmemis
+  alanda 48 MB cop. Akilli yedek tam yedekten >40 MB kucuk, okunan <120 MB.
+  Geri yuklenen her bolum fsck.vfat / fsck.exfat / e2fsck -fn / ntfsfix -n
+  ile temiz, dosyalar ozdes; 64. sektordeki ham onyukleyici korunur; hedefte
+  atlanan alandaki veri degismez; buyuk bosluktan sonraki EBR alinir.
+- Elle: picozed.img akilli yedek -> rastgele dolu hedefe geri yukleme; dolu
+  kumelerde fark 0, e2fsck temiz. (fsck.vfat az kumeli FAT32'yi kaynakta da
+  "Both FATs appear to be corrupt" diye reddeder — aracin siniri.)
+- Fiziksel SD kartta henuz olculmedi.
+
+## 2026-10-06 — ADR 0093 (durdurma, sure)
+
+- t94: yedek (tam / yalnizca kullanilan) ve yeni goruntuye geri yukleme
+  ilerleme geri cagrisindan durdurulur; yarim dosya kalmaz.
+- ui_smoke: is surerken alanlar kilitli, dugme "Durdur"; yavas iste
+  "Gecen/Kalan" etiketi, Durdur -> "durduruldu", pencere toparlanir.
+
 ## Harici dogrulama (elle)
 
 ```bash

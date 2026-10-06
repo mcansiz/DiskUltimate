@@ -15,7 +15,7 @@ from .exfat import ExFatFS
 from .ext import format_ext
 from .ntfs import format_ntfs
 from .fat import FatFS
-from .image import BlockDevice
+from .image import BlockDevice, is_zero
 from .platform import PLATFORM_NAME, find_tool, run_tool, tool_names
 from .ptable import GPT_UNUSED, human_size
 from .hfsformat import HfsFormatError, format_hfsplus
@@ -330,11 +330,11 @@ def _copy_back(tmp_path: str, view: BlockDevice,
             block = fh.read(n)
             if len(block) < n:
                 block += b"\x00" * (n - len(block))
-            if block.strip(b"\x00"):
+            if not is_zero(block):
                 view.write(written, block)
             else:
                 # hedefte eski veri varsa temizle, yoksa dokunma (seyreklik korunur)
-                if view.read(written, n).strip(b"\x00"):
+                if not is_zero(view.read(written, n)):
                     view.write(written, block)
             written += n
             report(tr("Bolume yaziliyor..."), 60 + int(39 * written / total))

@@ -7102,6 +7102,246 @@ def t90_guncelleme_denetimi_ve_lisanslar():
     assert "{}" in qt["note"], "Qt notu kaynak arsivi baglantisini tasimali"
 
 
+@test
+def t91_az_kumeli_fat32():
+    """65525'ten az kumeli FAT32 (mkdosfs -F 32) FAT16 sanilmaz; yazma tabloyu bozmaz
+
+    PicoZed/Xilinx BOOT bolumu: 100 MB, kume 4 KB -> 25549 kume, ama BPB
+    FAT32 (BPB_FATSz16 = 0). Tip kume sayisindan secilince FAT16 gorunuyor,
+    etiket 0x2B'den (FAT32'de BPB_FATSz32'nin ortasi) cop okunuyor ve dosya
+    yazimi 32 bitlik tabloya 16 bitlik girdi yaziyordu.
+    """
+    yol = img_path("t91.img")
+    d = DiskImage.create(yol, 101 * MIB, overwrite=True)
+    MBRTable.create(d).add_partition(2048, 100 * 2048, type_id=0x0B)
+    v = PartitionView(d, 2048, 100 * 2048)
+    FatFS.format(v, fat_type=32, cluster_sectors=1, label="BOOT")
+    # mkdosfs -F 32 -s 8 yerlesimi: kume 8 sektore cikar, kume sayisi
+    # 65525'in altina iner; buyuk kalan FAT tablosu gecerlidir.
+    asil = bytearray(v.read(0, 512))
+    asil[13] = 8
+    yedek_no = struct.unpack_from("<H", asil, 50)[0]
+    v.write(0, bytes(asil))
+    v.write(yedek_no * 512, bytes(asil))
+    fs = FatFS(v)
+    assert fs.fat_type == 32 and fs.cluster_count < 65525, (fs.fat_type,
+                                                             fs.cluster_count)
+    assert fs.label == "BOOT", fs.label
+    bilgi = detect(v)
+    assert bilgi.fs_type == "FAT32" and bilgi.label == "BOOT", (bilgi.fs_type,
+                                                               bilgi.label)
+    veri = os.urandom(300 * 1024)
+    fs.write_file("/BOOT.BIN", veri)
+    fs.flush()
+    assert FatFS(v).read_file("/BOOT.BIN") == veri
+    d.close()
+    _fsck(yol, 2048)
+
+
+@test
+def t92_paralel_yedek_ozdes():
+    """Paralel sikistirmali yedek tek is parcacikli yedekle bayt bayt ayni
+
+    Yedekleme bloklari is parcaciklarinda sikistirir ama sirayla yazar;
+    sira kayarsa dizin baska bloga isaret eder ve geri yukleme sessizce
+    yanlis veri yazar.
+    """
+    from diskultimate.core.image import is_zero
+
+    assert is_zero(b"") and is_zero(bytes(9 * MIB))
+    tek = bytearray(9 * MIB)
+    tek[-1] = 1
+    assert not is_zero(tek) and not is_zero(b"\x00\x01")
+
+    yol = img_path("t92.img")
+    d = DiskImage.create(yol, 24 * MIB, overwrite=True)
+    for i in range(0, 24, 3):          # karisik: rastgele / metin / sifir
+        d.write(i * MIB, os.urandom(MIB))
+        d.write((i + 1) * MIB, (b"DiskUltimate %d " % i) * 30000)
+    eski = os.environ.get("DISKULTIMATE_BACKUP_THREADS")
+    try:
+        dosyalar = []
+        for adet in ("1", "4"):
+            os.environ["DISKULTIMATE_BACKUP_THREADS"] = adet
+            hedef = img_path("t92_%s.dub" % adet)
+            backup(d, hedef, block_size=256 * 1024)
+            dosyalar.append(open(hedef, "rb").read())
+    finally:
+        if eski is None:
+            os.environ.pop("DISKULTIMATE_BACKUP_THREADS", None)
+        else:
+            os.environ["DISKULTIMATE_BACKUP_THREADS"] = eski
+    a, b = dosyalar
+    assert a[:24] == b[:24] and a[32:] == b[32:], "paralel cikti farkli"
+    geri = DiskImage.create(img_path("t92_geri.img"), 24 * MIB, overwrite=True)
+    restore(img_path("t92_4.dub"), geri)
+    assert geri.read(0, 24 * MIB) == d.read(0, 24 * MIB)
+    geri.close()
+    d.close()
+
+
+@test
+def t93_yalnizca_kullanilan_alan_yedegi():
+    """Yalnizca kullanilan alan yedegi: FAT32/exFAT/ext4/NTFS, ham onyukleyici, EBR (ADR 0092)
+
+    64 GB SD kartta yedek her sektoru okuyordu; DiskGenius yalnizca dolu
+    kumeleri okur. Bos alandaki cop ve bolumlenmemis buyuk alan okunmamali;
+    bolum disi ham onyukleyici (U-Boot gibi), dosyalar ve dosya sistemi
+    tutarliligi geri yuklemeden sonra korunmali. Atlanan bloga geri
+    yuklemede hedefte dokunulmaz.
+    """
+    from diskultimate.core import clone as _clone
+    from diskultimate.core import usedmap
+
+    yol = img_path("t93.img")
+    s = DiskSession.create(yol, 700 * MIB, scheme="mbr", overwrite=True)
+    k = ops.OperationQueue()
+    bolumler = (("fat32", 2048 * 4), ("exfat", 2048 * 110), ("ext4", 2048 * 220),
+                ("ntfs", 2048 * 340))
+    for anahtar, bas in bolumler:
+        k.add(ops.create_op(bas, 100 * 2048, 512, fs_key=anahtar,
+                            label=anahtar.upper()))
+    assert k.apply(s).ok
+    s.reload()
+    dosyalar = {}
+    for no in range(1, 5):
+        veri = os.urandom(3 * MIB) + b"son"
+        fs = s.filesystem(no)
+        fs.write_file("/veri.bin", veri)
+        fs.flush()
+        dosyalar[no] = veri
+    s.close_filesystems()
+    # Ham onyukleyici: ilk bolumden once (bolum tablosu disi), 64. sektor.
+    uboot = b"U-BOOT-SPL" + os.urandom(64 * 1024)
+    s.image.write(64 * 512, uboot)
+    # Cop: FAT32'nin bos kumelerinin sonuna ve bolumlenmemis alana
+    p1 = s.table.get(1)
+    cop_fat = (p1.start_lba + p1.sector_count) * 512 - 20 * MIB
+    s.image.write(cop_fat, os.urandom(8 * MIB))
+    s.image.write(500 * MIB, os.urandom(40 * MIB))      # 440..700 MB bos
+    s.image.flush()
+
+    tam = s.backup_disk(img_path("t93_tam.dub"))
+    akilli = s.backup_disk(img_path("t93_akilli.dub"), used_only=True)
+    assert not tam.used_only and akilli.used_only
+    assert _clone.read_backup_info(akilli.path).used_only
+    # 48 MB cop sikismaz: tam yedekte var, akillida yok
+    assert tam.file_size - akilli.file_size > 40 * MIB, (tam.file_size,
+                                                         akilli.file_size)
+    araliklar = usedmap.disk_used_ranges(s.image)
+    okunan = usedmap.total_bytes(araliklar)
+    assert okunan < 120 * MIB, okunan
+
+    # Hedefte eski veri: atlanan alanda aynen kalmali
+    hedef = DiskImage.create(img_path("t93_geri.img"), 700 * MIB, overwrite=True)
+    eski = os.urandom(MIB)
+    hedef.write(600 * MIB, eski)
+    restore(akilli.path, hedef)
+    assert hedef.read(600 * MIB, MIB) == eski, "atlanan bloga yazildi"
+    assert hedef.read(64 * 512, len(uboot)) == uboot, "ham onyukleyici yok"
+    hedef.close()
+
+    g = DiskSession.open(img_path("t93_geri.img"), readonly=True)
+    for no in range(1, 5):
+        assert g.filesystem(no).read("/veri.bin") == dosyalar[no], no
+    g.close_filesystems()
+    denetimler = {1: ["fsck.vfat", "-n"], 2: ["fsck.exfat", "-n"],
+                  3: ["e2fsck", "-fn"], 4: ["ntfsfix", "-n"]}
+    for no, komut in denetimler.items():
+        arac = shutil.which(komut[0])
+        if not arac:
+            continue
+        p = g.table.get(no)
+        parca = img_path("t93_p%d.img" % no)
+        with open(parca, "wb") as out:
+            out.write(g.image.read(p.start_lba * 512, p.sector_count * 512))
+        r = subprocess.run([arac] + komut[1:] + [parca], capture_output=True,
+                           text=True)
+        assert r.returncode == 0, (komut[0], r.stdout[-600:], r.stderr[-300:])
+        os.unlink(parca)
+    g.close()
+
+    # Yedek gezilebilir kalir: atlanan alan sifir okunur
+    dub = _clone.DubImage(akilli.path)
+    assert dub.is_skipped(600 * MIB, MIB) and not dub.is_skipped(0, 512)
+    assert dub.read(600 * MIB, 4096) == bytes(4096)
+    dub.close()
+    s.close()
+
+    # EBR: buyuk bosluktan sonraki mantiksal bolumun EBR'si alinir
+    d = DiskImage.create(img_path("t93_ebr.img"), 300 * MIB, overwrite=True)
+    t = MBRTable.create(d)
+    ext = 2048
+    t.create_extended(ext, 290 * 2048)
+    t.add_partition(ext + 2048, 20 * 2048, type_id=0x83)
+    t.add_partition(ext + 120 * 2048, 20 * 2048, type_id=0x83)
+    mantiksal = [p for p in MBRTable.read(d).partitions if p.logical]
+    assert len(mantiksal) == 2 and mantiksal[1].ebr_lba
+    r = usedmap.disk_used_ranges(d)
+    for p in mantiksal:
+        on = p.ebr_lba * 512
+        assert any(a <= on < a + n for a, n in r), ("EBR alinmadi", p.ebr_lba)
+    bosluk = (ext + 2048 + 20 * 2048 + 50 * 2048) * 512
+    assert not any(a <= bosluk < a + n for a, n in r), "buyuk bosluk alindi"
+    d.close()
+
+
+@test
+def t94_yedek_durdurma():
+    """Yedekleme/geri yukleme durdurulur; yarim dosya silinir, aygit kapanir
+
+    Arayuzun "Durdur" dugmesi ilerleme geri cagrisindan OperationCancelled
+    firlatir. Cekirdekteki `except Exception` bloklari onu yutmamali
+    (BaseException); paralel sikistirma havuzu kapanmali; yarim `.dub` ve
+    yarim yeni goruntu diskte kalmamali.
+    """
+    from diskultimate.core import clone as _clone
+
+    yol = img_path("t94.img")
+    s = DiskSession.create(yol, 200 * MIB, scheme="mbr", overwrite=True)
+    k = ops.OperationQueue()
+    k.add(ops.create_op(2048, 150 * 2048, 512, fs_key="fat32", label="VERI"))
+    assert k.apply(s).ok
+    s.reload()
+    fs = s.filesystem(1)
+    fs.write_file("/a.bin", os.urandom(60 * MIB))
+    fs.flush()
+    s.close_filesystems()
+
+    def durdur_sonra(n):
+        sayac = [0]
+
+        def report(mesaj, yuzde):
+            sayac[0] += 1
+            if sayac[0] > n:
+                raise _clone.OperationCancelled()
+        return report
+
+    assert not issubclass(_clone.OperationCancelled, Exception)
+    for akilli in (False, True):
+        hedef = img_path("t94_%d.dub" % akilli)
+        try:
+            s.backup_disk(hedef, used_only=akilli, progress=durdur_sonra(3))
+            raise AssertionError("durdurma islemedi")
+        except _clone.OperationCancelled:
+            pass
+        assert not os.path.exists(hedef), "yarim yedek kaldi"
+
+    tam = s.backup_disk(img_path("t94_tam.dub"))
+    yeni = img_path("t94_yeni.img")
+    try:
+        DiskSession.restore_to_new_image(tam.path, yeni,
+                                         progress=durdur_sonra(2))
+        raise AssertionError("durdurma islemedi")
+    except _clone.OperationCancelled:
+        pass
+    assert not os.path.exists(yeni), "yarim goruntu kaldi"
+    # Durdurmadan sonra ayni oturum calismaya devam eder
+    tekrar = s.backup_disk(img_path("t94_tekrar.dub"), used_only=True)
+    assert tekrar.used_only
+    s.close()
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

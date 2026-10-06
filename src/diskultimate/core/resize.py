@@ -288,8 +288,16 @@ def _fat_max_total(fs: FatFS) -> int:
 
 
 def _fat_bounds(fs: FatFS) -> Tuple[int, int]:
-    """(asgari, azami) kume sayisi — tip siniri."""
-    return _fat_type_bounds(fs.fat_type)
+    """(asgari, azami) kume sayisi — tip siniri.
+
+    FAT32 BPB yapisindan tanindigi icin 65525'ten az kumeli FAT32 olabilir
+    (mkdosfs -F 32). Onun alt siniri mevcut kume sayisidir: birim zaten
+    oyledir, yeniden boyutlandirma onu daha da asagi itmez.
+    """
+    lower, upper = _fat_type_bounds(fs.fat_type)
+    if fs.fat_type == 32:
+        lower = min(lower, fs.cluster_count)
+    return lower, upper
 
 
 def _fat_highest_used(fs: FatFS) -> int:
@@ -302,7 +310,7 @@ def _fat_highest_used(fs: FatFS) -> int:
 
 def _fat_info(view: BlockDevice) -> FsResizeInfo:
     fs = FatFS(view)
-    lower_cluster, _ = _fat_type_bounds(fs.fat_type)
+    lower_cluster, _ = _fat_bounds(fs)
     tepe = _fat_highest_used(fs)
     needed_clusters = max(tepe - 1, lower_cluster)
     # kucultmede FAT tablosunun yeri degismez: asgari boyut mevcut yerlesimden
@@ -328,7 +336,7 @@ def fat_resize(view: BlockDevice, new_sector_count: int) -> None:
     fs = FatFS(view)
     bps = fs.bytes_per_sector
     spc = fs.sectors_per_cluster
-    lower_cluster, upper_cluster = _fat_type_bounds(fs.fat_type)
+    lower_cluster, upper_cluster = _fat_bounds(fs)
     tepe = _fat_highest_used(fs)
 
     if new_sector_count <= fs.total_sectors:

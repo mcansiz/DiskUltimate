@@ -159,12 +159,17 @@ class FatFS:
         if data_sectors <= 0:
             raise FatError(tr("Gecersiz FAT yerlesimi"))
         self.cluster_count = data_sectors // self.sectors_per_cluster
-        if self.cluster_count < FAT12_MAX + 1:
-            self.fat_type = 12
-        elif self.cluster_count < FAT16_MAX + 1:
-            self.fat_type = 16
-        else:
+        # Tip BPB yapisindan belirlenir: BPB_FATSz16 == 0 ise FAT32'dir (Linux
+        # `fat_length == 0`, Windows fastfat `IsBpbFat32`). Yalnizca kume
+        # sayisina bakmak, `mkdosfs -F 32` ile kucuk bolumde uretilmis
+        # (65525'ten az kumeli) FAT32'yi FAT16 sanar; o durumda 16 bitlik
+        # girdi yazmak tabloyu bozar.
+        if fat16_size == 0:
             self.fat_type = 32
+        elif self.cluster_count < FAT12_MAX + 1:
+            self.fat_type = 12
+        else:
+            self.fat_type = 16
         self.root_cluster = struct.unpack_from("<I", boot, 44)[0] if self.fat_type == 32 else 0
         self.fsinfo_sector = struct.unpack_from("<H", boot, 48)[0] if self.fat_type == 32 else 0
         label_off = 0x47 if self.fat_type == 32 else 0x2B

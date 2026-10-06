@@ -46,13 +46,15 @@ yazilmaz. Bu yuzden yedek alirken onay kutusu istenmez.
 from __future__ import annotations
 
 import os
+import time
 from typing import Callable, List, Optional
 
-from PyQt5.QtCore import QModelIndex, QSize, Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog,
                              QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFormLayout,
                              QGroupBox, QHBoxLayout, QHeaderView,
-                             QLabel, QLineEdit, QPlainTextEdit, QProgressBar,
+                             QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
+                             QProgressBar,
                              QPushButton, QRadioButton, QSplitter, QTreeWidget,
                              QTreeWidgetItem, QVBoxLayout, QWidget)
 
@@ -97,14 +99,32 @@ class _Worker(QThread):
     progress = pyqtSignal(str, int)
     done = pyqtSignal(object)
     failed = pyqtSignal(str)
+    cancelled = pyqtSignal()
 
     def __init__(self, func: Callable):
         super().__init__()
         self.func = func
+        self.stop_requested = False
+
+    def request_stop(self) -> None:
+        """Durdurma istegi: bir sonraki ilerleme bildiriminde is kesilir.
+
+        Cekirdekteki uzun isler ilerlemeyi duzenli bildirir (yedekte her
+        8 MB'ta); `OperationCancelled` o noktadan firlar ve `with`/`finally`
+        bloklari aygiti ve dosyalari kapatir.
+        """
+        self.stop_requested = True
 
     def run(self):
+        def report(message: str, percent: int) -> None:
+            if self.stop_requested:
+                raise clone_mod.OperationCancelled()
+            self.progress.emit(message, percent)
+
         try:
-            self.done.emit(self.func(lambda m, p: self.progress.emit(m, p)))
+            self.done.emit(self.func(report))
+        except clone_mod.OperationCancelled:
+            self.cancelled.emit()
         except Exception as exc:                      # kullanici hatayi gormeli
             self.failed.emit(str(exc))
 
@@ -227,6 +247,7 @@ class BackupDialog(QDialog):
         # tetiklenir ve o sirada `self.mode` okunur. Sonradan atandiginda ilk
         # secim sessizce dusuyordu (Qt yuvadaki istisnayi yutar).
         self.mode = mode
+        self._run_mode = mode        # calisan isin kipi (sonuc metni icin)
 
         self.setWindowTitle(tr("Yedekleme ve Geri Yukleme"))
         self.setModal(True)
@@ -256,6 +277,17 @@ class BackupDialog(QDialog):
         self.bar.setAlignment(Qt.AlignCenter)
         self.bar.setMinimumHeight(24)        # yuzde metni cubuga sigsin
         root.addWidget(self.bar)
+        # Gecen / kalan sure: is surerken saniyede bir tazelenir (ilerleme
+        # gelmese de saat ilerler; kullanici isin durmadigini gorur).
+        self.time_label = QLabel("")
+        self.time_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        root.addWidget(self.time_label)
+        self._clock = QTimer(self)
+        self._clock.setInterval(1000)
+        self._clock.timeout.connect(self._update_clock)
+        self._started_at = 0.0
+        self._eta_base = None        # (zaman, yuzde): kalan sure hesabinin basi
+        self._eta_last = None        # (zaman, yuzde): son ilerleme
         root.addSpacing(4)
         root.addLayout(self._build_buttons())
 
@@ -301,7 +333,8 @@ class BackupDialog(QDialog):
         self.info_form = QFormLayout(info_box)
         self.info_form.setContentsMargins(0, 0, 0, 0)
         self.info_labels = {}
-        for key in ("size", "file", "created", "compress", "fs", "remark"):
+        for key in ("size", "file", "created", "compress", "scope", "fs",
+                    "remark"):
             value = QLabel("-")
             value.setTextInteractionFlags(Qt.TextSelectableByMouse)
             self.info_labels[key] = value
@@ -311,6 +344,7 @@ class BackupDialog(QDialog):
         self.info_form.addRow(tr("Yedek boyut:"), self.info_labels["file"])
         self.info_form.addRow(tr("Olusturma:"), self.info_labels["created"])
         self.info_form.addRow(tr("Sikistirma:"), self.info_labels["compress"])
+        self.info_form.addRow(tr("Kapsam:"), self.info_labels["scope"])
         self.info_form.addRow(tr("Dosya sistemi:"), self.info_labels["fs"])
         # Geri yuklemede notun yeri: salt okunur (DiskGenius "Aciklama")
         self.remark_caption = QLabel(tr("Aciklama:"))
@@ -428,6 +462,7 @@ class BackupDialog(QDialog):
 
     def _build_options_group(self) -> QWidget:
         group = QGroupBox(tr("Secenekler"))
+        self.options_group = group
         layout = QVBoxLayout(group)
 
         self.compress_row = QWidget()
@@ -445,6 +480,19 @@ class BackupDialog(QDialog):
         self.level_buttons["normal"].setChecked(True)
         row.addStretch(1)
         layout.addWidget(self.compress_row)
+
+        # DiskGenius gibi: dosya sisteminin bos alani okunmaz (ADR 0092).
+        # 64 GB'lik kartta 500 MB veri varsa yedek ~500 MB okur.
+        self.used_only = QCheckBox(
+            tr("Yalnizca kullanilan alani yedekle (hizli)"))
+        self.used_only.setChecked(True)
+        self.used_only.setToolTip(tr(
+            "FAT, exFAT, ext2/3/4 ve NTFS bolumlerinde yalnizca dolu kumeler "
+            "okunur; bos alan ve bolumlenmemis buyuk alan atlanir. Taninmayan "
+            "dosya sistemleri yine tumuyle yedeklenir. Silinmis dosyalari "
+            "yedekten kurtarmak icin bu secenegi kapatin (tum sektorler)."))
+        self.used_only.toggled.connect(lambda *_: self._update_info())
+        layout.addWidget(self.used_only)
 
         self.confirm = QCheckBox(
             tr("Hedefteki butun veriler silinecek; bunu anliyorum"))
@@ -629,6 +677,7 @@ class BackupDialog(QDialog):
             tr("Kaynak salt okunur acilir; hicbir sey silinmez.") if backup
             else tr("Hedefteki veriler yedekle degistirilir."))
         self.compress_row.setVisible(backup)
+        self.used_only.setVisible(backup)
         self.confirm.setVisible(not backup)
         self.note_box.setVisible(backup)
         self.remark_caption.setVisible(not backup)
@@ -661,8 +710,7 @@ class BackupDialog(QDialog):
             # yedek alma kipinden kalan kaynak bolumleri gosterilmemeli.
             self._show_no_backup()
         self._refresh_plan()
-        self.btn_start.setText(tr("Yedegi al") if backup
-                               else tr("Geri yukle"))
+        self.btn_start.setText(self._start_text())
         self._update_info()
         self._update_buttons()
 
@@ -775,6 +823,7 @@ class BackupDialog(QDialog):
                 info.created.strftime("%Y-%m-%d %H:%M") if info.created else "-")
             self.info_labels["compress"].setText(
                 "zlib" if info.compressed else tr("yok"))
+            self.info_labels["scope"].setText(self._scope_text(info.used_only))
             self.info_labels["fs"].setText(fs_display(info.fs_type) or "-")
             self.info_labels["remark"].setText(info.remark or "-")
             return
@@ -784,11 +833,18 @@ class BackupDialog(QDialog):
             self.info_labels["file"].setText(tr("(yedek alininca belli olur)"))
             self.info_labels["created"].setText("-")
             self.info_labels["compress"].setText(self._level_text())
+            self.info_labels["scope"].setText(
+                self._scope_text(self.used_only.isChecked()))
             self.info_labels["fs"].setText(
                 target.scheme.upper() if target.scheme else "-")
             return
         for label in self.info_labels.values():
             label.setText("-")
+
+    @staticmethod
+    def _scope_text(used_only: bool) -> str:
+        return (tr("Yalnizca kullanilan alan") if used_only
+                else tr("Tum sektorler"))
 
     def _level_text(self) -> str:
         for key, button in self.level_buttons.items():
@@ -1116,8 +1172,13 @@ class BackupDialog(QDialog):
             f"<span style='color:{COLOR_WARN}'>{notes[0]}</span>"
             if notes and restore else (notes[0] if notes else ""))
         problem = self._problem()
-        self.btn_start.setEnabled(not problem and not self._running)
-        self.btn_start.setToolTip(problem)
+        if self._running:
+            # Calisirken dugme "Durdur"dur: durdurma istenene kadar acik.
+            self.btn_start.setEnabled(not self._worker.stop_requested)
+            self.btn_start.setToolTip("")
+        else:
+            self.btn_start.setEnabled(not problem)
+            self.btn_start.setToolTip(problem)
         # Durum satiri **bayat kalmamali**: engel giderilince metin de gider.
         # Islem sonucu yaziliysa ona dokunulmaz.
         if self._running or self._result_shown:
@@ -1131,24 +1192,122 @@ class BackupDialog(QDialog):
     def _run(self, func, on_done, keep_buttons: bool = False) -> None:
         if self._worker is not None and self._worker.isRunning():
             return
-        if not keep_buttons:
-            self._running = True
-            self.btn_start.setEnabled(False)
-            self.btn_close.setEnabled(False)
         worker = _Worker(func)
         self._worker = worker
+        if not keep_buttons:
+            self._running = True
+            self._run_mode = self.mode
+            self.status.setStyleSheet("")   # onceki sonucun rengi kalmasin
+            self._lock_inputs(True)
+            self.btn_close.setEnabled(False)
+            self.btn_start.setText(tr("Durdur"))
+            self.btn_start.setIcon(app_icon("stop"))
+            self.btn_start.setEnabled(True)
+            self._started_at = time.monotonic()
+            self._eta_base = self._eta_last = None
+            self._update_clock()
+            self._clock.start()
         worker.progress.connect(self._on_progress)
         worker.done.connect(lambda value: self._finish(on_done, value, None,
                                                        keep_buttons))
         worker.failed.connect(lambda message: self._finish(on_done, None,
                                                            message, keep_buttons))
+        worker.cancelled.connect(lambda: self._finish(on_done, None, None,
+                                                      keep_buttons,
+                                                      cancelled=True))
         worker.start()
 
-    def _finish(self, on_done, value, error, keep_buttons: bool) -> None:
+    def _lock_inputs(self, locked: bool) -> None:
+        """Is surerken kaynak/hedef, dosya, kip ve secenekler degistirilemez.
+
+        Calisan is baslangicta okunan degerlerle surer; arada degisen bir
+        secim yalnizca ekrani yanlis gosterirdi (ve geri yuklemede yanlis
+        hedefe dair bir izlenim verirdi).
+        """
+        for widget in (self.rb_backup, self.rb_restore, self.path_edit,
+                       self.btn_pick, self.note_box, self.target_group,
+                       self.options_group):
+            widget.setEnabled(not locked)
+        if not locked:
+            self._sync_target_state()   # hedef alani kipe gore yeniden
+
+    def _request_stop(self) -> None:
+        worker = self._worker
+        if worker is None or not worker.isRunning() or worker.stop_requested:
+            return
+        target = self.current_target()
+        if self._run_mode == MODE_RESTORE and target is not None \
+                and target.kind != "new":
+            answer = QMessageBox.question(
+                self, tr("Islemi durdur"),
+                tr("Geri yukleme yarida kesilirse hedef tutarsiz kalir ve "
+                   "yeniden geri yuklenene ya da bicimlendirilene kadar "
+                   "kullanilamaz. Yine de durdurulsun mu?"),
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if answer != QMessageBox.Yes or not worker.isRunning():
+                return
+        worker.request_stop()
+        self.btn_start.setText(tr("Durduruluyor..."))
+        self.btn_start.setEnabled(False)
+
+    def _start_text(self) -> str:
+        return tr("Yedegi al") if self.mode == MODE_BACKUP else tr("Geri yukle")
+
+    # -- sure ---------------------------------------------------------------
+    @staticmethod
+    def _format_duration(seconds: float) -> str:
+        seconds = max(0, int(round(seconds)))
+        hours, rest = divmod(seconds, 3600)
+        minutes, secs = divmod(rest, 60)
+        if hours:
+            return f"{hours}:{minutes:02d}:{secs:02d}"
+        return f"{minutes:02d}:{secs:02d}"
+
+    def _remaining(self, now: float) -> Optional[float]:
+        """Kalan sure tahmini; ilerleme yetersizse None.
+
+        Hiz, son belirsiz asamadan (kullanilan alan hesabi gibi) sonra ilk
+        yuzdenin geldigi andan olculur: hazirlik suresi hizi bozmasin.
+        """
+        if self._eta_base is None or self._eta_last is None:
+            return None
+        t0, p0 = self._eta_base
+        t1, p1 = self._eta_last
+        if p1 - p0 < 1 or t1 - t0 < 1.0:
+            return None
+        per_percent = (t1 - t0) / (p1 - p0)
+        return max(0.0, per_percent * (100 - p1) - (now - t1))
+
+    def _update_clock(self) -> None:
+        if not self._running:
+            return
+        now = time.monotonic()
+        text = tr("Gecen: {}", self._format_duration(now - self._started_at))
+        remaining = self._remaining(now)
+        if remaining is not None:
+            text += " · " + tr("Kalan: ~{}", self._format_duration(remaining))
+        else:
+            text += " · " + tr("Kalan: hesaplaniyor...")
+        self.time_label.setText(text)
+
+    def _finish(self, on_done, value, error, keep_buttons: bool,
+                cancelled: bool = False) -> None:
         if not keep_buttons:
             self._running = False
+            self._clock.stop()
+            self.time_label.setText(tr("Sure: {}", self._format_duration(
+                time.monotonic() - self._started_at)))
             self.btn_close.setEnabled(True)
-        if error:
+            self.btn_start.setIcon(app_icon("apply"))
+            self.btn_start.setText(self._start_text())
+            self._lock_inputs(False)
+        if cancelled:
+            self.status.setText(self._cancelled_text())
+            self.status.setStyleSheet(f"color: {COLOR_WARN}")
+            self.bar.setRange(0, 100)
+            self.bar.setValue(0)
+            self._result_shown = True
+        elif error:
             self.status.setText(tr("Basarisiz: {}", error))
             self.status.setStyleSheet(f"color: {COLOR_WARN}")
             self.bar.setValue(0)
@@ -1158,8 +1317,28 @@ class BackupDialog(QDialog):
             on_done(value)
         self._update_buttons()
 
+    def _cancelled_text(self) -> str:
+        if self._run_mode == MODE_BACKUP:
+            return tr("Yedekleme durduruldu; yarim kalan yedek dosyasi silindi.")
+        target = self.current_target()
+        if target is not None and target.kind == "new":
+            return tr("Geri yukleme durduruldu; yarim kalan goruntu dosyasi "
+                      "silindi.")
+        return tr("Geri yukleme durduruldu. Hedef tutarsiz durumda: yeniden "
+                  "geri yukleyin ya da bicimlendirin.")
+
     def _on_progress(self, message: str, percent: int) -> None:
+        if self._worker is not None and self._worker.stop_requested:
+            return                       # "Durduruluyor..." ezilmesin
         self.status.setText(message)
+        if self._running:
+            now = time.monotonic()
+            if percent < 0:
+                self._eta_base = self._eta_last = None   # belirsiz asama
+            elif self._eta_base is None or percent < self._eta_last[1]:
+                self._eta_base = self._eta_last = (now, percent)
+            else:
+                self._eta_last = (now, percent)
         if percent < 0:
             if self.bar.maximum() != 0:
                 self.bar.setRange(0, 0)
@@ -1169,6 +1348,9 @@ class BackupDialog(QDialog):
         self.bar.setValue(max(0, min(100, percent)))
 
     def _start(self) -> None:
+        if self._running:
+            self._request_stop()
+            return
         if self._problem():
             return
         self._result_shown = False
@@ -1183,6 +1365,7 @@ class BackupDialog(QDialog):
         remark = self.remark.toPlainText()
         level = self.level()
         compress = level > clone_mod.LEVEL_NONE
+        used_only = self.used_only.isChecked()
 
         if target.kind == "physical" and target.session is None:
             disk = target.disk
@@ -1190,21 +1373,21 @@ class BackupDialog(QDialog):
             def task(report):
                 return DiskSession.backup_physical(
                     disk, path, compress=compress, progress=report,
-                    remark=remark, level=level)
+                    remark=remark, level=level, used_only=used_only)
         elif target.kind == "partition":
             session, index = target.session, target.index
 
             def task(report):
                 return session.backup_partition(
                     index, path, compress=compress, progress=report,
-                    remark=remark, level=level)
+                    remark=remark, level=level, used_only=used_only)
         else:
             session = target.session
 
             def task(report):
                 return session.backup_disk(path, compress=compress,
                                            progress=report, remark=remark,
-                                           level=level)
+                                           level=level, used_only=used_only)
 
         self.bar.setValue(0)
         self._run(task, self._backup_done)

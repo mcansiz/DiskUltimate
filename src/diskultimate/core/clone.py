@@ -9,20 +9,28 @@ Yedek bicimi `.dub` (DiskUltimate Backup) — belgesi: .claude/specs/dub.md
 """
 from __future__ import annotations
 
+import contextlib
 import datetime
 import os
 import struct
 import zlib
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Deque, Dict, List, Optional, Tuple
 
-from .image import BlockDevice, DiskImage
+from . import diagnostics, usedmap
+from .image import BlockDevice, DiskImage, is_zero
 from .platform import restore_owner
 from .ptable import human_size
 from ..i18n import tr
 
 MAGIC = b"DUBACKUP"
-VERSION = 1
+# Surum 2: `BLOCK_SKIP` (yalnizca kullanilan alan, ADR 0092). Atlanan blok
+# icermeyen yedek hala surum 1 yazilir ve eski surumlerde acilir; atlanan
+# blok iceren yedegi eski surum **reddeder** — bilinmeyen tur onda ham blok
+# gibi islenip sessizce yanlis veri yazardi.
+VERSION = 2
 HEADER_SIZE = 512
 INDEX_ENTRY = 16
 DEFAULT_BLOCK = 1024 * 1024
@@ -30,6 +38,10 @@ DEFAULT_BLOCK = 1024 * 1024
 BLOCK_ZERO = 0
 BLOCK_RAW = 1
 BLOCK_ZLIB = 2
+BLOCK_SKIP = 3          # dosya sisteminde kullanilmayan alan: okunmadi
+
+FLAG_ZLIB = 0x0001
+FLAG_USED_ONLY = 0x0002
 
 # Kullanici notu basligin bos alaninda durur (136..456). Baslik boyutu
 # degismedi: eski yedeklerde bu alan sifirdir ve not "yok" okunur, yeni
@@ -52,6 +64,35 @@ class CloneError(Exception):
     pass
 
 
+class OperationCancelled(BaseException):
+    """Kullanici uzun isi durdurdu.
+
+    Arayuz bunu ilerleme geri cagrisindan firlatir: cekirdekteki her uzun is
+    ilerlemeyi duzenli bildirdigi icin is, hangi dongudeyse orada durur.
+    `BaseException`dir (KeyboardInterrupt gibi): cekirdekte "her hatayi yut,
+    tamamini yedekle" turunden cok sayida `except Exception` var; iptal
+    onlara takilip sessizce yutulmamali.
+    """
+
+
+@contextlib.contextmanager
+def _partial_file(path: str):
+    """Yazilmak uzere acilan dosya; is yarida kalirsa (hata ya da durdurma)
+    kapatilip **silinir** — yarim `.dub` gecerli bir yedek gibi gorunmemeli.
+    """
+    fh = open(path, "wb")
+    try:
+        yield fh
+    except BaseException:
+        fh.close()
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+        raise
+    fh.close()
+
+
 @dataclass
 class BackupInfo:
     path: str
@@ -65,6 +106,7 @@ class BackupInfo:
     compressed: bool
     file_size: int
     remark: str = ""            # kullanicinin yedege iliskin notu
+    used_only: bool = False     # yalnizca kullanilan alan (ADR 0092)
 
     @property
     def ratio(self) -> float:
@@ -82,8 +124,33 @@ class BackupInfo:
             tr("Olusturma"): (self.created.strftime("%Y-%m-%d %H:%M")
                               if self.created else "-"),
             tr("Sikistirma"): "zlib" if self.compressed else tr("yok"),
+            tr("Kapsam"): (tr("Yalnizca kullanilan alan") if self.used_only
+                           else tr("Tum sektorler")),
             tr("Not"): self.remark or "-",
         }
+
+
+def _compress_workers() -> int:
+    """Sikistirma is parcacigi sayisi: cekirdek sayisi, en cok 8.
+
+    8'in ustunde kazanc okuma hizina takilir, bellek (2 x is parcacigi x blok)
+    ise buyumeye devam eder. `DISKULTIMATE_BACKUP_THREADS` ile ayarlanir
+    (1 = tek is parcacigi, eski davranis).
+    """
+    try:
+        istenen = int(os.environ.get("DISKULTIMATE_BACKUP_THREADS", "0"))
+    except ValueError:
+        istenen = 0
+    if istenen > 0:
+        return istenen
+    return max(1, min(8, os.cpu_count() or 1))
+
+
+def _result(job):
+    """Kuyruktaki isin sonucu; None atlanan bloktur."""
+    if job is None:
+        return BLOCK_SKIP, b""
+    return job.result()
 
 
 def _report(progress: Progress, message: str, percent: int) -> None:
@@ -97,8 +164,12 @@ def _report(progress: Progress, message: str, percent: int) -> None:
 def backup(device: BlockDevice, dest_path: str, compress: bool = True,
            block_size: int = DEFAULT_BLOCK, fs_type: str = "", label: str = "",
            progress: Progress = None, remark: str = "",
-           level: int = LEVEL_NORMAL) -> BackupInfo:
+           level: int = LEVEL_NORMAL,
+           used_ranges: Optional[List[Tuple[int, int]]] = None) -> BackupInfo:
     """Aygiti (disk veya bolum) `.dub` dosyasina yedekler.
+
+    `used_ranges` verilirse (`usedmap`) yalnizca o araliklara dokunan bloklar
+    **okunur**; digerleri `BLOCK_SKIP` olarak isaretlenir. None: tum sektorler.
 
     `level` zlib duzeyidir (`LEVEL_FAST` / `LEVEL_NORMAL` / `LEVEL_HIGH`);
     `compress=False` ya da `level=LEVEL_NONE` sikistirmayi kapatir. `remark`
@@ -121,40 +192,85 @@ def backup(device: BlockDevice, dest_path: str, compress: bool = True,
 
     index = bytearray(index_bytes)
     _report(progress, tr("Yedekleme baslatiliyor..."), 0)
-    with open(dest_path, "wb") as fh:
+    used_only = used_ranges is not None
+    flags = usedmap.block_flags(used_ranges, total, block_size)
+    to_read = sum(min(block_size, total - i * block_size)
+                  for i in range(block_count) if flags[i])
+    state = {"done": 0}
+    # Sikistirma tek cekirdekte ~40 MB/s ile darbogazdi. zlib.compress GIL'i
+    # birakir: bloklar is parcaciklarinda sikistirilir, okuma sirayla ana
+    # dongude kalir (ayni aygita tek yerden dokunulur) ve dosyaya **sirayla**
+    # yazilir — cikti tek is parcacikli surumle bayt bayt aynidir.
+    workers = _compress_workers() if compress else 0
+    havuz = ThreadPoolExecutor(max_workers=workers) if workers > 1 else None
+    bekleyen: Deque = deque()
+
+    def pack(block: bytes):
+        if is_zero(block):
+            return BLOCK_ZERO, b""
+        if compress:
+            paket = zlib.compress(block, level)
+            if len(paket) < len(block):
+                return BLOCK_ZLIB, paket
+        return BLOCK_RAW, block
+
+    def emit(fh, i: int, kind: int, paket: bytes, ofset: int, length: int):
+        if kind in (BLOCK_ZERO, BLOCK_SKIP):
+            struct.pack_into("<BxxxIQ", index, i * INDEX_ENTRY, kind, 0, 0)
+            if kind == BLOCK_SKIP:
+                return
+        else:
+            pos = fh.tell()
+            fh.write(paket)
+            struct.pack_into("<BxxxIQ", index, i * INDEX_ENTRY,
+                             kind, len(paket), pos)
+        state["done"] += length
+        if progress and (i % 8 == 0 or i == block_count - 1):
+            _report(progress,
+                    tr("Yedekleniyor... {} / {}", human_size(state["done"]),
+                       human_size(to_read)),
+                    int(98 * state["done"] / max(1, to_read)))
+
+    with diagnostics.span("backup", size=total, read=to_read,
+                          workers=workers or 1), \
+            _partial_file(dest_path) as fh:
         fh.seek(veri_baslangici)
-        yazilan = 0
-        for i in range(block_count):
-            ofset = i * block_size
-            length = min(block_size, total - ofset)
-            block = device.read(ofset, length)
-            if not block.strip(b"\x00"):
-                struct.pack_into("<BxxxIQ", index, i * INDEX_ENTRY,
-                                 BLOCK_ZERO, 0, 0)
-            else:
-                if compress:
-                    paket = zlib.compress(block, level)
-                    kind = BLOCK_ZLIB if len(paket) < length else BLOCK_RAW
-                    if kind == BLOCK_RAW:
-                        paket = block
-                else:
-                    kind, paket = BLOCK_RAW, block
-                pos = fh.tell()
-                fh.write(paket)
-                struct.pack_into("<BxxxIQ", index, i * INDEX_ENTRY,
-                                 kind, len(paket), pos)
-                yazilan += len(paket)
-            if progress and (i % 8 == 0 or i == block_count - 1):
-                _report(progress,
-                        tr("Yedekleniyor... {} / {}", human_size(ofset + length),
-                           human_size(total)),
-                        int(98 * (i + 1) / block_count))
+        try:
+            for i in range(block_count):
+                ofset = i * block_size
+                length = min(block_size, total - ofset)
+                if not flags[i]:
+                    if havuz is None or not bekleyen:
+                        emit(fh, i, BLOCK_SKIP, b"", ofset, length)
+                    else:     # sira korunur: atlanan blok da kuyruga girer
+                        bekleyen.append((i, None, ofset, length))
+                    continue
+                block = device.read(ofset, length)
+                if havuz is None:
+                    emit(fh, i, *pack(block), ofset, length)
+                    continue
+                bekleyen.append((i, havuz.submit(pack, block), ofset, length))
+                # bellek siniri: is parcacigi basina en cok iki blok bekler
+                while len(bekleyen) >= 2 * workers:
+                    j, is_, o, n = bekleyen.popleft()
+                    emit(fh, j, *_result(is_), o, n)
+            while bekleyen:
+                j, is_, o, n = bekleyen.popleft()
+                emit(fh, j, *_result(is_), o, n)
+        finally:
+            if havuz is not None:
+                for _, is_, _, _ in bekleyen:
+                    if is_ is not None:
+                        is_.cancel()
+                havuz.shutdown(wait=True)
 
         simdi = datetime.datetime.now()
         header = bytearray(HEADER_SIZE)
         header[0:8] = MAGIC
+        bayrak = (FLAG_ZLIB if compress else 0) | \
+            (FLAG_USED_ONLY if used_only else 0)
         struct.pack_into("<HHIQIQI", header, 8,
-                         VERSION, 1 if compress else 0, block_size, total,
+                         2 if used_only else 1, bayrak, block_size, total,
                          device.sector_size, int(simdi.timestamp()), block_count)
         header[40:72] = fs_type.encode("utf-8")[:32].ljust(32, b"\x00")
         header[72:136] = label.encode("utf-8")[:64].ljust(64, b"\x00")
@@ -244,7 +360,8 @@ def read_backup_info(path: str) -> BackupInfo:
                       sector_size=sector_size, block_size=block_size,
                       block_count=block_count, fs_type=fs_type, label=label,
                       created=olusturma, compressed=bool(bayraklar & 1),
-                      file_size=os.path.getsize(path), remark=remark)
+                      file_size=os.path.getsize(path), remark=remark,
+                      used_only=bool(bayraklar & FLAG_USED_ONLY))
 
 
 # --------------------------------------------------------------------------
@@ -309,6 +426,21 @@ class DubImage(BlockDevice):
             pos += alinacak
         return bytes(out)
 
+    def is_skipped(self, offset: int, length: int) -> bool:
+        """Aralik tumuyle `BLOCK_SKIP` bloklarinda mi (yedeklenmemis alan)?
+
+        Geri yukleme bu alana hedefte **dokunmaz**; sifir yazmak 64 GB'lik
+        bir kartta yedegin kazandirdigi sureyi geri yerdi.
+        """
+        if length <= 0:
+            return False
+        first = offset // self._block_size
+        last = (offset + length - 1) // self._block_size
+        for no in range(first, min(last, self._count - 1) + 1):
+            if self._index[no * INDEX_ENTRY] != BLOCK_SKIP:
+                return False
+        return last < self._count
+
     def write(self, offset: int, data: bytes) -> None:
         raise CloneError(self.readonly_reason)
 
@@ -329,7 +461,7 @@ class DubImage(BlockDevice):
             return b"\x00" * max(0, boy)
         kind, length, pos = struct.unpack_from("<BxxxIQ", self._index,
                                                no * INDEX_ENTRY)
-        if kind == BLOCK_ZERO:
+        if kind in (BLOCK_ZERO, BLOCK_SKIP):
             data = b"\x00" * boy
         else:
             self._fh.seek(pos)
@@ -365,9 +497,11 @@ def restore(src_path: str, device: BlockDevice, progress: Progress = None,
             target_length = min(info.block_size, info.total_bytes - ofset)
             if target_length <= 0:
                 break
-            if kind == BLOCK_ZERO:
+            if kind == BLOCK_SKIP:
+                pass        # kullanilmayan alan: hedefe dokunulmaz (ADR 0092)
+            elif kind == BLOCK_ZERO:
                 # hedefte eski veri varsa temizle, yoksa dokunma (seyreklik korunur)
-                if device.read(ofset, target_length).strip(b"\x00"):
+                if not is_zero(device.read(ofset, target_length)):
                     device.write(ofset, b"\x00" * target_length)
             else:
                 fh.seek(pos)
@@ -406,9 +540,9 @@ def clone(src: BlockDevice, dst: BlockDevice, block_size: int = DEFAULT_BLOCK,
     while kopyalanan < total:
         length = min(block_size, total - kopyalanan)
         block = src.read(kopyalanan, length)
-        if block.strip(b"\x00"):
+        if not is_zero(block):
             dst.write(kopyalanan, block)
-        elif dst.read(kopyalanan, length).strip(b"\x00"):
+        elif not is_zero(dst.read(kopyalanan, length)):
             dst.write(kopyalanan, b"\x00" * length)
         kopyalanan += length
         _report(progress,

@@ -44,7 +44,7 @@ from typing import Callable, Dict, Optional
 
 from .clone import CloneError, DubImage, read_backup_info
 from .gpt import GPTTable
-from .image import BlockDevice, PartitionView
+from .image import BlockDevice, PartitionView, is_zero
 from .layoutedit import EditableLayout, LayoutError, Slot
 from .mbr import MBRTable
 from .ptable import MBR_EXTENDED_TYPES, PartitionTable, human_size
@@ -201,17 +201,41 @@ class _Overlay(BlockDevice):
 # --------------------------------------------------------------------------
 #  Uygulama
 # --------------------------------------------------------------------------
+def _skip_probe(src: BlockDevice):
+    """`src` bir `DubImage` ya da onun uzerindeki `PartitionView` ise
+    (ofset, uzunluk) -> "yedeklenmemis mi" sorgusu; degilse None.
+
+    `_Overlay` (kucultulen dosya sistemi) bilerek kapsanmaz: boyutlandirma
+    atlanan alana yazmis olabilir.
+    """
+    if isinstance(src, DubImage):
+        return src.is_skipped
+    if type(src) is PartitionView and isinstance(src._dev, DubImage):
+        base = src.start_lba * src.sector_size
+        return lambda off, n: src._dev.is_skipped(base + off, n)
+    return None
+
+
 def _copy_region(src: BlockDevice, src_lba: int, dst: BlockDevice,
                  dst_lba: int, count: int, tick: Callable[[int], None]) -> None:
-    """Sektorleri kopyalar; bos (sifir) parcada hedef zaten sifirsa yazmaz."""
+    """Sektorleri kopyalar; bos (sifir) parcada hedef zaten sifirsa yazmaz.
+
+    Yedekte okunmamis (`BLOCK_SKIP`, kullanilmayan alan) parcaya hedefte hic
+    dokunulmaz (ADR 0092).
+    """
     ss = src.sector_size
     step = max(1, COPY_CHUNK // ss)
+    skipped = _skip_probe(src)
     pos = 0
     while pos < count:
         n = min(step, count - pos)
+        if skipped is not None and skipped((src_lba + pos) * ss, n * ss):
+            pos += n
+            tick(n)
+            continue
         data = src.read_sectors(src_lba + pos, n)
-        if data.strip(b"\x00") or \
-                dst.read_sectors(dst_lba + pos, n).strip(b"\x00"):
+        if not is_zero(data) or \
+                not is_zero(dst.read_sectors(dst_lba + pos, n)):
             dst.write_sectors(dst_lba + pos, data)
         pos += n
         tick(n)

@@ -217,6 +217,13 @@ def _apply(p, u, dark):
     p.drawRect(flag)
 
 
+def _stop(p, u, dark):
+    """Durdur: kirmizi kare (oynaticilardaki durdurma dugmesi)."""
+    p.setPen(Qt.NoPen)
+    p.setBrush(_tone(RED, dark))
+    p.drawRoundedRect(QRectF(3.5 * u, 3.5 * u, 9.0 * u, 9.0 * u), 1.6 * u, 1.6 * u)
+
+
 def _pending(p, u, dark):
     """Bekleyen islem listesi: satirlar + saat."""
     _pen(p, _ink(dark), u, 1.4)
@@ -724,7 +731,7 @@ def _unmount(p, u, dark):
 
 DRAWERS = {
     # kuyruk
-    "apply": _apply, "pending": _pending, "discard": _discard,
+    "apply": _apply, "stop": _stop, "pending": _pending, "discard": _discard,
     "undo": _undo, "redo": _redo, "refresh": _refresh,
     # islemler
     "table": _table, "table-clear": _table_clear, "convert": _convert,

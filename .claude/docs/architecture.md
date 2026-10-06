@@ -34,6 +34,7 @@ main.py                       Giris noktasi (QApplication + MainWindow)
     │   ├── formatter.py      Bicimlendirme dagiticisi (sekiz FS; yerel arac → mkfs → saf Python)
     │   ├── filesystem.py     FileSystemAccess arayuzu; FatAccess, ExFatAccess, ExtAccess
     │   ├── clone.py          .dub yedek bicimi (kullanici notu dahil), geri yukleme, klonlama
+    │   ├── usedmap.py        Yedek icin kullanilan alan haritasi: FAT/exFAT/ext/NTFS bitmap, disk bolgeleri (ADR 0092)
     │   ├── wipe.py           Guvenli silme (sifir/rastgele/DoD), bos alan silme
     │   ├── recovery.py       Silinmis dosya, kayip bolum, imza tabanli kurtarma
     │   ├── diagnostics.py    Gunluk, sure olcumu (span), donma yakalayici, cokme dokumu

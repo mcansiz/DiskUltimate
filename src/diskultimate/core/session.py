@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional
 
 from . import clone as clone_mod
+from . import usedmap
 from . import diagnostics
 from . import convert as convert_mod
 from . import recovery as recovery_mod
@@ -40,6 +41,23 @@ from ..i18n import tr
 
 class SessionError(Exception):
     pass
+
+
+def _used_ranges(device: BlockDevice, used_only: bool, progress,
+                 partition: bool = False):
+    """Yalnizca kullanilan alan istendiyse okunacak araliklar; degilse None.
+
+    Harita cikarilamazsa (taninmayan dosya sistemi, okunamayan tablo) yine
+    None doner ve yedek **tum sektorleri** alir — bilinmeyen alan bos
+    sayilmaz.
+    """
+    if not used_only:
+        return None
+    if progress:
+        progress(tr("Kullanilan alan hesaplaniyor..."), -1)
+    if partition:
+        return usedmap.fs_used_ranges(device)
+    return usedmap.disk_used_ranges(device, progress)
 
 
 def _restore_any(src_path: str, device: BlockDevice, progress,
@@ -817,19 +835,27 @@ class DiskSession:
     # ======================================================================
     def backup_partition(self, index: int, dest_path: str, compress: bool = True,
                          progress=None, remark: str = "",
-                         level: int = clone_mod.LEVEL_NORMAL):
+                         level: int = clone_mod.LEVEL_NORMAL,
+                         used_only: bool = False):
+        """`used_only`: yalnizca dosya sisteminin dolu alani okunur (ADR 0092)."""
         part = self.table.get(index) if self.table else None
         if part is None:
             raise SessionError(tr("Bolum bulunamadi"))
-        return clone_mod.backup(self.view(part), dest_path, compress=compress,
+        view = self.view(part)
+        ranges = _used_ranges(view, used_only, progress, partition=True)
+        return clone_mod.backup(view, dest_path, compress=compress,
                                 fs_type=part.fs_type, label=part.fs_label or part.name,
-                                progress=progress, remark=remark, level=level)
+                                progress=progress, remark=remark, level=level,
+                                used_ranges=ranges)
 
     def backup_disk(self, dest_path: str, compress: bool = True, progress=None,
-                    remark: str = "", level: int = clone_mod.LEVEL_NORMAL):
+                    remark: str = "", level: int = clone_mod.LEVEL_NORMAL,
+                    used_only: bool = False):
+        ranges = _used_ranges(self.image, used_only, progress)
         return clone_mod.backup(self.image, dest_path, compress=compress,
                                 fs_type=self.scheme_name, label=self.name,
-                                progress=progress, remark=remark, level=level)
+                                progress=progress, remark=remark, level=level,
+                                used_ranges=ranges)
 
     def restore_partition(self, index: int, src_path: str, progress=None,
                           fill: bool = True):
@@ -1057,7 +1083,8 @@ class DiskSession:
     @staticmethod
     def backup_physical(disk, dest_path: str, compress: bool = True,
                         progress=None, remark: str = "",
-                        level: int = clone_mod.LEVEL_NORMAL):
+                        level: int = clone_mod.LEVEL_NORMAL,
+                        used_only: bool = False):
         """Fiziksel diski **salt okunur** acip `.dub` dosyasina yedekler.
 
         Yedek almak icin diski oturum olarak acmak gerekmez: okumak zararsizdir
@@ -1066,10 +1093,11 @@ class DiskSession:
         """
         device = PhysicalDisk(disk, readonly=True)
         try:
+            ranges = _used_ranges(device, used_only, progress)
             return clone_mod.backup(device, dest_path, compress=compress,
                                     fs_type="", label=disk.name,
                                     progress=progress, remark=remark,
-                                    level=level)
+                                    level=level, used_ranges=ranges)
         finally:
             device.close()
 
@@ -1107,8 +1135,17 @@ class DiskSession:
         image = DiskImage.create(dest_path, size, overwrite=True)
         try:
             _restore_any(src_path, image, progress, layout)
-        finally:
+        except BaseException:
+            # Yarim kalan yeni goruntu (hata ya da durdurma) kullanilamaz ve
+            # yeni yaratildi: silinir. Var olan diske yazilan geri yukleme
+            # bu yola girmez.
             image.close()
+            try:
+                os.remove(dest_path)
+            except OSError:
+                pass
+            raise
+        image.close()
         return dest_path
 
     # ======================================================================

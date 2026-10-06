@@ -1415,6 +1415,13 @@ def main() -> int:
     yeni_yedek = d10.path_edit.text()
     d10._start()
     assert d10._worker is not None, "yedekleme is parcacigi baslamadi"
+    # Is surerken giris alanlari kilitli, dugme "Durdur" (kullanici istegi,
+    # 2026-10-05): "Disk sec" gibi alanlar islem sirasinda aktifti.
+    assert d10.btn_start.text() == "Durdur" and d10.btn_start.isEnabled(), \
+        d10.btn_start.text()
+    for ad in ("options_group", "target_group", "path_edit", "btn_pick",
+               "rb_restore", "note_box"):
+        assert not getattr(d10, ad).isEnabled(), f"is surerken {ad} etkin"
     d10._worker.wait()
     app.processEvents()
     assert d10.result_value is not None, f"yedek alinamadi: {d10.status.text()}"
@@ -1422,6 +1429,43 @@ def main() -> int:
     assert read_backup_info(yeni_yedek).remark == "Ana diskin haftalik yedegi",         "not yeni yedege yazilmadi"
     print(f"  (yedek penceresi: {os.path.basename(yeni_yedek)} "
           f"{d10.result_value.file_size} bayt, not dosyada)")
+    assert d10.btn_start.text() == "Yedegi al" and \
+        d10.options_group.isEnabled() and d10.target_group.isEnabled(), \
+        "is bitince alanlar acilmadi"
+    assert d10.time_label.text().startswith("Sure: "), d10.time_label.text()
+
+    # Durdurma: yavas bir is, saniyede bir tazelenen gecen/kalan sure,
+    # "Durdur" -> "Durduruluyor..." -> durduruldu; alanlar geri acilir.
+    import time as _time
+    asil_yedek = pencere.session.backup_disk
+
+    def yavas_yedek(path, **kw):
+        for i in range(600):
+            kw["progress"]("yavas", i // 6)
+            _time.sleep(0.01)
+
+    pencere.session.backup_disk = yavas_yedek
+    try:
+        d10._start()
+        bitis = _time.monotonic() + 3.3     # en az uc saat tiki
+        while _time.monotonic() < bitis:
+            app.processEvents()
+            _time.sleep(0.05)
+        sure = d10.time_label.text()
+        assert sure.startswith("Gecen: 00:0") and "Kalan: ~" in sure, sure
+        kaydet(d10, "36b-yedek-suruyor.png")
+        d10._start()                                  # = Durdur
+        assert d10.btn_start.text() == "Durduruluyor..." and \
+            not d10.btn_start.isEnabled(), d10.btn_start.text()
+        d10._worker.wait()
+        app.processEvents()
+        assert "durduruldu" in d10.status.text(), d10.status.text()
+        assert d10.btn_start.text() == "Yedegi al" and \
+            d10.btn_start.isEnabled() and d10.options_group.isEnabled(), \
+            "durdurmadan sonra pencere toparlanmadi"
+        print(f"  (durdurma: '{sure}' -> '{d10.status.text()[:40]}...')")
+    finally:
+        pencere.session.backup_disk = asil_yedek
     d10.close()
 
     d11 = BackupDialog(pencere, mode=MODE_RESTORE,

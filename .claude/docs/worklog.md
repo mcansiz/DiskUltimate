@@ -5852,3 +5852,50 @@ calismiyordu.
 - **v0.6.2-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.6.2-beta
   — sürüm koşusu 37226080373. Canlı denetim: 0.6.1-beta için v0.6.2-beta
   bulundu, 0.6.2-beta için yeni sürüm yok.
+
+## 2026-10-05 — Az kümeli FAT32 tespiti, yedekleme hızı (ADR 0091)
+
+- Kullanıcı bildirdi: `picozed.img` BOOT bölümü FAT16 ve etiket `□□□`
+  görünüyordu (DiskGenius: FAT32). Kök neden: tür küme sayısından seçiliyordu
+  (25 549 < 65 525). Artık BPB_FATSz16 == 0 → FAT32 (Linux/Windows ile aynı);
+  `fsdetect`, `fat.FatFS`, `resize` alt sınırı. FatFS bu birime yazsaydı
+  tabloyu bozardı. Doğrulama: picozed.img salt okunur — FAT32 / BOOT, kök
+  dizin (BOOT.BIN, image.ub) okunuyor; fsck.vfat temiz.
+- Yedekleme: profil 3.3 s (zlib 2.2 s tek çekirdek, `strip` sıfır denetimi
+  1.0 s). `image.is_zero` (memcmp, ~58 kat) + paralel zlib (≤ 8 iş parçacığı,
+  sıralı yazım, çıktı aynı) + `span("backup")`: 0.71 s. `.dub` biçimi aynı.
+- DiskGenius gibi yalnızca kullanılan kümeleri yedekleme: kullanıcı onayladı
+  (64 GB SD kart, başka PC) → ADR 0092, aşağıda.
+- t91, t92; run_all 90/92 (2 Windows'a özgü atlandı), diag 13/13,
+  platform 0, i18n TAMAM.
+
+## 2026-10-05 (2) — Yalnızca kullanılan alanı yedekleme (ADR 0092)
+
+- Kullanıcı: 64 GB SD kart yedeği (başka PC) DiskGenius'ta hızlı, bizde çok
+  yavaş; "evet yapalım". Asıl fark okuma: her sektör yerine yalnızca dolu
+  kümeler.
+- `core/usedmap.py`: FAT (FAT tablosu), exFAT (bitmap), ext2/3/4 (grup
+  bitmapleri, BLOCK_UNINIT'te metaveri), NTFS (`$Bitmap`); disk düzeyi baş
+  bölge, ≤16 MiB boşluklar, EBR, kenarlar. Tanınmayan/okunamayan → tamamı;
+  ext `needs_recovery`/bigalloc → tamamı.
+- `.dub` sürüm 2: `BLOCK_SKIP` (3), başlık bayrağı bit 1; geri yüklemede
+  atlanan alana dokunulmaz; `DubImage.is_skipped`, restoreplan da atlar.
+  Atlanan bloksuz yedek sürüm 1 kalır.
+- Yedek penceresi: "Yalnızca kullanılan alanı yedekle (hızlı)" varsayılan
+  açık; bilgi alanında "Kapsam". 7 yeni metin 9 dilde.
+- Ölçüm: 64 GB seyrek görüntü (300 MB veri) 27,4 s → 1,7 s; picozed.img
+  105/512 MB okunur. Fiziksel kartta ölçülmedi (VM/Windows'ta yapılmalı).
+- t93 (4 FS + fsck'ler, ham önyükleyici, EBR, dokunulmayan hedef alan).
+
+## 2026-10-06 — Yedek penceresi: kilit, geçen/kalan süre, Durdur (ADR 0093)
+
+- Kullanıcı isteği: yedek alınırken "Disk seç" gibi alanlar aktifti; süre
+  gösterilmiyordu; düğme durdurmaya dönüşsün.
+- İş sürerken kip, dosya, not, kaynak/hedef ve seçenekler kilitli; düğme
+  "Durdur" (yeni `stop` ikonu, 5 gömülü pakette karşılığı).
+- `Geçen · Kalan ~` saniyede bir; hız belirsiz aşamadan sonra ölçülür.
+- `clone.OperationCancelled` (BaseException) ilerleme geri çağrısından
+  fırlar; yarım `.dub` / yarım yeni görüntü silinir; var olan hedefe geri
+  yüklemeyi durdurmadan önce onay.
+- t94, ui_smoke senaryosu; 9 yeni metin 9 dilde.
+

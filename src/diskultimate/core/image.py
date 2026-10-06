@@ -75,6 +75,29 @@ def _observed(method):
     return wrapper
 
 
+_ZERO_BUF = bytes(4 * 1024 * 1024)
+
+
+def is_zero(data) -> bool:
+    """Blok tumuyle sifir mi?
+
+    Hazir sifir tamponuyla `==` karsilastirmasi memcmp'tir: 1 MB'ta ~0.04 ms.
+    `not data.strip(b"\x00")` ayni isi ~2.3 ms'de yapar ve yedekleme/klonlama
+    gibi butun diski tarayan islerde surenin onemli bir kismini yiyordu.
+    """
+    n = len(data)
+    if n <= len(_ZERO_BUF):
+        return data == _ZERO_BUF[:n]
+    # memoryview karsilastirmasi bayt bayt gider (~1.5 ms/MB); dilim kopyasi
+    # memcpy + memcmp'tir.
+    step = len(_ZERO_BUF)
+    for i in range(0, n, step):
+        part = data[i:i + step]
+        if part != _ZERO_BUF[:len(part)]:
+            return False
+    return True
+
+
 class BlockDevice:
     """Blok aygiti arayuzu: DiskImage ve PartitionView bunu uygular.
 

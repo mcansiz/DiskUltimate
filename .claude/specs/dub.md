@@ -17,8 +17,8 @@ Blok tabanli, sifir bloklari atlayan, istege bagli zlib sikistirmali yedek bicim
 | Ofset | Boyut | Alan |
 |---|---|---|
 | 0 | 8 | `DUBACKUP` |
-| 8 | 2 | Surum (1) |
-| 10 | 2 | Bayraklar (bit 0: zlib sikistirmasi) |
+| 8 | 2 | Surum (1; `BLOCK_SKIP` iceren yedekte 2) |
+| 10 | 2 | Bayraklar (bit 0: zlib sikistirmasi · bit 1: yalnizca kullanilan alan) |
 | 12 | 4 | Blok boyutu (bayt, varsayilan 1 MiB) |
 | 16 | 8 | Kaynak toplam boyut (bayt) |
 | 24 | 4 | Sektor boyutu |
@@ -69,10 +69,29 @@ desteklenmez — yedek bir arsivdir.
 
 | Ofset | Boyut | Alan |
 |---|---|---|
-| 0 | 1 | Tur: `0` sifir · `1` ham · `2` zlib |
+| 0 | 1 | Tur: `0` sifir · `1` ham · `2` zlib · `3` atlandi (surum 2) |
 | 1 | 3 | Ayrilmis |
 | 4 | 4 | Dosyadaki uzunluk |
 | 8 | 8 | Dosyadaki ofset |
+
+## Yalnizca kullanilan alan (surum 2, ADR 0092)
+
+`backup(..., used_ranges=...)` ile yalnizca dosya sisteminin dolu alanina
+dokunan bloklar okunur (`core/usedmap.py`: FAT, exFAT, ext2/3/4, NTFS;
+bolumden onceki alan, kucuk bosluklar, EBR'ler, bolum ve disk kenarlari her
+zaman). Okunmayan blok `3` (atlandi) olarak isaretlenir:
+
+* Geri yuklemede hedefte **dokunulmaz** (sifir da yazilmaz) — kullanilmayan
+  alanin icerigi dosya sistemi icin anlamsizdir; 64 GB'lik kartta sifir
+  yazmak yedegin kazandirdigi sureyi geri yerdi.
+* `DubImage` atlanan blogu sifir okur; `is_skipped()` geri yukleme planina
+  (restoreplan) ayni kurali uygulatir.
+* Atlanan blok iceren yedek **surum 2** yazilir. Eski surumler bilinmeyen
+  turu ham blok gibi isleyip sessizce yanlis veri yazardi; surum 2'yi ise
+  "desteklenmiyor" diye reddederler. Atlanan blok icermeyen yedek surum 1
+  kalir.
+* Silinmis dosya kurtarma ve imza taramasi atlanan alani goremez — bunun
+  icin "tum sektorler" secilir.
 
 ## Tasarim gerekceleri
 

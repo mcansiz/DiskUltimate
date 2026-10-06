@@ -426,12 +426,14 @@ def _fat(dev: BlockDevice, boot: bytes) -> Optional[FSInfo]:
     if data_sectors <= 0:
         return None
     clusters = data_sectors // spc
-    if clusters < 4085:
-        fs_type, label_off = "FAT12", 0x2B
-    elif clusters < 65525:
-        fs_type, label_off = "FAT16", 0x2B
-    else:
+    # FAT32 BPB yapisindan taninir (BPB_FATSz16 == 0), kume sayisindan degil:
+    # mkdosfs -F 32 kucuk bolumde 65525'ten az kumeli FAT32 uretebilir.
+    if fat16_size == 0:
         fs_type, label_off = "FAT32", 0x47
+    elif clusters < 4085:
+        fs_type, label_off = "FAT12", 0x2B
+    else:
+        fs_type, label_off = "FAT16", 0x2B
     label = _clean(boot[label_off:label_off + 11])
     info = FSInfo(fs_type=fs_type, label=label,
                   total_bytes=total * bps, cluster_size=spc * bps)

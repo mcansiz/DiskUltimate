@@ -38,6 +38,7 @@ PACKS = {
 # uygulama adi -> (tabler, phosphor, lucide, bootstrap, material)
 MAP = {
     "apply": ("flag", "flag", "flag", "flag", "flag"),
+    "stop": ("player-stop", "stop", "circle-stop", "stop-circle", "stop_circle"),
     "pending": ("hourglass", "hourglass", "hourglass", "hourglass-split", "hourglass_empty"),
     "discard": ("circle-x", "x-circle", "circle-x", "x-circle", "cancel"),
     "undo": ("arrow-back-up", "arrow-counter-clockwise", "undo-2", "arrow-counterclockwise", "undo"),

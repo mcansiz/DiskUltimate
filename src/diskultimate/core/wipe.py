@@ -10,7 +10,7 @@ import os
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
-from .image import BlockDevice
+from .image import BlockDevice, is_zero
 from .ptable import human_size
 from ..i18n import mark, tr
 
@@ -102,7 +102,7 @@ def _verify_zero(device: BlockDevice, progress: Progress = None) -> bool:
     total = device.size
     while okunan < total:
         length = min(CHUNK, total - okunan)
-        if device.read(okunan, length).strip(b"\x00"):
+        if not is_zero(device.read(okunan, length)):
             return False
         okunan += length
         if progress:
