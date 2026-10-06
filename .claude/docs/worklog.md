@@ -5957,3 +5957,6 @@ calismiyordu.
   i18n, ui_smoke tamam.
 - Sürüm 0.7.0-beta (kullanıcı: "release yayınlayalım"): yalnızca kullanılan alan
   yedeği, Durdur/süre, yabancı girdi uyumluluk ve güvenlik düzeltmeleri.
+- **v0.7.0-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.7.0-beta
+  — sürüm koşusu 37525013758 (3 platform test + exe, AppImage, macOS zip). Canlı
+  denetim: 0.6.2-beta için v0.7.0-beta bulundu, 0.7.0-beta güncel.
