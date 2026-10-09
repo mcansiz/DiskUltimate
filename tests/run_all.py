@@ -7342,6 +7342,86 @@ def t94_yedek_durdurma():
     s.close()
 
 
+@test
+def t95_mib_oncesi_baslayan_bolum():
+    """1 MiB'dan once baslayan bolumlu MBR (SD kart: LBA 1) boyutlandirilir
+
+    Kullanici bildirimi (2026-10-09): SD kart goruntusunde bolum 1 LBA 1'de
+    basliyordu. Duzenleme modeli MBR'nin ilk kullanilabilir LBA'sini 2048
+    sayip yerlesimi bastan "Bolum 1 onceki bolumle cakisiyor" diye
+    reddediyordu; hicbir bolum boyutlandirilamiyordu. Cekirdekte de
+    `check_range` bolum 1'i reddediyor, ustelik bunu dosya sistemi
+    kucultulduktan **sonra** yapiyordu.
+    """
+    from diskultimate.core import queueedit
+    from diskultimate.core.ptable import PartitionTableError
+    from diskultimate.core.resize import fs_resize_info_for
+
+    yol = img_path("t95.img")
+    M = MIB // 512
+    s = DiskSession.create(yol, 96 * MIB, scheme="mbr", overwrite=True)
+    k = ops.OperationQueue()
+    k.add(ops.create_op(2048, 20 * M, 512, fs_key="fat16", label="BOOT"))
+    k.add(ops.create_op(2048 + 20 * M, 20 * M, 512, fs_key="fat16",
+                        label="VERI"))
+    assert k.apply(s).ok
+    s.reload()
+    icerik = os.urandom(3 * MIB)
+    for i in (1, 2):
+        fs = s.filesystem(i)
+        fs.write_file("/veri.bin", icerik)
+        fs.flush()
+    s.close()
+    # Bolum 1'i LBA 1'e kaydir (one dogru kopyalama: ileri sirayla guvenli)
+    with open(yol, "r+b") as f:
+        for n in range(20):
+            f.seek((2048 + n * M) * 512)
+            parca = f.read(MIB)
+            f.seek((1 + n * M) * 512)
+            f.write(parca)
+        f.seek(446 + 8)
+        f.write(struct.pack("<I", 1))
+        f.seek(512 + 28)                    # BPB gizli sektor
+        f.write(struct.pack("<I", 1))
+
+    s = DiskSession.open(yol)
+    assert s.table.get(1).start_lba == 1
+    kuyruk = ops.OperationQueue()
+    sinirlar = {p.index: fs_resize_info_for(s, p) for p in s.partitions}
+    bak = lambda part: sinirlar.get(part.index)          # noqa: E731
+    model = queueedit.build(s, kuyruk, limits=bak)
+    assert model.validate() == "", model.validate()
+    assert model.window(1)[0] == 1, model.window(1)
+
+    once = {x.index: (x.new_start, x.new_count) for x in model.parts}
+    model.get(1).new_count = 16 * M
+    queueedit.commit(s, kuyruk, model, [1], before=once)
+    model = queueedit.build(s, kuyruk, limits=bak)
+    once = {x.index: (x.new_start, x.new_count) for x in model.parts}
+    _alt, ust = model.window(2)
+    model.get(2).new_count = ust - model.get(2).new_start + 1
+    queueedit.commit(s, kuyruk, model, [2], before=once)
+    assert len(kuyruk) == 2
+
+    # Bolum 1 kendi yerinden geriye gidemez (LBA 0 MBR'dir)
+    try:
+        s.table.check_range(0, 16 * M, ignore_index=1)
+        raise AssertionError("LBA 0 kabul edildi")
+    except PartitionTableError:
+        pass
+
+    s.become_writable(confirm=True)
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, sonuc.summary()
+    s.reload()
+    a, b = s.table.get(1), s.table.get(2)
+    assert (a.start_lba, a.sector_count) == (1, 16 * M), a
+    assert b.end_lba == ust, (b.end_lba, ust)
+    for i in (1, 2):
+        assert s.filesystem(i).read("/veri.bin") == icerik, i
+    s.close()
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

@@ -5960,3 +5960,33 @@ calismiyordu.
 - **v0.7.0-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.7.0-beta
   — sürüm koşusu 37525013758 (3 platform test + exe, AppImage, macOS zip). Canlı
   denetim: 0.6.2-beta için v0.7.0-beta bulundu, 0.7.0-beta güncel.
+
+## 2026-10-09 — 1 MiB'dan once baslayan bolum boyutlandirilamiyordu (SD kart)
+
+Kullanici bildirimi: `sdcard.img` (Raspberry Pi tarzi SD karti, MBR: bolum 1
+FAT16 **LBA 1**'de, bolum 2 ext4 LBA 65537'de, goruntunun sonuna kadar)
+ve onun yazildigi gercek SD kart boyutlandirilamiyordu. DiskGenius da
+ayni karti hata vererek reddediyor (kullanici).
+
+Kok neden: duzenleme modeli (`queueedit.build`) MBR'nin ilk kullanilabilir
+LBA'sini `table.first_usable_lba()` = 2048 aliyordu. Bolum 1 bunun onunde
+kaldigi icin `layout.validate()` yerlesimi bastan "Bolum 1 onceki bolumle
+cakisiyor" sayiyordu; `commit()` once dogruladigi icin **hangi bolum**
+duzenlenirse duzenlensin reddediliyordu (arayuzde "Yeni yerlesim gecersiz").
+Cekirdekte `ptable.check_range` de bolum 1'i ayni kuralla reddediyordu.
+Ek bulgu: `apply_resize` tablo denetimini dosya sistemi kucultulup
+tasindiktan **sonra** yapiyordu -> kismi uygulama (kucultmede zararsiz ama
+yanlis).
+
+Duzeltme:
+- `ptable.check_range`: yerinde duran bolum kendi mevcut baslangicinin
+  gerisine dusmedikce 1 MiB onunde kalabilir (yeni bolum kurali degismedi).
+- `queueedit.build`: alt sinir diskteki en erken birincil bolume iner.
+- `resize.apply_resize`: tablo araligi hicbir sey yazilmadan once denetlenir.
+- Test `t95_mib_oncesi_baslayan_bolum`: duzeltmesiz kodda kullanicinin
+  gordugu hatayla basarisiz, duzeltmeyle tamam.
+
+Gercek goruntunun 4 GB'a buyutulmus **kopyasinda** (kullanicinin dosyasina
+yazilmadi) kuyruk yolu: FAT16 32->24 MB, ext4 1->3.97 GB; `fsck.vfat -n` ve
+`e2fsck -fn` temiz. Gercek SD kartta sinanmadi (ana makinede fiziksel disk
+denemesi yapilmaz).

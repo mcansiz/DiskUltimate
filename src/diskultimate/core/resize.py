@@ -945,6 +945,15 @@ def apply_resize(session, plan: ResizePlan,
                              "kendi araciyla boyutlandirilabilir; bolum "
                              "tablosu tek basina degistirilmez"))
 
+    # Tablonun yeni araligi kabul edecegi **hicbir sey yazilmadan** denetlenir.
+    # Eskiden denetim 3. adimdaydi: dosya sistemi kucultulup tasindiktan
+    # sonra tablo reddedince islem yarida kaliyordu.
+    try:
+        session.table.check_range(plan.new_start, plan.new_count,
+                                  ignore_index=plan.index)
+    except PartitionTableError as exc:
+        raise ResizeError(tr("Bolum tablosu yazilamadi: {}", exc)) from exc
+
     session.close_filesystems()
     image = session.image
 

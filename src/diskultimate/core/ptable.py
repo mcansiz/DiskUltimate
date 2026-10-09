@@ -228,9 +228,16 @@ class PartitionTable:
         """Verilen araligin gecerli ve bos oldugunu dogrular."""
         if sector_count <= 0:
             raise PartitionTableError(tr("Bolum boyutu sifir olamaz"))
-        if start_lba < self.first_usable_lba():
+        # 1 MiB yeni bolumun kuralidir. Baska aracin 1 MiB'dan once baslattigi
+        # bolum (SD kart goruntusu: LBA 1; eski DOS: LBA 63) kendi yerinden
+        # geriye gitmedikce gecerlidir; yoksa hic boyutlandirilamiyordu.
+        floor = self.first_usable_lba()
+        own = next((p for p in self.partitions if p.index == ignore_index), None)
+        if own is not None and 0 < own.start_lba < floor:
+            floor = own.start_lba
+        if start_lba < floor:
             raise PartitionTableError(
-                tr("Baslangic cok erken (en az LBA {})", self.first_usable_lba()))
+                tr("Baslangic cok erken (en az LBA {})", floor))
         if start_lba + sector_count - 1 > self.last_usable_lba():
             raise PartitionTableError(tr("Bolum disk sonunu asiyor"))
         for p in self.partitions:

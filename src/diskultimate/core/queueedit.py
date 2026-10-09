@@ -59,10 +59,16 @@ def build(session, queue, limits: Optional[LimitsLookup] = None
     if isinstance(table, GPTTable):
         layout.gpt_first_usable = table._first_usable
         layout.gpt_entry_sectors = table.entry_sectors
-    layout.usable_override = (table.first_usable_lba(),
+    on_disk = {p.index: p for p in table.partitions}
+    # 1 MiB'dan once baslayan diskteki bolum (SD kart: LBA 1) gecerli
+    # sayilir; yoksa yerlesim bastan "cakisiyor" olur ve hicbir bolum
+    # boyutlandirilamazdi. Ayni kural: ptable.check_range.
+    first = min([table.first_usable_lba()]
+                + [p.start_lba for p in table.partitions
+                   if not p.logical and p.start_lba > 0])
+    layout.usable_override = (first,
                               min(table.last_usable_lba(),
                                   image.sector_count - 1))
-    on_disk = {p.index: p for p in table.partitions}
     for part in shown:
         if part.logical:
             continue
