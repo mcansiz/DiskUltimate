@@ -6058,3 +6058,7 @@ Duzeltmeler:
 - Sürüm 0.8.0-beta (kullanıcı: "comitle push yap, release oluştur"): kullanılan
   alan gösterimi, güç seçenekleri/uyku engeli, tek form klon, açık diskin bağlama
   bilgisi düzeltmesi.
+- **v0.8.0-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.8.0-beta
+  — sürüm koşusu 37971856250 (3 platform test + exe, AppImage, macOS zip, hepsi
+  başarılı). Notlara İngilizce/Türkçe "yenilikler" eklendi. Canlı denetim:
+  0.7.0-beta için v0.8.0-beta bulundu, 0.8.0-beta güncel.
