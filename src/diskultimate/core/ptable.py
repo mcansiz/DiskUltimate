@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
-from ..i18n import mark, tr
+from ..i18n import mark, tr, trn
 from ..i18n import tr
 
 MIB = 1024 * 1024
@@ -253,6 +253,50 @@ class PartitionTable:
     def _renumber(self) -> None:
         for i, p in enumerate(sorted(self.partitions, key=lambda x: (x.logical, x.start_lba)), 1):
             p.index = i
+
+
+@dataclass
+class UsageTotal:
+    """Bolumlerin toplam kullanilan alani (disk ozeti, harita basligi)."""
+    used: int = 0            # dolulugu olculen bolumlerin kullanilan bayti
+    measured: int = 0        # dolulugu olculen bolum sayisi
+    unmeasured: int = 0      # dosya sistemi okunamayan / bicimsiz bolum
+
+    @property
+    def known(self) -> bool:
+        return self.measured > 0
+
+
+def usage_total(partitions) -> UsageTotal:
+    """Bolum listesinden toplam kullanilan alan.
+
+    Genisletilmis kapsayici sayilmaz (mantiksal bolumler zaten sayilir).
+    Dolulugu bilinmeyen bolum (bicimsiz, sifreli, okunamayan) **sifir
+    sayilmaz**, ayrica sayilir: "bilinmiyor" "bos" gibi sunulmaz.
+    """
+    total = UsageTotal()
+    for p in partitions:
+        if not p.logical and p.scheme == "mbr" and \
+                p.type_id in MBR_EXTENDED_TYPES:
+            continue
+        if p.fs_used >= 0 and p.fs_total > 0:
+            total.used += p.fs_used
+            total.measured += 1
+        else:
+            total.unmeasured += 1
+    return total
+
+
+def usage_text(total: UsageTotal, disk_size: int) -> str:
+    """"12.4 GB (%2.6)" + olculemeyen bolum notu; hic olculemediyse "-"."""
+    if not total.known:
+        return tr("bilinmiyor")
+    text = f"{human_size(total.used)} (%{100 * total.used / max(1, disk_size):.1f})"
+    if total.unmeasured:
+        text += " — " + trn("{} bolumun dolulugu okunamadi",
+                             "{} bolumun dolulugu okunamadi",
+                             total.unmeasured, total.unmeasured)
+    return text
 
 
 def human_size(nbytes: float) -> str:

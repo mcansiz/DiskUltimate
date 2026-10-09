@@ -7422,6 +7422,197 @@ def t95_mib_oncesi_baslayan_bolum():
     s.close()
 
 
+@test
+def t96_disk_kullanilan_alan_toplami():
+    """Disk ozeti bolumlerin kullanilan alanini toplar; bilinmeyen sifir sayilmaz
+
+    Kullanici istegi (2026-10-09): disk secilince butun bolumlerin toplam
+    kullanilan alani gorunmeli. Genisletilmis kapsayici sayilmaz (mantiksal
+    bolumler zaten sayilir); dolulugu okunamayan bolum "0 kullanilan" gibi
+    sunulmaz, ayrica belirtilir.
+    """
+    from diskultimate.core.ptable import Partition, usage_text, usage_total
+
+    parcalar = [
+        Partition(index=1, start_lba=2048, sector_count=1000, fs_used=300,
+                  fs_total=500),
+        Partition(index=2, start_lba=4096, sector_count=9000, type_id=0x05),
+        Partition(index=5, start_lba=6144, sector_count=1000, logical=True,
+                  fs_used=200, fs_total=500),
+        Partition(index=6, start_lba=8192, sector_count=1000, logical=True),
+    ]
+    t = usage_total(parcalar)
+    assert (t.used, t.measured, t.unmeasured) == (500, 2, 1), t
+    metin = usage_text(t, 1000)
+    assert metin.startswith("500 B (%50.0)") and "1 " in metin, metin
+    assert usage_text(usage_total([parcalar[3]]), 1000) == "bilinmiyor"
+
+    # Gercek goruntu: ozet satiri FAT'in kendi olcumuyle ayni
+    yol = img_path("t96.img")
+    s = DiskSession.create(yol, 64 * MIB, scheme="mbr", overwrite=True)
+    k = ops.OperationQueue()
+    k.add(ops.create_op(2048, 40 * 2048, 512, fs_key="fat32", label="V"))
+    assert k.apply(s).ok
+    s.reload()
+    fs = s.filesystem(1)
+    fs.write_file("/a.bin", b"x" * (3 * MIB))
+    fs.flush()
+    s.close_filesystems()
+    s.reload()
+    beklenen = s.detect_fs(s.table.get(1)).used_bytes
+    assert usage_total(s.partitions).used == beklenen
+    from diskultimate.i18n import tr
+    assert s.summary()[tr("Kullanilan")].startswith(human_size(beklenen))
+    s.close()
+
+
+
+@test
+def t97_guc_platform_katmani():
+    """Uyku engeli konup kalkar; desteklenmeyen guc eylemi nedenle reddedilir
+
+    Kullanici istegi (2026-10-09, DiskGenius "When Finished / Prevent
+    sleeping"): klonlama gibi uzun islerde uyku engellenir, bitince
+    kapat/yeniden baslat/uyku/hazirda beklet secilebilir. Bu test gercek
+    eylemi CALISTIRMAZ; yalnizca destek sorgusu ve engelin yasam dongusu.
+    """
+    from diskultimate.core.platform import (POWER_ACTIONS, SleepInhibitor,
+                                            power_action,
+                                            power_action_supported)
+    for kind in POWER_ACTIONS:
+        ok, why = power_action_supported(kind)
+        assert isinstance(ok, bool) and (ok or why), (kind, ok, why)
+    assert power_action_supported("format_c")[0] is False
+    assert power_action("format_c")[0] is False     # bilinmeyen eylem reddedilir
+    engel = SleepInhibitor("DiskUltimate testi")
+    engel.release()                                  # konmadan kaldirmak zararsiz
+    ok, why = engel.acquire()
+    if not ok:
+        # systemd-inhibit olmayan ortam (konteyner): neden bos olmamali
+        assert why, "engel konamadi ama neden yok"
+        raise Atlandi(f"uyku engeli bu ortamda konamiyor: {why}")
+    assert engel.active
+    assert engel.acquire() == (True, "")             # ikinci kez: ayni engel
+    engel.release()
+    assert not engel.active
+
+
+
+@test
+def t98_tek_form_klon_cekirdegi():
+    """Tek klon formunun cekirdegi: dosyaya/acik goruntuye klon, durdurmada yarim dosya silinir
+
+    Kullanici istegi (2026-10-09): klonlama secimi ve takibi tek formda
+    (ADR 0096). `DiskSession.clone_between` formun tek cagrisidir. Ayrica
+    iki eski acik: durdurulan/basarisiz klon yarim dosyayi birakiyordu;
+    hedef olarak kaynagin kendi dosyasi secilirse kaynak sifirlanirdi.
+    """
+    from diskultimate.core import clone as clone_mod
+    from diskultimate.core.disksource import DiskSource
+    from diskultimate.core.session import SessionError
+
+    kaynak_yol = img_path("t98_kaynak.img")
+    s = DiskSession.create(kaynak_yol, 48 * MIB, scheme="gpt", overwrite=True)
+    k = ops.OperationQueue()
+    k.add(ops.create_op(2048, 30 * 2048, 512, fs_key="fat16", label="KLON"))
+    assert k.apply(s).ok
+    s.reload()
+    icerik = os.urandom(2 * MIB)
+    fs = s.filesystem(1)
+    fs.write_file("/veri.bin", icerik)
+    fs.flush()
+    s.close_filesystems()
+    s.image.flush()
+    kaynak = DiskSource(kind="image", path=kaynak_yol, label="t98_kaynak.img",
+                        size=s.image.size, session=s)
+
+    # 1) yeni dosyaya
+    hedef_yol = img_path("t98_klon.img")
+    sonuc = DiskSession.clone_between(kaynak, None, dest_path=hedef_yol)
+    assert os.path.samefile(sonuc, hedef_yol)
+    k1 = DiskSession.open(hedef_yol, readonly=True)
+    assert k1.filesystem(1).read("/veri.bin") == icerik
+    k1.close()
+
+    # 2) uygulamada acik baska bir goruntuye (o oturumun tutamaci)
+    acik_yol = img_path("t98_acik.img")
+    t = DiskSession.create(acik_yol, 64 * MIB, scheme="mbr", overwrite=True)
+    hedef = DiskSource(kind="image", path=acik_yol, label="t98_acik.img",
+                       size=t.image.size, session=t)
+    kopyalanan = DiskSession.clone_between(kaynak, hedef)
+    assert kopyalanan == s.image.size, kopyalanan
+    assert t.scheme == "gpt" and t.filesystem(1).read("/veri.bin") == icerik
+    t.close()
+
+    # 3) durdurma: yarim dosya kalmaz
+    yarim = img_path("t98_yarim.img")
+
+    def durdur(mesaj, yuzde):
+        if yuzde > 0:
+            raise clone_mod.OperationCancelled()
+    try:
+        DiskSession.clone_between(kaynak, None, dest_path=yarim, progress=durdur)
+        raise AssertionError("durdurma islemedi")
+    except clone_mod.OperationCancelled:
+        pass
+    assert not os.path.exists(yarim), "yarim klon dosyasi kaldi"
+
+    # 4) kaynagin kendi dosyasi hedef olamaz; kaynak saglam kalir
+    try:
+        DiskSession.clone_between(kaynak, None, dest_path=kaynak_yol)
+        raise AssertionError("kaynagin uzerine klon kabul edildi")
+    except SessionError:
+        pass
+    assert s.filesystem(1).read("/veri.bin") == icerik
+    s.close()
+
+
+
+@test
+def t99_acik_diskin_baglama_bilgisi_tazelenir():
+    """Disk acildiktan sonra baglanan bolum gorunur; /proc/mounts kacislari cozulur
+
+    Kullanici bildirimi (2026-10-09): nvme0n1 acikken bolum 3 ve 4 dosya
+    yoneticisinden baglandi; uygulama "bagli degil" gostermeye devam etti,
+    "Bagla" basarili donup ekranda hicbir sey degismedi. Oturum diski
+    actigi andaki DiskInfo'yu tutuyordu. Bagli bolum uyarisi (CLAUDE.md
+    kural 5) da bu bayat bilgiye dayaniyordu.
+    """
+    from diskultimate.core.physical import (DiskInfo, fill_mount_points,
+                                            sync_mounts)
+    from diskultimate.core.platform import decode_mount_field
+    from diskultimate.core.ptable import Partition
+
+    assert decode_mount_field(r"/media/pc/Basic\040data\040partition") == \
+        "/media/pc/Basic data partition"
+    assert decode_mount_field(r"/a\011b\134c") == "/a\tb\\c"
+
+    acik = DiskInfo(path="/dev/nvme0n1", name="nvme0n1",
+                    mounted=["nvme0n1p5 → /"], mount_map={349625647104: "/"})
+    bolumler = [Partition(index=4, start_lba=268675072, sector_count=1000),
+                Partition(index=5, start_lba=682862592, sector_count=1000)]
+    fill_mount_points(acik, bolumler)
+    assert [p.mount_point for p in bolumler] == ["", "/"]
+
+    taze = DiskInfo(path="/dev/nvme0n1", name="nvme0n1",
+                    mounted=["nvme0n1p4 → /media/pc/Data", "nvme0n1p5 → /"],
+                    mount_map={137561636864: "/media/pc/Data",
+                               349625647104: "/"})
+    assert sync_mounts(acik, taze) is True
+    assert acik.mounted == taze.mounted and acik.mounted is not taze.mounted
+    fill_mount_points(acik, bolumler)
+    assert [p.mount_point for p in bolumler] == ["/media/pc/Data", "/"]
+    assert sync_mounts(acik, taze) is False          # degisiklik yok
+    assert sync_mounts(acik, acik) is False          # ayni nesne
+    assert sync_mounts(acik, None) is False          # listede yok: dokunma
+    assert acik.mounted                              # bilinmiyor != bagli degil
+    cikti = DiskInfo(path="/dev/nvme0n1", name="nvme0n1",
+                     mounted=["nvme0n1p5 → /"], mount_map={349625647104: "/"})
+    assert sync_mounts(acik, cikti) is True          # cikarildi
+    fill_mount_points(acik, bolumler)
+    assert [p.mount_point for p in bolumler] == ["", "/"]
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

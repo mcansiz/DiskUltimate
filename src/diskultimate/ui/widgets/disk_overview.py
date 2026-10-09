@@ -16,7 +16,7 @@ from PyQt5.QtGui import QColor, QFont, QPainter, QPen
 from PyQt5.QtWidgets import QSizePolicy, QWidget
 
 from ...core.fsregistry import fs_display
-from ...core.ptable import human_size
+from ...core.ptable import human_size, usage_total
 from ..theme import FREE_COLOR, fs_color, palette_color
 from ...i18n import tr
 
@@ -133,8 +133,15 @@ class DiskOverviewWidget(QWidget):
             scheme = getattr(survey, "scheme_name", "") or tr("okunuyor...")
             painter.drawText(rect.adjusted(8, 24, -6, 0),
                              Qt.AlignLeft | Qt.AlignTop, scheme)
+            size_text = human_size(info.size)
+            usage = usage_total(getattr(survey, "partitions", []) or [])
+            if survey is not None and not survey.error and usage.known:
+                candidate = f"{size_text} · " + tr("{} kullanilan",
+                                                  human_size(usage.used))
+                if painter.fontMetrics().width(candidate) <= rect.width() - 14:
+                    size_text = candidate
             painter.drawText(rect.adjusted(8, 40, -6, 0),
-                             Qt.AlignLeft | Qt.AlignTop, human_size(info.size))
+                             Qt.AlignLeft | Qt.AlignTop, size_text)
             if info.is_system:
                 painter.setPen(QColor("#c0392b"))
                 painter.drawText(rect.adjusted(8, 54, -6, 0),
@@ -183,10 +190,14 @@ class DiskOverviewWidget(QWidget):
                              Qt.AlignLeft | Qt.AlignTop,
                              _elide(painter, fs_display(part.fs_type) or tr("ham"),
                                     rect.width() - 10))
+            bottom = human_size(part.size)
+            if part.fs_used >= 0 and part.fs_total > 0:
+                short = f"{human_size(part.fs_used)} / {bottom}"
+                if painter.fontMetrics().width(short) <= rect.width() - 10:
+                    bottom = short
             painter.drawText(rect.adjusted(6, 40, -4, 0),
                              Qt.AlignLeft | Qt.AlignTop,
-                             _elide(painter, human_size(part.size),
-                                    rect.width() - 10))
+                             _elide(painter, bottom, rect.width() - 10))
         painter.end()
 
     # -- etkilesim ---------------------------------------------------------

@@ -119,6 +119,14 @@ def _sozde_diyaloglar(pencere):
     kuyruk.add(ops.format_op(1, "fat32", label="SOZDE", fs_name="FAT32"))
     kuyruk.add(ops.delete_op(2, "Linux kok"))
     diyaloglar.append(ApplyDialog(pencere, oturum, kuyruk))
+    from diskultimate.core import disksource
+    from diskultimate.ui.dialogs.clone import CloneDialog
+    from diskultimate.ui.dialogs.task import POWER_FULL, TaskDialog
+    goruntuler, diskler = disksource.collect([oturum], [], {})
+    diyaloglar.append(CloneDialog(pencere, goruntuler, diskler,
+                                  source=goruntuler[0], pending_steps=2))
+    diyaloglar.append(TaskDialog(pencere, i18n.tr("Disk klonlaniyor"),
+                                 lambda report: None, power=POWER_FULL))
 
     try:
         diyaloglar.append(ResizePartitionDialog(
@@ -325,12 +333,10 @@ def tahmin_denetimi() -> None:
 
 
 def klon_hedefi_denetimi() -> None:
-    """Diskten diske klon penceresi: uygunsuz disk secilemez, onaylar zorunlu."""
+    """Tek klon formu: uygunsuz hedef secilemez, onaylar zorunlu, acik dosya hedef olamaz."""
     from types import SimpleNamespace
-    from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QDialogButtonBox
     from diskultimate.core.disksource import DiskSource
-    from diskultimate.ui.dialogs.clone_target import CloneTargetDialog
+    from diskultimate.ui.dialogs.clone import NEW_FILE, CloneDialog
 
     def disk(name, size, **kw):
         base = dict(path=f"/dev/{name}", name=name, size=size, model="TEST",
@@ -339,26 +345,153 @@ def klon_hedefi_denetimi() -> None:
         return DiskSource(kind="physical", path=base["path"], label=name,
                           size=size, disk=SimpleNamespace(**base))
     kaynak = disk("sda", 100 * MIB)
-    hedefler = [kaynak, disk("sdb", 50 * MIB), disk("sdc", 200 * MIB, info_complete=False),
-                disk("sdd", 200 * MIB, is_system=True, mounted=["/"]),
-                disk("sde", 300 * MIB, mounted=["/mnt/x"])]
-    d = CloneTargetDialog(None, "sda", "/dev/sda", 100 * MIB, hedefler, pending_steps=2)
-    tamam = d.buttons.button(QDialogButtonBox.Ok)
-    etkin = [bool(d.list.item(i).flags() & Qt.ItemIsEnabled) for i in range(d.list.count())]
-    assert etkin == [False, False, False, True, True], etkin
-    assert not tamam.isEnabled()
-    d.list.setCurrentRow(4)                      # sde: bagli bolum, buyuk
-    assert not tamam.isEnabled(), "silme onayi olmadan etkin"
+    diskler = [kaynak, disk("sdb", 50 * MIB), disk("sdc", 200 * MIB, info_complete=False),
+               disk("sdd", 200 * MIB, is_system=True, mounted=["/"]),
+               disk("sde", 300 * MIB, mounted=["/mnt/x"])]
+    acik = DiskSource(kind="image", path=os.path.abspath("acik.img"), label="acik.img",
+                      size=100 * MIB)
+    d = CloneDialog(None, [acik], diskler, source=kaynak, pending_steps=2)
+    uygun = [not d.target_problem(x) for x in diskler]
+    assert uygun == [False, False, False, True, True], uygun
+    assert d.pending_note.isVisible() or "2" in d.pending_note.text()
+    assert not d.btn_start.isEnabled() and d.problem()
+
+    d.target = diskler[4]                        # sde: bagli bolum, buyuk
+    d._show_target()
+    assert not d.btn_start.isEnabled(), "silme onayi olmadan etkin"
     assert "/mnt/x" in d.warn.text() and "200.00 MB" in d.warn.text(), d.warn.text()
     d.confirm.setChecked(True)
-    assert tamam.isEnabled() and not d.allow_system
-    d.list.setCurrentRow(3)                      # sdd: sistem diski
-    assert not tamam.isEnabled(), "sistem diski adi yazilmadan etkin"
+    assert d.btn_start.isEnabled(), d.problem()
+
+    d.target = diskler[3]                        # sdd: sistem diski
+    d.confirm.setChecked(False)
+    d._show_target()
+    d.confirm.setChecked(True)
+    assert not d.btn_start.isEnabled(), "sistem diski adi yazilmadan etkin"
     d.name_edit.setText("sdd")
-    assert tamam.isEnabled() and d.allow_system
-    assert d.selected().disk.name == "sdd"
+    assert d.btn_start.isEnabled(), d.problem()
+
+    # Yeni dosya hedefi: onay kutusu yok; uygulamada acik dosya hedef olamaz
+    d.target = NEW_FILE
+    d._show_target()
+    assert d.confirm.isHidden()
+    d.path_edit.setText(acik.path)
+    assert "acik" in d.problem() or not d.btn_start.isEnabled(), d.problem()
+    assert not d.btn_start.isEnabled()
+    d.path_edit.setText(os.path.join(os.path.dirname(acik.path), "yeni-klon.img"))
+    assert d.btn_start.isEnabled(), d.problem()
+
+    # Kaynak degisince ona uymayan hedef duser (kendisi hedef olamaz)
+    d.target = diskler[4]
+    d.source = diskler[4]
+    assert d.target_problem(diskler[4])
     d.close()
-    print("  (klon hedefi: uygunsuz diskler gri, silme onayi ve sistem diski adi zorunlu)")
+    print("  (klon formu: uygunsuz diskler secilemez, silme onayi ve sistem diski "
+          "adi zorunlu, acik dosya hedef olamaz)")
+
+
+def baglama_tazeleme_denetimi() -> None:
+    """Acik diskte baglama degisince bolum guncellenir; elle yenileme sahte "takildi" yazmaz."""
+    from types import SimpleNamespace
+    from diskultimate.core.physical import DiskInfo, fill_mount_points
+    from diskultimate.core.ptable import Partition
+
+    pencere = MainWindow()
+    pencere._disk_timer.stop()
+    disk = DiskInfo(path="/dev/test0", name="test0", size=10 * MIB, model="TEST")
+    bolum = Partition(index=1, start_lba=2048, sector_count=4096)
+
+    def tazele():
+        fill_mount_points(disk, [bolum])
+        return True
+    oturum = SimpleNamespace(disk_info=disk, refresh_mount_points=tazele)
+    bagli = DiskInfo(path="/dev/test0", name="test0", size=10 * MIB,
+                     model="TEST", mounted=["test0p1 → /media/x"],
+                     mount_map={2048 * 512: "/media/x"})
+    bos = DiskInfo(path="/dev/test0", name="test0", size=10 * MIB, model="TEST")
+    # Agac kurulumu gercek oturum ister; tazeleme dogrudan sinanir.
+    pencere.sessions.append(oturum)
+    try:
+        assert pencere._sync_open_mounts([bagli]) is True
+        assert bolum.mount_point == "/media/x", bolum.mount_point
+        assert disk.mounted == ["test0p1 → /media/x"]
+        assert pencere._sync_open_mounts([bagli]) is False
+        assert pencere._sync_open_mounts([bos]) is True
+        assert bolum.mount_point == "" and disk.mounted == []
+    finally:
+        pencere.sessions.remove(oturum)
+    try:
+        pencere._disks_scanned([bagli], {})            # ilk tarama
+        satir = pencere.log_view.toPlainText().count("takildi")
+        pencere._force_tree = True                     # refresh_disks ne yaparsa
+        pencere._disks_scanned([bagli], {})
+        assert pencere.log_view.toPlainText().count("takildi") == satir, \
+            "elle yenileme diski 'takildi' diye yazdi"
+    finally:
+        pencere.close()
+    print("  (baglama: acik diskte tazelenir, elle yenileme sahte 'takildi' yazmaz)")
+
+
+def guc_secenekleri_denetimi() -> None:
+    """Islem bitince eylemi yalnizca basarida doner; uyku engeli bitiste kalkar."""
+    from diskultimate.core import settings
+    from diskultimate.ui.widgets import power_options as po
+
+    onceki = settings.get(po.PREVENT_SLEEP_KEY, True)
+    alinan, birakilan = [], []
+
+    class SahteEngel:
+        active = False
+
+        def acquire(self):
+            self.active = True
+            alinan.append(1)
+            return True, ""
+
+        def release(self):
+            if self.active:
+                birakilan.append(1)
+            self.active = False
+
+    w = po.PowerOptions(None, reason="test")
+    w._inhibitor = SahteEngel()
+    w.sleep_check.setChecked(True)
+    assert w.selected_action is None, "varsayilan eylem secili olmamali"
+    w.after_check.setChecked(True)
+    w.action_combo.setCurrentIndex(w.action_combo.findData("reboot"))
+    w.begin()
+    assert w.inhibiting and alinan == [1]
+    w.sleep_check.setChecked(False)               # is surerken kapatilir
+    assert not w.inhibiting and birakilan == [1]
+    w.sleep_check.setChecked(True)
+    assert w.inhibiting and alinan == [1, 1]
+    assert w.end(False) is None, "hatada eylem donmemeli"
+    assert not w.inhibiting
+    w.begin()
+    assert w.end(True) == "reboot"
+    assert not w.inhibiting
+
+    # Yalnizca uyku engeli (taramalar): eylem hic donmez
+    v = po.PowerOptions(None, reason="tarama", after=False)
+    v._inhibitor = SahteEngel()
+    assert v.after_check.isHidden()
+    v.begin()
+    assert v.end(True) is None
+
+    # Geri sayim: gercek kapatma cagrilmaz; hazirlik eylemden once calisir
+    sira = []
+    gercek = po.power_action
+    po.power_action = lambda kind: (sira.append(("eylem", kind)), (True, ""))[1]
+    try:
+        assert po.run_power_action(None, "shutdown", seconds=1,
+                                   prepare=lambda: sira.append(("hazirlik",)))
+    finally:
+        po.power_action = gercek
+    assert sira == [("hazirlik",), ("eylem", "shutdown")], sira
+    assert po.run_power_action(None, None) is False
+    settings.set_value(po.PREVENT_SLEEP_KEY, onceki)
+    print("  (guc secenekleri: eylem yalnizca basarida, engel bitiste kalkar, "
+          "geri sayim sonrasi hazirlik + eylem)")
 
 
 def main() -> int:
@@ -378,6 +511,8 @@ def main() -> int:
     qt_metin_denetimi(qt_i18n, qt_durumu)
     tahmin_denetimi()
     klon_hedefi_denetimi()
+    guc_secenekleri_denetimi()
+    baglama_tazeleme_denetimi()
 
     pencere = MainWindow()
     pencere.resize(1400, 860)

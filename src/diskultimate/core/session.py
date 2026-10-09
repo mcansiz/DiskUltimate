@@ -34,7 +34,8 @@ from .resize import (_fs_resize as fs_resize_apply,
                      FsResizeInfo, ResizeError, ResizePlan, ResizeWindow,
                      apply_resize, fs_resize_info_for, plan_resize, window_for)
 from .ptable import (FreeRegion, Partition, PartitionTable, WholeDiskTable,
-                     PartitionTableError, human_size)
+                     PartitionTableError, human_size, usage_text,
+                     usage_total)
 from .vdisk import detect_format, format_label, open_disk
 from ..i18n import tr
 
@@ -395,6 +396,15 @@ class DiskSession:
                 part.fs_total = info.total_bytes
         if self.is_physical and self.table and self.table.scheme != "none":
             fill_mount_points(self.disk_info, self.table.partitions)
+
+    def refresh_mount_points(self) -> bool:
+        """Bolumlerin baglama noktasini `disk_info`dan yeniden yazar
+        (`physical.sync_mounts` sonrasinda); degisen varsa True."""
+        if not self.is_physical or not self.table or self.table.scheme == "none":
+            return False
+        before = [p.mount_point for p in self.table.partitions]
+        fill_mount_points(self.disk_info, self.table.partitions)
+        return before != [p.mount_point for p in self.table.partitions]
 
     def create_table(self, scheme: str) -> PartitionTable:
         """Yeni bolum tablosu kurar (mevcut bolumler kaybolur)."""
@@ -952,9 +962,50 @@ class DiskSession:
         return result
 
     def clone_to(self, dest_path: str, size_bytes: int = 0, progress=None) -> str:
-        """Tum goruntuyu yeni bir dosyaya klonlar."""
+        """Tum goruntuyu yeni bir dosyaya klonlar.
+
+        Hedef kaynagin kendi dosyasi olamaz: yeni dosya `overwrite=True` ile
+        yaratilir, kaynak ilk yazmadan once sifirlanirdi.
+        """
+        if self.path and not self.is_physical and os.path.exists(dest_path) \
+                and os.path.samefile(dest_path, self.path):
+            raise SessionError(tr("Kaynak ve hedef ayni disk"))
         return clone_mod.clone_to_new_image(self.image, dest_path,
                                             size_bytes=size_bytes, progress=progress)
+
+    @staticmethod
+    def clone_between(source, target=None, dest_path: str = "",
+                      allow_system: bool = False, progress=None):
+        """Tek klon formunun isi (ADR 0096): `DiskSource` -> `DiskSource`
+        ya da yeni goruntu dosyasi (`target=None`, `dest_path`).
+
+        Kaynak uygulamada acik degilse (fiziksel disk) **salt okunur** acilir
+        ve is bitince kapatilir — yedeklemedeki `backup_physical` gibi; okuma
+        zararsizdir. Hedef uygulamada aciksa o oturumun tutamaci kullanilir
+        (ADR 0021). Donus: yeni dosyada yol, diskte kopyalanan bayt.
+        """
+        session = getattr(source, "session", None)
+        temporary = None
+        if session is None:
+            disk = getattr(source, "disk", None)
+            if disk is None:
+                raise SessionError(tr("Klon kaynagi acilamadi"))
+            temporary = session = DiskSession.open_physical(disk, readonly=True)
+        try:
+            if target is None:
+                if not dest_path:
+                    raise SessionError(tr("Klon hedefi secilmedi"))
+                return session.clone_to(dest_path, progress=progress)
+            if target.session is not None:
+                return session.clone_to_session(
+                    target.session, allow_system=allow_system,
+                    progress=progress)
+            return session.clone_to_physical(target.disk,
+                                             allow_system=allow_system,
+                                             progress=progress)
+        finally:
+            if temporary is not None:
+                temporary.close()
 
     def clone_to_physical(self, disk, allow_system: bool = False,
                           progress=None) -> int:
@@ -1317,6 +1368,8 @@ class DiskSession:
             tr("Bolum tablosu"): self.scheme_name,
             tr("Bolum sayisi"): str(len(self.partitions)),
             tr("Bolumlenmis"): f"{human_size(used)} (%{100*used/max(1,self.image.size):.1f})",
+            tr("Kullanilan"): usage_text(usage_total(self.partitions),
+                                          self.image.size),
             tr("Erisim"): self._access_text(),
         }
         if self.is_physical:

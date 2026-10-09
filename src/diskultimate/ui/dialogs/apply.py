@@ -32,7 +32,7 @@ from __future__ import annotations
 import html
 from typing import Callable, Optional
 
-from PyQt5.QtCore import QSize, Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QSize, Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
                              QHeaderView, QLabel, QProgressBar, QPushButton,
@@ -42,6 +42,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
 from ...core import operations as ops
 from ..icons import icon as app_icon
 from ..theme import palette_color
+from ..widgets.power_options import PowerOptions, run_power_action
 from ...i18n import tr
 
 STATE_WAITING = 0
@@ -102,6 +103,7 @@ class ApplyDialog(QDialog):
         self.started = False
         self._worker: Optional[_ApplyWorker] = None
         self._items = queue.items
+        self.power_after: Optional[str] = None
 
         self.setWindowTitle(tr("Bekleyen islemleri uygula"))
         self.setModal(True)
@@ -162,6 +164,10 @@ class ApplyDialog(QDialog):
         layout.addSpacing(4)
 
         buttons = QHBoxLayout()
+        # Guc secenekleri dugmelerin solunda (DiskGenius duzeni): uzun
+        # partide uyku engeli ve "islem bitince" eylemi.
+        self.power = PowerOptions(self, reason=tr("Bekleyen islemler uygulaniyor"))
+        buttons.addWidget(self.power)
         buttons.addStretch(1)
         self.btn_run = QPushButton(app_icon("apply"), tr("Uygula"))
         self.btn_run.setDefault(True)
@@ -257,6 +263,7 @@ class ApplyDialog(QDialog):
         # demektir ve kipliligi bozabilir. Kapanma zaten `closeEvent` ve
         # `reject` ile engelleniyor.
         self.status.setText(tr("Uygulaniyor..."))
+        self.power.begin()
 
         self._worker = _ApplyWorker(self.session, self.queue)
         self._worker.stepStarted.connect(self._on_step_started)
@@ -317,14 +324,19 @@ class ApplyDialog(QDialog):
                 tr("<b>Durdu:</b> {}<br>Tamamlanan adimlar geri alinmaz; "
                    "duran adim ve sonrasi bekleyen listesinde kaldi.",
                    result.summary()))
-        self._finish()
+        self._finish(result.ok)
 
     def _on_failed(self, message: str) -> None:
         self.error = message
         self.status.setText(tr("<b>Uygulama basarisiz:</b> {}", message))
-        self._finish()
+        self._finish(False)
 
-    def _finish(self) -> None:
+    def _finish(self, success: bool) -> None:
+        self.power_after = self.power.end(success)
+        if self.power_after:
+            # Gozetimsiz is: sonuc "Kapat" tiklamasini beklemez, pencere
+            # kapanir ve geri sayim baslar (iptal edilebilir).
+            QTimer.singleShot(0, self.accept)
         self.btn_close.setText(tr("Kapat"))
         self.btn_close.setEnabled(True)
         self.btn_close.setDefault(True)
@@ -351,10 +363,11 @@ class ApplyDialog(QDialog):
         return outcome
 
 
-def run_apply(parent, session, queue, prepare=None):
+def run_apply(parent, session, queue, prepare=None, before_power=None):
     """Pencereyi acar; (calistirildi_mi, sonuc_veya_hata) dondurur."""
     dlg = ApplyDialog(parent, session, queue, prepare=prepare)
     dlg.exec_()
+    run_power_action(parent, dlg.power_after, prepare=before_power)
     if not dlg.started:
         return False, None
     if dlg.error:

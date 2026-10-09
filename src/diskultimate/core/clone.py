@@ -565,6 +565,15 @@ def clone_to_new_image(src: BlockDevice, dest_path: str, size_bytes: int = 0,
     target = DiskImage.create(dest_path, size, sparse=sparse, overwrite=True)
     try:
         clone(src, target, progress=progress)
-    finally:
+    except BaseException:
+        # Yarim klon (hata ya da durdurma) kullanilamaz ve yeni yaratildi:
+        # silinir (geri yuklemedeki kuralla ayni, t94).
         target.close()
+        try:
+            os.remove(dest_path)
+        except OSError:
+            pass
+        raise
+    target.close()
+    restore_owner(dest_path)    # yetkili kopyada dosya root'a ait kalmasin
     return os.path.abspath(dest_path)

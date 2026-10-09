@@ -68,6 +68,7 @@ from ..theme import fs_color
 from ..widgets.disk_map import DiskMapWidget
 from ..widgets.layout_bar import LayoutBar
 from ..widgets.partition_table import color_chip
+from ..widgets.power_options import PowerOptions, run_power_action
 from .restore_layout import RestoreLayoutDialog
 from ...i18n import tr
 
@@ -238,6 +239,8 @@ class BackupDialog(QDialog):
         self.plan = None
         self._plan_key = None
         self.result_value = None
+        # Kapatma/uyku oncesi ana pencerenin tamponlari bosaltmasi icin.
+        self.before_power: Optional[Callable[[], None]] = None
         self.opened_path = ""          # islem sonunda acilacak yol (varsa)
         self.reload_needed = False
         self._worker: Optional[_Worker] = None
@@ -518,6 +521,10 @@ class BackupDialog(QDialog):
 
     def _build_buttons(self) -> QHBoxLayout:
         row = QHBoxLayout()
+        # Guc secenekleri dugmelerin solunda (DiskGenius duzeni). Yedek
+        # ve geri yukleme sonucu diske yazar: "islem bitince" anlamlidir.
+        self.power = PowerOptions(self, reason=tr("Yedekleme / geri yukleme"))
+        row.addWidget(self.power)
         row.addStretch(1)
         self.btn_start = QPushButton(app_icon("apply"), tr("Baslat"))
         self.btn_start.setDefault(True)
@@ -1207,6 +1214,7 @@ class BackupDialog(QDialog):
             self._eta_base = self._eta_last = None
             self._update_clock()
             self._clock.start()
+            self.power.begin()
         worker.progress.connect(self._on_progress)
         worker.done.connect(lambda value: self._finish(on_done, value, None,
                                                        keep_buttons))
@@ -1292,7 +1300,9 @@ class BackupDialog(QDialog):
 
     def _finish(self, on_done, value, error, keep_buttons: bool,
                 cancelled: bool = False) -> None:
+        power_after = None
         if not keep_buttons:
+            power_after = self.power.end(not cancelled and not error)
             self._running = False
             self._clock.stop()
             self.time_label.setText(tr("Sure: {}", self._format_duration(
@@ -1316,6 +1326,11 @@ class BackupDialog(QDialog):
             self.status.setStyleSheet("")
             on_done(value)
         self._update_buttons()
+        if power_after:
+            # Sonuc durum satirinda; geri sayim iptal edilirse pencere acik
+            # kalir ve kullanici okur.
+            QTimer.singleShot(0, lambda: run_power_action(
+                self, power_after, prepare=self.before_power))
 
     def _cancelled_text(self) -> str:
         if self._run_mode == MODE_BACKUP:

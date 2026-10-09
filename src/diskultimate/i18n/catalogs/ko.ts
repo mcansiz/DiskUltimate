@@ -4,25 +4,25 @@
 <context>
     <name>DiskUltimate</name>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="198"/>
-        <location filename="../../ui/main_window.py" line="2537"/>
+        <location filename="../../ui/dialogs/apply.py" line="204"/>
+        <location filename="../../ui/main_window.py" line="2494"/>
         <source>
 (Bu adim veri kaybettirebilir)</source>
         <translation>
 (이 단계에서 데이터가 손실될 수 있습니다)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3881"/>
+        <location filename="../../ui/main_window.py" line="3916"/>
         <source>  (bolum yok)</source>
         <translation>  (파티션 없음)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2896"/>
+        <location filename="../../ui/main_window.py" line="2893"/>
         <source>  (disk bulunamadi)</source>
         <translation>  (디스크를 찾을 수 없음)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3870"/>
+        <location filename="../../ui/main_window.py" line="3903"/>
         <source>  Yalnizca kullanilan alan yedegi bu diskte tum sektorleri alir.</source>
         <translation>  이 디스크에서는 사용 공간만 백업해도 모든 섹터를 포함합니다.</translation>
     </message>
@@ -151,17 +151,17 @@
         <translation>열기(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="549"/>
+        <location filename="../../ui/main_window.py" line="554"/>
         <source>&amp;Araclar</source>
         <translation>도구(&amp;T)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="524"/>
+        <location filename="../../ui/main_window.py" line="529"/>
         <source>&amp;Bolum</source>
         <translation>파티션(&amp;P)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="484"/>
+        <location filename="../../ui/main_window.py" line="489"/>
         <source>&amp;Dosya</source>
         <translation>파일(&amp;F)</translation>
     </message>
@@ -191,7 +191,7 @@
         <translation>저장(&amp;S)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="545"/>
+        <location filename="../../ui/main_window.py" line="550"/>
         <source>&amp;Onyukleme</source>
         <translation>부팅(&amp;B)</translation>
     </message>
@@ -206,7 +206,7 @@
         <translation>모두 예(&amp;A)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="574"/>
+        <location filename="../../ui/main_window.py" line="579"/>
         <source>&amp;Yardim</source>
         <translation>도움말(&amp;H)</translation>
     </message>
@@ -237,44 +237,44 @@
         <translation>(설정되지 않음)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="809"/>
+        <location filename="../../ui/dialogs/backup.py" line="816"/>
         <source>(bicimlendirilmemis)</source>
         <translation>(포맷되지 않음)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1103"/>
+        <location filename="../../ui/dialogs/backup.py" line="1110"/>
         <source>(bolum tablosu okunamadi ya da yok)</source>
         <translation>(파티션 테이블이 없거나 읽을 수 없음)</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_overview.py" line="156"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="163"/>
         <source>(bolum yok)</source>
         <translation>(파티션 없음)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3514"/>
-        <location filename="../../ui/widgets/disk_overview.py" line="155"/>
+        <location filename="../../ui/main_window.py" line="3537"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="162"/>
         <source>(bolumler okunamadi: {})</source>
         <translation>(파티션을 읽을 수 없음: {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3510"/>
+        <location filename="../../ui/main_window.py" line="3533"/>
         <source>(bolumler okunuyor...)</source>
         <translation>(파티션 읽는 중...)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="808"/>
-        <location filename="../../ui/main_window.py" line="2757"/>
+        <location filename="../../ui/dialogs/backup.py" line="815"/>
+        <location filename="../../ui/main_window.py" line="2726"/>
         <source>(bos)</source>
         <translation>(유휴)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3693"/>
+        <location filename="../../ui/main_window.py" line="3716"/>
         <source>(degistirilemez — neden?)</source>
         <translation>(수정할 수 없음 — 이유는?)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3477"/>
+        <location filename="../../ui/main_window.py" line="3500"/>
         <source>(disk bulunamadi)</source>
         <translation>(디스크를 찾을 수 없음)</translation>
     </message>
@@ -284,32 +284,32 @@
         <translation>(논리)</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_overview.py" line="157"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="164"/>
         <source>(okunuyor...)</source>
         <translation>(읽는 중...)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="975"/>
+        <location filename="../../ui/dialogs/backup.py" line="982"/>
         <source>(secilmedi)</source>
         <translation>(선택되지 않음)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="833"/>
+        <location filename="../../ui/dialogs/backup.py" line="840"/>
         <source>(yedek alininca belli olur)</source>
         <translation>(백업을 만든 후에 알 수 있음)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1010"/>
+        <location filename="../../ui/dialogs/backup.py" line="1017"/>
         <source>(yedek dosyasi secilmedi)</source>
         <translation>(선택된 백업 파일 없음)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2755"/>
+        <location filename="../../ui/main_window.py" line="2724"/>
         <source>(yok)</source>
         <translation>(없음)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="810"/>
+        <location filename="../../ui/dialogs/backup.py" line="817"/>
         <source>({} icerigi bu surumde listelenemiyor)</source>
         <translation>(이 버전에서는 {} 내용을 나열할 수 없음)</translation>
     </message>
@@ -346,7 +346,7 @@
         <translation>&lt; 이전</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2288"/>
+        <location filename="../../ui/main_window.py" line="2246"/>
         <source>&lt;b&gt;Acik disk/goruntu kapatilacak.&lt;/b&gt;&lt;br&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;열려 있는 디스크/이미지가 닫힙니다.&lt;/b&gt;&lt;br&gt;&lt;br&gt;</translation>
     </message>
@@ -356,12 +356,12 @@
         <translation>&lt;b&gt;파티션 {}&lt;/b&gt; — {}&lt;br&gt;현재 파일 시스템: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="466"/>
+        <location filename="../../ui/widgets/disk_map.py" line="483"/>
         <source>&lt;b&gt;Bos alan&lt;/b&gt;&lt;br&gt;Boyut: {}</source>
         <translation>&lt;b&gt;여유 공간&lt;/b&gt;&lt;br&gt;크기: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2490"/>
+        <location filename="../../ui/main_window.py" line="2447"/>
         <source>&lt;b&gt;Diskteki hali&lt;/b&gt; gosteriliyor — {} bekleyen adim listede bekliyor.</source>
         <translation>&lt;b&gt;현재 디스크의 실제 레이아웃&lt;/b&gt;을 표시하고 있습니다 — 보류 중인 단계 {}개가 목록에서 대기 중입니다.</translation>
     </message>
@@ -371,7 +371,7 @@
         <translation>&lt;b&gt;사용됨:&lt;/b&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="317"/>
+        <location filename="../../ui/dialogs/apply.py" line="324"/>
         <source>&lt;b&gt;Durdu:&lt;/b&gt; {}&lt;br&gt;Tamamlanan adimlar geri alinmaz; duran adim ve sonrasi bekleyen listesinde kaldi.</source>
         <translation>&lt;b&gt;중지됨:&lt;/b&gt; {}&lt;br&gt;완료된 단계는 되돌릴 수 없습니다. 실패한 단계와 그 이후 단계는 보류 중인 목록에 남아 있습니다.</translation>
     </message>
@@ -391,7 +391,7 @@
         <translation>&lt;b&gt;부팅 구성을 읽을 수 없습니다.&lt;/b&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2484"/>
+        <location filename="../../ui/main_window.py" line="2441"/>
         <source>&lt;b&gt;Planlanan yerlesim&lt;/b&gt; gosteriliyor — {} bekleyen adim uygulandiginda disk boyle olacak ({}). Diske henuz yazilmadi.</source>
         <translation>&lt;b&gt;계획된 레이아웃&lt;/b&gt;을 표시하고 있습니다 — 보류 중인 단계 {}개가 적용되면 디스크가 이렇게 됩니다 ({}). 아직 아무것도 기록되지 않았습니다.</translation>
     </message>
@@ -406,22 +406,27 @@
         <translation>&lt;b&gt;검색 영역:&lt;/b&gt; {}&lt;br&gt;디렉터리 레코드 없이 파일 시그니처로 복구합니다. 포맷된 영역에서도 동작합니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="324"/>
+        <location filename="../../ui/dialogs/apply.py" line="331"/>
         <source>&lt;b&gt;Uygulama basarisiz:&lt;/b&gt; {}</source>
         <translation>&lt;b&gt;적용 실패:&lt;/b&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="184"/>
+        <location filename="../../ui/dialogs/clone.py" line="429"/>
+        <source>&lt;b&gt;Yeni goruntu dosyasi&lt;/b&gt; — hicbir diske dokunulmaz</source>
+        <translation>&lt;b&gt;새 이미지 파일&lt;/b&gt; — 어떤 디스크도 건드리지 않음</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/apply.py" line="190"/>
         <source>&lt;b&gt;{} adim veri kaybettirebilir&lt;/b&gt; ve uygulandiktan sonra geri alinamaz.</source>
         <translation>&lt;b&gt;{}개 단계가 데이터를 파괴할 수 있으며&lt;/b&gt; 적용한 후에는 되돌릴 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2568"/>
+        <location filename="../../ui/main_window.py" line="2525"/>
         <source>&lt;b&gt;{} bekleyen adim&lt;/b&gt; henuz uygulanmadi ve kaynak kapatilinca kaybolacak.&lt;br&gt;&lt;br&gt;Diskte hicbir degisiklik yapilmadi.&lt;br&gt;&lt;br&gt;Yine de kapatilsin mi?</source>
         <translation>&lt;b&gt;보류 중인 단계 {}개&lt;/b&gt;가 아직 적용되지 않았으며 원본을 닫으면 사라집니다.&lt;br&gt;&lt;br&gt;디스크에서는 아무것도 변경되지 않았습니다.&lt;br&gt;&lt;br&gt;그래도 닫으시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2233"/>
+        <location filename="../../ui/main_window.py" line="2191"/>
         <source>&lt;b&gt;{} fiziksel diskin&lt;/b&gt; bilgisi okunamadi ({}).&lt;br&gt;&lt;br&gt;Fiziksel disklere erismek icin {} yetkisi gerekir. Uygulama simdi yetkili olarak yeniden baslatilsin mi?&lt;br&gt;&lt;br&gt;&lt;i&gt;Disk goruntusu dosyalari (.img, VHD, VDI...) icin yetki gerekmez; yalnizca goruntu dosyalariyla calisacaksaniz &lt;b&gt;Hayir&lt;/b&gt; diyebilirsiniz.&lt;/i&gt;</source>
         <translation>&lt;b&gt;물리 디스크 {}개&lt;/b&gt;를 읽을 수 없습니다 ({}).&lt;br&gt;&lt;br&gt;물리 디스크에 액세스하려면 {} 권한이 필요합니다. 지금 상승된 권한으로 응용 프로그램을 다시 시작하시겠습니까?&lt;br&gt;&lt;br&gt;&lt;i&gt;디스크 이미지 파일(.img, VHD, VDI...)은 권한이 필요하지 않습니다. 이미지 파일로만 작업한다면 &lt;b&gt;아니요&lt;/b&gt;를 선택해도 됩니다.&lt;/i&gt;</translation>
     </message>
@@ -446,7 +451,7 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; ({}) — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1058"/>
+        <location filename="../../ui/main_window.py" line="1063"/>
         <source>&lt;b&gt;{}&lt;/b&gt; bir DiskUltimate yedegidir. Icerigi &lt;b&gt;salt okunur&lt;/b&gt; olarak gezebilirsiniz: bolumler, klasorler ve dosyalar gorunur, dosyalari disa aktarabilirsiniz.&lt;br&gt;&lt;br&gt;&lt;b&gt;Kaynak boyut:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Yedek boyut:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Olusturma:&lt;/b&gt; {}&lt;br&gt;&lt;br&gt;Yedegi bir &lt;b&gt;diske veya goruntuye yazmak&lt;/b&gt; icin: &lt;i&gt;Disk &amp;gt; Yedegi diske yaz...&lt;/i&gt;</source>
         <translation>&lt;b&gt;{}&lt;/b&gt;은(는) DiskUltimate 백업입니다. 내용을 &lt;b&gt;읽기 전용&lt;/b&gt;으로 탐색할 수 있습니다. 파티션, 폴더, 파일이 표시되며 파일을 내보낼 수 있습니다.&lt;br&gt;&lt;br&gt;&lt;b&gt;원본 크기:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;백업 크기:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;생성 일시:&lt;/b&gt; {}&lt;br&gt;&lt;br&gt;&lt;b&gt;백업을 디스크나 이미지에 쓰려면&lt;/b&gt;: &lt;i&gt;디스크 &amp;gt; 디스크에 백업 쓰기...&lt;/i&gt;</translation>
     </message>
@@ -461,27 +466,22 @@
         <translation>파일 시그니처 &lt;b&gt;{}&lt;/b&gt;개를 찾았습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1161"/>
+        <location filename="../../ui/dialogs/backup.py" line="1168"/>
         <source>&lt;b&gt;{}&lt;/b&gt; isletim sistemi diskidir. Onaylamak icin disk adini yazin: &lt;b&gt;{}&lt;/b&gt;</source>
         <translation>&lt;b&gt;{}&lt;/b&gt;은(는) 운영 체제 디스크입니다. 확인하려면 디스크 이름을 입력하십시오: &lt;b&gt;{}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="133"/>
+        <location filename="../../ui/dialogs/clone.py" line="486"/>
         <source>&lt;b&gt;{}&lt;/b&gt; isletim sistemi diskidir. Uzerine yazmak sistemi acilamaz hale getirir. Onaylamak icin disk adini yazin: &lt;b&gt;{}&lt;/b&gt;</source>
         <translation>&lt;b&gt;{}&lt;/b&gt;은(는) 운영 체제 디스크입니다. 덮어쓰면 시스템을 부팅할 수 없게 됩니다. 확인하려면 디스크 이름을 입력하십시오: &lt;b&gt;{}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1815"/>
-        <source>&lt;b&gt;{}&lt;/b&gt; nereye klonlansin?</source>
-        <translation>&lt;b&gt;{}&lt;/b&gt;을(를) 어디에 복제하시겠습니까?</translation>
-    </message>
-    <message>
-        <location filename="../../ui/main_window.py" line="4041"/>
+        <location filename="../../ui/main_window.py" line="4076"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acik — bu &lt;b&gt;normaldir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Yaptiginiz degisiklikler bekleyen islem olarak birikir ve diske ancak &lt;b&gt;Uygula&lt;/b&gt; dediginizde yazilir.</source>
         <translation>&lt;b&gt;{}&lt;/b&gt;이(가) 읽기 전용으로 열려 있습니다 — 이는 &lt;b&gt;정상&lt;/b&gt;입니다.&lt;br&gt;&lt;br&gt;변경 사항은 보류 중인 작업으로 모이며 &lt;b&gt;적용&lt;/b&gt;을 선택해야만 디스크에 기록됩니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4010"/>
+        <location filename="../../ui/main_window.py" line="4045"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acildi; bu dosyada degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;&lt;b&gt;Neden:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Yol:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Bicim:&lt;/b&gt; {}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt;이(가) 읽기 전용으로 열렸습니다. 이 파일은 수정할 수 없습니다.&lt;br&gt;&lt;br&gt;&lt;b&gt;이유:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;경로:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;형식:&lt;/b&gt; {}</translation>
     </message>
@@ -491,12 +491,12 @@
         <translation>삭제된 항목 &lt;b&gt;{}&lt;/b&gt;개를 찾았습니다 — 그중 &lt;b&gt;{}&lt;/b&gt;개는 완전히 복구할 수 있는 것으로 보입니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4048"/>
+        <location filename="../../ui/main_window.py" line="4083"/>
         <source>&lt;b&gt;{}&lt;/b&gt; uzerinde degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;{}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt;은(는) 수정할 수 없습니다.&lt;br&gt;&lt;br&gt;{}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="138"/>
+        <location filename="../../ui/dialogs/clone.py" line="491"/>
         <source>&lt;b&gt;{}&lt;/b&gt; uzerindeki bolum tablosu ve butun bolumler kaybolacak.</source>
         <translation>&lt;b&gt;{}&lt;/b&gt;의 파티션 테이블과 모든 파티션이 손실됩니다.</translation>
     </message>
@@ -521,22 +521,22 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; — {} (처음 {} 표시)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4015"/>
+        <location filename="../../ui/main_window.py" line="4050"/>
         <source>&lt;br&gt;&lt;br&gt;Dosyayi kullanan diger programi (baska bir disk araci, yedekleme yazilimi vb.) kapatip &lt;b&gt;Yeniden dene&lt;/b&gt;ye basin.</source>
         <translation>&lt;br&gt;&lt;br&gt;파일을 사용 중인 다른 프로그램(다른 디스크 도구, 백업 소프트웨어 등)을 닫고 &lt;b&gt;다시 시도&lt;/b&gt;를 누르십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4141"/>
+        <location filename="../../ui/main_window.py" line="4177"/>
         <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt5, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
         <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;디스크 이미지, 가상 디스크 및 &lt;b&gt;이 시스템의 실제 디스크&lt;/b&gt;를 파티션 분할, 포맷, 백업, 복구하는 도구입니다.&lt;/p&gt;&lt;p&gt;&lt;b&gt;기술:&lt;/b&gt; Python 3 + PyQt5, 외부 의존성 없음&lt;br&gt;&lt;b&gt;파티션 테이블:&lt;/b&gt; MBR(논리 파티션 포함), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT 변환&lt;br&gt;&lt;b&gt;포맷:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 및 NTFS — 8가지 모두 순수 Python으로, 세 가지 플랫폼에서&lt;br&gt;&lt;b&gt;파일 액세스:&lt;/b&gt; FAT 및 exFAT 전체 읽기/쓰기&lt;/p&gt;&lt;p&gt;이미지 파일에는 관리자 권한이 필요하지 않습니다. 물리 디스크 액세스에는 관리자/root 권한이 필요하며 &lt;b&gt;기본적으로 읽기 전용&lt;/b&gt;입니다. 쓰기에는 별도의 확인이 필요합니다.&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="841"/>
+        <location filename="../../ui/main_window.py" line="846"/>
         <source>&lt;p&gt;Bu uygulama asagidaki ikon paketlerinden secilmis ikonlari gomulu olarak icerir. Isletim sistemi amblemleri sahiplerinin ticari markasidir; yalnizca diski tanitmak icin gosterilir.&lt;/p&gt;</source>
         <translation>&lt;p&gt;이 응용 프로그램에는 다음 아이콘 팩에서 선택한 아이콘이 포함되어 있습니다. 운영 체제 엠블럼은 해당 소유자의 상표이며 디스크를 식별하기 위해서만 표시됩니다.&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="825"/>
+        <location filename="../../ui/main_window.py" line="830"/>
         <source>&lt;p&gt;Bu uygulamanin indirilebilir surumleri (Windows exe, Linux AppImage, macOS) asagidaki bilesenleri icinde tasir. Uygulamanin kendisi GNU GPL surum 3 ile lisanslidir; kaynak kodu: {}&lt;/p&gt;</source>
         <translation>&lt;p&gt;다운로드용 빌드(Windows exe, Linux AppImage, macOS)에는 아래 구성 요소가 포함되어 있습니다. 애플리케이션 자체는 GNU GPL 버전 3으로 라이선스됩니다. 소스 코드: {}&lt;/p&gt;</translation>
     </message>
@@ -628,17 +628,19 @@
         <translation>켜짐</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="699"/>
+        <location filename="../../ui/main_window.py" line="704"/>
         <source>Acik .dub yedegini yeni bir goruntu dosyasina veya fiziksel diske yazar</source>
         <translation>열려 있는 .dub 백업을 새 이미지 파일 또는 물리 디스크에 씁니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2201"/>
+        <location filename="../../ui/main_window.py" line="2159"/>
         <source>Acik dosya bicimi</source>
         <translation>파일 열기 형식</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="571"/>
+        <location filename="../../ui/dialogs/backup.py" line="578"/>
+        <location filename="../../ui/dialogs/clone.py" line="337"/>
+        <location filename="../../ui/dialogs/clone.py" line="363"/>
         <source>Acik goruntuler</source>
         <translation>이미지 열기</translation>
     </message>
@@ -649,24 +651,24 @@
         <translation>설명</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="350"/>
+        <location filename="../../ui/dialogs/backup.py" line="353"/>
         <source>Aciklama:</source>
         <translation>설명:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="714"/>
+        <location filename="../../ui/main_window.py" line="719"/>
         <source>Acilista guncellemeleri denetle</source>
         <translation>시작할 때 업데이트 확인</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_overview.py" line="244"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="255"/>
         <source>Acmak icin tiklayin (salt okunur)</source>
         <translation>클릭하여 열기(읽기 전용)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="360"/>
+        <location filename="../../ui/dialogs/backup.py" line="363"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3889"/>
+        <location filename="../../ui/main_window.py" line="3924"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <source>Ad</source>
@@ -678,7 +680,7 @@
         <translation>이름 바꾸기...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="121"/>
+        <location filename="../../ui/dialogs/apply.py" line="123"/>
         <source>Adim</source>
         <translation>단계</translation>
     </message>
@@ -698,12 +700,12 @@
         <translation>단계 {}: 파티션 {}은(는) 암호화되어 있습니다({}). 내용을 볼 수 없으며, 이 작업은 암호화된 데이터를 영구적으로 파괴합니다.</translation>
     </message>
     <message>
-        <location filename="../../core/queueedit.py" line="174"/>
+        <location filename="../../core/queueedit.py" line="180"/>
         <source>Adimlar bu sirayla uygulanamaz: &apos;{}&apos; baska bir bolumle cakisiyor</source>
         <translation>이 순서로는 단계를 적용할 수 없습니다: &apos;{}&apos;이(가) 다른 파티션과 겹칩니다</translation>
     </message>
     <message>
-        <location filename="../../core/queueedit.py" line="177"/>
+        <location filename="../../core/queueedit.py" line="183"/>
         <source>Adimlar icin uygulanabilir bir sira bulunamadi</source>
         <translation>단계를 적용할 수 있는 순서를 찾지 못했습니다</translation>
     </message>
@@ -713,8 +715,8 @@
         <translation>네트워크 인터페이스(MAC)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2866"/>
-        <location filename="../../ui/main_window.py" line="2940"/>
+        <location filename="../../ui/main_window.py" line="2835"/>
+        <location filename="../../ui/main_window.py" line="2937"/>
         <source>Agactan bir fiziksel disk secin.</source>
         <translation>트리에서 물리 디스크를 선택하십시오.</translation>
     </message>
@@ -724,22 +726,22 @@
         <translation>Apple HFS+</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2760"/>
+        <location filename="../../ui/main_window.py" line="2729"/>
         <source>Arayuz bir saniyeden uzun yanit vermezse butun is parcaciklarinin yigini kendiliginden rapor dosyasina yazilir. Raporlar gunluk klasorundeki freeze/ altindadir.</source>
         <translation>인터페이스가 1초 이상 응답하지 않으면 모든 스레드의 스택이 자동으로 보고서 파일에 기록됩니다. 보고서는 로그 폴더의 freeze/ 아래에 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2197"/>
+        <location filename="../../ui/main_window.py" line="2155"/>
         <source>Arayuz dili</source>
         <translation>인터페이스 언어</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2199"/>
+        <location filename="../../ui/main_window.py" line="2157"/>
         <source>Arayuz stili</source>
         <translation>인터페이스 스타일</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2785"/>
+        <location filename="../../ui/main_window.py" line="2754"/>
         <source>Arayuzun takildigi andaki yigin. En ustteki &apos;O an acik islem&apos; satiri hangi islemin bekledigini soyler.</source>
         <translation>인터페이스가 멈춘 순간의 스택입니다. 맨 위의 &apos;현재 열린 작업&apos; 줄이 어떤 작업이 대기 중이었는지 알려 줍니다.</translation>
     </message>
@@ -759,12 +761,12 @@
         <translation>아래로</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2583"/>
+        <location filename="../../ui/main_window.py" line="2540"/>
         <source>Asagi tasi</source>
         <translation>아래로 이동</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="179"/>
+        <location filename="../../ui/dialogs/apply.py" line="185"/>
         <source>Asagidaki &lt;b&gt;{} adim&lt;/b&gt; sirayla &lt;b&gt;{}&lt;/b&gt; uzerinde calistirilacak.</source>
         <translation>다음 &lt;b&gt;{}개 단계&lt;/b&gt;가 &lt;b&gt;{}&lt;/b&gt;에서 순서대로 실행됩니다.</translation>
     </message>
@@ -790,18 +792,18 @@
         <translation>설정 백업</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="119"/>
-        <location filename="../../core/session.py" line="1324"/>
+        <location filename="../../core/physical.py" line="121"/>
+        <location filename="../../core/session.py" line="1377"/>
         <source>Aygit</source>
         <translation>장치</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3277"/>
+        <location filename="../../ui/main_window.py" line="3278"/>
         <source>Aygit cikarildi: {}</source>
         <translation>장치가 제거됨: {}</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="900"/>
+        <location filename="../../core/physical.py" line="934"/>
         <source>Aygit donanimsal olarak yazma korumali</source>
         <translation>장치가 하드웨어적으로 쓰기 보호되어 있습니다</translation>
     </message>
@@ -811,7 +813,7 @@
         <translation>장치가 요청한 크기보다 작습니다</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1227"/>
+        <location filename="../../core/platform.py" line="1239"/>
         <source>Aygit klasorune ({}) goruntu olusturulamaz; bu alan bellekte tutulur ve dolunca sistem aygit dugumu olusturamaz.</source>
         <translation>장치 폴더({})에는 이미지를 만들 수 없습니다. 이 영역은 메모리에 보관되며, 가득 차면 시스템이 더 이상 장치 노드를 만들 수 없습니다.</translation>
     </message>
@@ -821,12 +823,12 @@
         <translation>장치가 읽기 전용입니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3273"/>
+        <location filename="../../ui/main_window.py" line="3274"/>
         <source>Aygit takildi: {} — {} ({})</source>
         <translation>장치가 연결됨: {} — {} ({})</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="947"/>
+        <location filename="../../core/physical.py" line="981"/>
         <source>Aygit yok: {}</source>
         <translation>해당 장치가 없습니다: {}</translation>
     </message>
@@ -924,7 +926,7 @@
         <translation>포맷 예정</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="131"/>
+        <location filename="../../core/physical.py" line="133"/>
         <source>BILINMIYOR</source>
         <translation>알 수 없음</translation>
     </message>
@@ -950,22 +952,23 @@
         <translation>BIOS 부팅 장치</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2872"/>
+        <location filename="../../ui/main_window.py" line="2854"/>
         <source>BOLUM AYGITLARI</source>
         <translation>파티션 장치</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3887"/>
+        <location filename="../../ui/main_window.py" line="3922"/>
         <source>BOLUM {}</source>
         <translation>파티션 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3873"/>
+        <location filename="../../ui/main_window.py" line="2845"/>
+        <location filename="../../ui/main_window.py" line="3906"/>
         <source>BOLUMLER</source>
         <translation>파티션</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="590"/>
+        <location filename="../../core/platform.py" line="591"/>
         <source>Bagla</source>
         <translation>마운트</translation>
     </message>
@@ -975,77 +978,73 @@
         <translation>마운트</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="595"/>
+        <location filename="../../core/platform.py" line="596"/>
         <source>Baglama noktasi</source>
         <translation>마운트 지점</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1667"/>
+        <location filename="../../ui/main_window.py" line="1672"/>
         <source>Baglama yalnizca gercek disklerde anlamlidir; goruntu dosyasi isletim sistemine bagli degildir.</source>
         <translation>마운트는 실제 디스크에만 적용됩니다. 이미지 파일은 운영 체제에 연결되어 있지 않습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="790"/>
+        <location filename="../../core/platform.py" line="802"/>
         <source>Baglamak icin root yetkisi veya `udisksctl` gerekir.</source>
         <translation>마운트하려면 root 권한 또는 `udisksctl`이 필요합니다.</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="126"/>
+        <location filename="../../core/physical.py" line="128"/>
         <source>Baglanti</source>
         <translation>버스</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1628"/>
-        <location filename="../../ui/main_window.py" line="1630"/>
+        <location filename="../../ui/main_window.py" line="1633"/>
         <location filename="../../ui/main_window.py" line="1635"/>
-        <location filename="../../ui/main_window.py" line="2708"/>
+        <location filename="../../ui/main_window.py" line="1640"/>
+        <location filename="../../ui/main_window.py" line="2677"/>
         <source>Baglantilari kes</source>
         <translation>모두 마운트 해제</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2702"/>
+        <location filename="../../ui/main_window.py" line="2671"/>
         <source>Bagli bolum uyarisi</source>
         <translation>마운트된 파티션 경고</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="109"/>
+        <location filename="../../core/physical.py" line="111"/>
         <source>Bagli bolum var ({}) — yazmak veri kaybettirir</source>
         <translation>마운트된 파티션이 있습니다({}) — 쓰면 데이터가 손실됩니다</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="114"/>
+        <location filename="../../core/physical.py" line="116"/>
         <source>Bagli bolum yok</source>
         <translation>마운트된 파티션 없음</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="133"/>
+        <location filename="../../core/physical.py" line="135"/>
         <source>Bagli bolumler</source>
         <translation>마운트된 파티션</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3894"/>
+        <location filename="../../ui/main_window.py" line="3929"/>
         <source>Bagli degil</source>
         <translation>마운트되지 않음</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3946"/>
+        <location filename="../../ui/main_window.py" line="3981"/>
         <source>Bagli — isletim sistemi kullaniyor</source>
         <translation>마운트됨 — 운영 체제에서 사용 중</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="227"/>
+        <location filename="../../ui/dialogs/apply.py" line="233"/>
         <source>Basarisiz</source>
         <translation>실패</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1311"/>
+        <location filename="../../ui/dialogs/backup.py" line="1321"/>
+        <location filename="../../ui/dialogs/clone.py" line="651"/>
         <source>Basarisiz: {}</source>
         <translation>실패: {}</translation>
-    </message>
-    <message>
-        <location filename="../../ui/main_window.py" line="1817"/>
-        <source>Baska bir diske...</source>
-        <translation>다른 디스크로...</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/partition_layout.py" line="77"/>
@@ -1059,13 +1058,13 @@
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3897"/>
+        <location filename="../../ui/main_window.py" line="3932"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Baslangic LBA</source>
         <translation>시작 LBA</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="233"/>
+        <location filename="../../core/ptable.py" line="240"/>
         <source>Baslangic cok erken (en az LBA {})</source>
         <translation>시작 위치가 너무 앞쪽입니다 (최소 LBA {})</translation>
     </message>
@@ -1080,7 +1079,7 @@
         <translation>초기 구조</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="522"/>
+        <location filename="../../ui/dialogs/backup.py" line="529"/>
         <location filename="../../ui/dialogs/resize.py" line="36"/>
         <source>Baslat</source>
         <translation>시작</translation>
@@ -1096,7 +1095,7 @@
         <translation>플래그가 설정된 상태로 유지됩니다. Windows는 다음 시작 시 볼륨을 검사합니다. 그때까지 Linux는 이 볼륨을 마운트하지 않습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3899"/>
+        <location filename="../../ui/main_window.py" line="3934"/>
         <source>Bayt ofseti</source>
         <translation>바이트 오프셋</translation>
     </message>
@@ -1106,7 +1105,7 @@
         <translation>일부 단계가 실패했습니다. 자세한 내용은 아래 로그에 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1502"/>
+        <location filename="../../core/platform.py" line="1514"/>
         <source>Beklenmeyen cikti</source>
         <translation>예기치 않은 출력</translation>
     </message>
@@ -1116,32 +1115,37 @@
         <translation>예기치 않은 응답</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2424"/>
+        <location filename="../../ui/main_window.py" line="2382"/>
         <source>Bekleyen adimla cakisiyor</source>
         <translation>보류 중인 단계와 충돌합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2554"/>
+        <location filename="../../ui/main_window.py" line="2511"/>
         <source>Bekleyen islem yok</source>
         <translation>보류 중인 작업 없음</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="192"/>
+        <location filename="../../ui/main_window.py" line="197"/>
         <source>Bekleyen islemler</source>
         <translation>보류 중인 작업</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2553"/>
+        <location filename="../../ui/main_window.py" line="2510"/>
         <source>Bekleyen islemler ({})</source>
         <translation>보류 중인 작업 ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2567"/>
+        <location filename="../../ui/dialogs/apply.py" line="169"/>
+        <source>Bekleyen islemler uygulaniyor</source>
+        <translation>보류 중인 작업 적용 중</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="2524"/>
         <source>Bekleyen islemler var</source>
         <translation>보류 중인 작업이 있습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3386"/>
+        <location filename="../../ui/main_window.py" line="3409"/>
         <location filename="../../ui/widgets/partition_table.py" line="145"/>
         <source>Bekleyen islemler:</source>
         <translation>보류 중인 작업:</translation>
@@ -1157,28 +1161,28 @@
         <translation>보류 중인 작업에 추가됨: 부트 코드 제거</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2615"/>
+        <location filename="../../ui/main_window.py" line="2572"/>
         <source>Bekleyen islemleri iptal et</source>
         <translation>보류 중인 작업 취소</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="690"/>
+        <location filename="../../ui/main_window.py" line="695"/>
         <source>Bekleyen islemleri sirayla uygular. Bu ana kadar diske hicbir sey yazilmadi.</source>
         <translation>보류 중인 작업을 순서대로 적용합니다. 지금까지 디스크에는 아무것도 기록되지 않았습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="106"/>
+        <location filename="../../ui/dialogs/apply.py" line="108"/>
         <source>Bekleyen islemleri uygula</source>
         <translation>보류 중인 작업 적용</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="50"/>
+        <location filename="../../ui/dialogs/clone.py" line="221"/>
         <source>Bekleyen {} adim klona DAHIL DEGIL: diskin su anki hali kopyalanir.</source>
         <translation>보류 중인 단계 {}개는 복제에 포함되지 않습니다. 디스크는 현재 상태 그대로 복사됩니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="202"/>
-        <location filename="../../ui/dialogs/apply.py" line="224"/>
+        <location filename="../../ui/dialogs/apply.py" line="208"/>
+        <location filename="../../ui/dialogs/apply.py" line="230"/>
         <source>Bekliyor</source>
         <translation>대기 중</translation>
     </message>
@@ -1190,12 +1194,12 @@
         <translation>펌웨어</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1824"/>
+        <location filename="../../core/platform.py" line="1836"/>
         <source>Bellenim ayricaligi bulunamadi.</source>
         <translation>펌웨어 권한을 찾을 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1835"/>
+        <location filename="../../core/platform.py" line="1847"/>
         <source>Bellenim ayricaligi verilmedi ({} yetkisi gerekir).</source>
         <translation>펌웨어 권한이 부여되지 않았습니다 ({} 권한 필요).</translation>
     </message>
@@ -1205,23 +1209,23 @@
         <translation>펌웨어 볼륨 파일</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1711"/>
+        <location filename="../../core/platform.py" line="1723"/>
         <source>Bellenim degiskenleri icin {} yetkisi gerekiyor.</source>
         <translation>펌웨어 변수에는 {} 권한이 필요합니다.</translation>
     </message>
     <message>
         <location filename="../../core/efistore.py" line="467"/>
-        <location filename="../../core/platform.py" line="1963"/>
+        <location filename="../../core/platform.py" line="1975"/>
         <source>Bellenim degiskenleri yazilamiyor.</source>
         <translation>펌웨어 변수를 쓸 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1709"/>
+        <location filename="../../core/platform.py" line="1721"/>
         <source>Bellenim turu belirlenemedi.</source>
         <translation>펌웨어 유형을 확인할 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="674"/>
+        <location filename="../../ui/main_window.py" line="679"/>
         <source>Bellenimdeki onyukleme girislerini ve sirasini duzenler.</source>
         <translation>펌웨어 부팅 항목과 그 순서를 편집합니다.</translation>
     </message>
@@ -1241,7 +1245,7 @@
         <translation>펌웨어에 쓰는 중</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1314"/>
+        <location filename="../../core/session.py" line="1365"/>
         <source>Bicim</source>
         <translation>포맷</translation>
     </message>
@@ -1252,16 +1256,16 @@
         <translation>포맷</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="637"/>
+        <location filename="../../ui/main_window.py" line="642"/>
         <source>Bicimlendir...</source>
         <translation>포맷...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3381"/>
-        <location filename="../../ui/main_window.py" line="3532"/>
-        <location filename="../../ui/main_window.py" line="3892"/>
+        <location filename="../../ui/main_window.py" line="3404"/>
+        <location filename="../../ui/main_window.py" line="3555"/>
+        <location filename="../../ui/main_window.py" line="3927"/>
         <location filename="../../ui/widgets/disk_map.py" line="194"/>
-        <location filename="../../ui/widgets/disk_overview.py" line="240"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="251"/>
         <source>Bicimlendirilmemis</source>
         <translation>포맷되지 않음</translation>
     </message>
@@ -1282,9 +1286,34 @@
         <translation>포맷 옵션</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="120"/>
+        <location filename="../../core/physical.py" line="122"/>
         <source>Bilgi durumu</source>
         <translation>정보 상태</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/power_options.py" line="47"/>
+        <source>Bilgisayar {} saniye icinde hazirda bekletilecek.</source>
+        <translation>{}초 후 컴퓨터가 최대 절전 모드로 전환됩니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/power_options.py" line="44"/>
+        <source>Bilgisayar {} saniye icinde kapatilacak.</source>
+        <translation>{}초 후 컴퓨터가 종료됩니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/power_options.py" line="46"/>
+        <source>Bilgisayar {} saniye icinde uyku moduna gececek.</source>
+        <translation>{}초 후 컴퓨터가 절전 모드로 전환됩니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/power_options.py" line="45"/>
+        <source>Bilgisayar {} saniye icinde yeniden baslatilacak.</source>
+        <translation>{}초 후 컴퓨터가 다시 시작됩니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/power_options.py" line="37"/>
+        <source>Bilgisayari kapat</source>
+        <translation>시스템 종료</translation>
     </message>
     <message>
         <location filename="../../core/fsregistry.py" line="87"/>
@@ -1344,9 +1373,9 @@
         <translation>알 수 없는 작업 유형: {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="412"/>
-        <location filename="../../core/session.py" line="854"/>
-        <location filename="../../core/session.py" line="866"/>
+        <location filename="../../core/session.py" line="422"/>
+        <location filename="../../core/session.py" line="864"/>
+        <location filename="../../core/session.py" line="876"/>
         <source>Bilinmeyen sema: {}</source>
         <translation>알 수 없는 체계: {}</translation>
     </message>
@@ -1373,7 +1402,7 @@
         <translation>알 수 없음 (구성을 읽을 수 없음)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2897"/>
+        <location filename="../../ui/main_window.py" line="2894"/>
         <source>Bir diski acmak icin uzerine cift tiklayin.</source>
         <translation>디스크를 두 번 클릭하여 여십시오.</translation>
     </message>
@@ -1439,8 +1468,8 @@
     </message>
     <message>
         <location filename="../../core/operations.py" line="81"/>
-        <location filename="../../ui/main_window.py" line="1593"/>
-        <location filename="../../ui/main_window.py" line="3893"/>
+        <location filename="../../ui/main_window.py" line="1598"/>
+        <location filename="../../ui/main_window.py" line="3928"/>
         <source>Birim etiketi</source>
         <translation>볼륨 레이블</translation>
     </message>
@@ -1456,7 +1485,7 @@
         <translation>볼륨 레이블:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="649"/>
+        <location filename="../../ui/main_window.py" line="654"/>
         <source>Birim etiketini degistir...</source>
         <translation>볼륨 레이블 변경...</translation>
     </message>
@@ -1528,7 +1557,7 @@
         <translation>끝 섹터:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3898"/>
+        <location filename="../../ui/main_window.py" line="3933"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Bitis LBA</source>
         <translation>끝 LBA</translation>
@@ -1584,8 +1613,8 @@
         <translation>파티션이 &lt;b&gt;{}만큼 작아집니다&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="285"/>
-        <location filename="../../ui/main_window.py" line="891"/>
+        <location filename="../../ui/main_window.py" line="290"/>
+        <location filename="../../ui/main_window.py" line="896"/>
         <source>Bolum Bilgisi</source>
         <translation>파티션 정보</translation>
     </message>
@@ -1605,7 +1634,7 @@
         <translation>파티션이 FAT{}에 비해 너무 작습니다 (클러스터 수 {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3908"/>
+        <location filename="../../ui/main_window.py" line="3943"/>
         <source>Bolum GUID</source>
         <translation>파티션 GUID</translation>
     </message>
@@ -1621,17 +1650,17 @@
     </message>
     <message>
         <location filename="../../core/operations.py" line="82"/>
-        <location filename="../../ui/main_window.py" line="1548"/>
+        <location filename="../../ui/main_window.py" line="1553"/>
         <source>Bolum adi</source>
         <translation>파티션 이름</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="586"/>
+        <location filename="../../core/session.py" line="596"/>
         <source>Bolum adi yalnizca GPT semasinda desteklenir</source>
         <translation>파티션 이름은 GPT 체계에서만 지원됩니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1545"/>
+        <location filename="../../ui/main_window.py" line="1550"/>
         <source>Bolum adi yalnizca GPT semasinda saklanir.
 MBR icin birim etiketini degistirin.</source>
         <translation>파티션 이름은 GPT 체계에서만 저장됩니다.
@@ -1643,7 +1672,7 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션 이름:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="647"/>
+        <location filename="../../ui/main_window.py" line="652"/>
         <source>Bolum adini degistir...</source>
         <translation>파티션 이름 변경...</translation>
     </message>
@@ -1653,12 +1682,12 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션 설정</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="768"/>
+        <location filename="../../core/platform.py" line="780"/>
         <source>Bolum aygiti bulunamadi: {}</source>
         <translation>파티션 장치를 찾을 수 없습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1924"/>
+        <location filename="../../ui/main_window.py" line="1873"/>
         <source>Bolum bagli</source>
         <translation>파티션이 마운트되어 있습니다</translation>
     </message>
@@ -1671,14 +1700,14 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션 크기는 0일 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1514"/>
+        <location filename="../../ui/main_window.py" line="1519"/>
         <source>Bolum bu kadar kuculemez</source>
         <translation>파티션을 이만큼 축소할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1201"/>
-        <location filename="../../core/session.py" line="886"/>
-        <location filename="../../core/session.py" line="916"/>
+        <location filename="../../core/session.py" line="1252"/>
+        <location filename="../../core/session.py" line="896"/>
+        <location filename="../../core/session.py" line="926"/>
         <source>Bolum bulunamadi</source>
         <translation>파티션을 찾을 수 없습니다</translation>
     </message>
@@ -1693,22 +1722,22 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션이 디스크 경계를 벗어납니다</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="235"/>
+        <location filename="../../core/ptable.py" line="242"/>
         <source>Bolum disk sonunu asiyor</source>
         <translation>파티션이 디스크 끝을 넘어갑니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1336"/>
+        <location filename="../../ui/main_window.py" line="1341"/>
         <source>Bolum duzeni acilamadi</source>
         <translation>파티션 레이아웃을 열 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="641"/>
+        <location filename="../../ui/main_window.py" line="646"/>
         <source>Bolum duzenini degistir...</source>
         <translation>파티션 레이아웃 변경...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1224"/>
+        <location filename="../../ui/main_window.py" line="1229"/>
         <source>Bolum eklenemez</source>
         <translation>파티션을 추가할 수 없습니다</translation>
     </message>
@@ -1742,8 +1771,8 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션이 주변 영역을 넘어갑니다 (가장 뒤 LBA {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2153"/>
-        <location filename="../../ui/main_window.py" line="985"/>
+        <location filename="../../ui/main_window.py" line="2109"/>
+        <location filename="../../ui/main_window.py" line="990"/>
         <source>Bolum olusturuluyor...</source>
         <translation>파티션 만드는 중...</translation>
     </message>
@@ -1753,22 +1782,22 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>계획을 준비한 후 파티션이 변경되었습니다. 새로 고치십시오</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1318"/>
+        <location filename="../../core/session.py" line="1369"/>
         <source>Bolum sayisi</source>
         <translation>파티션 수</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3974"/>
+        <location filename="../../ui/main_window.py" line="4009"/>
         <source>Bolum secili degil</source>
         <translation>선택된 파티션 없음</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1317"/>
+        <location filename="../../core/session.py" line="1368"/>
         <source>Bolum tablosu</source>
         <translation>파티션 테이블</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1337"/>
+        <location filename="../../ui/main_window.py" line="1342"/>
         <source>Bolum tablosu kuyrukta degisiyor; once bekleyen islemleri uygulayin ya da kaldirin.</source>
         <translation>대기열에서 파티션 테이블이 변경됩니다. 먼저 보류 중인 작업을 적용하거나 제거하십시오.</translation>
     </message>
@@ -1788,12 +1817,13 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션 테이블을 지웠습니다</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="986"/>
+        <location filename="../../core/resize.py" line="955"/>
+        <location filename="../../core/resize.py" line="995"/>
         <source>Bolum tablosu yazilamadi: {}</source>
         <translation>파티션 테이블을 쓸 수 없습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="974"/>
+        <location filename="../../core/resize.py" line="983"/>
         <location filename="../../core/restoreplan.py" line="311"/>
         <source>Bolum tablosu yaziliyor...</source>
         <translation>파티션 테이블 쓰는 중...</translation>
@@ -1801,9 +1831,9 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
     <message>
         <location filename="../../core/resize.py" line="841"/>
         <location filename="../../core/resize.py" line="933"/>
-        <location filename="../../core/session.py" line="191"/>
-        <location filename="../../core/session.py" line="355"/>
-        <location filename="../../ui/main_window.py" line="1182"/>
+        <location filename="../../core/session.py" line="192"/>
+        <location filename="../../core/session.py" line="356"/>
+        <location filename="../../ui/main_window.py" line="1187"/>
         <source>Bolum tablosu yok</source>
         <translation>파티션 테이블 없음</translation>
     </message>
@@ -1819,17 +1849,17 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션 테이블에 없는 파일 시스템 &lt;b&gt;{}&lt;/b&gt;개가 감지되었습니다. 테이블에 추가할 항목을 선택하십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2054"/>
+        <location filename="../../ui/main_window.py" line="2007"/>
         <source>Bolum tablosunda olmayan bir dosya sistemi bulunamadi.</source>
         <translation>파티션 테이블 밖에서 파일 시스템을 찾지 못했습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="654"/>
+        <location filename="../../ui/main_window.py" line="659"/>
         <source>Bolum tablosunu GPT&apos;ye donustur</source>
         <translation>파티션 테이블을 GPT로 변환</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="655"/>
+        <location filename="../../ui/main_window.py" line="660"/>
         <source>Bolum tablosunu MBR&apos;ye donustur</source>
         <translation>파티션 테이블을 MBR로 변환</translation>
     </message>
@@ -1841,7 +1871,7 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
     <message>
         <location filename="../../core/operations.py" line="648"/>
         <location filename="../../core/operations.py" line="75"/>
-        <location filename="../../ui/main_window.py" line="633"/>
+        <location filename="../../ui/main_window.py" line="638"/>
         <source>Bolum tablosunu sil</source>
         <translation>파티션 테이블 삭제</translation>
     </message>
@@ -1852,8 +1882,8 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
     </message>
     <message>
         <location filename="../../core/operations.py" line="83"/>
-        <location filename="../../ui/main_window.py" line="1562"/>
-        <location filename="../../ui/main_window.py" line="1574"/>
+        <location filename="../../ui/main_window.py" line="1567"/>
+        <location filename="../../ui/main_window.py" line="1579"/>
         <source>Bolum turu</source>
         <translation>파티션 유형</translation>
     </message>
@@ -1863,7 +1893,7 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>유형:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="648"/>
+        <location filename="../../ui/main_window.py" line="653"/>
         <source>Bolum turunu degistir...</source>
         <translation>파티션 유형 변경...</translation>
     </message>
@@ -1873,7 +1903,7 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션 데이터는 유지됩니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1733"/>
+        <location filename="../../ui/main_window.py" line="1738"/>
         <source>Bolum yok</source>
         <translation>파티션 없음</translation>
     </message>
@@ -1890,24 +1920,24 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <location filename="../../core/operations.py" line="794"/>
         <location filename="../../core/operations.py" line="809"/>
         <location filename="../../core/ptable.py" line="123"/>
-        <location filename="../../ui/dialogs/backup.py" line="1098"/>
-        <location filename="../../ui/dialogs/backup.py" line="560"/>
-        <location filename="../../ui/dialogs/backup.py" line="786"/>
+        <location filename="../../ui/dialogs/backup.py" line="1105"/>
+        <location filename="../../ui/dialogs/backup.py" line="567"/>
+        <location filename="../../ui/dialogs/backup.py" line="793"/>
         <location filename="../../ui/dialogs/bootloader.py" line="201"/>
         <location filename="../../ui/dialogs/bootloader.py" line="234"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="164"/>
-        <location filename="../../ui/main_window.py" line="2080"/>
-        <location filename="../../ui/widgets/disk_overview.py" line="177"/>
+        <location filename="../../ui/main_window.py" line="2033"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="184"/>
         <location filename="../../ui/widgets/layout_bar.py" line="131"/>
         <location filename="../../ui/widgets/partition_table.py" line="51"/>
         <source>Bolum {}</source>
         <translation>파티션 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1745"/>
-        <location filename="../../ui/main_window.py" line="1938"/>
-        <location filename="../../ui/main_window.py" line="1961"/>
-        <location filename="../../ui/main_window.py" line="3020"/>
+        <location filename="../../ui/main_window.py" line="1750"/>
+        <location filename="../../ui/main_window.py" line="1887"/>
+        <location filename="../../ui/main_window.py" line="1910"/>
+        <location filename="../../ui/main_window.py" line="3017"/>
         <source>Bolum {} ({})</source>
         <translation>파티션 {} ({})</translation>
     </message>
@@ -1932,7 +1962,7 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션 {}이(가) LBA 0에서 시작합니다. MBR은 이 레이아웃을 표현할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1236"/>
+        <location filename="../../core/session.py" line="1287"/>
         <source>Bolum {} NTFS degil</source>
         <translation>파티션 {}은(는) NTFS가 아닙니다</translation>
     </message>
@@ -1947,7 +1977,7 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션 {} 이름</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1708"/>
+        <location filename="../../ui/main_window.py" line="1713"/>
         <source>Bolum {} baglandi: {}</source>
         <translation>파티션 {}을(를) {}에 마운트했습니다</translation>
     </message>
@@ -1967,12 +1997,12 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션 {} 크기 조정</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1710"/>
+        <location filename="../../ui/main_window.py" line="1715"/>
         <source>Bolum {} cikarildi</source>
         <translation>파티션 {}을(를) 마운트 해제했습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1621"/>
+        <location filename="../../ui/main_window.py" line="1626"/>
         <source>Bolum {} cikariliyor...</source>
         <translation>파티션 {} 마운트 해제 중...</translation>
     </message>
@@ -1982,7 +2012,7 @@ MBR에서는 대신 볼륨 레이블을 변경하십시오.</translation>
         <translation>파티션 {}이(가) 디스크 끝의 백업 GPT 영역까지 이어집니다(마지막 사용 가능 LBA {}). 테이블을 쓰지 않았습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1515"/>
+        <location filename="../../ui/main_window.py" line="1520"/>
         <source>Bolum {} en az {} olabilir (dolu: {}); istenen {}.
 
 Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
@@ -2041,7 +2071,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>파티션 {} 삭제</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1925"/>
+        <location filename="../../ui/main_window.py" line="1874"/>
         <source>Bolum {} su anda bagli ({}). Bagli bir NTFS birimi onarilamaz; once baglantisini kesin.</source>
         <translation>파티션 {}이(가) 현재 마운트되어 있습니다 ({}). 마운트된 NTFS 볼륨은 복구할 수 없습니다. 먼저 마운트를 해제하십시오.</translation>
     </message>
@@ -2051,18 +2081,18 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>파티션 {} 유형</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="694"/>
+        <location filename="../../core/session.py" line="704"/>
         <source>Bolum {} yeni boyutun disinda kaliyor; goruntu kucultulmedi</source>
         <translation>파티션 {}이(가) 새 크기를 벗어납니다. 이미지를 축소하지 않았습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2002"/>
+        <location filename="../../ui/main_window.py" line="1952"/>
         <source>Bolum {} — Silinmis Dosyalar</source>
         <translation>파티션 {} — 삭제된 파일</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="611"/>
-        <location filename="../../ui/main_window.py" line="3022"/>
+        <location filename="../../ui/dialogs/backup.py" line="618"/>
+        <location filename="../../ui/main_window.py" line="3019"/>
         <source>Bolum {} — {}</source>
         <translation>파티션 {} — {}</translation>
     </message>
@@ -2092,13 +2122,13 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>파티션 {}: 위치 변경</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1937"/>
-        <location filename="../../ui/main_window.py" line="3372"/>
+        <location filename="../../ui/main_window.py" line="1886"/>
+        <location filename="../../ui/main_window.py" line="3395"/>
         <source>Bolum {}: {}</source>
         <translation>파티션 {}: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3524"/>
+        <location filename="../../ui/main_window.py" line="3547"/>
         <source>Bolum {}: {} ({})</source>
         <translation>파티션 {}: {} ({})</translation>
     </message>
@@ -2119,7 +2149,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>파티션 {}: {}은(는) 크기를 조정할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2001"/>
+        <location filename="../../ui/main_window.py" line="1951"/>
         <source>Bolum {}: {} silinmis giris bulundu</source>
         <translation>파티션 {}: 삭제된 항목 {}개를 찾았습니다</translation>
     </message>
@@ -2129,12 +2159,12 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>파티션에 레이블 쓰기를 지원하는 파일 시스템이 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1251"/>
+        <location filename="../../core/session.py" line="1302"/>
         <source>Bolumde okunabilir dosya sistemi yok</source>
         <translation>파티션에 읽을 수 있는 파일 시스템이 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="661"/>
+        <location filename="../../ui/main_window.py" line="666"/>
         <source>Bolume geri yukle...</source>
         <translation>파티션으로 복원...</translation>
     </message>
@@ -2151,7 +2181,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>파티션 없음</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3038"/>
+        <location filename="../../ui/main_window.py" line="3035"/>
         <source>Bolumlenmemis alan
 {}
 Baslangic LBA   : {}
@@ -2168,7 +2198,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
 이 영역에 새 파티션을 만들 수 있습니다 (파티션 &gt; 새 파티션).</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1319"/>
+        <location filename="../../core/session.py" line="1370"/>
         <source>Bolumlenmis</source>
         <translation>파티션됨</translation>
     </message>
@@ -2183,7 +2213,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>파티션이 디스크상의 위치와 크기로 돌아갑니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1070"/>
+        <location filename="../../ui/dialogs/backup.py" line="1077"/>
         <source>Bolumler yedekteki gibi yazilir; {} bos kalir — &quot;Bolumleri yonet&quot; ile dagitabilirsiniz.</source>
         <translation>파티션은 백업에 있는 그대로 기록되며, {}은(는) 여유 공간으로 남습니다 — &quot;파티션 관리&quot;로 분배할 수 있습니다.</translation>
     </message>
@@ -2193,7 +2223,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>파티션이 백업에 있는 위치와 크기로 돌아갑니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1075"/>
+        <location filename="../../ui/dialogs/backup.py" line="1082"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="185"/>
         <source>Bolumler yedekteki yer ve boyutlarinda yazilacak.</source>
         <translation>파티션은 백업에 있는 위치와 크기로 기록됩니다.</translation>
@@ -2204,7 +2234,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>파티션 관리</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="444"/>
+        <location filename="../../ui/dialogs/backup.py" line="447"/>
         <source>Bolumleri yonet...</source>
         <translation>파티션 관리...</translation>
     </message>
@@ -2219,12 +2249,12 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>파티션 크기 조정</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="638"/>
+        <location filename="../../ui/main_window.py" line="643"/>
         <source>Bolumu boyutlandir...</source>
         <translation>파티션 크기 조정...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="640"/>
+        <location filename="../../ui/main_window.py" line="645"/>
         <source>Bolumu fareyle surukleyerek kucult, buyut veya tasi</source>
         <translation>마우스로 끌어서 파티션을 축소, 확장 또는 이동합니다</translation>
     </message>
@@ -2234,35 +2264,35 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>파티션 안전하게 지우기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="663"/>
+        <location filename="../../ui/main_window.py" line="668"/>
         <source>Bolumu guvenli sil...</source>
         <translation>파티션 안전하게 지우기...</translation>
     </message>
     <message>
         <location filename="../../core/operations.py" line="79"/>
-        <location filename="../../ui/main_window.py" line="645"/>
+        <location filename="../../ui/main_window.py" line="650"/>
         <source>Bolumu sil</source>
         <translation>파티션 삭제</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="660"/>
+        <location filename="../../ui/main_window.py" line="665"/>
         <source>Bolumu yedekle...</source>
         <translation>파티션 백업...</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="758"/>
+        <location filename="../../core/platform.py" line="770"/>
         <source>Bolumun diskteki konumu bilinmiyor; surucu harfi atanmadi</source>
         <translation>디스크에서 파티션의 위치를 알 수 없습니다. 드라이브 문자를 할당하지 않았습니다</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="831"/>
+        <location filename="../../core/platform.py" line="843"/>
         <source>Bolumun diskteki konumu bilinmiyor; surucu harfi kaldirilmadi</source>
         <translation>디스크에서 파티션의 위치를 알 수 없습니다. 드라이브 문자를 제거하지 않았습니다</translation>
     </message>
     <message>
         <location filename="../../core/ptable.py" line="22"/>
         <location filename="../../core/ptable.py" line="53"/>
-        <location filename="../../ui/main_window.py" line="3930"/>
+        <location filename="../../ui/main_window.py" line="3965"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Bos</source>
         <translation>여유</translation>
@@ -2284,7 +2314,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>여유 공간</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3390"/>
+        <location filename="../../ui/main_window.py" line="3413"/>
         <source>Bos alan ({})</source>
         <translation>여유 공간 ({})</translation>
     </message>
@@ -2294,7 +2324,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>여유 공간 채우는 중... {} / {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1196"/>
+        <location filename="../../ui/main_window.py" line="1201"/>
         <source>Bos alan yok</source>
         <translation>여유 공간 없음</translation>
     </message>
@@ -2319,7 +2349,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>여유 블록이 부족합니다: {}개 요청, {}개 발견</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="270"/>
+        <location filename="../../core/ptable.py" line="321"/>
         <source>Bos boyut</source>
         <translation>크기가 비어 있습니다</translation>
     </message>
@@ -2335,21 +2365,22 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>남은 여유 아이노드가 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1612"/>
+        <location filename="../../core/platform.py" line="1624"/>
         <source>Bos komut</source>
         <translation>빈 명령</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="124"/>
-        <location filename="../../core/session.py" line="1315"/>
-        <location filename="../../ui/dialogs/backup.py" line="360"/>
-        <location filename="../../ui/dialogs/backup.py" line="453"/>
-        <location filename="../../ui/dialogs/backup.py" line="686"/>
+        <location filename="../../core/physical.py" line="126"/>
+        <location filename="../../core/session.py" line="1366"/>
+        <location filename="../../ui/dialogs/backup.py" line="363"/>
+        <location filename="../../ui/dialogs/backup.py" line="456"/>
+        <location filename="../../ui/dialogs/backup.py" line="693"/>
         <location filename="../../ui/dialogs/bootloader.py" line="76"/>
+        <location filename="../../ui/dialogs/clone.py" line="87"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3895"/>
+        <location filename="../../ui/main_window.py" line="3930"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
@@ -2357,7 +2388,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>크기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1139"/>
+        <location filename="../../ui/main_window.py" line="1144"/>
         <source>Boyut cozumlenemedi: {}</source>
         <translation>크기를 해석할 수 없습니다: {}</translation>
     </message>
@@ -2368,7 +2399,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>크기:</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="459"/>
+        <location filename="../../ui/widgets/disk_map.py" line="476"/>
         <source>Boyut: {}</source>
         <translation>크기: {}</translation>
     </message>
@@ -2378,13 +2409,13 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>크기 조정 / 이동...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1280"/>
+        <location filename="../../ui/main_window.py" line="1285"/>
         <source>Boyutlandirilamaz</source>
         <translation>크기 조정 불가</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1289"/>
-        <location filename="../../ui/main_window.py" line="1389"/>
+        <location filename="../../ui/main_window.py" line="1294"/>
+        <location filename="../../ui/main_window.py" line="1394"/>
         <source>Boyutlandirma hazirlanamadi</source>
         <translation>크기 조정을 준비할 수 없습니다</translation>
     </message>
@@ -2408,17 +2439,17 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>이 UDF 볼륨(sparable, 가상 또는 메타데이터 파티션)은 이 버전에서 읽기 전용으로 열립니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1394"/>
+        <location filename="../../core/platform.py" line="1406"/>
         <source>Bu Windows surumu ({}) ReFS olusturamiyor; Enterprise, Pro for Workstations ya da Server gerekir</source>
         <translation>이 Windows 에디션({})에서는 ReFS를 만들 수 없습니다. Enterprise, Pro for Workstations 또는 Server가 필요합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2579"/>
+        <location filename="../../ui/main_window.py" line="2536"/>
         <source>Bu adimi kaldir</source>
         <translation>이 단계 제거</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2425"/>
+        <location filename="../../ui/main_window.py" line="2383"/>
         <source>Bu alan &lt;b&gt;{}&lt;/b&gt; ile cakisiyor. O bolum henuz diske yazilmadi ama bekleyen islemler arasinda ve bu alani tutuyor.&lt;br&gt;&lt;br&gt;Once bekleyen adimi kaldirin ya da baska bir alan secin.</source>
         <translation>이 영역은 &lt;b&gt;{}&lt;/b&gt;과(와) 겹칩니다. 해당 파티션은 아직 디스크에 기록되지 않았지만 보류 중인 목록에 있으며 이미 이 공간을 차지하고 있습니다.&lt;br&gt;&lt;br&gt;보류 중인 단계를 제거하거나 다른 영역을 선택하십시오.</translation>
     </message>
@@ -2433,7 +2464,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>이 볼륨은 다음 기능을 사용하며 이 버전에서는 쓰기를 지원하지 않습니다: {}. 볼륨 손상을 막기 위해 작업을 거부했습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1281"/>
+        <location filename="../../ui/main_window.py" line="1286"/>
         <source>Bu bolum boyutlandirilamiyor.
 
 {}</source>
@@ -2442,7 +2473,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1290"/>
+        <location filename="../../ui/main_window.py" line="1295"/>
         <source>Bu bolum bu gorunumde duzenlenemez.</source>
         <translation>이 파티션은 이 보기에서 편집할 수 없습니다.</translation>
     </message>
@@ -2452,7 +2483,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>이 파티션은 이 창에서 편집할 수 없습니다 (대기열에 새로 추가되었거나 제한 값을 읽을 수 없음).</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="283"/>
+        <location filename="../../core/physical.py" line="285"/>
         <source>Bu bolum calisan sistemin parcasi ({}); cikarilamaz.</source>
         <translation>이 파티션은 실행 중인 시스템의 일부입니다({}). 마운트를 해제할 수 없습니다.</translation>
     </message>
@@ -2462,12 +2493,12 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>이 파티션에는 쓸 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1999"/>
+        <location filename="../../ui/main_window.py" line="1949"/>
         <source>Bu bolumde silinmis dosya girisi bulunamadi.</source>
         <translation>이 파티션에서 삭제된 파일 항목을 찾지 못했습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1264"/>
+        <location filename="../../core/session.py" line="1315"/>
         <source>Bu bolumde silinmis dosya taramasi desteklenmiyor (yalnizca FAT ve exFAT)</source>
         <translation>이 파티션에서는 삭제된 파일 검색이 지원되지 않습니다 (FAT 및 exFAT만 해당)</translation>
     </message>
@@ -2477,12 +2508,12 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>이 파티션에는 쓸 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2692"/>
+        <location filename="../../ui/main_window.py" line="2661"/>
         <source>Bu bolumler &lt;b&gt;hala bagli&lt;/b&gt;. Isletim sistemi onlari kullanirken ham sektorlere yazmak dosya sistemini &lt;b&gt;bozabilir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Once bu bolumleri cikarmaniz (unmount) onerilir.</source>
         <translation>이 파티션들은 &lt;b&gt;아직 마운트되어 있습니다&lt;/b&gt;. 운영 체제가 사용 중인 상태에서 원시 섹터를 쓰면 파일 시스템이 &lt;b&gt;손상&lt;/b&gt;될 수 있습니다.&lt;br&gt;&lt;br&gt;먼저 이 파티션들의 마운트를 해제하는 것을 권장합니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1636"/>
+        <location filename="../../ui/main_window.py" line="1641"/>
         <source>Bu bolumler cikarilamadi:</source>
         <translation>다음 파티션의 마운트를 해제할 수 없습니다:</translation>
     </message>
@@ -2492,28 +2523,28 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>이 btrfs 기능(extent-tree-v2 / raid-stripe-tree)은 이 버전에서 읽을 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3810"/>
+        <location filename="../../ui/main_window.py" line="3833"/>
         <source>Bu diski kapat</source>
         <translation>이 디스크 닫기</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1166"/>
-        <location filename="../../ui/dialogs/clone_target.py" line="148"/>
+        <location filename="../../ui/dialogs/backup.py" line="1173"/>
+        <location filename="../../ui/dialogs/clone.py" line="502"/>
         <source>Bu diskte bagli bolumler var: {} — yazmadan once cikarmaniz onerilir.</source>
         <translation>이 디스크에 마운트된 파티션이 있습니다: {} — 쓰기 전에 마운트를 해제하는 것을 권장합니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2703"/>
+        <location filename="../../ui/main_window.py" line="2672"/>
         <source>Bu diskte bagli bolumler var:&lt;br&gt;&lt;b&gt;{}&lt;/b&gt;&lt;br&gt;&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>이 디스크에 마운트된 파티션이 있습니다:&lt;br&gt;&lt;b&gt;{}&lt;/b&gt;&lt;br&gt;&lt;br&gt;{}&lt;br&gt;&lt;br&gt;계속하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1175"/>
+        <location filename="../../ui/main_window.py" line="1180"/>
         <source>Bu diskte bolum tablosu yok; dosya sistemi ({}) tum diski kapliyor. GPT olusturmak bu dosya sistemini siler. Devam edilsin mi?</source>
         <translation>이 디스크에는 파티션 테이블이 없으며 파일 시스템({})이 디스크 전체를 차지합니다. GPT를 만들면 이 파일 시스템이 지워집니다. 계속하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../core/ptable.py" line="306"/>
+        <location filename="../../core/ptable.py" line="357"/>
         <source>Bu diskte bolum tablosu yok; dosya sistemi tum diski kapliyor. Bolum eklemek/silmek icin once bolum tablosu olusturun (icindeki dosya sistemi silinir).</source>
         <translation>이 디스크에는 파티션 테이블이 없으며 파일 시스템이 디스크 전체를 차지합니다. 파티션을 추가하거나 삭제하려면 먼저 파티션 테이블을 만드십시오 (기존 파일 시스템은 지워집니다).</translation>
     </message>
@@ -2523,7 +2554,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>이 디렉터리는 암호화되어 있습니다(fscrypt). 키 없이는 이름을 쓸 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1060"/>
+        <location filename="../../core/session.py" line="1111"/>
         <source>Bu dosya bir DiskUltimate yedegi degil</source>
         <translation>이 파일은 DiskUltimate 백업이 아닙니다</translation>
     </message>
@@ -2548,7 +2579,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>이 파일 시스템은 {}보다 작아질 수 없습니다 (데이터가 손실됨)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1590"/>
+        <location filename="../../ui/main_window.py" line="1595"/>
         <source>Bu dosya sisteminde etiket degistirme desteklenmiyor.
 Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>이 파일 시스템에서는 레이블 변경이 지원되지 않습니다.
@@ -2558,6 +2589,11 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <location filename="../../core/recovery.py" line="64"/>
         <source>Bu dosya sisteminde silinmis dosya taramasi desteklenmiyor</source>
         <translation>이 파일 시스템에서는 삭제된 파일 검색이 지원되지 않습니다</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="464"/>
+        <source>Bu dosya uygulamada acik; baska bir ad secin.</source>
+        <translation>이 파일은 프로그램에서 열려 있습니다. 다른 이름을 선택하세요.</translation>
     </message>
     <message>
         <location filename="../../core/exfat.py" line="360"/>
@@ -2580,22 +2616,22 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>이 항목에는 복구할 수 있는 데이터가 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1183"/>
+        <location filename="../../ui/main_window.py" line="1188"/>
         <source>Bu goruntude bolum tablosu yok. Simdi GPT olusturulsun mu?</source>
         <translation>이 이미지에는 파티션 테이블이 없습니다. 지금 GPT 파티션 테이블을 만드시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3832"/>
+        <location filename="../../ui/main_window.py" line="3855"/>
         <source>Bu goruntuyu kapat</source>
         <translation>이 이미지 닫기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1917"/>
+        <location filename="../../ui/main_window.py" line="1866"/>
         <source>Bu islem yalnizca NTFS bolumlerde kullanilabilir.</source>
         <translation>이 작업은 NTFS 파티션에서만 사용할 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1623"/>
+        <location filename="../../core/platform.py" line="1635"/>
         <source>Bu islem {} yetkisi gerektiriyor.</source>
         <translation>이 작업에는 {} 권한이 필요합니다.</translation>
     </message>
@@ -2605,7 +2641,7 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>이 할당 설명자 유형은 쓰기가 지원되지 않습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3998"/>
+        <location filename="../../ui/main_window.py" line="4033"/>
         <source>Bu kaynak degistirilemez</source>
         <translation>이 원본은 수정할 수 없습니다</translation>
     </message>
@@ -2620,7 +2656,7 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>이 컴퓨터는 이 항목으로 시작되었습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2777"/>
+        <location filename="../../ui/main_window.py" line="2746"/>
         <source>Bu makinede kayitli donma raporu bulunamadi.
 
 Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
@@ -2629,22 +2665,22 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
 인터페이스가 1초 이상 멈추면 보고서가 자동으로 만들어집니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="610"/>
+        <location filename="../../core/platform.py" line="611"/>
         <source>Bu platformda baglama desteklenmiyor.</source>
         <translation>이 플랫폼에서는 마운트가 지원되지 않습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1997"/>
+        <location filename="../../core/platform.py" line="2009"/>
         <source>Bu platformda bellenim degiskeni yazilamiyor.</source>
         <translation>이 플랫폼에서는 펌웨어 변수를 쓸 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1718"/>
+        <location filename="../../core/platform.py" line="1730"/>
         <source>Bu platformda bellenim degiskenleri okunamiyor.</source>
         <translation>이 플랫폼에서는 펌웨어 변수를 읽을 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="321"/>
+        <location filename="../../core/platform.py" line="322"/>
         <source>Bu platformda yetki yukseltme desteklenmiyor.</source>
         <translation>이 플랫폼에서는 권한 상승이 지원되지 않습니다.</translation>
     </message>
@@ -2659,12 +2695,22 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>이 옵션은 읽을 수 있는 파일 시스템이 있을 때만 사용할 수 있습니다</translation>
     </message>
     <message>
+        <location filename="../../core/platform.py" line="2147"/>
+        <source>Bu sistem hazirda bekletmeyi desteklemiyor</source>
+        <translation>이 시스템은 최대 절전 모드를 지원하지 않습니다</translation>
+    </message>
+    <message>
+        <location filename="../../core/platform.py" line="2145"/>
+        <source>Bu sistem uyku modunu desteklemiyor</source>
+        <translation>이 시스템은 절전 모드를 지원하지 않습니다</translation>
+    </message>
+    <message>
         <location filename="../../ui/updatecheck.py" line="64"/>
         <source>Bu surumu atla</source>
         <translation>이 버전 건너뛰기</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="377"/>
+        <location filename="../../ui/dialogs/backup.py" line="380"/>
         <source>Bu yedegin ne oldugunu yazin — dosyanin icinde saklanir</source>
         <translation>이 백업에 대한 설명 — 메모는 파일 안에 저장됩니다</translation>
     </message>
@@ -2703,7 +2749,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>찾은 파일</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="695"/>
+        <location filename="../../ui/main_window.py" line="700"/>
         <source>Butun bekleyen adimlari iptal eder</source>
         <translation>보류 중인 모든 단계를 취소합니다</translation>
     </message>
@@ -2713,12 +2759,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>모든 파티션을 대상 디스크에 비례하여 확장하거나 축소합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="643"/>
+        <location filename="../../ui/main_window.py" line="648"/>
         <source>Butun bolumleri tek pencerede birlikte buyut, kucult ya da tasi</source>
         <translation>모든 파티션을 한 창에서 함께 확장, 축소 또는 이동합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="710"/>
+        <location filename="../../ui/main_window.py" line="715"/>
         <source>Butun is parcaciklarinin o anki yiginini dosyaya yazar</source>
         <translation>모든 스레드의 현재 스택을 파일에 기록합니다</translation>
     </message>
@@ -2748,17 +2794,17 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>실행 중인 컴퓨터</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="225"/>
+        <location filename="../../ui/dialogs/apply.py" line="231"/>
         <source>Calisiyor...</source>
         <translation>실행 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2756"/>
+        <location filename="../../ui/main_window.py" line="2725"/>
         <source>Calisma suresi</source>
         <translation>가동 시간</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="228"/>
+        <location filename="../../ui/dialogs/apply.py" line="234"/>
         <source>Calistirilmadi</source>
         <translation>실행 안 됨</translation>
     </message>
@@ -2769,32 +2815,32 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>포크 익스텐트가 불완전합니다 (파일 ID {})</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="590"/>
+        <location filename="../../core/platform.py" line="591"/>
         <source>Cikar</source>
         <translation>마운트 해제</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="127"/>
+        <location filename="../../core/physical.py" line="129"/>
         <source>Cikarilabilir</source>
         <translation>이동식</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1634"/>
+        <location filename="../../ui/main_window.py" line="1639"/>
         <source>Cikarilamayan bolum var:</source>
         <translation>일부 파티션의 마운트를 해제할 수 없습니다:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2114"/>
+        <location filename="../../ui/main_window.py" line="2068"/>
         <source>Cikariliyor: {}</source>
         <translation>추출 중: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2107"/>
+        <location filename="../../ui/main_window.py" line="2061"/>
         <source>Cikarma hedefi</source>
         <translation>추출 대상</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="630"/>
+        <location filename="../../ui/main_window.py" line="635"/>
         <source>Cikis</source>
         <translation>끝내기</translation>
     </message>
@@ -2804,12 +2850,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>라인</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2750"/>
+        <location filename="../../ui/main_window.py" line="2719"/>
         <source>Cokme gunlugu</source>
         <translation>충돌 로그</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="492"/>
+        <location filename="../../ui/main_window.py" line="497"/>
         <source>D&amp;isk</source>
         <translation>디스크(&amp;I)</translation>
     </message>
@@ -2819,37 +2865,37 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>변경 예정</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3089"/>
+        <location filename="../../ui/main_window.py" line="3086"/>
         <source>DEGISTIRILEMEZ</source>
         <translation>수정 불가</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="955"/>
+        <location filename="../../ui/main_window.py" line="960"/>
         <source>DIKKAT: arayuz {:.1f} sn yanit vermedi — rapor: {}</source>
         <translation>경고: 인터페이스가 {:.1f}초 동안 응답하지 않았습니다 — 보고서: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1142"/>
+        <location filename="../../ui/main_window.py" line="1147"/>
         <source>DIKKAT: kucultme sondaki verileri siler (uygulama onayinda yeniden sorulur)</source>
         <translation>경고: 축소하면 끝부분의 데이터가 지워집니다 (적용할 때 다시 묻습니다)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4006"/>
+        <location filename="../../ui/main_window.py" line="4041"/>
         <source>DIKKAT: salt okunur acildi — {}</source>
         <translation>경고: 읽기 전용으로 열림 — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1153"/>
+        <location filename="../../ui/main_window.py" line="1158"/>
         <source>DIKKAT: yeni tablo mevcut {} bolumun tanimini siler</source>
         <translation>경고: 새 테이블은 기존 파티션 {}개의 정의를 지웁니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2657"/>
+        <location filename="../../ui/main_window.py" line="2615"/>
         <source>DIKKAT: {}</source>
         <translation>경고: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3860"/>
+        <location filename="../../ui/main_window.py" line="3893"/>
         <source>DISK GORUNTUSU</source>
         <translation>디스크 이미지</translation>
     </message>
@@ -2885,12 +2931,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>변경 사항은 &lt;b&gt;기록하기 전까지&lt;/b&gt; 적용되지 않습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3093"/>
+        <location filename="../../ui/main_window.py" line="3090"/>
         <source>Degisiklikler bekleyen islem olarak birikir; diske ancak Uygula ile yazilir.</source>
         <translation>변경 사항은 보류 중인 작업으로 모이며 적용을 선택해야만 디스크에 기록됩니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4040"/>
+        <location filename="../../ui/main_window.py" line="4075"/>
         <source>Degisiklikler bekliyor</source>
         <translation>변경 사항이 보류 중입니다</translation>
     </message>
@@ -2905,7 +2951,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>변수</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1703"/>
+        <location filename="../../core/platform.py" line="1715"/>
         <source>Degiskenler okunamiyor; root yetkisi gerekiyor.</source>
         <translation>변수를 읽을 수 없습니다. root 권한이 필요합니다.</translation>
     </message>
@@ -2915,12 +2961,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>변경할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4047"/>
+        <location filename="../../ui/main_window.py" line="4082"/>
         <source>Degistirilemez kaynak</source>
         <translation>원본을 수정할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1410"/>
+        <location filename="../../core/session.py" line="1463"/>
         <source>Degistirilemez — {}</source>
         <translation>수정 불가 — {}</translation>
     </message>
@@ -2931,7 +2977,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>수정한 날짜</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1706"/>
+        <location filename="../../core/platform.py" line="1718"/>
         <source>Degistirmek icin root yetkisi gerekir.</source>
         <translation>이것을 변경하려면 root 권한이 필요합니다.</translation>
     </message>
@@ -2941,12 +2987,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>검사 결과</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4198"/>
+        <location filename="../../ui/main_window.py" line="4234"/>
         <source>Denetlenemedi: {}</source>
         <translation>확인할 수 없습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2041"/>
+        <location filename="../../ui/main_window.py" line="1993"/>
         <source>Derin tarama (64 KB adim) yapilsin mi?
 
 Hayir: hizli tarama (1 MB adim) — cogu durumda yeterlidir.
@@ -2972,9 +3018,9 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>지원되지 않는 HFS+ 압축(유형 {}): {} — 이 버전에서는 LZVN/LZFSE를 열 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1544"/>
-        <location filename="../../ui/main_window.py" line="1589"/>
-        <location filename="../../ui/main_window.py" line="1666"/>
+        <location filename="../../ui/main_window.py" line="1549"/>
+        <location filename="../../ui/main_window.py" line="1594"/>
+        <location filename="../../ui/main_window.py" line="1671"/>
         <source>Desteklenmiyor</source>
         <translation>지원되지 않음</translation>
     </message>
@@ -2989,12 +3035,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>다른 시스템 검색 활성화 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="558"/>
+        <location filename="../../ui/main_window.py" line="563"/>
         <source>Dil</source>
         <translation>언어</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="876"/>
+        <location filename="../../ui/main_window.py" line="881"/>
         <source>Dil degistirildi: {}</source>
         <translation>언어가 변경됨: {}</translation>
     </message>
@@ -3037,6 +3083,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../core/operations.py" line="659"/>
         <location filename="../../core/operations.py" line="781"/>
         <location filename="../../ui/dialogs/bootloader.py" line="290"/>
+        <location filename="../../ui/dialogs/clone.py" line="87"/>
         <source>Disk</source>
         <translation>디스크</translation>
     </message>
@@ -3047,38 +3094,38 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크가 GPT에 비해 너무 작습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2177"/>
+        <location filename="../../ui/main_window.py" line="2135"/>
         <source>Disk acik degil</source>
         <translation>열려 있는 디스크가 없습니다</translation>
     </message>
     <message>
+        <location filename="../../ui/main_window.py" line="2958"/>
         <location filename="../../ui/main_window.py" line="2961"/>
-        <location filename="../../ui/main_window.py" line="2964"/>
         <source>Disk acilamadi</source>
         <translation>디스크를 열 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2264"/>
+        <location filename="../../ui/main_window.py" line="2222"/>
         <source>Disk acilamadi (yetki): {}</source>
         <translation>디스크를 열 수 없습니다 (권한): {}</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="112"/>
+        <location filename="../../core/physical.py" line="114"/>
         <source>Disk bilgileri okunamadi (yetki yok) — sistem diski olup olmadigi BILINMIYOR</source>
         <translation>디스크 정보를 읽을 수 없습니다 (권한 없음) — 시스템 디스크인지 여부를 알 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="687"/>
+        <location filename="../../ui/main_window.py" line="692"/>
         <source>Disk bilgisi</source>
         <translation>디스크 정보</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1141"/>
+        <location filename="../../ui/dialogs/backup.py" line="1148"/>
         <source>Disk bilgisi eksik; bilgisi okunamayan diske yazilmaz.</source>
         <translation>디스크 정보가 불완전합니다. 읽을 수 없는 디스크에는 절대 쓰지 않습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1121"/>
+        <location filename="../../ui/dialogs/backup.py" line="1128"/>
         <source>Disk bilgisi eksik; once yetki alin.</source>
         <translation>디스크 정보가 불완전합니다. 먼저 권한을 얻으십시오.</translation>
     </message>
@@ -3088,17 +3135,17 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크 파티션</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="890"/>
+        <location filename="../../core/physical.py" line="924"/>
         <source>Disk bulunamadi: {}</source>
         <translation>디스크를 찾을 수 없습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1144"/>
+        <location filename="../../ui/dialogs/backup.py" line="1151"/>
         <source>Disk donanimsal olarak yazma korumali.</source>
         <translation>디스크가 하드웨어적으로 쓰기 보호되어 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1007"/>
+        <location filename="../../ui/main_window.py" line="1012"/>
         <source>Disk goruntuleri ({});;Ham goruntu (*.img *.raw *.dd *.bin);;Sanal diskler (*.vhd *.vhdx *.vdi *.vmdk *.qcow2);;Tum dosyalar (*)</source>
         <translation>디스크 이미지 ({});;원시 이미지 (*.img *.raw *.dd *.bin);;가상 디스크 (*.vhd *.vhdx *.vdi *.vmdk *.qcow2);;모든 파일 (*)</translation>
     </message>
@@ -3108,12 +3155,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크 이미지</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1417"/>
+        <location filename="../../ui/dialogs/backup.py" line="1432"/>
         <source>Disk goruntusu (*.img *.raw *.dd);;Tum dosyalar (*)</source>
         <translation>디스크 이미지 (*.img *.raw *.dd);;모든 파일 (*)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1885"/>
+        <location filename="../../ui/dialogs/clone.py" line="386"/>
         <source>Disk goruntusu (*.img)</source>
         <translation>디스크 이미지 (*.img)</translation>
     </message>
@@ -3123,14 +3170,14 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크 이미지 (*.img);;모든 파일 (*)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1006"/>
+        <location filename="../../ui/main_window.py" line="1011"/>
         <source>Disk goruntusu ac</source>
         <translation>디스크 이미지 열기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1110"/>
-        <location filename="../../ui/main_window.py" line="301"/>
-        <location filename="../../ui/main_window.py" line="902"/>
+        <location filename="../../ui/main_window.py" line="1115"/>
+        <location filename="../../ui/main_window.py" line="306"/>
+        <location filename="../../ui/main_window.py" line="907"/>
         <location filename="../../ui/widgets/disk_map.py" line="177"/>
         <source>Disk goruntusu acik degil</source>
         <translation>열려 있는 디스크 이미지가 없습니다</translation>
@@ -3141,44 +3188,29 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크 안전하게 지우기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1896"/>
-        <source>Disk klonlandi: {}</source>
-        <translation>디스크를 복제했습니다: {}</translation>
-    </message>
-    <message>
-        <location filename="../../ui/main_window.py" line="1868"/>
-        <source>Disk klonlandi: {} -&gt; {} ({})</source>
-        <translation>디스크를 복제했습니다: {} -&gt; {} ({})</translation>
-    </message>
-    <message>
-        <location filename="../../ui/main_window.py" line="1891"/>
+        <location filename="../../ui/dialogs/clone.py" line="265"/>
         <source>Disk klonlaniyor</source>
         <translation>디스크 복제 중</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1862"/>
-        <source>Disk klonlaniyor — {}</source>
-        <translation>디스크 복제 중 — {}</translation>
-    </message>
-    <message>
-        <location filename="../../core/physical.py" line="1163"/>
-        <location filename="../../core/physical.py" line="1193"/>
+        <location filename="../../core/physical.py" line="1197"/>
+        <location filename="../../core/physical.py" line="1227"/>
         <source>Disk konumlandirilamadi</source>
         <translation>디스크에서 위치를 이동(seek)할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3221"/>
+        <location filename="../../ui/main_window.py" line="3218"/>
         <source>Disk listesi alinamadi: {}</source>
         <translation>디스크 목록을 가져올 수 없습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="805"/>
+        <location filename="../../core/session.py" line="815"/>
         <source>Disk numarasi bilinmiyor</source>
         <translation>디스크 번호를 알 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="880"/>
-        <location filename="../../core/platform.py" line="891"/>
+        <location filename="../../core/platform.py" line="892"/>
+        <location filename="../../core/platform.py" line="903"/>
         <source>Disk numarasi cozulemedi: {}</source>
         <translation>디스크 번호를 확인할 수 없습니다: {}</translation>
     </message>
@@ -3188,23 +3220,23 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크를 읽을 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1095"/>
+        <location filename="../../core/physical.py" line="1129"/>
         <source>Disk salt okunur acildi</source>
         <translation>디스크를 읽기 전용으로 열었습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="685"/>
+        <location filename="../../ui/main_window.py" line="690"/>
         <source>Disk salt okunur acilir. Degisiklikler bekleyen islem olarak birikir ve ancak Uygula ile diske yazilir.</source>
         <translation>디스크가 읽기 전용으로 열려 있습니다. 변경 사항은 보류 중인 작업으로 모이며 적용을 선택해야만 디스크에 기록됩니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="402"/>
+        <location filename="../../ui/dialogs/backup.py" line="405"/>
         <source>Disk sec...</source>
         <translation>디스크 선택...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2865"/>
-        <location filename="../../ui/main_window.py" line="2939"/>
+        <location filename="../../ui/main_window.py" line="2834"/>
+        <location filename="../../ui/main_window.py" line="2936"/>
         <source>Disk secili degil</source>
         <translation>선택된 디스크 없음</translation>
     </message>
@@ -3214,18 +3246,23 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>백업 GPT를 위해 디스크 끝에 {}의 여유 공간이 필요합니다. 마지막 파티션이 LBA {}에서 끝납니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="889"/>
+        <location filename="../../ui/main_window.py" line="187"/>
+        <location filename="../../ui/main_window.py" line="894"/>
         <source>Disk ve Bolumler</source>
         <translation>디스크 및 파티션</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="745"/>
+        <location filename="../../ui/main_window.py" line="1826"/>
+        <source>Disk yok</source>
+        <translation>디스크 없음</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/backup.py" line="752"/>
         <source>DiskUltimate yedegi (*.dub)</source>
         <translation>DiskUltimate 백업 (*.dub)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="751"/>
+        <location filename="../../ui/dialogs/backup.py" line="758"/>
         <source>DiskUltimate yedegi (*.dub);;Tum dosyalar (*)</source>
         <translation>DiskUltimate 백업 (*.dub);;모든 파일 (*)</translation>
     </message>
@@ -3240,37 +3277,32 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>비례하여 분배</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1072"/>
+        <location filename="../../ui/main_window.py" line="1077"/>
         <source>Diske yaz...</source>
         <translation>디스크에 쓰기...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="36"/>
-        <source>Diski baska bir diske klonla</source>
-        <translation>디스크를 다른 디스크로 복제</translation>
-    </message>
-    <message>
-        <location filename="../../ui/main_window.py" line="658"/>
+        <location filename="../../ui/main_window.py" line="663"/>
         <source>Diski geri yukle...</source>
         <translation>디스크 복원...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="662"/>
+        <location filename="../../ui/main_window.py" line="667"/>
         <source>Diski guvenli sil...</source>
         <translation>디스크 안전하게 지우기...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1814"/>
+        <location filename="../../ui/dialogs/clone.py" line="151"/>
         <source>Diski klonla</source>
         <translation>디스크 복제</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="659"/>
+        <location filename="../../ui/main_window.py" line="664"/>
         <source>Diski klonla...</source>
         <translation>디스크 복제...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="657"/>
+        <location filename="../../ui/main_window.py" line="662"/>
         <source>Diski yedekle...</source>
         <translation>디스크 백업...</translation>
     </message>
@@ -3280,7 +3312,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크 끝의 여유 공간을 마지막 파티션에 추가합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2898"/>
+        <location filename="../../ui/main_window.py" line="2895"/>
         <source>Diskler varsayilan olarak SALT OKUNUR acilir.</source>
         <translation>디스크는 기본적으로 읽기 전용으로 열립니다.</translation>
     </message>
@@ -3290,7 +3322,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크상</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="161"/>
+        <location filename="../../core/session.py" line="162"/>
         <source>Diskte MBR&apos;nin yaninda eski bir GPT kalintisi var</source>
         <translation>디스크에 MBR과 함께 오래된 GPT 잔여물이 있습니다</translation>
     </message>
@@ -3310,7 +3342,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크에 여유 클러스터가 부족합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1638"/>
+        <location filename="../../ui/main_window.py" line="1643"/>
         <source>Diskteki baglantilar kesildi</source>
         <translation>디스크의 모든 파티션을 마운트 해제했습니다</translation>
     </message>
@@ -3320,7 +3352,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크와 동일</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2487"/>
+        <location filename="../../ui/main_window.py" line="2444"/>
         <source>Diskteki hali goster</source>
         <translation>디스크상 레이아웃 표시</translation>
     </message>
@@ -3330,7 +3362,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>디스크의 운영 체제</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="670"/>
+        <location filename="../../ui/main_window.py" line="675"/>
         <source>Diskteki isletim sistemlerini ve onyukleme kodunu gosterir; GRUB kurulumunu yonetir.</source>
         <translation>디스크의 운영 체제와 부트 코드를 표시하고 GRUB 설치를 관리합니다.</translation>
     </message>
@@ -3454,40 +3486,40 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>확인 중... {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2751"/>
+        <location filename="../../ui/main_window.py" line="2720"/>
         <source>Donma esigi</source>
         <translation>멈춤 임계값</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2776"/>
+        <location filename="../../ui/main_window.py" line="2745"/>
         <source>Donma raporu yok</source>
         <translation>멈춤 보고서 없음</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2784"/>
+        <location filename="../../ui/main_window.py" line="2753"/>
         <source>Donma raporu — {}</source>
         <translation>멈춤 보고서 — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1727"/>
+        <location filename="../../ui/main_window.py" line="1732"/>
         <source>Donusumde bolum verileri yerinde kalir; kesinti tabloyu bozabilir, onemli veriler icin once yedek alin</source>
         <translation>변환하는 동안 파티션 데이터는 제자리에 유지되지만, 중단되면 테이블이 손상될 수 있으므로 먼저 중요한 데이터를 백업하십시오</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1313"/>
+        <location filename="../../core/session.py" line="1364"/>
         <location filename="../../ui/dialogs/efiboot.py" line="279"/>
         <location filename="../../ui/widgets/file_browser.py" line="243"/>
         <source>Dosya</source>
         <translation>파일</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="278"/>
-        <location filename="../../ui/main_window.py" line="890"/>
+        <location filename="../../ui/main_window.py" line="283"/>
+        <location filename="../../ui/main_window.py" line="895"/>
         <source>Dosya Gezgini</source>
         <translation>파일 탐색기</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="360"/>
+        <location filename="../../ui/dialogs/backup.py" line="363"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="74"/>
         <location filename="../../ui/widgets/partition_table.py" line="22"/>
         <source>Dosya Sistemi</source>
@@ -3530,7 +3562,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>파일 추가...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3709"/>
+        <location filename="../../ui/main_window.py" line="3732"/>
         <source>Dosya gezgininde ac</source>
         <translation>파일 탐색기에서 열기</translation>
     </message>
@@ -3543,32 +3575,32 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../core/clone.py" line="121"/>
         <location filename="../../ui/dialogs/bootloader.py" line="76"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3892"/>
+        <location filename="../../ui/main_window.py" line="3927"/>
         <source>Dosya sistemi</source>
         <translation>파일 시스템</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3136"/>
+        <location filename="../../ui/main_window.py" line="3133"/>
         <source>Dosya sistemi acilamadi</source>
         <translation>파일 시스템을 열 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3018"/>
+        <location filename="../../ui/main_window.py" line="3015"/>
         <source>Dosya sistemi acilamadi: {}</source>
         <translation>파일 시스템을 열 수 없습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="928"/>
+        <location filename="../../core/session.py" line="938"/>
         <source>Dosya sistemi bolumu dolduracak kadar buyutuluyor...</source>
         <translation>파티션을 채우도록 파일 시스템 확장 중...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="998"/>
+        <location filename="../../core/resize.py" line="1007"/>
         <source>Dosya sistemi buyutulemedi: {}</source>
         <translation>파일 시스템을 확장할 수 없습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="990"/>
+        <location filename="../../core/resize.py" line="999"/>
         <source>Dosya sistemi buyutuluyor...</source>
         <translation>파일 시스템 확장 중...</translation>
     </message>
@@ -3578,7 +3610,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>파일 시스템은 최대 {}일 수 있습니다. 나머지 공간은 파티션 안에서 **사용되지 않은 채로** 남습니다</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="953"/>
+        <location filename="../../core/resize.py" line="962"/>
         <source>Dosya sistemi kucultuluyor...</source>
         <translation>파일 시스템 축소 중...</translation>
     </message>
@@ -3593,8 +3625,8 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>파일 시스템 제한 값 계산 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1385"/>
-        <location filename="../../ui/main_window.py" line="1398"/>
+        <location filename="../../ui/main_window.py" line="1390"/>
+        <location filename="../../ui/main_window.py" line="1403"/>
         <source>Dosya sistemi sinirlari okunuyor</source>
         <translation>파일 시스템 제한 값 읽는 중</translation>
     </message>
@@ -3604,7 +3636,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>파일 시스템을 인식할 수 없습니다. 파티션을 축소할 수 없으며, 확장으로 추가된 공간은 사용되지 않은 채로 남습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="348"/>
+        <location filename="../../ui/dialogs/backup.py" line="351"/>
         <location filename="../../ui/dialogs/new_image.py" line="89"/>
         <location filename="../../ui/dialogs/partition.py" line="114"/>
         <location filename="../../ui/dialogs/partition.py" line="214"/>
@@ -3612,7 +3644,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>파일 시스템:</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="458"/>
+        <location filename="../../ui/widgets/disk_map.py" line="475"/>
         <source>Dosya sistemi: {}</source>
         <translation>파일 시스템: {}</translation>
     </message>
@@ -3635,35 +3667,43 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>파일이 이미 있습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2123"/>
+        <location filename="../../ui/dialogs/clone.py" line="202"/>
+        <source>Dosya:</source>
+        <translation>파일:</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="2077"/>
         <source>Dosyalar cikariliyor</source>
         <translation>파일 추출 중</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2026"/>
+        <location filename="../../ui/main_window.py" line="1976"/>
         <source>Dosyalar kurtariliyor</source>
         <translation>파일 복구 중</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1203"/>
+        <location filename="../../ui/dialogs/backup.py" line="1210"/>
+        <location filename="../../ui/dialogs/clone.py" line="568"/>
         <location filename="../../ui/qt_i18n.py" line="46"/>
         <source>Durdur</source>
         <translation>중단</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1250"/>
+        <location filename="../../ui/dialogs/backup.py" line="1258"/>
+        <location filename="../../ui/dialogs/clone.py" line="599"/>
         <source>Durduruluyor...</source>
         <translation>중지하는 중...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1325"/>
-        <location filename="../../ui/dialogs/apply.py" line="121"/>
-        <location filename="../../ui/dialogs/backup.py" line="453"/>
-        <location filename="../../ui/dialogs/backup.py" line="686"/>
+        <location filename="../../core/session.py" line="1378"/>
+        <location filename="../../ui/dialogs/apply.py" line="123"/>
+        <location filename="../../ui/dialogs/backup.py" line="456"/>
+        <location filename="../../ui/dialogs/backup.py" line="693"/>
+        <location filename="../../ui/dialogs/clone.py" line="87"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3915"/>
-        <location filename="../../ui/main_window.py" line="3917"/>
-        <location filename="../../ui/main_window.py" line="3923"/>
+        <location filename="../../ui/main_window.py" line="3950"/>
+        <location filename="../../ui/main_window.py" line="3952"/>
+        <location filename="../../ui/main_window.py" line="3958"/>
         <source>Durum</source>
         <translation>상태</translation>
     </message>
@@ -3690,7 +3730,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>EFI: {}</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="121"/>
+        <location filename="../../core/physical.py" line="123"/>
         <source>EKSIK (yetki yok)</source>
         <translation>불완전 (권한 없음)</translation>
     </message>
@@ -3700,7 +3740,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>ELF 실행 파일</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="129"/>
+        <location filename="../../core/physical.py" line="131"/>
         <source>EVET</source>
         <translation>예</translation>
     </message>
@@ -3737,7 +3777,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>정보 누락</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="120"/>
+        <location filename="../../core/physical.py" line="122"/>
         <source>Eksiksiz</source>
         <translation>완전</translation>
     </message>
@@ -3747,22 +3787,22 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>최소 64 KB 이상이어야 합니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2086"/>
+        <location filename="../../ui/main_window.py" line="2039"/>
         <source>En az bir dosya turu secin.</source>
         <translation>파일 형식을 하나 이상 선택하십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4211"/>
+        <location filename="../../ui/main_window.py" line="4247"/>
         <source>En guncel surumu kullaniyorsunuz ({}).</source>
         <translation>최신 버전({})을 사용하고 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2754"/>
+        <location filename="../../ui/main_window.py" line="2723"/>
         <source>En uzun donma</source>
         <translation>가장 긴 멈춤</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1320"/>
+        <location filename="../../core/session.py" line="1373"/>
         <source>Erisim</source>
         <translation>액세스</translation>
     </message>
@@ -3773,7 +3813,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
     </message>
     <message>
         <location filename="../../core/clone.py" line="122"/>
-        <location filename="../../ui/dialogs/backup.py" line="360"/>
+        <location filename="../../ui/dialogs/backup.py" line="363"/>
         <location filename="../../ui/dialogs/tools.py" line="183"/>
         <location filename="../../ui/widgets/partition_table.py" line="22"/>
         <source>Etiket</source>
@@ -3785,9 +3825,9 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>레이블:</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="127"/>
-        <location filename="../../core/physical.py" line="128"/>
-        <location filename="../../ui/main_window.py" line="3901"/>
+        <location filename="../../core/physical.py" line="129"/>
+        <location filename="../../core/physical.py" line="130"/>
+        <location filename="../../ui/main_window.py" line="3936"/>
         <location filename="../../ui/qt_i18n.py" line="42"/>
         <source>Evet</source>
         <translation>예</translation>
@@ -3843,7 +3883,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>FAT 테이블이 일관되지 않아 볼륨에 쓸 수 없습니다. 먼저 fsck.fat 또는 chkdsk로 복구하십시오</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="489"/>
+        <location filename="../../ui/dialogs/backup.py" line="492"/>
         <source>FAT, exFAT, ext2/3/4 ve NTFS bolumlerinde yalnizca dolu kumeler okunur; bos alan ve bolumlenmemis buyuk alan atlanir. Taninmayan dosya sistemleri yine tumuyle yedeklenir. Silinmis dosyalari yedekten kurtarmak icin bu secenegi kapatin (tum sektorler).</source>
         <translation>FAT, exFAT, ext2/3/4 및 NTFS 파티션에서는 사용 중인 클러스터만 읽고, 빈 공간과 큰 미할당 영역은 건너뜁니다. 인식되지 않는 파일 시스템은 여전히 전체를 백업합니다. 백업에서 삭제된 파일을 복구하려면 이 옵션을 끄십시오(모든 섹터).</translation>
     </message>
@@ -3853,7 +3893,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>FAT12</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2203"/>
+        <location filename="../../ui/main_window.py" line="2161"/>
         <source>FAT12/16/32 ve exFAT saf Python ile desteklenir ve her platformda calisir. NTFS ve ext2/3/4 bicimlendirmesi sistemdeki mkfs araclarini gerektirir.</source>
         <translation>FAT12/16/32와 exFAT는 순수 Python으로 지원되며 모든 플랫폼에서 동작합니다. NTFS 및 ext2/3/4 포맷에는 시스템에 mkfs 도구가 설치되어 있어야 합니다.</translation>
     </message>
@@ -3903,7 +3943,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>FILE 시그니처가 없습니다: 레코드 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2868"/>
+        <location filename="../../ui/main_window.py" line="2837"/>
         <source>FIZIKSEL DISK — {}</source>
         <translation>물리 디스크 — {}</translation>
     </message>
@@ -3918,13 +3958,13 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>fixup 시그니처가 일치하지 않습니다 (레코드가 손상됨)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3431"/>
+        <location filename="../../ui/main_window.py" line="3454"/>
         <source>Fiziksel Diskler ({})</source>
         <translation>물리 디스크 ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2966"/>
-        <location filename="../../ui/main_window.py" line="3333"/>
+        <location filename="../../ui/main_window.py" line="2963"/>
+        <location filename="../../ui/main_window.py" line="3356"/>
         <source>Fiziksel disk acildi (salt okunur): {} — {}, {}</source>
         <translation>물리 디스크를 열었습니다 (읽기 전용): {} — {}, {}</translation>
     </message>
@@ -3934,7 +3974,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>물리 디스크를 찾을 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="922"/>
+        <location filename="../../ui/main_window.py" line="927"/>
         <source>Fiziksel disk erisimi icin {} gerekir. Disk menusu &gt; &apos;{} olarak yeniden baslat&apos;</source>
         <translation>물리 디스크에 액세스하려면 {}이(가) 필요합니다. 디스크 메뉴 &gt; &apos;{}(으)로 다시 시작&apos;</translation>
     </message>
@@ -3944,17 +3984,17 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>물리 디스크가 필요합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3283"/>
+        <location filename="../../ui/main_window.py" line="3284"/>
         <source>Fiziksel disk listesi hazir: {} disk</source>
         <translation>물리 디스크 목록 준비 완료: 디스크 {}개</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2847"/>
+        <location filename="../../ui/main_window.py" line="2816"/>
         <source>Fiziksel disk listesi taraniyor...</source>
         <translation>물리 디스크 목록 검색 중...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="294"/>
+        <location filename="../../core/session.py" line="295"/>
         <source>Fiziksel disk — {}</source>
         <translation>물리 디스크 — {}</translation>
     </message>
@@ -3964,27 +4004,29 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>물리 디스크: 작업 전에 백업을 만드십시오</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="677"/>
+        <location filename="../../core/session.py" line="687"/>
         <source>Fiziksel diskin boyutu degistirilemez</source>
         <translation>물리 디스크는 크기를 조정할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="586"/>
+        <location filename="../../ui/dialogs/backup.py" line="593"/>
+        <location filename="../../ui/dialogs/clone.py" line="338"/>
+        <location filename="../../ui/dialogs/clone.py" line="359"/>
         <source>Fiziksel diskler</source>
         <translation>물리 디스크</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="335"/>
+        <location filename="../../core/session.py" line="336"/>
         <source>Fiziksel diskler guvenlik gerekcesiyle salt okunur acilir. Degisiklikler bekleyen islem olarak birikir ve diske ancak Uygula ile yazilir.</source>
         <translation>물리 디스크는 안전을 위해 읽기 전용으로 열립니다. 변경 사항은 보류 중인 작업으로 모이며 적용을 선택해야만 디스크에 기록됩니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="681"/>
+        <location filename="../../ui/main_window.py" line="686"/>
         <source>Fiziksel disklere erisim icin uygulamayi yetkili olarak yeniden baslatir. Goruntu dosyalari icin gerekmez.</source>
         <translation>물리 디스크에 액세스하기 위해 상승된 권한으로 응용 프로그램을 다시 시작합니다. 이미지 파일에는 필요하지 않습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="678"/>
+        <location filename="../../ui/main_window.py" line="683"/>
         <source>Fiziksel diskleri yenile</source>
         <translation>물리 디스크 새로 고침</translation>
     </message>
@@ -4020,7 +4062,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>GPT 파티션 이름 (선택 사항)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="632"/>
+        <location filename="../../ui/main_window.py" line="637"/>
         <source>GPT bolum tablosu olustur</source>
         <translation>GPT 파티션 테이블 만들기</translation>
     </message>
@@ -4075,7 +4117,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>GRUB 설치됨: {}</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1592"/>
+        <location filename="../../core/platform.py" line="1604"/>
         <source>GRUB kurulumu yalnizca Linux&apos;ta yapilabilir; bu sistemde ({}) yalnizca inceleme yapilir.</source>
         <translation>GRUB는 Linux에서만 설치할 수 있습니다. 이 시스템({})에서는 검사만 가능합니다.</translation>
     </message>
@@ -4155,18 +4197,18 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>GZIP 압축 파일</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1285"/>
-        <location filename="../../ui/dialogs/task.py" line="81"/>
+        <location filename="../../ui/dialogs/backup.py" line="1293"/>
+        <location filename="../../ui/dialogs/task.py" line="86"/>
         <source>Gecen: {}</source>
         <translation>경과 시간: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/task.py" line="85"/>
+        <location filename="../../ui/dialogs/task.py" line="90"/>
         <source>Gecen: {} · Kalan: yaklasik {}</source>
         <translation>경과 시간: {} · 남은 시간: 약 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/task.py" line="84"/>
+        <location filename="../../ui/dialogs/task.py" line="89"/>
         <source>Gecen: {} · kalan sure hesaplaniyor...</source>
         <translation>경과 시간: {} · 남은 시간 계산 중...</translation>
     </message>
@@ -4262,7 +4304,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
     </message>
     <message>
         <location filename="../../ui/dialogs/new_image.py" line="163"/>
-        <location filename="../../ui/main_window.py" line="1139"/>
+        <location filename="../../ui/main_window.py" line="1144"/>
         <source>Gecersiz boyut</source>
         <translation>잘못된 크기</translation>
     </message>
@@ -4323,12 +4365,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>패스 {}/{} ({}) — {} / {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4153"/>
+        <location filename="../../ui/main_window.py" line="4189"/>
         <source>Gelistirici: {}</source>
         <translation>개발자: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="158"/>
+        <location filename="../../ui/dialogs/apply.py" line="160"/>
         <source>Genel: %p%</source>
         <translation>전체: %p%</translation>
     </message>
@@ -4358,18 +4400,18 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>실시간 하위 볼륨이 있는 XFS는 확장할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="692"/>
+        <location filename="../../ui/main_window.py" line="697"/>
         <source>Geri al</source>
         <translation>실행 취소</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2608"/>
+        <location filename="../../ui/main_window.py" line="2565"/>
         <source>Geri alindi: {}</source>
         <translation>실행 취소됨: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1254"/>
-        <location filename="../../ui/dialogs/backup.py" line="306"/>
+        <location filename="../../ui/dialogs/backup.py" line="1262"/>
+        <location filename="../../ui/dialogs/backup.py" line="309"/>
         <source>Geri yukle</source>
         <translation>복원</translation>
     </message>
@@ -4380,12 +4422,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>복원 시작 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1327"/>
+        <location filename="../../ui/dialogs/backup.py" line="1342"/>
         <source>Geri yukleme durduruldu. Hedef tutarsiz durumda: yeniden geri yukleyin ya da bicimlendirin.</source>
         <translation>복원이 중지되었습니다. 대상이 일관되지 않은 상태입니다. 다시 복원하거나 포맷하십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1325"/>
+        <location filename="../../ui/dialogs/backup.py" line="1340"/>
         <source>Geri yukleme durduruldu; yarim kalan goruntu dosyasi silindi.</source>
         <translation>복원이 중지되었습니다. 완료되지 않은 이미지 파일을 삭제했습니다.</translation>
     </message>
@@ -4395,22 +4437,22 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>복원 확인</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1480"/>
+        <location filename="../../ui/dialogs/backup.py" line="1495"/>
         <source>Geri yukleme tamamlandi.</source>
         <translation>복원이 완료되었습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1243"/>
+        <location filename="../../ui/dialogs/backup.py" line="1251"/>
         <source>Geri yukleme yarida kesilirse hedef tutarsiz kalir ve yeniden geri yuklenene ya da bicimlendirilene kadar kullanilamaz. Yine de durdurulsun mu?</source>
         <translation>복원을 중단하면 대상이 일관되지 않은 상태로 남아 다시 복원하거나 포맷할 때까지 사용할 수 없습니다. 그래도 중지하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1478"/>
+        <location filename="../../ui/dialogs/backup.py" line="1493"/>
         <source>Geri yuklendi: {}</source>
         <translation>복원됨: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1416"/>
+        <location filename="../../ui/dialogs/backup.py" line="1431"/>
         <source>Geri yuklenecek goruntu dosyasi</source>
         <translation>복원할 대상 이미지 파일</translation>
     </message>
@@ -4497,23 +4539,23 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>이미지</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="628"/>
+        <location filename="../../ui/main_window.py" line="633"/>
         <source>Goruntu ac...</source>
         <translation>이미지 열기...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1024"/>
+        <location filename="../../ui/main_window.py" line="1029"/>
         <source>Goruntu acilamadi</source>
         <translation>이미지를 열 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1035"/>
+        <location filename="../../ui/main_window.py" line="1040"/>
         <source>Goruntu acildi: {} — {}, {}, {}</source>
         <translation>이미지를 열었습니다: {} — {}, {}, {}</translation>
     </message>
     <message>
         <location filename="../../core/operations.py" line="87"/>
-        <location filename="../../ui/main_window.py" line="1130"/>
+        <location filename="../../ui/main_window.py" line="1135"/>
         <source>Goruntu boyutu</source>
         <translation>이미지 크기</translation>
     </message>
@@ -4523,12 +4565,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>이미지 크기는 최소 64 KiB여야 합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1131"/>
+        <location filename="../../ui/dialogs/backup.py" line="1138"/>
         <source>Goruntu boyutu yedekten kucuk olamaz ({}).</source>
         <translation>이미지 크기는 백업({})보다 작을 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="426"/>
+        <location filename="../../ui/dialogs/backup.py" line="429"/>
         <source>Goruntu boyutu:</source>
         <translation>이미지 크기:</translation>
     </message>
@@ -4538,7 +4580,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>이미지 크기 변경</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="634"/>
+        <location filename="../../ui/main_window.py" line="639"/>
         <source>Goruntu boyutunu degistir...</source>
         <translation>이미지 크기 변경...</translation>
     </message>
@@ -4549,22 +4591,17 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>이미지 파일</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="981"/>
+        <location filename="../../ui/main_window.py" line="986"/>
         <source>Goruntu dosyasi olusturuluyor...</source>
         <translation>이미지 파일 만드는 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1816"/>
-        <source>Goruntu dosyasina...</source>
-        <translation>이미지 파일로...</translation>
-    </message>
-    <message>
-        <location filename="../../ui/main_window.py" line="997"/>
+        <location filename="../../ui/main_window.py" line="1002"/>
         <source>Goruntu olusturulamadi</source>
         <translation>이미지를 만들 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1000"/>
+        <location filename="../../ui/main_window.py" line="1005"/>
         <source>Goruntu olusturuldu: {} ({})</source>
         <translation>이미지를 만들었습니다: {} ({})</translation>
     </message>
@@ -4579,10 +4616,9 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>이미지를 읽기 전용으로 열었습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1809"/>
-        <location filename="../../ui/main_window.py" line="2036"/>
-        <location filename="../../ui/main_window.py" line="2076"/>
-        <location filename="../../ui/main_window.py" line="3992"/>
+        <location filename="../../ui/main_window.py" line="1988"/>
+        <location filename="../../ui/main_window.py" line="2029"/>
+        <location filename="../../ui/main_window.py" line="4027"/>
         <source>Goruntu yok</source>
         <translation>이미지 없음</translation>
     </message>
@@ -4592,12 +4628,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>표시할 장치가 선택되지 않았습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="965"/>
+        <location filename="../../core/resize.py" line="974"/>
         <source>Goruntunun bulundugu yerde yeterli bos alan yok: tasima {} yeni alan gerektiriyor, {} bos. Hicbir sey yazilmadi.</source>
         <translation>이미지가 저장된 위치에 여유 공간이 부족합니다: 이동하려면 {}의 새 공간이 필요하지만 {}만 남아 있습니다. 아무것도 기록되지 않았습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="629"/>
+        <location filename="../../ui/main_window.py" line="634"/>
         <source>Goruntuyu kapat</source>
         <translation>이미지 닫기</translation>
     </message>
@@ -4607,12 +4643,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>찾아보기...</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1618"/>
+        <location filename="../../core/platform.py" line="1630"/>
         <source>Grafik yetki penceresi icin `pkexec` gerekiyor (polkit paketi).</source>
         <translation>그래픽 인증 창을 사용하려면 `pkexec`(polkit 패키지)가 필요합니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="315"/>
+        <location filename="../../core/platform.py" line="316"/>
         <source>Grafik yetki penceresi icin `pkexec` gerekiyor (polkit paketi). Uygulamayi `sudo python3 main.py` ile baslatabilirsiniz.</source>
         <translation>그래픽 권한 요청 창을 사용하려면 `pkexec`(polkit 패키지)가 필요합니다. `sudo python3 main.py`로 응용 프로그램을 시작할 수 있습니다.</translation>
     </message>
@@ -4637,18 +4673,18 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>그룹 설명자 없음: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4185"/>
+        <location filename="../../ui/main_window.py" line="4221"/>
         <source>Guncellemeler denetleniyor...</source>
         <translation>업데이트를 확인하는 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4197"/>
-        <location filename="../../ui/main_window.py" line="4210"/>
+        <location filename="../../ui/main_window.py" line="4233"/>
+        <location filename="../../ui/main_window.py" line="4246"/>
         <source>Guncellemeleri denetle</source>
         <translation>업데이트 확인</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="713"/>
+        <location filename="../../ui/main_window.py" line="718"/>
         <source>Guncellemeleri denetle...</source>
         <translation>업데이트 확인...</translation>
     </message>
@@ -4668,12 +4704,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>로그 파일</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2769"/>
+        <location filename="../../ui/main_window.py" line="2738"/>
         <source>Gunluk klasoru</source>
         <translation>로그 폴더</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="706"/>
+        <location filename="../../ui/main_window.py" line="711"/>
         <source>Gunluk klasorunu ac</source>
         <translation>로그 폴더 열기</translation>
     </message>
@@ -4688,7 +4724,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>저널을 한 덩어리로 할당할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="705"/>
+        <location filename="../../ui/main_window.py" line="710"/>
         <source>Gunluk yolu, donma sayisi ve o an calisan islemler</source>
         <translation>로그 경로, 멈춤 횟수 및 현재 실행 중인 작업</translation>
     </message>
@@ -4708,7 +4744,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>보안 설명자 쓰는 중 ($Secure)...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="961"/>
+        <location filename="../../ui/main_window.py" line="966"/>
         <source>HATA — {}: {}</source>
         <translation>오류 — {}: {}</translation>
     </message>
@@ -4774,7 +4810,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>HFS+ 레이아웃 준비 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="711"/>
+        <location filename="../../ui/main_window.py" line="716"/>
         <source>Hakkinda</source>
         <translation>정보</translation>
     </message>
@@ -4784,7 +4820,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>원시 디스크 이미지 (.img)</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1343"/>
+        <location filename="../../core/platform.py" line="1355"/>
         <source>Harici araclar</source>
         <translation>외부 도구</translation>
     </message>
@@ -4799,13 +4835,18 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>오류: {}</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="127"/>
-        <location filename="../../core/physical.py" line="128"/>
+        <location filename="../../core/physical.py" line="129"/>
         <location filename="../../core/physical.py" line="130"/>
-        <location filename="../../ui/main_window.py" line="3901"/>
+        <location filename="../../core/physical.py" line="132"/>
+        <location filename="../../ui/main_window.py" line="3936"/>
         <location filename="../../ui/qt_i18n.py" line="44"/>
         <source>Hayir</source>
         <translation>아니요</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/power_options.py" line="40"/>
+        <source>Hazirda beklet</source>
+        <translation>최대 절전 모드</translation>
     </message>
     <message>
         <location filename="../../core/ntfsfix.py" line="598"/>
@@ -4818,22 +4859,23 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>최대 절전 모드 파일 무효화</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/task.py" line="105"/>
+        <location filename="../../ui/dialogs/task.py" line="113"/>
         <source>Hazirlaniyor...</source>
         <translation>준비 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="121"/>
-        <location filename="../../ui/dialogs/backup.py" line="453"/>
-        <location filename="../../ui/dialogs/backup.py" line="686"/>
-        <location filename="../../ui/main_window.py" line="192"/>
-        <location filename="../../ui/main_window.py" line="2554"/>
+        <location filename="../../ui/dialogs/apply.py" line="123"/>
+        <location filename="../../ui/dialogs/backup.py" line="456"/>
+        <location filename="../../ui/dialogs/backup.py" line="693"/>
+        <location filename="../../ui/dialogs/clone.py" line="189"/>
+        <location filename="../../ui/main_window.py" line="197"/>
+        <location filename="../../ui/main_window.py" line="2511"/>
         <source>Hedef</source>
         <translation>대상</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="390"/>
-        <location filename="../../ui/dialogs/backup.py" line="995"/>
+        <location filename="../../ui/dialogs/backup.py" line="1002"/>
+        <location filename="../../ui/dialogs/backup.py" line="393"/>
         <source>Hedef Disk / Bolum</source>
         <translation>대상 디스크 / 파티션</translation>
     </message>
@@ -4863,48 +4905,37 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>대상이 너무 작습니다: 백업 {}, 대상 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1134"/>
+        <location filename="../../ui/dialogs/backup.py" line="1141"/>
         <source>Hedef cok kucuk: yedek {}, hedef {}.</source>
         <translation>대상이 너무 작습니다: 백업 {}, 대상 {}.</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1000"/>
+        <location filename="../../core/session.py" line="1051"/>
         <source>Hedef disk kaynaktan kucuk: kaynak {}, hedef {}</source>
         <translation>대상 디스크가 원본보다 작습니다: 원본 {}, 대상 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="958"/>
+        <location filename="../../ui/dialogs/backup.py" line="965"/>
         <source>Hedef disk sec</source>
         <translation>대상 디스크 선택</translation>
     </message>
     <message>
         <location filename="../../core/grub.py" line="476"/>
-        <location filename="../../ui/main_window.py" line="1840"/>
         <source>Hedef disk yok</source>
         <translation>대상 디스크 없음</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="55"/>
-        <source>Hedef disk:</source>
-        <translation>대상 디스크:</translation>
-    </message>
-    <message>
-        <location filename="../../ui/dialogs/backup.py" line="1114"/>
+        <location filename="../../ui/dialogs/backup.py" line="1121"/>
         <source>Hedef diski secin (&quot;Disk sec...&quot;).</source>
         <translation>대상 디스크를 선택하십시오 (&quot;디스크 선택...&quot;).</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="119"/>
-        <source>Hedef diski secin.</source>
-        <translation>대상 디스크를 선택하십시오.</translation>
-    </message>
-    <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="90"/>
+        <location filename="../../ui/dialogs/clone.py" line="238"/>
         <source>Hedef diskteki BUTUN veriler silinecek; anladim</source>
         <translation>대상 디스크의 모든 데이터가 지워진다는 것을 이해합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="143"/>
+        <location filename="../../ui/dialogs/clone.py" line="496"/>
         <source>Hedef kaynaktan {} buyuk: bu kisim ayrilmamis alan olur, eski veri fiziksel olarak orada kalir (tamamen yok etmek icin Guvenli silme).</source>
         <translation>대상이 원본보다 {} 더 큽니다. 그 부분은 할당되지 않은 공간이 되며 이전 데이터가 물리적으로 그대로 남습니다 (완전히 파기하려면 안전한 삭제를 사용하십시오).</translation>
     </message>
@@ -4915,32 +4946,53 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>대상이 읽기 전용입니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1421"/>
+        <location filename="../../ui/dialogs/clone.py" line="354"/>
+        <source>Hedef sec</source>
+        <translation>대상 선택</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="192"/>
+        <source>Hedef sec...</source>
+        <translation>대상 선택...</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="194"/>
+        <location filename="../../ui/dialogs/clone.py" line="426"/>
+        <source>Hedef secilmedi</source>
+        <translation>선택한 대상 없음</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/backup.py" line="1436"/>
         <source>Hedef, yedek dosyasinin kendisi olamaz.</source>
         <translation>대상은 백업 파일 자체일 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="687"/>
+        <location filename="../../ui/dialogs/backup.py" line="694"/>
         <source>Hedef:</source>
         <translation>대상:</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1248"/>
+        <location filename="../../ui/dialogs/clone.py" line="453"/>
+        <source>Hedefi secin.</source>
+        <translation>대상을 선택하세요.</translation>
+    </message>
+    <message>
+        <location filename="../../core/platform.py" line="1260"/>
         <source>Hedefte yalnizca {} bos alan var; {} goruntu sigmaz.</source>
         <translation>대상 위치에 {}만 남아 있습니다. {} 이미지가 들어가지 않습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1244"/>
+        <location filename="../../core/platform.py" line="1256"/>
         <source>Hedefte {} bos alan var, goruntu {}. Seyrek goruntu doldukca yer biter ve islemler yarida kalabilir.</source>
         <translation>대상 위치의 여유 공간은 {}이고 이미지는 {}입니다. 스파스 이미지가 채워지면서 공간이 부족해져 작업이 도중에 중단될 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="498"/>
+        <location filename="../../ui/dialogs/backup.py" line="501"/>
         <source>Hedefteki butun veriler silinecek; bunu anliyorum</source>
         <translation>대상의 모든 데이터가 지워진다는 것을 이해합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="678"/>
+        <location filename="../../ui/dialogs/backup.py" line="685"/>
         <source>Hedefteki veriler yedekle degistirilir.</source>
         <translation>대상의 데이터가 백업으로 대체됩니다.</translation>
     </message>
@@ -4955,8 +5007,8 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>하이브리드 MBR에 GPT에 없는 영역이 있습니다(LBA {})</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="620"/>
-        <location filename="../../ui/dialogs/backup.py" line="988"/>
+        <location filename="../../ui/dialogs/backup.py" line="627"/>
+        <location filename="../../ui/dialogs/backup.py" line="995"/>
         <source>Hicbir diske dokunulmaz</source>
         <translation>어떤 디스크도 건드리지 않습니다</translation>
     </message>
@@ -4966,28 +5018,28 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>선택된 파일 형식이 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="149"/>
+        <location filename="../../ui/dialogs/apply.py" line="151"/>
         <source>Hicbir sey calistirilmadi; diske dokunulmadi.</source>
         <translation>아직 아무것도 실행되지 않았습니다. 디스크는 변경되지 않았습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1738"/>
+        <location filename="../../ui/main_window.py" line="1743"/>
         <source>Hizalama</source>
         <translation>정렬</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1748"/>
+        <location filename="../../ui/main_window.py" line="1753"/>
         <source>Hizalama Denetimi</source>
         <translation>정렬 검사</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="656"/>
+        <location filename="../../ui/main_window.py" line="661"/>
         <source>Hizalama denetimi (4K)</source>
         <translation>정렬 검사 (4K)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="474"/>
-        <location filename="../../ui/dialogs/backup.py" line="852"/>
+        <location filename="../../ui/dialogs/backup.py" line="477"/>
+        <location filename="../../ui/dialogs/backup.py" line="859"/>
         <source>Hizli</source>
         <translation>빠름</translation>
     </message>
@@ -5023,7 +5075,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>IPv6 네트워크 부팅</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="106"/>
+        <location filename="../../core/physical.py" line="108"/>
         <source>ISLETIM SISTEMI DISKI — yazmak makineyi kullanilamaz hale getirir</source>
         <translation>운영 체제 디스크 — 쓰면 컴퓨터를 사용할 수 없게 됩니다</translation>
     </message>
@@ -5048,12 +5100,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>내부 오류: 뒤로 이동이 요청되었습니다 ({}섹터). 아무것도 기록되지 않았습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="770"/>
+        <location filename="../../ui/dialogs/backup.py" line="777"/>
         <source>Icerik okunuyor...</source>
         <translation>내용 읽는 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="357"/>
+        <location filename="../../ui/dialogs/backup.py" line="360"/>
         <source>Icerik:</source>
         <translation>내용:</translation>
     </message>
@@ -5063,17 +5115,17 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>이진 파일</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="561"/>
+        <location filename="../../ui/main_window.py" line="566"/>
         <source>Ikon seti</source>
         <translation>아이콘 세트</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="807"/>
+        <location filename="../../ui/main_window.py" line="812"/>
         <source>Ikon seti degistirildi: {}</source>
         <translation>아이콘 세트가 변경됨: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="121"/>
+        <location filename="../../ui/dialogs/apply.py" line="123"/>
         <source>Ilerleme</source>
         <translation>진행률</translation>
     </message>
@@ -5093,17 +5145,17 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>시그니처 기반 파일 복구</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="677"/>
+        <location filename="../../ui/main_window.py" line="682"/>
         <source>Imza tabanli dosya kurtarma...</source>
         <translation>시그니처 기반 파일 복구...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2090"/>
+        <location filename="../../ui/main_window.py" line="2043"/>
         <source>Imza taramasi</source>
         <translation>시그니처 검색</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2100"/>
+        <location filename="../../ui/main_window.py" line="2054"/>
         <source>Imza taramasi ({}): {} dosya bulundu</source>
         <translation>시그니처 검색 ({}): 파일 {}개 발견</translation>
     </message>
@@ -5143,7 +5195,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>아이노드 쓰는 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="97"/>
+        <location filename="../../ui/dialogs/clone.py" line="94"/>
         <location filename="../../ui/dialogs/new_image.py" line="102"/>
         <location filename="../../ui/dialogs/ntfsfix.py" line="92"/>
         <location filename="../../ui/dialogs/partition.py" line="131"/>
@@ -5152,12 +5204,13 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <location filename="../../ui/dialogs/tools.py" line="257"/>
         <location filename="../../ui/dialogs/tools.py" line="82"/>
         <location filename="../../ui/qt_i18n.py" line="49"/>
+        <location filename="../../ui/widgets/power_options.py" line="174"/>
         <source>Iptal</source>
         <translation>취소</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="293"/>
-        <location filename="../../ui/main_window.py" line="893"/>
+        <location filename="../../ui/main_window.py" line="298"/>
+        <location filename="../../ui/main_window.py" line="898"/>
         <source>Islem Gunlugu</source>
         <translation>작업 로그</translation>
     </message>
@@ -5168,10 +5221,15 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>작업 실패</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1700"/>
         <location filename="../../ui/main_window.py" line="1705"/>
+        <location filename="../../ui/main_window.py" line="1710"/>
         <source>Islem basarisiz.</source>
         <translation>작업이 실패했습니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/power_options.py" line="71"/>
+        <source>Islem bitince:</source>
+        <translation>완료 후:</translation>
     </message>
     <message>
         <location filename="../../core/ntfsfix.py" line="577"/>
@@ -5210,24 +5268,41 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>저널 초기화 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="304"/>
+        <location filename="../../ui/widgets/power_options.py" line="93"/>
+        <source>Islem surerken uyku modunu engelle</source>
+        <translation>작업 중 절전 모드 방지</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/power_options.py" line="163"/>
+        <source>Islem tamamlandi.</source>
+        <translation>작업이 완료되었습니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/power_options.py" line="226"/>
+        <location filename="../../ui/widgets/power_options.py" line="231"/>
+        <source>Islem uygulanamadi: {}</source>
+        <translation>작업을 수행할 수 없습니다: {}</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/backup.py" line="307"/>
         <source>Islem:</source>
         <translation>작업:</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1242"/>
+        <location filename="../../ui/dialogs/backup.py" line="1250"/>
+        <location filename="../../ui/dialogs/clone.py" line="591"/>
         <source>Islemi durdur</source>
         <translation>작업 중지</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/bootloader.py" line="92"/>
-        <location filename="../../ui/main_window.py" line="585"/>
-        <location filename="../../ui/main_window.py" line="888"/>
+        <location filename="../../ui/main_window.py" line="590"/>
+        <location filename="../../ui/main_window.py" line="893"/>
         <source>Islemler</source>
         <translation>작업</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="132"/>
+        <location filename="../../core/physical.py" line="134"/>
         <location filename="../../ui/dialogs/bootloader.py" line="75"/>
         <location filename="../../ui/widgets/partition_table.py" line="21"/>
         <source>Isletim sistemi</source>
@@ -5252,8 +5327,8 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>설치된 운영 체제 없음 (데이터 파티션)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3384"/>
-        <location filename="../../ui/widgets/disk_map.py" line="456"/>
+        <location filename="../../ui/main_window.py" line="3407"/>
+        <location filename="../../ui/widgets/disk_map.py" line="473"/>
         <source>Isletim sistemi: {}</source>
         <translation>운영 체제: {}</translation>
     </message>
@@ -5270,12 +5345,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>남은 그룹에 여유 아이노드가 부족합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1290"/>
+        <location filename="../../ui/dialogs/backup.py" line="1298"/>
         <source>Kalan: hesaplaniyor...</source>
         <translation>남은 시간: 계산 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1288"/>
+        <location filename="../../ui/dialogs/backup.py" line="1296"/>
         <source>Kalan: ~{}</source>
         <translation>남은 시간: 약 {}</translation>
     </message>
@@ -5291,9 +5366,10 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>꺼짐 — 다른 시스템이 메뉴에 나타나지 않습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="328"/>
-        <location filename="../../ui/dialogs/backup.py" line="525"/>
+        <location filename="../../ui/dialogs/apply.py" line="340"/>
+        <location filename="../../ui/dialogs/backup.py" line="532"/>
         <location filename="../../ui/dialogs/bootloader.py" line="154"/>
+        <location filename="../../ui/dialogs/clone.py" line="274"/>
         <location filename="../../ui/dialogs/efiboot.py" line="148"/>
         <location filename="../../ui/dialogs/preview.py" line="43"/>
         <location filename="../../ui/dialogs/tools.py" line="156"/>
@@ -5306,7 +5382,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>닫기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1087"/>
+        <location filename="../../ui/main_window.py" line="1092"/>
         <source>Kapatildi: {}</source>
         <translation>닫음: {}</translation>
     </message>
@@ -5322,7 +5398,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>익스텐트 오버플로 파일이 8개 조각을 넘었습니다. 볼륨의 조각화가 너무 심합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="347"/>
+        <location filename="../../ui/dialogs/backup.py" line="350"/>
         <source>Kapsam:</source>
         <translation>범위:</translation>
     </message>
@@ -5342,17 +5418,17 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>손실된 파티션 검색 결과</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2056"/>
+        <location filename="../../ui/main_window.py" line="2009"/>
         <source>Kayip bolum taramasi: {} aday bulundu</source>
         <translation>손실된 파티션 검색: 후보 {}개 발견</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2046"/>
+        <location filename="../../ui/main_window.py" line="1998"/>
         <source>Kayip bolumler taraniyor</source>
         <translation>손실된 파티션 검색 중</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="676"/>
+        <location filename="../../ui/main_window.py" line="681"/>
         <source>Kayip bolumleri tara...</source>
         <translation>손실된 파티션 검색...</translation>
     </message>
@@ -5390,18 +5466,18 @@ Konum: {}</source>
 위치: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="44"/>
-        <source>Kaynagin butun sektorleri (bolum tablosu, bolumler, onyukleme alani) hedef diske birebir kopyalanir. Kaynak salt okunur kalir.</source>
-        <translation>원본의 모든 섹터(파티션 테이블, 파티션, 부팅 영역)가 그대로 대상 디스크에 복사됩니다. 원본은 읽기 전용으로 유지됩니다.</translation>
+        <location filename="../../ui/dialogs/clone.py" line="215"/>
+        <source>Kaynagin butun sektorleri (bolum tablosu, bolumler, onyukleme alani) hedefe birebir kopyalanir. Kaynak salt okunur kalir.</source>
+        <translation>원본의 모든 섹터(파티션 테이블, 파티션, 부트 영역)가 대상에 그대로 복사됩니다. 원본은 읽기 전용으로 유지됩니다.</translation>
     </message>
     <message>
         <location filename="../../core/efistore.py" line="137"/>
-        <location filename="../../ui/dialogs/backup.py" line="686"/>
+        <location filename="../../ui/dialogs/backup.py" line="693"/>
         <source>Kaynak</source>
         <translation>원본</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="994"/>
+        <location filename="../../ui/dialogs/backup.py" line="1001"/>
         <source>Kaynak Disk / Bolum</source>
         <translation>원본 디스크 / 파티션</translation>
     </message>
@@ -5416,14 +5492,30 @@ Konum: {}</source>
         <translation>원본 크기</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="343"/>
+        <location filename="../../ui/dialogs/backup.py" line="346"/>
         <source>Kaynak boyut:</source>
         <translation>원본 크기:</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="958"/>
+        <location filename="../../ui/dialogs/clone.py" line="174"/>
+        <source>Kaynak disk</source>
+        <translation>원본 디스크</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/backup.py" line="965"/>
+        <location filename="../../ui/dialogs/clone.py" line="334"/>
         <source>Kaynak disk sec</source>
         <translation>원본 디스크 선택</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="177"/>
+        <source>Kaynak disk sec...</source>
+        <translation>원본 디스크 선택...</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="449"/>
+        <source>Kaynak diski secin.</source>
+        <translation>원본 디스크를 선택하세요.</translation>
     </message>
     <message>
         <location filename="../../core/streamio.py" line="36"/>
@@ -5444,9 +5536,14 @@ Konum: {}</source>
         <translation>원본을 읽기 전용으로 열었습니다. 이미지/디스크를 쓰기 모드로 열면 이 파티션에 쓸 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="677"/>
+        <location filename="../../ui/dialogs/backup.py" line="684"/>
         <source>Kaynak salt okunur acilir; hicbir sey silinmez.</source>
         <translation>원본은 읽기 전용으로 열려 있으며 아무것도 지워지지 않습니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="411"/>
+        <source>Kaynak secilmedi</source>
+        <translation>선택한 원본 없음</translation>
     </message>
     <message>
         <location filename="../../core/convert.py" line="167"/>
@@ -5459,35 +5556,31 @@ Konum: {}</source>
         <translation>원본 테이블이 MBR이 아닙니다</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1035"/>
+        <location filename="../../core/session.py" line="1086"/>
         <source>Kaynak ve hedef ayni bolum</source>
         <translation>원본과 대상이 같은 파티션입니다</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="984"/>
-        <location filename="../../core/session.py" line="997"/>
+        <location filename="../../core/session.py" line="1035"/>
+        <location filename="../../core/session.py" line="1048"/>
+        <location filename="../../core/session.py" line="972"/>
         <source>Kaynak ve hedef ayni disk</source>
         <translation>원본과 대상이 같은 디스크입니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1169"/>
+        <location filename="../../ui/dialogs/backup.py" line="1176"/>
         <source>Kaynak yalnizca okunur; yedek dosyasi disinda hicbir yere yazilmaz.</source>
         <translation>원본은 읽기만 합니다. 백업 파일 외에는 아무것도 기록되지 않습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1775"/>
+        <location filename="../../ui/main_window.py" line="1780"/>
         <source>Kaynak yok</source>
         <translation>원본 없음</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="687"/>
+        <location filename="../../ui/dialogs/backup.py" line="694"/>
         <source>Kaynak:</source>
         <translation>원본:</translation>
-    </message>
-    <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="43"/>
-        <source>Kaynak: &lt;b&gt;{}&lt;/b&gt; ({})</source>
-        <translation>원본: &lt;b&gt;{}&lt;/b&gt; ({})</translation>
     </message>
     <message>
         <location filename="../../core/clone.py" line="120"/>
@@ -5585,6 +5678,11 @@ Konum: {}</source>
 {}</translation>
     </message>
     <message>
+        <location filename="../../ui/dialogs/clone.py" line="460"/>
+        <source>Klasor bulunamadi: {}</source>
+        <translation>폴더를 찾을 수 없음: {}</translation>
+    </message>
+    <message>
         <location filename="../../core/extwrite.py" line="1220"/>
         <source>Klasor degistirilemez (immutable) olarak isaretli.</source>
         <translation>폴더가 변경 불가(immutable)로 표시되어 있습니다.</translation>
@@ -5649,47 +5747,81 @@ Konum: {}</source>
         <translation>폴더</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1874"/>
-        <location filename="../../ui/main_window.py" line="1898"/>
-        <source>Klon hazir</source>
-        <translation>복제 준비 완료</translation>
-    </message>
-    <message>
-        <location filename="../../ui/main_window.py" line="1882"/>
+        <location filename="../../ui/dialogs/clone.py" line="385"/>
         <source>Klon hedefi</source>
         <translation>복제 대상</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1898"/>
-        <source>Klon olusturuldu:
-{}
-
-Simdi acilsin mi?</source>
-        <translation>복제본을 만들었습니다:
-{}
-
-지금 여시겠습니까?</translation>
+        <location filename="../../core/session.py" line="997"/>
+        <source>Klon hedefi secilmedi</source>
+        <translation>선택한 복제 대상 없음</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="96"/>
+        <location filename="../../core/session.py" line="992"/>
+        <source>Klon kaynagi acilamadi</source>
+        <translation>복제 원본을 열 수 없습니다</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="663"/>
+        <source>Klon olusturuldu: {}</source>
+        <translation>복제본 생성됨: {}</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="592"/>
+        <source>Klon yarida kesilirse hedef disk tutarsiz kalir ve yeniden klonlanana ya da bicimlendirilene kadar kullanilamaz. Yine de durdurulsun mu?</source>
+        <translation>복제가 중단되면 대상 디스크가 일관성 없는 상태로 남아 다시 복제하거나 포맷할 때까지 사용할 수 없습니다. 그래도 중지할까요?</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="271"/>
+        <location filename="../../ui/dialogs/clone.py" line="633"/>
         <source>Klonla</source>
         <translation>복제</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1865"/>
-        <location filename="../../ui/main_window.py" line="1894"/>
-        <source>Klonlama basarisiz</source>
-        <translation>복제 실패</translation>
-    </message>
-    <message>
         <location filename="../../core/clone.py" line="539"/>
+        <location filename="../../ui/dialogs/clone.py" line="563"/>
         <source>Klonlama baslatiliyor...</source>
         <translation>복제 시작 중...</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="645"/>
+        <source>Klonlama durduruldu. Hedef tutarsiz durumda: yeniden klonlayin ya da bicimlendirin.</source>
+        <translation>복제가 중지되었습니다. 대상이 일관성 없는 상태입니다. 다시 복제하거나 포맷하세요.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="647"/>
+        <source>Klonlama durduruldu; yarim kalan goruntu dosyasi silindi.</source>
+        <translation>복제가 중지되었습니다. 완료되지 않은 이미지 파일은 삭제되었습니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1846"/>
+        <source>Klonlama: {}</source>
+        <translation>복제: {}</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1827"/>
+        <source>Klonlanacak disk yok. Bir goruntu acin ya da diskleri yenileyin; Linux&apos;ta ve Windows&apos;ta disk listesi yonetici yetkisi ister.</source>
+        <translation>복제할 디스크가 없습니다. 이미지를 열거나 디스크를 새로 고치세요. Linux와 Windows에서는 디스크 목록에 관리자 권한이 필요합니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="335"/>
+        <source>Klonlanacak diski secin. Kaynak salt okunur acilir; uzerine hicbir sey yazilmaz.</source>
+        <translation>복제할 디스크를 선택하세요. 원본은 읽기 전용으로 열리며 아무것도 기록되지 않습니다.</translation>
     </message>
     <message>
         <location filename="../../core/clone.py" line="549"/>
         <source>Klonlaniyor... {} / {}</source>
         <translation>복제 중... {} / {}</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="268"/>
+        <source>Klonu ac</source>
+        <translation>복제본 열기</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="355"/>
+        <source>Klonun yazilacagi yeri secin. Hedef diskteki her sey silinir.</source>
+        <translation>복제본을 기록할 위치를 선택하세요. 대상 디스크의 모든 내용이 지워집니다.</translation>
     </message>
     <message>
         <location filename="../../core/fat.py" line="899"/>
@@ -5725,7 +5857,7 @@ Simdi acilsin mi?</source>
         <translation>루트 파일 시스템이 아닙니다 ({} 없음)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3904"/>
+        <location filename="../../ui/main_window.py" line="3939"/>
         <source>Konum</source>
         <translation>위치</translation>
     </message>
@@ -5745,7 +5877,7 @@ Simdi acilsin mi?</source>
         <translation>복사 중 — {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="158"/>
+        <location filename="../../core/session.py" line="159"/>
         <source>Koruyucu MBR (0xEE) var ama gecerli GPT basligi bulunamadi</source>
         <translation>보호 MBR(0xEE)이 있지만 유효한 GPT 헤더를 찾지 못했습니다</translation>
     </message>
@@ -5785,13 +5917,15 @@ Simdi acilsin mi?</source>
         <translation>사용할 수 없음</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3928"/>
+        <location filename="../../core/session.py" line="1371"/>
+        <location filename="../../ui/main_window.py" line="2842"/>
+        <location filename="../../ui/main_window.py" line="3963"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Kullanilan</source>
         <translation>사용됨</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="57"/>
+        <location filename="../../core/session.py" line="58"/>
         <source>Kullanilan alan hesaplaniyor...</source>
         <translation>사용 공간을 계산하는 중...</translation>
     </message>
@@ -5806,7 +5940,7 @@ Simdi acilsin mi?</source>
         <translation>사용 중인 아이노드 검색 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="462"/>
+        <location filename="../../ui/widgets/disk_map.py" line="479"/>
         <source>Kullanilan: {} / {}</source>
         <translation>사용됨: {} / {}</translation>
     </message>
@@ -5836,7 +5970,7 @@ Simdi acilsin mi?</source>
         <translation>클러스터 맵 검사 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3911"/>
+        <location filename="../../ui/main_window.py" line="3946"/>
         <source>Kume/blok boyutu</source>
         <translation>클러스터/블록 크기</translation>
     </message>
@@ -5846,27 +5980,27 @@ Simdi acilsin mi?</source>
         <translation>복구 가능성</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2016"/>
+        <location filename="../../ui/main_window.py" line="1966"/>
         <source>Kurtariliyor: {}</source>
         <translation>복구 중: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2028"/>
+        <location filename="../../ui/main_window.py" line="1980"/>
         <source>Kurtarma basarisiz</source>
         <translation>복구 실패</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1271"/>
+        <location filename="../../core/session.py" line="1322"/>
         <source>Kurtarma desteklenmiyor</source>
         <translation>복구가 지원되지 않습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2009"/>
+        <location filename="../../ui/main_window.py" line="1959"/>
         <source>Kurtarma hedefi</source>
         <translation>복구 대상</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2031"/>
+        <location filename="../../ui/main_window.py" line="1983"/>
         <source>Kurtarma tamamlandi</source>
         <translation>복구 완료</translation>
     </message>
@@ -5881,13 +6015,13 @@ Simdi acilsin mi?</source>
         <translation>대기열에 추가</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1480"/>
-        <location filename="../../ui/main_window.py" line="2523"/>
+        <location filename="../../ui/main_window.py" line="1485"/>
+        <location filename="../../ui/main_window.py" line="2480"/>
         <source>Kuyruga eklendi: {}</source>
         <translation>대기열에 추가됨: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2594"/>
+        <location filename="../../ui/main_window.py" line="2551"/>
         <source>Kuyruktan cikarildi: {}</source>
         <translation>대기열에서 제거됨: {}</translation>
     </message>
@@ -5898,18 +6032,18 @@ Simdi acilsin mi?</source>
         <translation>LBA {}</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_overview.py" line="243"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="254"/>
         <source>LBA {} - {}</source>
         <translation>LBA {} - {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1746"/>
+        <location filename="../../ui/main_window.py" line="1751"/>
         <source>LBA {} — {}</source>
         <translation>LBA {} — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="460"/>
-        <location filename="../../ui/widgets/disk_map.py" line="467"/>
+        <location filename="../../ui/widgets/disk_map.py" line="477"/>
+        <location filename="../../ui/widgets/disk_map.py" line="484"/>
         <source>LBA: {} - {}</source>
         <translation>LBA: {} - {}</translation>
     </message>
@@ -5990,14 +6124,9 @@ Simdi acilsin mi?</source>
         <translation>Linux는 이 상태의 NTFS 볼륨을 마운트하지 않습니다 (ntfs3: dirty 볼륨, ntfs-3g: Windows 캐시에 메타데이터가 남아 있음).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4155"/>
+        <location filename="../../ui/main_window.py" line="4191"/>
         <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt5 ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
         <translation>라이선스: GNU GPL 버전 3. 함께 제공되는 Qt, PyQt5 및 Python의 라이선스: 도움말 &gt; 타사 라이선스.</translation>
-    </message>
-    <message>
-        <location filename="../../ui/main_window.py" line="1841"/>
-        <source>Listede fiziksel disk yok. Diskleri yenileyin; Linux&apos;ta ve Windows&apos;ta disk listesi yonetici yetkisi ister.</source>
-        <translation>목록에 물리 디스크가 없습니다. 디스크를 새로 고치십시오. Linux와 Windows에서는 디스크 목록을 가져오려면 관리자 권한이 필요합니다.</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/new_image.py" line="73"/>
@@ -6010,7 +6139,7 @@ Simdi acilsin mi?</source>
         <translation>MBR이 2 TiB 한계를 초과합니다. GPT를 사용하십시오</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="631"/>
+        <location filename="../../ui/main_window.py" line="636"/>
         <source>MBR bolum tablosu olustur</source>
         <translation>MBR 파티션 테이블 만들기</translation>
     </message>
@@ -6026,7 +6155,7 @@ Simdi acilsin mi?</source>
         <translation>MBR은 최대 4개의 주 파티션을 가질 수 있지만 테이블에는 {}개가 있습니다. 먼저 파티션 수를 줄이십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1225"/>
+        <location filename="../../ui/main_window.py" line="1230"/>
         <source>MBR tablosunda 4 birincil bolum dolu.
 Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</source>
         <translation>MBR 테이블의 주 파티션 4개가 모두 사용 중입니다.
@@ -6097,7 +6226,7 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>Mac OS X HFS+</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1696"/>
+        <location filename="../../core/platform.py" line="1708"/>
         <source>Makine BIOS (eski) kipinde acilmis; UEFI onyukleme degiskenleri yok.</source>
         <translation>컴퓨터가 BIOS(레거시) 모드로 시작되었습니다. UEFI 부팅 변수가 없습니다.</translation>
     </message>
@@ -6107,7 +6236,7 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>논리</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3905"/>
+        <location filename="../../ui/main_window.py" line="3940"/>
         <source>Mantiksal (EBR: LBA {})</source>
         <translation>논리 (EBR: LBA {})</translation>
     </message>
@@ -6199,7 +6328,7 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>기존 파티션을 읽는 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1131"/>
+        <location filename="../../ui/main_window.py" line="1136"/>
         <source>Mevcut boyut: {}
 
 Yeni boyut (orn. 4 GB, 512 MB):</source>
@@ -6218,12 +6347,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Microsoft 기본 데이터</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1339"/>
+        <location filename="../../core/platform.py" line="1351"/>
         <source>Mimari</source>
         <translation>아키텍처</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="122"/>
+        <location filename="../../core/physical.py" line="124"/>
         <source>Model</source>
         <translation>모델</translation>
     </message>
@@ -6248,17 +6377,17 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>NTFS 볼륨 상태를 읽을 수 없어 쓰기를 거부했습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1916"/>
+        <location filename="../../ui/main_window.py" line="1865"/>
         <source>NTFS degil</source>
         <translation>NTFS 아님</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1934"/>
+        <location filename="../../ui/main_window.py" line="1883"/>
         <source>NTFS denetlenemedi</source>
         <translation>NTFS를 검사할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1930"/>
+        <location filename="../../ui/main_window.py" line="1879"/>
         <source>NTFS denetleniyor — Bolum {}</source>
         <translation>NTFS 검사 중 — 파티션 {}</translation>
     </message>
@@ -6310,7 +6439,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>NTFS 검사 및 복구</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="664"/>
+        <location filename="../../ui/main_window.py" line="669"/>
         <source>NTFS&apos;i denetle ve onar...</source>
         <translation>NTFS 검사 및 복구...</translation>
     </message>
@@ -6336,18 +6465,18 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>음수 오프셋/길이</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="475"/>
-        <location filename="../../ui/dialogs/backup.py" line="853"/>
+        <location filename="../../ui/dialogs/backup.py" line="478"/>
+        <location filename="../../ui/dialogs/backup.py" line="860"/>
         <source>Normal</source>
         <translation>보통</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="920"/>
+        <location filename="../../ui/main_window.py" line="925"/>
         <source>Normal kullanici</source>
         <translation>표준 사용자</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1341"/>
+        <location filename="../../core/platform.py" line="1353"/>
         <source>Normal kullanici — fiziksel disk icin {} gerekir</source>
         <translation>표준 사용자 — 물리 디스크에는 {}이(가) 필요합니다</translation>
     </message>
@@ -6357,7 +6486,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>메모</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="373"/>
+        <location filename="../../ui/dialogs/backup.py" line="376"/>
         <source>Not:</source>
         <translation>메모:</translation>
     </message>
@@ -6385,7 +6514,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>읽기 범위가 파티션 경계를 넘어갑니다</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1081"/>
+        <location filename="../../core/physical.py" line="1115"/>
         <source>Okuma disk sinirini asiyor</source>
         <translation>읽기 범위가 디스크 경계를 넘어갑니다</translation>
     </message>
@@ -6400,7 +6529,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>읽기 오류</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1168"/>
+        <location filename="../../core/physical.py" line="1202"/>
         <source>Okuma hatasi (Windows {})</source>
         <translation>읽기 오류 (Windows {})</translation>
     </message>
@@ -6415,7 +6544,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>읽기 범위가 가상 디스크 경계를 넘어갑니다</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1406"/>
+        <location filename="../../core/session.py" line="1459"/>
         <source>Okuma/Yazma (acik)</source>
         <translation>읽기/쓰기 (열림)</translation>
     </message>
@@ -6438,12 +6567,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>생성 일시</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="345"/>
+        <location filename="../../ui/dialogs/backup.py" line="348"/>
         <source>Olusturma:</source>
         <translation>생성 일시:</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="432"/>
+        <location filename="../../ui/dialogs/backup.py" line="435"/>
         <source>Olusturulacak goruntu dosyasinin boyutu; bolumler bu boyuta gore yerlestirilir</source>
         <translation>만들 이미지 파일의 크기입니다. 파티션은 이 크기에 맞게 배치됩니다</translation>
     </message>
@@ -6453,8 +6582,8 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>16진수</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="288"/>
-        <location filename="../../ui/main_window.py" line="892"/>
+        <location filename="../../ui/main_window.py" line="293"/>
+        <location filename="../../ui/main_window.py" line="897"/>
         <source>Onaltilik Goruntuleyici</source>
         <translation>16진수 보기</translation>
     </message>
@@ -6494,45 +6623,44 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>복구 완료</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1733"/>
+        <location filename="../../ui/main_window.py" line="1738"/>
         <source>Once bir bolum tablosu acin.</source>
         <translation>먼저 파티션 테이블을 여십시오.</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="844"/>
+        <location filename="../../core/session.py" line="854"/>
         <source>Once bir bolum tablosu olusturun</source>
         <translation>먼저 파티션 테이블을 만드십시오</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1397"/>
+        <location filename="../../core/session.py" line="1450"/>
         <source>Once bir bolum tablosu olusturun (MBR veya GPT)</source>
         <translation>먼저 파티션 테이블(MBR 또는 GPT)을 만드십시오</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3993"/>
+        <location filename="../../ui/main_window.py" line="4028"/>
         <source>Once bir disk goruntusu acin veya olusturun.</source>
         <translation>먼저 디스크 이미지를 열거나 만드십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1809"/>
-        <location filename="../../ui/main_window.py" line="2036"/>
-        <location filename="../../ui/main_window.py" line="2076"/>
+        <location filename="../../ui/main_window.py" line="1988"/>
+        <location filename="../../ui/main_window.py" line="2029"/>
         <source>Once bir goruntu acin.</source>
         <translation>먼저 이미지를 여십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1113"/>
+        <location filename="../../ui/dialogs/backup.py" line="1120"/>
         <source>Once bir kaynak secin.</source>
         <translation>먼저 원본을 선택하십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3975"/>
+        <location filename="../../ui/main_window.py" line="4010"/>
         <source>Once listeden veya haritadan bir bolum secin.</source>
         <translation>먼저 목록이나 맵에서 파티션을 선택하십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1111"/>
-        <location filename="../../ui/dialogs/backup.py" line="1116"/>
+        <location filename="../../ui/dialogs/backup.py" line="1118"/>
+        <location filename="../../ui/dialogs/backup.py" line="1123"/>
         <source>Once yedek dosyasini secin.</source>
         <translation>먼저 백업 파일을 선택하십시오.</translation>
     </message>
@@ -6567,12 +6695,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>부팅 플래그</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="94"/>
+        <location filename="../../ui/main_window.py" line="96"/>
         <source>Onyukleme bayragini kaldir</source>
         <translation>부팅 플래그 해제</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="93"/>
+        <location filename="../../ui/main_window.py" line="95"/>
         <source>Onyukleme bayragini koy</source>
         <translation>부팅 플래그 설정</translation>
     </message>
@@ -6588,7 +6716,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>부팅 상태 검사 중</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2178"/>
+        <location filename="../../ui/main_window.py" line="2136"/>
         <source>Onyukleme durumunu incelemek icin once bir disk ya da goruntu acin.</source>
         <translation>부팅 상태를 검사하려면 먼저 디스크나 이미지를 여십시오.</translation>
     </message>
@@ -6691,7 +6819,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
     <message>
         <location filename="../../core/ntfsresize.py" line="820"/>
         <location filename="../../core/ntfsresize.py" line="841"/>
-        <location filename="../../core/resize.py" line="1002"/>
+        <location filename="../../core/resize.py" line="1011"/>
         <source>Onyukleme sektoru guncelleniyor...</source>
         <translation>부트 섹터 업데이트 중...</translation>
     </message>
@@ -6716,7 +6844,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>백업에서 부트 섹터를 복원했습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3901"/>
+        <location filename="../../ui/main_window.py" line="3936"/>
         <source>Onyuklenebilir</source>
         <translation>부팅 가능</translation>
     </message>
@@ -6731,12 +6859,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>부트로더 관리자</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="668"/>
+        <location filename="../../ui/main_window.py" line="673"/>
         <source>Onyukleyici yoneticisi...</source>
         <translation>부트로더 관리자...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2749"/>
+        <location filename="../../ui/main_window.py" line="2718"/>
         <source>Oturum gunlugu</source>
         <translation>세션 로그</translation>
     </message>
@@ -6764,7 +6892,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>속성 조각이 일관되지 않습니다(레코드 {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3909"/>
+        <location filename="../../ui/main_window.py" line="3944"/>
         <source>Oznitelikler</source>
         <translation>특성</translation>
     </message>
@@ -6801,22 +6929,22 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>계획</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2492"/>
+        <location filename="../../ui/main_window.py" line="2449"/>
         <source>Planlanani goster</source>
         <translation>계획된 레이아웃 표시</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1337"/>
+        <location filename="../../core/platform.py" line="1349"/>
         <source>Platform</source>
         <translation>플랫폼</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4154"/>
+        <location filename="../../ui/main_window.py" line="4190"/>
         <source>Proje sayfasi: {}</source>
         <translation>프로젝트 페이지: {}</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1338"/>
+        <location filename="../../core/platform.py" line="1350"/>
         <source>Python</source>
         <translation>Python</translation>
     </message>
@@ -6836,7 +6964,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>QCOW2 시그니처를 찾을 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2198"/>
+        <location filename="../../ui/main_window.py" line="2156"/>
         <source>Qt platformu</source>
         <translation>Qt 플랫폼</translation>
     </message>
@@ -6851,7 +6979,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>임의 데이터 (1회 통과)</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1376"/>
+        <location filename="../../core/platform.py" line="1388"/>
         <source>ReFS yalnizca Windows&apos;un kendi araciyla olusturulabilir; {} uzerinde arac yok</source>
         <translation>ReFS는 Windows 자체 도구로만 만들 수 있습니다. {}에는 해당 도구가 없습니다</translation>
     </message>
@@ -6871,14 +6999,14 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>지우기 예정</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="650"/>
-        <location filename="../../ui/dialogs/clone_target.py" line="63"/>
-        <location filename="../../ui/widgets/disk_overview.py" line="141"/>
+        <location filename="../../ui/dialogs/backup.py" line="657"/>
+        <location filename="../../ui/dialogs/clone.py" line="321"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="148"/>
         <source>SISTEM DISKI</source>
         <translation>시스템 디스크</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2885"/>
+        <location filename="../../ui/main_window.py" line="2882"/>
         <source>SISTEMDEKI DISKLER</source>
         <translation>이 시스템의 디스크</translation>
     </message>
@@ -6908,33 +7036,33 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>고정 테이블($UpCase, $AttrDef) 쓰는 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4018"/>
-        <location filename="../../ui/main_window.py" line="4027"/>
+        <location filename="../../ui/main_window.py" line="4053"/>
+        <location filename="../../ui/main_window.py" line="4062"/>
         <source>Salt okunur acildi</source>
         <translation>읽기 전용으로 열림</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4021"/>
+        <location filename="../../ui/main_window.py" line="4056"/>
         <source>Salt okunur devam et</source>
         <translation>읽기 전용으로 계속</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1409"/>
+        <location filename="../../core/session.py" line="1462"/>
         <source>Salt okunur — degisiklikler Uygula ile yazilir</source>
         <translation>읽기 전용 — 변경 사항은 적용을 선택하면 기록됩니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2165"/>
+        <location filename="../../ui/main_window.py" line="2123"/>
         <source>Sanal disk olusturulamadi</source>
         <translation>가상 디스크를 만들 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2163"/>
+        <location filename="../../ui/main_window.py" line="2119"/>
         <source>Sanal disk olusturuluyor</source>
         <translation>가상 디스크 만드는 중</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2145"/>
+        <location filename="../../ui/main_window.py" line="2101"/>
         <source>Sanal disk olusturuluyor...</source>
         <translation>가상 디스크 만드는 중...</translation>
     </message>
@@ -6944,17 +7072,23 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>가상 디스크를 읽기 전용으로 열었습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="325"/>
+        <location filename="../../ui/dialogs/clone.py" line="93"/>
+        <source>Sec</source>
+        <translation>선택</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/backup.py" line="328"/>
+        <location filename="../../ui/dialogs/clone.py" line="206"/>
         <source>Sec...</source>
         <translation>선택...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="464"/>
+        <location filename="../../ui/dialogs/backup.py" line="467"/>
         <source>Secenekler</source>
         <translation>옵션</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2098"/>
+        <location filename="../../ui/main_window.py" line="2052"/>
         <source>Secilen turlerde dosya imzasi bulunamadi.</source>
         <translation>선택한 형식의 파일 시그니처를 찾지 못했습니다.</translation>
     </message>
@@ -6969,7 +7103,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>선택 항목 복구...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="683"/>
+        <location filename="../../ui/main_window.py" line="688"/>
         <source>Secili diski ac</source>
         <translation>선택한 디스크 열기</translation>
     </message>
@@ -6979,32 +7113,32 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>선택한 항목</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3001"/>
+        <location filename="../../ui/main_window.py" line="2998"/>
         <source>Secili: Bolum {} — {} ({})</source>
         <translation>선택됨: 파티션 {} — {} ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3010"/>
+        <location filename="../../ui/main_window.py" line="3007"/>
         <source>Secili: Bolum {} — {} ({}) — planlanan, henuz olusturulmadi</source>
         <translation>선택됨: 파티션 {} — {} ({}) — 계획됨, 아직 만들어지지 않음</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3036"/>
+        <location filename="../../ui/main_window.py" line="3033"/>
         <source>Secili: Bos alan — {}</source>
         <translation>선택됨: 여유 공간 — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2880"/>
+        <location filename="../../ui/main_window.py" line="2862"/>
         <source>Secili: {} ({})</source>
         <translation>선택됨: {} ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2086"/>
+        <location filename="../../ui/main_window.py" line="2039"/>
         <source>Secim yok</source>
         <translation>선택된 항목 없음</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1316"/>
+        <location filename="../../core/session.py" line="1367"/>
         <source>Sektor</source>
         <translation>섹터</translation>
     </message>
@@ -7015,7 +7149,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>섹터 (LBA):</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="125"/>
+        <location filename="../../core/physical.py" line="127"/>
         <source>Sektor boyutu</source>
         <translation>섹터 크기</translation>
     </message>
@@ -7030,7 +7164,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>섹터 경계에 정렬되지 않은 쓰기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3890"/>
+        <location filename="../../ui/main_window.py" line="3925"/>
         <source>Sema</source>
         <translation>체계</translation>
     </message>
@@ -7050,7 +7184,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>심볼릭 링크의 내용은 읽을 수 없습니다. 대상을 얻으려면 symlink_target()을 사용하거나 resolve(..., follow=True)로 따라가십시오</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="123"/>
+        <location filename="../../core/physical.py" line="125"/>
         <source>Seri no</source>
         <translation>일련 번호</translation>
     </message>
@@ -7065,12 +7199,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>스트라이프된 btrfs(RAID0/10/5/6)는 이 버전에서 읽을 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1351"/>
+        <location filename="../../core/session.py" line="1404"/>
         <source>Seyrek (sparse) VMDK bu surumde salt okunur.</source>
         <translation>이 버전에서 스파스 VMDK는 읽기 전용입니다.</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="343"/>
+        <location filename="../../core/session.py" line="344"/>
         <source>Seyrek (sparse) VMDK bu surumde salt okunur. Duz (flat) VMDK ve VHD yazilabilir.</source>
         <translation>이 버전에서 스파스 VMDK는 읽기 전용입니다. Flat VMDK와 VHD는 쓸 수 있습니다.</translation>
     </message>
@@ -7151,8 +7285,8 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>압축 속성이 손상되었습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="346"/>
-        <location filename="../../ui/dialogs/backup.py" line="471"/>
+        <location filename="../../ui/dialogs/backup.py" line="349"/>
+        <location filename="../../ui/dialogs/backup.py" line="474"/>
         <source>Sikistirma:</source>
         <translation>압축:</translation>
     </message>
@@ -7170,12 +7304,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>삭제된 파일</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1992"/>
+        <location filename="../../ui/main_window.py" line="1941"/>
         <source>Silinmis dosyalar taraniyor</source>
         <translation>삭제된 파일 검색 중</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="675"/>
+        <location filename="../../ui/main_window.py" line="680"/>
         <source>Silinmis dosyalari tara...</source>
         <translation>삭제된 파일 검색...</translation>
     </message>
@@ -7190,8 +7324,8 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>삭제 확인</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1146"/>
-        <location filename="../../ui/dialogs/clone_target.py" line="123"/>
+        <location filename="../../ui/dialogs/backup.py" line="1153"/>
+        <location filename="../../ui/dialogs/clone.py" line="474"/>
         <source>Silme onayini isaretleyin.</source>
         <translation>지우기 확인란을 선택하십시오.</translation>
     </message>
@@ -7206,12 +7340,17 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>지우기 방법:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="708"/>
+        <location filename="../../ui/widgets/power_options.py" line="172"/>
+        <source>Simdi</source>
+        <translation>지금</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="713"/>
         <source>Simdi yigin dokumu al</source>
         <translation>지금 스택 덤프 만들기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1073"/>
+        <location filename="../../ui/main_window.py" line="1078"/>
         <source>Simdilik gez</source>
         <translation>지금은 탐색만 하기</translation>
     </message>
@@ -7252,38 +7391,38 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>시스템</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2202"/>
+        <location filename="../../ui/main_window.py" line="2160"/>
         <source>Sistem Bilgisi</source>
         <translation>시스템 정보</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="702"/>
+        <location filename="../../ui/main_window.py" line="707"/>
         <source>Sistem bilgisi</source>
         <translation>시스템 정보</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="129"/>
+        <location filename="../../core/physical.py" line="131"/>
         <source>Sistem diski</source>
         <translation>시스템 디스크</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2955"/>
+        <location filename="../../ui/main_window.py" line="2952"/>
         <source>Sistem diski korumasi</source>
         <translation>시스템 디스크 보호</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2674"/>
+        <location filename="../../ui/main_window.py" line="2643"/>
         <source>Sistem diski onayi</source>
         <translation>시스템 디스크 확인</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2680"/>
+        <location filename="../../ui/main_window.py" line="2649"/>
         <source>Sistem diski onayi verilmedi, uygulama iptal</source>
         <translation>시스템 디스크 확인이 이루어지지 않아 적용이 취소되었습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1149"/>
-        <location filename="../../ui/dialogs/clone_target.py" line="121"/>
+        <location filename="../../ui/dialogs/backup.py" line="1156"/>
+        <location filename="../../ui/dialogs/clone.py" line="472"/>
         <source>Sistem diski: onaylamak icin disk adini yazin.</source>
         <translation>시스템 디스크: 확인하려면 디스크 이름을 입력하십시오.</translation>
     </message>
@@ -7313,12 +7452,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>마지막 파티션 확장</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="707"/>
+        <location filename="../../ui/main_window.py" line="712"/>
         <source>Son donma raporunu goster...</source>
         <translation>마지막 멈춤 보고서 표시...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="693"/>
+        <location filename="../../ui/main_window.py" line="698"/>
         <source>Son eklenen bekleyen adimi kaldirir</source>
         <translation>가장 최근에 추가된 보류 중인 단계를 제거합니다</translation>
     </message>
@@ -7329,7 +7468,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>마지막 그룹이 메타데이터를 담기에 너무 작습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2755"/>
+        <location filename="../../ui/main_window.py" line="2724"/>
         <source>Son rapor</source>
         <translation>마지막 보고서</translation>
     </message>
@@ -7365,9 +7504,9 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>결과 확인 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1998"/>
-        <location filename="../../ui/main_window.py" line="2053"/>
-        <location filename="../../ui/main_window.py" line="2097"/>
+        <location filename="../../ui/main_window.py" line="1948"/>
+        <location filename="../../ui/main_window.py" line="2006"/>
+        <location filename="../../ui/main_window.py" line="2051"/>
         <source>Sonuc yok</source>
         <translation>결과 없음</translation>
     </message>
@@ -7382,7 +7521,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>현재 부팅된 항목</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2757"/>
+        <location filename="../../ui/main_window.py" line="2726"/>
         <source>Su an calisan</source>
         <translation>현재 실행 중</translation>
     </message>
@@ -7410,12 +7549,13 @@ Devam edilsin mi?</source>
         <translation>슈퍼블록 쓰는 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1298"/>
+        <location filename="../../ui/dialogs/backup.py" line="1308"/>
+        <location filename="../../ui/dialogs/clone.py" line="629"/>
         <source>Sure: {}</source>
         <translation>소요 시간: {}</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1818"/>
+        <location filename="../../core/platform.py" line="1830"/>
         <source>Surec belirteci acilamadi.</source>
         <translation>프로세스 토큰을 열 수 없습니다.</translation>
     </message>
@@ -7425,17 +7565,17 @@ Devam edilsin mi?</source>
         <translation>드라이버 항목</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="595"/>
+        <location filename="../../core/platform.py" line="596"/>
         <source>Surucu harfi</source>
         <translation>드라이브 문자</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="589"/>
+        <location filename="../../core/platform.py" line="590"/>
         <source>Surucu harfi ata</source>
         <translation>드라이브 문자 할당</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="589"/>
+        <location filename="../../core/platform.py" line="590"/>
         <source>Surucu harfini kaldir</source>
         <translation>드라이브 문자 제거</translation>
     </message>
@@ -7455,22 +7595,22 @@ Devam edilsin mi?</source>
         <translation>모두 아니요(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="849"/>
+        <location filename="../../core/session.py" line="859"/>
         <source>Tablo zaten {} biciminde</source>
         <translation>테이블이 이미 {} 형식입니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1738"/>
+        <location filename="../../ui/main_window.py" line="1743"/>
         <source>Tabloda bolum yok.</source>
         <translation>테이블에 파티션이 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1174"/>
+        <location filename="../../ui/main_window.py" line="1179"/>
         <source>Tablosuz disk</source>
         <translation>파티션 테이블이 없는 디스크</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="846"/>
+        <location filename="../../core/session.py" line="856"/>
         <source>Tablosuz disk donusturulemez; dosya sistemi tum diski kapliyor</source>
         <translation>파티션 테이블이 없는 디스크는 변환할 수 없습니다. 파일 시스템이 디스크 전체를 차지합니다</translation>
     </message>
@@ -7515,16 +7655,16 @@ Devam edilsin mi?</source>
         <location filename="../../core/ntfsresize.py" line="823"/>
         <location filename="../../core/ntfsresize.py" line="845"/>
         <location filename="../../core/operations.py" line="622"/>
-        <location filename="../../core/resize.py" line="1007"/>
+        <location filename="../../core/resize.py" line="1016"/>
         <location filename="../../core/restoreplan.py" line="340"/>
-        <location filename="../../core/session.py" line="835"/>
+        <location filename="../../core/session.py" line="845"/>
         <location filename="../../core/udfformat.py" line="358"/>
         <location filename="../../core/wipe.py" line="157"/>
         <location filename="../../core/wipe.py" line="96"/>
         <location filename="../../core/xfsformat.py" line="325"/>
         <location filename="../../core/xfsgrow.py" line="407"/>
-        <location filename="../../ui/dialogs/apply.py" line="226"/>
-        <location filename="../../ui/main_window.py" line="2126"/>
+        <location filename="../../ui/dialogs/apply.py" line="232"/>
+        <location filename="../../ui/main_window.py" line="2082"/>
         <source>Tamamlandi</source>
         <translation>완료</translation>
     </message>
@@ -7544,28 +7684,28 @@ Devam edilsin mi?</source>
         <translation>마무리 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2759"/>
-        <location filename="../../ui/main_window.py" line="567"/>
+        <location filename="../../ui/main_window.py" line="2728"/>
+        <location filename="../../ui/main_window.py" line="572"/>
         <source>Tanilama</source>
         <translation>진단</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2744"/>
+        <location filename="../../ui/main_window.py" line="2713"/>
         <source>Tanilama DISKULTIMATE_DIAG=0 ile kapatilmis.</source>
         <translation>DISKULTIMATE_DIAG=0으로 진단이 꺼져 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="703"/>
+        <location filename="../../ui/main_window.py" line="708"/>
         <source>Tanilama durumu...</source>
         <translation>진단 상태...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="149"/>
+        <location filename="../../ui/main_window.py" line="151"/>
         <source>Tanilama gunlugu: {}</source>
         <translation>진단 로그: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2743"/>
+        <location filename="../../ui/main_window.py" line="2712"/>
         <source>Tanilama kapali</source>
         <translation>진단 꺼짐</translation>
     </message>
@@ -7575,9 +7715,9 @@ Devam edilsin mi?</source>
         <translation>인식할 수 없는 부트 코드</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1995"/>
-        <location filename="../../ui/main_window.py" line="2049"/>
-        <location filename="../../ui/main_window.py" line="2094"/>
+        <location filename="../../ui/main_window.py" line="1945"/>
+        <location filename="../../ui/main_window.py" line="2002"/>
+        <location filename="../../ui/main_window.py" line="2048"/>
         <source>Tarama basarisiz</source>
         <translation>검색에 실패했습니다</translation>
     </message>
@@ -7592,7 +7732,7 @@ Devam edilsin mi?</source>
         <translation>검색 완료: 파일 {}개</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2040"/>
+        <location filename="../../ui/main_window.py" line="1992"/>
         <source>Tarama derinligi</source>
         <translation>검색 깊이</translation>
     </message>
@@ -7612,32 +7752,32 @@ Devam edilsin mi?</source>
         <translation>브라우저를 열 수 없습니다. 주소: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="796"/>
+        <location filename="../../ui/dialogs/backup.py" line="803"/>
         <source>Tek bolum yedegi</source>
         <translation>단일 파티션 백업</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="564"/>
+        <location filename="../../ui/main_window.py" line="569"/>
         <source>Tema</source>
         <translation>테마</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="792"/>
+        <location filename="../../ui/main_window.py" line="797"/>
         <source>Tema degistirildi: {}</source>
         <translation>테마가 변경되었습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3953"/>
+        <location filename="../../ui/main_window.py" line="3988"/>
         <source>Temiz</source>
         <translation>정상</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3918"/>
+        <location filename="../../ui/main_window.py" line="3953"/>
         <source>Temiz ayrilmamis — okunabilir, yazilamaz; once chkdsk / fsck ile denetleyin</source>
         <translation>정상적으로 분리되지 않음 — 읽기 가능, 쓰기 불가. 먼저 chkdsk / fsck로 검사하십시오</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3951"/>
+        <location filename="../../ui/main_window.py" line="3986"/>
         <source>Temiz kapatilmamis — Linux baglamaz; Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>정상적으로 종료되지 않음 — Linux에서 마운트되지 않습니다. 파티션 &gt; NTFS 검사 및 복구</translation>
     </message>
@@ -7672,7 +7812,7 @@ Devam edilsin mi?</source>
         <translation>전체 영역 지우기 (그 안의 모든 내용이 파기됨)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1749"/>
+        <location filename="../../ui/main_window.py" line="1754"/>
         <source>Tum bolumler 4K sinirinda hizali.</source>
         <translation>모든 파티션이 4K 경계에 정렬되어 있습니다.</translation>
     </message>
@@ -7682,22 +7822,22 @@ Devam edilsin mi?</source>
         <translation>모든 파티션이 손실됩니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1952"/>
+        <location filename="../../ui/main_window.py" line="1901"/>
         <source>Tum disk ({})</source>
         <translation>전체 디스크 ({})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2080"/>
-        <location filename="../../ui/main_window.py" line="3008"/>
-        <location filename="../../ui/main_window.py" line="3044"/>
-        <location filename="../../ui/main_window.py" line="3108"/>
-        <location filename="../../ui/main_window.py" line="3676"/>
+        <location filename="../../ui/main_window.py" line="2033"/>
+        <location filename="../../ui/main_window.py" line="3005"/>
+        <location filename="../../ui/main_window.py" line="3041"/>
+        <location filename="../../ui/main_window.py" line="3105"/>
+        <location filename="../../ui/main_window.py" line="3699"/>
         <source>Tum goruntu</source>
         <translation>전체 이미지</translation>
     </message>
     <message>
         <location filename="../../core/clone.py" line="128"/>
-        <location filename="../../ui/dialogs/backup.py" line="847"/>
+        <location filename="../../ui/dialogs/backup.py" line="854"/>
         <source>Tum sektorler</source>
         <translation>모든 섹터</translation>
     </message>
@@ -7725,7 +7865,7 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3891"/>
+        <location filename="../../ui/main_window.py" line="3926"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
@@ -7733,18 +7873,18 @@ Devam edilsin mi?</source>
         <translation>유형</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3907"/>
+        <location filename="../../ui/main_window.py" line="3942"/>
         <source>Tur GUID</source>
         <translation>유형 GUID</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1562"/>
-        <location filename="../../ui/main_window.py" line="1574"/>
+        <location filename="../../ui/main_window.py" line="1567"/>
+        <location filename="../../ui/main_window.py" line="1579"/>
         <source>Tur:</source>
         <translation>유형:</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_map.py" line="457"/>
+        <location filename="../../ui/widgets/disk_map.py" line="474"/>
         <source>Tur: {}</source>
         <translation>유형: {}</translation>
     </message>
@@ -7872,7 +8012,7 @@ Devam edilsin mi?</source>
         <translation>UEFI 부팅 편집기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="672"/>
+        <location filename="../../ui/main_window.py" line="677"/>
         <source>UEFI onyukleme duzenleyici...</source>
         <translation>UEFI 부팅 편집기...</translation>
     </message>
@@ -7887,27 +8027,27 @@ Devam edilsin mi?</source>
         <translation>USB 장치</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3913"/>
+        <location filename="../../ui/main_window.py" line="3948"/>
         <source>UUID / Seri no</source>
         <translation>UUID / 일련 번호</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2876"/>
+        <location filename="../../ui/main_window.py" line="2858"/>
         <source>UYARI: Uygulama yonetici/root yetkisi olmadan calisiyor; disk icerigi okunamayabilir.</source>
         <translation>경고: 응용 프로그램이 관리자/root 권한 없이 실행 중입니다. 디스크 내용을 읽지 못할 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3869"/>
+        <location filename="../../ui/main_window.py" line="3902"/>
         <source>UYARI: {}</source>
         <translation>경고: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="852"/>
+        <location filename="../../ui/main_window.py" line="857"/>
         <source>Ucuncu taraf lisanslari</source>
         <translation>타사 라이선스</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="712"/>
+        <location filename="../../ui/main_window.py" line="717"/>
         <source>Ucuncu taraf lisanslari...</source>
         <translation>타사 라이선스...</translation>
     </message>
@@ -7943,15 +8083,15 @@ Devam edilsin mi?</source>
         <translation>경고:</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="166"/>
-        <location filename="../../ui/main_window.py" line="2556"/>
-        <location filename="../../ui/main_window.py" line="688"/>
+        <location filename="../../ui/dialogs/apply.py" line="172"/>
+        <location filename="../../ui/main_window.py" line="2513"/>
+        <location filename="../../ui/main_window.py" line="693"/>
         <location filename="../../ui/qt_i18n.py" line="51"/>
         <source>Uygula</source>
         <translation>적용</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2555"/>
+        <location filename="../../ui/main_window.py" line="2512"/>
         <source>Uygula ({})</source>
         <translation>적용 ({})</translation>
     </message>
@@ -7961,42 +8101,42 @@ Devam edilsin mi?</source>
         <translation>응용 프로그램</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2647"/>
+        <location filename="../../ui/main_window.py" line="2605"/>
         <source>Uygulama basarisiz: {}</source>
         <translation>적용 실패: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="250"/>
+        <location filename="../../ui/dialogs/apply.py" line="256"/>
         <source>Uygulama baslatilmadi.</source>
         <translation>적용이 시작되지 않았습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2284"/>
+        <location filename="../../ui/main_window.py" line="2242"/>
         <source>Uygulama kapatilip &lt;b&gt;{} yetkisiyle&lt;/b&gt; yeniden baslatilacak.&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>응용 프로그램이 종료된 후 &lt;b&gt;{} 권한으로&lt;/b&gt; 다시 시작됩니다.&lt;br&gt;&lt;br&gt;계속하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="306"/>
+        <location filename="../../core/platform.py" line="307"/>
         <source>Uygulama zaten {} yetkisiyle calisiyor.</source>
         <translation>응용 프로그램이 이미 {} 권한으로 실행 중입니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="917"/>
+        <location filename="../../ui/main_window.py" line="922"/>
         <source>Uygulama {} yetkisiyle calisiyor; fiziksel disklere erisebilir.</source>
         <translation>응용 프로그램이 {} 권한으로 실행 중이며 물리 디스크에 액세스할 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="308"/>
+        <location filename="../../core/platform.py" line="309"/>
         <source>Uygulamanin yeniden baslatilacagi betik yolu belirlenemedi.</source>
         <translation>응용 프로그램을 다시 시작할 스크립트 경로를 확인할 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2653"/>
+        <location filename="../../ui/main_window.py" line="2611"/>
         <source>Uygulandi: {}</source>
         <translation>적용됨: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="259"/>
+        <location filename="../../ui/dialogs/apply.py" line="265"/>
         <source>Uygulaniyor...</source>
         <translation>적용 중...</translation>
     </message>
@@ -8011,7 +8151,17 @@ Devam edilsin mi?</source>
         <translation>적합하지 않은 위치</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2887"/>
+        <location filename="../../ui/widgets/power_options.py" line="39"/>
+        <source>Uyku</source>
+        <translation>절전</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/power_options.py" line="142"/>
+        <source>Uyku engellenemedi: {}</source>
+        <translation>절전 모드를 막을 수 없습니다: {}</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="2884"/>
         <source>VAR</source>
         <translation>예</translation>
     </message>
@@ -8041,7 +8191,7 @@ Devam edilsin mi?</source>
         <translation>VHD 시그니처를 찾을 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2168"/>
+        <location filename="../../ui/main_window.py" line="2126"/>
         <source>VHD olusturuldu: {} ({})</source>
         <translation>VHD를 만들었습니다: {} ({})</translation>
     </message>
@@ -8076,9 +8226,9 @@ Devam edilsin mi?</source>
         <translation>기본값 복원</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/apply.py" line="169"/>
-        <location filename="../../ui/main_window.py" line="2320"/>
-        <location filename="../../ui/main_window.py" line="694"/>
+        <location filename="../../ui/dialogs/apply.py" line="175"/>
+        <location filename="../../ui/main_window.py" line="2278"/>
+        <location filename="../../ui/main_window.py" line="699"/>
         <location filename="../../ui/qt_i18n.py" line="50"/>
         <source>Vazgec</source>
         <translation>취소</translation>
@@ -8095,22 +8245,22 @@ Devam edilsin mi?</source>
         <translation>데이터 런 값이 너무 큽니다</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1210"/>
+        <location filename="../../core/resize.py" line="1219"/>
         <source>Veri tasinirken hata: {}. {} / {} kopyalanmisti ve kaynak bolumun basi ezildi: bolum su an BOZUK (ne eski ne yeni yerinde tam). Tasima: sektor {} -&gt; {}, {} sektor, {} sektor tamamlandi (tanilama gunlugunde). Yedekten geri yukleyin ya da bos alan acip tasimayi bu sayilarla tamamlatin.</source>
         <translation>데이터 이동 중 오류: {}. {} / {}이(가) 복사되었으며 원본 파티션의 시작 부분을 덮어썼습니다: 이제 파티션이 손상된 상태입니다 (이전 위치와 새 위치 어디에서도 완전하지 않음). 이동: 섹터 {} -&gt; {}, {}섹터 중 {}섹터 완료 (진단 로그에 기록됨). 백업에서 복원하거나, 공간을 확보한 후 이 숫자를 사용하여 이동을 완료하십시오.</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1206"/>
+        <location filename="../../core/resize.py" line="1215"/>
         <source>Veri tasinirken hata: {}. {} / {} kopyalanmisti; kaynak bolum henuz ezilmedi, bolum eski yerinde saglam ve tablo degismedi.</source>
         <translation>데이터 이동 중 오류: {}. {} / {}이(가) 복사되었습니다. 원본 파티션은 아직 덮어쓰지 않았으므로 파티션은 이전 위치에 온전히 남아 있고 테이블은 변경되지 않았습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="969"/>
+        <location filename="../../core/resize.py" line="978"/>
         <source>Veri tasiniyor...</source>
         <translation>데이터 이동 중...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1194"/>
+        <location filename="../../core/resize.py" line="1203"/>
         <source>Veri tasiniyor... {}</source>
         <translation>데이터 이동 중... {}</translation>
     </message>
@@ -8136,32 +8286,32 @@ Devam edilsin mi?</source>
         <translation>Windows 복구</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="521"/>
+        <location filename="../../core/session.py" line="531"/>
         <source>Windows bicimlendiricisi cagriliyor...</source>
         <translation>Windows 포맷 도구 호출 중...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="532"/>
+        <location filename="../../core/session.py" line="542"/>
         <source>Windows bicimlendiricisi hata verdi: {}</source>
         <translation>Windows 포맷 도구가 오류를 보고했습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1466"/>
+        <location filename="../../core/platform.py" line="1478"/>
         <source>Windows bicimlendiricisi kullanildi</source>
         <translation>Windows 포맷 도구를 사용했습니다</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="830"/>
+        <location filename="../../core/session.py" line="840"/>
         <source>Windows boyutlandiricisi basarisiz: {}</source>
         <translation>Windows 크기 조정 도구가 실패했습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="824"/>
+        <location filename="../../core/session.py" line="834"/>
         <source>Windows boyutlandiricisi calisiyor...</source>
         <translation>Windows 크기 조정 도구 실행 중...</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1523"/>
+        <location filename="../../core/platform.py" line="1535"/>
         <source>Windows boyutlandiricisi kullanildi</source>
         <translation>Windows 크기 조정 도구를 사용했습니다</translation>
     </message>
@@ -8171,7 +8321,8 @@ Devam edilsin mi?</source>
         <translation>Windows 실행 파일</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1994"/>
+        <location filename="../../core/platform.py" line="2006"/>
+        <location filename="../../core/platform.py" line="2168"/>
         <source>Windows hata kodu {}</source>
         <translation>Windows 오류 코드 {}</translation>
     </message>
@@ -8191,7 +8342,7 @@ Devam edilsin mi?</source>
         <translation>Windows가 최대 절전 모드 상태입니다 (빠른 시작 포함). 이 볼륨에 쓴 후 Windows를 다시 시작(재개)하면 볼륨이 손상됩니다. Windows를 시작한 다음 &apos;다시 시작&apos;으로 종료하거나, 복구에서 최대 절전 모드 파일 무효화를 선택하십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3948"/>
+        <location filename="../../ui/main_window.py" line="3983"/>
         <source>Windows hazirda bekletmede — Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>Windows가 최대 절전 모드 상태입니다 — 파티션 &gt; NTFS 검사 및 복구</translation>
     </message>
@@ -8216,6 +8367,11 @@ Devam edilsin mi?</source>
         <translation>Windows 부트로더</translation>
     </message>
     <message>
+        <location filename="../../core/platform.py" line="2073"/>
+        <source>Windows uyku engelini kabul etmedi</source>
+        <translation>Windows가 절전 차단을 거부했습니다</translation>
+    </message>
+    <message>
         <location filename="../../ui/dialogs/ntfsfix.py" line="66"/>
         <source>Windows&apos;ta chkdsk iste</source>
         <translation>Windows에서 chkdsk 요청</translation>
@@ -8226,7 +8382,7 @@ Devam edilsin mi?</source>
         <translation>다음 Windows 시작 시 chkdsk가 실행됩니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="665"/>
+        <location filename="../../ui/main_window.py" line="670"/>
         <source>Windows&apos;un temiz kapatmadigi NTFS birimini baglanabilir hale getirir (ntfsfix gibi)</source>
         <translation>Windows가 정상적으로 종료하지 않은 NTFS 볼륨을 다시 마운트할 수 있게 만듭니다 (ntfsfix와 유사)</translation>
     </message>
@@ -8291,7 +8447,7 @@ Devam edilsin mi?</source>
         <translation>XFS 루트 디렉터리와 로그 쓰는 중...</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1041"/>
+        <location filename="../../core/resize.py" line="1050"/>
         <source>XFS kucultulemez</source>
         <translation>XFS는 축소할 수 없습니다</translation>
     </message>
@@ -8327,19 +8483,19 @@ Devam edilsin mi?</source>
         <translation>새 볼륨</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2888"/>
+        <location filename="../../ui/main_window.py" line="2885"/>
         <source>YOK</source>
         <translation>아니요</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2753"/>
+        <location filename="../../ui/main_window.py" line="2722"/>
         <source>Yakalanan donma</source>
         <translation>감지된 멈춤</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1455"/>
-        <location filename="../../core/platform.py" line="1486"/>
-        <location filename="../../core/platform.py" line="1512"/>
+        <location filename="../../core/platform.py" line="1467"/>
+        <location filename="../../core/platform.py" line="1498"/>
+        <location filename="../../core/platform.py" line="1524"/>
         <source>Yalnizca Windows</source>
         <translation>Windows 전용</translation>
     </message>
@@ -8350,17 +8506,17 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../core/clone.py" line="127"/>
-        <location filename="../../ui/dialogs/backup.py" line="846"/>
+        <location filename="../../ui/dialogs/backup.py" line="853"/>
         <source>Yalnizca kullanilan alan</source>
         <translation>사용 공간만</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="487"/>
+        <location filename="../../ui/dialogs/backup.py" line="490"/>
         <source>Yalnizca kullanilan alani yedekle (hizli)</source>
         <translation>사용 공간만 백업(빠름)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3924"/>
+        <location filename="../../ui/main_window.py" line="3959"/>
         <source>Yapi tutarsiz — okunabilir, yazilamaz; once fsck.fat / chkdsk ile onarin</source>
         <translation>구조가 일관되지 않음 — 읽기 가능, 쓰기 불가. 먼저 fsck.fat / chkdsk로 복구하십시오</translation>
     </message>
@@ -8391,8 +8547,8 @@ Devam edilsin mi?</source>
         <translation>기록할 수 없음</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2639"/>
-        <location filename="../../ui/main_window.py" line="3127"/>
+        <location filename="../../ui/main_window.py" line="2596"/>
+        <location filename="../../ui/main_window.py" line="3124"/>
         <source>Yazilamaz kaynak</source>
         <translation>원본에 쓸 수 없습니다</translation>
     </message>
@@ -8423,7 +8579,7 @@ Devam edilsin mi?</source>
         <translation>쓰기 범위가 파티션 경계를 넘어갑니다</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1097"/>
+        <location filename="../../core/physical.py" line="1131"/>
         <source>Yazma disk sinirini asiyor</source>
         <translation>쓰기 범위가 디스크 경계를 넘어갑니다</translation>
     </message>
@@ -8433,7 +8589,7 @@ Devam edilsin mi?</source>
         <translation>쓰기 범위가 이미지 경계를 넘어갑니다 (offset={}, length={}, size={})</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1217"/>
+        <location filename="../../core/physical.py" line="1251"/>
         <source>Yazma hatasi (Windows {})</source>
         <translation>쓰기 오류 (Windows {})</translation>
     </message>
@@ -8443,22 +8599,22 @@ Devam edilsin mi?</source>
         <translation>쓰기 권한이 거부되었습니다 — 다른 프로그램이 파일을 사용 중이거나 액세스가 차단되었습니다</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="128"/>
+        <location filename="../../core/physical.py" line="130"/>
         <source>Yazma korumali</source>
         <translation>쓰기 보호됨</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="898"/>
+        <location filename="../../core/physical.py" line="932"/>
         <source>Yazma modu acikca onaylanmalidir (confirm=True)</source>
         <translation>쓰기 모드는 명시적으로 확인해야 합니다 (confirm=True)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2730"/>
+        <location filename="../../ui/main_window.py" line="2699"/>
         <source>Yazma modu acilamadi</source>
         <translation>쓰기 모드를 활성화할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2732"/>
+        <location filename="../../ui/main_window.py" line="2701"/>
         <source>Yazma modu acildi: {}</source>
         <translation>쓰기 모드가 활성화됨: {}</translation>
     </message>
@@ -8468,7 +8624,7 @@ Devam edilsin mi?</source>
         <translation>쓰기 범위가 가상 디스크 경계를 넘어갑니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2689"/>
+        <location filename="../../ui/main_window.py" line="2658"/>
         <source>Yazma sirasinda bu birimler &lt;b&gt;gecici olarak cikarilacak&lt;/b&gt; (kilitlenip ayrilir).</source>
         <translation>이 볼륨들은 쓰는 동안 &lt;b&gt;일시적으로 마운트 해제됩니다&lt;/b&gt; (잠금 및 분리).</translation>
     </message>
@@ -8478,12 +8634,12 @@ Devam edilsin mi?</source>
         <translation>쓸 수 없음</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1254"/>
+        <location filename="../../ui/dialogs/backup.py" line="1262"/>
         <source>Yedegi al</source>
         <translation>백업 만들기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="697"/>
+        <location filename="../../ui/main_window.py" line="702"/>
         <source>Yedegi diske yaz...</source>
         <translation>디스크에 백업 쓰기...</translation>
     </message>
@@ -8503,12 +8659,12 @@ Devam edilsin mi?</source>
         <translation>백업의 파티션 테이블을 읽을 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1039"/>
+        <location filename="../../ui/dialogs/backup.py" line="1046"/>
         <source>Yedegin yazilacagi diski secin: &quot;Disk sec...&quot;</source>
         <translation>백업을 쓸 디스크를 선택하십시오: &quot;디스크 선택...&quot;</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="961"/>
+        <location filename="../../ui/dialogs/backup.py" line="968"/>
         <source>Yedegin yazilacagi yeri secin. &quot;Yeni goruntu dosyasi&quot; hicbir diske dokunmaz.</source>
         <translation>백업을 쓸 위치를 선택하십시오. &quot;새 이미지 파일&quot;은 어떤 디스크도 건드리지 않습니다.</translation>
     </message>
@@ -8523,12 +8679,12 @@ Devam edilsin mi?</source>
         <translation>백업을 열었습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1051"/>
+        <location filename="../../ui/main_window.py" line="1056"/>
         <source>Yedek acildi (salt okunur): {} — kaynak {}, yedek {}</source>
         <translation>백업을 열었습니다 (읽기 전용): {} — 원본 {}, 백업 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="305"/>
+        <location filename="../../ui/dialogs/backup.py" line="308"/>
         <source>Yedek al</source>
         <translation>백업</translation>
     </message>
@@ -8544,7 +8700,7 @@ Devam edilsin mi?</source>
         <translation>백업을 만들었습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1400"/>
+        <location filename="../../ui/dialogs/backup.py" line="1415"/>
         <source>Yedek alindi: {} — {} (kaynak {}, kazanc %{:.0f})</source>
         <translation>백업 완료: {} — {} (원본 {}, {:.0f}% 절감)</translation>
     </message>
@@ -8559,7 +8715,7 @@ Devam edilsin mi?</source>
         <translation>백업을 만들고, 다른 시스템 검색을 활성화하고, GRUB가 이미 설치된 디스크에 GRUB를 다시 설치한 후 메뉴를 생성합니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1044"/>
+        <location filename="../../ui/dialogs/backup.py" line="1051"/>
         <source>Yedek bayt bayt yazilir; bolum yerlesimi degistirilemez.</source>
         <translation>백업은 바이트 단위로 그대로 기록되며 파티션 레이아웃은 변경할 수 없습니다.</translation>
     </message>
@@ -8569,7 +8725,7 @@ Devam edilsin mi?</source>
         <translation>백업 크기</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="344"/>
+        <location filename="../../ui/dialogs/backup.py" line="347"/>
         <source>Yedek boyut:</source>
         <translation>백업 크기:</translation>
     </message>
@@ -8581,28 +8737,28 @@ Devam edilsin mi?</source>
     <message>
         <location filename="../../core/clone.py" line="117"/>
         <location filename="../../core/efistore.py" line="138"/>
-        <location filename="../../ui/dialogs/backup.py" line="744"/>
-        <location filename="../../ui/dialogs/backup.py" line="750"/>
+        <location filename="../../ui/dialogs/backup.py" line="751"/>
+        <location filename="../../ui/dialogs/backup.py" line="757"/>
         <source>Yedek dosyasi</source>
         <translation>백업 파일</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="318"/>
+        <location filename="../../ui/dialogs/backup.py" line="321"/>
         <source>Yedek dosyasi (.dub)</source>
         <translation>백업 파일 (.dub)</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1341"/>
+        <location filename="../../core/session.py" line="1394"/>
         <source>Yedek dosyasi (.dub) bir arsivdir; uzerine yazilamaz. Yedegi bir diske veya yeni bir goruntuye yazin.</source>
         <translation>백업 파일(.dub)은 아카이브이므로 덮어쓸 수 없습니다. 백업을 디스크나 새 이미지에 쓰십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1057"/>
+        <location filename="../../ui/main_window.py" line="1062"/>
         <source>Yedek dosyasi acildi</source>
         <translation>백업 파일을 열었습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="701"/>
+        <location filename="../../ui/main_window.py" line="706"/>
         <source>Yedek dosyasi bilgisi...</source>
         <translation>백업 파일 정보...</translation>
     </message>
@@ -8627,12 +8783,12 @@ Devam edilsin mi?</source>
         <translation>백업 파일을 표시하고 있습니다. 펌웨어에 직접 쓸 수 없으므로 먼저 실행 중인 컴퓨터의 구성을 읽으십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1124"/>
+        <location filename="../../ui/dialogs/backup.py" line="1131"/>
         <source>Yedek dosyasi okunamadi.</source>
         <translation>백업 파일을 읽을 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="323"/>
+        <location filename="../../ui/dialogs/backup.py" line="326"/>
         <source>Yedek dosyasi secilmedi</source>
         <translation>선택된 백업 파일 없음</translation>
     </message>
@@ -8667,12 +8823,12 @@ Devam edilsin mi?</source>
         <translation>백업이 대상보다 작습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="761"/>
+        <location filename="../../ui/dialogs/backup.py" line="768"/>
         <source>Yedek okunamadi: {}</source>
         <translation>백업을 읽을 수 없습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1046"/>
+        <location filename="../../ui/dialogs/backup.py" line="1053"/>
         <source>Yedek okunuyor...</source>
         <translation>백업 읽는 중...</translation>
     </message>
@@ -8697,22 +8853,27 @@ Devam edilsin mi?</source>
         <translation>백업 없음</translation>
     </message>
     <message>
+        <location filename="../../ui/dialogs/backup.py" line="526"/>
+        <source>Yedekleme / geri yukleme</source>
+        <translation>백업 / 복원</translation>
+    </message>
+    <message>
         <location filename="../../core/clone.py" line="194"/>
         <source>Yedekleme baslatiliyor...</source>
         <translation>백업 시작 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1322"/>
+        <location filename="../../ui/dialogs/backup.py" line="1337"/>
         <source>Yedekleme durduruldu; yarim kalan yedek dosyasi silindi.</source>
         <translation>백업이 중지되었습니다. 완료되지 않은 백업 파일을 삭제했습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="252"/>
+        <location filename="../../ui/dialogs/backup.py" line="255"/>
         <source>Yedekleme ve Geri Yukleme</source>
         <translation>백업 및 복원</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1776"/>
+        <location filename="../../ui/main_window.py" line="1781"/>
         <source>Yedeklenecek bir goruntu veya disk bulunamadi.
 
 Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
@@ -8721,7 +8882,7 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
 이미지를 열거나 디스크 &gt; 물리 디스크 새로 고침을 사용하십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="959"/>
+        <location filename="../../ui/dialogs/backup.py" line="966"/>
         <source>Yedeklenecek goruntuyu, bolumu ya da fiziksel diski secin.</source>
         <translation>백업할 이미지, 파티션 또는 물리 디스크를 선택하십시오.</translation>
     </message>
@@ -8746,7 +8907,7 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
         <translation>백업상</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="446"/>
+        <location filename="../../ui/dialogs/backup.py" line="449"/>
         <source>Yedekteki bolumleri hedef diske gore buyutun, kucultun ya da tasiyin</source>
         <translation>대상 디스크에 맞게 백업의 파티션을 확장, 축소 또는 이동합니다</translation>
     </message>
@@ -8776,7 +8937,7 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
         <translation>새 용량:</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2135"/>
+        <location filename="../../ui/main_window.py" line="2091"/>
         <source>Yeni Sanal Disk (VHD)</source>
         <translation>새 가상 디스크 (VHD)</translation>
     </message>
@@ -8792,7 +8953,7 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
         <translation>새 이름에는 경로가 포함될 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1548"/>
+        <location filename="../../ui/main_window.py" line="1553"/>
         <location filename="../../ui/widgets/file_browser.py" line="397"/>
         <source>Yeni ad:</source>
         <translation>새 이름:</translation>
@@ -8803,7 +8964,7 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
         <translation>새 파티션</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1197"/>
+        <location filename="../../ui/main_window.py" line="1202"/>
         <source>Yeni bolum icin yeterli bos alan bulunamadi.
 
 Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
@@ -8817,7 +8978,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>새 파티션 만들기</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="636"/>
+        <location filename="../../ui/main_window.py" line="641"/>
         <source>Yeni bolum...</source>
         <translation>새 파티션...</translation>
     </message>
@@ -8862,27 +9023,47 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>새 크기가 현재 사용량보다 작지만, 파일 시스템 자체의 관리 영역도 함께 줄어들기 때문에 데이터는 여전히 들어갑니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="995"/>
+        <location filename="../../ui/main_window.py" line="1000"/>
         <source>Yeni disk goruntusu</source>
         <translation>새 디스크 이미지</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1593"/>
+        <location filename="../../ui/main_window.py" line="1598"/>
         <source>Yeni etiket:</source>
         <translation>새 레이블:</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1119"/>
+        <location filename="../../ui/dialogs/clone.py" line="357"/>
+        <source>Yeni goruntu dosyasi</source>
+        <translation>새 이미지 파일</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="358"/>
+        <source>Yeni goruntu dosyasi (.img)</source>
+        <translation>새 이미지 파일 (.img)</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/backup.py" line="1126"/>
         <source>Yeni goruntu dosyasi yalnizca geri yuklemede hedeftir.</source>
         <translation>새 이미지 파일은 복원할 때만 대상이 될 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="619"/>
+        <location filename="../../ui/dialogs/backup.py" line="626"/>
         <source>Yeni goruntu dosyasi...</source>
         <translation>새 이미지 파일...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="627"/>
+        <location filename="../../ui/dialogs/clone.py" line="204"/>
+        <source>Yeni goruntu dosyasinin yolu</source>
+        <translation>새 이미지 파일 경로</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone.py" line="457"/>
+        <source>Yeni goruntu dosyasinin yolunu secin.</source>
+        <translation>새 이미지 파일 경로를 선택하세요.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="632"/>
         <source>Yeni goruntu...</source>
         <translation>새 이미지...</translation>
     </message>
@@ -8900,7 +9081,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>새 폴더</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="696"/>
+        <location filename="../../ui/main_window.py" line="701"/>
         <source>Yeni sanal disk (VHD)...</source>
         <translation>새 가상 디스크 (VHD)...</translation>
     </message>
@@ -8911,17 +9092,17 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>새 버전이 있습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4201"/>
+        <location filename="../../ui/main_window.py" line="4237"/>
         <source>Yeni surum var: {} (kullanilan: {})</source>
         <translation>새 버전이 있습니다: {}(사용 중: {})</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1476"/>
+        <location filename="../../ui/main_window.py" line="1481"/>
         <source>Yeni yerlesim gecersiz</source>
         <translation>새 레이아웃이 올바르지 않습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="1065"/>
+        <location filename="../../ui/dialogs/backup.py" line="1072"/>
         <source>Yeni yerlesim: {}</source>
         <translation>새 레이아웃: {}</translation>
     </message>
@@ -8939,36 +9120,41 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>이름을 바꿀 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2305"/>
-        <location filename="../../ui/main_window.py" line="2352"/>
+        <location filename="../../ui/widgets/power_options.py" line="38"/>
+        <source>Yeniden baslat</source>
+        <translation>다시 시작</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="2263"/>
+        <location filename="../../ui/main_window.py" line="2310"/>
         <source>Yeniden baslatilamadi</source>
         <translation>다시 시작할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="560"/>
+        <location filename="../../core/platform.py" line="561"/>
         <source>Yeniden baslatilamadi (ShellExecute hatasi {}).</source>
         <translation>다시 시작할 수 없습니다 (ShellExecute 오류 {}).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2304"/>
-        <location filename="../../ui/main_window.py" line="2351"/>
+        <location filename="../../ui/main_window.py" line="2262"/>
+        <location filename="../../ui/main_window.py" line="2309"/>
         <source>Yeniden baslatilamadi: {}</source>
         <translation>다시 시작할 수 없습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="757"/>
+        <location filename="../../core/session.py" line="767"/>
         <source>Yeniden boyutlandirma icin onay gerekli (confirm=True)</source>
         <translation>크기 조정에는 확인이 필요합니다 (confirm=True)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4020"/>
+        <location filename="../../ui/main_window.py" line="4055"/>
         <location filename="../../ui/qt_i18n.py" line="46"/>
         <source>Yeniden dene</source>
         <translation>다시 시도</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/bootloader.py" line="149"/>
-        <location filename="../../ui/main_window.py" line="635"/>
+        <location filename="../../ui/main_window.py" line="640"/>
         <location filename="../../ui/widgets/file_browser.py" line="113"/>
         <location filename="../../ui/widgets/file_browser.py" line="51"/>
         <location filename="../../ui/widgets/file_browser.py" line="539"/>
@@ -8976,18 +9162,18 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>새로 고침</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3068"/>
+        <location filename="../../ui/main_window.py" line="3065"/>
         <source>Yenileme hatasi</source>
         <translation>새로 고침 오류</translation>
     </message>
     <message>
-        <location filename="../../core/resize.py" line="1005"/>
-        <location filename="../../core/session.py" line="832"/>
+        <location filename="../../core/resize.py" line="1014"/>
+        <location filename="../../core/session.py" line="842"/>
         <source>Yenileniyor...</source>
         <translation>새로 고치는 중...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="802"/>
+        <location filename="../../core/session.py" line="812"/>
         <source>Yerel boyutlandirici yok</source>
         <translation>기본 크기 조정 도구 없음</translation>
     </message>
@@ -9012,55 +9198,55 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>여유 공간이 부족합니다: 블록 {}개 필요, {}개 사용 가능</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1340"/>
+        <location filename="../../core/platform.py" line="1352"/>
         <source>Yetki</source>
         <translation>권한</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2229"/>
+        <location filename="../../ui/main_window.py" line="2187"/>
         <source>Yetki eksik ({}) — yukseltme yapilamiyor: {}</source>
         <translation>권한 부족 ({}) — 권한을 상승할 수 없습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2319"/>
+        <location filename="../../ui/main_window.py" line="2277"/>
         <source>Yetki penceresi bekleniyor. Parola sorulursa girin.</source>
         <translation>인증 대화 상자를 기다리는 중입니다. 요청하면 암호를 입력하십시오.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="559"/>
+        <location filename="../../core/platform.py" line="560"/>
         <source>Yetki verilmedi (UAC penceresinde iptal edildi).</source>
         <translation>권한이 부여되지 않았습니다 (UAC 창에서 취소됨).</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="373"/>
-        <location filename="../../core/platform.py" line="375"/>
+        <location filename="../../core/platform.py" line="374"/>
+        <location filename="../../core/platform.py" line="376"/>
         <source>Yetki verilmedi (parola penceresi iptal edildi).</source>
         <translation>권한이 부여되지 않았습니다 (암호 대화 상자가 취소됨).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2267"/>
-        <location filename="../../ui/main_window.py" line="2270"/>
-        <location filename="../../ui/main_window.py" line="2727"/>
+        <location filename="../../ui/main_window.py" line="2225"/>
+        <location filename="../../ui/main_window.py" line="2228"/>
+        <location filename="../../ui/main_window.py" line="2696"/>
         <source>Yetki yetersiz</source>
         <translation>권한 부족</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3285"/>
+        <location filename="../../ui/main_window.py" line="3286"/>
         <source>Yetki: normal kullanici — fiziksel disk icin {} gerekir</source>
         <translation>권한: 표준 사용자 — 물리 디스크에는 {}이(가) 필요합니다</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="377"/>
+        <location filename="../../core/platform.py" line="378"/>
         <source>Yetkilendirme reddedildi (polkit).</source>
         <translation>인증이 거부되었습니다 (polkit).</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="379"/>
+        <location filename="../../core/platform.py" line="380"/>
         <source>Yetkili kopya baslatilamadi (cikis kodu {}).</source>
         <translation>권한이 상승된 사본을 시작할 수 없습니다 (종료 코드 {}).</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2338"/>
+        <location filename="../../ui/main_window.py" line="2296"/>
         <source>Yetkili kopya beklenmekten vazgecildi; acilirsa iki kopyadan birini kapatin.</source>
         <translation>권한이 상승된 사본을 더 이상 기다리지 않습니다. 사본이 열리면 두 사본 중 하나를 닫으십시오.</translation>
     </message>
@@ -9070,17 +9256,17 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>권한 없이 계속</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2792"/>
+        <location filename="../../ui/main_window.py" line="2761"/>
         <source>Yigin dokumu</source>
         <translation>스택 덤프</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2791"/>
+        <location filename="../../ui/main_window.py" line="2760"/>
         <source>Yigin dokumu yazildi: {}</source>
         <translation>스택 덤프를 기록했습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="474"/>
+        <location filename="../../ui/dialogs/backup.py" line="477"/>
         <source>Yok</source>
         <translation>없음</translation>
     </message>
@@ -9112,12 +9298,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>경로:</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1330"/>
+        <location filename="../../core/platform.py" line="1342"/>
         <source>Yonetici</source>
         <translation>관리자</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2886"/>
+        <location filename="../../ui/main_window.py" line="2883"/>
         <source>Yonetici/root yetkisi: {}</source>
         <translation>관리자/root 권한: {}</translation>
     </message>
@@ -9132,13 +9318,13 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>위로</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2582"/>
+        <location filename="../../ui/main_window.py" line="2539"/>
         <source>Yukari tasi</source>
         <translation>위로 이동</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="475"/>
-        <location filename="../../ui/dialogs/backup.py" line="853"/>
+        <location filename="../../ui/dialogs/backup.py" line="478"/>
+        <location filename="../../ui/dialogs/backup.py" line="860"/>
         <source>Yuksek</source>
         <translation>높음</translation>
     </message>
@@ -9148,7 +9334,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>ZIP / Office 문서</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1017"/>
+        <location filename="../../ui/main_window.py" line="1022"/>
         <source>Zaten acik, one getirildi: {}</source>
         <translation>이미 열려 있어 앞으로 가져왔습니다: {}</translation>
     </message>
@@ -9177,27 +9363,27 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>이미 있습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3448"/>
+        <location filename="../../ui/main_window.py" line="3471"/>
         <source>[SISTEM DISKI]</source>
         <translation>[시스템 디스크]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3456"/>
+        <location filename="../../ui/main_window.py" line="3479"/>
         <source>[bagli bolum var]</source>
         <translation>[마운트된 파티션 있음]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3346"/>
+        <location filename="../../ui/main_window.py" line="3369"/>
         <source>[degistirilemez]</source>
         <translation>[수정 불가]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3445"/>
+        <location filename="../../ui/main_window.py" line="3468"/>
         <source>[{} SISTEM DISKI]</source>
         <translation>[{} 시스템 디스크]</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="609"/>
+        <location filename="../../core/platform.py" line="610"/>
         <source>`diskutil` bulunamadi.</source>
         <translation>`diskutil`을 찾을 수 없습니다.</translation>
     </message>
@@ -9207,17 +9393,17 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>`grub-install`이 실패했습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1596"/>
+        <location filename="../../core/platform.py" line="1608"/>
         <source>`grub-install` bulunamadi (grub-pc ya da grub-efi paketi kurulu degil).</source>
         <translation>`grub-install`을 찾을 수 없습니다 (grub-pc 또는 grub-efi 패키지가 설치되어 있지 않음).</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="605"/>
+        <location filename="../../core/platform.py" line="606"/>
         <source>`mount` veya `udisksctl` bulunamadi.</source>
         <translation>`mount` 또는 `udisksctl`을 찾을 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="320"/>
+        <location filename="../../core/platform.py" line="321"/>
         <source>`osascript` bulunamadi.</source>
         <translation>`osascript`를 찾을 수 없습니다.</translation>
     </message>
@@ -9227,7 +9413,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>`update-grub`와 `grub-mkconfig`를 모두 찾을 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1700"/>
+        <location filename="../../core/platform.py" line="1712"/>
         <source>`{}` bagli degil; `efivarfs` cekirdek modulu yuklu olmayabilir.</source>
         <translation>`{}`이(가) 마운트되어 있지 않습니다. `efivarfs` 커널 모듈이 로드되지 않았을 수 있습니다.</translation>
     </message>
@@ -9257,7 +9443,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>링크</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="65"/>
+        <location filename="../../ui/dialogs/clone.py" line="323"/>
         <source>bagli bolum var</source>
         <translation>마운트된 파티션 있음</translation>
     </message>
@@ -9273,19 +9459,20 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>포맷되지 않음</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="652"/>
+        <location filename="../../ui/dialogs/backup.py" line="659"/>
         <source>bilgi eksik</source>
         <translation>정보 불완전</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/clone_target.py" line="60"/>
+        <location filename="../../ui/dialogs/clone.py" line="329"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="160"/>
         <source>bilinmeyen</source>
         <translation>알 수 없음</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1396"/>
-        <location filename="../../ui/main_window.py" line="1519"/>
+        <location filename="../../core/platform.py" line="1408"/>
+        <location filename="../../core/ptable.py" line="293"/>
+        <location filename="../../ui/main_window.py" line="1524"/>
         <source>bilinmiyor</source>
         <translation>알 수 없음</translation>
     </message>
@@ -9373,6 +9560,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     </message>
     <message>
         <location filename="../../core/disksource.py" line="110"/>
+        <location filename="../../ui/dialogs/clone.py" line="294"/>
         <source>disk bilgisi okunamadi (yetki yok)</source>
         <translation>디스크 정보를 읽을 수 없음 (권한 없음)</translation>
     </message>
@@ -9507,10 +9695,10 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>저널을 비우고, dirty 플래그를 지웁니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="612"/>
-        <location filename="../../ui/main_window.py" line="3020"/>
-        <location filename="../../ui/main_window.py" line="3525"/>
-        <location filename="../../ui/widgets/disk_overview.py" line="184"/>
+        <location filename="../../ui/dialogs/backup.py" line="619"/>
+        <location filename="../../ui/main_window.py" line="3017"/>
+        <location filename="../../ui/main_window.py" line="3548"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="191"/>
         <source>ham</source>
         <translation>원시</translation>
     </message>
@@ -9551,11 +9739,13 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     </message>
     <message>
         <location filename="../../core/disksource.py" line="108"/>
+        <location filename="../../ui/dialogs/clone.py" line="304"/>
         <source>kaynak diskin kendisi</source>
         <translation>원본 디스크 자체</translation>
     </message>
     <message>
         <location filename="../../core/disksource.py" line="115"/>
+        <location filename="../../ui/dialogs/clone.py" line="308"/>
         <source>kaynaktan kucuk ({} &lt; {})</source>
         <translation>원본보다 작음 ({} &lt; {})</translation>
     </message>
@@ -9565,14 +9755,24 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>잠김</translation>
     </message>
     <message>
+        <location filename="../../core/platform.py" line="2190"/>
+        <source>kod {}</source>
+        <translation>코드 {}</translation>
+    </message>
+    <message>
         <location filename="../../core/recovery.py" line="565"/>
         <source>kurtarilan_{:012X}.{}</source>
         <translation>recovered_{:012X}.{}</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1716"/>
+        <location filename="../../core/platform.py" line="1728"/>
         <source>macOS bellenim degiskenlerine erisim vermiyor.</source>
         <translation>macOS는 펌웨어 변수에 대한 액세스를 허용하지 않습니다.</translation>
+    </message>
+    <message>
+        <location filename="../../core/platform.py" line="2138"/>
+        <source>macOS&apos;ta hazirda bekletme dogrudan baslatilamaz</source>
+        <translation>macOS에서는 최대 절전 모드를 직접 시작할 수 없습니다</translation>
     </message>
     <message>
         <location filename="../../core/grub.py" line="93"/>
@@ -9616,17 +9816,33 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>서버가 {}을(를) 반환했습니다</translation>
     </message>
     <message>
+        <location filename="../../core/platform.py" line="2141"/>
+        <source>systemctl bulunamadi</source>
+        <translation>systemctl을 찾을 수 없음</translation>
+    </message>
+    <message>
+        <location filename="../../core/platform.py" line="2081"/>
+        <source>systemd-inhibit bulunamadi; uyku engellenemiyor</source>
+        <translation>systemd-inhibit을 찾을 수 없어 절전 모드를 막을 수 없습니다</translation>
+    </message>
+    <message>
         <location filename="../../core/planview.py" line="351"/>
         <source>toplam {}</source>
         <translation>합계 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="597"/>
+        <location filename="../../ui/dialogs/backup.py" line="604"/>
+        <location filename="../../ui/dialogs/clone.py" line="319"/>
         <source>uygulamada acik</source>
         <translation>응용 프로그램에서 열려 있음</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1344"/>
+        <location filename="../../core/platform.py" line="2095"/>
+        <source>uyku engeli konamadi (kod {})</source>
+        <translation>절전 모드를 차단할 수 없음 (코드 {})</translation>
+    </message>
+    <message>
+        <location filename="../../core/platform.py" line="1356"/>
         <source>var</source>
         <translation>있음</translation>
     </message>
@@ -9636,7 +9852,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>응답 시간이 초과되었습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="656"/>
+        <location filename="../../ui/dialogs/backup.py" line="663"/>
         <source>yazma korumali</source>
         <translation>쓰기 보호됨</translation>
     </message>
@@ -9658,13 +9874,14 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     <message>
         <location filename="../../core/clone.py" line="126"/>
         <location filename="../../core/grub.py" line="106"/>
-        <location filename="../../core/physical.py" line="134"/>
-        <location filename="../../core/platform.py" line="1344"/>
-        <location filename="../../ui/dialogs/backup.py" line="825"/>
-        <location filename="../../ui/dialogs/backup.py" line="852"/>
+        <location filename="../../core/physical.py" line="136"/>
+        <location filename="../../core/platform.py" line="1356"/>
+        <location filename="../../ui/dialogs/backup.py" line="832"/>
+        <location filename="../../ui/dialogs/backup.py" line="859"/>
         <location filename="../../ui/dialogs/bootloader.py" line="235"/>
         <location filename="../../ui/dialogs/partition.py" line="205"/>
-        <location filename="../../ui/widgets/disk_map.py" line="458"/>
+        <location filename="../../ui/main_window.py" line="3315"/>
+        <location filename="../../ui/widgets/disk_map.py" line="475"/>
         <source>yok</source>
         <translation>없음</translation>
     </message>
@@ -9763,7 +9980,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>{}</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1236"/>
+        <location filename="../../core/physical.py" line="1270"/>
         <source>{}
 
 Bu diskte hicbir birim kilitlenemedi. Diski kapatip yeniden yazma modunda acin; sorun surerse birimi Windows&apos;tan cikarin (eject).</source>
@@ -9783,7 +10000,7 @@ Mevcut icerik tamamen kaybolur.</source>
 현재 내용은 완전히 손실됩니다.</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1239"/>
+        <location filename="../../core/physical.py" line="1273"/>
         <source>{}
 
 Kilitli birimler: {}. Yazilan alan bu birimlerin disinda, baska bir bagli birime ait olabilir.</source>
@@ -9792,7 +10009,7 @@ Kilitli birimler: {}. Yazilan alan bu birimlerin disinda, baska bir bagli birime
 잠긴 볼륨: {}. 기록된 영역이 이 볼륨들 밖에 있으며 마운트된 다른 볼륨에 속할 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1230"/>
+        <location filename="../../core/physical.py" line="1264"/>
         <source>{}
 
 Su birim(ler) kilitlenemedi: {}
@@ -9803,7 +10020,7 @@ Birimi kullanan programlari (Gezgin penceresi, virus tarayici, yedekleme) kapati
 볼륨을 사용 중인 프로그램(탐색기 창, 백신, 백업)을 닫고 디스크를 다시 여십시오. 또는 Windows에서 볼륨을 꺼내십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1697"/>
+        <location filename="../../ui/main_window.py" line="1702"/>
         <source>{}
 
 Windows bu NTFS birimini temiz kapatmamis olabilir (Hizli baslatma, hazirda bekletme, elektrik kesintisi). Birimi simdi denetlemek ister misiniz?</source>
@@ -9821,7 +10038,7 @@ Yine de bu konumda olusturulsun mu?</source>
 그래도 이 위치에 만드시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3464"/>
+        <location filename="../../ui/main_window.py" line="3487"/>
         <source>{}
 {}
 Sektor: {} B | Baglanti: {}</source>
@@ -9835,22 +10052,22 @@ Sektor: {} B | Baglanti: {}</source>
         <translation>{}  (.{})</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="820"/>
+        <location filename="../../ui/dialogs/backup.py" line="827"/>
         <source>{} (%{:.0f} kazanc)</source>
         <translation>{} ({:.0f}% 절감)</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1000"/>
+        <location filename="../../core/physical.py" line="1034"/>
         <source>{} (acilamadi: {})</source>
         <translation>{} (열 수 없음: {})</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1011"/>
+        <location filename="../../core/physical.py" line="1045"/>
         <source>{} (kilitlenemedi — birim kullanimda)</source>
         <translation>{} (잠글 수 없음 — 볼륨이 사용 중)</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1340"/>
+        <location filename="../../core/platform.py" line="1352"/>
         <source>{} (tam erisim)</source>
         <translation>{} (모든 권한)</translation>
     </message>
@@ -9865,17 +10082,17 @@ Sektor: {} B | Baglanti: {}</source>
         <translation>{} ({}회 통과)</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3895"/>
+        <location filename="../../ui/main_window.py" line="3930"/>
         <source>{} ({} sektor)</source>
         <translation>{} ({}섹터)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="864"/>
+        <location filename="../../ui/dialogs/backup.py" line="871"/>
         <source>{} / {} bayt</source>
         <translation>{} / {}바이트</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2675"/>
+        <location filename="../../ui/main_window.py" line="2644"/>
         <source>{} ISLETIM SISTEMI DISKIDIR.
 
 Bu diske yazmak isletim sistemini acilamaz hale getirebilir.
@@ -9891,27 +10108,27 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} KB 블록</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1457"/>
+        <location filename="../../core/platform.py" line="1469"/>
         <source>{} Windows araciyla olusturulamaz</source>
         <translation>{}은(는) Windows 도구로 만들 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="541"/>
+        <location filename="../../core/physical.py" line="563"/>
         <source>{} acilamadi (Windows hatasi {})</source>
         <translation>{}을(를) 열 수 없습니다 (Windows 오류 {})</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="537"/>
+        <location filename="../../core/physical.py" line="559"/>
         <source>{} acilamadi: Yonetici yetkisi gerekiyor (uygulamayi &apos;Yonetici olarak calistir&apos; ile baslatin)</source>
         <translation>{}을(를) 열 수 없습니다: 관리자 권한이 필요합니다 (&apos;관리자 권한으로 실행&apos;으로 응용 프로그램을 시작하십시오)</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="944"/>
+        <location filename="../../core/physical.py" line="978"/>
         <source>{} acilamadi: yetki yetersiz. Uygulamayi &apos;sudo&apos; ile calistirin veya kullaniciyi &apos;disk&apos; grubuna ekleyin.</source>
         <translation>{}을(를) 열 수 없습니다: 권한이 부족합니다. &apos;sudo&apos;로 응용 프로그램을 실행하거나 사용자를 &apos;disk&apos; 그룹에 추가하십시오.</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="949"/>
+        <location filename="../../core/physical.py" line="983"/>
         <source>{} acilamadi: {}</source>
         <translation>{}을(를) 열 수 없습니다: {}</translation>
     </message>
@@ -9929,22 +10146,22 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{}개 단계를 적용했으며, &apos;{}&apos; 단계에서 중지되었습니다: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="654"/>
+        <location filename="../../ui/dialogs/backup.py" line="661"/>
         <source>{} bagli</source>
         <translation>{} 마운트됨</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1690"/>
+        <location filename="../../ui/main_window.py" line="1695"/>
         <source>{} basarisiz: {}</source>
         <translation>{} 실패: {}</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="125"/>
+        <location filename="../../core/physical.py" line="127"/>
         <source>{} bayt</source>
         <translation>{}바이트</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../ui/main_window.py" line="2623"/>
+        <location filename="../../ui/main_window.py" line="2580"/>
         <source>{} bekleyen adim iptal edildi</source>
         <extra-po-msgid_plural>{} bekleyen adim iptal edildi</extra-po-msgid_plural>
         <translation>
@@ -9952,12 +10169,12 @@ Devam etmek icin disk adini yazin: {}</source>
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2616"/>
+        <location filename="../../ui/main_window.py" line="2573"/>
         <source>{} bekleyen adim silinecek.&lt;br&gt;&lt;br&gt;Diskte hicbir degisiklik yapilmadigi icin bu islem &lt;b&gt;zararsizdir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>보류 중인 단계 {}개가 제거됩니다.&lt;br&gt;&lt;br&gt;디스크에서는 아무것도 변경되지 않았으므로 이 작업은 &lt;b&gt;안전합니다&lt;/b&gt;.&lt;br&gt;&lt;br&gt;계속하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1235"/>
+        <location filename="../../core/platform.py" line="1247"/>
         <source>{} bellekte tutulan bir dosya sistemi ({}); goruntu RAM kullanir ve yeniden baslatmada silinir.</source>
         <translation>{}은(는) 메모리에 유지되는 파일 시스템({})입니다. 이미지는 RAM을 사용하며 다시 시작하면 삭제됩니다.</translation>
     </message>
@@ -9967,7 +10184,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} 포맷 중...</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="903"/>
+        <location filename="../../core/physical.py" line="937"/>
         <source>{} bilgileri okunamadi (yetki yok); sistem diski olup olmadigi bilinmiyor. Bilinmeyen bir diske yazma reddedildi.</source>
         <translation>{}의 정보를 읽을 수 없습니다 (권한 없음). 시스템 디스크인지 알 수 없습니다. 알 수 없는 디스크에 대한 쓰기가 거부되었습니다.</translation>
     </message>
@@ -9977,12 +10194,12 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{}은(는) 컨테이너입니다. 이 버전에서는 그 안의 볼륨을 열 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../core/platform.py" line="1231"/>
+        <location filename="../../core/platform.py" line="1243"/>
         <source>{} bir sistem/aygit dosya sistemi ({}); goruntu buraya olusturulamaz.</source>
         <translation>{}은(는) 시스템/장치 파일 시스템({})입니다. 여기에는 이미지를 만들 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1750"/>
+        <location filename="../../ui/main_window.py" line="1755"/>
         <source>{} bolum 4K sinirinda hizali degil; SSD ve ileri bicim disklerde basarim dusebilir.</source>
         <translation>파티션 {}개가 4K 경계에 정렬되어 있지 않습니다. SSD 및 Advanced Format 디스크에서 성능이 저하될 수 있습니다.</translation>
     </message>
@@ -10001,6 +10218,14 @@ Devam etmek icin disk adini yazin: {}</source>
         <source>{} bolum tablosu olustur</source>
         <translation>{} 파티션 테이블 만들기</translation>
     </message>
+    <message numerus="yes">
+        <location filename="../../core/ptable.py" line="296"/>
+        <source>{} bolumun dolulugu okunamadi</source>
+        <extra-po-msgid_plural>{} bolumun dolulugu okunamadi</extra-po-msgid_plural>
+        <translation>
+            <numerusform>{}개 파티션의 사용량을 읽을 수 없음</numerusform>
+        </translation>
+    </message>
     <message>
         <location filename="../../core/formatter.py" line="266"/>
         <source>{} bu sistemde bicimlendirilemiyor ({})</source>
@@ -10017,8 +10242,8 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>이 버전에서 {}은(는) 읽기 전용으로 열립니다</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1348"/>
-        <location filename="../../core/session.py" line="340"/>
+        <location filename="../../core/session.py" line="1401"/>
+        <location filename="../../core/session.py" line="341"/>
         <source>{} bu surumde yalnizca okunabilir; yazma destegi yol haritasinda.</source>
         <translation>이 버전에서 {}은(는) 읽기 전용입니다. 쓰기 지원은 로드맵에 있습니다.</translation>
     </message>
@@ -10053,36 +10278,32 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} 내보내는 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1875"/>
-        <source>{} diskine klonlandi ({}).
-
-Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin isletim sistemi birini cevrimdisi yapabilir.</source>
-        <translation>{}에 복제했습니다 ({}).
-
-두 디스크가 같은 컴퓨터에 계속 연결되어 있으면, 디스크 ID가 같기 때문에 운영 체제가 그중 하나를 오프라인으로 전환할 수 있습니다.</translation>
+        <location filename="../../ui/dialogs/clone.py" line="656"/>
+        <source>{} diskine klonlandi ({}). Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin isletim sistemi birini cevrimdisi yapabilir.</source>
+        <translation>디스크 {}에 복제했습니다({}). 두 디스크가 같은 컴퓨터에 연결된 상태로 있으면 디스크 ID가 같아 운영 체제가 하나를 오프라인으로 전환할 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2756"/>
+        <location filename="../../ui/main_window.py" line="2725"/>
         <source>{} dk</source>
         <translation>{}분</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1726"/>
+        <location filename="../../ui/main_window.py" line="1731"/>
         <source>{} donusumu kuyruga alindi: {}</source>
         <translation>{} 변환이 대기열에 추가됨: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1724"/>
+        <location filename="../../ui/main_window.py" line="1729"/>
         <source>{} donusumu yapilamaz</source>
         <translation>{} 변환을 할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2125"/>
+        <location filename="../../ui/main_window.py" line="2081"/>
         <source>{} dosya cikarildi -&gt; {}</source>
         <translation>파일 {}개를 추출했습니다 -&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2127"/>
+        <location filename="../../ui/main_window.py" line="2083"/>
         <source>{} dosya cikarildi:
 {}</source>
         <translation>파일 {}개를 추출했습니다:
@@ -10097,14 +10318,14 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2032"/>
+        <location filename="../../ui/main_window.py" line="1984"/>
         <source>{} dosya kurtarildi:
 {}</source>
         <translation>파일 {}개를 복구했습니다:
 {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="680"/>
+        <location filename="../../core/session.py" line="690"/>
         <source>{} dosyalarinin boyutu bu surumde degistirilemez</source>
         <translation>이 버전에서는 {} 파일의 크기를 변경할 수 없습니다</translation>
     </message>
@@ -10124,7 +10345,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>{} 업데이트됨: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4138"/>
+        <location filename="../../ui/main_window.py" line="4174"/>
         <source>{} hakkinda</source>
         <translation>{} 정보</translation>
     </message>
@@ -10146,7 +10367,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>{}에는 최소 {}이(가) 필요합니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="849"/>
+        <location filename="../../ui/main_window.py" line="854"/>
         <source>{} ikon</source>
         <translation>{} 아이콘</translation>
     </message>
@@ -10156,7 +10377,7 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>디스크 끝 방향으로 {} 이동합니다({} 데이터 복사)</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="908"/>
+        <location filename="../../core/physical.py" line="942"/>
         <source>{} isletim sistemi diskidir. Yazma islemi makineyi acilamaz hale getirebilir; bu diske yazmak icin ayrica onay gerekir.</source>
         <translation>{}은(는) 운영 체제 디스크입니다. 쓰면 컴퓨터를 부팅할 수 없게 될 수 있습니다. 이 디스크에 쓰려면 별도의 확인이 필요합니다.</translation>
     </message>
@@ -10171,13 +10392,20 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <translation>{}만큼 작아짐</translation>
     </message>
     <message>
+        <location filename="../../ui/main_window.py" line="3886"/>
+        <location filename="../../ui/widgets/disk_map.py" line="326"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="139"/>
+        <source>{} kullanilan</source>
+        <translation>{} 사용됨</translation>
+    </message>
+    <message>
         <location filename="../../core/formatter.py" line="68"/>
         <source>{} kurulu degil</source>
         <translation>{}이(가) 설치되어 있지 않습니다</translation>
     </message>
     <message>
         <location filename="../../core/mbr.py" line="381"/>
-        <location filename="../../core/ptable.py" line="241"/>
+        <location filename="../../core/ptable.py" line="248"/>
         <source>{} numarali bolum ile cakisiyor</source>
         <translation>파티션 {}과(와) 겹칩니다</translation>
     </message>
@@ -10220,18 +10448,18 @@ Konum: {}</source>
         <translation>{} 읽는 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2291"/>
-        <location filename="../../ui/main_window.py" line="2321"/>
+        <location filename="../../ui/main_window.py" line="2249"/>
+        <location filename="../../ui/main_window.py" line="2279"/>
         <source>{} olarak yeniden baslat</source>
         <translation>{}(으)로 다시 시작</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="679"/>
+        <location filename="../../ui/main_window.py" line="684"/>
         <source>{} olarak yeniden baslat...</source>
         <translation>{}(으)로 다시 시작...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2244"/>
+        <location filename="../../ui/main_window.py" line="2202"/>
         <source>{} olarak yeniden baslatma reddedildi; fiziksel diskler acilamaz</source>
         <translation>{}(으)로 다시 시작하는 것이 거부되었습니다. 물리 디스크를 열 수 없습니다</translation>
     </message>
@@ -10267,8 +10495,8 @@ Konum: {}</source>
         <translation>삭제된 항목 {}개를 찾았습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2751"/>
-        <location filename="../../ui/main_window.py" line="2754"/>
+        <location filename="../../ui/main_window.py" line="2720"/>
+        <location filename="../../ui/main_window.py" line="2723"/>
         <source>{} sn</source>
         <translation>{}초</translation>
     </message>
@@ -10295,7 +10523,7 @@ Konum: {}</source>
     </message>
     <message>
         <location filename="../../core/formatter.py" line="206"/>
-        <location filename="../../core/session.py" line="512"/>
+        <location filename="../../core/session.py" line="522"/>
         <source>{} yalnizca fiziksel diskte, Windows&apos;un kendi araciyla olusturulabilir; goruntu dosyasinda kullanilamaz.</source>
         <translation>{}은(는) Windows 자체 도구로 물리 디스크에서만 만들 수 있습니다. 이미지 파일에는 사용할 수 없습니다.</translation>
     </message>
@@ -10320,12 +10548,12 @@ Konum: {}</source>
         <translation>{} 레이아웃 준비 중...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2281"/>
+        <location filename="../../ui/main_window.py" line="2239"/>
         <source>{} yetkisi</source>
         <translation>{} 권한</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2232"/>
+        <location filename="../../ui/main_window.py" line="2190"/>
         <source>{} yetkisi gerekiyor</source>
         <translation>{} 권한이 필요합니다</translation>
     </message>
@@ -10335,22 +10563,27 @@ Konum: {}</source>
         <translation>{} 권한을 요청하는 중입니다. 요청하면 암호를 입력하십시오.</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="147"/>
+        <location filename="../../ui/dialogs/clone.py" line="509"/>
+        <source>{} zaten var; uzerine yazilacak.</source>
+        <translation>{}이(가) 이미 있습니다. 덮어씁니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="149"/>
         <source>{} {} baslatildi</source>
         <translation>{} {} 시작됨</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3082"/>
+        <location filename="../../ui/main_window.py" line="3079"/>
         <source>{} | {} | {} bolum</source>
         <translation>{} | {} | 파티션 {}개</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3453"/>
+        <location filename="../../ui/main_window.py" line="3476"/>
         <source>{} — (yetki yok, bilgi okunamadi)</source>
         <translation>{} — (권한 없음, 정보를 읽을 수 없음)</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/disk_overview.py" line="239"/>
+        <location filename="../../ui/widgets/disk_overview.py" line="250"/>
         <source>{} — Bolum {}</source>
         <translation>{} — 파티션 {}</translation>
     </message>
@@ -10360,12 +10593,17 @@ Konum: {}</source>
         <translation>{} — 처음 440바이트를 0으로 채움</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3381"/>
+        <location filename="../../ui/dialogs/clone.py" line="435"/>
+        <source>{} — su anki icerik (klonla silinecek)</source>
+        <translation>{} — 현재 내용(복제 시 지워짐)</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3404"/>
         <source>{} — {}</source>
         <translation>{} — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3530"/>
+        <location filename="../../ui/main_window.py" line="3553"/>
         <source>{} — {}
 LBA {} - {}
 Acmak icin tiklayin (salt okunur)</source>
@@ -10374,7 +10612,7 @@ LBA {} - {}
 클릭하여 열기(읽기 전용)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/backup.py" line="885"/>
+        <location filename="../../ui/dialogs/backup.py" line="892"/>
         <source>{} — {} (geri yukleme sonrasi) — kenarlari surukleyerek boyutlandirin</source>
         <translation>{} — {} (복원 후) — 가장자리를 끌어서 크기 조정</translation>
     </message>
@@ -10404,7 +10642,7 @@ LBA {} - {}
         <translation>{}, {} — 데이터 유지됨</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2030"/>
+        <location filename="../../ui/main_window.py" line="1982"/>
         <source>{}/{} dosya kurtarildi -&gt; {}</source>
         <translation>파일 {}/{}개를 복구했습니다 -&gt; {}</translation>
     </message>
@@ -10414,9 +10652,14 @@ LBA {} - {}
         <translation>항목 {}/{}개를 삭제했습니다 — 항목 {}개를 삭제할 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="540"/>
+        <location filename="../../core/physical.py" line="562"/>
         <source>{}: aygitta ortam yok</source>
         <translation>{}: 장치에 미디어가 없습니다</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="3316"/>
+        <source>{}: bagli bolumler degisti — {}</source>
+        <translation>{}: 마운트된 파티션이 변경됨 — {}</translation>
     </message>
     <message>
         <location filename="../../ui/widgets/file_browser.py" line="128"/>
@@ -10425,7 +10668,7 @@ LBA {} - {}
         <translation>{}: 내용 표시가 지원되지 않습니다</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2271"/>
+        <location filename="../../ui/main_window.py" line="2229"/>
         <source>{}&lt;br&gt;&lt;br&gt;Uygulama &lt;b&gt;{} yetkisiyle&lt;/b&gt; yeniden baslatilsin mi?</source>
         <translation>{}&lt;br&gt;&lt;br&gt;&lt;b&gt;{} 권한으로&lt;/b&gt; 응용 프로그램을 다시 시작하시겠습니까?</translation>
     </message>
@@ -10438,6 +10681,98 @@ LBA {} - {}
         <location filename="../../core/updates.py" line="108"/>
         <source>Surum listesi alinamadi: {}</source>
         <translation type="vanished">릴리스 목록을 가져올 수 없습니다: {}</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1817"/>
+        <source>&lt;b&gt;{}&lt;/b&gt; nereye klonlansin?</source>
+        <translation type="vanished">&lt;b&gt;{}&lt;/b&gt;을(를) 어디에 복제하시겠습니까?</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1819"/>
+        <source>Baska bir diske...</source>
+        <translation type="vanished">다른 디스크로...</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1900"/>
+        <source>Disk klonlandi: {}</source>
+        <translation type="vanished">디스크를 복제했습니다: {}</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1871"/>
+        <source>Disk klonlandi: {} -&gt; {} ({})</source>
+        <translation type="vanished">디스크를 복제했습니다: {} -&gt; {} ({})</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1864"/>
+        <source>Disk klonlaniyor — {}</source>
+        <translation type="vanished">디스크 복제 중 — {}</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone_target.py" line="36"/>
+        <source>Diski baska bir diske klonla</source>
+        <translation type="vanished">디스크를 다른 디스크로 복제</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1818"/>
+        <source>Goruntu dosyasina...</source>
+        <translation type="vanished">이미지 파일로...</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone_target.py" line="55"/>
+        <source>Hedef disk:</source>
+        <translation type="vanished">대상 디스크:</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone_target.py" line="119"/>
+        <source>Hedef diski secin.</source>
+        <translation type="vanished">대상 디스크를 선택하십시오.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone_target.py" line="44"/>
+        <source>Kaynagin butun sektorleri (bolum tablosu, bolumler, onyukleme alani) hedef diske birebir kopyalanir. Kaynak salt okunur kalir.</source>
+        <translation type="vanished">원본의 모든 섹터(파티션 테이블, 파티션, 부팅 영역)가 그대로 대상 디스크에 복사됩니다. 원본은 읽기 전용으로 유지됩니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/clone_target.py" line="43"/>
+        <source>Kaynak: &lt;b&gt;{}&lt;/b&gt; ({})</source>
+        <translation type="vanished">원본: &lt;b&gt;{}&lt;/b&gt; ({})</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1877"/>
+        <location filename="../../ui/main_window.py" line="1902"/>
+        <source>Klon hazir</source>
+        <translation type="vanished">복제 준비 완료</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1902"/>
+        <source>Klon olusturuldu:
+{}
+
+Simdi acilsin mi?</source>
+        <translation type="vanished">복제본을 만들었습니다:
+{}
+
+지금 여시겠습니까?</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1868"/>
+        <location filename="../../ui/main_window.py" line="1898"/>
+        <source>Klonlama basarisiz</source>
+        <translation type="vanished">복제 실패</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1843"/>
+        <source>Listede fiziksel disk yok. Diskleri yenileyin; Linux&apos;ta ve Windows&apos;ta disk listesi yonetici yetkisi ister.</source>
+        <translation type="vanished">목록에 물리 디스크가 없습니다. 디스크를 새로 고치십시오. Linux와 Windows에서는 디스크 목록을 가져오려면 관리자 권한이 필요합니다.</translation>
+    </message>
+    <message>
+        <location filename="../../ui/main_window.py" line="1878"/>
+        <source>{} diskine klonlandi ({}).
+
+Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin isletim sistemi birini cevrimdisi yapabilir.</source>
+        <translation type="vanished">{}에 복제했습니다 ({}).
+
+두 디스크가 같은 컴퓨터에 계속 연결되어 있으면, 디스크 ID가 같기 때문에 운영 체제가 그중 하나를 오프라인으로 전환할 수 있습니다.</translation>
     </message>
 </context>
 <context>

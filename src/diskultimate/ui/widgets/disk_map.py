@@ -308,9 +308,26 @@ class DiskMapWidget(QWidget):
                         else fm.elidedText(nokta, Qt.ElideLeft, kalan))
                 painter.drawText(fs_alani, Qt.AlignRight | Qt.AlignVCenter, yazi)
         painter.setPen(metin_rengi)
+        if block.kind == "part":
+            lower = self._size_line(painter, block.obj, genislik_yazi)
         painter.drawText(QRect(sol, rect.top() + 69, genislik_yazi, 15),
                          Qt.AlignLeft | Qt.AlignVCenter,
                          self._elide(painter, lower, genislik_yazi))
+
+    @staticmethod
+    def _size_line(painter: QPainter, part: Partition, width: int) -> str:
+        """Alt satir: toplam + kullanilan. Sigmazsa kisa bicim, o da
+        sigmazsa yalnizca toplam (kirpilmis sayi yanlis okunur)."""
+        total = human_size(part.size)
+        if part.fs_used < 0 or part.fs_total <= 0:
+            return total
+        used = human_size(part.fs_used)
+        fm = painter.fontMetrics()
+        for candidate in (f"{total} · " + tr("{} kullanilan", used),
+                          f"{used} / {total}"):
+            if fm.width(candidate) <= width:
+                return candidate
+        return total
 
     @staticmethod
     def _elide(painter: QPainter, text: str, width: int) -> str:

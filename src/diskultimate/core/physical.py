@@ -15,6 +15,8 @@ GUVENLIK TASARIMI — bu modul veri kaybina yol acabilecek tek yerdir:
 """
 from __future__ import annotations
 
+import dataclasses
+
 import os
 import re
 import struct
@@ -26,7 +28,7 @@ from contextlib import contextmanager
 
 from . import diagnostics
 from .image import BlockDevice, DiskImageError
-from .platform import IS_LINUX, IS_MACOS, IS_WINDOWS, run_tool
+from .platform import IS_LINUX, IS_MACOS, IS_WINDOWS, decode_mount_field, run_tool
 from .platform import mount_partition as pf_mount
 from .platform import partition_mount_point as pf_mount_point
 from .platform import unmount_partition as pf_unmount
@@ -313,6 +315,26 @@ def fill_mount_points(info: Optional[DiskInfo], partitions) -> None:
         part.mount_point = point
 
 
+def sync_mounts(open_info: Optional[DiskInfo],
+                fresh: Optional[DiskInfo]) -> bool:
+    """Taze disk listesindeki baglama bilgisini **acik** diskin `DiskInfo`
+    nesnesine aktarir; degistiyse True.
+
+    Acik oturum diski actigi andaki nesneyi tutar. Disk acildiktan sonra
+    dosya yoneticisinden baglanan bolum uygulamada "bagli degil" gorunuyordu
+    (kullanici bildirimi, 2026-10-09) — ve bagli bolum uyarisi (CLAUDE.md
+    kural 5) bu bayat bilgiye dayaniyordu. Aygita dokunulmaz: bilgi, zaten
+    yapilan liste taramasindan gelir. Arayuz parcaciginda cagrilir.
+    """
+    if open_info is None or fresh is None or open_info is fresh:
+        return False
+    changed = (list(open_info.mounted) != list(fresh.mounted)
+               or dict(open_info.mount_map) != dict(fresh.mount_map))
+    open_info.mounted = list(fresh.mounted)
+    open_info.mount_map = dict(fresh.mount_map)
+    return changed
+
+
 def busy_drive_letters() -> set:
     """Acik disklere ait surucu harfleri (buyuk harf, iki nokta olmadan)."""
     letters = set()
@@ -373,7 +395,7 @@ def _linux_mounts() -> Dict[str, str]:
     for satir in _read_text("/proc/mounts").splitlines():
         parcalar = satir.split()
         if len(parcalar) >= 2 and parcalar[0].startswith("/dev/"):
-            result[parcalar[0]] = parcalar[1].replace("\\040", " ")
+            result[decode_mount_field(parcalar[0])] = decode_mount_field(parcalar[1])
     return result
 
 
@@ -776,11 +798,15 @@ def _win_drive_letters() -> Dict[int, List[str]]:
 def _list_windows() -> List[DiskInfo]:
     diskler: List[DiskInfo] = []
     acik = open_device_paths()
+    extents_ok = True
     try:
         system_numbers = set(_win_system_disk_numbers())
         harfler, ofsetler = _win_volume_extents()
     except Exception:
-        system_numbers, harfler = set(), {}
+        # `ofsetler` de tanimlanir: eskiden yalnizca `harfler` bosaltiliyordu
+        # ve asagidaki `ofsetler.items()` NameError veriyordu.
+        system_numbers, harfler, ofsetler = set(), {}, {}
+        extents_ok = False
 
     for numara in range(32):
         path = f"\\\\.\\PhysicalDrive{numara}"
@@ -791,6 +817,14 @@ def _list_windows() -> List[DiskInfo]:
         if path in acik:
             info = acik[path]
             info.in_use = True
+            if extents_ok:
+                # Birim taramasi diske tutamac acmaz (birimleri sorar); acik
+                # diskin baglama bilgisi buradan tazelenir. Kopya doner:
+                # oturumun nesnesine arayuz parcaciginda `sync_mounts` yazar.
+                info = dataclasses.replace(
+                    info, mounted=list(harfler.get(numara, [])),
+                    mount_map={off: harf for (disk_no, off), harf
+                               in ofsetler.items() if disk_no == numara})
             diskler.append(info)
             diagnostics.debug(f"{path} uygulamada acik; yoklanmadi")
             continue

@@ -1,6 +1,8 @@
 # 0076 — Diskten diske klonlama
 
 Tarih: 2026-10-01
+> **2026-10-09:** hedef secim penceresi (`CloneTargetDialog`) kaldirildi; klon artik tek formdadir — [0096](0096-tek-form-klonlama.md). Bu belgedeki guvenlik kurallari aynen gecerlidir.
+
 Durum: **uygulandi** — goruntu oturumlariyla (ayni kod yolu) Linux ve
 Windows'ta sinandi. **Gercek fiziksel hedef sinanmadi**: VBox misafirinde
 guestcontrol yonetici yetkisi vermiyor; kullanicinin yonetici exe'siyle

@@ -5990,3 +5990,68 @@ Gercek goruntunun 4 GB'a buyutulmus **kopyasinda** (kullanicinin dosyasina
 yazilmadi) kuyruk yolu: FAT16 32->24 MB, ext4 1->3.97 GB; `fsck.vfat -n` ve
 `e2fsck -fn` temiz. Gercek SD kartta sinanmadi (ana makinede fiziksel disk
 denemesi yapilmaz).
+
+## 2026-10-09 (2) — Kullanilan alan gosterimi, geri al ikonu, guc secenekleri (ADR 0095)
+
+- **Kullanilan alan** (kullanici istegi): `ptable.usage_total/usage_text`
+  bolumlerin kullanilan alanini toplar; genisletilmis kapsayici sayilmaz,
+  dolulugu okunamayan bolum sifir sayilmaz ("N bolumun dolulugu okunamadi").
+  Gosterildigi yerler: acik disk ozeti (`summary` "Kullanilan" + bolum
+  listesinde sutun), fiziksel disk bilgisi (acilmamis diskte yoklamadan,
+  acik diskte oturumdan), harita ust seridi ("ad — boyut — X kullanilan —
+  sema"), bolum blogu alt satiri ("198 MB · 109 MB kullanilan"; sigmazsa
+  "109 MB / 198 MB", o da sigmazsa yalnizca boyut), diskler genel gorunumu.
+  Test t96.
+- **Cizgi ikon seti geri al/yinele**: ok ucu elle konmus ucgendi, arcin ucu
+  ucgenin alt kenarindan tasiyordu. Uc artik arcin bitis noktasinda ve
+  teget yonunde hesaplanir (`Pen.arc(head_len, head_w)`).
+- **Guc secenekleri** (ADR 0095): Uygula, Yedekleme ve uzun `run_task`
+  islerinde "Islem bitince: kapat/yeniden baslat/uyku/hazirda beklet" ve
+  "Islem surerken uyku modunu engelle". Eylem yalnizca basarida, 60 sn geri
+  sayimla, oncesinde tamponlar diske yazilir. Taramalarda yalnizca uyku
+  engeli. Linux'ta engel olculdu (cokmede de kalkiyor); Windows/macOS VM'de
+  sinanmadi. Testler t97 + ui_smoke `guc_secenekleri_denetimi`.
+
+## 2026-10-09 (3) — Disk klonlama tek formda (ADR 0096)
+
+- Kullanici istegi: dort pencerelik klon akisi (soru kutusu, hedef listesi /
+  dosya penceresi, ilerleme, sonuc) yerine DiskGenius tarzi **tek form**:
+  `ui/dialogs/clone.py` `CloneDialog` — kaynak + harita, hedef (fiziksel disk,
+  acik goruntu ya da yeni dosya) + "klonla silinecek" haritasi, onaylar,
+  ilerleme/sure, Durdur, guc secenekleri, sonuc ve "Klonu ac".
+  `CloneTargetDialog` kaldirildi; guvenlik kurallari aynen tasindi.
+- Kaynak artik acik oturum olmak zorunda degil: acik olmayan fiziksel disk is
+  parcaciginda salt okunur acilir (`DiskSession.clone_between`).
+- Iki acik kapatildi: yarim klon dosyasi kaliyordu (artik silinir, basarida
+  `restore_owner`); kaynagin kendi dosyasi hedef secilirse kaynak
+  sifirlanirdi (`clone_to` reddeder).
+- Testler: t98, ui_smoke `klon_hedefi_denetimi` yeni forma tasindi, sozde dil
+  listesine klon formu ve guc secenekli gorev penceresi eklendi. Ekran disi
+  uctan uca klon `cmp` ile birebir. Fiziksel disk hedefi VM'de sinanmadi.
+
+## 2026-10-09 (4) — Acik diskin baglama bilgisi bayat kaliyordu
+
+Kullanici bildirimi: nvme0n1 acikken bolum 3 ve 4 dosya yoneticisinden
+baglandi (`/media/pc/Basic data partition`, `/media/pc/Data`); uygulama
+"bagli degil" gostermeye devam etti, "Bagla" / "Cikar" calismiyor gibiydi.
+
+Kok neden: acik oturum diski actigi andaki `DiskInfo`'yu (mount_map) tutuyor,
+3 sn'lik tarama yeni durumu okuyor ama oturuma aktarmiyordu. Tanilama
+gunlugu dogruladi: "Bagla" 4 kez basariyla dondu (bolum zaten bagliydi, mevcut
+nokta verildi) ama tablo bayat bilgiden cizildi. Bagli bolum uyarisi
+(CLAUDE.md kural 5) da ayni bayat bilgiye dayaniyordu.
+
+Duzeltmeler:
+- `physical.sync_mounts` + `DiskSession.refresh_mount_points`; ana pencere
+  tarama sonucunda (arayuz parcaciginda) acik fiziksel oturumlari tazeler,
+  degisiklik gunluge yazilir ve gorunum yenilenir. Aygita dokunulmaz.
+- Windows: acik disk listede oturumun nesnesiyle donuyordu; artik birim
+  taramasindan taze `mounted`/`mount_map` iceren kopya doner (birim taramasi
+  basarisizsa eski bilgi korunur — "bilinmiyor" "bagli degil" sayilmaz).
+  Ayrica birim taramasi istisna verince `ofsetler` tanimsiz kaliyordu (NameError).
+- `/proc/mounts` sekizlik kacislari tam cozulur (`platform.decode_mount_field`;
+  yalnizca `\040` cozuluyordu).
+- Elle yenileme imzayi bosaltiyordu; her seferinde "Aygit takildi: nvme0n1"
+  yaziliyordu. Ayri `_force_tree` bayragi.
+- Testler: t99, ui_smoke `baglama_tazeleme_denetimi`. Gercek bagla/cikar ana
+  makinede denenmedi (ana makine diskine islem yapilmaz).

@@ -165,7 +165,8 @@ class Pen:
         self.fill(color)
         self.p.drawPolygon(QPolygonF([self.P(*q) for q in pts]))
 
-    def arc(self, cx, cy, r, start, sweep, color=None, width=1.5, head=False):
+    def arc(self, cx, cy, r, start, sweep, color=None, width=1.5, head=False,
+            head_len=2.2, head_w=2.0):
         self.stroke(color, width)
         box = QRectF((cx - r) * self.u, (cy - r) * self.u, 2 * r * self.u, 2 * r * self.u)
         path = QPainterPath()
@@ -178,8 +179,11 @@ class Pen:
             px, py = cx + r * math.cos(a), cy - r * math.sin(a)
             dx, dy = -math.sin(a) * sgn, -math.cos(a) * sgn
             nx, ny = math.cos(a), -math.sin(a)
-            self.poly([(px + dx * 2.2, py + dy * 2.2), (px + nx * 2.0, py + ny * 2.0),
-                       (px - nx * 2.0, py - ny * 2.0)], color)
+            # Ok ucu arcin bittigi noktada ve teget yonunde: tabani arcin
+            # ucunu ortalar, yuvarlak cizgi ucu ucgenin icinde kalir.
+            self.poly([(px + dx * head_len, py + dy * head_len),
+                       (px + nx * head_w, py + ny * head_w),
+                       (px - nx * head_w, py - ny * head_w)], color)
 
     def text(self, x, y, w, h, s, color=None, size=6.0, bold=True):
         f = QFont("DejaVu Sans")
@@ -262,12 +266,12 @@ def s_discard(g):
     g.line([(5.5, 5.5), (10.5, 10.5)], g.acc, 1.8); g.line([(10.5, 5.5), (5.5, 10.5)], g.acc, 1.8)
 
 def s_undo(g):
-    g.arc(8.5, 9, 5, 150, -190, g.acc, 1.7, head=False)
-    g.poly([(1.5, 5.5), (6.5, 3.2), (6.2, 8.2)], g.acc)
+    # Elle konumlanan ucgen arcin ucuyla hizali degildi: cizginin yuvarlak
+    # ucu ucgenin alt kenarindan tasiyordu. Uc artik arctan hesaplanir.
+    g.arc(9, 9.5, 5, -60, 180, g.acc, 1.7, head=True, head_len=3.4, head_w=2.6)
 
 def s_redo(g):
-    g.arc(7.5, 9, 5, 30, 190, g.acc, 1.7)
-    g.poly([(14.5, 5.5), (9.5, 3.2), (9.8, 8.2)], g.acc)
+    g.arc(7, 9.5, 5, 240, -180, g.acc, 1.7, head=True, head_len=3.4, head_w=2.6)
 
 def s_refresh(g):
     g.arc(8, 8, 5.2, 70, 290, g.acc, 1.8, head=True)

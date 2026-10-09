@@ -5,8 +5,13 @@ import time
 from typing import Callable, Optional
 
 from PyQt5.QtCore import QThread, Qt, QTimer, pyqtSignal
-from PyQt5.QtWidgets import QApplication, QDialog, QLabel, QProgressBar, QVBoxLayout
+from PyQt5.QtWidgets import (QApplication, QDialog, QLabel, QLayout,
+                             QProgressBar, QVBoxLayout)
 from ...i18n import tr
+
+
+POWER_FULL = "full"
+POWER_SLEEP = "sleep"
 
 
 class _Worker(QThread):
@@ -91,16 +96,19 @@ class TaskDialog(QDialog):
     func(progress_cb) imzali bir cagrilabilir alir; progress_cb(mesaj, yuzde).
     """
 
-    def __init__(self, parent, title: str, func: Callable):
+    def __init__(self, parent, title: str, func: Callable,
+                 power: str = ""):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setFixedSize(420, 128)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
         self.result_value = None
         self.error: Optional[str] = None
+        self.power_after: Optional[str] = None
 
         layout = QVBoxLayout(self)
+        # Boyut icerikten: guc secenekleri satiri eklenince pencere uzar.
+        layout.setSizeConstraint(QLayout.SetFixedSize)
         layout.setContentsMargins(18, 16, 18, 16)
         self.label = QLabel(tr("Hazirlaniyor..."))
         layout.addWidget(self.label)
@@ -110,6 +118,16 @@ class TaskDialog(QDialog):
         self.detail = QLabel("")
         self.detail.setEnabled(False)   # paletten soluk ton
         layout.addWidget(self.detail)
+        # Uzun isler (klonlama, tarama): uyku engeli + "islem bitince".
+        self.power = None
+        if power:
+            from ..widgets.power_options import PowerOptions
+            layout.addSpacing(6)
+            self.power = PowerOptions(self, reason=title,
+                                      after=(power == POWER_FULL))
+            layout.addWidget(self.power)
+        for widget in (self.label, self.bar, self.detail):
+            widget.setFixedWidth(384)      # uzun mesaj pencereyi genisletmesin
 
         self.estimator = Estimator()
         self.detail.setText(self.estimator.text())
@@ -144,15 +162,21 @@ class TaskDialog(QDialog):
 
     def _on_done(self, value) -> None:
         self.result_value = value
+        if self.power is not None:
+            self.power_after = self.power.end(True)
         self.accept()
 
     def _on_fail(self, msg: str) -> None:
         self.error = msg
+        if self.power is not None:
+            self.power.end(False)
         self.reject()
 
     def exec_(self) -> int:
         QTimer.singleShot(0, self.update)
         self._tick.start()
+        if self.power is not None:
+            self.power.begin()
         self.worker.start()
         try:
             result = super().exec_()
@@ -166,11 +190,25 @@ class TaskDialog(QDialog):
         return result
 
 
-def run_task(parent, title: str, func: Callable):
-    """Islemi calistirir; (basarili, sonuc_veya_hata) dondurur."""
-    dlg = TaskDialog(parent, title, func)
+def run_task(parent, title: str, func: Callable, power: str = "",
+             before_power: Optional[Callable[[], None]] = None):
+    """Islemi calistirir; (basarili, sonuc_veya_hata) dondurur.
+
+    Kullanicinin baslattigi **uzun** islerde `power`:
+      * `POWER_FULL` — uyku engeli + "islem bitince" (klonlama, kurtarma:
+        sonucu diske yazan isler). Eylem basarili bitiste geri sayimla
+        uygulanir; `before_power` ondan once.
+      * `POWER_SLEEP` — yalnizca uyku engeli (taramalar: sonuc bellekte,
+        bilgisayar kapanirsa kaybolur).
+    """
+    dlg = TaskDialog(parent, title, func, power=power)
     try:
         ok = dlg.exec_() == QDialog.Accepted
-        return ok, (dlg.result_value if ok else dlg.error)
+        kind = dlg.power_after
+        result = (ok, (dlg.result_value if ok else dlg.error))
     finally:
         dlg.deleteLater()           # ebeveyne bagli pencere birikmesin
+    if kind:
+        from ..widgets.power_options import run_power_action
+        run_power_action(parent, kind, prepare=before_power)
+    return result

@@ -5,6 +5,7 @@ Cekirdegin geri kalani isletim sistemi ayrimi yapmaz; burayi cagirir.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -684,8 +685,9 @@ def partition_mount_point(disk_path: str, index: int, offset: int = -1) -> str:
             gercek = os.path.realpath(device)
             for satir in _read_proc_mounts():
                 parcalar = satir.split()
-                if len(parcalar) >= 2 and os.path.realpath(parcalar[0]) == gercek:
-                    return parcalar[1].replace("\\040", " ")
+                if len(parcalar) >= 2 and \
+                        os.path.realpath(decode_mount_field(parcalar[0])) == gercek:
+                    return decode_mount_field(parcalar[1])
             return ""
         if IS_MACOS:
             result = run_tool(["diskutil", "info", "-plist", device], timeout=20)
@@ -697,6 +699,16 @@ def partition_mount_point(disk_path: str, index: int, offset: int = -1) -> str:
     except Exception:
         return ""
     return ""
+
+
+def decode_mount_field(text: str) -> str:
+    r"""`/proc/mounts` alanindaki sekizlik kacislari cozer.
+
+    Cekirdek bosluk, sekme, satir sonu ve ters boluyu `\040`, `\011`,
+    `\012`, `\134` olarak yazar. Yalnizca bosluk cozuluyordu; sekme ya da
+    ters bolu iceren etiketli birimin noktasi yanlis okunurdu.
+    """
+    return re.sub(r"\\([0-7]{3})", lambda m: chr(int(m.group(1), 8)), text)
 
 
 def _read_proc_mounts() -> List[str]:
@@ -712,7 +724,7 @@ def _is_mount_point(path: str) -> bool:
     """Bu yolun kendisi bir baglama noktasi mi?"""
     for line in _read_proc_mounts():
         parts = line.split()
-        if len(parts) >= 2 and parts[1].replace("\\040", " ") == path:
+        if len(parts) >= 2 and decode_mount_field(parts[1]) == path:
             return True
     return False
 
@@ -2008,3 +2020,173 @@ def efivar_delete(name: str, guid: str) -> Tuple[bool, str]:
         except OSError as exc:
             return False, str(exc)
     return efivar_write(name, guid, 0, b"")
+
+
+# --------------------------------------------------------------------------
+# Guc: uyku engelleme ve islem sonrasi eylem
+# --------------------------------------------------------------------------
+# Klonlama, geri yukleme, guvenli silme gercek donanimda saatler surer.
+# Sistem bu arada uykuya gecerse is durur (USB disk uykuda kopabilir);
+# bitince ne yapilacagini da kullanici secer (DiskGenius "When Finished").
+
+POWER_ACTIONS = ("shutdown", "reboot", "suspend", "hibernate")
+
+_ES_CONTINUOUS = 0x80000000
+_ES_SYSTEM_REQUIRED = 0x00000001
+
+
+class SleepInhibitor:
+    """Islem surerken sistemin uyku moduna gecmesini engeller.
+
+    * Windows: `SetThreadExecutionState` — **cagiran is parcacigina**
+      baglidir; bu yuzden `acquire`/`release` arayuz parcaciginda (omru
+      boyunca yasayan parcacik) cagrilir.
+    * Linux: `systemd-inhibit --what=sleep:idle ... cat`. `cat` bizim
+      borumuzu okur: uygulama coker ya da kapanirsa boru kapanir, `cat`
+      biter ve engel **kendiliginden** kalkar.
+    * macOS: `caffeinate -i -w <pid>` — ayni nedenle bizim surecimize bagli.
+    """
+
+    def __init__(self, reason: str = "DiskUltimate"):
+        self.reason = reason
+        self._proc = None
+        self._win = False
+
+    @property
+    def active(self) -> bool:
+        if self._win:
+            return True
+        return self._proc is not None and self._proc.poll() is None
+
+    def acquire(self) -> Tuple[bool, str]:
+        """Engeli koyar; (basarili, basarisizsa neden)."""
+        if self.active:
+            return True, ""
+        try:
+            if IS_WINDOWS:
+                import ctypes
+                k32 = ctypes.windll.kernel32
+                k32.SetThreadExecutionState.argtypes = [ctypes.c_uint32]
+                k32.SetThreadExecutionState.restype = ctypes.c_uint32
+                if not k32.SetThreadExecutionState(_ES_CONTINUOUS
+                                                   | _ES_SYSTEM_REQUIRED):
+                    return False, tr("Windows uyku engelini kabul etmedi")
+                self._win = True
+                return True, ""
+            if IS_MACOS:
+                cmd = ["caffeinate", "-i", "-w", str(os.getpid())]
+            else:
+                exe = shutil.which("systemd-inhibit")
+                if not exe:
+                    return False, tr("systemd-inhibit bulunamadi; uyku "
+                                     "engellenemiyor")
+                cmd = [exe, "--what=sleep:idle", "--who=DiskUltimate",
+                       f"--why={self.reason}", "--mode=block", "cat"]
+            proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                    stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.PIPE)
+            try:
+                # Yetki reddi hemen doner; calisiyorsa zaman asimi = basari.
+                proc.wait(timeout=0.15)
+            except subprocess.TimeoutExpired:
+                self._proc = proc
+                return True, ""
+            err = (proc.stderr.read() or b"").decode("utf-8", "replace").strip()
+            return False, err or tr("uyku engeli konamadi (kod {})",
+                                    proc.returncode)
+        except Exception as exc:                      # noqa: BLE001
+            return False, str(exc)
+
+    def release(self) -> None:
+        if self._win:
+            try:
+                import ctypes
+                ctypes.windll.kernel32.SetThreadExecutionState(_ES_CONTINUOUS)
+            except Exception:                         # noqa: BLE001
+                pass
+            self._win = False
+        proc, self._proc = self._proc, None
+        if proc is not None:
+            try:
+                if proc.stdin:
+                    proc.stdin.close()            # cat biter, engel kalkar
+                proc.terminate()
+                proc.wait(timeout=2)
+            except Exception:                         # noqa: BLE001
+                try:
+                    proc.kill()
+                except Exception:                     # noqa: BLE001
+                    pass
+
+
+def _linux_sleep_states() -> str:
+    try:
+        with open("/sys/power/state", encoding="ascii") as f:
+            return f.read()
+    except OSError:
+        return ""
+
+
+def power_action_supported(kind: str) -> Tuple[bool, str]:
+    """Islem sonrasi eylem bu sistemde yapilabilir mi; degilse neden."""
+    if kind not in POWER_ACTIONS:
+        return False, kind
+    if IS_WINDOWS:
+        return True, ""
+    if IS_MACOS:
+        if kind == "hibernate":
+            return False, tr("macOS'ta hazirda bekletme dogrudan baslatilamaz")
+        return True, ""
+    if not shutil.which("systemctl"):
+        return False, tr("systemctl bulunamadi")
+    states = _linux_sleep_states()
+    if kind == "suspend" and states and not ({"mem", "freeze"}
+                                             & set(states.split())):
+        return False, tr("Bu sistem uyku modunu desteklemiyor")
+    if kind == "hibernate" and states and "disk" not in states.split():
+        return False, tr("Bu sistem hazirda bekletmeyi desteklemiyor")
+    return True, ""
+
+
+def power_action(kind: str) -> Tuple[bool, str]:
+    """Bilgisayari kapatir / yeniden baslatir / uyutur / hazirda bekletir.
+
+    Cagiran taraf once kullaniciya geri sayim gosterir; bu islev hemen
+    uygular. (basarili, basarisizsa neden).
+    """
+    ok, why = power_action_supported(kind)
+    if not ok:
+        return False, why
+    try:
+        if IS_WINDOWS:
+            if kind == "suspend":
+                import ctypes
+                # bHibernate=False: uyku (rundll32 yolu yanlis argumanla
+                # cogu zaman hazirda bekletmeye duser).
+                if ctypes.windll.powrprof.SetSuspendState(False, False, False):
+                    return True, ""
+                return False, tr("Windows hata kodu {}",
+                                 ctypes.windll.kernel32.GetLastError())
+            flag = {"shutdown": "/s", "reboot": "/r", "hibernate": "/h"}[kind]
+            cmd = ["shutdown", flag] + ([] if kind == "hibernate"
+                                        else ["/t", "0"])
+        elif IS_MACOS:
+            if kind == "suspend":
+                cmd = ["pmset", "sleepnow"]
+            elif is_elevated():
+                cmd = ["shutdown", "-h" if kind == "shutdown" else "-r", "now"]
+            else:
+                verb = "shut down" if kind == "shutdown" else "restart"
+                cmd = ["osascript", "-e",
+                       f'tell application "System Events" to {verb}']
+        else:
+            verb = {"shutdown": "poweroff", "reboot": "reboot",
+                    "suspend": "suspend", "hibernate": "hibernate"}[kind]
+            cmd = ["systemctl", verb]
+        result = run_tool(cmd, timeout=60)
+        if result.returncode == 0:
+            return True, ""
+        return False, ((result.stderr or result.stdout or "").strip()
+                       or tr("kod {}", result.returncode))
+    except Exception as exc:                          # noqa: BLE001
+        return False, str(exc)
