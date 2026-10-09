@@ -81,7 +81,7 @@ APP_NAME = "DiskUltimate"
 APP_AUTHOR = "Mikail Cansız"
 # Surumun tek kaynagi burasidir. Degistirildiginde README.md'deki surum rozeti
 # ve .claude/docs/project-overview.md "Durum" satiri da guncellenir.
-APP_VERSION = "0.7.0-beta"
+APP_VERSION = "0.8.0-beta"
 
 # Sekme sirasi tek yerden tanimlanir; `tabs.setCurrentIndex` cagrilari ciplak
 # sayi kullanmaz, boylece sekme sirasi degisince sessizce yanlis sekme acilmaz.

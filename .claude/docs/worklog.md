@@ -6055,3 +6055,6 @@ Duzeltmeler:
   yaziliyordu. Ayri `_force_tree` bayragi.
 - Testler: t99, ui_smoke `baglama_tazeleme_denetimi`. Gercek bagla/cikar ana
   makinede denenmedi (ana makine diskine islem yapilmaz).
+- Sürüm 0.8.0-beta (kullanıcı: "comitle push yap, release oluştur"): kullanılan
+  alan gösterimi, güç seçenekleri/uyku engeli, tek form klon, açık diskin bağlama
+  bilgisi düzeltmesi.
