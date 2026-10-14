@@ -7700,6 +7700,50 @@ def t100_acik_diskin_harfleri_gidip_gelmez():
         physical._unregister_open(acik_yol)
 
 
+# --------------------------------------------------------------------------
+@test
+def t101_uygula_sonrasi_salt_okunur():
+    """Uygula bitince kaynak yeniden salt okunur acilir (ADR 0025)
+
+    Gozlemci gezinti testi (win10, 2026-10-14): Uygula'dan sonra oturum
+    yazma kipinde kaliyordu; Windows'ta diskin BUTUN birimleri disk
+    kapatilana kadar kilitli/ayrilmis kaldi, yeni bicimlendirilen bolum
+    Gezgin'de gorunmedi. Fiziksel yol Windows'ta `tests.long.explore
+    --aygit` ile sinanir; burada ayni gecis goruntu dosyasinda.
+    """
+    from diskultimate.core import operations as ops
+
+    yol = os.path.join(TMP, "salt_okunur_donus.img")
+    s = DiskSession.create(yol, 128 * MIB, scheme="gpt", overwrite=True)
+    r = s.free_regions()[0]
+    s.create_partition(r.start_lba, 48 * 2048, fs_key="fat32", label="ILK")
+    s.close()
+
+    s = DiskSession.open(yol, readonly=True)
+    try:
+        assert s.readonly
+        s.become_readonly()                              # zaten salt okunur: no-op
+        kuyruk = ops.OperationQueue()
+        parca = s.partitions[0]
+        kuyruk.add(ops.format_op(parca.index, "fat32", label="SONRA",
+                                 at_lba=parca.start_lba))
+        s.become_writable(confirm=True)
+        sonuc = kuyruk.apply(s)
+        assert sonuc.ok, sonuc.summary()
+        assert not s.readonly
+        s.become_readonly()
+        assert s.readonly, "Uygula sonrasi kaynak yazma kipinde kaldi"
+        assert s.partitions[0].fs_label.strip() == "SONRA", s.partitions[0].fs_label
+        try:
+            s.create_partition(s.free_regions()[0].start_lba, 2048, fs_key="fat32")
+        except Exception:
+            pass
+        else:
+            raise AssertionError("salt okunur oturum yazdi")
+    finally:
+        s.close()
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

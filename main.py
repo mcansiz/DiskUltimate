@@ -43,7 +43,14 @@ from diskultimate.ui.main_window import (APP_NAME, APP_VERSION,  # noqa: E402
 from diskultimate.ui.startup import elevate_at_startup  # noqa: E402
 from diskultimate.ui.theme import apply_theme, saved_theme  # noqa: E402
 
-def main() -> int:
+def start(argv=None):
+    """Uygulamayi kurar ve ana pencereyi gosterir: (app, window).
+
+    `window` None ise yetkili kopya devraldi, bu kopya kapanmalidir.
+    Olay dongusunu calistirmaz: gozlemci arayuz testi (ADR 0097) uygulamayi
+    **ayni acilis yolundan** kurup kendisi surer.
+    """
+    argv = list(sys.argv if argv is None else argv)
     # Tanilama pencereden once acilir: acilista yetki istegi de gunluge girsin
     # (iki kez cagrilmasi zararsizdir, ayni yolu dondurur).
     diagnostics.configure()
@@ -52,7 +59,7 @@ def main() -> int:
     set_app_user_model_id("DiskUltimate.DiskUltimate")
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-    app = QApplication(sys.argv)
+    app = QApplication(argv)
     app.setApplicationName(APP_NAME)
     app.setApplicationVersion(APP_VERSION)
     app.setOrganizationName("DiskUltimate")
@@ -75,7 +82,7 @@ def main() -> int:
     theme = apply_theme(app, saved_theme())
 
     if elevate_at_startup(APP_NAME):
-        return 0                      # yetkili kopya devraldi
+        return app, None              # yetkili kopya devraldi
 
     window = MainWindow()
     if not is_elevated():
@@ -90,8 +97,15 @@ def main() -> int:
     # Yetkili kopya olarak acildiysak, bizi baslatan kopya kapanmak icin bu
     # bildirimi bekliyor (bkz. core.platform.ElevatedLaunch, ADR 0039).
     signal_elevated_ready()
-    if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
-        window.open_path(sys.argv[1])
+    if len(argv) > 1 and os.path.isfile(argv[1]):
+        window.open_path(argv[1])
+    return app, window
+
+
+def main() -> int:
+    app, window = start()
+    if window is None:
+        return 0
     return app.exec_()
 
 

@@ -6106,3 +6106,58 @@ Neden testler yakalamadı: `ui_smoke` disk yoklama zamanlayıcısını bilerek
 durduruyor ve yalnızca görüntü dosyasıyla çalışıyor; birim testleri tek bir
 çağrının çıktısına bakıyor. Hata ancak "fiziksel disk açık + Windows +
 zamanlayıcı en az iki tur" birleşiminde görünüyordu.
+
+## 2026-10-14 (2) — Gözlemci arayüz gezintisi (ADR 0097) ve bulduğu hata
+
+Kullanıcı isteği: "GitHub'da sanal makinede GUI'yi çalıştırıp tüm özellikleri
+elle deneyen bir test yapabilir miyiz? Betiklerle bu tür hataları
+bulamıyoruz." (Kullanıcı: "evet puşla ve testi yapalım".)
+
+- `tests/long/explore.py`: uygulama `main.start()` ile gerçek açılış yolundan
+  kurulur (main.py `start()` + `main()` olarak ayrıldı; davranış aynı),
+  ağaca fareyle tıklanır, gezginde gezilir, kuyruğa biçimlendirme eklenir,
+  Uygula'ya basılır. Modal pencereler gerçek `exec_` döngüsünde açılır, bir
+  sürücü onları kullanıcı gibi karşılar; beklenmeyen pencere bulgudur. Her
+  adımdan sonra 12 sn boşta beklenir ve kendiliğinden olan her şey izlenir
+  (ağaç/görünüm/gezgin yenilenmesi, günlük, seçim/kaydırma, sürücü harfi
+  maskesi, `WM_DEVICECHANGE`, istisna, donma raporu); yoklamanın döndüğü de
+  doğrulanır. Aygıt kipi (`--aygit`, yalnızca CI / `DU_TEST_VM=1`) VHD'yi
+  Windows araçlarıyla bölümler, Uygula sonrası Get-Volume + chkdsk.
+- `.github/workflows/gezinti.yml`: her push'ta Windows aygıt, Windows
+  görüntü, Linux (Xvfb) görüntü; rapor + ekran görüntüleri + günlükler.
+
+Testin kanıtı (VirtualBox win10, aygıt kipi, gerçek "windows" Qt platformu):
+- **Eski kod** (0.8.0-beta): "boşta: açılış" düştü — 12 sn'de ağaç 8 kez
+  yeniden kuruldu, görünüm 4 kez tazelendi, gezgin 4 kez sıfırlandı, günlüğe
+  4 kez "bağlı bölümler değişti" yazıldı. Kullanıcının bildirdiği belirtinin
+  birebiri.
+- **Yeni kod**: aynı adım temiz (4 yoklama turu, hiçbir şey değişmedi);
+  ağaç → gezgin → kuyruk → Uygula → yerleşme adımları geçti.
+
+Testin ilk koşuda bulduğu **yeni hata**: Uygula'dan sonra oturum yazma
+kipinde kalıyordu (ADR 0025 "kilit yalnızca uygulama süresince" diyor).
+Windows'ta diskin BÜTÜN birimleri — dokunulmayan F: dahil — disk
+kapatılana kadar kilitli/ayrılmış kaldı; yeni biçimlendirilen bölüm
+Gezgin'de görünmedi (Get-Volume boş döndü). Düzeltme:
+`DiskSession.become_readonly()` + `MainWindow._end_write_mode()` — Uygula
+bitince (başarılı ya da yarıda) kaynak yeniden salt okunur açılır; yazma
+tutamacı kapanırken kilitler bırakılır ve bölüm tablosu yeniden okutulur.
+Test t101 (görüntü dosyasında aynı geçiş). Yeni metin 9 dile çevrildi.
+Windows'ta düzeltmenin sonucu CI gezinti koşusunda ölçülecek.
+
+Test sürücüsünün kendi hataları (sınırken bulundu, düzeltildi):
+- işlenen pencere `id()` ile tutuluyordu; kapanan pencerenin numarası yeni
+  Uygula penceresine verildi, test 10 dk asılı kaldı → işaret pencerenin
+  kendisinde (`du_driven` özelliği), toplam süre sınırı (`--sinir`,
+  faulthandler yığın basıp çıkar), rapor her adımdan sonra yazılır;
+- Qt5 `QTest.mouseDClick` önceki bas-bırak'ı göndermiyor, öğe görünümü çift
+  tıklamayı yutuyordu → önce tıklama, sonra çift tıklama;
+- pencere işlemi sürücünün kendi zamanlayıcı yuvasında çalışınca iç içe
+  açılan "bağlı bölüm" sorusu karşılanmıyordu (Qt zamanlayıcıyı kendi yuvası
+  bitmeden yeniden tetiklemez) → işlem ayrı `singleShot`'ta;
+- PowerShell arayüz iş parçacığında çağrılınca uygulamanın donma yakalayıcısı
+  testin kendi donmasını raporladı → `off_ui`;
+- ekran görüntüsü adındaki `:` NTFS'te alternatif veri akışı sayıldı.
+
+Not: kullanıcı PC'nin ısındığını bildirdi; yerel VM ve ağır testler
+durduruldu, VM kapatıldı. Sonraki koşular GitHub Actions'ta.

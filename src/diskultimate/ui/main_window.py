@@ -2600,6 +2600,10 @@ class MainWindow(QMainWindow):
         ran, outcome = run_apply(self, self.session, queue,
                                  prepare=self._make_writable,
                                  before_power=self._flush_for_power)
+        # Yazma yetkisi yalnizca uygulama suresince (ADR 0025): basarili da
+        # olsa yarida da kalsa kaynak yeniden salt okunur acilir; Windows'ta
+        # diskin birim kilitleri ancak boyle birakilir.
+        self._end_write_mode()
         if not ran:
             if outcome:
                 self.log(tr("Uygulama basarisiz: {}", outcome))
@@ -2615,6 +2619,21 @@ class MainWindow(QMainWindow):
             self.log(tr("DIKKAT: {}", result.summary()))
         self.refresh()
         self._refresh_pending()
+
+    def _end_write_mode(self) -> None:
+        """Uygula bitti: kaynak yeniden salt okunur (`become_readonly`)."""
+        session = self.session
+        if session is None or session.readonly:
+            return
+        # Arka plandaki isletim sistemi taramasi ve disk yoklamasi ayni
+        # aygita dokunabilir; tutamac degismeden once biter (ADR 0021/0089).
+        self.osinfo.wait(session)
+        self._wait_for_scan()
+        try:
+            session.become_readonly()
+        except Exception as exc:                      # noqa: BLE001
+            diagnostics.warn(f"salt okunur kipe donulemedi: {exc}")
+            self.log(tr("Disk salt okunur kipe dondurulemedi: {}", exc))
 
     def _flush_for_power(self) -> None:
         """Kapatma/uyku oncesi: acik dosya sistemleri kapanir, goruntunun

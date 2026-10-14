@@ -1440,6 +1440,32 @@ class DiskSession:
         diagnostics.info(f"kaynak yazma moduna alindi: {self.name}")
         self.reload()
 
+    def become_readonly(self) -> None:
+        """Uygula bittikten sonra kaynagi yeniden **salt okunur** acar.
+
+        ADR 0025: yazma yetkisi — ve Windows'ta onunla gelen birim kilitleri —
+        yalnizca uygulama suresince vardir. Yazma tutamaci acik kalinca diskin
+        BUTUN birimleri (dokunulmayanlar dahil) disk kapatilana kadar kilitli
+        ve ayrilmis kaliyordu; yeni bicimlendirilen bolum Gezgin'de hic
+        gorunmuyordu (gozlemci gezinti testi, win10, 2026-10-14). Yazma
+        tutamaci kapanirken kilitler birakilir ve isletim sistemine bolum
+        tablosunu yeniden okumasi bildirilir (`PhysicalDisk.close`).
+
+        Zaten salt okunursa hicbir sey yapmaz.
+        """
+        if self.readonly:
+            return
+        self.close_filesystems()
+        if self.is_physical:
+            info = self.image.info
+            self.image.close()
+            self.image = PhysicalDisk(info, readonly=True)
+        else:
+            self.image.close()
+            self.image = open_disk(self.path, readonly=True)
+        diagnostics.info(f"kaynak yeniden salt okunur: {self.name}")
+        self.reload()
+
     def close(self) -> None:
         self.close_filesystems()
         self.image.close()

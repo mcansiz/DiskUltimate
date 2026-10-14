@@ -682,6 +682,24 @@ bkz. worklog 2026-09-17 (4).
 Ders: dil degisimi gibi **kullanicinin baslatmadigi** tazelemeler modal
 pencere dogurmamalidir. Yeni bir `retranslate()` yazarken bu denetlenir.
 
+## Gözlemci arayüz gezintisi (ADR 0097)
+
+Uygulamayı `main.start()` ile gerçek açılış yolundan kurar, kullanıcı gibi
+sürer (ağaca tıklama, gezgin, kuyruk, Uygula) ve her adımdan sonra **boşta**
+bekleyip değişmemesi gerekenleri izler (ağaç/görünüm/gezgin yenilenmesi,
+günlük, seçim/kaydırma, sürücü harfleri, Windows birim bildirimleri,
+istisna, donma raporu). Disk yoklaması çalışır; çalışmıyorsa adım hata verir.
+
+```bash
+QT_QPA_PLATFORM=offscreen python3 -m tests.long.explore            # görüntü kipi (her yerde)
+python -m tests.long.explore --aygit                               # takılı VHD: yalnızca CI / DU_TEST_VM=1
+python -m tests.long.explore --bosta 30 --sinir 900 --rapor rapor/x
+```
+
+Çıktı: `--rapor` altında JSON (uzun testlerle aynı biçim), olay akışlı
+Markdown ve `goruntuler/` (her adım + her karşılanan pencere). CI:
+`.github/workflows/gezinti.yml` (Windows aygıt, Windows görüntü, Linux Xvfb).
+
 ## Bilinen sinirlar (test disi)
 - NTFS kullanim orani okunamiyor (MFT cozumlemesi yok) — tabloda `-` gosterilir.
 - `t05_harici_bicimlendirme` sistemde `mkfs.*` yoksa **atlanir**. Atlanan test

@@ -241,5 +241,11 @@ python3 main.py              # GUI
 python3 -m tests.run_all     # çekirdek testleri
 python3 -m tests.diag_check  # tanılama / donma yakalayıcı
 python3 -m tests.i18n_check  # ceviri sozlukleri
+QT_QPA_PLATFORM=offscreen python3 -m tests.long.explore  # gozlemci arayuz gezintisi (ADR 0097)
 DISKULTIMATE_LANG=en python3 main.py   # arayuzu baska dilde ac
 ```
+
+Gozlemci gezinti (`tests.long.explore`) uygulamayi kullanici gibi surer ve
+her adimdan sonra **bosta** bekleyip kendiliginden degisen bir sey olup
+olmadigini izler; gercek aygit kipi (`--aygit`) yalnizca CI'da / test VM'inde
+kosar. Yoklama, zamanlayici ya da arka plan isi degisince bu test de kosulur.
