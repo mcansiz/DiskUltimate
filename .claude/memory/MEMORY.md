@@ -10,3 +10,4 @@ global hafiza kullanilmaz.
 - [Linux test ortami](linux-test-ortami.md) — Linux VM yok (2026-09-29); ana makinede yalnizca goruntu dosyasiyla, fiziksel disk VBox win10'da
 - [VirtualBox win10 test](virtualbox-win10-test.md) — yerel VBox misafiri "win10 ": guestcontrol pc/1234 (yonetici isleri Administrator/1234), embeddable Python, kos.bat; X: = ana makine myiso paylasimi (yazma!)
 - [Git: tek main](git-tek-main.md) — dal/PR acilmaz; commit dogrudan main'e, push edilir
+- [Agir testler GitHub'da](agir-testler-github.md) — VM/tam test/GUI gezinti yerelde PC'yi isitiyor; GitHub Actions'ta kos, sure siniri koy, sessiz bekleme

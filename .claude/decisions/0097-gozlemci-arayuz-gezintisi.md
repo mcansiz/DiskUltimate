@@ -1,8 +1,10 @@
 # 0097 — Gözlemci arayüz gezintisi (gerçek uygulama, gerçek disk, zaman)
 
 Tarih: 2026-10-14
-Durum: **uygulandı** — görüntü kipi ana makinede ölçüldü; aygıt kipi GitHub
-Actions `windows-2022` üzerinde (sonuçlar worklog'da)
+Durum: **uygulandı** — VirtualBox win10'da eski kodun hatasını yakaladı,
+yeni kodda temiz; GitHub Actions 38609339211'de Windows aygıt / Windows
+görüntü / Linux Xvfb üçü de geçti. İlk koşuda ayrıca "Uygula sonrası birim
+kilitleri bırakılmıyor" hatasını buldu (worklog 2026-10-14 (2)).
 İlgili: [0080](0080-uzun-testler.md), [0021](0021-acik-aygiti-yoklamama-ve-kopyalama-ilerlemesi.md),
 [0026](0026-bolum-yoklamasi.md), [0096](0096-tek-form-klonlama.md)
 

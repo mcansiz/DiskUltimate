@@ -6143,7 +6143,11 @@ Gezgin'de görünmedi (Get-Volume boş döndü). Düzeltme:
 bitince (başarılı ya da yarıda) kaynak yeniden salt okunur açılır; yazma
 tutamacı kapanırken kilitler bırakılır ve bölüm tablosu yeniden okutulur.
 Test t101 (görüntü dosyasında aynı geçiş). Yeni metin 9 dile çevrildi.
-Windows'ta düzeltmenin sonucu CI gezinti koşusunda ölçülecek.
+GitHub Actions koşusu 38609339211 (commit 172256b): üç gezinti işi de
+başarılı. Windows aygıt: PhysicalDrive2, bütün boşta adımları temiz,
+Uygula sonrası Windows `F: exFAT DUGUI` ve `E: NTFS DUVERI` birimlerini
+görüyor, `chkdsk F:` temiz (düzeltmeden önce Get-Volume boştu). CI
+38609339004 (Linux run_all + ui_smoke) başarılı.
 
 Test sürücüsünün kendi hataları (sınırken bulundu, düzeltildi):
 - işlenen pencere `id()` ile tutuluyordu; kapanan pencerenin numarası yeni
