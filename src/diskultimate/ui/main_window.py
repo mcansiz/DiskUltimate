@@ -1589,10 +1589,13 @@ class MainWindow(QMainWindow):
         if part is None:
             return
         fs = self.session.filesystem(part.index)
-        if fs is None or not fs.writable:
+        # Kaynak salt okunur acik olabilir (ADR 0025): etiket kuyruga girer ve
+        # Uygula'da yazilir. Soru surucunun ve birimin durumudur.
+        possible, reason = fs.label_possible() if fs is not None else (False, "")
+        if not possible:
             QMessageBox.information(
                 self, tr("Desteklenmiyor"),
-                tr("Bu dosya sisteminde etiket degistirme desteklenmiyor.\n"
+                reason or tr("Bu dosya sisteminde etiket degistirme desteklenmiyor.\n"
                 "Bolumu yeniden bicimlendirerek etiket verebilirsiniz."))
             return
         etiket, ok = QInputDialog.getText(self, tr("Birim etiketi"), tr("Yeni etiket:"),
@@ -1788,6 +1791,8 @@ class MainWindow(QMainWindow):
             backup_path=backup_path, disk_path=self._selected_disk_path() or "")
         dlg.before_power = self._flush_for_power
         dlg.exec_()
+        # Geri yukleme hedef oturumu yazma kipine alir (ADR 0025).
+        self._end_write_mode()
         if dlg.result_value is not None:
             self.log(dlg.status.text())
         if dlg.opened_path:
@@ -1842,6 +1847,8 @@ class MainWindow(QMainWindow):
             reload_needed, opened = dlg.reload_needed, dlg.opened_path
         finally:
             dlg.deleteLater()
+        # Acik bir oturuma klon onu yazma kipine alir (ADR 0025).
+        self._end_write_mode()
         if text:
             self.log(tr("Klonlama: {}", text))
         if reload_needed:
@@ -1916,7 +1923,9 @@ class MainWindow(QMainWindow):
                 fs = self.session.filesystem(index)
             except Exception:
                 pass
-            free_region = bool(fs and getattr(fs, "writable", False))
+            # Bos alan silme dolgu dosyasi yazar; kaynak su an salt okunur
+            # olsa da Uygula'da yazilabilecekse secilebilir (ADR 0025).
+            free_region = bool(fs is not None and fs.write_possible()[0])
 
         dlg = WipeDialog(self, target_name, size, allow_free_space=free_region)
         if exec_dialog(dlg) != WipeDialog.Accepted:
@@ -2621,19 +2630,26 @@ class MainWindow(QMainWindow):
         self._refresh_pending()
 
     def _end_write_mode(self) -> None:
-        """Uygula bitti: kaynak yeniden salt okunur (`become_readonly`)."""
-        session = self.session
-        if session is None or session.readonly:
+        """Yazan is bitti: yazma kipindeki **butun** oturumlar yeniden salt
+        okunur (`become_readonly`, ADR 0025).
+
+        Yalnizca etkin oturum degil: geri yukleme ve diske klonlama hedefi
+        baska bir acik oturum olabilir ve o oturum is parcaciginda yazma
+        kipine alinir.
+        """
+        writable = [s for s in self.sessions if not s.readonly]
+        if not writable:
             return
         # Arka plandaki isletim sistemi taramasi ve disk yoklamasi ayni
         # aygita dokunabilir; tutamac degismeden once biter (ADR 0021/0089).
-        self.osinfo.wait(session)
         self._wait_for_scan()
-        try:
-            session.become_readonly()
-        except Exception as exc:                      # noqa: BLE001
-            diagnostics.warn(f"salt okunur kipe donulemedi: {exc}")
-            self.log(tr("Disk salt okunur kipe dondurulemedi: {}", exc))
+        for session in writable:
+            self.osinfo.wait(session)
+            try:
+                session.become_readonly()
+            except Exception as exc:                  # noqa: BLE001
+                diagnostics.warn(f"salt okunur kipe donulemedi: {exc}")
+                self.log(tr("Disk salt okunur kipe dondurulemedi: {}", exc))
 
     def _flush_for_power(self) -> None:
         """Kapatma/uyku oncesi: acik dosya sistemleri kapanir, goruntunun

@@ -539,7 +539,11 @@ SIGNATURES: List[FileSignature] = [
     FileSignature("png", mark("PNG goruntu"), b"\x89PNG\r\n\x1a\n", b"IEND\xaeB`\x82", 64 * 1024 * 1024, "png"),
     FileSignature("gif", mark("GIF goruntu"), b"GIF8", b"\x00\x3B", 16 * 1024 * 1024, "gif"),
     FileSignature("pdf", mark("PDF belgesi"), b"%PDF-", b"%%EOF", 128 * 1024 * 1024, "pdf"),
-    FileSignature("zip", mark("ZIP / Office belgesi"), b"PK\x03\x04", b"", 256 * 1024 * 1024, "zip"),
+    # ZIP'in sonu "merkezi dizin sonu" kaydidir (PK\x05\x06 + 18 bayt + yorum);
+    # boyut ondan hesaplanir (`_carve_size`). Bitis bilinmeyince dosya azami
+    # boyuta (256 MB) kesiliyordu ve hicbir zip okuyucu acamiyordu: okuyucular
+    # bu kaydi dosyanin SONUNDA arar (gozlemci gezinti testi, 2026-10-14).
+    FileSignature("zip", mark("ZIP / Office belgesi"), b"PK\x03\x04", b"PK\x05\x06", 256 * 1024 * 1024, "zip"),
     FileSignature("rar", mark("RAR arsivi"), b"Rar!\x1a\x07", b"", 256 * 1024 * 1024, "rar"),
     FileSignature("7z", mark("7-Zip arsivi"), b"7z\xbc\xaf\x27\x1c", b"", 256 * 1024 * 1024, "7z"),
     FileSignature("gz", mark("GZIP arsivi"), b"\x1f\x8b\x08", b"", 128 * 1024 * 1024, "gz"),
@@ -629,10 +633,27 @@ def _carve_size(device: BlockDevice, offset: int, sig: FileSignature,
         veri = kuyruk + device.read(offset + okunan, length)
         bulundu = veri.find(sig.footer)
         if bulundu >= 0:
-            return okunan - len(kuyruk) + bulundu + len(sig.footer)
+            end = okunan - len(kuyruk) + bulundu + len(sig.footer)
+            if sig.key == "zip":
+                return _zip_end(device, offset, end - len(sig.footer), sinir)
+            return end
         kuyruk = veri[-(len(sig.footer) - 1):] if len(sig.footer) > 1 else b""
         okunan += length
     return 0        # bitis imzasi bulunamadi: guvenilir degil, atlanir
+
+
+def _zip_end(device: BlockDevice, offset: int, eocd: int, limit: int) -> int:
+    """ZIP'in gercek boyu: merkezi dizin sonu kaydi (22 bayt) + yorumu.
+
+    `eocd` dosya basina gore kaydin konumudur. Kayit sinirdan tasarsa
+    guvenilir degildir (0 = atla).
+    """
+    record = device.read(offset + eocd, 22)
+    if len(record) < 22:
+        return 0
+    comment = struct.unpack_from("<H", record, 20)[0]
+    end = eocd + 22 + comment
+    return end if end <= limit else 0
 
 
 def extract_carved(device: BlockDevice, item: CarvedFile, dest_dir: str,

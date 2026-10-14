@@ -197,7 +197,7 @@ def _run_format(session, p, progress):
 
 
 def _run_delete(session, p, progress):
-    session.delete_partition(p["index"], wipe=p.get("wipe", True))
+    session.delete_partition(p["index"], wipe=p.get("wipe", False))
 
 
 def _run_resize(session, p, progress):
@@ -710,7 +710,7 @@ def format_op(index: int, fs_key: str, label: str = "", fs_name: str = "",
     return operation
 
 
-def delete_op(index: int, name: str = "", wipe: bool = True,
+def delete_op(index: int, name: str = "", wipe: bool = False,
               at_lba: int = -1) -> Operation:
     return Operation("delete", title_text=mark("Bolum {} sil"),
                      title_args=(index,), detail_text=mark("{}"),

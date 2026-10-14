@@ -487,7 +487,16 @@ class DiskSession:
             self.reload()
         return self.table.get(part.index) if self.table else part
 
-    def delete_partition(self, index: int, wipe: bool = True) -> None:
+    def delete_partition(self, index: int, wipe: bool = False) -> None:
+        """Bolumu tablodan kaldirir; veri **korunur** (`wipe=False`).
+
+        DiskGenius ve Windows'un kendi araci da yalnizca tablo girdisini
+        kaldirir: silinen bolum "Kayip bolumleri tara" ile geri getirilebilir.
+        Eskiden bolumun ilk ve son 2 MB'i da siliniyordu; kayip bolum
+        taramasi silinen bolumu hic bulamiyordu (gozlemci gezinti testi,
+        2026-10-14). Veriyi yok etmek icin Guvenli silme vardir; ayni yere
+        yeni bolum olusturmak zaten kendi basini temizler.
+        """
         self._require_table()
         self._require_writable()
         if self.table.scheme == "none":

@@ -7744,6 +7744,108 @@ def t101_uygula_sonrasi_salt_okunur():
         s.close()
 
 
+
+# --------------------------------------------------------------------------
+@test
+def t102_salt_okunur_kaynakta_yazma_yetenegi():
+    """Salt okunur acik kaynakta etiket / bos alan silme secilebilir (ADR 0025)
+
+    Kaynak artik hep salt okunur acilir; arayuz "fs.writable" sorup fiziksel
+    diskte etiket degistirmeyi ve bos alan silmeyi hic sundurmuyordu. Soru
+    surucunun ve birimin durumudur, aygitin su anki kipi degil.
+    """
+    yol = os.path.join(TMP, "yazma_yetenegi.img")
+    s = DiskSession.create(yol, 128 * MIB, scheme="gpt", overwrite=True)
+    r = s.free_regions()[0]
+    s.create_partition(r.start_lba, 48 * 2048, fs_key="fat32", label="FATB")
+    r = s.free_regions()[0]
+    s.create_partition(r.start_lba, 40 * 2048, fs_key="ext4", label="EXTB")
+    s.close()
+
+    s = DiskSession.open(yol, readonly=True)
+    try:
+        fat = s.filesystem(1)
+        assert not fat.writable, "salt okunur kaynakta FAT yazilabilir gorundu"
+        assert fat.write_possible() == (True, ""), fat.write_possible()
+        assert fat.label_possible()[0], fat.label_possible()
+        ext = s.filesystem(2)
+        assert not ext.label_possible()[0], "ext etiket yazicisi yok"
+    finally:
+        s.close()
+
+
+
+# --------------------------------------------------------------------------
+@test
+def t103_silinen_bolum_kayip_taramasinda_bulunur():
+    """Bolum silme veriyi korur; silinen bolum kayip bolum taramasinda bulunur
+
+    Gozlemci gezinti testi (2026-10-14): "Bolum sil" bolumun ilk ve son 2
+    MB'ini da siliyordu; silinen bolum "Kayip bolumleri tara" ile hic
+    bulunamiyordu. DiskGenius ve Windows yalnizca tablo girdisini kaldirir.
+    """
+    from diskultimate.core import operations as ops
+
+    yol = os.path.join(TMP, "silinen_bolum.img")
+    s = DiskSession.create(yol, 192 * MIB, scheme="gpt", overwrite=True)
+    r = s.free_regions()[0]
+    s.create_partition(r.start_lba, 40 * 2048, fs_key="fat32", label="BIR")
+    r = s.free_regions()[0]
+    hedef = s.create_partition(r.start_lba, 64 * 2048, fs_key="fat32", label="IKI")
+    fs = s.filesystem(hedef.index)
+    fs.write_file("/kalsin.txt", b"silinen bolumden geri geldi\n")
+    fs.flush()
+    baslangic = hedef.start_lba
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.delete_op(hedef.index, at_lba=baslangic))
+    assert kuyruk.apply(s).ok
+    assert all(p.start_lba != baslangic for p in s.partitions)
+    bulunan = [b for b in s.scan_lost_partitions(deep=False)
+               if b.start_lba == baslangic]
+    assert bulunan, "silinen bolum hizli taramada bulunamadi"
+    assert bulunan[0].label.strip() == "IKI", bulunan[0].label
+    geri = s.adopt_lost_partition(bulunan[0])
+    assert s.filesystem(geri.index).read("/kalsin.txt") == \
+        b"silinen bolumden geri geldi\n"
+    s.close()
+
+
+# --------------------------------------------------------------------------
+@test
+def t104_imzadan_cikarilan_zip_acilir():
+    """Imza taramasi ZIP'i merkezi dizin sonuna gore keser; cikarilan zip acilir
+
+    Eskiden ZIP'in bitis imzasi yoktu: dosya azami boyuta (256 MB) kesiliyor
+    ve hicbir zip okuyucu onu acamiyordu (gozlemci gezinti testi).
+    """
+    import io
+    import zipfile
+    from diskultimate.core import recovery
+
+    tampon = io.BytesIO()
+    with zipfile.ZipFile(tampon, "w", zipfile.ZIP_STORED) as zf:
+        zf.writestr("icerik.txt", "imza taramasi\n" * 100)
+        zf.comment = b"yorum"
+    veri = tampon.getvalue()
+    yol = os.path.join(TMP, "imza_zip.img")
+    s = DiskSession.create(yol, 64 * MIB, scheme="gpt", overwrite=True)
+    r = s.free_regions()[0]
+    p = s.create_partition(r.start_lba, 40 * 2048, fs_key="fat32", label="ZIP")
+    fs = s.filesystem(p.index)
+    fs.write_file("/a.zip", veri)
+    fs.flush()
+    fs.remove("/a.zip")
+    fs.flush()
+    bulunan = [c for c in s.carve_files(p.index, keys=["zip"])]
+    assert bulunan, "zip imzasi bulunamadi"
+    assert bulunan[0].size == len(veri), (bulunan[0].size, len(veri))
+    cikti = s.extract_carved(bulunan[0], os.path.join(TMP, "imza_zip_cikti"), p.index)
+    with zipfile.ZipFile(cikti) as zf:
+        assert zf.read("icerik.txt") == ("imza taramasi\n" * 100).encode()
+    assert len(recovery.SIGNATURES_BY_KEY["zip"].footer) == 4
+    s.close()
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

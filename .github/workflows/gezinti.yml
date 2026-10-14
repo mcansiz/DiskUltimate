@@ -1,8 +1,9 @@
 # Gozlemci arayuz gezintisi (ADR 0097): uygulama gercek pencere sistemiyle
-# acilir, bir kullanici gibi surulur (agac, gezgin, kuyruk, Uygula) ve her
-# adimdan sonra bosta bekletilip "degismemesi gerekenler" izlenir.
-# Windows'ta takili bir VHD gercek aygit olarak kullanilir; GitHub makinesi
-# her kosudan sonra silinir, VM sayilir (ADR 0080, CLAUDE.md test kurali).
+# acilir, bir kullanici gibi surulur ve her adimdan sonra bosta bekletilip
+# "degismemesi gerekenler" izlenir; sonuc isletim sisteminin kendi
+# araclariyla dogrulanir. Senaryolar ayri islerde paralel kosar.
+# Aygit kipi: Windows'ta takili VHD, Linux'ta scsi_debug (root). GitHub
+# makinesi her kosudan sonra silinir, VM sayilir (ADR 0080, CLAUDE.md).
 name: Arayuz gezintisi
 
 on:
@@ -12,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       bosta:
-        description: Her bosta bekleme adiminin suresi (sn)
+        description: Uzun bosta bekleme adiminin suresi (sn)
         default: "12"
 
 permissions:
@@ -24,16 +25,23 @@ concurrency:
 
 jobs:
   gezinti:
-    name: Gezinti ${{ matrix.ad }}
+    name: ${{ matrix.ad }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { ad: windows-aygit, os: windows-2022, kip: "--aygit" }
-          - { ad: windows-goruntu, os: windows-2022, kip: "" }
-          - { ad: linux-goruntu, os: ubuntu-24.04, kip: "" }
+          - { ad: windows-aygit-temel, os: windows-2022, kip: "--aygit", senaryo: temel }
+          - { ad: windows-aygit-bolum, os: windows-2022, kip: "--aygit", senaryo: bolum }
+          - { ad: windows-aygit-yedek, os: windows-2022, kip: "--aygit", senaryo: yedek }
+          - { ad: windows-aygit-kurtarma, os: windows-2022, kip: "--aygit", senaryo: kurtarma }
+          - { ad: windows-goruntu-arayuz, os: windows-2022, kip: "", senaryo: arayuz }
+          - { ad: linux-aygit-temel, os: ubuntu-24.04, kip: "--aygit", senaryo: temel }
+          - { ad: linux-aygit-bolum, os: ubuntu-24.04, kip: "--aygit", senaryo: bolum }
+          - { ad: linux-aygit-yedek, os: ubuntu-24.04, kip: "--aygit", senaryo: yedek }
+          - { ad: linux-aygit-kurtarma, os: ubuntu-24.04, kip: "--aygit", senaryo: kurtarma }
+          - { ad: linux-goruntu-hepsi, os: ubuntu-24.04, kip: "", senaryo: hepsi }
     env:
       PYTHONIOENCODING: utf-8
       DISKULTIMATE_NO_ELEVATION_PROMPT: "1"
@@ -49,7 +57,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with: { python-version: "3.12" }
 
-      - name: Linux Qt kutuphaneleri ve Xvfb
+      - name: Linux Qt kutuphaneleri, Xvfb ve disk araclari
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -q
@@ -57,7 +65,9 @@ jobs:
             libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 \
             libdbus-1-3 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
             libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 \
-            libxcb-xkb1 libxcb-cursor0 fonts-dejavu-core
+            libxcb-xkb1 libxcb-cursor0 fonts-dejavu-core \
+            gdisk parted dosfstools exfatprogs ntfs-3g \
+            "linux-modules-extra-$(uname -r)" || true
       - name: PyQt5
         run: python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
 
@@ -66,17 +76,25 @@ jobs:
         run: |
           Add-Type -AssemblyName System.Windows.Forms
           "Ekran: " + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-          "ffmpeg: " + [bool](Get-Command ffmpeg -ErrorAction SilentlyContinue)
           Get-Disk | Format-Table Number,FriendlyName,Size,PartitionStyle | Out-String
 
       - name: Gezinti (Windows)
         if: runner.os == 'Windows'
-        run: python -m tests.long.explore ${{ matrix.kip }} --bosta $env:BOSTA --rapor rapor/${{ matrix.ad }}
+        run: >
+          python -m tests.long.explore --senaryo ${{ matrix.senaryo }} ${{ matrix.kip }}
+          --bosta $env:BOSTA --rapor rapor/${{ matrix.ad }}
       - name: Gezinti (Linux, Xvfb)
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.kip == ''
         run: >
           xvfb-run -a -s "-screen 0 1600x1000x24"
-          python -m tests.long.explore ${{ matrix.kip }} --bosta "$BOSTA" --rapor rapor/${{ matrix.ad }}
+          python -m tests.long.explore --senaryo ${{ matrix.senaryo }}
+          --bosta "$BOSTA" --rapor rapor/${{ matrix.ad }}
+      - name: Gezinti (Linux, Xvfb, root + scsi_debug)
+        if: runner.os == 'Linux' && matrix.kip != ''
+        run: >
+          sudo -E env "PATH=$PATH" xvfb-run -a -s "-screen 0 1600x1000x24"
+          "$(command -v python)" -m tests.long.explore --senaryo ${{ matrix.senaryo }}
+          ${{ matrix.kip }} --bosta "$BOSTA" --rapor rapor/${{ matrix.ad }}
 
       - name: Ozet
         if: always()

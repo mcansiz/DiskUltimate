@@ -11,7 +11,7 @@ import datetime
 import io
 import os
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from .exfat import ExEntry, ExFatError, ExFatFS
 from .extread import ExtError, ExtFS
@@ -67,6 +67,24 @@ class FileSystemAccess:
         destegi olmamasi (cozulemez). Her sinif kendi nedenini soyler.
         """
         return "" if self.writable else tr("Bu bolume yazilamiyor.")
+
+    def write_possible(self) -> Tuple[bool, str]:
+        """Kaynak yazma kipine alininca bu bolume yazilabilir mi; (evet, neden).
+
+        `writable` kaynagin **su anki** kipine baglidir. Kaynak artik hep
+        salt okunur acildigi icin (ADR 0025) kuyruga yazan bir adim eklemeye
+        karar verirken o yetmez: fiziksel diskte etiket degistirme ve bos
+        alan silme hic secilemiyordu (gozlemci gezinti testi, 2026-10-14).
+        Varsayilan: su anki durum; aygittan bagimsiz karar verebilen
+        suruculer bunu ezer.
+        """
+        return self.writable, ("" if self.writable else self.write_reason)
+
+    def label_possible(self) -> Tuple[bool, str]:
+        """Birim etiketi (kuyrukta, Uygula'da) degistirilebilir mi."""
+        if type(self).set_label is FileSystemAccess.set_label:
+            return False, ""
+        return self.write_possible()
 
     def listdir(self, path: str = "/") -> List[FileNode]:
         raise NotImplementedError
@@ -305,6 +323,10 @@ class FatAccess(FileSystemAccess):
     def rename(self, path: str, new_name: str) -> None:
         self.fs.rename(path, new_name)
 
+    def write_possible(self) -> Tuple[bool, str]:
+        reason = self.fs.write_block_reason or ""
+        return not reason, reason
+
     def set_label(self, label: str) -> None:
         self.fs.set_label(label)
         self.label = label
@@ -368,6 +390,10 @@ class ExFatAccess(FileSystemAccess):
 
     def rename(self, path: str, new_name: str) -> None:
         self.fs.rename(path, new_name)
+
+    def write_possible(self) -> Tuple[bool, str]:
+        reason = self.fs.write_block_reason or ""
+        return not reason, reason
 
     def set_label(self, label: str) -> None:
         self.fs.set_label(label)
