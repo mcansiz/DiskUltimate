@@ -1283,9 +1283,16 @@ class PhysicalDisk(BlockDevice):
                 # aygitta yakaladi (2026-10-04). Yeni birimler kilitlenip
                 # yazma bir kez tekrarlanir.
                 diagnostics.warn(f"{self.path}: yazma reddedildi (LBA {bas // ss}); "
-                                 "sonradan baglanan birimler kilitleniyor")
+                                 "birim kilitleri tazeleniyor")
                 self._relocking = True
                 try:
+                    # Eldeki kilitler bayat olabilir: bolumun yerlesimi ayni
+                    # Uygula'da degisince (boyutlandirma) Windows birimi AYNI
+                    # GUID ile yeniden kurup baglar; eski tutamac olu birime
+                    # bakar, GUID "zaten kilitli" sayilip atlaniyordu ve yazma
+                    # yine reddediliyordu (gezinti testi, windows-2022,
+                    # 2026-10-14). Hepsi birakilip taze kilit alinir.
+                    self._win_release_volumes()
                     self._win_lock_volumes()
                     self._win_write(offset, data)
                     return

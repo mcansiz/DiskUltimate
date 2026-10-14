@@ -436,8 +436,7 @@ class Observer:
         wrap(window, "refresh", "tazele")
         wrap(window, "_sync_open_mounts", "tarama")
         wrap(window, "log", "gunluk", lambda a, k: str(a[0]) if a else "")
-        wrap(window.browser, "set_filesystem", "gezgin",
-             lambda a, k: str(a[1]) if len(a) > 1 else "")
+        self._wrap_browser_reset(window.browser)
         wrap(window.browser, "navigate", "gezinti",
              lambda a, k: str(a[0]) if a else "")
         self._hook_exceptions()
@@ -460,6 +459,19 @@ class Observer:
             return original(*args, **kwargs)
 
         setattr(obj, name, wrapper)
+
+    def _wrap_browser_reset(self, browser) -> None:
+        """Gezgin yalnizca BASKA bir dosya sistemi verilince sifirlanir; ayni
+        nesne yeniden verilince konum korunur (file_browser.set_filesystem)."""
+        original = browser.set_filesystem
+        events = self.events
+
+        def wrapper(fs=None, title="", *args, **kwargs):
+            if fs is None or fs is not browser.fs:
+                events.append((time.monotonic(), "gezgin", str(title)))
+            return original(fs, title, *args, **kwargs)
+
+        browser.set_filesystem = wrapper
 
     def _hook_exceptions(self) -> None:
         previous = sys.excepthook
@@ -1393,8 +1405,12 @@ class Explore:
         if (part.fs_type or "").upper() != "NTFS":
             raise StepSkip(f"veri bolumu {part.fs_type}, NTFS degil")
         self.select_partition(DATA_LABEL)
-        with self.expecting(("ntfs", cls("NtfsFixDialog"), lambda d: d.reject()),
-                            ("ntfs-bagli", is_info, answer_ok, True)):
+        if part.mount_point and not IS_WINDOWS:
+            # Linux/macOS'ta bagli NTFS'e yazilmaz: uygulama uyarip durur.
+            with self.expecting(("ntfs-bagli", is_info, answer_ok)):
+                self.trigger(self.window.act_ntfs_fix)
+            return f"bagli bolum ({part.mount_point}): uyari gosterildi, onarim acilmadi"
+        with self.expecting(("ntfs", cls("NtfsFixDialog"), lambda d: d.reject())):
             self.trigger(self.window.act_ntfs_fix)
         return "NTFS denetimi tamam (onarim kuyruga eklenmedi)"
 
@@ -1506,7 +1522,13 @@ class Explore:
         missing = [n for n in self.data["dosyalar"] if n not in names]
         if missing:
             raise StepFail(f"aktarilmayan dosyalar: {missing}; gezgin {names}")
-        return f"aktarildi: {sorted(self.data['dosyalar'])}"
+        # Linux'ta "Baglantilari kes" veri bolumunu cikardi; yansimasi bir
+        # sonraki disk taramasinda gelir — bu adimin sonucudur, bostaki
+        # olcume tasmasin. Gezgin bu sirada yerinde kalmali.
+        settled = self.observer.settle(quiet=4, limit=30)
+        if self.window.browser.current_path.rstrip("/") != "":
+            raise StepFail(f"gezgin yer degistirdi: {self.window.browser.current_path}")
+        return f"aktarildi: {sorted(self.data['dosyalar'])}; {settled}"
 
     def backup_dialog_run(self, path: str, kinds=("partition",), target=None,
                           new_image: str = "", confirm: bool = False):

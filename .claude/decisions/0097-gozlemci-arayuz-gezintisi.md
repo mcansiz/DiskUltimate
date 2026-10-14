@@ -86,10 +86,31 @@ küçük ve bilgisinin tam olduğu ayrıca denetlenir. Uygulamanın kendi kapıl
 sürücü onları kullanıcı gibi yanıtlar; sistem diski onayı beklenmeyen pencere
 sayılır ve reddedilir.
 
+## Senaryolar (2026-10-14 (3), kullanıcı: "tüm özellikleri test edelim")
+
+| Senaryo | Kapsam |
+|---|---|
+| `temel` | gezgin, biçimlendir, Uygula |
+| `bolum` | boyutlandır, yeni bölüm, ad, tür, etiket, önyükleme bayrağı, hizalama, düzen penceresi, NTFS denetimi, Uygula; sil → geri al → vazgeç → sil; GPT→MBR→GPT (veri korunur) |
+| `yedek` | gezginle dosya aktar, bölüm ve disk yedeği, biçimlendir, bölüme geri yükle (içerik bayt bayt), yeni görüntüye geri yükle, klon, `.dub` aç ve gez, yedek bilgisi |
+| `kurtarma` | gezgin: klasör/ad/dışa aktar/sil; silinmiş dosya kurtarma (bayt bayt), imza taraması (zip açılır), bölüm sil → kayıp bölüm tara → geri ekle, boş alan silme, bölümü sıfırla |
+| `arayuz` | 10 dil, 3 tema, 8 ikon seti, bilgi pencereleri, onaltılık görünüm, yeni görüntü/VHD, görüntü boyutlandırma, görüntü kapatma, önyükleyici/EFI pencereleri (düğmelere basılmaz) |
+
+Her senaryo kendi diskiyle başlar (görüntü kipinde taze dosya); kritik adım
+düşerse yalnızca o senaryonun kalanı atlanır. Dosya seçme pencereleri
+kullanıcının yazacağı yolla yanıtlanır (`QFileDialog` statik işlevleri
+Windows'ta yerel penceredir, Qt göremez). Ayarlar geçici klasöre yazılır.
+Aygıt kipi Linux'ta `scsi_debug` + `sgdisk`/`mkfs`/`mount` (root, Xvfb).
+CI: Windows/Linux aygıt × 4 senaryo, Windows görüntü `arayuz`, Linux
+görüntü `hepsi` — 10 paralel iş.
+
+Testin bu genişlemede bulduğu hatalar: ADR 0098 (bölüm silme veriyi
+siliyordu, imzadan çıkan zip açılmıyordu, fiziksel diskte etiket ve boş alan
+silme seçilemiyordu) ve geri yükleme/klon sonrası yazma kipi (ADR 0025).
+
 ## Bilinen sınırlar / sonraki adımlar
 
-* İlk sürüm tek bir yıkıcı akış içerir (biçimlendir + Uygula). Özellik listesi
-  adım adım genişletilecek (yeni bölüm, boyutlandırma, yedek/geri yükleme,
-  klon, silme, kurtarma taramaları, dil/tema değişimi).
-* Linux aygıt kipi (scsi_debug + udisks bağlama) ve macOS henüz yok.
-* Video kaydı yok; Windows makinesinde ffmpeg varlığı ilk koşuda ölçülür.
+* macOS aygıt kipi yok.
+* Dış otomasyon (UIA) ve video kaydı yok; ekran görüntüleri her adımda.
+* Yerel güç eylemi (kapat/uyku) ve ana makineyi etkileyen önyükleyici/EFI
+  yazmaları bilerek sınanmaz.

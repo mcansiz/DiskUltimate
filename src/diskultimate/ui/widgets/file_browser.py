@@ -133,6 +133,18 @@ class FileBrowser(QWidget):
 
     # -- baglama -------------------------------------------------------------
     def set_filesystem(self, fs: Optional[FileSystemAccess], title: str = "") -> None:
+        if fs is not None and fs is self.fs:
+            # Ayni dosya sistemi yeniden verildi (gorunum tazelendi, orn. baska
+            # bir bolumun baglama bilgisi degisti): kullanicinin bulundugu
+            # klasor, kaydirma ve secim korunur. Her tazelemede en basa
+            # donmek, surucu harfleri gidip geldiginde gezgini kullanilmaz
+            # yapiyordu (win10, 2026-10-14). Icerik degistiyse oturum dosya
+            # sistemini yeniden acar ve buraya yeni nesne gelir.
+            self._title = title
+            root = self.tree.topLevelItem(0)
+            if root is not None and title:
+                root.setText(0, title)
+            return
         self.fs = fs
         self.current_path = "/"
         self._title = title
