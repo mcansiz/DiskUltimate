@@ -6225,3 +6225,9 @@ açılır; fiziksel diskte etiket ve boş alan silme seçilebilir; aynı Uygula'
 boyutlandırılan bölüme yazma (bayat kilit); bağlama değişikliğinde gezgin
 yerinde kalır. Gözlemci arayüz gezintisi (ADR 0097) CI'da her push'ta.
 `APP_VERSION`, README rozetleri, proje özeti.
+- **v0.8.1-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.8.1-beta
+  — sürüm koşusu 38622618039 (3 platform test + exe, AppImage, macOS zip,
+  hepsi başarılı); sürüm commit'inde gezinti 38622612048 10/10 ve CI
+  38622611930 başarılı. Notlara İngilizce/Türkçe "yenilikler" eklendi.
+  Dosyalar indirilip `SHA256SUMS` ile doğrulandı (3/3 OK). Canlı denetim:
+  0.8.0-beta için v0.8.1-beta bulundu, 0.8.1-beta güncel.
