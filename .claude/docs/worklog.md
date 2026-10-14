@@ -6214,3 +6214,14 @@ kipinde NTFS yok, fiziksel disk bilgisi yalnızca aygıt kipinde).
 Linux aygıt aynı sayılar; Windows görüntü arayüz 25; Linux görüntü
 hepsi 123.
 Görüntü kipinde yerel koşular kısa bekleme ve `nice` ile, tek süreç.
+
+## 2026-10-14 (4) — Sürüm 0.8.1-beta
+
+Kullanıcı: "bu hali ile release yayınlayalım". Düzeltme ağırlıklı olduğu için
+yama sürümü (0.8.1-beta): açık diskin sürücü harfleri gidip gelmiyor; Uygula,
+geri yükleme ve klon sonrası disk salt okunura döner (Windows birimleri
+Gezgin'de kalır); bölüm silme veriyi korur (ADR 0098); imzadan çıkan zip
+açılır; fiziksel diskte etiket ve boş alan silme seçilebilir; aynı Uygula'da
+boyutlandırılan bölüme yazma (bayat kilit); bağlama değişikliğinde gezgin
+yerinde kalır. Gözlemci arayüz gezintisi (ADR 0097) CI'da her push'ta.
+`APP_VERSION`, README rozetleri, proje özeti.
