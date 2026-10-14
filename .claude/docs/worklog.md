@@ -6062,3 +6062,47 @@ Duzeltmeler:
   — sürüm koşusu 37971856250 (3 platform test + exe, AppImage, macOS zip, hepsi
   başarılı). Notlara İngilizce/Türkçe "yenilikler" eklendi. Canlı denetim:
   0.7.0-beta için v0.8.0-beta bulundu, 0.8.0-beta güncel.
+
+## 2026-10-14 — Windows: açık diskin sürücü harfleri 3 sn'de bir gidip geliyordu
+
+Kullanıcı bildirimi (win10): "disk sürücü harfleri gidip geliyor, dosya
+yöneticisinde en başa dönüyor".
+
+Kök neden (0.8.0-beta'daki "açık diskin bağlama bilgisi" düzeltmesinin yan
+etkisi, 2026-10-09 (4)): `_win_volume_extents` açık diske ait harfleri
+**yoklamadan atlıyor** (ADR 0021, aynı aygıta ikinci tutamaç açılmaz), ama
+atlanan harf taze listeye de hiç girmiyordu. `sync_mounts` açık diskin
+harflerini sildi → sonraki turda harf "meşgul" olmadığı için yoklanıp geri
+geldi → bir sonraki turda yine silindi. Her turda disk imzası değiştiği için
+ağaç baştan kuruluyor, görünüm yenileniyor, kaydırma en başa dönüyordu;
+günlüğe de her 3 sn'de "bağlı bölümler değişti" yazılıyordu. Linux yolu
+etkilenmez (orada atlama yok).
+
+Düzeltme (`core/physical.py`):
+- `open_disk_volumes()`: açık disklerin bilinen harfleri {harf: (disk no,
+  bölüm ofseti)}. Harf hâlâ `GetLogicalDrives` maskesindeyse **yoklanmadan**
+  bilinen yeriyle listeye taşınır; harfi kaldırılan bölüm maskede olmadığı
+  için kendiliğinden düşer, sonradan bağlanan yeni harf yoklanır (ADR 0096
+  korunur).
+- `_win_logical_drives()` ayrıldı: Windows döngüsü Linux'ta sahte
+  çağrılarla sınanabiliyor.
+- Test t100: üç tur kararlılık, açık diskin birimi yoklanmaz, yeni harf
+  görünür, kaldırılan harf düşer. Düzeltme kapatılınca test tam bildirilen
+  hatayı veriyor (`mounted == []`).
+
+Doğrulama:
+- Ana makine: `run_all` 98/100 (2 atlanan Windows'a özgü), `platform_check`
+  0 bulgu, `diag_check` 13/13, `i18n_check` BAŞARILI.
+- VirtualBox win10 (Administrator, sistem diski **salt okunur** açıldı,
+  `.tmp/vm/w1014/harf_dongusu.py`): eski kod 5/5 turda `['C:','E:']` ↔ `[]`
+  gidip geldi; yeni kod 5/5 tur kararlı.
+- VirtualBox win10 `run_all`: 95/100, 0 hata; t20, t21, t100 Windows'ta
+  geçti. 5 atlanan: e2fsck/mkswap yok (3), Unix'e özgü (2). Misafir
+  test için açıldı, sonra kapatıldı.
+- Not: misafire kopyalarken `.tmp` bir kez hariç tutulmadı (22 GB); kopya
+  durduruldu, misafirdeki yarım `.tmp` silindi.
+
+Neden testler yakalamadı: `ui_smoke` disk yoklama zamanlayıcısını bilerek
+durduruyor ve yalnızca görüntü dosyasıyla çalışıyor; birim testleri tek bir
+çağrının çıktısına bakıyor. Hata ancak "fiziksel disk açık + Windows +
+zamanlayıcı en az iki tur" birleşiminde görünüyordu.

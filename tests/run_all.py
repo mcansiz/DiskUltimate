@@ -7613,6 +7613,93 @@ def t99_acik_diskin_baglama_bilgisi_tazelenir():
     assert [p.mount_point for p in bolumler] == ["", "/"]
 
 
+# --------------------------------------------------------------------------
+@test
+def t100_acik_diskin_harfleri_gidip_gelmez():
+    """Windows: acik diskin surucu harfi taramadan taramaya kaybolmaz
+
+    Kullanici bildirimi (2026-10-14, win10): surucu harfleri gidip geliyor,
+    agac/gezgin her seferinde en basa donuyordu. Neden: acik diskin harfi
+    yoklanmiyor (ADR 0021) ve taze listede **hic yer almiyordu**;
+    `sync_mounts` (ADR 0096 sonrasi) harfleri siliyor, bir sonraki turda
+    harf "mesgul" olmadigi icin yoklanip geri geliyordu — 3 sn'de bir.
+
+    Gercek aygita DOKUNULMAZ: Windows cagrilari sahte surumlerle
+    degistirilir, bu yuzden Linux'ta da kosar.
+    """
+    from diskultimate.core import physical
+
+    acik_yol = "\\\\.\\PhysicalDrive0"
+    # harf -> (disk no, bolum ofseti); maske bu sozlukten uretilir
+    birimler = {"C": (0, MIB), "E": (1, MIB)}
+    acilan = []
+
+    def sahte_handle(path, write=False, query_only=False):
+        if "PhysicalDrive" in path:
+            assert path != acik_yol, "acik aygit yeniden acildi (ADR 0021)"
+            raise physical.PhysicalDiskError("test: disk yok")
+        acilan.append(path)
+        return path
+
+    def sahte_ioctl(handle, code, data=b"", out_size=256):
+        harf = handle[4]
+        if code != physical.IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS \
+                or harf not in birimler:
+            return None
+        disk_no, ofset = birimler[harf]
+        return struct.pack("<IIIIqq", 1, 0, disk_no, 0, ofset, 8 * MIB)
+
+    yamalar = {
+        "_win_handle": sahte_handle,
+        "_win_ioctl": sahte_ioctl,
+        "_win_close": lambda handle: None,
+        "_win_drive_type": lambda harf: 3,           # DRIVE_FIXED
+        "_win_system_disk_numbers": lambda: [0],
+        "_win_logical_drives": lambda: sum(
+            1 << (ord(h) - ord("A")) for h in birimler),
+    }
+    gercek = {ad: getattr(physical, ad) for ad in yamalar}
+    info = physical.DiskInfo(path=acik_yol, name="PhysicalDrive0",
+                             size=64 * MIB, mounted=["C:"],
+                             mount_map={MIB: "C:"})
+
+    def tara():
+        acilan.clear()
+        return {d.path: d for d in physical._list_windows()}[acik_yol]
+
+    physical._register_open(info)
+    try:
+        for ad, islev in yamalar.items():
+            setattr(physical, ad, islev)
+        assert physical.open_disk_volumes() == {"C": (0, MIB)}
+        for tur in range(3):
+            taze = tara()
+            assert taze.mounted == ["C:"], (tur, taze.mounted)
+            assert taze.mount_map == {MIB: "C:"}, (tur, taze.mount_map)
+            assert not physical.sync_mounts(info, taze), \
+                f"tur {tur}: degisiklik yokken baglama bilgisi degisti"
+            assert "\\\\.\\C:" not in acilan, "acik diskin birimi yoklandi"
+            assert "\\\\.\\E:" in acilan, "diger birimler yoklanmali"
+
+        # Acik diske sonradan baglanan bolum gorunur (ADR 0096 korunur).
+        birimler["F"] = (0, 9 * MIB)
+        taze = tara()
+        assert taze.mounted == ["C:", "F:"], taze.mounted
+        assert physical.sync_mounts(info, taze)
+        assert "\\\\.\\F:" in acilan and "\\\\.\\C:" not in acilan
+
+        # Harfi kaldirilan bolum duser (maskede yok).
+        del birimler["C"]
+        taze = tara()
+        assert taze.mounted == ["F:"], taze.mounted
+        assert taze.mount_map == {9 * MIB: "F:"}, taze.mount_map
+        assert physical.sync_mounts(info, taze)
+    finally:
+        for ad, islev in gercek.items():
+            setattr(physical, ad, islev)
+        physical._unregister_open(acik_yol)
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],

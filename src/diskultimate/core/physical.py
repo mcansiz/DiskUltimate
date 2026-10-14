@@ -335,15 +335,44 @@ def sync_mounts(open_info: Optional[DiskInfo],
     return changed
 
 
+def _drive_letter(item: str) -> str:
+    """Surucu harfi: "E:" / "E:\\" -> "E"; degilse bos dize."""
+    head = str(item).strip().rstrip("\\").rstrip(":")
+    return head.upper() if len(head) == 1 and head.isalpha() else ""
+
+
 def busy_drive_letters() -> set:
     """Acik disklere ait surucu harfleri (buyuk harf, iki nokta olmadan)."""
     letters = set()
     for info in open_device_paths().values():
         for item in info.mounted:
-            head = item.strip().rstrip(":").rstrip("\\")
-            if len(head) == 1 and head.isalpha():
-                letters.add(head.upper())
+            head = _drive_letter(item)
+            if head:
+                letters.add(head)
     return letters
+
+
+def open_disk_volumes() -> Dict[str, Tuple[int, Optional[int]]]:
+    """Acik disklerin bilinen harfleri: {harf: (disk numarasi, bolum ofseti)}.
+
+    Bu harfler listelemede yoklanmaz (ayni aygita ikinci tutamac, ADR 0021)
+    ama hala **bagli**dir. Yoklanmadi diye listeden dusurulurse acik diskin
+    baglama bilgisi bir tur silinir, bir tur geri gelir: harfler 3 saniyede
+    bir gidip geliyor, agac her seferinde bastan kuruluyordu (win10,
+    2026-10-14). Ofset bilinmiyorsa None.
+    """
+    out: Dict[str, Tuple[int, Optional[int]]] = {}
+    for info in open_device_paths().values():
+        digits = "".join(ch for ch in info.path if ch.isdigit())
+        if not digits:
+            continue
+        offsets = {_drive_letter(point): off
+                   for off, point in (info.mount_map or {}).items()}
+        for item in info.mounted:
+            head = _drive_letter(item)
+            if head:
+                out[head] = (int(digits), offsets.get(head))
+    return out
 
 
 def list_disks(include_removable: bool = True) -> List[DiskInfo]:
@@ -644,6 +673,13 @@ def _win_close(handle) -> None:
         pass
 
 
+def _win_logical_drives() -> int:
+    """`GetLogicalDrives` bit maskesi (A = bit 0); aygit acmaz."""
+    import ctypes
+
+    return int(ctypes.windll.kernel32.GetLogicalDrives())
+
+
 def _win_volume_extents() -> Tuple[Dict[int, List[str]], Dict[Tuple[int, int], str]]:
     """{disk numarasi: [surucu harfleri]} — bagli bolumleri gostermek icin.
 
@@ -653,20 +689,27 @@ def _win_volume_extents() -> Tuple[Dict[int, List[str]], Dict[Tuple[int, int], s
     harfler `_win_quiet_errors()` altinda acilir, boylece bos kart yuvasi
     bloklamak yerine hemen hata dondurur.
     """
-    import ctypes
-
     result: Dict[int, List[str]] = {}
     extents: Dict[Tuple[int, int], str] = {}
     busy = busy_drive_letters()
-    maske = ctypes.windll.kernel32.GetLogicalDrives()
+    known = open_disk_volumes()
+    maske = _win_logical_drives()
     for i in range(26):
         if not (maske >> i) & 1:
             continue
         harf = chr(ord("A") + i)
         # Acik bir diske ait birim: tutamac acmak ya reddedilir (kilitli) ya da
-        # aygit kuyruguna takilir. Harf zaten bilindigi icin sorulmaz.
+        # aygit kuyruguna takilir. Harf zaten bilindigi icin sorulmaz; harf
+        # hala var oldugundan bilinen yeriyle **listede kalir** (yoksa acik
+        # diskin harfleri her turda silinip geri gelir). Cikarilan harf
+        # maskede olmadigi icin kendiliginden duser.
         if harf in busy:
             diagnostics.debug(f"surucu {harf}: uygulamada acik; yoklanmadi")
+            if harf in known:
+                disk_no, offset = known[harf]
+                result.setdefault(disk_no, []).append(f"{harf}:")
+                if offset is not None:
+                    extents[(disk_no, offset)] = f"{harf}:"
             continue
         kind = _win_drive_type(harf)
         if kind in (DRIVE_NO_ROOT_DIR, DRIVE_REMOTE, DRIVE_CDROM):
@@ -819,8 +862,10 @@ def _list_windows() -> List[DiskInfo]:
             info.in_use = True
             if extents_ok:
                 # Birim taramasi diske tutamac acmaz (birimleri sorar); acik
-                # diskin baglama bilgisi buradan tazelenir. Kopya doner:
-                # oturumun nesnesine arayuz parcaciginda `sync_mounts` yazar.
+                # diskin baglama bilgisi buradan tazelenir. Bildigi harfler
+                # yoklanmadan tasinir (`open_disk_volumes`), yeni baglanan
+                # harf yoklanir. Kopya doner: oturumun nesnesine arayuz
+                # parcaciginda `sync_mounts` yazar.
                 info = dataclasses.replace(
                     info, mounted=list(harfler.get(numara, [])),
                     mount_map={off: harf for (disk_no, off), harf
