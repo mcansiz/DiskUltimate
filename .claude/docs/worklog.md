@@ -6165,3 +6165,52 @@ Test sürücüsünün kendi hataları (sınırken bulundu, düzeltildi):
 
 Not: kullanıcı PC'nin ısındığını bildirdi; yerel VM ve ağır testler
 durduruldu, VM kapatıldı. Sonraki koşular GitHub Actions'ta.
+
+## 2026-10-14 (3) — Gezinti testi bütün özelliklere genişletildi; bulduğu hatalar
+
+Kullanıcı: "yapalım tüm özellikleri test edelim" (yeni bölüm, boyutlandırma,
+yedek/geri yükleme, klon, silme, dil/tema, Linux gerçek aygıt kipi).
+
+Test (`tests/long/explore.py`, ADR 0097 güncellendi): senaryolar `temel`,
+`bolum`, `yedek`, `kurtarma`, `arayuz` (kapsam tablosu ADR'de). Her senaryo
+kendi diskiyle başlar; dosya seçme pencereleri kullanıcının yazacağı yolla
+yanıtlanır; ayarlar geçici klasöre yazılır; sonuç Get-Volume/chkdsk,
+blkid/fsck ya da dosyayı yeniden okuyarak doğrulanır, içerik bayt bayt
+karşılaştırılır. Linux aygıt kipi: scsi_debug + sgdisk/mkfs, veri bölümü
+ntfs-3g ile bağlı (root, Xvfb). CI `gezinti.yml`: 10 paralel iş.
+Agent ile iki özellik haritası çıkarıldı (pencere sınıfları, alanlar, 13
+statik dosya penceresi, TaskDialog'un reddedilmemesi gerektiği).
+
+Testin bulduğu uygulama hataları (hepsi düzeltildi):
+1. **Bölüm sil, verinin ilk/son 2 MB'ini de siliyordu** — silinen bölüm
+   "Kayıp bölümleri tara" ile hiç bulunamıyordu. Silme artık yalnızca
+   tablo girdisi (DiskGenius/Windows gibi). ADR 0098, t103.
+2. **İmzadan çıkarılan ZIP açılmıyordu** — bitiş imzası yoktu, dosya 256
+   MB'a kesiliyordu. Boyut merkezi dizin sonu kaydından. ADR 0098, t104.
+3. **Fiziksel diskte etiket değiştirme ve boş alan silme seçilemiyordu** —
+   arayüz `fs.writable` soruyordu, kaynak hep salt okunur. `write_possible`
+   / `label_possible`. ADR 0098, t102.
+4. **Geri yükleme ve diske klon** hedef oturumu yazma kipinde bırakıyordu
+   (ADR 0025); `_end_write_mode` bütün oturumları kapsar.
+5. **Windows: aynı Uygula'da boyutlandırılan bölüme sonraki yazma
+   reddediliyordu** — Windows birimi aynı GUID ile yeniden kuruyor, yeniden
+   kilitleme GUID'i "zaten kilitli" sayıp atlıyordu. Ret gelince bütün
+   kilitler bırakılıp taze alınır (windows-aygit-bolum).
+6. **Başka bir bölümün bağlama değişikliği dosya gezginini en başa
+   döndürüyordu** (bugünkü hatanın kalıntısı; linux-aygit-yedek). Aynı dosya
+   sistemi nesnesi yeniden verilince gezgin yerinde kalır.
+
+Testin kendi hataları: hepsi-kipinde senaryolar aynı diski paylaşıyordu;
+çoklu seçim `setCurrentItem` ile siliniyordu; görüntü kurma ve kopya
+doğrulama arayüz iş parçacığında çalışıp donma raporu üretiyordu; Linux'ta
+bağlı NTFS'te onarım penceresinin açılmaması doğru davranış; gözlemci
+kurulumu pencere açıldıktan sonra olay döngüsünü 2 sn tuttu (Windows CI).
+
+GitHub koşuları: 38616904226 (e9a0caf) 7/10 → 38618268364 (935dcd0) 9/10
+(kalan: testin kendi donması) → **38619948338 (fc92361) 10/10**, CI
+38619947979 başarılı. 378 adım tamam; 3 gerekçeli atlama (görüntü
+kipinde NTFS yok, fiziksel disk bilgisi yalnızca aygıt kipinde).
+İş başına: Windows aygıt temel 13 / bolum 41 / yedek 27 / kurtarma 34;
+Linux aygıt aynı sayılar; Windows görüntü arayüz 25; Linux görüntü
+hepsi 123.
+Görüntü kipinde yerel koşular kısa bekleme ve `nice` ile, tek süreç.

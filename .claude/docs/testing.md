@@ -691,10 +691,14 @@ günlük, seçim/kaydırma, sürücü harfleri, Windows birim bildirimleri,
 istisna, donma raporu). Disk yoklaması çalışır; çalışmıyorsa adım hata verir.
 
 ```bash
-QT_QPA_PLATFORM=offscreen python3 -m tests.long.explore            # görüntü kipi (her yerde)
-python -m tests.long.explore --aygit                               # takılı VHD: yalnızca CI / DU_TEST_VM=1
-python -m tests.long.explore --bosta 30 --sinir 900 --rapor rapor/x
+QT_QPA_PLATFORM=offscreen python3 -m tests.long.explore --senaryo hepsi --bosta 4
+python -m tests.long.explore --senaryo bolum --aygit   # VHD / scsi_debug: yalnızca CI / DU_TEST_VM=1
+python -m tests.long.explore --senaryo yedek --bosta 30 --sinir 900 --rapor rapor/x
 ```
+
+Senaryolar: `temel`, `bolum`, `yedek`, `kurtarma`, `arayuz` (kapsam: ADR
+0097). Aygıt kipinde tek senaryo koşar (her biri taze aygıt ister). İlk
+tam sonuç (2026-10-14, GitHub 38619948338): 10/10 iş, 378 adım.
 
 Çıktı: `--rapor` altında JSON (uzun testlerle aynı biçim), olay akışlı
 Markdown ve `goruntuler/` (her adım + her karşılanan pencere). CI:
