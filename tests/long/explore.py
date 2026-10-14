@@ -426,11 +426,12 @@ IDLE_EVENTS = {
 class Observer:
     """Uygulamanin "kendiliginden" yaptigi her seyi zaman damgasiyla yazar."""
 
-    def __init__(self, app, window):
+    def __init__(self, app, window, freeze_dir: str, freeze_before: set):
         self.app = app
         self.window = window
         self.events: List[Tuple[float, str, str]] = []
         self.qt_messages: List[str] = []
+        self.freeze_dir, self.freeze_before = freeze_dir, freeze_before
         wrap = self._wrap
         wrap(window, "_build_tree", "agac")
         wrap(window, "refresh", "tazele")
@@ -441,9 +442,6 @@ class Observer:
              lambda a, k: str(a[0]) if a else "")
         self._hook_exceptions()
         self._hook_qt_messages()
-        from diskultimate.core import diagnostics
-        self.freeze_dir = diagnostics.report_dir()
-        self.freeze_before = set(glob.glob(os.path.join(self.freeze_dir, "freeze-*")))
         self._mask = None
         self._native = None
         if IS_WINDOWS:
@@ -1194,12 +1192,21 @@ class Explore:
 
     def s_launch(self) -> str:
         import main as app_main
+        from diskultimate.core import diagnostics
 
+        # Dosya/klasor isleri uygulama ACILMADAN once: pencere gosterildikten
+        # sonra test kendi kurulumunu yaparken olay dongusu donmuyor; Windows
+        # CI'da ilk klasor olusturma 2 sn surdu ve donma yakalayicisi testin
+        # kendi isini raporladi (2026-10-14).
+        freeze_dir = diagnostics.report_dir()
+        freeze_before = set(glob.glob(os.path.join(freeze_dir, "freeze-*")))
         self.files = FileDialogs()
         self.app, self.window = app_main.start([os.path.join(ROOT, "main.py")])
         if self.window is None:
             raise StepFail("yetkili kopya devraldi (beklenmiyordu)")
-        self.observer = Observer(self.app, self.window)
+        diagnostics.beat()
+        self.observer = Observer(self.app, self.window, freeze_dir, freeze_before)
+        diagnostics.beat()
         self.driver = ModalDriver(self.shot)
         if not wait(60, lambda: self.window._disk_scan_done):
             raise StepFail("ilk disk taramasi 60 sn'de bitmedi")
