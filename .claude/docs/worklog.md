@@ -6264,3 +6264,10 @@ Güvenli silmedeki "silme sonrası doğrula" kutusu yok sayılıyordu
 - 3 yeni metin, 9 dil. t105 (geçer / tutmazsa hata / yazmadan ret /
   eski davranış). Gezinti `kurtarma`: "bölümü sıfırla" doğrulamalı; görüntü
   kipinde yerel TAMAM.
+
+## 2026-10-15 (2) — Sürüm 0.8.2-beta
+
+Kullanıcı: "yayınla". 0.8.1-beta'dan sonraki iki düzeltme: güvenli silmede
+doğrulama gerçekten yapılır (`6d1a30f`), Uygula/geri yükleme/klon sonrası
+salt okunura dönüş yalnızca fiziksel disklerde (`1b665f2`); README iki dilde
+güncellendi. `APP_VERSION`, README rozetleri, proje özeti.
