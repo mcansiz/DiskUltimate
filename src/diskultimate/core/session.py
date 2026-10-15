@@ -1254,22 +1254,35 @@ class DiskSession:
     # ======================================================================
     # Guvenli silme
     # ======================================================================
-    def wipe_partition_data(self, index: int, method: str = "zero", progress=None):
+    def wipe_partition_data(self, index: int, method: str = "zero", progress=None,
+                            verify: bool = False):
         self._require_writable()
         part = self.table.get(index) if self.table else None
         if part is None:
             raise SessionError(tr("Bolum bulunamadi"))
         self._fs_cache.pop(index, None)
-        result = wipe_mod.wipe_device(self.view(part), method=method, progress=progress)
+        result = wipe_mod.wipe_device(self.view(part), method=method,
+                                      progress=progress, verify=verify)
         self.reload()
+        self._check_wipe_verified(result, verify)
         return result
 
-    def wipe_disk(self, method: str = "zero", progress=None):
+    def wipe_disk(self, method: str = "zero", progress=None, verify: bool = False):
         self._require_writable()
         self.close_filesystems()
-        result = wipe_mod.wipe_device(self.image, method=method, progress=progress)
+        result = wipe_mod.wipe_device(self.image, method=method,
+                                      progress=progress, verify=verify)
         self.reload()
+        self._check_wipe_verified(result, verify)
         return result
+
+    @staticmethod
+    def _check_wipe_verified(result: dict, verify: bool) -> None:
+        """Dogrulama istendiyse ve tutmadiysa adim hata verir: "silindi"
+        denip sifir olmayan veri birakmak, silmenin amacina aykiridir."""
+        if verify and not result.get("verified"):
+            raise SessionError(tr("Silme dogrulamasi basarisiz: alanda sifir "
+                                  "olmayan veri kaldi"))
 
     # -- NTFS denetimi ve onarimi (ntfsfix karsiligi) ------------------------
     def ntfs_check(self, index: int):

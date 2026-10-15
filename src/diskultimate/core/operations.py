@@ -227,11 +227,13 @@ def _run_boot(session, p, progress):
 
 
 def _run_wipe_partition(session, p, progress):
+    verify = bool(p.get("verify", False))
     if p.get("index", -1) < 0:
-        session.wipe_disk(p.get("method", "zero"), progress=progress)
+        session.wipe_disk(p.get("method", "zero"), progress=progress,
+                          verify=verify)
         return
     session.wipe_partition_data(p["index"], p.get("method", "zero"),
-                                progress=progress)
+                                progress=progress, verify=verify)
 
 
 def _run_wipe_free(session, p, progress):
@@ -770,12 +772,20 @@ def boot_op(index: int, value: bool, at_lba: int = -1) -> Operation:
 
 
 def wipe_partition_op(index: int, method: str, method_name: str = "",
-                      at_lba: int = -1) -> Operation:
-    """Guvenli silme adimi. `index < 0` ise hedef **butun disktir**."""
-    operation = Operation("wipe_partition", detail_text=mark("{}"),
+                      at_lba: int = -1, verify: bool = False) -> Operation:
+    """Guvenli silme adimi. `index < 0` ise hedef **butun disktir**.
+
+    `verify`: silmeden sonra alan geri okunur, sifir olmayan bayt kalmissa
+    adim hata verir (yalnizca sifirla biten yontemlerde). Eskiden pencere
+    secenegi topluyor ama adima hic gecirmiyordu; kutu isaretli olsa da
+    dogrulama yapilmiyordu (2026-10-15).
+    """
+    operation = Operation("wipe_partition",
+                          detail_text=(mark("{}, sonra dogrulanir") if verify
+                                       else mark("{}")),
                           detail_args=(method_name or method,),
                           params={"index": index, "method": method,
-                                  "at_lba": at_lba})
+                                  "at_lba": at_lba, "verify": verify})
     if index < 0:
         operation.title_text = mark("Disk guvenli sil")
         operation.target_text = mark("Disk")

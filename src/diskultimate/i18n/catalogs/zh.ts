@@ -5,24 +5,24 @@
     <name>DiskUltimate</name>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="204"/>
-        <location filename="../../ui/main_window.py" line="2494"/>
+        <location filename="../../ui/main_window.py" line="2503"/>
         <source>
 (Bu adim veri kaybettirebilir)</source>
         <translation>
 （此步骤可能导致数据丢失）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3935"/>
+        <location filename="../../ui/main_window.py" line="3954"/>
         <source>  (bolum yok)</source>
         <translation>  （无分区）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2912"/>
+        <location filename="../../ui/main_window.py" line="2931"/>
         <source>  (disk bulunamadi)</source>
         <translation>  （未找到磁盘）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3922"/>
+        <location filename="../../ui/main_window.py" line="3941"/>
         <source>  Yalnizca kullanilan alan yedegi bu diskte tum sektorleri alir.</source>
         <translation>  在此磁盘上，仅备份已用空间也会包含所有扇区。</translation>
     </message>
@@ -32,7 +32,7 @@
         <translation>  已跳过：{}（{}）</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="400"/>
+        <location filename="../../core/operations.py" line="402"/>
         <source> ({} adim calistirilmadi)</source>
         <translation>（{} 个步骤未运行）</translation>
     </message>
@@ -42,7 +42,7 @@
         <translation>（{} 项更改未应用）</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="529"/>
+        <location filename="../../core/operations.py" line="531"/>
         <source> [YIKICI]</source>
         <translation> [破坏性]</translation>
     </message>
@@ -211,8 +211,8 @@
         <translation>帮助(&amp;H)</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="736"/>
-        <location filename="../../core/operations.py" line="745"/>
+        <location filename="../../core/operations.py" line="738"/>
+        <location filename="../../core/operations.py" line="747"/>
         <source>&apos;{}&apos;</source>
         <translation>“{}”</translation>
     </message>
@@ -252,29 +252,29 @@
         <translation>（无分区）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3556"/>
+        <location filename="../../ui/main_window.py" line="3575"/>
         <location filename="../../ui/widgets/disk_overview.py" line="162"/>
         <source>(bolumler okunamadi: {})</source>
         <translation>（无法读取分区：{}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3552"/>
+        <location filename="../../ui/main_window.py" line="3571"/>
         <source>(bolumler okunuyor...)</source>
         <translation>（正在读取分区...）</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="815"/>
-        <location filename="../../ui/main_window.py" line="2745"/>
+        <location filename="../../ui/main_window.py" line="2764"/>
         <source>(bos)</source>
         <translation>（空闲）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3735"/>
+        <location filename="../../ui/main_window.py" line="3754"/>
         <source>(degistirilemez — neden?)</source>
         <translation>（不可修改 — 为什么？）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3519"/>
+        <location filename="../../ui/main_window.py" line="3538"/>
         <source>(disk bulunamadi)</source>
         <translation>（未找到磁盘）</translation>
     </message>
@@ -304,7 +304,7 @@
         <translation>（未选择备份文件）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2743"/>
+        <location filename="../../ui/main_window.py" line="2762"/>
         <source>(yok)</source>
         <translation>（无）</translation>
     </message>
@@ -335,7 +335,7 @@
         <translation>64bit（超过 40 亿个块的卷）</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="544"/>
+        <location filename="../../core/recovery.py" line="548"/>
         <source>7-Zip arsivi</source>
         <translation>7-Zip 压缩包</translation>
     </message>
@@ -346,7 +346,7 @@
         <translation>&lt; 上一页</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2246"/>
+        <location filename="../../ui/main_window.py" line="2255"/>
         <source>&lt;b&gt;Acik disk/goruntu kapatilacak.&lt;/b&gt;&lt;br&gt;&lt;br&gt;</source>
         <translation>&lt;b&gt;当前打开的磁盘/镜像将被关闭。&lt;/b&gt;&lt;br&gt;&lt;br&gt;</translation>
     </message>
@@ -361,7 +361,7 @@
         <translation>&lt;b&gt;空闲空间&lt;/b&gt;&lt;br&gt;大小：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2447"/>
+        <location filename="../../ui/main_window.py" line="2456"/>
         <source>&lt;b&gt;Diskteki hali&lt;/b&gt; gosteriliyor — {} bekleyen adim listede bekliyor.</source>
         <translation>正在显示&lt;b&gt;磁盘上的当前布局&lt;/b&gt; — 列表中有 {} 个待执行步骤。</translation>
     </message>
@@ -391,7 +391,7 @@
         <translation>&lt;b&gt;无法读取引导配置。&lt;/b&gt;{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2441"/>
+        <location filename="../../ui/main_window.py" line="2450"/>
         <source>&lt;b&gt;Planlanan yerlesim&lt;/b&gt; gosteriliyor — {} bekleyen adim uygulandiginda disk boyle olacak ({}). Diske henuz yazilmadi.</source>
         <translation>正在显示&lt;b&gt;计划布局&lt;/b&gt; — 应用 {} 个待执行步骤后磁盘将如此显示（{}）。尚未写入任何内容。</translation>
     </message>
@@ -421,12 +421,12 @@
         <translation>&lt;b&gt;{} 个步骤可能破坏数据&lt;/b&gt;，应用后无法撤销。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2525"/>
+        <location filename="../../ui/main_window.py" line="2534"/>
         <source>&lt;b&gt;{} bekleyen adim&lt;/b&gt; henuz uygulanmadi ve kaynak kapatilinca kaybolacak.&lt;br&gt;&lt;br&gt;Diskte hicbir degisiklik yapilmadi.&lt;br&gt;&lt;br&gt;Yine de kapatilsin mi?</source>
         <translation>&lt;b&gt;{} 个待执行步骤&lt;/b&gt;尚未应用，关闭源后将丢失。&lt;br&gt;&lt;br&gt;磁盘上没有任何内容被更改。&lt;br&gt;&lt;br&gt;仍要关闭吗？</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2191"/>
+        <location filename="../../ui/main_window.py" line="2200"/>
         <source>&lt;b&gt;{} fiziksel diskin&lt;/b&gt; bilgisi okunamadi ({}).&lt;br&gt;&lt;br&gt;Fiziksel disklere erismek icin {} yetkisi gerekir. Uygulama simdi yetkili olarak yeniden baslatilsin mi?&lt;br&gt;&lt;br&gt;&lt;i&gt;Disk goruntusu dosyalari (.img, VHD, VDI...) icin yetki gerekmez; yalnizca goruntu dosyalariyla calisacaksaniz &lt;b&gt;Hayir&lt;/b&gt; diyebilirsiniz.&lt;/i&gt;</source>
         <translation>&lt;b&gt;{} 个物理磁盘&lt;/b&gt;无法读取（{}）。&lt;br&gt;&lt;br&gt;访问物理磁盘需要{}权限。是否立即以提升的权限重新启动应用程序？&lt;br&gt;&lt;br&gt;&lt;i&gt;磁盘镜像文件（.img、VHD、VDI...）不需要权限；如果只处理镜像文件，可以选择&lt;b&gt;否&lt;/b&gt;。&lt;/i&gt;</translation>
     </message>
@@ -476,12 +476,12 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; 是操作系统磁盘。覆盖它将导致系统无法启动。请输入磁盘名称以确认：&lt;b&gt;{}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4095"/>
+        <location filename="../../ui/main_window.py" line="4114"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acik — bu &lt;b&gt;normaldir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Yaptiginiz degisiklikler bekleyen islem olarak birikir ve diske ancak &lt;b&gt;Uygula&lt;/b&gt; dediginizde yazilir.</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; 以只读方式打开 — 这是&lt;b&gt;正常&lt;/b&gt;的。&lt;br&gt;&lt;br&gt;您的更改会作为待执行操作收集起来，仅在您选择&lt;b&gt;应用&lt;/b&gt;时才写入磁盘。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4064"/>
+        <location filename="../../ui/main_window.py" line="4083"/>
         <source>&lt;b&gt;{}&lt;/b&gt; salt okunur acildi; bu dosyada degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;&lt;b&gt;Neden:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Yol:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Bicim:&lt;/b&gt; {}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; 以只读方式打开；无法修改此文件。&lt;br&gt;&lt;br&gt;&lt;b&gt;原因：&lt;/b&gt;{}&lt;br&gt;&lt;b&gt;路径：&lt;/b&gt;{}&lt;br&gt;&lt;b&gt;格式：&lt;/b&gt;{}</translation>
     </message>
@@ -491,7 +491,7 @@
         <translation>找到 &lt;b&gt;{}&lt;/b&gt; 个已删除条目 — 其中 &lt;b&gt;{}&lt;/b&gt; 个看起来可以完整恢复。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4102"/>
+        <location filename="../../ui/main_window.py" line="4121"/>
         <source>&lt;b&gt;{}&lt;/b&gt; uzerinde degisiklik yapilamaz.&lt;br&gt;&lt;br&gt;{}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; 无法修改。&lt;br&gt;&lt;br&gt;{}</translation>
     </message>
@@ -521,12 +521,12 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; — {}（显示前 {}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4069"/>
+        <location filename="../../ui/main_window.py" line="4088"/>
         <source>&lt;br&gt;&lt;br&gt;Dosyayi kullanan diger programi (baska bir disk araci, yedekleme yazilimi vb.) kapatip &lt;b&gt;Yeniden dene&lt;/b&gt;ye basin.</source>
         <translation>&lt;br&gt;&lt;br&gt;请关闭正在使用该文件的其他程序（其他磁盘工具、备份软件等），然后按&lt;b&gt;重试&lt;/b&gt;。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4196"/>
+        <location filename="../../ui/main_window.py" line="4215"/>
         <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt5, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
         <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;用于对磁盘镜像、虚拟磁盘和&lt;b&gt;本系统中的真实磁盘&lt;/b&gt;进行分区、格式化、备份和恢复的工具。&lt;/p&gt;&lt;p&gt;&lt;b&gt;技术：&lt;/b&gt;Python 3 + PyQt5，无外部依赖&lt;br&gt;&lt;b&gt;分区表：&lt;/b&gt;MBR（含逻辑分区）、GPT、MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT 转换&lt;br&gt;&lt;b&gt;格式化：&lt;/b&gt;FAT12/16/32、exFAT、ext2/3/4 和 NTFS — 全部八种均以纯 Python 实现，支持三个平台&lt;br&gt;&lt;b&gt;文件访问：&lt;/b&gt;FAT 和 exFAT 完整读写&lt;/p&gt;&lt;p&gt;镜像文件不需要管理员权限。访问物理磁盘需要管理员/root 权限，且&lt;b&gt;默认只读&lt;/b&gt;；写入需另行确认。&lt;/p&gt;</translation>
     </message>
@@ -606,7 +606,7 @@
         <translation>APFS 压缩属性已损坏</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="826"/>
+        <location filename="../../core/filesystem.py" line="852"/>
         <source>APFS yazma desteklenmiyor; birim salt okunur acildi.</source>
         <translation>不支持写入 APFS；该卷已以只读方式打开。</translation>
     </message>
@@ -633,7 +633,7 @@
         <translation>将打开的 .dub 备份写入新的镜像文件或物理磁盘</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2159"/>
+        <location filename="../../ui/main_window.py" line="2168"/>
         <source>Acik dosya bicimi</source>
         <translation>打开文件格式</translation>
     </message>
@@ -668,7 +668,7 @@
     <message>
         <location filename="../../ui/dialogs/backup.py" line="363"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3943"/>
+        <location filename="../../ui/main_window.py" line="3962"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <source>Ad</source>
@@ -685,17 +685,17 @@
         <translation>步骤</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="346"/>
+        <location filename="../../core/operations.py" line="348"/>
         <source>Adim {}: bolum {} bir kapsayici ({}); icindeki tum birimler de kaybolur.</source>
         <translation>步骤 {}：分区 {} 是一个容器（{}）；其中的所有卷也将丢失。</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="349"/>
+        <location filename="../../core/operations.py" line="351"/>
         <source>Adim {}: bolum {} imzasiz ve rastgele veri iceriyor; sifreli bir birim (VeraCrypt vb.) olabilir.</source>
         <translation>步骤 {}：分区 {} 没有签名且包含看似随机的数据；它可能是加密卷（VeraCrypt 等）。</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="342"/>
+        <location filename="../../core/operations.py" line="344"/>
         <source>Adim {}: bolum {} sifreli ({}). Icerigi gorulemez; bu islem sifreli veriyi kalici olarak yok eder.</source>
         <translation>步骤 {}：分区 {} 已加密（{}）。其内容无法查看；此操作将永久销毁加密数据。</translation>
     </message>
@@ -715,8 +715,8 @@
         <translation>网络接口（MAC）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2854"/>
-        <location filename="../../ui/main_window.py" line="2956"/>
+        <location filename="../../ui/main_window.py" line="2873"/>
+        <location filename="../../ui/main_window.py" line="2975"/>
         <source>Agactan bir fiziksel disk secin.</source>
         <translation>请从树中选择一个物理磁盘。</translation>
     </message>
@@ -726,22 +726,22 @@
         <translation>Apple HFS+</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2748"/>
+        <location filename="../../ui/main_window.py" line="2767"/>
         <source>Arayuz bir saniyeden uzun yanit vermezse butun is parcaciklarinin yigini kendiliginden rapor dosyasina yazilir. Raporlar gunluk klasorundeki freeze/ altindadir.</source>
         <translation>如果界面停止响应超过一秒，所有线程的堆栈会自动写入报告文件。报告位于日志文件夹的 freeze/ 下。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2155"/>
+        <location filename="../../ui/main_window.py" line="2164"/>
         <source>Arayuz dili</source>
         <translation>界面语言</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2157"/>
+        <location filename="../../ui/main_window.py" line="2166"/>
         <source>Arayuz stili</source>
         <translation>界面风格</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2773"/>
+        <location filename="../../ui/main_window.py" line="2792"/>
         <source>Arayuzun takildigi andaki yigin. En ustteki &apos;O an acik islem&apos; satiri hangi islemin bekledigini soyler.</source>
         <translation>界面冻结时的堆栈。最上面的“当前打开的操作”一行指出了正在等待的操作。</translation>
     </message>
@@ -761,7 +761,7 @@
         <translation>下移</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2540"/>
+        <location filename="../../ui/main_window.py" line="2549"/>
         <source>Asagi tasi</source>
         <translation>下移</translation>
     </message>
@@ -793,12 +793,12 @@
     </message>
     <message>
         <location filename="../../core/physical.py" line="121"/>
-        <location filename="../../core/session.py" line="1377"/>
+        <location filename="../../core/session.py" line="1399"/>
         <source>Aygit</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3297"/>
+        <location filename="../../ui/main_window.py" line="3316"/>
         <source>Aygit cikarildi: {}</source>
         <translation>设备已移除：{}</translation>
     </message>
@@ -823,7 +823,7 @@
         <translation>设备为只读</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3293"/>
+        <location filename="../../ui/main_window.py" line="3312"/>
         <source>Aygit takildi: {} — {} ({})</source>
         <translation>已插入设备：{} — {}（{}）</translation>
     </message>
@@ -952,18 +952,18 @@
         <translation>BIOS 引导设备</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2873"/>
+        <location filename="../../ui/main_window.py" line="2892"/>
         <source>BOLUM AYGITLARI</source>
         <translation>分区设备</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3941"/>
+        <location filename="../../ui/main_window.py" line="3960"/>
         <source>BOLUM {}</source>
         <translation>分区 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2864"/>
-        <location filename="../../ui/main_window.py" line="3925"/>
+        <location filename="../../ui/main_window.py" line="2883"/>
+        <location filename="../../ui/main_window.py" line="3944"/>
         <source>BOLUMLER</source>
         <translation>分区</translation>
     </message>
@@ -983,7 +983,7 @@
         <translation>挂载点</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1672"/>
+        <location filename="../../ui/main_window.py" line="1675"/>
         <source>Baglama yalnizca gercek disklerde anlamlidir; goruntu dosyasi isletim sistemine bagli degildir.</source>
         <translation>挂载仅适用于真实磁盘；镜像文件不会连接到操作系统。</translation>
     </message>
@@ -998,15 +998,15 @@
         <translation>总线</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1633"/>
-        <location filename="../../ui/main_window.py" line="1635"/>
-        <location filename="../../ui/main_window.py" line="1640"/>
-        <location filename="../../ui/main_window.py" line="2696"/>
+        <location filename="../../ui/main_window.py" line="1636"/>
+        <location filename="../../ui/main_window.py" line="1638"/>
+        <location filename="../../ui/main_window.py" line="1643"/>
+        <location filename="../../ui/main_window.py" line="2715"/>
         <source>Baglantilari kes</source>
         <translation>全部卸载</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2690"/>
+        <location filename="../../ui/main_window.py" line="2709"/>
         <source>Bagli bolum uyarisi</source>
         <translation>已挂载分区警告</translation>
     </message>
@@ -1026,12 +1026,12 @@
         <translation>已挂载的分区</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3948"/>
+        <location filename="../../ui/main_window.py" line="3967"/>
         <source>Bagli degil</source>
         <translation>未挂载</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4000"/>
+        <location filename="../../ui/main_window.py" line="4019"/>
         <source>Bagli — isletim sistemi kullaniyor</source>
         <translation>已挂载 — 正被操作系统使用</translation>
     </message>
@@ -1058,7 +1058,7 @@
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3951"/>
+        <location filename="../../ui/main_window.py" line="3970"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Baslangic LBA</source>
         <translation>起始 LBA</translation>
@@ -1095,7 +1095,7 @@
         <translation>该标志保持设置状态；Windows 会在下次启动时检查该卷。在此之前 Linux 不会挂载它。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3953"/>
+        <location filename="../../ui/main_window.py" line="3972"/>
         <source>Bayt ofseti</source>
         <translation>字节偏移</translation>
     </message>
@@ -1115,12 +1115,12 @@
         <translation>意外的响应</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2382"/>
+        <location filename="../../ui/main_window.py" line="2391"/>
         <source>Bekleyen adimla cakisiyor</source>
         <translation>与某个待执行步骤冲突</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2511"/>
+        <location filename="../../ui/main_window.py" line="2520"/>
         <source>Bekleyen islem yok</source>
         <translation>没有待执行操作</translation>
     </message>
@@ -1130,7 +1130,7 @@
         <translation>待执行操作</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2510"/>
+        <location filename="../../ui/main_window.py" line="2519"/>
         <source>Bekleyen islemler ({})</source>
         <translation>待执行操作（{}）</translation>
     </message>
@@ -1140,12 +1140,12 @@
         <translation>正在应用待处理的操作</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2524"/>
+        <location filename="../../ui/main_window.py" line="2533"/>
         <source>Bekleyen islemler var</source>
         <translation>存在待执行操作</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3428"/>
+        <location filename="../../ui/main_window.py" line="3447"/>
         <location filename="../../ui/widgets/partition_table.py" line="145"/>
         <source>Bekleyen islemler:</source>
         <translation>待执行操作：</translation>
@@ -1161,7 +1161,7 @@
         <translation>已加入待执行操作：移除引导代码</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2572"/>
+        <location filename="../../ui/main_window.py" line="2581"/>
         <source>Bekleyen islemleri iptal et</source>
         <translation>放弃待执行操作</translation>
     </message>
@@ -1245,7 +1245,7 @@
         <translation>正在写入固件</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1365"/>
+        <location filename="../../core/session.py" line="1387"/>
         <source>Bicim</source>
         <translation>格式化</translation>
     </message>
@@ -1261,9 +1261,9 @@
         <translation>格式化...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3423"/>
-        <location filename="../../ui/main_window.py" line="3574"/>
-        <location filename="../../ui/main_window.py" line="3946"/>
+        <location filename="../../ui/main_window.py" line="3442"/>
+        <location filename="../../ui/main_window.py" line="3593"/>
+        <location filename="../../ui/main_window.py" line="3965"/>
         <location filename="../../ui/widgets/disk_map.py" line="194"/>
         <location filename="../../ui/widgets/disk_overview.py" line="251"/>
         <source>Bicimlendirilmemis</source>
@@ -1271,7 +1271,7 @@
     </message>
     <message>
         <location filename="../../ui/widgets/file_browser.py" line="125"/>
-        <location filename="../../ui/widgets/file_browser.py" line="143"/>
+        <location filename="../../ui/widgets/file_browser.py" line="155"/>
         <source>Bicimlendirilmemis bolum</source>
         <translation>未格式化的分区</translation>
     </message>
@@ -1367,15 +1367,15 @@
         <translation>未知节点</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="441"/>
-        <location filename="../../core/operations.py" line="471"/>
+        <location filename="../../core/operations.py" line="443"/>
+        <location filename="../../core/operations.py" line="473"/>
         <source>Bilinmeyen islem turu: {}</source>
         <translation>未知的操作类型：{}</translation>
     </message>
     <message>
         <location filename="../../core/session.py" line="422"/>
-        <location filename="../../core/session.py" line="864"/>
-        <location filename="../../core/session.py" line="876"/>
+        <location filename="../../core/session.py" line="873"/>
+        <location filename="../../core/session.py" line="885"/>
         <source>Bilinmeyen sema: {}</source>
         <translation>未知的分区方案：{}</translation>
     </message>
@@ -1402,7 +1402,7 @@
         <translation>未知（无法读取配置）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2913"/>
+        <location filename="../../ui/main_window.py" line="2932"/>
         <source>Bir diski acmak icin uzerine cift tiklayin.</source>
         <translation>双击磁盘以打开。</translation>
     </message>
@@ -1468,8 +1468,8 @@
     </message>
     <message>
         <location filename="../../core/operations.py" line="81"/>
-        <location filename="../../ui/main_window.py" line="1598"/>
-        <location filename="../../ui/main_window.py" line="3947"/>
+        <location filename="../../ui/main_window.py" line="1601"/>
+        <location filename="../../ui/main_window.py" line="3966"/>
         <source>Birim etiketi</source>
         <translation>卷标</translation>
     </message>
@@ -1557,7 +1557,7 @@
         <translation>结束扇区：</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3952"/>
+        <location filename="../../ui/main_window.py" line="3971"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
         <source>Bitis LBA</source>
         <translation>结束 LBA</translation>
@@ -1634,7 +1634,7 @@
         <translation>该分区对于 FAT{} 来说太小（簇数 {}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3962"/>
+        <location filename="../../ui/main_window.py" line="3981"/>
         <source>Bolum GUID</source>
         <translation>分区 GUID</translation>
     </message>
@@ -1655,7 +1655,7 @@
         <translation>分区名称</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="596"/>
+        <location filename="../../core/session.py" line="605"/>
         <source>Bolum adi yalnizca GPT semasinda desteklenir</source>
         <translation>仅 GPT 方案支持分区名称</translation>
     </message>
@@ -1687,7 +1687,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>未找到分区设备：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1873"/>
+        <location filename="../../ui/main_window.py" line="1880"/>
         <source>Bolum bagli</source>
         <translation>分区已挂载</translation>
     </message>
@@ -1705,9 +1705,9 @@ MBR icin birim etiketini degistirin.</source>
         <translation>分区无法缩小这么多</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1252"/>
-        <location filename="../../core/session.py" line="896"/>
-        <location filename="../../core/session.py" line="926"/>
+        <location filename="../../core/session.py" line="1262"/>
+        <location filename="../../core/session.py" line="905"/>
+        <location filename="../../core/session.py" line="935"/>
         <source>Bolum bulunamadi</source>
         <translation>未找到分区</translation>
     </message>
@@ -1771,7 +1771,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>分区超出了周边区域（最晚为 LBA {}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2109"/>
+        <location filename="../../ui/main_window.py" line="2118"/>
         <location filename="../../ui/main_window.py" line="990"/>
         <source>Bolum olusturuluyor...</source>
         <translation>正在创建分区...</translation>
@@ -1782,17 +1782,17 @@ MBR icin birim etiketini degistirin.</source>
         <translation>准备计划后分区已发生变化；请刷新</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1369"/>
+        <location filename="../../core/session.py" line="1391"/>
         <source>Bolum sayisi</source>
         <translation>分区数</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4028"/>
+        <location filename="../../ui/main_window.py" line="4047"/>
         <source>Bolum secili degil</source>
         <translation>未选择分区</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1368"/>
+        <location filename="../../core/session.py" line="1390"/>
         <source>Bolum tablosu</source>
         <translation>分区表</translation>
     </message>
@@ -1812,7 +1812,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>不创建分区表</translation>
     </message>
     <message>
-        <location filename="../../core/wipe.py" line="172"/>
+        <location filename="../../core/wipe.py" line="176"/>
         <source>Bolum tablosu silindi</source>
         <translation>分区表已擦除</translation>
     </message>
@@ -1849,7 +1849,7 @@ MBR icin birim etiketini degistirin.</source>
         <translation>检测到 &lt;b&gt;{}&lt;/b&gt; 个不在分区表中的文件系统。请选择要添加到分区表的那一个。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2007"/>
+        <location filename="../../ui/main_window.py" line="2016"/>
         <source>Bolum tablosunda olmayan bir dosya sistemi bulunamadi.</source>
         <translation>未找到分区表之外的文件系统。</translation>
     </message>
@@ -1869,14 +1869,14 @@ MBR icin birim etiketini degistirin.</source>
         <translation>转换分区表</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="648"/>
+        <location filename="../../core/operations.py" line="650"/>
         <location filename="../../core/operations.py" line="75"/>
         <location filename="../../ui/main_window.py" line="638"/>
         <source>Bolum tablosunu sil</source>
         <translation>删除分区表</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="656"/>
+        <location filename="../../core/operations.py" line="658"/>
         <source>Bolum tablosunu {} yap</source>
         <translation>将分区表转换为 {}</translation>
     </message>
@@ -1898,27 +1898,27 @@ MBR icin birim etiketini degistirin.</source>
         <translation>更改分区类型...</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="658"/>
+        <location filename="../../core/operations.py" line="660"/>
         <source>Bolum verisi korunur</source>
         <translation>分区数据将被保留</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1738"/>
+        <location filename="../../ui/main_window.py" line="1741"/>
         <source>Bolum yok</source>
         <translation>无分区</translation>
     </message>
     <message>
         <location filename="../../core/bootloader.py" line="675"/>
-        <location filename="../../core/operations.py" line="702"/>
-        <location filename="../../core/operations.py" line="717"/>
-        <location filename="../../core/operations.py" line="728"/>
-        <location filename="../../core/operations.py" line="737"/>
-        <location filename="../../core/operations.py" line="746"/>
-        <location filename="../../core/operations.py" line="756"/>
-        <location filename="../../core/operations.py" line="767"/>
-        <location filename="../../core/operations.py" line="785"/>
-        <location filename="../../core/operations.py" line="794"/>
-        <location filename="../../core/operations.py" line="809"/>
+        <location filename="../../core/operations.py" line="704"/>
+        <location filename="../../core/operations.py" line="719"/>
+        <location filename="../../core/operations.py" line="730"/>
+        <location filename="../../core/operations.py" line="739"/>
+        <location filename="../../core/operations.py" line="748"/>
+        <location filename="../../core/operations.py" line="758"/>
+        <location filename="../../core/operations.py" line="769"/>
+        <location filename="../../core/operations.py" line="795"/>
+        <location filename="../../core/operations.py" line="804"/>
+        <location filename="../../core/operations.py" line="819"/>
         <location filename="../../core/ptable.py" line="123"/>
         <location filename="../../ui/dialogs/backup.py" line="1105"/>
         <location filename="../../ui/dialogs/backup.py" line="567"/>
@@ -1926,7 +1926,7 @@ MBR icin birim etiketini degistirin.</source>
         <location filename="../../ui/dialogs/bootloader.py" line="201"/>
         <location filename="../../ui/dialogs/bootloader.py" line="234"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="164"/>
-        <location filename="../../ui/main_window.py" line="2033"/>
+        <location filename="../../ui/main_window.py" line="2042"/>
         <location filename="../../ui/widgets/disk_overview.py" line="184"/>
         <location filename="../../ui/widgets/layout_bar.py" line="131"/>
         <location filename="../../ui/widgets/partition_table.py" line="51"/>
@@ -1934,10 +1934,10 @@ MBR icin birim etiketini degistirin.</source>
         <translation>分区 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1750"/>
-        <location filename="../../ui/main_window.py" line="1887"/>
-        <location filename="../../ui/main_window.py" line="1910"/>
-        <location filename="../../ui/main_window.py" line="3036"/>
+        <location filename="../../ui/main_window.py" line="1753"/>
+        <location filename="../../ui/main_window.py" line="1894"/>
+        <location filename="../../ui/main_window.py" line="1917"/>
+        <location filename="../../ui/main_window.py" line="3055"/>
         <source>Bolum {} ({})</source>
         <translation>分区 {}（{}）</translation>
     </message>
@@ -1962,47 +1962,47 @@ MBR icin birim etiketini degistirin.</source>
         <translation>分区 {} 从 LBA 0 开始；MBR 无法表示此布局</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1287"/>
+        <location filename="../../core/session.py" line="1309"/>
         <source>Bolum {} NTFS degil</source>
         <translation>分区 {} 不是 NTFS</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="807"/>
+        <location filename="../../core/operations.py" line="817"/>
         <source>Bolum {} NTFS onar</source>
         <translation>修复分区 {} 上的 NTFS</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="744"/>
+        <location filename="../../core/operations.py" line="746"/>
         <source>Bolum {} adi</source>
         <translation>分区 {} 名称</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1713"/>
+        <location filename="../../ui/main_window.py" line="1716"/>
         <source>Bolum {} baglandi: {}</source>
         <translation>分区 {} 已挂载到 {}</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="701"/>
+        <location filename="../../core/operations.py" line="703"/>
         <source>Bolum {} bicimlendir</source>
         <translation>格式化分区 {}</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="791"/>
+        <location filename="../../core/operations.py" line="801"/>
         <source>Bolum {} bos alanini sil</source>
         <translation>擦除分区 {} 的空闲空间</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="724"/>
+        <location filename="../../core/operations.py" line="726"/>
         <source>Bolum {} boyutlandir</source>
         <translation>调整分区 {} 的大小</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1715"/>
+        <location filename="../../ui/main_window.py" line="1718"/>
         <source>Bolum {} cikarildi</source>
         <translation>分区 {} 已卸载</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1626"/>
+        <location filename="../../ui/main_window.py" line="1629"/>
         <source>Bolum {} cikariliyor...</source>
         <translation>正在卸载分区 {}...</translation>
     </message>
@@ -2021,7 +2021,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
 刚刚已从磁盘重新测量该限制；该步骤未加入队列。</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="735"/>
+        <location filename="../../core/operations.py" line="737"/>
         <source>Bolum {} etiketi</source>
         <translation>分区 {} 卷标</translation>
     </message>
@@ -2031,7 +2031,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>分区 {} 位置无效（LBA {}）</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="783"/>
+        <location filename="../../core/operations.py" line="793"/>
         <source>Bolum {} guvenli sil</source>
         <translation>安全擦除分区 {}</translation>
     </message>
@@ -2061,38 +2061,38 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>分区 {} 与前一个分区重叠</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="764"/>
+        <location filename="../../core/operations.py" line="766"/>
         <source>Bolum {} onyukleme bayragi</source>
         <translation>分区 {} 引导标志</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="715"/>
+        <location filename="../../core/operations.py" line="717"/>
         <source>Bolum {} sil</source>
         <translation>删除分区 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1874"/>
+        <location filename="../../ui/main_window.py" line="1881"/>
         <source>Bolum {} su anda bagli ({}). Bagli bir NTFS birimi onarilamaz; once baglantisini kesin.</source>
         <translation>分区 {} 当前已挂载（{}）。已挂载的 NTFS 卷无法修复；请先卸载。</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="754"/>
+        <location filename="../../core/operations.py" line="756"/>
         <source>Bolum {} turu</source>
         <translation>分区 {} 类型</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="704"/>
+        <location filename="../../core/session.py" line="713"/>
         <source>Bolum {} yeni boyutun disinda kaliyor; goruntu kucultulmedi</source>
         <translation>分区 {} 会超出新大小；未缩小映像</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1952"/>
+        <location filename="../../ui/main_window.py" line="1961"/>
         <source>Bolum {} — Silinmis Dosyalar</source>
         <translation>分区 {} — 已删除文件</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="618"/>
-        <location filename="../../ui/main_window.py" line="3038"/>
+        <location filename="../../ui/main_window.py" line="3057"/>
         <source>Bolum {} — {}</source>
         <translation>分区 {} — {}</translation>
     </message>
@@ -2122,13 +2122,13 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>分区 {}：位置变化</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1886"/>
-        <location filename="../../ui/main_window.py" line="3414"/>
+        <location filename="../../ui/main_window.py" line="1893"/>
+        <location filename="../../ui/main_window.py" line="3433"/>
         <source>Bolum {}: {}</source>
         <translation>分区 {}：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3566"/>
+        <location filename="../../ui/main_window.py" line="3585"/>
         <source>Bolum {}: {} ({})</source>
         <translation>分区 {}：{}（{}）</translation>
     </message>
@@ -2149,7 +2149,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>分区 {}：{} 无法调整大小</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1951"/>
+        <location filename="../../ui/main_window.py" line="1960"/>
         <source>Bolum {}: {} silinmis giris bulundu</source>
         <translation>分区 {}：找到 {} 个已删除条目</translation>
     </message>
@@ -2159,7 +2159,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>该分区没有支持写入卷标的文件系统</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1302"/>
+        <location filename="../../core/session.py" line="1324"/>
         <source>Bolumde okunabilir dosya sistemi yok</source>
         <translation>该分区没有可读取的文件系统</translation>
     </message>
@@ -2181,7 +2181,7 @@ Sinir az once diskten yeniden olculdu; adim kuyruga eklenmedi.</source>
         <translation>未分区</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3054"/>
+        <location filename="../../ui/main_window.py" line="3073"/>
         <source>Bolumlenmemis alan
 {}
 Baslangic LBA   : {}
@@ -2198,7 +2198,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
 您可以在此区域创建新分区（分区 &gt; 新建分区）。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1370"/>
+        <location filename="../../core/session.py" line="1392"/>
         <source>Bolumlenmis</source>
         <translation>已分区</translation>
     </message>
@@ -2292,7 +2292,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
     <message>
         <location filename="../../core/ptable.py" line="22"/>
         <location filename="../../core/ptable.py" line="53"/>
-        <location filename="../../ui/main_window.py" line="3984"/>
+        <location filename="../../ui/main_window.py" line="4003"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Bos</source>
         <translation>空闲</translation>
@@ -2314,12 +2314,12 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>空闲空间</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3432"/>
+        <location filename="../../ui/main_window.py" line="3451"/>
         <source>Bos alan ({})</source>
         <translation>空闲空间（{}）</translation>
     </message>
     <message>
-        <location filename="../../core/wipe.py" line="148"/>
+        <location filename="../../core/wipe.py" line="152"/>
         <source>Bos alan dolduruluyor... {} / {}</source>
         <translation>正在填充空闲空间... {} / {}</translation>
     </message>
@@ -2371,7 +2371,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
     </message>
     <message>
         <location filename="../../core/physical.py" line="126"/>
-        <location filename="../../core/session.py" line="1366"/>
+        <location filename="../../core/session.py" line="1388"/>
         <location filename="../../ui/dialogs/backup.py" line="363"/>
         <location filename="../../ui/dialogs/backup.py" line="456"/>
         <location filename="../../ui/dialogs/backup.py" line="693"/>
@@ -2380,7 +2380,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3949"/>
+        <location filename="../../ui/main_window.py" line="3968"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
@@ -2444,12 +2444,12 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>此 Windows 版本（{}）无法创建 ReFS；需要企业版、专业工作站版或服务器版</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2536"/>
+        <location filename="../../ui/main_window.py" line="2545"/>
         <source>Bu adimi kaldir</source>
         <translation>移除此步骤</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2383"/>
+        <location filename="../../ui/main_window.py" line="2392"/>
         <source>Bu alan &lt;b&gt;{}&lt;/b&gt; ile cakisiyor. O bolum henuz diske yazilmadi ama bekleyen islemler arasinda ve bu alani tutuyor.&lt;br&gt;&lt;br&gt;Once bekleyen adimi kaldirin ya da baska bir alan secin.</source>
         <translation>此区域与 &lt;b&gt;{}&lt;/b&gt; 重叠。该分区尚未写入磁盘，但它位于待执行列表中，已占用此空间。&lt;br&gt;&lt;br&gt;请移除该待执行步骤或选择其他区域。</translation>
     </message>
@@ -2488,17 +2488,17 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>此分区属于正在运行的系统（{}）；无法卸载。</translation>
     </message>
     <message>
-        <location filename="../../core/wipe.py" line="120"/>
+        <location filename="../../core/wipe.py" line="124"/>
         <source>Bu bolum yazilabilir degil</source>
         <translation>此分区不可写</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1949"/>
+        <location filename="../../ui/main_window.py" line="1958"/>
         <source>Bu bolumde silinmis dosya girisi bulunamadi.</source>
         <translation>在此分区上未找到已删除的文件条目。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1315"/>
+        <location filename="../../core/session.py" line="1337"/>
         <source>Bu bolumde silinmis dosya taramasi desteklenmiyor (yalnizca FAT ve exFAT)</source>
         <translation>此分区不支持扫描已删除文件（仅限 FAT 和 exFAT）</translation>
     </message>
@@ -2508,12 +2508,12 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>无法写入此分区。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2680"/>
+        <location filename="../../ui/main_window.py" line="2699"/>
         <source>Bu bolumler &lt;b&gt;hala bagli&lt;/b&gt;. Isletim sistemi onlari kullanirken ham sektorlere yazmak dosya sistemini &lt;b&gt;bozabilir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Once bu bolumleri cikarmaniz (unmount) onerilir.</source>
         <translation>这些分区&lt;b&gt;仍处于挂载状态&lt;/b&gt;。在操作系统使用它们时写入原始扇区可能会&lt;b&gt;损坏&lt;/b&gt;文件系统。&lt;br&gt;&lt;br&gt;建议先卸载这些分区。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1641"/>
+        <location filename="../../ui/main_window.py" line="1644"/>
         <source>Bu bolumler cikarilamadi:</source>
         <translation>无法卸载以下分区：</translation>
     </message>
@@ -2523,7 +2523,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>此版本无法读取该 btrfs 特性（extent-tree-v2 / raid-stripe-tree）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3852"/>
+        <location filename="../../ui/main_window.py" line="3871"/>
         <source>Bu diski kapat</source>
         <translation>关闭此磁盘</translation>
     </message>
@@ -2534,7 +2534,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>此磁盘有已挂载的分区：{} — 建议在写入前卸载它们。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2691"/>
+        <location filename="../../ui/main_window.py" line="2710"/>
         <source>Bu diskte bagli bolumler var:&lt;br&gt;&lt;b&gt;{}&lt;/b&gt;&lt;br&gt;&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>此磁盘有已挂载的分区：&lt;br&gt;&lt;b&gt;{}&lt;/b&gt;&lt;br&gt;&lt;br&gt;{}&lt;br&gt;&lt;br&gt;是否继续？</translation>
     </message>
@@ -2554,7 +2554,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>此目录已加密（fscrypt）；没有密钥无法写入名称。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1111"/>
+        <location filename="../../core/session.py" line="1120"/>
         <source>Bu dosya bir DiskUltimate yedegi degil</source>
         <translation>此文件不是 DiskUltimate 备份</translation>
     </message>
@@ -2579,7 +2579,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <translation>此文件系统不能小于 {}（否则会丢失数据）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1595"/>
+        <location filename="../../ui/main_window.py" line="1598"/>
         <source>Bu dosya sisteminde etiket degistirme desteklenmiyor.
 Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>此文件系统不支持更改卷标。
@@ -2621,12 +2621,12 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>此镜像没有分区表。是否立即创建 GPT 分区表？</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3874"/>
+        <location filename="../../ui/main_window.py" line="3893"/>
         <source>Bu goruntuyu kapat</source>
         <translation>关闭此镜像</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1866"/>
+        <location filename="../../ui/main_window.py" line="1873"/>
         <source>Bu islem yalnizca NTFS bolumlerde kullanilabilir.</source>
         <translation>此操作仅适用于 NTFS 分区。</translation>
     </message>
@@ -2641,7 +2641,7 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>不支持写入此分配描述符类型：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4052"/>
+        <location filename="../../ui/main_window.py" line="4071"/>
         <source>Bu kaynak degistirilemez</source>
         <translation>无法修改此源</translation>
     </message>
@@ -2656,7 +2656,7 @@ Bolumu yeniden bicimlendirerek etiket verebilirsiniz.</source>
         <translation>本机是从此启动项启动的</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2765"/>
+        <location filename="../../ui/main_window.py" line="2784"/>
         <source>Bu makinede kayitli donma raporu bulunamadi.
 
 Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
@@ -2799,7 +2799,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>正在运行...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2744"/>
+        <location filename="../../ui/main_window.py" line="2763"/>
         <source>Calisma suresi</source>
         <translation>运行时间</translation>
     </message>
@@ -2825,17 +2825,17 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>可移动</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1639"/>
+        <location filename="../../ui/main_window.py" line="1642"/>
         <source>Cikarilamayan bolum var:</source>
         <translation>部分分区无法卸载：</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2068"/>
+        <location filename="../../ui/main_window.py" line="2077"/>
         <source>Cikariliyor: {}</source>
         <translation>正在提取：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2061"/>
+        <location filename="../../ui/main_window.py" line="2070"/>
         <source>Cikarma hedefi</source>
         <translation>提取目标</translation>
     </message>
@@ -2850,7 +2850,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>线条</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2738"/>
+        <location filename="../../ui/main_window.py" line="2757"/>
         <source>Cokme gunlugu</source>
         <translation>崩溃日志</translation>
     </message>
@@ -2865,7 +2865,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>待更改</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3105"/>
+        <location filename="../../ui/main_window.py" line="3124"/>
         <source>DEGISTIRILEMEZ</source>
         <translation>不可修改</translation>
     </message>
@@ -2880,7 +2880,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>警告：缩小会擦除末尾的数据（应用时会再次询问）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4060"/>
+        <location filename="../../ui/main_window.py" line="4079"/>
         <source>DIKKAT: salt okunur acildi — {}</source>
         <translation>警告：已以只读方式打开 — {}</translation>
     </message>
@@ -2890,12 +2890,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>警告：新分区表会清除现有 {} 个分区的定义</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2619"/>
+        <location filename="../../ui/main_window.py" line="2628"/>
         <source>DIKKAT: {}</source>
         <translation>警告：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3912"/>
+        <location filename="../../ui/main_window.py" line="3931"/>
         <source>DISK GORUNTUSU</source>
         <translation>磁盘镜像</translation>
     </message>
@@ -2931,12 +2931,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>更改&lt;b&gt;在写入之前&lt;/b&gt;不会生效。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3109"/>
+        <location filename="../../ui/main_window.py" line="3128"/>
         <source>Degisiklikler bekleyen islem olarak birikir; diske ancak Uygula ile yazilir.</source>
         <translation>更改会作为待执行操作收集起来；仅在“应用”时才写入磁盘。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4094"/>
+        <location filename="../../ui/main_window.py" line="4113"/>
         <source>Degisiklikler bekliyor</source>
         <translation>有待执行的更改</translation>
     </message>
@@ -2961,12 +2961,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>无法更改</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4101"/>
+        <location filename="../../ui/main_window.py" line="4120"/>
         <source>Degistirilemez kaynak</source>
         <translation>源不可修改</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1489"/>
+        <location filename="../../core/session.py" line="1511"/>
         <source>Degistirilemez — {}</source>
         <translation>不可修改 — {}</translation>
     </message>
@@ -2987,12 +2987,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>检查结果</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4253"/>
+        <location filename="../../ui/main_window.py" line="4272"/>
         <source>Denetlenemedi: {}</source>
         <translation>无法检查：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1993"/>
+        <location filename="../../ui/main_window.py" line="2002"/>
         <source>Derin tarama (64 KB adim) yapilsin mi?
 
 Hayir: hizli tarama (1 MB adim) — cogu durumda yeterlidir.
@@ -3019,8 +3019,8 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="1549"/>
-        <location filename="../../ui/main_window.py" line="1594"/>
-        <location filename="../../ui/main_window.py" line="1671"/>
+        <location filename="../../ui/main_window.py" line="1597"/>
+        <location filename="../../ui/main_window.py" line="1674"/>
         <source>Desteklenmiyor</source>
         <translation>不支持</translation>
     </message>
@@ -3057,31 +3057,31 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
     </message>
     <message>
         <location filename="../../ui/dialogs/efiboot.py" line="128"/>
-        <location filename="../../ui/widgets/file_browser.py" line="527"/>
+        <location filename="../../ui/widgets/file_browser.py" line="539"/>
         <source>Disa aktar...</source>
         <translation>导出...</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="297"/>
+        <location filename="../../ui/widgets/file_browser.py" line="309"/>
         <source>Disa aktariliyor</source>
         <translation>正在导出</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="299"/>
-        <location filename="../../ui/widgets/file_browser.py" line="303"/>
+        <location filename="../../ui/widgets/file_browser.py" line="311"/>
+        <location filename="../../ui/widgets/file_browser.py" line="315"/>
         <source>Disa aktarma hatasi</source>
         <translation>导出错误</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="277"/>
+        <location filename="../../ui/widgets/file_browser.py" line="289"/>
         <source>Disa aktarma klasoru</source>
         <translation>导出文件夹</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="642"/>
-        <location filename="../../core/operations.py" line="650"/>
-        <location filename="../../core/operations.py" line="659"/>
-        <location filename="../../core/operations.py" line="781"/>
+        <location filename="../../core/operations.py" line="644"/>
+        <location filename="../../core/operations.py" line="652"/>
+        <location filename="../../core/operations.py" line="661"/>
+        <location filename="../../core/operations.py" line="791"/>
         <location filename="../../ui/dialogs/bootloader.py" line="290"/>
         <location filename="../../ui/dialogs/clone.py" line="87"/>
         <source>Disk</source>
@@ -3094,18 +3094,18 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>该磁盘对于 GPT 来说太小</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2135"/>
+        <location filename="../../ui/main_window.py" line="2144"/>
         <source>Disk acik degil</source>
         <translation>没有打开的磁盘</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2977"/>
-        <location filename="../../ui/main_window.py" line="2980"/>
+        <location filename="../../ui/main_window.py" line="2996"/>
+        <location filename="../../ui/main_window.py" line="2999"/>
         <source>Disk acilamadi</source>
         <translation>无法打开磁盘</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2222"/>
+        <location filename="../../ui/main_window.py" line="2231"/>
         <source>Disk acilamadi (yetki): {}</source>
         <translation>无法打开磁盘（权限）：{}</translation>
     </message>
@@ -3150,7 +3150,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>磁盘镜像 ({});;原始镜像 (*.img *.raw *.dd *.bin);;虚拟磁盘 (*.vhd *.vhdx *.vdi *.vmdk *.qcow2);;所有文件 (*)</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="240"/>
+        <location filename="../../ui/widgets/file_browser.py" line="252"/>
         <source>Disk goruntusu</source>
         <translation>磁盘镜像</translation>
     </message>
@@ -3183,7 +3183,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>没有打开的磁盘镜像</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="780"/>
+        <location filename="../../core/operations.py" line="790"/>
         <source>Disk guvenli sil</source>
         <translation>安全擦除磁盘</translation>
     </message>
@@ -3199,12 +3199,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>无法在磁盘上定位</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3237"/>
+        <location filename="../../ui/main_window.py" line="3256"/>
         <source>Disk listesi alinamadi: {}</source>
         <translation>无法获取磁盘列表：{}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="815"/>
+        <location filename="../../core/session.py" line="824"/>
         <source>Disk numarasi bilinmiyor</source>
         <translation>磁盘编号未知</translation>
     </message>
@@ -3230,7 +3230,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>磁盘以只读方式打开。更改会作为待执行操作收集起来，仅在“应用”时才写入磁盘。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2636"/>
+        <location filename="../../ui/main_window.py" line="2655"/>
         <source>Disk salt okunur kipe dondurulemedi: {}</source>
         <translation>无法将磁盘恢复为只读模式：{}</translation>
     </message>
@@ -3240,8 +3240,8 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>选择磁盘...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2853"/>
-        <location filename="../../ui/main_window.py" line="2955"/>
+        <location filename="../../ui/main_window.py" line="2872"/>
+        <location filename="../../ui/main_window.py" line="2974"/>
         <source>Disk secili degil</source>
         <translation>未选择磁盘</translation>
     </message>
@@ -3257,7 +3257,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>磁盘和分区</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1826"/>
+        <location filename="../../ui/main_window.py" line="1831"/>
         <source>Disk yok</source>
         <translation>没有磁盘</translation>
     </message>
@@ -3317,7 +3317,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>磁盘末尾的空闲空间将并入最后一个分区</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2914"/>
+        <location filename="../../ui/main_window.py" line="2933"/>
         <source>Diskler varsayilan olarak SALT OKUNUR acilir.</source>
         <translation>磁盘默认以只读方式打开。</translation>
     </message>
@@ -3347,7 +3347,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>磁盘上没有足够的空闲簇</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1643"/>
+        <location filename="../../ui/main_window.py" line="1646"/>
         <source>Diskteki baglantilar kesildi</source>
         <translation>已卸载磁盘上的所有分区</translation>
     </message>
@@ -3357,7 +3357,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>与磁盘上相同</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2444"/>
+        <location filename="../../ui/main_window.py" line="2453"/>
         <source>Diskteki hali goster</source>
         <translation>显示磁盘上的布局</translation>
     </message>
@@ -3466,7 +3466,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../core/apfs.py" line="420"/>
         <location filename="../../core/btrfs.py" line="315"/>
         <location filename="../../core/f2fs.py" line="423"/>
-        <location filename="../../core/filesystem.py" line="665"/>
+        <location filename="../../core/filesystem.py" line="691"/>
         <location filename="../../core/hfsplus.py" line="565"/>
         <location filename="../../core/hfsplus.py" line="577"/>
         <location filename="../../core/iso9660.py" line="252"/>
@@ -3486,34 +3486,34 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>DoD 5220.22-M ECE（7 遍）</translation>
     </message>
     <message>
-        <location filename="../../core/wipe.py" line="109"/>
+        <location filename="../../core/wipe.py" line="113"/>
         <source>Dogrulaniyor... {}</source>
         <translation>正在校验... {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2739"/>
+        <location filename="../../ui/main_window.py" line="2758"/>
         <source>Donma esigi</source>
         <translation>冻结阈值</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2764"/>
+        <location filename="../../ui/main_window.py" line="2783"/>
         <source>Donma raporu yok</source>
         <translation>无冻结报告</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2772"/>
+        <location filename="../../ui/main_window.py" line="2791"/>
         <source>Donma raporu — {}</source>
         <translation>冻结报告 — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1732"/>
+        <location filename="../../ui/main_window.py" line="1735"/>
         <source>Donusumde bolum verileri yerinde kalir; kesinti tabloyu bozabilir, onemli veriler icin once yedek alin</source>
         <translation>转换期间分区数据保持原位；中断可能会损坏分区表，因此请先备份重要数据</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1364"/>
+        <location filename="../../core/session.py" line="1386"/>
         <location filename="../../ui/dialogs/efiboot.py" line="279"/>
-        <location filename="../../ui/widgets/file_browser.py" line="243"/>
+        <location filename="../../ui/widgets/file_browser.py" line="255"/>
         <source>Dosya</source>
         <translation>文件</translation>
     </message>
@@ -3562,12 +3562,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>添加文件</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="530"/>
+        <location filename="../../ui/widgets/file_browser.py" line="542"/>
         <source>Dosya ekle...</source>
         <translation>添加文件...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3751"/>
+        <location filename="../../ui/main_window.py" line="3770"/>
         <source>Dosya gezgininde ac</source>
         <translation>在文件浏览器中打开</translation>
     </message>
@@ -3580,22 +3580,22 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../core/clone.py" line="121"/>
         <location filename="../../ui/dialogs/bootloader.py" line="76"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
-        <location filename="../../ui/main_window.py" line="3946"/>
+        <location filename="../../ui/main_window.py" line="3965"/>
         <source>Dosya sistemi</source>
         <translation>文件系统</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3152"/>
+        <location filename="../../ui/main_window.py" line="3171"/>
         <source>Dosya sistemi acilamadi</source>
         <translation>无法打开文件系统</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3034"/>
+        <location filename="../../ui/main_window.py" line="3053"/>
         <source>Dosya sistemi acilamadi: {}</source>
         <translation>无法打开文件系统：{}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="938"/>
+        <location filename="../../core/session.py" line="947"/>
         <source>Dosya sistemi bolumu dolduracak kadar buyutuluyor...</source>
         <translation>正在扩展文件系统以填满分区...</translation>
     </message>
@@ -3677,12 +3677,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>文件：</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2077"/>
+        <location filename="../../ui/main_window.py" line="2086"/>
         <source>Dosyalar cikariliyor</source>
         <translation>正在提取文件</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1976"/>
+        <location filename="../../ui/main_window.py" line="1985"/>
         <source>Dosyalar kurtariliyor</source>
         <translation>正在恢复文件</translation>
     </message>
@@ -3700,15 +3700,15 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>正在停止...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1378"/>
+        <location filename="../../core/session.py" line="1400"/>
         <location filename="../../ui/dialogs/apply.py" line="123"/>
         <location filename="../../ui/dialogs/backup.py" line="456"/>
         <location filename="../../ui/dialogs/backup.py" line="693"/>
         <location filename="../../ui/dialogs/clone.py" line="87"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
-        <location filename="../../ui/main_window.py" line="3969"/>
-        <location filename="../../ui/main_window.py" line="3971"/>
-        <location filename="../../ui/main_window.py" line="3977"/>
+        <location filename="../../ui/main_window.py" line="3988"/>
+        <location filename="../../ui/main_window.py" line="3990"/>
+        <location filename="../../ui/main_window.py" line="3996"/>
         <source>Durum</source>
         <translation>状态</translation>
     </message>
@@ -3740,7 +3740,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>不完整（无权限）</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="549"/>
+        <location filename="../../core/recovery.py" line="553"/>
         <source>ELF calistirilabilir</source>
         <translation>ELF 可执行文件</translation>
     </message>
@@ -3755,19 +3755,19 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>可选数据</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="342"/>
-        <location filename="../../ui/widgets/file_browser.py" line="346"/>
-        <location filename="../../ui/widgets/file_browser.py" line="371"/>
+        <location filename="../../ui/widgets/file_browser.py" line="354"/>
+        <location filename="../../ui/widgets/file_browser.py" line="358"/>
+        <location filename="../../ui/widgets/file_browser.py" line="383"/>
         <source>Ekleme hatasi</source>
         <translation>添加错误</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="316"/>
+        <location filename="../../ui/widgets/file_browser.py" line="328"/>
         <source>Eklenecek dosyalar</source>
         <translation>要添加的文件</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="357"/>
+        <location filename="../../ui/widgets/file_browser.py" line="369"/>
         <source>Eklenecek klasor</source>
         <translation>要添加的文件夹</translation>
     </message>
@@ -3792,22 +3792,22 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>必须至少为 64 KB。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2039"/>
+        <location filename="../../ui/main_window.py" line="2048"/>
         <source>En az bir dosya turu secin.</source>
         <translation>请至少选择一种文件类型。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4266"/>
+        <location filename="../../ui/main_window.py" line="4285"/>
         <source>En guncel surumu kullaniyorsunuz ({}).</source>
         <translation>您正在使用最新版本（{}）。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2742"/>
+        <location filename="../../ui/main_window.py" line="2761"/>
         <source>En uzun donma</source>
         <translation>最长冻结时间</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1373"/>
+        <location filename="../../core/session.py" line="1395"/>
         <source>Erisim</source>
         <translation>访问方式</translation>
     </message>
@@ -3832,7 +3832,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
     <message>
         <location filename="../../core/physical.py" line="129"/>
         <location filename="../../core/physical.py" line="130"/>
-        <location filename="../../ui/main_window.py" line="3955"/>
+        <location filename="../../ui/main_window.py" line="3974"/>
         <location filename="../../ui/qt_i18n.py" line="42"/>
         <source>Evet</source>
         <translation>是</translation>
@@ -3863,7 +3863,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>未找到 F2FS 超级块</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="783"/>
+        <location filename="../../core/filesystem.py" line="809"/>
         <source>F2FS yazma bu surumde yok; birim salt okunur acildi.</source>
         <translation>此版本不支持写入 F2FS；该卷已以只读方式打开。</translation>
     </message>
@@ -3898,7 +3898,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>FAT12</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2161"/>
+        <location filename="../../ui/main_window.py" line="2170"/>
         <source>FAT12/16/32 ve exFAT saf Python ile desteklenir ve her platformda calisir. NTFS ve ext2/3/4 bicimlendirmesi sistemdeki mkfs araclarini gerektirir.</source>
         <translation>FAT12/16/32 和 exFAT 以纯 Python 实现，可在所有平台上使用。NTFS 和 ext2/3/4 格式化需要系统中安装 mkfs 工具。</translation>
     </message>
@@ -3948,7 +3948,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>没有 FILE 签名：记录 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2856"/>
+        <location filename="../../ui/main_window.py" line="2875"/>
         <source>FIZIKSEL DISK — {}</source>
         <translation>物理磁盘 — {}</translation>
     </message>
@@ -3963,13 +3963,13 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>修正签名不匹配（记录已损坏）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3473"/>
+        <location filename="../../ui/main_window.py" line="3492"/>
         <source>Fiziksel Diskler ({})</source>
         <translation>物理磁盘（{}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2982"/>
-        <location filename="../../ui/main_window.py" line="3375"/>
+        <location filename="../../ui/main_window.py" line="3001"/>
+        <location filename="../../ui/main_window.py" line="3394"/>
         <source>Fiziksel disk acildi (salt okunur): {} — {}, {}</source>
         <translation>已打开物理磁盘（只读）：{} — {}，{}</translation>
     </message>
@@ -3989,12 +3989,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>需要物理磁盘</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3303"/>
+        <location filename="../../ui/main_window.py" line="3322"/>
         <source>Fiziksel disk listesi hazir: {} disk</source>
         <translation>物理磁盘列表已就绪：{} 个磁盘</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2835"/>
+        <location filename="../../ui/main_window.py" line="2854"/>
         <source>Fiziksel disk listesi taraniyor...</source>
         <translation>正在扫描物理磁盘列表...</translation>
     </message>
@@ -4009,7 +4009,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>物理磁盘：操作前请先备份</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="687"/>
+        <location filename="../../core/session.py" line="696"/>
         <source>Fiziksel diskin boyutu degistirilemez</source>
         <translation>无法调整物理磁盘的大小</translation>
     </message>
@@ -4197,7 +4197,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>GUID 需要 16 字节，可用 {} 字节</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="545"/>
+        <location filename="../../core/recovery.py" line="549"/>
         <source>GZIP arsivi</source>
         <translation>GZIP 压缩包</translation>
     </message>
@@ -4297,8 +4297,8 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>无效的名称：{}</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="469"/>
-        <location filename="../../core/operations.py" line="498"/>
+        <location filename="../../core/operations.py" line="471"/>
+        <location filename="../../core/operations.py" line="500"/>
         <source>Gecersiz adim numarasi</source>
         <translation>无效的步骤编号</translation>
     </message>
@@ -4365,12 +4365,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>正在准备临时卷...</translation>
     </message>
     <message>
-        <location filename="../../core/wipe.py" line="84"/>
+        <location filename="../../core/wipe.py" line="88"/>
         <source>Gecis {}/{} ({}) — {} / {}</source>
         <translation>第 {}/{} 遍（{}）— {} / {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4208"/>
+        <location filename="../../ui/main_window.py" line="4227"/>
         <source>Gelistirici: {}</source>
         <translation>开发者：{}</translation>
     </message>
@@ -4410,7 +4410,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>撤销</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2565"/>
+        <location filename="../../ui/main_window.py" line="2574"/>
         <source>Geri alindi: {}</source>
         <translation>已撤销：{}</translation>
     </message>
@@ -4539,7 +4539,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>嵌入的 HFS+ 卷未按扇区对齐</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="820"/>
+        <location filename="../../core/operations.py" line="830"/>
         <source>Goruntu</source>
         <translation>镜像</translation>
     </message>
@@ -4580,7 +4580,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>镜像大小：</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="818"/>
+        <location filename="../../core/operations.py" line="828"/>
         <source>Goruntu boyutunu degistir</source>
         <translation>更改镜像大小</translation>
     </message>
@@ -4621,9 +4621,9 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>镜像已以只读方式打开</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1988"/>
-        <location filename="../../ui/main_window.py" line="2029"/>
-        <location filename="../../ui/main_window.py" line="4046"/>
+        <location filename="../../ui/main_window.py" line="1997"/>
+        <location filename="../../ui/main_window.py" line="2038"/>
+        <location filename="../../ui/main_window.py" line="4065"/>
         <source>Goruntu yok</source>
         <translation>无镜像</translation>
     </message>
@@ -4678,13 +4678,13 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>没有块组描述符：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4240"/>
+        <location filename="../../ui/main_window.py" line="4259"/>
         <source>Guncellemeler denetleniyor...</source>
         <translation>正在检查更新...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4252"/>
-        <location filename="../../ui/main_window.py" line="4265"/>
+        <location filename="../../ui/main_window.py" line="4271"/>
+        <location filename="../../ui/main_window.py" line="4284"/>
         <source>Guncellemeleri denetle</source>
         <translation>检查更新</translation>
     </message>
@@ -4704,12 +4704,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>正在准备日志区域...</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="235"/>
+        <location filename="../../ui/widgets/file_browser.py" line="247"/>
         <source>Gunluk dosyasi</source>
         <translation>日志文件</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2757"/>
+        <location filename="../../ui/main_window.py" line="2776"/>
         <source>Gunluk klasoru</source>
         <translation>日志文件夹</translation>
     </message>
@@ -4843,7 +4843,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <location filename="../../core/physical.py" line="129"/>
         <location filename="../../core/physical.py" line="130"/>
         <location filename="../../core/physical.py" line="132"/>
-        <location filename="../../ui/main_window.py" line="3955"/>
+        <location filename="../../ui/main_window.py" line="3974"/>
         <location filename="../../ui/qt_i18n.py" line="44"/>
         <source>Hayir</source>
         <translation>否</translation>
@@ -4874,7 +4874,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <location filename="../../ui/dialogs/backup.py" line="693"/>
         <location filename="../../ui/dialogs/clone.py" line="189"/>
         <location filename="../../ui/main_window.py" line="197"/>
-        <location filename="../../ui/main_window.py" line="2511"/>
+        <location filename="../../ui/main_window.py" line="2520"/>
         <source>Hedef</source>
         <translation>目标</translation>
     </message>
@@ -4885,7 +4885,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>目标磁盘/分区</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="315"/>
+        <location filename="../../core/operations.py" line="317"/>
         <source>Hedef bolum bulunamadi (LBA {}); yerlesim degismis olabilir</source>
         <translation>未找到目标分区（LBA {}）；布局可能已更改</translation>
     </message>
@@ -4915,7 +4915,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>目标太小：备份 {}，目标 {}。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1051"/>
+        <location filename="../../core/session.py" line="1060"/>
         <source>Hedef disk kaynaktan kucuk: kaynak {}, hedef {}</source>
         <translation>目标磁盘小于源：源 {}，目标 {}</translation>
     </message>
@@ -5018,7 +5018,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>不会触及任何磁盘</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="578"/>
+        <location filename="../../core/recovery.py" line="582"/>
         <source>Hicbir dosya turu secilmedi</source>
         <translation>未选择文件类型</translation>
     </message>
@@ -5028,12 +5028,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>尚未运行任何操作；磁盘未被触及。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1743"/>
+        <location filename="../../ui/main_window.py" line="1746"/>
         <source>Hizalama</source>
         <translation>对齐</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1753"/>
+        <location filename="../../ui/main_window.py" line="1756"/>
         <source>Hizalama Denetimi</source>
         <translation>对齐检查</translation>
     </message>
@@ -5090,12 +5090,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>未找到 ISO 9660 主卷描述符</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="567"/>
+        <location filename="../../core/filesystem.py" line="593"/>
         <source>ISO 9660 salt okunur bir bicimdir; yazilmaz, bastan uretilir.</source>
         <translation>ISO 9660 是只读格式；不能写入，只能从头创建。</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="240"/>
+        <location filename="../../ui/widgets/file_browser.py" line="252"/>
         <source>ISO goruntusu</source>
         <translation>ISO 镜像</translation>
     </message>
@@ -5115,7 +5115,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>内容：</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="241"/>
+        <location filename="../../ui/widgets/file_browser.py" line="253"/>
         <source>Ikili dosya</source>
         <translation>二进制文件</translation>
     </message>
@@ -5155,17 +5155,17 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>基于签名的文件恢复...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2043"/>
+        <location filename="../../ui/main_window.py" line="2052"/>
         <source>Imza taramasi</source>
         <translation>签名扫描</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2054"/>
+        <location filename="../../ui/main_window.py" line="2063"/>
         <source>Imza taramasi ({}): {} dosya bulundu</source>
         <translation>签名扫描（{}）：找到 {} 个文件</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="609"/>
+        <location filename="../../core/recovery.py" line="613"/>
         <source>Imza taraniyor... {} / {} — {} dosya</source>
         <translation>正在扫描签名... {} / {} — {} 个文件</translation>
     </message>
@@ -5226,8 +5226,8 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>操作失败</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1705"/>
-        <location filename="../../ui/main_window.py" line="1710"/>
+        <location filename="../../ui/main_window.py" line="1708"/>
+        <location filename="../../ui/main_window.py" line="1713"/>
         <source>Islem basarisiz.</source>
         <translation>操作失败。</translation>
     </message>
@@ -5332,15 +5332,15 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>未安装操作系统（数据分区）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3426"/>
+        <location filename="../../ui/main_window.py" line="3445"/>
         <location filename="../../ui/widgets/disk_map.py" line="473"/>
         <source>Isletim sistemi: {}</source>
         <translation>操作系统：{}</translation>
     </message>
     <message>
         <location filename="../../core/recovery.py" line="538"/>
-        <location filename="../../ui/widgets/file_browser.py" line="236"/>
-        <location filename="../../ui/widgets/file_browser.py" line="237"/>
+        <location filename="../../ui/widgets/file_browser.py" line="248"/>
+        <location filename="../../ui/widgets/file_browser.py" line="249"/>
         <source>JPEG goruntu</source>
         <translation>JPEG 图像</translation>
     </message>
@@ -5423,12 +5423,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>丢失分区扫描结果</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2009"/>
+        <location filename="../../ui/main_window.py" line="2018"/>
         <source>Kayip bolum taramasi: {} aday bulundu</source>
         <translation>丢失分区扫描：找到 {} 个候选项</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1998"/>
+        <location filename="../../ui/main_window.py" line="2007"/>
         <source>Kayip bolumler taraniyor</source>
         <translation>正在扫描丢失的分区</translation>
     </message>
@@ -5438,7 +5438,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>搜索丢失的分区...</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="678"/>
+        <location filename="../../core/operations.py" line="680"/>
         <source>Kayip bolumu geri ekle</source>
         <translation>恢复丢失的分区</translation>
     </message>
@@ -5535,8 +5535,8 @@ Konum: {}</source>
         <translation>源已以只读方式打开。</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="318"/>
-        <location filename="../../core/filesystem.py" line="382"/>
+        <location filename="../../core/filesystem.py" line="340"/>
+        <location filename="../../core/filesystem.py" line="408"/>
         <source>Kaynak salt okunur acildi. Goruntuyu/diski yazma modunda acarsaniz bu bolume yazabilirsiniz.</source>
         <translation>源已以只读方式打开。如果以写入模式打开镜像/磁盘，即可写入此分区。</translation>
     </message>
@@ -5561,14 +5561,14 @@ Konum: {}</source>
         <translation>源分区表不是 MBR</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1086"/>
+        <location filename="../../core/session.py" line="1095"/>
         <source>Kaynak ve hedef ayni bolum</source>
         <translation>源和目标是同一个分区</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1035"/>
-        <location filename="../../core/session.py" line="1048"/>
-        <location filename="../../core/session.py" line="972"/>
+        <location filename="../../core/session.py" line="1044"/>
+        <location filename="../../core/session.py" line="1057"/>
+        <location filename="../../core/session.py" line="981"/>
         <source>Kaynak ve hedef ayni disk</source>
         <translation>源和目标是同一个磁盘</translation>
     </message>
@@ -5578,7 +5578,7 @@ Konum: {}</source>
         <translation>仅读取源；除备份文件外不写入任何内容。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1780"/>
+        <location filename="../../ui/main_window.py" line="1783"/>
         <source>Kaynak yok</source>
         <translation>无源</translation>
     </message>
@@ -5628,7 +5628,7 @@ Konum: {}</source>
         <translation>部分写入</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="239"/>
+        <location filename="../../ui/widgets/file_browser.py" line="251"/>
         <source>Kitaplik</source>
         <translation>库文件</translation>
     </message>
@@ -5638,22 +5638,22 @@ Konum: {}</source>
         <translation>经典</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="213"/>
+        <location filename="../../ui/widgets/file_browser.py" line="225"/>
         <source>Klasor</source>
         <translation>文件夹</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="199"/>
+        <location filename="../../ui/widgets/file_browser.py" line="211"/>
         <source>Klasor acilamadi</source>
         <translation>无法打开文件夹</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="197"/>
+        <location filename="../../ui/widgets/file_browser.py" line="209"/>
         <source>Klasor acilamadi: {}</source>
         <translation>无法打开文件夹：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="380"/>
+        <location filename="../../ui/widgets/file_browser.py" line="392"/>
         <source>Klasor adi:</source>
         <translation>文件夹名称：</translation>
     </message>
@@ -5699,12 +5699,12 @@ Konum: {}</source>
         <translation>添加文件夹</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="531"/>
+        <location filename="../../ui/widgets/file_browser.py" line="543"/>
         <source>Klasor ekle...</source>
         <translation>添加文件夹...</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="375"/>
+        <location filename="../../ui/widgets/file_browser.py" line="387"/>
         <source>Klasor eklendi ({} dosya)</source>
         <translation>已添加文件夹（{} 个文件）</translation>
     </message>
@@ -5725,7 +5725,7 @@ Konum: {}</source>
         <translation>无法将文件夹移动到其自身中</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="369"/>
+        <location filename="../../ui/widgets/file_browser.py" line="381"/>
         <source>Klasor kopyalaniyor</source>
         <translation>正在复制文件夹</translation>
     </message>
@@ -5736,7 +5736,7 @@ Konum: {}</source>
         <translation>无法读取文件夹</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="386"/>
+        <location filename="../../ui/widgets/file_browser.py" line="398"/>
         <source>Klasor olusturulamadi</source>
         <translation>无法创建文件夹</translation>
     </message>
@@ -5757,12 +5757,12 @@ Konum: {}</source>
         <translation>克隆目标</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="997"/>
+        <location filename="../../core/session.py" line="1006"/>
         <source>Klon hedefi secilmedi</source>
         <translation>未选择克隆目标</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="992"/>
+        <location filename="../../core/session.py" line="1001"/>
         <source>Klon kaynagi acilamadi</source>
         <translation>无法打开克隆源</translation>
     </message>
@@ -5799,12 +5799,12 @@ Konum: {}</source>
         <translation>克隆已停止；未完成的映像文件已删除。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1846"/>
+        <location filename="../../ui/main_window.py" line="1853"/>
         <source>Klonlama: {}</source>
         <translation>克隆：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1827"/>
+        <location filename="../../ui/main_window.py" line="1832"/>
         <source>Klonlanacak disk yok. Bir goruntu acin ya da diskleri yenileyin; Linux&apos;ta ve Windows&apos;ta disk listesi yonetici yetkisi ister.</source>
         <translation>没有可克隆的磁盘。请打开映像或刷新磁盘；在 Linux 和 Windows 上，磁盘列表需要管理员权限。</translation>
     </message>
@@ -5862,7 +5862,7 @@ Konum: {}</source>
         <translation>不是根文件系统（没有 {}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3958"/>
+        <location filename="../../ui/main_window.py" line="3977"/>
         <source>Konum</source>
         <translation>位置</translation>
     </message>
@@ -5877,7 +5877,7 @@ Konum: {}</source>
         <translation>位置：</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="340"/>
+        <location filename="../../ui/widgets/file_browser.py" line="352"/>
         <source>Kopyalaniyor — {}</source>
         <translation>正在复制 — {}</translation>
     </message>
@@ -5922,9 +5922,9 @@ Konum: {}</source>
         <translation>不可用</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1371"/>
-        <location filename="../../ui/main_window.py" line="2861"/>
-        <location filename="../../ui/main_window.py" line="3982"/>
+        <location filename="../../core/session.py" line="1393"/>
+        <location filename="../../ui/main_window.py" line="2880"/>
+        <location filename="../../ui/main_window.py" line="4001"/>
         <location filename="../../ui/widgets/partition_table.py" line="23"/>
         <source>Kullanilan</source>
         <translation>已用</translation>
@@ -5975,7 +5975,7 @@ Konum: {}</source>
         <translation>正在检查簇映射...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3965"/>
+        <location filename="../../ui/main_window.py" line="3984"/>
         <source>Kume/blok boyutu</source>
         <translation>簇/块大小</translation>
     </message>
@@ -5985,27 +5985,27 @@ Konum: {}</source>
         <translation>可恢复性</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1966"/>
+        <location filename="../../ui/main_window.py" line="1975"/>
         <source>Kurtariliyor: {}</source>
         <translation>正在恢复：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1980"/>
+        <location filename="../../ui/main_window.py" line="1989"/>
         <source>Kurtarma basarisiz</source>
         <translation>恢复失败</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1322"/>
+        <location filename="../../core/session.py" line="1344"/>
         <source>Kurtarma desteklenmiyor</source>
         <translation>不支持恢复</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1959"/>
+        <location filename="../../ui/main_window.py" line="1968"/>
         <source>Kurtarma hedefi</source>
         <translation>恢复目标</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1983"/>
+        <location filename="../../ui/main_window.py" line="1992"/>
         <source>Kurtarma tamamlandi</source>
         <translation>恢复完成</translation>
     </message>
@@ -6021,18 +6021,18 @@ Konum: {}</source>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="1485"/>
-        <location filename="../../ui/main_window.py" line="2480"/>
+        <location filename="../../ui/main_window.py" line="2489"/>
         <source>Kuyruga eklendi: {}</source>
         <translation>已加入队列：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2551"/>
+        <location filename="../../ui/main_window.py" line="2560"/>
         <source>Kuyruktan cikarildi: {}</source>
         <translation>已从队列中移除：{}</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="679"/>
-        <location filename="../../core/operations.py" line="685"/>
+        <location filename="../../core/operations.py" line="681"/>
+        <location filename="../../core/operations.py" line="687"/>
         <source>LBA {}</source>
         <translation>LBA {}</translation>
     </message>
@@ -6042,7 +6042,7 @@ Konum: {}</source>
         <translation>LBA {} - {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1751"/>
+        <location filename="../../ui/main_window.py" line="1754"/>
         <source>LBA {} — {}</source>
         <translation>LBA {} — {}</translation>
     </message>
@@ -6129,7 +6129,7 @@ Konum: {}</source>
         <translation>Linux 拒绝挂载处于此状态的 NTFS 卷（ntfs3：脏卷；ntfs-3g：元数据保留在 Windows 缓存中）。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4210"/>
+        <location filename="../../ui/main_window.py" line="4229"/>
         <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt5 ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
         <translation>许可证：GNU GPL 第 3 版。随附的 Qt、PyQt5 和 Python 的许可证：帮助 &gt; 第三方许可证。</translation>
     </message>
@@ -6216,12 +6216,12 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>正在写入 MFT 镜像...</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="546"/>
+        <location filename="../../core/recovery.py" line="550"/>
         <source>MP3 ses</source>
         <translation>MP3 音频</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="547"/>
+        <location filename="../../core/recovery.py" line="551"/>
         <source>MP4 video</source>
         <translation>MP4 视频</translation>
     </message>
@@ -6241,7 +6241,7 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>逻辑</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3959"/>
+        <location filename="../../ui/main_window.py" line="3978"/>
         <source>Mantiksal (EBR: LBA {})</source>
         <translation>逻辑（EBR：LBA {}）</translation>
     </message>
@@ -6312,7 +6312,7 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>文本</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="235"/>
+        <location filename="../../ui/widgets/file_browser.py" line="247"/>
         <source>Metin belgesi</source>
         <translation>文本文档</translation>
     </message>
@@ -6322,7 +6322,7 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>正在备份当前设置...</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="641"/>
+        <location filename="../../core/operations.py" line="643"/>
         <source>Mevcut bolumler kaybolur</source>
         <translation>现有分区将丢失</translation>
     </message>
@@ -6382,17 +6382,17 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>无法读取 NTFS 卷状态；已拒绝写入：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1865"/>
+        <location filename="../../ui/main_window.py" line="1872"/>
         <source>NTFS degil</source>
         <translation>不是 NTFS</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1883"/>
+        <location filename="../../ui/main_window.py" line="1890"/>
         <source>NTFS denetlenemedi</source>
         <translation>无法检查 NTFS</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1879"/>
+        <location filename="../../ui/main_window.py" line="1886"/>
         <source>NTFS denetleniyor — Bolum {}</source>
         <translation>正在检查 NTFS — 分区 {}</translation>
     </message>
@@ -6529,7 +6529,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>读取超出了镜像边界（offset={}，length={}，size={}）</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="448"/>
+        <location filename="../../ui/widgets/file_browser.py" line="460"/>
         <source>Okuma hatasi</source>
         <translation>读取错误</translation>
     </message>
@@ -6549,7 +6549,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>读取超出了虚拟磁盘边界</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1485"/>
+        <location filename="../../core/session.py" line="1507"/>
         <source>Okuma/Yazma (acik)</source>
         <translation>读写（已打开）</translation>
     </message>
@@ -6628,28 +6628,28 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>修复完成</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1738"/>
+        <location filename="../../ui/main_window.py" line="1741"/>
         <source>Once bir bolum tablosu acin.</source>
         <translation>请先打开分区表。</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="854"/>
+        <location filename="../../core/session.py" line="863"/>
         <source>Once bir bolum tablosu olusturun</source>
         <translation>请先创建分区表</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1476"/>
+        <location filename="../../core/session.py" line="1498"/>
         <source>Once bir bolum tablosu olusturun (MBR veya GPT)</source>
         <translation>请先创建分区表（MBR 或 GPT）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4047"/>
+        <location filename="../../ui/main_window.py" line="4066"/>
         <source>Once bir disk goruntusu acin veya olusturun.</source>
         <translation>请先打开或创建磁盘镜像。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1988"/>
-        <location filename="../../ui/main_window.py" line="2029"/>
+        <location filename="../../ui/main_window.py" line="1997"/>
+        <location filename="../../ui/main_window.py" line="2038"/>
         <source>Once bir goruntu acin.</source>
         <translation>请先打开镜像。</translation>
     </message>
@@ -6659,7 +6659,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>请先选择源。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4029"/>
+        <location filename="../../ui/main_window.py" line="4048"/>
         <source>Once listeden veya haritadan bir bolum secin.</source>
         <translation>请先从列表或分区图中选择一个分区。</translation>
     </message>
@@ -6675,7 +6675,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>建议名称</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="525"/>
+        <location filename="../../ui/widgets/file_browser.py" line="537"/>
         <source>Onizleme</source>
         <translation>预览</translation>
     </message>
@@ -6721,7 +6721,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>正在检查引导状态</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2136"/>
+        <location filename="../../ui/main_window.py" line="2145"/>
         <source>Onyukleme durumunu incelemek icin once bir disk ya da goruntu acin.</source>
         <translation>请先打开磁盘或镜像以检查引导状态。</translation>
     </message>
@@ -6849,7 +6849,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>已从备份还原引导扇区</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3955"/>
+        <location filename="../../ui/main_window.py" line="3974"/>
         <source>Onyuklenebilir</source>
         <translation>可引导</translation>
     </message>
@@ -6869,7 +6869,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>引导程序管理器...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2737"/>
+        <location filename="../../ui/main_window.py" line="2756"/>
         <source>Oturum gunlugu</source>
         <translation>会话日志</translation>
     </message>
@@ -6897,7 +6897,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>属性片段不一致（记录 {}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3963"/>
+        <location filename="../../ui/main_window.py" line="3982"/>
         <source>Oznitelikler</source>
         <translation>属性</translation>
     </message>
@@ -6908,13 +6908,13 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
     </message>
     <message>
         <location filename="../../core/recovery.py" line="541"/>
-        <location filename="../../ui/widgets/file_browser.py" line="237"/>
+        <location filename="../../ui/widgets/file_browser.py" line="249"/>
         <source>PDF belgesi</source>
         <translation>PDF 文档</translation>
     </message>
     <message>
         <location filename="../../core/recovery.py" line="539"/>
-        <location filename="../../ui/widgets/file_browser.py" line="236"/>
+        <location filename="../../ui/widgets/file_browser.py" line="248"/>
         <source>PNG goruntu</source>
         <translation>PNG 图像</translation>
     </message>
@@ -6934,7 +6934,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>计划</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2449"/>
+        <location filename="../../ui/main_window.py" line="2458"/>
         <source>Planlanani goster</source>
         <translation>显示计划布局</translation>
     </message>
@@ -6944,7 +6944,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>平台</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4209"/>
+        <location filename="../../ui/main_window.py" line="4228"/>
         <source>Proje sayfasi: {}</source>
         <translation>项目页面：{}</translation>
     </message>
@@ -6954,7 +6954,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>Python</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="239"/>
+        <location filename="../../ui/widgets/file_browser.py" line="251"/>
         <source>Python betigi</source>
         <translation>Python 脚本</translation>
     </message>
@@ -6969,12 +6969,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>未找到 QCOW2 签名</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2156"/>
+        <location filename="../../ui/main_window.py" line="2165"/>
         <source>Qt platformu</source>
         <translation>Qt 平台</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="543"/>
+        <location filename="../../core/recovery.py" line="547"/>
         <source>RAR arsivi</source>
         <translation>RAR 压缩包</translation>
     </message>
@@ -7011,12 +7011,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>系统磁盘</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2901"/>
+        <location filename="../../ui/main_window.py" line="2920"/>
         <source>SISTEMDEKI DISKLER</source>
         <translation>本系统中的磁盘</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="550"/>
+        <location filename="../../core/recovery.py" line="554"/>
         <source>SQLite veritabani</source>
         <translation>SQLite 数据库</translation>
     </message>
@@ -7041,33 +7041,33 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>正在写入固定表（$UpCase、$AttrDef）...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4072"/>
-        <location filename="../../ui/main_window.py" line="4081"/>
+        <location filename="../../ui/main_window.py" line="4091"/>
+        <location filename="../../ui/main_window.py" line="4100"/>
         <source>Salt okunur acildi</source>
         <translation>已以只读方式打开</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4075"/>
+        <location filename="../../ui/main_window.py" line="4094"/>
         <source>Salt okunur devam et</source>
         <translation>以只读方式继续</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1488"/>
+        <location filename="../../core/session.py" line="1510"/>
         <source>Salt okunur — degisiklikler Uygula ile yazilir</source>
         <translation>只读 — 更改通过“应用”写入</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2123"/>
+        <location filename="../../ui/main_window.py" line="2132"/>
         <source>Sanal disk olusturulamadi</source>
         <translation>无法创建虚拟磁盘</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2119"/>
+        <location filename="../../ui/main_window.py" line="2128"/>
         <source>Sanal disk olusturuluyor</source>
         <translation>正在创建虚拟磁盘</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2101"/>
+        <location filename="../../ui/main_window.py" line="2110"/>
         <source>Sanal disk olusturuluyor...</source>
         <translation>正在创建虚拟磁盘...</translation>
     </message>
@@ -7093,7 +7093,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>选项</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2052"/>
+        <location filename="../../ui/main_window.py" line="2061"/>
         <source>Secilen turlerde dosya imzasi bulunamadi.</source>
         <translation>未找到所选类型的文件签名。</translation>
     </message>
@@ -7118,32 +7118,32 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>所选启动项</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3017"/>
+        <location filename="../../ui/main_window.py" line="3036"/>
         <source>Secili: Bolum {} — {} ({})</source>
         <translation>已选择：分区 {} — {}（{}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3026"/>
+        <location filename="../../ui/main_window.py" line="3045"/>
         <source>Secili: Bolum {} — {} ({}) — planlanan, henuz olusturulmadi</source>
         <translation>已选择：分区 {} — {}（{}）— 已计划，尚未创建</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3052"/>
+        <location filename="../../ui/main_window.py" line="3071"/>
         <source>Secili: Bos alan — {}</source>
         <translation>已选择：空闲空间 — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2881"/>
+        <location filename="../../ui/main_window.py" line="2900"/>
         <source>Secili: {} ({})</source>
         <translation>已选择：{}（{}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2039"/>
+        <location filename="../../ui/main_window.py" line="2048"/>
         <source>Secim yok</source>
         <translation>未选择任何内容</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1367"/>
+        <location filename="../../core/session.py" line="1389"/>
         <source>Sektor</source>
         <translation>扇区</translation>
     </message>
@@ -7169,7 +7169,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>未按扇区边界对齐的写入</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3944"/>
+        <location filename="../../ui/main_window.py" line="3963"/>
         <source>Sema</source>
         <translation>分区方案</translation>
     </message>
@@ -7204,7 +7204,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>此版本无法读取条带化 btrfs（RAID0/10/5/6）</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1404"/>
+        <location filename="../../core/session.py" line="1426"/>
         <source>Seyrek (sparse) VMDK bu surumde salt okunur.</source>
         <translation>稀疏 VMDK 在此版本中为只读。</translation>
     </message>
@@ -7270,7 +7270,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>不支持压缩的 QCOW2 簇</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="238"/>
+        <location filename="../../ui/widgets/file_browser.py" line="250"/>
         <source>Sikistirilmis arsiv</source>
         <translation>压缩包</translation>
     </message>
@@ -7298,7 +7298,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="80"/>
         <location filename="../../ui/widgets/file_browser.py" line="119"/>
-        <location filename="../../ui/widgets/file_browser.py" line="537"/>
+        <location filename="../../ui/widgets/file_browser.py" line="549"/>
         <location filename="../../ui/widgets/file_browser.py" line="66"/>
         <source>Sil</source>
         <translation>删除</translation>
@@ -7309,7 +7309,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>已删除文件</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1941"/>
+        <location filename="../../ui/main_window.py" line="1950"/>
         <source>Silinmis dosyalar taraniyor</source>
         <translation>正在扫描已删除文件</translation>
     </message>
@@ -7319,12 +7319,17 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>扫描已删除文件...</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="433"/>
+        <location filename="../../core/session.py" line="1284"/>
+        <source>Silme dogrulamasi basarisiz: alanda sifir olmayan veri kaldi</source>
+        <translation>擦除校验失败：区域中仍有非零数据</translation>
+    </message>
+    <message>
+        <location filename="../../ui/widgets/file_browser.py" line="445"/>
         <source>Silme hatasi</source>
         <translation>删除错误</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="419"/>
+        <location filename="../../ui/widgets/file_browser.py" line="431"/>
         <source>Silme onayi</source>
         <translation>删除确认</translation>
     </message>
@@ -7391,12 +7396,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>将按顺序执行以下步骤：&lt;br&gt;1. 备份当前设置&lt;br&gt;2. 启用对其他系统的扫描&lt;br&gt;3. 在磁盘 &lt;b&gt;{}&lt;/b&gt; 上重新安装 GRUB&lt;br&gt;4. 重新生成引导菜单&lt;br&gt;&lt;br&gt;不会触及其他磁盘。是否继续？</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="530"/>
+        <location filename="../../core/filesystem.py" line="556"/>
         <source>Sis</source>
         <translation>系统</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2160"/>
+        <location filename="../../ui/main_window.py" line="2169"/>
         <source>Sistem Bilgisi</source>
         <translation>系统信息</translation>
     </message>
@@ -7411,17 +7416,17 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>系统磁盘</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2971"/>
+        <location filename="../../ui/main_window.py" line="2990"/>
         <source>Sistem diski korumasi</source>
         <translation>系统磁盘保护</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2662"/>
+        <location filename="../../ui/main_window.py" line="2681"/>
         <source>Sistem diski onayi</source>
         <translation>系统磁盘确认</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2668"/>
+        <location filename="../../ui/main_window.py" line="2687"/>
         <source>Sistem diski onayi verilmedi, uygulama iptal</source>
         <translation>未确认系统磁盘，已取消应用</translation>
     </message>
@@ -7432,7 +7437,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>系统磁盘：请输入磁盘名称以确认。</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="241"/>
+        <location filename="../../ui/widgets/file_browser.py" line="253"/>
         <source>Sistem dosyasi</source>
         <translation>系统文件</translation>
     </message>
@@ -7473,7 +7478,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>最后一个块组太小，无法容纳其元数据</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2743"/>
+        <location filename="../../ui/main_window.py" line="2762"/>
         <source>Son rapor</source>
         <translation>最近的报告</translation>
     </message>
@@ -7509,9 +7514,9 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>正在检查结果...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1948"/>
-        <location filename="../../ui/main_window.py" line="2006"/>
-        <location filename="../../ui/main_window.py" line="2051"/>
+        <location filename="../../ui/main_window.py" line="1957"/>
+        <location filename="../../ui/main_window.py" line="2015"/>
+        <location filename="../../ui/main_window.py" line="2060"/>
         <source>Sonuc yok</source>
         <translation>无结果</translation>
     </message>
@@ -7526,7 +7531,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>当前启动项</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2745"/>
+        <location filename="../../ui/main_window.py" line="2764"/>
         <source>Su an calisan</source>
         <translation>正在运行</translation>
     </message>
@@ -7536,7 +7541,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>当前的 GRUB 配置将被备份 &lt;b&gt;{}&lt;/b&gt; 替换。&lt;br&gt;&lt;br&gt;现有设置将丢失。</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="420"/>
+        <location filename="../../ui/widgets/file_browser.py" line="432"/>
         <source>Su ogeler kalici olarak silinecek:
 
 {}
@@ -7600,12 +7605,12 @@ Devam edilsin mi?</source>
         <translation>全部否(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="859"/>
+        <location filename="../../core/session.py" line="868"/>
         <source>Tablo zaten {} biciminde</source>
         <translation>分区表已是 {} 格式</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1743"/>
+        <location filename="../../ui/main_window.py" line="1746"/>
         <source>Tabloda bolum yok.</source>
         <translation>分区表中没有分区。</translation>
     </message>
@@ -7615,7 +7620,7 @@ Devam edilsin mi?</source>
         <translation>无分区表的磁盘</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="856"/>
+        <location filename="../../core/session.py" line="865"/>
         <source>Tablosuz disk donusturulemez; dosya sistemi tum diski kapliyor</source>
         <translation>无法转换没有分区表的磁盘；文件系统覆盖整个磁盘</translation>
     </message>
@@ -7659,17 +7664,17 @@ Devam edilsin mi?</source>
         <location filename="../../core/ntfsfix.py" line="608"/>
         <location filename="../../core/ntfsresize.py" line="823"/>
         <location filename="../../core/ntfsresize.py" line="845"/>
-        <location filename="../../core/operations.py" line="622"/>
+        <location filename="../../core/operations.py" line="624"/>
         <location filename="../../core/resize.py" line="1016"/>
         <location filename="../../core/restoreplan.py" line="340"/>
-        <location filename="../../core/session.py" line="845"/>
+        <location filename="../../core/session.py" line="854"/>
         <location filename="../../core/udfformat.py" line="358"/>
-        <location filename="../../core/wipe.py" line="157"/>
-        <location filename="../../core/wipe.py" line="96"/>
+        <location filename="../../core/wipe.py" line="100"/>
+        <location filename="../../core/wipe.py" line="161"/>
         <location filename="../../core/xfsformat.py" line="325"/>
         <location filename="../../core/xfsgrow.py" line="407"/>
         <location filename="../../ui/dialogs/apply.py" line="232"/>
-        <location filename="../../ui/main_window.py" line="2082"/>
+        <location filename="../../ui/main_window.py" line="2091"/>
         <source>Tamamlandi</source>
         <translation>完成</translation>
     </message>
@@ -7679,23 +7684,23 @@ Devam edilsin mi?</source>
         <translation>完成。</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="365"/>
+        <location filename="../../ui/widgets/file_browser.py" line="377"/>
         <source>Tamamlaniyor</source>
         <translation>正在完成</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="337"/>
+        <location filename="../../ui/widgets/file_browser.py" line="349"/>
         <source>Tamamlaniyor...</source>
         <translation>正在完成...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2747"/>
+        <location filename="../../ui/main_window.py" line="2766"/>
         <location filename="../../ui/main_window.py" line="572"/>
         <source>Tanilama</source>
         <translation>诊断</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2732"/>
+        <location filename="../../ui/main_window.py" line="2751"/>
         <source>Tanilama DISKULTIMATE_DIAG=0 ile kapatilmis.</source>
         <translation>已通过 DISKULTIMATE_DIAG=0 关闭诊断。</translation>
     </message>
@@ -7710,7 +7715,7 @@ Devam edilsin mi?</source>
         <translation>诊断日志：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2731"/>
+        <location filename="../../ui/main_window.py" line="2750"/>
         <source>Tanilama kapali</source>
         <translation>诊断已关闭</translation>
     </message>
@@ -7720,9 +7725,9 @@ Devam edilsin mi?</source>
         <translation>无法识别的引导代码</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1945"/>
-        <location filename="../../ui/main_window.py" line="2002"/>
-        <location filename="../../ui/main_window.py" line="2048"/>
+        <location filename="../../ui/main_window.py" line="1954"/>
+        <location filename="../../ui/main_window.py" line="2011"/>
+        <location filename="../../ui/main_window.py" line="2057"/>
         <source>Tarama basarisiz</source>
         <translation>扫描失败</translation>
     </message>
@@ -7732,12 +7737,12 @@ Devam edilsin mi?</source>
         <translation>扫描完成：{} 个候选分区</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="612"/>
+        <location filename="../../core/recovery.py" line="616"/>
         <source>Tarama bitti: {} dosya</source>
         <translation>扫描完成：{} 个文件</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1992"/>
+        <location filename="../../ui/main_window.py" line="2001"/>
         <source>Tarama derinligi</source>
         <translation>扫描深度</translation>
     </message>
@@ -7772,17 +7777,17 @@ Devam edilsin mi?</source>
         <translation>主题已更改：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4007"/>
+        <location filename="../../ui/main_window.py" line="4026"/>
         <source>Temiz</source>
         <translation>正常</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3972"/>
+        <location filename="../../ui/main_window.py" line="3991"/>
         <source>Temiz ayrilmamis — okunabilir, yazilamaz; once chkdsk / fsck ile denetleyin</source>
         <translation>未正常卸载 — 可读，不可写；请先用 chkdsk / fsck 检查</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4005"/>
+        <location filename="../../ui/main_window.py" line="4024"/>
         <source>Temiz kapatilmamis — Linux baglamaz; Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>未正常关闭 — Linux 不会挂载它；请使用“分区 &gt; 检查并修复 NTFS”</translation>
     </message>
@@ -7817,26 +7822,26 @@ Devam edilsin mi?</source>
         <translation>擦除整个区域（其中的所有内容都将被销毁）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1754"/>
+        <location filename="../../ui/main_window.py" line="1757"/>
         <source>Tum bolumler 4K sinirinda hizali.</source>
         <translation>所有分区均已按 4K 边界对齐。</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="649"/>
+        <location filename="../../core/operations.py" line="651"/>
         <source>Tum bolumler kaybolur</source>
         <translation>所有分区都将丢失</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1901"/>
+        <location filename="../../ui/main_window.py" line="1908"/>
         <source>Tum disk ({})</source>
         <translation>整个磁盘（{}）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2033"/>
-        <location filename="../../ui/main_window.py" line="3024"/>
-        <location filename="../../ui/main_window.py" line="3060"/>
-        <location filename="../../ui/main_window.py" line="3124"/>
-        <location filename="../../ui/main_window.py" line="3718"/>
+        <location filename="../../ui/main_window.py" line="2042"/>
+        <location filename="../../ui/main_window.py" line="3043"/>
+        <location filename="../../ui/main_window.py" line="3079"/>
+        <location filename="../../ui/main_window.py" line="3143"/>
+        <location filename="../../ui/main_window.py" line="3737"/>
         <source>Tum goruntu</source>
         <translation>整个镜像</translation>
     </message>
@@ -7870,7 +7875,7 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../ui/dialogs/tools.py" line="283"/>
-        <location filename="../../ui/main_window.py" line="3945"/>
+        <location filename="../../ui/main_window.py" line="3964"/>
         <location filename="../../ui/widgets/file_browser.py" line="122"/>
         <location filename="../../ui/widgets/file_browser.py" line="93"/>
         <location filename="../../ui/widgets/partition_table.py" line="24"/>
@@ -7878,7 +7883,7 @@ Devam edilsin mi?</source>
         <translation>类型</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3961"/>
+        <location filename="../../ui/main_window.py" line="3980"/>
         <source>Tur GUID</source>
         <translation>类型 GUID</translation>
     </message>
@@ -8032,17 +8037,17 @@ Devam edilsin mi?</source>
         <translation>USB 设备</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3967"/>
+        <location filename="../../ui/main_window.py" line="3986"/>
         <source>UUID / Seri no</source>
         <translation>UUID / 序列号</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2877"/>
+        <location filename="../../ui/main_window.py" line="2896"/>
         <source>UYARI: Uygulama yonetici/root yetkisi olmadan calisiyor; disk icerigi okunamayabilir.</source>
         <translation>警告：应用程序在没有管理员/root 权限的情况下运行；可能无法读取磁盘内容。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3921"/>
+        <location filename="../../ui/main_window.py" line="3940"/>
         <source>UYARI: {}</source>
         <translation>警告：{}</translation>
     </message>
@@ -8089,24 +8094,24 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="172"/>
-        <location filename="../../ui/main_window.py" line="2513"/>
+        <location filename="../../ui/main_window.py" line="2522"/>
         <location filename="../../ui/main_window.py" line="693"/>
         <location filename="../../ui/qt_i18n.py" line="51"/>
         <source>Uygula</source>
         <translation>应用</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2512"/>
+        <location filename="../../ui/main_window.py" line="2521"/>
         <source>Uygula ({})</source>
         <translation>应用（{}）</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="238"/>
+        <location filename="../../ui/widgets/file_browser.py" line="250"/>
         <source>Uygulama</source>
         <translation>应用程序</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2609"/>
+        <location filename="../../ui/main_window.py" line="2618"/>
         <source>Uygulama basarisiz: {}</source>
         <translation>应用失败：{}</translation>
     </message>
@@ -8116,7 +8121,7 @@ Devam edilsin mi?</source>
         <translation>未开始应用。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2242"/>
+        <location filename="../../ui/main_window.py" line="2251"/>
         <source>Uygulama kapatilip &lt;b&gt;{} yetkisiyle&lt;/b&gt; yeniden baslatilacak.&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>应用程序将关闭并&lt;b&gt;以{}权限&lt;/b&gt;重新启动。&lt;br&gt;&lt;br&gt;是否继续？</translation>
     </message>
@@ -8136,7 +8141,7 @@ Devam edilsin mi?</source>
         <translation>无法确定用于重新启动应用程序的脚本路径。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2615"/>
+        <location filename="../../ui/main_window.py" line="2624"/>
         <source>Uygulandi: {}</source>
         <translation>已应用：{}</translation>
     </message>
@@ -8166,7 +8171,7 @@ Devam edilsin mi?</source>
         <translation>无法阻止睡眠：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2903"/>
+        <location filename="../../ui/main_window.py" line="2922"/>
         <source>VAR</source>
         <translation>是</translation>
     </message>
@@ -8196,7 +8201,7 @@ Devam edilsin mi?</source>
         <translation>未找到 VHD 签名</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2126"/>
+        <location filename="../../ui/main_window.py" line="2135"/>
         <source>VHD olusturuldu: {} ({})</source>
         <translation>已创建 VHD：{}（{}）</translation>
     </message>
@@ -8232,7 +8237,7 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="175"/>
-        <location filename="../../ui/main_window.py" line="2278"/>
+        <location filename="../../ui/main_window.py" line="2287"/>
         <location filename="../../ui/main_window.py" line="699"/>
         <location filename="../../ui/qt_i18n.py" line="50"/>
         <source>Vazgec</source>
@@ -8291,12 +8296,12 @@ Devam edilsin mi?</source>
         <translation>Windows 恢复分区</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="531"/>
+        <location filename="../../core/session.py" line="540"/>
         <source>Windows bicimlendiricisi cagriliyor...</source>
         <translation>正在调用 Windows 格式化程序...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="542"/>
+        <location filename="../../core/session.py" line="551"/>
         <source>Windows bicimlendiricisi hata verdi: {}</source>
         <translation>Windows 格式化程序报告错误：{}</translation>
     </message>
@@ -8306,12 +8311,12 @@ Devam edilsin mi?</source>
         <translation>已使用 Windows 格式化程序</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="840"/>
+        <location filename="../../core/session.py" line="849"/>
         <source>Windows boyutlandiricisi basarisiz: {}</source>
         <translation>Windows 调整大小工具失败：{}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="834"/>
+        <location filename="../../core/session.py" line="843"/>
         <source>Windows boyutlandiricisi calisiyor...</source>
         <translation>Windows 调整大小工具正在运行...</translation>
     </message>
@@ -8321,7 +8326,7 @@ Devam edilsin mi?</source>
         <translation>已使用 Windows 调整大小工具</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="548"/>
+        <location filename="../../core/recovery.py" line="552"/>
         <source>Windows calistirilabilir</source>
         <translation>Windows 可执行文件</translation>
     </message>
@@ -8347,7 +8352,7 @@ Devam edilsin mi?</source>
         <translation>Windows 处于休眠状态（包括快速启动）。写入此卷后再恢复 Windows 会损坏该卷。请启动 Windows 并通过“重启”将其关闭，或在修复中选择使休眠文件失效。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4002"/>
+        <location filename="../../ui/main_window.py" line="4021"/>
         <source>Windows hazirda bekletmede — Bolum &gt; NTFS&apos;i denetle ve onar</source>
         <translation>Windows 处于休眠状态 — 请使用“分区 &gt; 检查并修复 NTFS”</translation>
     </message>
@@ -8473,7 +8478,7 @@ Devam edilsin mi?</source>
         <translation>此版本无法扩展 XFS v4 卷</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="690"/>
+        <location filename="../../core/filesystem.py" line="716"/>
         <source>XFS yazma bu surumde yok; birim salt okunur acildi.</source>
         <translation>此版本不支持写入 XFS；该卷已以只读方式打开。</translation>
     </message>
@@ -8488,12 +8493,12 @@ Devam edilsin mi?</source>
         <translation>NEW VOLUME</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2904"/>
+        <location filename="../../ui/main_window.py" line="2923"/>
         <source>YOK</source>
         <translation>否</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2741"/>
+        <location filename="../../ui/main_window.py" line="2760"/>
         <source>Yakalanan donma</source>
         <translation>捕获的冻结次数</translation>
     </message>
@@ -8521,7 +8526,7 @@ Devam edilsin mi?</source>
         <translation>仅备份已用空间（快速）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3978"/>
+        <location filename="../../ui/main_window.py" line="3997"/>
         <source>Yapi tutarsiz — okunabilir, yazilamaz; once fsck.fat / chkdsk ile onarin</source>
         <translation>结构不一致 — 可读，不可写；请先用 fsck.fat / chkdsk 修复</translation>
     </message>
@@ -8552,8 +8557,8 @@ Devam edilsin mi?</source>
         <translation>无法写入</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2596"/>
-        <location filename="../../ui/main_window.py" line="3143"/>
+        <location filename="../../ui/main_window.py" line="2605"/>
+        <location filename="../../ui/main_window.py" line="3162"/>
         <source>Yazilamaz kaynak</source>
         <translation>源不可写</translation>
     </message>
@@ -8594,7 +8599,7 @@ Devam edilsin mi?</source>
         <translation>写入超出了镜像边界（offset={}，length={}，size={}）</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1296"/>
+        <location filename="../../core/physical.py" line="1303"/>
         <source>Yazma hatasi (Windows {})</source>
         <translation>写入错误（Windows {}）</translation>
     </message>
@@ -8614,12 +8619,12 @@ Devam edilsin mi?</source>
         <translation>必须明确确认写入模式（confirm=True）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2718"/>
+        <location filename="../../ui/main_window.py" line="2737"/>
         <source>Yazma modu acilamadi</source>
         <translation>无法启用写入模式</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2720"/>
+        <location filename="../../ui/main_window.py" line="2739"/>
         <source>Yazma modu acildi: {}</source>
         <translation>已启用写入模式：{}</translation>
     </message>
@@ -8629,12 +8634,12 @@ Devam edilsin mi?</source>
         <translation>写入超出了虚拟磁盘边界</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2677"/>
+        <location filename="../../ui/main_window.py" line="2696"/>
         <source>Yazma sirasinda bu birimler &lt;b&gt;gecici olarak cikarilacak&lt;/b&gt; (kilitlenip ayrilir).</source>
         <translation>写入期间这些卷将被&lt;b&gt;临时卸除&lt;/b&gt;（锁定并分离）。</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="492"/>
+        <location filename="../../ui/widgets/file_browser.py" line="504"/>
         <source>Yazma yapilamiyor</source>
         <translation>无法写入</translation>
     </message>
@@ -8753,7 +8758,7 @@ Devam edilsin mi?</source>
         <translation>备份文件 (.dub)</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1394"/>
+        <location filename="../../core/session.py" line="1416"/>
         <source>Yedek dosyasi (.dub) bir arsivdir; uzerine yazilamaz. Yedegi bir diske veya yeni bir goruntuye yazin.</source>
         <translation>备份文件（.dub）是一个归档，不能覆盖写入。请将备份写入磁盘或新镜像。</translation>
     </message>
@@ -8878,7 +8883,7 @@ Devam edilsin mi?</source>
         <translation>备份与还原</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1781"/>
+        <location filename="../../ui/main_window.py" line="1784"/>
         <source>Yedeklenecek bir goruntu veya disk bulunamadi.
 
 Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
@@ -8942,7 +8947,7 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
         <translation>新容量：</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2091"/>
+        <location filename="../../ui/main_window.py" line="2100"/>
         <source>Yeni Sanal Disk (VHD)</source>
         <translation>新建虚拟磁盘 (VHD)</translation>
     </message>
@@ -8959,7 +8964,7 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="1553"/>
-        <location filename="../../ui/widgets/file_browser.py" line="397"/>
+        <location filename="../../ui/widgets/file_browser.py" line="409"/>
         <source>Yeni ad:</source>
         <translation>新名称：</translation>
     </message>
@@ -8978,7 +8983,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
 待执行步骤也会占用空间；清空列表即可释放。</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="684"/>
+        <location filename="../../core/operations.py" line="686"/>
         <source>Yeni bolum olustur</source>
         <translation>创建新分区</translation>
     </message>
@@ -9033,7 +9038,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>新建磁盘镜像</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1598"/>
+        <location filename="../../ui/main_window.py" line="1601"/>
         <source>Yeni etiket:</source>
         <translation>新卷标：</translation>
     </message>
@@ -9079,8 +9084,8 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     </message>
     <message>
         <location filename="../../ui/widgets/file_browser.py" line="117"/>
-        <location filename="../../ui/widgets/file_browser.py" line="380"/>
-        <location filename="../../ui/widgets/file_browser.py" line="532"/>
+        <location filename="../../ui/widgets/file_browser.py" line="392"/>
+        <location filename="../../ui/widgets/file_browser.py" line="544"/>
         <location filename="../../ui/widgets/file_browser.py" line="61"/>
         <source>Yeni klasor</source>
         <translation>新建文件夹</translation>
@@ -9097,7 +9102,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>有新版本可用</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4256"/>
+        <location filename="../../ui/main_window.py" line="4275"/>
         <source>Yeni surum var: {} (kullanilan: {})</source>
         <translation>有新版本可用：{}（当前使用：{}）</translation>
     </message>
@@ -9113,14 +9118,14 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     </message>
     <message>
         <location filename="../../ui/widgets/file_browser.py" line="118"/>
-        <location filename="../../ui/widgets/file_browser.py" line="397"/>
-        <location filename="../../ui/widgets/file_browser.py" line="534"/>
+        <location filename="../../ui/widgets/file_browser.py" line="409"/>
+        <location filename="../../ui/widgets/file_browser.py" line="546"/>
         <location filename="../../ui/widgets/file_browser.py" line="63"/>
         <source>Yeniden adlandir</source>
         <translation>重命名</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="404"/>
+        <location filename="../../ui/widgets/file_browser.py" line="416"/>
         <source>Yeniden adlandirilamadi</source>
         <translation>无法重命名</translation>
     </message>
@@ -9130,8 +9135,8 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>重新启动</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2263"/>
-        <location filename="../../ui/main_window.py" line="2310"/>
+        <location filename="../../ui/main_window.py" line="2272"/>
+        <location filename="../../ui/main_window.py" line="2319"/>
         <source>Yeniden baslatilamadi</source>
         <translation>无法重新启动</translation>
     </message>
@@ -9141,18 +9146,18 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>无法重新启动（ShellExecute 错误 {}）。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2262"/>
-        <location filename="../../ui/main_window.py" line="2309"/>
+        <location filename="../../ui/main_window.py" line="2271"/>
+        <location filename="../../ui/main_window.py" line="2318"/>
         <source>Yeniden baslatilamadi: {}</source>
         <translation>无法重新启动：{}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="767"/>
+        <location filename="../../core/session.py" line="776"/>
         <source>Yeniden boyutlandirma icin onay gerekli (confirm=True)</source>
         <translation>调整大小需要确认（confirm=True）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4074"/>
+        <location filename="../../ui/main_window.py" line="4093"/>
         <location filename="../../ui/qt_i18n.py" line="46"/>
         <source>Yeniden dene</source>
         <translation>重试</translation>
@@ -9162,23 +9167,23 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <location filename="../../ui/main_window.py" line="640"/>
         <location filename="../../ui/widgets/file_browser.py" line="113"/>
         <location filename="../../ui/widgets/file_browser.py" line="51"/>
-        <location filename="../../ui/widgets/file_browser.py" line="539"/>
+        <location filename="../../ui/widgets/file_browser.py" line="551"/>
         <source>Yenile</source>
         <translation>刷新</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3084"/>
+        <location filename="../../ui/main_window.py" line="3103"/>
         <source>Yenileme hatasi</source>
         <translation>刷新错误</translation>
     </message>
     <message>
         <location filename="../../core/resize.py" line="1014"/>
-        <location filename="../../core/session.py" line="842"/>
+        <location filename="../../core/session.py" line="851"/>
         <source>Yenileniyor...</source>
         <translation>正在刷新...</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="812"/>
+        <location filename="../../core/session.py" line="821"/>
         <source>Yerel boyutlandirici yok</source>
         <translation>没有原生的调整大小工具</translation>
     </message>
@@ -9208,12 +9213,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>权限</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2187"/>
+        <location filename="../../ui/main_window.py" line="2196"/>
         <source>Yetki eksik ({}) — yukseltme yapilamiyor: {}</source>
         <translation>权限不足（{}）— 无法提升：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2277"/>
+        <location filename="../../ui/main_window.py" line="2286"/>
         <source>Yetki penceresi bekleniyor. Parola sorulursa girin.</source>
         <translation>正在等待授权对话框。如有提示，请输入密码。</translation>
     </message>
@@ -9229,14 +9234,14 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>未授予权限（已取消密码对话框）。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2225"/>
-        <location filename="../../ui/main_window.py" line="2228"/>
-        <location filename="../../ui/main_window.py" line="2715"/>
+        <location filename="../../ui/main_window.py" line="2234"/>
+        <location filename="../../ui/main_window.py" line="2237"/>
+        <location filename="../../ui/main_window.py" line="2734"/>
         <source>Yetki yetersiz</source>
         <translation>权限不足</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3305"/>
+        <location filename="../../ui/main_window.py" line="3324"/>
         <source>Yetki: normal kullanici — fiziksel disk icin {} gerekir</source>
         <translation>权限：标准用户 — 访问物理磁盘需要{}</translation>
     </message>
@@ -9251,7 +9256,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>无法启动提升权限的副本（退出代码 {}）。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2296"/>
+        <location filename="../../ui/main_window.py" line="2305"/>
         <source>Yetkili kopya beklenmekten vazgecildi; acilirsa iki kopyadan birini kapatin.</source>
         <translation>已停止等待提升权限的副本；如果它随后打开，请关闭两个副本中的一个。</translation>
     </message>
@@ -9261,12 +9266,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>不使用权限继续</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2780"/>
+        <location filename="../../ui/main_window.py" line="2799"/>
         <source>Yigin dokumu</source>
         <translation>堆栈转储</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2779"/>
+        <location filename="../../ui/main_window.py" line="2798"/>
         <source>Yigin dokumu yazildi: {}</source>
         <translation>已写入堆栈转储：{}</translation>
     </message>
@@ -9308,7 +9313,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>管理员</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2902"/>
+        <location filename="../../ui/main_window.py" line="2921"/>
         <source>Yonetici/root yetkisi: {}</source>
         <translation>管理员/root 权限：{}</translation>
     </message>
@@ -9323,7 +9328,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>上移</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2539"/>
+        <location filename="../../ui/main_window.py" line="2548"/>
         <source>Yukari tasi</source>
         <translation>上移</translation>
     </message>
@@ -9334,7 +9339,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>高</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="542"/>
+        <location filename="../../core/recovery.py" line="546"/>
         <source>ZIP / Office belgesi</source>
         <translation>ZIP / Office 文档</translation>
     </message>
@@ -9368,22 +9373,22 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>已存在：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3490"/>
+        <location filename="../../ui/main_window.py" line="3509"/>
         <source>[SISTEM DISKI]</source>
         <translation>[系统磁盘]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3498"/>
+        <location filename="../../ui/main_window.py" line="3517"/>
         <source>[bagli bolum var]</source>
         <translation>[有已挂载的分区]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3388"/>
+        <location filename="../../ui/main_window.py" line="3407"/>
         <source>[degistirilemez]</source>
         <translation>[不可修改]</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3487"/>
+        <location filename="../../ui/main_window.py" line="3506"/>
         <source>[{} SISTEM DISKI]</source>
         <translation>[{} 系统磁盘]</translation>
     </message>
@@ -9428,7 +9433,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>无法读取 `{}`。</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="742"/>
+        <location filename="../../core/filesystem.py" line="768"/>
         <source>alt hacim</source>
         <translation>子卷</translation>
     </message>
@@ -9443,7 +9448,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>外部日志设备</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="425"/>
+        <location filename="../../core/filesystem.py" line="451"/>
         <source>bag</source>
         <translation>链接</translation>
     </message>
@@ -9482,7 +9487,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>未知</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="834"/>
+        <location filename="../../core/filesystem.py" line="860"/>
         <source>birim</source>
         <translation>卷</translation>
     </message>
@@ -9537,7 +9542,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>部分 btrfs 数据位于另一个设备上；仅凭单个设备无法读取</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="734"/>
+        <location filename="../../core/filesystem.py" line="760"/>
         <source>btrfs yazma bu surumde yok; birim salt okunur acildi.</source>
         <translation>此版本不支持写入 btrfs；该卷已以只读方式打开。</translation>
     </message>
@@ -9580,7 +9585,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>硬件写保护</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="793"/>
+        <location filename="../../core/operations.py" line="803"/>
         <source>dosyalar korunur</source>
         <translation>保留文件</translation>
     </message>
@@ -9674,7 +9679,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>所需工具：{}</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="427"/>
+        <location filename="../../core/filesystem.py" line="453"/>
         <location filename="../../ui/dialogs/efiboot.py" line="275"/>
         <source>gizli</source>
         <translation>隐藏</translation>
@@ -9685,24 +9690,24 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>镜像文件</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="804"/>
+        <location filename="../../core/operations.py" line="814"/>
         <source>gunluk bosaltilir, Windows&apos;ta chkdsk istenir</source>
         <translation>清空日志，并请求在 Windows 上运行 chkdsk</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="802"/>
+        <location filename="../../core/operations.py" line="812"/>
         <source>gunluk bosaltilir, hazirda bekletme gecersiz kilinir</source>
         <translation>清空日志，并使休眠文件失效</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="806"/>
+        <location filename="../../core/operations.py" line="816"/>
         <source>gunluk bosaltilir, kirli bayragi temizlenir</source>
         <translation>清空日志，并清除脏标志</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/backup.py" line="619"/>
-        <location filename="../../ui/main_window.py" line="3036"/>
-        <location filename="../../ui/main_window.py" line="3567"/>
+        <location filename="../../ui/main_window.py" line="3055"/>
+        <location filename="../../ui/main_window.py" line="3586"/>
         <location filename="../../ui/widgets/disk_overview.py" line="191"/>
         <source>ham</source>
         <translation>原始</translation>
@@ -9733,12 +9738,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>inline_data inode：{}</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="766"/>
+        <location filename="../../core/operations.py" line="768"/>
         <source>isaretle</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="766"/>
+        <location filename="../../core/operations.py" line="768"/>
         <source>kaldir</source>
         <translation>清除</translation>
     </message>
@@ -9765,7 +9770,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>代码 {}</translation>
     </message>
     <message>
-        <location filename="../../core/recovery.py" line="565"/>
+        <location filename="../../core/recovery.py" line="569"/>
         <source>kurtarilan_{:012X}.{}</source>
         <translation>recovered_{:012X}.{}</translation>
     </message>
@@ -9811,7 +9816,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>resize inode 没有二级间接块</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="836"/>
+        <location filename="../../core/filesystem.py" line="862"/>
         <source>sifreli</source>
         <translation>已加密</translation>
     </message>
@@ -9867,7 +9872,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>备份文件</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="726"/>
+        <location filename="../../core/operations.py" line="728"/>
         <source>yeni boyut {}</source>
         <translation>新大小 {}</translation>
     </message>
@@ -9885,7 +9890,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <location filename="../../ui/dialogs/backup.py" line="859"/>
         <location filename="../../ui/dialogs/bootloader.py" line="235"/>
         <location filename="../../ui/dialogs/partition.py" line="205"/>
-        <location filename="../../ui/main_window.py" line="3334"/>
+        <location filename="../../ui/main_window.py" line="3353"/>
         <location filename="../../ui/widgets/disk_map.py" line="475"/>
         <source>yok</source>
         <translation>无</translation>
@@ -9976,16 +9981,16 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>zstd：没有可重复使用的 Huffman 表</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="708"/>
-        <location filename="../../core/operations.py" line="716"/>
-        <location filename="../../core/operations.py" line="755"/>
-        <location filename="../../core/operations.py" line="775"/>
-        <location filename="../../core/operations.py" line="819"/>
+        <location filename="../../core/operations.py" line="710"/>
+        <location filename="../../core/operations.py" line="718"/>
+        <location filename="../../core/operations.py" line="757"/>
+        <location filename="../../core/operations.py" line="785"/>
+        <location filename="../../core/operations.py" line="829"/>
         <source>{}</source>
         <translation>{}</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1315"/>
+        <location filename="../../core/physical.py" line="1322"/>
         <source>{}
 
 Bu diskte hicbir birim kilitlenemedi. Diski kapatip yeniden yazma modunda acin; sorun surerse birimi Windows&apos;tan cikarin (eject).</source>
@@ -10005,7 +10010,7 @@ Mevcut icerik tamamen kaybolur.</source>
 当前内容将完全丢失。</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1318"/>
+        <location filename="../../core/physical.py" line="1325"/>
         <source>{}
 
 Kilitli birimler: {}. Yazilan alan bu birimlerin disinda, baska bir bagli birime ait olabilir.</source>
@@ -10014,7 +10019,7 @@ Kilitli birimler: {}. Yazilan alan bu birimlerin disinda, baska bir bagli birime
 已锁定的卷：{}。写入的区域位于这些卷之外，可能属于另一个已挂载的卷。</translation>
     </message>
     <message>
-        <location filename="../../core/physical.py" line="1309"/>
+        <location filename="../../core/physical.py" line="1316"/>
         <source>{}
 
 Su birim(ler) kilitlenemedi: {}
@@ -10025,7 +10030,7 @@ Birimi kullanan programlari (Gezgin penceresi, virus tarayici, yedekleme) kapati
 请关闭正在使用该卷的程序（资源管理器窗口、杀毒软件、备份软件），然后重新打开磁盘；或在 Windows 中弹出该卷。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1702"/>
+        <location filename="../../ui/main_window.py" line="1705"/>
         <source>{}
 
 Windows bu NTFS birimini temiz kapatmamis olabilir (Hizli baslatma, hazirda bekletme, elektrik kesintisi). Birimi simdi denetlemek ister misiniz?</source>
@@ -10043,7 +10048,7 @@ Yine de bu konumda olusturulsun mu?</source>
 仍要在此位置创建吗？</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3506"/>
+        <location filename="../../ui/main_window.py" line="3525"/>
         <source>{}
 {}
 Sektor: {} B | Baglanti: {}</source>
@@ -10077,7 +10082,7 @@ Sektor: {} B | Baglanti: {}</source>
         <translation>{}（完全访问）</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="365"/>
+        <location filename="../../ui/widgets/file_browser.py" line="377"/>
         <source>{} ({} / {})</source>
         <translation>{}（{} / {}）</translation>
     </message>
@@ -10087,7 +10092,7 @@ Sektor: {} B | Baglanti: {}</source>
         <translation>{}（{} 遍）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3949"/>
+        <location filename="../../ui/main_window.py" line="3968"/>
         <source>{} ({} sektor)</source>
         <translation>{}（{} 个扇区）</translation>
     </message>
@@ -10097,7 +10102,7 @@ Sektor: {} B | Baglanti: {}</source>
         <translation>{} / {} 字节</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2663"/>
+        <location filename="../../ui/main_window.py" line="2682"/>
         <source>{} ISLETIM SISTEMI DISKIDIR.
 
 Bu diske yazmak isletim sistemini acilamaz hale getirebilir.
@@ -10138,7 +10143,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>无法打开 {}：{}</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../core/operations.py" line="396"/>
+        <location filename="../../core/operations.py" line="398"/>
         <source>{} adim uygulandi</source>
         <extra-po-msgid_plural>{} adim uygulandi</extra-po-msgid_plural>
         <translation>
@@ -10146,7 +10151,7 @@ Devam etmek icin disk adini yazin: {}</source>
         </translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="398"/>
+        <location filename="../../core/operations.py" line="400"/>
         <source>{} adim uygulandi, &apos;{}&apos; adiminda durdu: {}</source>
         <translation>已应用 {} 个步骤，在步骤“{}”处停止：{}</translation>
     </message>
@@ -10156,7 +10161,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} 已挂载</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1695"/>
+        <location filename="../../ui/main_window.py" line="1698"/>
         <source>{} basarisiz: {}</source>
         <translation>{} 失败：{}</translation>
     </message>
@@ -10166,7 +10171,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} 字节</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../ui/main_window.py" line="2580"/>
+        <location filename="../../ui/main_window.py" line="2589"/>
         <source>{} bekleyen adim iptal edildi</source>
         <extra-po-msgid_plural>{} bekleyen adim iptal edildi</extra-po-msgid_plural>
         <translation>
@@ -10174,7 +10179,7 @@ Devam etmek icin disk adini yazin: {}</source>
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2573"/>
+        <location filename="../../ui/main_window.py" line="2582"/>
         <source>{} bekleyen adim silinecek.&lt;br&gt;&lt;br&gt;Diskte hicbir degisiklik yapilmadigi icin bu islem &lt;b&gt;zararsizdir&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>将移除 {} 个待执行步骤。&lt;br&gt;&lt;br&gt;由于磁盘上没有任何内容被更改，这是&lt;b&gt;无害&lt;/b&gt;的。&lt;br&gt;&lt;br&gt;是否继续？</translation>
     </message>
@@ -10194,7 +10199,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>无法读取 {} 的信息（无权限）；无法确定是否为系统磁盘。已拒绝写入未知磁盘。</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="955"/>
+        <location filename="../../core/filesystem.py" line="981"/>
         <source>{} bir kapsayicidir; icindeki birimler bu surumde acilamiyor.</source>
         <translation>{} 是一个容器；此版本无法打开其中的卷。</translation>
     </message>
@@ -10204,7 +10209,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} 是系统/设备文件系统（{}）；无法在此处创建镜像。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1755"/>
+        <location filename="../../ui/main_window.py" line="1758"/>
         <source>{} bolum 4K sinirinda hizali degil; SSD ve ileri bicim disklerde basarim dusebilir.</source>
         <translation>{} 个分区未按 4K 边界对齐；在 SSD 和高级格式磁盘上性能可能下降。</translation>
     </message>
@@ -10219,7 +10224,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>可以将 {} 个分区迁移到 MBR</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="639"/>
+        <location filename="../../core/operations.py" line="641"/>
         <source>{} bolum tablosu olustur</source>
         <translation>创建 {} 分区表</translation>
     </message>
@@ -10247,7 +10252,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>此版本以只读方式打开 {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="1401"/>
+        <location filename="../../core/session.py" line="1423"/>
         <location filename="../../core/session.py" line="341"/>
         <source>{} bu surumde yalnizca okunabilir; yazma destegi yol haritasinda.</source>
         <translation>{} 在此版本中为只读；写入支持已列入开发计划。</translation>
@@ -10278,7 +10283,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} 已更改：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="287"/>
+        <location filename="../../ui/widgets/file_browser.py" line="299"/>
         <source>{} disa aktariliyor...</source>
         <translation>正在导出 {}...</translation>
     </message>
@@ -10288,34 +10293,34 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>已克隆到磁盘 {}（{}）。如果两个磁盘同时连接在同一台计算机上，由于磁盘标识相同，操作系统可能会将其中一个设为脱机。</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2744"/>
+        <location filename="../../ui/main_window.py" line="2763"/>
         <source>{} dk</source>
         <translation>{} 分钟</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1731"/>
+        <location filename="../../ui/main_window.py" line="1734"/>
         <source>{} donusumu kuyruga alindi: {}</source>
         <translation>{} 转换已加入队列：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1729"/>
+        <location filename="../../ui/main_window.py" line="1732"/>
         <source>{} donusumu yapilamaz</source>
         <translation>无法进行 {} 转换</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2081"/>
+        <location filename="../../ui/main_window.py" line="2090"/>
         <source>{} dosya cikarildi -&gt; {}</source>
         <translation>已提取 {} 个文件 -&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2083"/>
+        <location filename="../../ui/main_window.py" line="2092"/>
         <source>{} dosya cikarildi:
 {}</source>
         <translation>已提取 {} 个文件：
 {}</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../ui/widgets/file_browser.py" line="351"/>
+        <location filename="../../ui/widgets/file_browser.py" line="363"/>
         <source>{} dosya eklendi ({})</source>
         <extra-po-msgid_plural>{} dosya eklendi ({})</extra-po-msgid_plural>
         <translation>
@@ -10323,19 +10328,19 @@ Devam etmek icin disk adini yazin: {}</source>
         </translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1984"/>
+        <location filename="../../ui/main_window.py" line="1993"/>
         <source>{} dosya kurtarildi:
 {}</source>
         <translation>已恢复 {} 个文件：
 {}</translation>
     </message>
     <message>
-        <location filename="../../core/session.py" line="690"/>
+        <location filename="../../core/session.py" line="699"/>
         <source>{} dosyalarinin boyutu bu surumde degistirilemez</source>
         <translation>此版本无法更改 {} 文件的大小</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="242"/>
+        <location filename="../../ui/widgets/file_browser.py" line="254"/>
         <source>{} dosyasi</source>
         <translation>{} 文件</translation>
     </message>
@@ -10350,7 +10355,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} 已更新：{}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="4193"/>
+        <location filename="../../ui/main_window.py" line="4212"/>
         <source>{} hakkinda</source>
         <translation>关于 {}</translation>
     </message>
@@ -10362,7 +10367,7 @@ Devam etmek icin disk adini yazin: {}</source>
 {}</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="958"/>
+        <location filename="../../core/filesystem.py" line="984"/>
         <source>{} icerigi bu surumde goruntulenemiyor. Okunabilen dosya sistemleri: FAT12/16/32, exFAT, NTFS, ext2/3/4, HFS+, APFS, UDF, XFS, btrfs, F2FS, ISO 9660.</source>
         <translation>此版本无法显示 {} 的内容。可读取的文件系统：FAT12/16/32、exFAT、NTFS、ext2/3/4、HFS+、APFS、UDF、XFS、btrfs、F2FS、ISO 9660。</translation>
     </message>
@@ -10387,7 +10392,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>{} 是操作系统磁盘。写入可能导致机器无法启动；写入此磁盘需要另行确认。</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="229"/>
+        <location filename="../../ui/widgets/file_browser.py" line="241"/>
         <source>{} klasor, {} dosya — {}</source>
         <translation>{} 个文件夹，{} 个文件 — {}</translation>
     </message>
@@ -10397,7 +10402,7 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>缩小 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3905"/>
+        <location filename="../../ui/main_window.py" line="3924"/>
         <location filename="../../ui/widgets/disk_map.py" line="326"/>
         <location filename="../../ui/widgets/disk_overview.py" line="139"/>
         <source>{} kullanilan</source>
@@ -10426,12 +10431,12 @@ Devam etmek icin disk adini yazin: {}</source>
         <translation>不存在分区 {}</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="305"/>
+        <location filename="../../ui/widgets/file_browser.py" line="317"/>
         <source>{} oge disa aktarildi -&gt; {}</source>
         <translation>已导出 {} 个项目 -&gt; {}</translation>
     </message>
     <message numerus="yes">
-        <location filename="../../ui/widgets/file_browser.py" line="438"/>
+        <location filename="../../ui/widgets/file_browser.py" line="450"/>
         <source>{} oge silindi</source>
         <extra-po-msgid_plural>{} oge silindi</extra-po-msgid_plural>
         <translation>
@@ -10453,8 +10458,8 @@ Konum: {}</source>
         <translation>正在读取 {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2249"/>
-        <location filename="../../ui/main_window.py" line="2279"/>
+        <location filename="../../ui/main_window.py" line="2258"/>
+        <location filename="../../ui/main_window.py" line="2288"/>
         <source>{} olarak yeniden baslat</source>
         <translation>以{}身份重新启动</translation>
     </message>
@@ -10464,7 +10469,7 @@ Konum: {}</source>
         <translation>以{}身份重新启动...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2202"/>
+        <location filename="../../ui/main_window.py" line="2211"/>
         <source>{} olarak yeniden baslatma reddedildi; fiziksel diskler acilamaz</source>
         <translation>已拒绝以{}身份重新启动；无法打开物理磁盘</translation>
     </message>
@@ -10484,7 +10489,12 @@ Konum: {}</source>
         <translation>{} 秒</translation>
     </message>
     <message>
-        <location filename="../../core/filesystem.py" line="952"/>
+        <location filename="../../core/wipe.py" line="72"/>
+        <source>{} sifirla bitmedigi icin dogrulanamaz</source>
+        <translation>{} 不以零填充结束，无法校验</translation>
+    </message>
+    <message>
+        <location filename="../../core/filesystem.py" line="978"/>
         <source>{} sifreli bir birimdir; icerigi anahtar olmadan okunamaz.</source>
         <translation>{} 是加密卷；没有密钥无法读取其内容。</translation>
     </message>
@@ -10500,8 +10510,8 @@ Konum: {}</source>
         <translation>找到 {} 个已删除条目</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2739"/>
-        <location filename="../../ui/main_window.py" line="2742"/>
+        <location filename="../../ui/main_window.py" line="2758"/>
+        <location filename="../../ui/main_window.py" line="2761"/>
         <source>{} sn</source>
         <translation>{} 秒</translation>
     </message>
@@ -10528,12 +10538,12 @@ Konum: {}</source>
     </message>
     <message>
         <location filename="../../core/formatter.py" line="206"/>
-        <location filename="../../core/session.py" line="522"/>
+        <location filename="../../core/session.py" line="531"/>
         <source>{} yalnizca fiziksel diskte, Windows&apos;un kendi araciyla olusturulabilir; goruntu dosyasinda kullanilamaz.</source>
         <translation>{} 只能使用 Windows 自带的工具在物理磁盘上创建；不能用于镜像文件。</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="334"/>
+        <location filename="../../ui/widgets/file_browser.py" line="346"/>
         <source>{} yaziliyor ({} / {})</source>
         <translation>正在写入 {}（{} / {}）</translation>
     </message>
@@ -10553,12 +10563,12 @@ Konum: {}</source>
         <translation>正在准备 {} 布局...</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2239"/>
+        <location filename="../../ui/main_window.py" line="2248"/>
         <source>{} yetkisi</source>
         <translation>{}权限</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2190"/>
+        <location filename="../../ui/main_window.py" line="2199"/>
         <source>{} yetkisi gerekiyor</source>
         <translation>需要{}权限</translation>
     </message>
@@ -10578,12 +10588,12 @@ Konum: {}</source>
         <translation>{} {} 已启动</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3098"/>
+        <location filename="../../ui/main_window.py" line="3117"/>
         <source>{} | {} | {} bolum</source>
         <translation>{} | {} | {} 个分区</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3495"/>
+        <location filename="../../ui/main_window.py" line="3514"/>
         <source>{} — (yetki yok, bilgi okunamadi)</source>
         <translation>{} —（无权限，无法读取信息）</translation>
     </message>
@@ -10603,12 +10613,12 @@ Konum: {}</source>
         <translation>{} — 当前内容（克隆时将被清除）</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3423"/>
+        <location filename="../../ui/main_window.py" line="3442"/>
         <source>{} — {}</source>
         <translation>{} — {}</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3572"/>
+        <location filename="../../ui/main_window.py" line="3591"/>
         <source>{} — {}
 LBA {} - {}
 Acmak icin tiklayin (salt okunur)</source>
@@ -10627,32 +10637,37 @@ LBA {} - {}
         <translation>{} — {} 个扇区 — {}</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="691"/>
+        <location filename="../../core/operations.py" line="693"/>
         <source>{}, bicimlendirilmemis</source>
         <translation>{}，未格式化</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="705"/>
+        <location filename="../../core/operations.py" line="707"/>
         <source>{}, etiket &apos;{}&apos;</source>
         <translation>{}，卷标“{}”</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="688"/>
+        <location filename="../../core/operations.py" line="784"/>
+        <source>{}, sonra dogrulanir</source>
+        <translation>{}，随后校验</translation>
+    </message>
+    <message>
+        <location filename="../../core/operations.py" line="690"/>
         <source>{}, {}</source>
         <translation>{}，{}</translation>
     </message>
     <message>
-        <location filename="../../core/operations.py" line="681"/>
+        <location filename="../../core/operations.py" line="683"/>
         <source>{}, {} — veri korunur</source>
         <translation>{}，{} — 保留数据</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="1982"/>
+        <location filename="../../ui/main_window.py" line="1991"/>
         <source>{}/{} dosya kurtarildi -&gt; {}</source>
         <translation>已恢复 {}/{} 个文件 -&gt; {}</translation>
     </message>
     <message>
-        <location filename="../../ui/widgets/file_browser.py" line="441"/>
+        <location filename="../../ui/widgets/file_browser.py" line="453"/>
         <source>{}/{} oge silindi — {} oge silinemedi</source>
         <translation>已删除 {}/{} 个项目 — {} 个项目无法删除</translation>
     </message>
@@ -10662,18 +10677,18 @@ LBA {} - {}
         <translation>{}：设备中没有介质</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="3335"/>
+        <location filename="../../ui/main_window.py" line="3354"/>
         <source>{}: bagli bolumler degisti — {}</source>
         <translation>{}：已挂载的分区已更改 — {}</translation>
     </message>
     <message>
         <location filename="../../ui/widgets/file_browser.py" line="128"/>
-        <location filename="../../ui/widgets/file_browser.py" line="147"/>
+        <location filename="../../ui/widgets/file_browser.py" line="159"/>
         <source>{}: icerik goruntuleme desteklenmiyor</source>
         <translation>{}：不支持显示内容</translation>
     </message>
     <message>
-        <location filename="../../ui/main_window.py" line="2229"/>
+        <location filename="../../ui/main_window.py" line="2238"/>
         <source>{}&lt;br&gt;&lt;br&gt;Uygulama &lt;b&gt;{} yetkisiyle&lt;/b&gt; yeniden baslatilsin mi?</source>
         <translation>{}&lt;br&gt;&lt;br&gt;是否&lt;b&gt;以{}权限&lt;/b&gt;重新启动应用程序？</translation>
     </message>

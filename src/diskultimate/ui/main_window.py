@@ -1936,7 +1936,7 @@ class MainWindow(QMainWindow):
             return
         self.enqueue(ops.wipe_partition_op(
             index, v["method"], method_name=dlg.method_combo.currentText(),
-            at_lba=at_lba))
+            at_lba=at_lba, verify=v["verify"]))
 
     # ==================================================================
     # Kurtarma

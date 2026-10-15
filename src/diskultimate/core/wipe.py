@@ -67,6 +67,10 @@ def wipe_device(device: BlockDevice, method: str = "zero",
         raise WipeError(tr("Bilinmeyen silme yontemi: {}", method))
     if getattr(device, "readonly", False):
         raise WipeError(tr("Aygit salt okunur"))
+    if verify and yontem.passes[-1] != "zero":
+        # Dogrulama sifir okumaya dayanir; hicbir sey yazilmadan reddedilir.
+        raise WipeError(tr("{} sifirla bitmedigi icin dogrulanamaz",
+                           tr(yontem.label)))
     total = device.size
     pass_count = yontem.pass_count
     for gecis, kind in enumerate(yontem.passes, 1):

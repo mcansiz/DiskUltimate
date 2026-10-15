@@ -6251,7 +6251,16 @@ Artık yalnızca fiziksel disk oturumları salt okunura döner (gezinti
 testindeki denetim de fiziksel disklere daraltıldı). Yerel `temel` görüntü
 kipi TAMAM.
 
-Açık bulgu (kullanıcıya soruldu): Güvenli silme penceresindeki "silme
-sonrası doğrula" kutusu yok sayılıyor — `WipeDialog.values()["verify"]`
-kuyruk adımına geçirilmiyor; çekirdek (`wipe.wipe_device(verify=)`)
-destekliyor. README "isteğe bağlı doğrulama" diyor.
+Güvenli silmedeki "silme sonrası doğrula" kutusu yok sayılıyordu
+(`WipeDialog.values()["verify"]` kuyruk adımına geçirilmiyordu; README
+"isteğe bağlı doğrulama" diyordu). Kullanıcı: "çalışır hale getir".
+- `wipe_partition_op(verify=)` → `_run_wipe_partition` →
+  `wipe_partition_data` / `wipe_disk(verify=)` → `wipe_device`. Kuyruktaki
+  ayrıntı "…, sonra doğrulanır".
+- Doğrulama tutmazsa adım hata verir (`_check_wipe_verified`); eskiden
+  `verified=False` sonucu kimse okumuyordu.
+- Sıfırla bitmeyen yöntemde doğrulama istenirse hiçbir şey yazılmadan
+  reddedilir (pencere zaten yalnızca sıfırlamada seçtirir).
+- 3 yeni metin, 9 dil. t105 (geçer / tutmazsa hata / yazmadan ret /
+  eski davranış). Gezinti `kurtarma`: "bölümü sıfırla" doğrulamalı; görüntü
+  kipinde yerel TAMAM.

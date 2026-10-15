@@ -1944,13 +1944,22 @@ class Explore:
                 else:
                     dlg.radio_tum.setChecked(True)
                     dlg.method_combo.setCurrentIndex(dlg.method_combo.findData("zero"))
+                    if not dlg.verify_check.isEnabled():
+                        raise StepFail("sifirlamada dogrulama secilemiyor")
+                    dlg.verify_check.setChecked(True)
                 press_ok(dlg)
 
             with self.expecting(("guvenli-sil", cls("WipeDialog"), fill)):
                 self.trigger(self.window.act_wipe_part)
             if self.queue_len() != 1:
                 raise StepFail("silme kuyruga girmedi")
-            return "bos alan silme kuyrukta" if free else "bolum sifirla silinecek"
+            if free:
+                return "bos alan silme kuyrukta"
+            # Pencere secenegi adima tasinmali (eskiden yok sayiliyordu).
+            step = self.window.queue.items[-1]
+            if not step.params.get("verify"):
+                raise StepFail("dogrulama secimi kuyruk adimina gecmedi")
+            return "bolum sifirla silinecek, sonra dogrulanacak"
         return run
 
     def v_wipe_free(self) -> str:

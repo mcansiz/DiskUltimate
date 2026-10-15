@@ -7846,6 +7846,73 @@ def t104_imzadan_cikarilan_zip_acilir():
     s.close()
 
 
+
+# --------------------------------------------------------------------------
+@test
+def t105_guvenli_silme_dogrulamasi():
+    """Guvenli silmede "silme sonrasi dogrula" gercekten dogrular
+
+    Pencere secenegi topluyordu ama kuyruk adimina hic gecirmiyordu: kutu
+    isaretli olsa da dogrulama yapilmiyordu (README "isteğe bağlı doğrulama"
+    diyordu; 2026-10-15). Dogrulama tutmazsa adim hata verir; sifirla
+    bitmeyen yontemde dogrulama istenirse hicbir sey yazilmadan reddedilir.
+    """
+    from diskultimate.core import operations as ops
+    from diskultimate.core import wipe as wipe_mod
+
+    yol = os.path.join(TMP, "silme_dogrulama.img")
+
+    def kur():
+        s = DiskSession.create(yol, 96 * MIB, scheme="gpt", overwrite=True)
+        r = s.free_regions()[0]
+        p = s.create_partition(r.start_lba, 40 * 2048, fs_key="fat32", label="SIL")
+        return s, p
+
+    # 1) dogrulamali sifirlama: gecer, alan gercekten sifir
+    s, p = kur()
+    adim = ops.wipe_partition_op(p.index, "zero", at_lba=p.start_lba, verify=True)
+    assert adim.params["verify"] is True
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(adim)
+    sonuc = kuyruk.apply(s)
+    assert sonuc.ok, sonuc.summary()
+    bolum = s.view(s.table.get(p.index))
+    assert wipe_mod.is_zero(bolum.read(0, 4 * MIB)), "sifirlanan alan sifir degil"
+    s.close()
+
+    # 2) okunan veri sifir degilse adim hata verir
+    s, p = kur()
+    gercek = wipe_mod.is_zero
+    wipe_mod.is_zero = lambda data: False
+    try:
+        kuyruk = ops.OperationQueue()
+        kuyruk.add(ops.wipe_partition_op(p.index, "zero", at_lba=p.start_lba,
+                                         verify=True))
+        sonuc = kuyruk.apply(s)
+    finally:
+        wipe_mod.is_zero = gercek
+    assert not sonuc.ok, "dogrulama tutmadigi halde adim basarili sayildi"
+    s.close()
+
+    # 3) sifirla bitmeyen yontem + dogrulama: yazmadan reddedilir
+    s, p = kur()
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.wipe_partition_op(p.index, "random", at_lba=p.start_lba,
+                                     verify=True))
+    sonuc = kuyruk.apply(s)
+    assert not sonuc.ok, "rastgele yontemde dogrulama kabul edildi"
+    assert (s.filesystem(p.index).label or "").strip() == "SIL", \
+        "reddedilen silme yine de veri yazdi"
+    s.close()
+
+    # dogrulamasiz eski davranis degismedi
+    s, p = kur()
+    kuyruk = ops.OperationQueue()
+    kuyruk.add(ops.wipe_partition_op(p.index, "random", at_lba=p.start_lba))
+    assert kuyruk.apply(s).ok
+    s.close()
+
+
 def _dis_denetim(fs_key: str, yol: str) -> None:
     """Varsa harici araclarla birim denetimi (yoksa sessizce gecer)."""
     araclar = {"fat32": ["fsck.vfat", "-n"], "exfat": ["fsck.exfat", "-n"],
