@@ -6271,3 +6271,9 @@ Kullanıcı: "yayınla". 0.8.1-beta'dan sonraki iki düzeltme: güvenli silmede
 doğrulama gerçekten yapılır (`6d1a30f`), Uygula/geri yükleme/klon sonrası
 salt okunura dönüş yalnızca fiziksel disklerde (`1b665f2`); README iki dilde
 güncellendi. `APP_VERSION`, README rozetleri, proje özeti.
+- **v0.8.2-beta yayınlandı** (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.8.2-beta
+  — sürüm koşusu 38769139298 (3 platform test + exe, AppImage, macOS zip,
+  hepsi başarılı); sürüm commit'inde (ecefe9b) gezinti 38769130783 10/10 ve
+  CI 38769130756 başarılı (6d1a30f'nin gezinti koşusu yenisiyle iptal oldu,
+  hata değil). Notlara İngilizce/Türkçe "yenilikler" eklendi. `SHA256SUMS`
+  3/3 OK. Canlı denetim: 0.8.1-beta için v0.8.2-beta bulundu, 0.8.2-beta güncel.
