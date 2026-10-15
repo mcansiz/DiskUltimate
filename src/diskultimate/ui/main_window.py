@@ -2630,14 +2630,17 @@ class MainWindow(QMainWindow):
         self._refresh_pending()
 
     def _end_write_mode(self) -> None:
-        """Yazan is bitti: yazma kipindeki **butun** oturumlar yeniden salt
-        okunur (`become_readonly`, ADR 0025).
+        """Yazan is bitti: yazma kipindeki **fiziksel disk** oturumlari yeniden
+        salt okunur (`become_readonly`, ADR 0025).
 
         Yalnizca etkin oturum degil: geri yukleme ve diske klonlama hedefi
         baska bir acik oturum olabilir ve o oturum is parcaciginda yazma
-        kipine alinir.
+        kipine alinir. Goruntu dosyalari dokunulmaz: onlarda isletim
+        sistemi kilidi yoktur ve yazilabilir acilirlar; salt okunura
+        cevirmek NTFS/ext goruntusunde bos alan silmeyi ilk Uygula'dan
+        sonra kapatiyordu.
         """
-        writable = [s for s in self.sessions if not s.readonly]
+        writable = [s for s in self.sessions if s.is_physical and not s.readonly]
         if not writable:
             return
         # Arka plandaki isletim sistemi taramasi ve disk yoklamasi ayni

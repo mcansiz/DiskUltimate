@@ -124,6 +124,9 @@ start: right-click the app → **Open**.
   a pre-check tells you if a conversion is not possible
 - Create, delete, format; change partition type, GPT name, volume label and
   boot (active) flag
+- Deleting a partition removes only its table entry, like DiskGenius and
+  Windows: the data stays and *Lost partition scan* can bring it back. Use
+  *Secure wipe* to destroy the data
 - **Resize and move with the mouse** — drag the handles on the partition bar;
   data is preserved for FAT12/16/32, exFAT, NTFS and ext2/3/4 (shrink, grow,
   move) and XFS (grow), all in pure Python on every platform
@@ -210,7 +213,7 @@ start: right-click the app → **Open**.
   Russian, Simplified Chinese, Japanese and Korean, switched live from
   *Tools → Language* (no restart; open disks and pending steps are kept).
   The French, Italian, Spanish, Russian, Chinese, Japanese and Korean
-  translations are new in this version and have not yet been reviewed by
+  translations have not yet been reviewed by
   native speakers — corrections are welcome
 - **Update check**: on start-up the app checks GitHub for a newer release in the
   background and offers to open the download page (*Help → Check for updates*;
@@ -297,7 +300,8 @@ Access to physical disks goes through six layers, and none of them is relaxed:
 
 1. **Listing is harmless** — listing disks reads no sectors and writes nothing.
 2. **Read-only by default** — a disk is always opened read-only; write access
-   is taken only while pending steps are being applied.
+   is taken only while pending steps (or a restore / clone) run and is given
+   back when they finish, so Windows shows the volumes again right away.
 3. **System disk** — writing to the disk the running system lives on requires
    typing the disk's name to confirm.
 4. **Incomplete information** (for example, no permission to read it) — writing
@@ -311,7 +315,11 @@ administrator rights.
 ## Known limitations
 
 - **Beta:** operations on real disks have been tested on Windows and Linux
-  test machines, but not on every hardware and configuration.
+  test machines, and on every change on GitHub with a virtual disk attached
+  to Windows and a SCSI test disk on Linux, but not on every hardware and
+  configuration.
+- Free space wipe on a physical disk can be chosen for FAT and exFAT; on NTFS,
+  ext and other file systems it is available only on image files.
 - macOS is not tested and not supported.
 - The hex viewer is read-only (no sector editing).
 - Not available: splitting / merging partitions, primary ↔ logical
@@ -345,7 +353,17 @@ python3 -m tests.platform_check   # cross-platform rules
 python3 -m tests.i18n_check       # translation catalogs
 python3 -m tests.diag_check       # diagnostics / freeze detector
 python3 -m tests.ui_smoke         # interface smoke test
+QT_QPA_PLATFORM=offscreen python3 -m tests.long.explore --senaryo hepsi --bosta 4
 ```
+
+`tests.long.explore` uses the application the way a person does: it opens
+the real window, clicks through partitions, backup, recovery and the
+interface, leaves the app idle after every step and fails if anything
+changes by itself (tree rebuilt, file browser jumps, drive letters come and
+go). Results are checked with the operating system's own tools. On GitHub it
+runs for every change with a real device (`--aygit`: a VHD attached to
+Windows, a `scsi_debug` disk on Linux); that mode refuses to run outside CI
+or a test VM.
 
 Volumes written by the app are cross-checked with independent tools
 (`fsck.vfat`, `fsck.exfat`, `e2fsck`, `ntfsfix`, `xfs_repair`, `fsck.hfsplus`,

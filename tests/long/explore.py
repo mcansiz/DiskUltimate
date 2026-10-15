@@ -1133,8 +1133,8 @@ class Explore:
             raise StepFail(f"Uygula yarida kaldi: {result.summary()}")
         if self.queue_len():
             raise StepFail(f"kuyrukta {self.queue_len()} adim kaldi")
-        if any(not s.readonly for s in w.sessions):
-            raise StepFail("Uygula sonrasi kaynak yazma kipinde kaldi (ADR 0025)")
+        if any(s.is_physical and not s.readonly for s in w.sessions):
+            raise StepFail("Uygula sonrasi disk yazma kipinde kaldi (ADR 0025)")
         return f"{count} adim uygulandi"
 
     def os_volumes(self, expect: Dict[str, str] = None, absent=(),
@@ -1642,8 +1642,8 @@ class Explore:
         result = self.data.get("yedek_sonuc") or (None, "")
         if result[0] is None:
             raise StepFail(f"geri yukleme olmadi: {result[1]}")
-        if any(not s.readonly for s in self.window.sessions):
-            raise StepFail("geri yukleme sonrasi oturum yazma kipinde kaldi (ADR 0025)")
+        if any(s.is_physical and not s.readonly for s in self.window.sessions):
+            raise StepFail("geri yukleme sonrasi disk yazma kipinde kaldi (ADR 0025)")
         return result[1][:160]
 
     def v_restore_part(self) -> str:

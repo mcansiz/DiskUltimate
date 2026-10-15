@@ -6231,3 +6231,27 @@ yerinde kalır. Gözlemci arayüz gezintisi (ADR 0097) CI'da her push'ta.
   38622611930 başarılı. Notlara İngilizce/Türkçe "yenilikler" eklendi.
   Dosyalar indirilip `SHA256SUMS` ile doğrulandı (3/3 OK). Canlı denetim:
   0.8.0-beta için v0.8.1-beta bulundu, 0.8.1-beta güncel.
+
+## 2026-10-15 — README güncellendi; görüntü oturumları yazılabilir kalır
+
+Kullanıcı: "readme.md dosyası güncel mi". Eksikler (README.md + README.tr.md):
+- Bölüm silme artık veriyi korur, *Kayıp bölüm tarama* geri getirir (ADR 0098).
+- Güvenlik katmanı 2: yazma yetkisi iş bitince bırakılır (Windows birimleri
+  hemen geri gelir).
+- Bilinen sınırlar: her değişiklikte GitHub'da gerçek aygıtla sınanıyor;
+  fiziksel diskte boş alan silme yalnızca FAT/exFAT'ta.
+- Derleme ve test: `tests.long.explore` (gözlemci gezinti) anlatıldı.
+- "Çeviriler bu sürümde eklendi" ifadesi bayatlamıştı (0.6.0'a aitti).
+
+README'yi doğrularken bulunan yan etki: `_end_write_mode` (2026-10-14)
+görüntü oturumlarını da salt okunura çeviriyordu; amacı yalnızca fiziksel
+diskin Windows birim kilitleriydi. Görüntüler yazılabilir açılır; ilk
+Uygula'dan sonra NTFS/ext görüntüsünde boş alan silme kayboluyordu.
+Artık yalnızca fiziksel disk oturumları salt okunura döner (gezinti
+testindeki denetim de fiziksel disklere daraltıldı). Yerel `temel` görüntü
+kipi TAMAM.
+
+Açık bulgu (kullanıcıya soruldu): Güvenli silme penceresindeki "silme
+sonrası doğrula" kutusu yok sayılıyor — `WipeDialog.values()["verify"]`
+kuyruk adımına geçirilmiyor; çekirdek (`wipe.wipe_device(verify=)`)
+destekliyor. README "isteğe bağlı doğrulama" diyor.

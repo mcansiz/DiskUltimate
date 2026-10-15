@@ -124,6 +124,9 @@ sağ tık → **Aç**.
   dönüşüm mümkün değilse ön denetim bunu söyler
 - Bölüm oluşturma, silme, biçimlendirme; bölüm türü, GPT adı, birim etiketi ve
   önyükleme (aktif) bayrağı değiştirme
+- Bölüm silme, DiskGenius ve Windows'ta olduğu gibi yalnızca bölüm tablosundaki
+  girdiyi kaldırır: veri yerinde kalır ve *Kayıp bölüm tarama* onu geri
+  getirebilir. Veriyi yok etmek için *Güvenli silme* kullanın
 - **Fareyle boyutlandırma ve taşıma** — bölüm şeridindeki tutamaçları sürükleyin;
   FAT12/16/32, exFAT, NTFS ve ext2/3/4'te (küçültme, büyütme, taşıma) ve XFS'te
   (büyütme) veri korunur — hepsi saf Python, her platformda
@@ -214,8 +217,8 @@ sağ tık → **Aç**.
   Rusça, Basitleştirilmiş Çince, Japonca ve Korece; *Araclar → Dil*
   menüsünden anında değişir (yeniden başlatma gerekmez, açık diskler ve
   bekleyen adımlar korunur). Fransızca, İtalyanca, İspanyolca, Rusça, Çince,
-  Japonca ve Korece çeviriler bu sürümde eklendi ve henüz anadili konuşanlarca
-  gözden geçirilmedi — düzeltmeler memnuniyetle karşılanır
+  Japonca ve Korece çeviriler henüz anadili konuşanlarca gözden
+  geçirilmedi — düzeltmeler memnuniyetle karşılanır
 - **Güncelleme denetimi**: açılışta GitHub'da daha yeni bir sürüm olup olmadığına
   arka planda bakar ve indirme sayfasını açmayı önerir (*Yardım → Güncellemeleri
   denetle*; kapatılabilir ya da `DISKULTIMATE_UPDATE_CHECK=0`)
@@ -303,7 +306,8 @@ Fiziksel disk erişimi altı katmandan geçer ve bunların hiçbiri gevşetilmez
 1. **Listeleme zararsızdır** — diskler listelenirken hiçbir sektör okunmaz,
    hiçbir şey yazılmaz.
 2. **Varsayılan salt okunur** — disk her zaman salt okunur açılır; yazma
-   yetkisi yalnızca bekleyen adımlar uygulanırken alınır.
+   yetkisi yalnızca bekleyen adımlar (ya da geri yükleme / klon) çalışırken
+   alınır ve iş bitince bırakılır; Windows birimleri hemen yeniden gösterir.
 3. **Sistem diski** — çalışan sistemin bulunduğu diske yazmak için diskin adını
    yazarak onay vermek gerekir.
 4. **Bilgisi eksik disk** (örneğin okuma yetkisi yok) — yazma **reddedilir**;
@@ -316,8 +320,11 @@ görüntüleri hiçbir zaman yönetici yetkisi gerektirmez.
 
 ## Bilinen sınırlar
 
-- **Beta:** gerçek disk işlemleri Windows ve Linux test makinelerinde
-  sınanmıştır, ancak her donanım ve yapılandırmada değil.
+- **Beta:** gerçek disk işlemleri Windows ve Linux test makinelerinde ve her
+  değişiklikte GitHub'da (Windows'ta takılı sanal disk, Linux'ta SCSI test
+  diski) sınanmıştır, ancak her donanım ve yapılandırmada değil.
+- Fiziksel diskte boş alan silme FAT ve exFAT'ta seçilebilir; NTFS, ext ve
+  diğer dosya sistemlerinde yalnızca görüntü dosyalarında kullanılabilir.
 - macOS sınanmamıştır ve desteklenmez.
 - Onaltılık görüntüleyici salt okunurdur (sektör düzenleme yok).
 - Henüz yok: bölüm bölme / birleştirme, birincil ↔ mantıksal dönüşümü, bozuk
@@ -352,7 +359,17 @@ python3 -m tests.platform_check   # çapraz platform kuralları
 python3 -m tests.i18n_check       # çeviri sözlükleri
 python3 -m tests.diag_check       # tanılama / donma yakalayıcı
 python3 -m tests.ui_smoke         # arayüz duman testi
+QT_QPA_PLATFORM=offscreen python3 -m tests.long.explore --senaryo hepsi --bosta 4
 ```
+
+`tests.long.explore` uygulamayı bir kullanıcı gibi kullanır: gerçek pencereyi
+açar, bölüm, yedek, kurtarma ve arayüz özelliklerini sırayla dener, her
+adımdan sonra uygulamayı boşta bekletir ve kendiliğinden bir şey değişirse
+(ağaç yeniden kurulursa, dosya gezgini başa dönerse, sürücü harfleri gidip
+gelirse) hata verir. Sonuç işletim sisteminin kendi araçlarıyla doğrulanır.
+GitHub'da her değişiklikte gerçek bir aygıtla koşar (`--aygit`: Windows'ta
+takılı VHD, Linux'ta `scsi_debug` diski); bu kip CI ya da test VM'i dışında
+çalışmayı reddeder.
 
 Uygulamanın yazdığı birimler bağımsız araçlarla çapraz doğrulanır
 (`fsck.vfat`, `fsck.exfat`, `e2fsck`, `ntfsfix`, `xfs_repair`, `fsck.hfsplus`,
