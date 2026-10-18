@@ -6341,3 +6341,8 @@ menü üretimi/eski grub.cfg'nin yazılmaması, hata yolu — araç ve yetki sah
 `ui_smoke` ve gezinti yerelde koşulmadı (ağır testler GitHub'da). Gerçek
 `grub-install`/`update-grub` bu değişiklikle çalıştırılmadı (Linux VM yok;
 ana makinede önyükleyiciye yazılmaz). Mimari şeması da güncellendi.
+- **GitHub sonucu (`72fbc9d`):** CI 39122300780 başarılı — Linux `run_all`
+  100/106 (6 atlanan eski ortam atlamaları; t106 geçti), `ui_smoke` başarılı
+  (açılış dili + iş parçacığı denetimi geçti). Arayüz gezintisi 39122300677
+  10/10 iş başarılı (Windows + Linux, aygıt ve görüntü kipleri). Push CI'ı
+  yalnızca Linux'ta koşar; Windows/macOS `run_all`/`ui_smoke` sürüm koşusunda.
