@@ -221,3 +221,23 @@ dosyada durur ve cevirmene onerilir, ama arayuzde Turkce gorunur. Bu yuzden
 
 Gecis dogrulamasi: 2630 metnin (2 dil x 1315) tamaminda `tr()` ciktisinin
 JSON donemiyle **birebir ayni** oldugu karsilastirildi.
+
+## Ek (2026-10-18): `initialize()` hic cagrilmiyordu
+
+Yukaridaki "acilista `i18n.initialize()` ile yapilir" cumlesi hicbir surumde
+dogru olmadi: islev tanimliydi ama `main.py` (ya da baska bir yer) onu hic
+cagirmadi (git gecmisi tarandi). Sonuc: `DISKULTIMATE_LANG`, menuden kaydedilen
+dil ve sistem dili acilista yok sayiliyor, uygulama hep Turkce aciliyordu; dil
+yalnizca menuden degistirilebiliyordu. Mimari semasi cikarilirken bulundu.
+
+`main.start()` artik `diagnostics.configure()`dan hemen sonra, Qt cevirisinden
+ve yetki penceresinden **once** `i18n.initialize()` cagirir (ikisi de etkin
+dili okur). Davranis degisikligi: kaydedilmis dil yoksa uygulama **sistem
+diliyle** acilir (katalog varsa) — tasarim buydu, ilk kez uygulaniyor.
+Gozlemci gezinti (`tests.long.explore`) CI makinesinin dilinden etkilenmesin
+diye `DISKULTIMATE_LANG=tr` ile kosar.
+
+Olcum: `tests.ui_smoke` → `acilis_dili_denetimi` ayri bir surecte gercek
+acilis yolundan gecer: `DISKULTIMATE_LANG=en` → "Apply", kayitli `de` →
+"Anwenden", ortam degiskeni kayitli dilden once gelir. Duzeltme geri
+alindiginda denetim `('tr', 'Uygula')` ile kalir (olculdu).

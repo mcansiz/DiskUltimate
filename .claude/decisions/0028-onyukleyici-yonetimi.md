@@ -212,3 +212,61 @@ tekrari (CLAUDE.md, eksik disk bilgisi kurali).
   buyuklugunden bagimsiz yol aramasi.
 - **t32** — `GrubDefaults` duzenlemesinde yorumlarin, siranin ve yerinde
   guncellemenin korunmasi; `grub.cfg` menu/alt menu cozumlemesi.
+
+## Ek (2026-10-18): kural 5 uygulanmiyordu; geri yukleme menuyu uretmiyordu
+
+Mimari semasi (`.claude/docs/diskultimate-mimari.drawio`) cikarilirken
+bulundu, kullanici kararıyla duzeltildi.
+
+### Kural 5 — "yalnizca GRUB'un zaten oldugu yere"
+
+`BootloaderDialog._repair_targets` iki dalda da acik diski donduruyordu;
+`has_grub` denetimi etkisizdi. BIOS'ta GRUB'u olmayan bir diskin (ornegin
+Windows diskinin) ilk sektoruna GRUB yazilabiliyordu. Karar artik cekirdekte
+(`grub.repair_targets`) ve **bellenim kipine gore** verilir:
+
+- **BIOS / kip bilinmiyor:** hedef acik disktir, yalnizca ilk sektorunde GRUB
+  varsa (`DiskBoot.has_grub`).
+- **UEFI:** `grub-install` aygiti yok sayar (olcum 1), hedef bu makinenin
+  ESP'sidir (`ESP_TARGET`). Acik diskin ilk sektoru olcut olamaz — UEFI'de
+  GRUB orada durmaz; `has_grub`i sart kosmak UEFI'de onarimi hep reddederdi.
+  Olcut calisan sistemin GRUB ile yapilandirilmis olmasidir
+  (`GrubStatus.configured`: `grub.cfg` ya da varsayilanlar dosyasi var).
+  Boylece systemd-boot ile acilan bir sisteme GRUB yazilip bellenim sirasi
+  degistirilmez. Onay metni de UEFI'de "X diskine kurulur" yerine ESP'yi
+  soyler (yeni metin, 9 dil).
+- `install("")` BIOS'ta **calismaz**: bos aygitla arac hedefi kendisi
+  tahmin ederdi.
+
+### Geri yukleme menuyu yeniden uretir, eski `grub.cfg`yi yazmaz
+
+Belge "grub.cfg yedekten geldigi icin menu uretmeye gerek yok" diyordu ama kod
+`grub.cfg`yi geri yazmiyordu: geri konan ayarlar menuye hic yansimiyordu.
+Iki duzeltme yolu vardi:
+
+| Yol | Sorun |
+|---|---|
+| Yedekteki `grub.cfg`yi geri yaz | Yedek anindaki cekirdek/initrd dosyalarini gosterir; o gunden beri silinmis bir cekirdek varsa makine **acilmaz** |
+| Ayarlari geri koy, menuyu **yeniden uret** (secildi) | Menu geri konan ayarlarla bugunku cekirdeklerden uretilir — "Menuyu yeniden uret" dugmesiyle ayni yol |
+
+Eski `grub.cfg` yedek klasorunde inceleme icin durur. Dosyalardan biri
+yazilamazsa menu **uretilmez**: yarim geri konmus ayarlarla menu uretmek
+calisan menuyu bozmak olurdu.
+
+### Arayuz is parcacigi
+
+`grub.status()` (`grub-install --version`, 20 sn'ye kadar) pencere acilisinda
+ve yenilemede, `set_os_prober` (pkexec parola sorabilir) onay kutusunda arayuz
+is parcacigindaydi — ADR 0020'ye aykiri. Ikisi de artik `run_task` icinde.
+
+### Olcum
+
+- **t106** (`tests.run_all`) — hedef karari (BIOS/UEFI/bilinmeyen kip), UEFI
+  onariminda `grub-install`in aygitsiz cagrilmasi, bos aygit reddi, geri
+  yuklemede varsayilan + grub.d'nin geri konmasi, eski `grub.cfg`nin
+  yazilmamasi, menunun en son uretilmesi, yazma hatasinda menunun
+  uretilmemesi. Arac ve yetki **sahte**; gercek `grub-install`/`update-grub`
+  bu degisiklikle calistirilmadi (Linux VM yok, ana makinede onyukleyiciye
+  yazilmaz).
+- **ui_smoke** — `grub.status()` ve `set_os_prober`in arayuz is parcaciginda
+  calismadigi (eski kodda ikisi de calisiyordu; olculdu).

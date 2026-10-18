@@ -30,6 +30,7 @@ from ...core.fsregistry import fs_display
 from ...core import bootloader as bl
 from ...core import grub as grub_mod
 from ...core import operations as ops
+from ...core.platform import GRUB_DEFAULTS_PATH
 from ...core.ptable import human_size
 from ...i18n import mark, tr
 from ..icons import icon as app_icon
@@ -171,22 +172,22 @@ class BootloaderDialog(QDialog):
         bu yuzden arayuz is parcaciginda degil `run_task` icinde calisir
         (ADR 0020).
         """
-        session = self.session
-
-        def work(report):
-            return bl.survey_session(session, progress=report)
-
-        ok, result = run_task(self, tr("Onyukleme durumu inceleniyor"), work)
+        ok, result = run_task(self, tr("Onyukleme durumu inceleniyor"),
+                              lambda report: _inspect(self.session, report))
         if not ok:
             self.note(tr("Inceleme basarisiz: {}", result))
             return
-        self.adopt(result, grub_mod.status())
+        self.adopt(*result)
 
-    def adopt(self, survey: bl.DiskBoot,
-              status: Optional[grub_mod.GrubStatus] = None) -> None:
-        """Hazir inceleme sonucunu benimser ve arayuzu doldurur."""
+    def adopt(self, survey: bl.DiskBoot, status: grub_mod.GrubStatus) -> None:
+        """Hazir inceleme sonucunu benimser ve arayuzu doldurur.
+
+        `status` cagiran tarafindan **arka planda** toplanir (`_inspect`):
+        `grub.status()` `grub-install --version` calistirir (20 sn'ye kadar);
+        eskiden burada, arayuz is parcaciginda cagriliyordu (ADR 0020).
+        """
         self.survey = survey
-        self.status = status if status is not None else grub_mod.status()
+        self.status = status
         self._fill_systems()
         self._fill_state()
         self._update_buttons()
@@ -340,7 +341,12 @@ class BootloaderDialog(QDialog):
 
     def toggle_os_prober(self) -> None:
         wanted = self.chk_prober.isChecked()
-        ok, message = grub_mod.set_os_prober(wanted)
+        # Varsayilanlar dosyasi yetkiyle yazilir; pkexec parola sorup
+        # bekleyebilir. Arayuz is parcaciginda degil (ADR 0020).
+        done, result = run_task(
+            self, tr("{} yaziliyor...", GRUB_DEFAULTS_PATH),
+            lambda report: grub_mod.set_os_prober(wanted))
+        ok, message = result if done else (False, str(result))
         self.note(message or (tr("os-prober acildi") if wanted
                               else tr("os-prober kapatildi")))
         if not ok:
@@ -393,7 +399,7 @@ class BootloaderDialog(QDialog):
 
         def work(report):
             report(tr("Yedek geri yukleniyor..."), -1)
-            return grub_mod.restore_config(stamp)
+            return grub_mod.restore_config(stamp, progress=report)
 
         done, result = run_task(self, tr("Geri yukleniyor"), work)
         self._report(done, result)
@@ -412,15 +418,26 @@ class BootloaderDialog(QDialog):
                    "Hedefi kendiniz secip \"GRUB'u bu diske kur\" "
                    "kullanabilirsiniz."))
             return
+        # UEFI'de `grub-install` diski yok sayar ve ESP'ye kurar; onay metni
+        # "X diskine kurulur" derse kullaniciya olmayacak bir sey vaat eder.
+        if targets == [grub_mod.ESP_TARGET]:
+            question = tr("Sirasiyla su adimlar uygulanacak:<br>"
+                          "1. Mevcut ayarlar yedeklenir<br>"
+                          "2. Diger sistemlerin taranmasi acilir<br>"
+                          "3. GRUB bu makinenin <b>EFI Sistem Bolumune</b> "
+                          "yeniden kurulur (diskin ilk sektoru degismez)<br>"
+                          "4. Onyukleme menusu yeniden uretilir<br><br>"
+                          "Baska hicbir diske dokunulmaz. Devam edilsin mi?")
+        else:
+            question = tr("Sirasiyla su adimlar uygulanacak:<br>"
+                          "1. Mevcut ayarlar yedeklenir<br>"
+                          "2. Diger sistemlerin taranmasi acilir<br>"
+                          "3. GRUB <b>{}</b> diskine yeniden kurulur<br>"
+                          "4. Onyukleme menusu yeniden uretilir<br><br>"
+                          "Baska hicbir diske dokunulmaz. Devam edilsin mi?",
+                          ", ".join(targets))
         answer = QMessageBox.question(
-            self, tr("Tumunu onar"),
-            tr("Sirasiyla su adimlar uygulanacak:<br>"
-               "1. Mevcut ayarlar yedeklenir<br>"
-               "2. Diger sistemlerin taranmasi acilir<br>"
-               "3. GRUB <b>{}</b> diskine yeniden kurulur<br>"
-               "4. Onyukleme menusu yeniden uretilir<br><br>"
-               "Baska hicbir diske dokunulmaz. Devam edilsin mi?",
-               ", ".join(targets)),
+            self, tr("Tumunu onar"), question,
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if answer != QMessageBox.Yes:
             return
@@ -447,11 +464,11 @@ class BootloaderDialog(QDialog):
         self.refresh()
 
     def _repair_targets(self) -> List[str]:
-        """Onarilacak diskler: acik disk GRUB tasiyorsa yalnizca o."""
-        device = self._target_device()
-        if device and self.survey and self.survey.has_grub:
-            return [device]
-        return [device] if device else []
+        """Onarim hedefi: BIOS'ta GRUB tasiyan acik disk, UEFI'de ESP."""
+        return grub_mod.repair_targets(
+            self._target_device(),
+            disk_has_grub=bool(self.survey and self.survey.has_grub),
+            system_uses_grub=bool(self.status and self.status.configured))
 
     def _report(self, ok: bool, result) -> None:
         """Ortak sonuc gosterimi: (basarili_mi, ileti) ciftleri icin."""
@@ -477,12 +494,16 @@ def show_bootloader(parent, session, queue_callback=None) -> None:
     uzun surebilir. Bos bir pencere gosterip icini doldurmak yerine ilerleme
     penceresi gosterilir (ADR 0020/0021).
     """
-    ok, survey = run_task(parent, tr("Onyukleme durumu inceleniyor"),
-                          lambda report: bl.survey_session(session,
-                                                           progress=report))
+    ok, result = run_task(parent, tr("Onyukleme durumu inceleniyor"),
+                          lambda report: _inspect(session, report))
     if not ok:
-        QMessageBox.warning(parent, tr("Inceleme basarisiz"), str(survey))
+        QMessageBox.warning(parent, tr("Inceleme basarisiz"), str(result))
         return
     dialog = BootloaderDialog(parent, session, queue_callback)
-    dialog.adopt(survey)
+    dialog.adopt(*result)
     exec_dialog(dialog)
+
+
+def _inspect(session, report):
+    """Arka planda: diskin onyukleme incelemesi + calisan sistemin GRUB durumu."""
+    return bl.survey_session(session, progress=report), grub_mod.status()

@@ -27,7 +27,7 @@
         <translation>  Sur ce disque, une sauvegarde de l&apos;espace utilisé uniquement prend tous les secteurs.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="364"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="370"/>
         <source>  atlandi: {} ({})</source>
         <translation>  ignoré : {} ({})</translation>
     </message>
@@ -58,7 +58,7 @@
         <translation> ou </translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="213"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="214"/>
         <source> · EFI</source>
         <translation> · EFI</translation>
     </message>
@@ -314,7 +314,7 @@
         <translation>(le contenu {} ne peut pas être listé dans cette version)</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="208"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="209"/>
         <source>-</source>
         <translation>-</translation>
     </message>
@@ -446,7 +446,7 @@
         <translation>L&apos;entrée &lt;b&gt;{}&lt;/b&gt; ({}) sera supprimée.&lt;br&gt;&lt;br&gt;Le système démarré depuis cette entrée n&apos;apparaîtra plus dans le menu du micrologiciel. Les fichiers sur le disque ne sont pas supprimés.&lt;br&gt;&lt;br&gt;La modification n&apos;est appliquée qu&apos;une fois écrite.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="247"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="248"/>
         <source>&lt;b&gt;{}&lt;/b&gt; ({}) — {}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt; ({}) — {}</translation>
     </message>
@@ -456,7 +456,7 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; est une sauvegarde DiskUltimate. Vous pouvez parcourir son contenu &lt;b&gt;en lecture seule&lt;/b&gt; : les partitions, dossiers et fichiers sont visibles et vous pouvez exporter des fichiers.&lt;br&gt;&lt;br&gt;&lt;b&gt;Taille de la source :&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Taille de la sauvegarde :&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;Créée le :&lt;/b&gt; {}&lt;br&gt;&lt;br&gt;Pour &lt;b&gt;écrire la sauvegarde sur un disque ou une image&lt;/b&gt; : &lt;i&gt;Disque &amp;gt; Écrire la sauvegarde sur un disque...&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="276"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="277"/>
         <source>&lt;b&gt;{}&lt;/b&gt; diskindeki onyukleme kodu ({}) kaldirilacak.&lt;br&gt;&lt;br&gt;Bolum tablosu ve dosyalar &lt;b&gt;korunur&lt;/b&gt;; ama bu diskten acilan sistem artik acilmaz.&lt;br&gt;&lt;br&gt;Islem hemen yapilmaz: bekleyen islemlere eklenir ve &quot;Uygula&quot; dediginizde calisir.</source>
         <translation>Le code d&apos;amorçage ({}) du disque &lt;b&gt;{}&lt;/b&gt; sera supprimé.&lt;br&gt;&lt;br&gt;La table de partitions et les fichiers sont &lt;b&gt;conservés&lt;/b&gt; ; mais le système démarré depuis ce disque ne pourra plus démarrer.&lt;br&gt;&lt;br&gt;Rien ne se passe pour l&apos;instant : l&apos;étape est ajoutée aux opérations en attente et s&apos;exécute lorsque vous choisissez « Appliquer ».</translation>
     </message>
@@ -623,7 +623,7 @@
     <message>
         <location filename="../../core/efistore.py" line="133"/>
         <location filename="../../core/efistore.py" line="147"/>
-        <location filename="../../core/grub.py" line="83"/>
+        <location filename="../../core/grub.py" line="88"/>
         <source>Acik</source>
         <translation>Activé</translation>
     </message>
@@ -781,13 +781,13 @@
         <translation>Paramètres</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="491"/>
-        <location filename="../../core/grub.py" line="494"/>
+        <location filename="../../core/grub.py" line="542"/>
+        <location filename="../../core/grub.py" line="545"/>
         <source>Ayarlar yedeklendi</source>
         <translation>Paramètres sauvegardés</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="121"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="122"/>
         <source>Ayarlari yedekle</source>
         <translation>Sauvegarder les paramètres</translation>
     </message>
@@ -932,7 +932,7 @@
     </message>
     <message>
         <location filename="../../core/efistore.py" line="132"/>
-        <location filename="../../core/grub.py" line="100"/>
+        <location filename="../../core/grub.py" line="105"/>
         <source>BIOS (eski kip)</source>
         <translation>BIOS (mode hérité)</translation>
     </message>
@@ -942,7 +942,7 @@
         <translation>BIOS Boot</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="311"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="312"/>
         <source>BIOS kipinde GRUB yalnizca gercek bir diske kurulabilir. Once sol agactan bir fiziksel disk acin.</source>
         <translation>En mode BIOS, GRUB ne peut être installé que sur un disque réel. Ouvrez d&apos;abord un disque physique dans l&apos;arborescence à gauche.</translation>
     </message>
@@ -1100,7 +1100,7 @@
         <translation>Décalage en octets</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="445"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="462"/>
         <source>Bazi adimlar basarisiz oldu; ayrintilar asagidaki gunlukte.</source>
         <translation>Certaines étapes ont échoué ; les détails figurent dans le journal ci-dessous.</translation>
     </message>
@@ -1156,7 +1156,7 @@
         <translation>Provient des opérations en attente : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="292"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="293"/>
         <source>Bekleyen islemlere eklendi: onyukleme kodunu kaldir</source>
         <translation>Ajouté aux opérations en attente : suppression du code d&apos;amorçage</translation>
     </message>
@@ -1188,7 +1188,7 @@
     </message>
     <message>
         <location filename="../../core/efistore.py" line="136"/>
-        <location filename="../../core/grub.py" line="99"/>
+        <location filename="../../core/grub.py" line="104"/>
         <location filename="../../ui/dialogs/efiboot.py" line="102"/>
         <source>Bellenim</source>
         <translation>Micrologiciel</translation>
@@ -1392,12 +1392,12 @@
     <message>
         <location filename="../../core/efistore.py" line="134"/>
         <location filename="../../core/efistore.py" line="136"/>
-        <location filename="../../core/grub.py" line="101"/>
+        <location filename="../../core/grub.py" line="106"/>
         <source>Bilinmiyor</source>
         <translation>Inconnu</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="81"/>
+        <location filename="../../core/grub.py" line="86"/>
         <source>Bilinmiyor (yapilandirma okunamadi)</source>
         <translation>Inconnu (impossible de lire la configuration)</translation>
     </message>
@@ -1584,7 +1584,7 @@
         <translation>Tailles de bloc différentes</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="75"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="76"/>
         <location filename="../../ui/dialogs/efiboot.py" line="282"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="74"/>
         <location filename="../../ui/widgets/partition_table.py" line="21"/>
@@ -1838,7 +1838,7 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <translation>Aucune table de partitions</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="232"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="233"/>
         <location filename="../../ui/dialogs/new_image.py" line="75"/>
         <source>Bolum tablosu:</source>
         <translation>Table de partitions :</translation>
@@ -1923,8 +1923,8 @@ Pour MBR, modifiez plutôt le nom de volume.</translation>
         <location filename="../../ui/dialogs/backup.py" line="1105"/>
         <location filename="../../ui/dialogs/backup.py" line="567"/>
         <location filename="../../ui/dialogs/backup.py" line="793"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="201"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="234"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="202"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="235"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="164"/>
         <location filename="../../ui/main_window.py" line="2042"/>
         <location filename="../../ui/widgets/disk_overview.py" line="184"/>
@@ -2375,7 +2375,7 @@ Vous pouvez créer une nouvelle partition dans cette zone (Partition &gt; Nouvel
         <location filename="../../ui/dialogs/backup.py" line="363"/>
         <location filename="../../ui/dialogs/backup.py" line="456"/>
         <location filename="../../ui/dialogs/backup.py" line="693"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="76"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="77"/>
         <location filename="../../ui/dialogs/clone.py" line="87"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
@@ -2905,12 +2905,12 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Plus tard</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="132"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="133"/>
         <source>Debian 12 ve Ubuntu 22.04&apos;ten beri kapali gelir; kapaliyken yanindaki Windows menude gorunmez.</source>
         <translation>Désactivé par défaut depuis Debian 12 et Ubuntu 22.04 ; tant qu&apos;il est désactivé, une installation Windows voisine n&apos;apparaît pas dans le menu.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="350"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="356"/>
         <source>Degisikligin etkili olmasi icin menuyu yeniden uretin.</source>
         <translation>Régénérez le menu pour que la modification prenne effet.</translation>
     </message>
@@ -2956,7 +2956,7 @@ Si l&apos;interface se bloque pendant plus d&apos;une seconde, un rapport est cr
         <translation>Impossible de lire les variables ; les droits root sont requis.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="348"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="354"/>
         <source>Degistirilemedi</source>
         <translation>Modification impossible</translation>
     </message>
@@ -3025,12 +3025,12 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Non pris en charge</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="130"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="131"/>
         <source>Diger isletim sistemlerini tara (os-prober)</source>
         <translation>Rechercher d&apos;autres systèmes d&apos;exploitation (os-prober)</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="498"/>
+        <location filename="../../core/grub.py" line="549"/>
         <source>Diger sistemlerin taranmasi aciliyor...</source>
         <translation>Activation de la recherche d&apos;autres systèmes...</translation>
     </message>
@@ -3082,7 +3082,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <location filename="../../core/operations.py" line="652"/>
         <location filename="../../core/operations.py" line="661"/>
         <location filename="../../core/operations.py" line="791"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="290"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="291"/>
         <location filename="../../ui/dialogs/clone.py" line="87"/>
         <source>Disk</source>
         <translation>Disque</translation>
@@ -3362,7 +3362,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Afficher la disposition sur le disque</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="72"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="73"/>
         <source>Diskteki isletim sistemleri</source>
         <translation>Systèmes d&apos;exploitation présents sur le disque</translation>
     </message>
@@ -3578,7 +3578,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
     </message>
     <message>
         <location filename="../../core/clone.py" line="121"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="76"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="77"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
         <location filename="../../ui/main_window.py" line="3965"/>
         <source>Dosya sistemi</source>
@@ -3720,12 +3720,13 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
     <message>
         <location filename="../../core/bootloader.py" line="351"/>
         <location filename="../../core/bootloader.py" line="450"/>
+        <location filename="../../core/grub.py" line="560"/>
         <location filename="../../core/ptable.py" line="54"/>
         <source>EFI Sistem Bolumu</source>
         <translation>Partition système EFI</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="236"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="237"/>
         <source>EFI Sistem Bolumu:</source>
         <translation>Partition système EFI :</translation>
     </message>
@@ -3772,7 +3773,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>Dossier à ajouter</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="106"/>
+        <location filename="../../core/grub.py" line="111"/>
         <source>Eksik arac</source>
         <translation>Outil manquant</translation>
     </message>
@@ -3984,7 +3985,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>L&apos;accès aux disques physiques nécessite {}. Menu Disque &gt; « Redémarrer en tant que {} »</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="310"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="311"/>
         <source>Fiziksel disk gerekli</source>
         <translation>Un disque physique est requis</translation>
     </message>
@@ -4102,7 +4103,7 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>GRUB 2</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="320"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="321"/>
         <source>GRUB &lt;b&gt;{}&lt;/b&gt; diskine kurulacak.&lt;br&gt;&lt;br&gt;Diskin ilk sektoru degisir. Devam edilsin mi?</source>
         <translation>GRUB sera installé sur le disque &lt;b&gt;{}&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Le premier secteur du disque sera modifié. Continuer ?</translation>
     </message>
@@ -4112,12 +4113,12 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>GRUB Legacy</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="322"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="323"/>
         <source>GRUB kur</source>
         <translation>Installer GRUB</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="506"/>
+        <location filename="../../core/grub.py" line="560"/>
         <source>GRUB kuruldu: {}</source>
         <translation>GRUB installé : {}</translation>
     </message>
@@ -4127,48 +4128,48 @@ Oui : lente, mais trouve aussi les partitions non alignées.</translation>
         <translation>GRUB ne peut être installé que sous Linux ; sur ce système ({}), seul l&apos;examen est possible.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="331"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="332"/>
         <source>GRUB kuruluyor</source>
         <translation>Installation de GRUB</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="448"/>
+        <location filename="../../core/grub.py" line="471"/>
         <source>GRUB paketleri guncel.</source>
         <translation>Les paquets GRUB sont à jour.</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="442"/>
+        <location filename="../../core/grub.py" line="465"/>
         <source>GRUB paketleri guncelleniyor...</source>
         <translation>Mise à jour des paquets GRUB...</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="97"/>
+        <location filename="../../core/grub.py" line="102"/>
         <source>GRUB yonetimi</source>
         <translation>Gestion de GRUB</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="396"/>
+        <location filename="../../core/grub.py" line="419"/>
         <source>GRUB {} diskine kuruldu.</source>
         <translation>GRUB a été installé sur le disque {}.</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="382"/>
-        <location filename="../../core/grub.py" line="504"/>
+        <location filename="../../core/grub.py" line="405"/>
+        <location filename="../../core/grub.py" line="557"/>
         <source>GRUB {} diskine kuruluyor...</source>
         <translation>Installation de GRUB sur le disque {}...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="104"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="105"/>
         <source>GRUB&apos;u bu diske kur...</source>
         <translation>Installer GRUB sur ce disque...</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="477"/>
+        <location filename="../../core/grub.py" line="528"/>
         <source>GRUB&apos;un kurulu oldugu bir disk bulunamadi.</source>
         <translation>Aucun disque avec GRUB installé n&apos;a été trouvé.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="411"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="417"/>
         <source>GRUB&apos;un kurulu oldugu bir disk bulunamadi.
 
 Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</source>
@@ -4177,17 +4178,18 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
 Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce disque ».</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="394"/>
+        <location filename="../../core/grub.py" line="417"/>
         <source>GRUB, EFI Sistem Bolumune kuruldu (diskin ilk sektoru degismedi).</source>
         <translation>GRUB a été installé sur la partition système EFI (le premier secteur du disque n&apos;a pas été modifié).</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="379"/>
+        <location filename="../../core/grub.py" line="402"/>
+        <location filename="../../core/grub.py" line="556"/>
         <source>GRUB, EFI Sistem Bolumune kuruluyor...</source>
         <translation>Installation de GRUB sur la partition système EFI...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="315"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="316"/>
         <source>GRUB, bu makinenin &lt;b&gt;EFI Sistem Bolumune&lt;/b&gt; kurulacak.&lt;br&gt;&lt;br&gt;Makine UEFI ile acildigi icin hedef disk degil ESP&apos;dir; &lt;b&gt;diskin ilk sektoru degismez&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>GRUB sera installé sur la &lt;b&gt;partition système EFI&lt;/b&gt; de cette machine.&lt;br&gt;&lt;br&gt;La machine a démarré en UEFI, la cible est donc l&apos;ESP et non un disque ; &lt;b&gt;le premier secteur du disque n&apos;est pas modifié&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Continuer ?</translation>
     </message>
@@ -4437,7 +4439,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Restauration arrêtée ; le fichier image incomplet a été supprimé.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="387"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="393"/>
         <source>Geri yukleme onayi</source>
         <translation>Confirmation de la restauration</translation>
     </message>
@@ -4462,12 +4464,12 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Fichier image dans lequel restaurer</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="381"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="387"/>
         <source>Geri yuklenecek yedek:</source>
         <translation>Sauvegarde à restaurer :</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="398"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="404"/>
         <source>Geri yukleniyor</source>
         <translation>Restauration</translation>
     </message>
@@ -4835,7 +4837,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Un XFS avec journal externe ne peut pas être agrandi</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="459"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="476"/>
         <source>Hata: {}</source>
         <translation>Erreur : {}</translation>
     </message>
@@ -4925,7 +4927,8 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Sélectionner le disque cible</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="476"/>
+        <location filename="../../core/grub.py" line="398"/>
+        <location filename="../../core/grub.py" line="527"/>
         <source>Hedef disk yok</source>
         <translation>Aucun disque cible</translation>
     </message>
@@ -5135,7 +5138,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Progression</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="98"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="99"/>
         <source>Ilk 440 bayti sifirlar; bolum tablosu ve veriler korunur. Bekleyen islem olarak kuyruga eklenir.</source>
         <translation>Met à zéro les 440 premiers octets ; la table de partitions et les données sont conservées. Ajouté à la file d&apos;attente comme opération en attente.</translation>
     </message>
@@ -5170,12 +5173,12 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Analyse des signatures... {} / {} — {} fichiers</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="484"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="500"/>
         <source>Inceleme basarisiz</source>
         <translation>Échec de l&apos;examen</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="181"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="178"/>
         <source>Inceleme basarisiz: {}</source>
         <translation>Échec de l&apos;examen : {}</translation>
     </message>
@@ -5220,8 +5223,8 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Journal des opérations</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="460"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="469"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="477"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="486"/>
         <source>Islem basarisiz</source>
         <translation>Échec de l&apos;opération</translation>
     </message>
@@ -5300,7 +5303,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Arrêter l&apos;opération</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="92"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="93"/>
         <location filename="../../ui/main_window.py" line="590"/>
         <location filename="../../ui/main_window.py" line="893"/>
         <source>Islemler</source>
@@ -5308,7 +5311,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
     </message>
     <message>
         <location filename="../../core/physical.py" line="134"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="75"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="76"/>
         <location filename="../../ui/widgets/partition_table.py" line="21"/>
         <source>Isletim sistemi</source>
         <translation>Système d&apos;exploitation</translation>
@@ -5366,14 +5369,14 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>Désactivé</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="85"/>
+        <location filename="../../core/grub.py" line="90"/>
         <source>Kapali — diger sistemler menude cikmaz</source>
         <translation>Désactivé — les autres systèmes n&apos;apparaîtront pas dans le menu</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="340"/>
         <location filename="../../ui/dialogs/backup.py" line="532"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="154"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="155"/>
         <location filename="../../ui/dialogs/clone.py" line="274"/>
         <location filename="../../ui/dialogs/efiboot.py" line="148"/>
         <location filename="../../ui/dialogs/preview.py" line="43"/>
@@ -5462,7 +5465,7 @@ Vous pouvez choisir vous-même une cible et utiliser « Installer GRUB sur ce di
         <translation>L&apos;enregistrement {} est réparti sur plusieurs enregistrements MFT ($ATTRIBUTE_LIST) ; cette version ne peut pas modifier de tels enregistrements</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="376"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="382"/>
         <source>Kayitli yedek bulunamadi. Once &quot;Ayarlari yedekle&quot;yi kullanin.
 
 Konum: {}</source>
@@ -5912,12 +5915,12 @@ Emplacement : {}</translation>
         <translation>Réduction impossible — {}</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="97"/>
+        <location filename="../../core/grub.py" line="102"/>
         <source>Kullanilabilir</source>
         <translation>Disponible</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="98"/>
+        <location filename="../../core/grub.py" line="103"/>
         <source>Kullanilamaz</source>
         <translation>Non disponible</translation>
     </message>
@@ -6287,12 +6290,12 @@ Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une p
         <translation>Délai du menu :</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="104"/>
+        <location filename="../../core/grub.py" line="109"/>
         <source>Menu girisi</source>
         <translation>Entrées du menu</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="427"/>
+        <location filename="../../core/grub.py" line="450"/>
         <source>Menu uretilemedi.</source>
         <translation>Impossible de générer le menu.</translation>
     </message>
@@ -6317,7 +6320,7 @@ Pour ajouter d&apos;autres partitions, créez des partitions logiques dans une p
         <translation>Document texte</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="488"/>
+        <location filename="../../core/grub.py" line="539"/>
         <source>Mevcut ayarlar yedekleniyor...</source>
         <translation>Sauvegarde des paramètres actuels...</translation>
     </message>
@@ -6593,12 +6596,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Visionneuse hexadécimale</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="410"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="416"/>
         <source>Onarilacak disk yok</source>
         <translation>Aucun disque à réparer</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="431"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="448"/>
         <source>Onariliyor</source>
         <translation>Réparation</translation>
     </message>
@@ -6608,22 +6611,22 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Réparer</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="433"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="450"/>
         <source>Onarim basarisiz</source>
         <translation>Échec de la réparation</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="444"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="461"/>
         <source>Onarim eksik kaldi</source>
         <translation>Réparation incomplète</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="490"/>
+        <location filename="../../core/grub.py" line="541"/>
         <source>Onarim oncesi kendiliginden</source>
         <translation>Automatique, avant la réparation</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="440"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="457"/>
         <source>Onarim tamamlandi</source>
         <translation>Réparation terminée</translation>
     </message>
@@ -6710,13 +6713,13 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Définir l&apos;indicateur de démarrage</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="88"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="89"/>
         <source>Onyukleme durumu</source>
         <translation>État du démarrage</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="179"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="480"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="175"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="497"/>
         <source>Onyukleme durumu inceleniyor</source>
         <translation>Examen de l&apos;état du démarrage</translation>
     </message>
@@ -6759,50 +6762,50 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Entrées de démarrage</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="231"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="232"/>
         <source>Onyukleme kodu:</source>
         <translation>Code d&apos;amorçage :</translation>
     </message>
     <message>
         <location filename="../../core/operations.py" line="90"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="275"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="287"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="276"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="288"/>
         <source>Onyukleme kodunu kaldir</source>
         <translation>Supprimer le code d&apos;amorçage</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="96"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="97"/>
         <source>Onyukleme kodunu kaldir...</source>
         <translation>Supprimer le code d&apos;amorçage...</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="426"/>
+        <location filename="../../core/grub.py" line="449"/>
         <source>Onyukleme menusu guncellendi.</source>
         <translation>Le menu de démarrage a été mis à jour.</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="512"/>
+        <location filename="../../core/grub.py" line="566"/>
         <source>Onyukleme menusu uretildi</source>
         <translation>Menu de démarrage généré</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="338"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="339"/>
         <source>Onyukleme menusu uretiliyor</source>
         <translation>Génération du menu de démarrage</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="441"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="458"/>
         <source>Onyukleme menusu yeniden uretildi.</source>
         <translation>Le menu de démarrage a été régénéré.</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="411"/>
-        <location filename="../../core/grub.py" line="510"/>
+        <location filename="../../core/grub.py" line="434"/>
+        <location filename="../../core/grub.py" line="564"/>
         <source>Onyukleme menusu yeniden uretiliyor...</source>
         <translation>Régénération du menu de démarrage...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="109"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="110"/>
         <source>Onyukleme menusunu yeniden uret</source>
         <translation>Régénérer le menu de démarrage</translation>
     </message>
@@ -6859,7 +6862,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Marquer comme amorçable</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="49"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="50"/>
         <source>Onyukleyici Yoneticisi</source>
         <translation>Gestionnaire de chargeurs d&apos;amorçage</translation>
     </message>
@@ -6919,12 +6922,12 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>Image PNG</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="449"/>
+        <location filename="../../core/grub.py" line="472"/>
         <source>Paket guncellemesi basarisiz.</source>
         <translation>La mise à jour des paquets a échoué.</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="439"/>
+        <location filename="../../core/grub.py" line="462"/>
         <source>Paket guncellemesi yalnizca apt tabanli dagitimlarda yapilabilir.</source>
         <translation>La mise à jour des paquets n&apos;est possible que sur les distributions basées sur apt.</translation>
     </message>
@@ -7321,7 +7324,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
     <message>
         <location filename="../../core/session.py" line="1284"/>
         <source>Silme dogrulamasi basarisiz: alanda sifir olmayan veri kaldi</source>
-        <translation>Échec de la vérification de l'effacement : des données non nulles subsistent dans la zone</translation>
+        <translation>Échec de la vérification de l&apos;effacement : des données non nulles subsistent dans la zone</translation>
     </message>
     <message>
         <location filename="../../ui/widgets/file_browser.py" line="445"/>
@@ -7391,9 +7394,14 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>{} entrées de l&apos;ordre n&apos;ont pas d&apos;entrée correspondante : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="417"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="432"/>
         <source>Sirasiyla su adimlar uygulanacak:&lt;br&gt;1. Mevcut ayarlar yedeklenir&lt;br&gt;2. Diger sistemlerin taranmasi acilir&lt;br&gt;3. GRUB &lt;b&gt;{}&lt;/b&gt; diskine yeniden kurulur&lt;br&gt;4. Onyukleme menusu yeniden uretilir&lt;br&gt;&lt;br&gt;Baska hicbir diske dokunulmaz. Devam edilsin mi?</source>
         <translation>Les étapes suivantes seront appliquées dans l&apos;ordre :&lt;br&gt;1. Les paramètres actuels sont sauvegardés&lt;br&gt;2. La recherche d&apos;autres systèmes est activée&lt;br&gt;3. GRUB est réinstallé sur le disque &lt;b&gt;{}&lt;/b&gt;&lt;br&gt;4. Le menu de démarrage est régénéré&lt;br&gt;&lt;br&gt;Aucun autre disque n&apos;est touché. Continuer ?</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/bootloader.py" line="424"/>
+        <source>Sirasiyla su adimlar uygulanacak:&lt;br&gt;1. Mevcut ayarlar yedeklenir&lt;br&gt;2. Diger sistemlerin taranmasi acilir&lt;br&gt;3. GRUB bu makinenin &lt;b&gt;EFI Sistem Bolumune&lt;/b&gt; yeniden kurulur (diskin ilk sektoru degismez)&lt;br&gt;4. Onyukleme menusu yeniden uretilir&lt;br&gt;&lt;br&gt;Baska hicbir diske dokunulmaz. Devam edilsin mi?</source>
+        <translation>Les étapes suivantes seront appliquées dans l&apos;ordre :&lt;br&gt;1. Les paramètres actuels sont sauvegardés&lt;br&gt;2. La recherche d&apos;autres systèmes est activée&lt;br&gt;3. GRUB est réinstallé sur la &lt;b&gt;partition système EFI&lt;/b&gt; de cette machine (le premier secteur du disque ne change pas)&lt;br&gt;4. Le menu de démarrage est régénéré&lt;br&gt;&lt;br&gt;Aucun autre disque n&apos;est touché. Continuer ?</translation>
     </message>
     <message>
         <location filename="../../core/filesystem.py" line="556"/>
@@ -7536,7 +7544,7 @@ Nouvelle taille (par ex. 4 GB, 512 MB) :</translation>
         <translation>En cours d&apos;exécution</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="388"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="394"/>
         <source>Su anki GRUB yapilandirmasi &lt;b&gt;{}&lt;/b&gt; yedegiyle degistirilecek.&lt;br&gt;&lt;br&gt;Mevcut ayarlar kaybolur.</source>
         <translation>La configuration GRUB actuelle sera remplacée par la sauvegarde &lt;b&gt;{}&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Les paramètres actuels seront perdus.</translation>
     </message>
@@ -7595,7 +7603,7 @@ Continuer ?</translation>
         <translation>Faites glisser pour redimensionner ; au relâchement, l&apos;opération est ajoutée aux opérations en attente</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="102"/>
+        <location filename="../../core/grub.py" line="107"/>
         <source>Surum</source>
         <translation>Version</translation>
     </message>
@@ -7658,7 +7666,7 @@ Continuer ?</translation>
         <location filename="../../core/ext.py" line="441"/>
         <location filename="../../core/formatter.py" line="254"/>
         <location filename="../../core/formatter.py" line="285"/>
-        <location filename="../../core/grub.py" line="517"/>
+        <location filename="../../core/grub.py" line="571"/>
         <location filename="../../core/hfsformat.py" line="294"/>
         <location filename="../../core/ntfs.py" line="896"/>
         <location filename="../../core/ntfsfix.py" line="608"/>
@@ -7679,7 +7687,7 @@ Continuer ?</translation>
         <translation>Terminé</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="467"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="484"/>
         <source>Tamamlandi.</source>
         <translation>Terminé.</translation>
     </message>
@@ -7857,12 +7865,12 @@ Continuer ?</translation>
         <translation>Tout enregistrer</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="416"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="440"/>
         <source>Tumunu onar</source>
         <translation>Tout réparer</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="113"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="114"/>
         <source>Tumunu onar...</source>
         <translation>Tout réparer...</translation>
     </message>
@@ -8012,7 +8020,7 @@ Continuer ?</translation>
     </message>
     <message>
         <location filename="../../core/efistore.py" line="132"/>
-        <location filename="../../core/grub.py" line="99"/>
+        <location filename="../../core/grub.py" line="104"/>
         <source>UEFI</source>
         <translation>UEFI</translation>
     </message>
@@ -8531,12 +8539,12 @@ Continuer ?</translation>
         <translation>Structure incohérente — lisible, non inscriptible ; réparez d&apos;abord avec fsck.fat / chkdsk</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="103"/>
+        <location filename="../../core/grub.py" line="108"/>
         <source>Yapilandirma</source>
         <translation>Configuration</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="354"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="360"/>
         <source>Yapilandirma yedekleniyor...</source>
         <translation>Sauvegarde de la configuration...</translation>
     </message>
@@ -8654,12 +8662,12 @@ Continuer ?</translation>
         <translation>Écrire la sauvegarde sur un disque...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="380"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="386"/>
         <source>Yedegi geri yukle</source>
         <translation>Restaurer la sauvegarde</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="124"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="125"/>
         <source>Yedegi geri yukle...</source>
         <translation>Restaurer la sauvegarde...</translation>
     </message>
@@ -8699,13 +8707,13 @@ Continuer ?</translation>
         <translation>Sauvegarder</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="367"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="373"/>
         <location filename="../../ui/dialogs/efiboot.py" line="405"/>
         <source>Yedek alindi</source>
         <translation>Sauvegarde créée</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="362"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="368"/>
         <source>Yedek alindi: {}</source>
         <translation>Sauvegarde créée : {}</translation>
     </message>
@@ -8720,7 +8728,7 @@ Continuer ?</translation>
         <translation>Rien n&apos;a été écrit car aucune sauvegarde n&apos;a été créée.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="115"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="116"/>
         <source>Yedek alir, diger sistemlerin taranmasini acar, GRUB&apos;u zaten bulundugu diske yeniden kurar ve menuyu uretir.</source>
         <translation>Crée une sauvegarde, active la recherche d&apos;autres systèmes, réinstalle GRUB sur le disque qui l&apos;héberge déjà et génère le menu.</translation>
     </message>
@@ -8740,7 +8748,7 @@ Continuer ?</translation>
         <translation>Taille de la sauvegarde :</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="304"/>
+        <location filename="../../core/grub.py" line="321"/>
         <source>Yedek bulunamadi: {}</source>
         <translation>Sauvegarde introuvable : {}</translation>
     </message>
@@ -8818,12 +8826,12 @@ Continuer ?</translation>
         <translation>Ouvrir un fichier de sauvegarde...</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="338"/>
+        <location filename="../../core/grub.py" line="355"/>
         <source>Yedek geri yuklendi: {}</source>
         <translation>Sauvegarde restaurée : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="395"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="401"/>
         <source>Yedek geri yukleniyor...</source>
         <translation>Restauration de la sauvegarde...</translation>
     </message>
@@ -8858,7 +8866,7 @@ Continuer ?</translation>
         <translation>Version de sauvegarde non prise en charge : {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="375"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="381"/>
         <source>Yedek yok</source>
         <translation>Aucune sauvegarde</translation>
     </message>
@@ -8897,12 +8905,12 @@ Ouvrez une image ou utilisez Disque &gt; Actualiser les disques physiques.</tran
         <translation>Sélectionnez l&apos;image, la partition ou le disque physique à sauvegarder.</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="359"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="365"/>
         <source>Yedeklenemedi</source>
         <translation>Échec de la sauvegarde</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="357"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="363"/>
         <source>Yedekleniyor</source>
         <translation>Sauvegarde en cours</translation>
     </message>
@@ -9163,7 +9171,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Réessayer</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="149"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="150"/>
         <location filename="../../ui/main_window.py" line="640"/>
         <location filename="../../ui/widgets/file_browser.py" line="113"/>
         <location filename="../../ui/widgets/file_browser.py" line="51"/>
@@ -9398,7 +9406,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>`diskutil` est introuvable.</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="398"/>
+        <location filename="../../core/grub.py" line="421"/>
         <source>`grub-install` basarisiz oldu.</source>
         <translation>`grub-install` a échoué.</translation>
     </message>
@@ -9418,7 +9426,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>`osascript` est introuvable.</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="420"/>
+        <location filename="../../core/grub.py" line="443"/>
         <source>`update-grub` ya da `grub-mkconfig` bulunamadi.</source>
         <translation>Ni `update-grub` ni `grub-mkconfig` n&apos;ont été trouvés.</translation>
     </message>
@@ -9428,7 +9436,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>`{}` n&apos;est pas monté ; le module noyau `efivarfs` n&apos;est peut-être pas chargé.</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="196"/>
+        <location filename="../../core/grub.py" line="201"/>
         <source>`{}` okunamadi.</source>
         <translation>Impossible de lire `{}`.</translation>
     </message>
@@ -9552,9 +9560,9 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>ce système de fichiers</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="103"/>
-        <location filename="../../core/grub.py" line="243"/>
-        <location filename="../../core/grub.py" line="91"/>
+        <location filename="../../core/grub.py" line="108"/>
+        <location filename="../../core/grub.py" line="248"/>
+        <location filename="../../core/grub.py" line="96"/>
         <source>bulunamadi</source>
         <translation>introuvable</translation>
     </message>
@@ -9669,7 +9677,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>Calcul de la disposition ext...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="245"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="246"/>
         <source>fiziksel disk</source>
         <translation>disque physique</translation>
     </message>
@@ -9685,7 +9693,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>caché</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="244"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="245"/>
         <source>goruntu dosyasi</source>
         <translation>fichier image</translation>
     </message>
@@ -9785,7 +9793,7 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>La veille prolongée ne peut pas être lancée directement sur macOS</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="93"/>
+        <location filename="../../core/grub.py" line="98"/>
         <source>okunamadi (yetki yok)</source>
         <translation>lecture impossible (pas d&apos;autorisation)</translation>
     </message>
@@ -9795,18 +9803,18 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
         <translation>lecture...</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="105"/>
+        <location filename="../../core/grub.py" line="110"/>
         <source>os-prober</source>
         <translation>os-prober</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="500"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="344"/>
+        <location filename="../../core/grub.py" line="551"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="350"/>
         <source>os-prober acildi</source>
         <translation>os-prober activé</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="345"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="351"/>
         <source>os-prober kapatildi</source>
         <translation>os-prober désactivé</translation>
     </message>
@@ -9883,12 +9891,12 @@ Les étapes en attente occupent aussi de l&apos;espace ; vider la liste le libè
     </message>
     <message>
         <location filename="../../core/clone.py" line="126"/>
-        <location filename="../../core/grub.py" line="106"/>
+        <location filename="../../core/grub.py" line="111"/>
         <location filename="../../core/physical.py" line="136"/>
         <location filename="../../core/platform.py" line="1356"/>
         <location filename="../../ui/dialogs/backup.py" line="832"/>
         <location filename="../../ui/dialogs/backup.py" line="859"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="235"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="236"/>
         <location filename="../../ui/dialogs/partition.py" line="205"/>
         <location filename="../../ui/main_window.py" line="3353"/>
         <location filename="../../ui/widgets/disk_map.py" line="475"/>
@@ -10449,7 +10457,7 @@ Saisissez le nom du disque pour continuer : {}</translation>
         </translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="368"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="374"/>
         <source>{} oge yedeklendi.
 
 Konum: {}</source>
@@ -10554,6 +10562,7 @@ Emplacement : {}</translation>
     </message>
     <message>
         <location filename="../../core/efistore.py" line="474"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="347"/>
         <source>{} yaziliyor...</source>
         <translation>Écriture de {}...</translation>
     </message>
@@ -10608,7 +10617,7 @@ Emplacement : {}</translation>
         <translation>{} — Partition {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="288"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="289"/>
         <source>{} — ilk 440 bayt sifirlanir</source>
         <translation>{} — les 440 premiers octets sont mis à zéro</translation>
     </message>

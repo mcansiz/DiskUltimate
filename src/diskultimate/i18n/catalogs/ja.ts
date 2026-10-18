@@ -27,7 +27,7 @@
         <translation>  このディスクでは、使用領域のみのバックアップでも全セクターを含めます。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="364"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="370"/>
         <source>  atlandi: {} ({})</source>
         <translation>  スキップ: {}（{}）</translation>
     </message>
@@ -58,7 +58,7 @@
         <translation> または </translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="213"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="214"/>
         <source> · EFI</source>
         <translation> · EFI</translation>
     </message>
@@ -314,7 +314,7 @@
         <translation>（このバージョンでは {} の内容を一覧表示できません）</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="208"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="209"/>
         <source>-</source>
         <translation>-</translation>
     </message>
@@ -446,7 +446,7 @@
         <translation>エントリ &lt;b&gt;{}&lt;/b&gt;（{}）を削除します。&lt;br&gt;&lt;br&gt;このエントリから起動していたシステムは、ファームウェアのメニューに表示されなくなります。ディスク上のファイルは削除されません。&lt;br&gt;&lt;br&gt;変更は書き込むまで適用されません。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="247"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="248"/>
         <source>&lt;b&gt;{}&lt;/b&gt; ({}) — {}</source>
         <translation>&lt;b&gt;{}&lt;/b&gt;（{}）— {}</translation>
     </message>
@@ -456,7 +456,7 @@
         <translation>&lt;b&gt;{}&lt;/b&gt; は DiskUltimate のバックアップです。内容を&lt;b&gt;読み取り専用&lt;/b&gt;で参照できます。パーティション、フォルダー、ファイルが表示され、ファイルをエクスポートできます。&lt;br&gt;&lt;br&gt;&lt;b&gt;ソースのサイズ:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;バックアップのサイズ:&lt;/b&gt; {}&lt;br&gt;&lt;b&gt;作成日時:&lt;/b&gt; {}&lt;br&gt;&lt;br&gt;&lt;b&gt;バックアップをディスクまたはイメージに書き込む&lt;/b&gt;には: &lt;i&gt;ディスク &amp;gt; バックアップをディスクに書き込む...&lt;/i&gt;</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="276"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="277"/>
         <source>&lt;b&gt;{}&lt;/b&gt; diskindeki onyukleme kodu ({}) kaldirilacak.&lt;br&gt;&lt;br&gt;Bolum tablosu ve dosyalar &lt;b&gt;korunur&lt;/b&gt;; ama bu diskten acilan sistem artik acilmaz.&lt;br&gt;&lt;br&gt;Islem hemen yapilmaz: bekleyen islemlere eklenir ve &quot;Uygula&quot; dediginizde calisir.</source>
         <translation>ディスク &lt;b&gt;{}&lt;/b&gt; のブートコード（{}）を削除します。&lt;br&gt;&lt;br&gt;パーティションテーブルとファイルは&lt;b&gt;保持されます&lt;/b&gt;が、このディスクから起動していたシステムは起動しなくなります。&lt;br&gt;&lt;br&gt;この時点では何も実行されません。ステップは保留中の操作に追加され、「適用」を選択したときに実行されます。</translation>
     </message>
@@ -623,7 +623,7 @@
     <message>
         <location filename="../../core/efistore.py" line="133"/>
         <location filename="../../core/efistore.py" line="147"/>
-        <location filename="../../core/grub.py" line="83"/>
+        <location filename="../../core/grub.py" line="88"/>
         <source>Acik</source>
         <translation>オン</translation>
     </message>
@@ -781,13 +781,13 @@
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="491"/>
-        <location filename="../../core/grub.py" line="494"/>
+        <location filename="../../core/grub.py" line="542"/>
+        <location filename="../../core/grub.py" line="545"/>
         <source>Ayarlar yedeklendi</source>
         <translation>設定をバックアップしました</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="121"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="122"/>
         <source>Ayarlari yedekle</source>
         <translation>設定をバックアップ</translation>
     </message>
@@ -932,7 +932,7 @@
     </message>
     <message>
         <location filename="../../core/efistore.py" line="132"/>
-        <location filename="../../core/grub.py" line="100"/>
+        <location filename="../../core/grub.py" line="105"/>
         <source>BIOS (eski kip)</source>
         <translation>BIOS（レガシモード）</translation>
     </message>
@@ -942,7 +942,7 @@
         <translation>BIOS ブート</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="311"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="312"/>
         <source>BIOS kipinde GRUB yalnizca gercek bir diske kurulabilir. Once sol agactan bir fiziksel disk acin.</source>
         <translation>BIOS モードでは、GRUB は実ディスクにのみインストールできます。まず左側のツリーから物理ディスクを開いてください。</translation>
     </message>
@@ -1100,7 +1100,7 @@
         <translation>バイトオフセット</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="445"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="462"/>
         <source>Bazi adimlar basarisiz oldu; ayrintilar asagidaki gunlukte.</source>
         <translation>一部のステップが失敗しました。詳細は下のログを参照してください。</translation>
     </message>
@@ -1156,7 +1156,7 @@
         <translation>保留中の操作によるもの: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="292"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="293"/>
         <source>Bekleyen islemlere eklendi: onyukleme kodunu kaldir</source>
         <translation>保留中の操作に追加しました: ブートコードの削除</translation>
     </message>
@@ -1188,7 +1188,7 @@
     </message>
     <message>
         <location filename="../../core/efistore.py" line="136"/>
-        <location filename="../../core/grub.py" line="99"/>
+        <location filename="../../core/grub.py" line="104"/>
         <location filename="../../ui/dialogs/efiboot.py" line="102"/>
         <source>Bellenim</source>
         <translation>ファームウェア</translation>
@@ -1392,12 +1392,12 @@
     <message>
         <location filename="../../core/efistore.py" line="134"/>
         <location filename="../../core/efistore.py" line="136"/>
-        <location filename="../../core/grub.py" line="101"/>
+        <location filename="../../core/grub.py" line="106"/>
         <source>Bilinmiyor</source>
         <translation>不明</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="81"/>
+        <location filename="../../core/grub.py" line="86"/>
         <source>Bilinmiyor (yapilandirma okunamadi)</source>
         <translation>不明（構成を読み取れませんでした）</translation>
     </message>
@@ -1584,7 +1584,7 @@
         <translation>ブロックサイズが一致しません</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="75"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="76"/>
         <location filename="../../ui/dialogs/efiboot.py" line="282"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="74"/>
         <location filename="../../ui/widgets/partition_table.py" line="21"/>
@@ -1838,7 +1838,7 @@ MBR の場合は、代わりにボリュームラベルを変更してくださ�
         <translation>パーティションテーブルがありません</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="232"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="233"/>
         <location filename="../../ui/dialogs/new_image.py" line="75"/>
         <source>Bolum tablosu:</source>
         <translation>パーティションテーブル:</translation>
@@ -1923,8 +1923,8 @@ MBR の場合は、代わりにボリュームラベルを変更してくださ�
         <location filename="../../ui/dialogs/backup.py" line="1105"/>
         <location filename="../../ui/dialogs/backup.py" line="567"/>
         <location filename="../../ui/dialogs/backup.py" line="793"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="201"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="234"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="202"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="235"/>
         <location filename="../../ui/dialogs/partition_layout.py" line="164"/>
         <location filename="../../ui/main_window.py" line="2042"/>
         <location filename="../../ui/widgets/disk_overview.py" line="184"/>
@@ -2375,7 +2375,7 @@ Bu alanda yeni bolum olusturabilirsiniz (Bolum &gt; Yeni bolum).</source>
         <location filename="../../ui/dialogs/backup.py" line="363"/>
         <location filename="../../ui/dialogs/backup.py" line="456"/>
         <location filename="../../ui/dialogs/backup.py" line="693"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="76"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="77"/>
         <location filename="../../ui/dialogs/clone.py" line="87"/>
         <location filename="../../ui/dialogs/tools.py" line="123"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
@@ -2905,12 +2905,12 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="132"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="133"/>
         <source>Debian 12 ve Ubuntu 22.04&apos;ten beri kapali gelir; kapaliyken yanindaki Windows menude gorunmez.</source>
         <translation>Debian 12 および Ubuntu 22.04 以降は既定で無効です。無効の間は、隣にインストールされた Windows がメニューに表示されません。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="350"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="356"/>
         <source>Degisikligin etkili olmasi icin menuyu yeniden uretin.</source>
         <translation>変更を有効にするには、メニューを再生成してください。</translation>
     </message>
@@ -2956,7 +2956,7 @@ Arayuz bir saniyeden uzun takilirsa rapor kendiliginden olusur.</source>
         <translation>変数を読み取れません。root 権限が必要です。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="348"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="354"/>
         <source>Degistirilemedi</source>
         <translation>変更できませんでした</translation>
     </message>
@@ -3025,12 +3025,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>サポートされていません</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="130"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="131"/>
         <source>Diger isletim sistemlerini tara (os-prober)</source>
         <translation>他のオペレーティングシステムを検索する（os-prober）</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="498"/>
+        <location filename="../../core/grub.py" line="549"/>
         <source>Diger sistemlerin taranmasi aciliyor...</source>
         <translation>他のシステムの検索を有効にしています...</translation>
     </message>
@@ -3082,7 +3082,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <location filename="../../core/operations.py" line="652"/>
         <location filename="../../core/operations.py" line="661"/>
         <location filename="../../core/operations.py" line="791"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="290"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="291"/>
         <location filename="../../ui/dialogs/clone.py" line="87"/>
         <source>Disk</source>
         <translation>ディスク</translation>
@@ -3362,7 +3362,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>ディスク上のレイアウトを表示</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="72"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="73"/>
         <source>Diskteki isletim sistemleri</source>
         <translation>ディスク上のオペレーティングシステム</translation>
     </message>
@@ -3578,7 +3578,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
     </message>
     <message>
         <location filename="../../core/clone.py" line="121"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="76"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="77"/>
         <location filename="../../ui/dialogs/tools.py" line="182"/>
         <location filename="../../ui/main_window.py" line="3965"/>
         <source>Dosya sistemi</source>
@@ -3720,12 +3720,13 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
     <message>
         <location filename="../../core/bootloader.py" line="351"/>
         <location filename="../../core/bootloader.py" line="450"/>
+        <location filename="../../core/grub.py" line="560"/>
         <location filename="../../core/ptable.py" line="54"/>
         <source>EFI Sistem Bolumu</source>
         <translation>EFI システムパーティション</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="236"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="237"/>
         <source>EFI Sistem Bolumu:</source>
         <translation>EFI システムパーティション:</translation>
     </message>
@@ -3772,7 +3773,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>追加するフォルダー</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="106"/>
+        <location filename="../../core/grub.py" line="111"/>
         <source>Eksik arac</source>
         <translation>ツールがありません</translation>
     </message>
@@ -3984,7 +3985,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>物理ディスクへのアクセスには {} が必要です。[ディスク] メニュー &gt;「{} として再起動」</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="310"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="311"/>
         <source>Fiziksel disk gerekli</source>
         <translation>物理ディスクが必要です</translation>
     </message>
@@ -4102,7 +4103,7 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>GRUB 2</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="320"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="321"/>
         <source>GRUB &lt;b&gt;{}&lt;/b&gt; diskine kurulacak.&lt;br&gt;&lt;br&gt;Diskin ilk sektoru degisir. Devam edilsin mi?</source>
         <translation>GRUB をディスク &lt;b&gt;{}&lt;/b&gt; にインストールします。&lt;br&gt;&lt;br&gt;ディスクの最初のセクターが変更されます。続行しますか？</translation>
     </message>
@@ -4112,12 +4113,12 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>GRUB Legacy</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="322"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="323"/>
         <source>GRUB kur</source>
         <translation>GRUB のインストール</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="506"/>
+        <location filename="../../core/grub.py" line="560"/>
         <source>GRUB kuruldu: {}</source>
         <translation>GRUB をインストールしました: {}</translation>
     </message>
@@ -4127,48 +4128,48 @@ Evet: yavas ama hizasiz bolumleri de bulur.</source>
         <translation>GRUB は Linux でのみインストールできます。このシステム（{}）では調査のみ可能です。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="331"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="332"/>
         <source>GRUB kuruluyor</source>
         <translation>GRUB をインストールしています</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="448"/>
+        <location filename="../../core/grub.py" line="471"/>
         <source>GRUB paketleri guncel.</source>
         <translation>GRUB パッケージは最新です。</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="442"/>
+        <location filename="../../core/grub.py" line="465"/>
         <source>GRUB paketleri guncelleniyor...</source>
         <translation>GRUB パッケージを更新しています...</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="97"/>
+        <location filename="../../core/grub.py" line="102"/>
         <source>GRUB yonetimi</source>
         <translation>GRUB の管理</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="396"/>
+        <location filename="../../core/grub.py" line="419"/>
         <source>GRUB {} diskine kuruldu.</source>
         <translation>GRUB をディスク {} にインストールしました。</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="382"/>
-        <location filename="../../core/grub.py" line="504"/>
+        <location filename="../../core/grub.py" line="405"/>
+        <location filename="../../core/grub.py" line="557"/>
         <source>GRUB {} diskine kuruluyor...</source>
         <translation>GRUB をディスク {} にインストールしています...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="104"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="105"/>
         <source>GRUB&apos;u bu diske kur...</source>
         <translation>このディスクに GRUB をインストール...</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="477"/>
+        <location filename="../../core/grub.py" line="528"/>
         <source>GRUB&apos;un kurulu oldugu bir disk bulunamadi.</source>
         <translation>GRUB がインストールされたディスクは見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="411"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="417"/>
         <source>GRUB&apos;un kurulu oldugu bir disk bulunamadi.
 
 Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</source>
@@ -4177,17 +4178,18 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
 対象を自分で選択し、「このディスクに GRUB をインストール」を使用できます。</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="394"/>
+        <location filename="../../core/grub.py" line="417"/>
         <source>GRUB, EFI Sistem Bolumune kuruldu (diskin ilk sektoru degismedi).</source>
         <translation>GRUB を EFI システムパーティションにインストールしました（ディスクの最初のセクターは変更されていません）。</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="379"/>
+        <location filename="../../core/grub.py" line="402"/>
+        <location filename="../../core/grub.py" line="556"/>
         <source>GRUB, EFI Sistem Bolumune kuruluyor...</source>
         <translation>GRUB を EFI システムパーティションにインストールしています...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="315"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="316"/>
         <source>GRUB, bu makinenin &lt;b&gt;EFI Sistem Bolumune&lt;/b&gt; kurulacak.&lt;br&gt;&lt;br&gt;Makine UEFI ile acildigi icin hedef disk degil ESP&apos;dir; &lt;b&gt;diskin ilk sektoru degismez&lt;/b&gt;.&lt;br&gt;&lt;br&gt;Devam edilsin mi?</source>
         <translation>GRUB をこのマシンの &lt;b&gt;EFI システムパーティション&lt;/b&gt;にインストールします。&lt;br&gt;&lt;br&gt;マシンは UEFI で起動されたため、インストール先はディスクではなく ESP です。&lt;b&gt;ディスクの最初のセクターは変更されません&lt;/b&gt;。&lt;br&gt;&lt;br&gt;続行しますか？</translation>
     </message>
@@ -4437,7 +4439,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>復元を停止しました。未完成のイメージファイルは削除されました。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="387"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="393"/>
         <source>Geri yukleme onayi</source>
         <translation>復元の確認</translation>
     </message>
@@ -4462,12 +4464,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>復元先のイメージファイル</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="381"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="387"/>
         <source>Geri yuklenecek yedek:</source>
         <translation>復元するバックアップ:</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="398"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="404"/>
         <source>Geri yukleniyor</source>
         <translation>復元しています</translation>
     </message>
@@ -4835,7 +4837,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>外部ログを持つ XFS は拡張できません</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="459"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="476"/>
         <source>Hata: {}</source>
         <translation>エラー: {}</translation>
     </message>
@@ -4925,7 +4927,8 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>対象ディスクの選択</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="476"/>
+        <location filename="../../core/grub.py" line="398"/>
+        <location filename="../../core/grub.py" line="527"/>
         <source>Hedef disk yok</source>
         <translation>対象ディスクがありません</translation>
     </message>
@@ -5135,7 +5138,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>進行状況</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="98"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="99"/>
         <source>Ilk 440 bayti sifirlar; bolum tablosu ve veriler korunur. Bekleyen islem olarak kuyruga eklenir.</source>
         <translation>先頭の 440 バイトをゼロで埋めます。パーティションテーブルとデータは保持されます。保留中の操作としてキューに追加されます。</translation>
     </message>
@@ -5170,12 +5173,12 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>シグネチャをスキャンしています... {} / {} — {} 個のファイル</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="484"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="500"/>
         <source>Inceleme basarisiz</source>
         <translation>調査に失敗しました</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="181"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="178"/>
         <source>Inceleme basarisiz: {}</source>
         <translation>調査に失敗しました: {}</translation>
     </message>
@@ -5220,8 +5223,8 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>操作ログ</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="460"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="469"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="477"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="486"/>
         <source>Islem basarisiz</source>
         <translation>操作に失敗しました</translation>
     </message>
@@ -5300,7 +5303,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>操作を停止</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="92"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="93"/>
         <location filename="../../ui/main_window.py" line="590"/>
         <location filename="../../ui/main_window.py" line="893"/>
         <source>Islemler</source>
@@ -5308,7 +5311,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
     </message>
     <message>
         <location filename="../../core/physical.py" line="134"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="75"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="76"/>
         <location filename="../../ui/widgets/partition_table.py" line="21"/>
         <source>Isletim sistemi</source>
         <translation>オペレーティングシステム</translation>
@@ -5366,14 +5369,14 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>オフ</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="85"/>
+        <location filename="../../core/grub.py" line="90"/>
         <source>Kapali — diger sistemler menude cikmaz</source>
         <translation>オフ — 他のシステムはメニューに表示されません</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/apply.py" line="340"/>
         <location filename="../../ui/dialogs/backup.py" line="532"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="154"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="155"/>
         <location filename="../../ui/dialogs/clone.py" line="274"/>
         <location filename="../../ui/dialogs/efiboot.py" line="148"/>
         <location filename="../../ui/dialogs/preview.py" line="43"/>
@@ -5462,7 +5465,7 @@ Hedefi kendiniz secip &quot;GRUB&apos;u bu diske kur&quot; kullanabilirsiniz.</s
         <translation>レコード {} が複数の MFT レコードに分散しています（$ATTRIBUTE_LIST）。このバージョンではこのようなレコードを変更できません</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="376"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="382"/>
         <source>Kayitli yedek bulunamadi. Once &quot;Ayarlari yedekle&quot;yi kullanin.
 
 Konum: {}</source>
@@ -5912,12 +5915,12 @@ Konum: {}</source>
         <translation>縮小できません — {}</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="97"/>
+        <location filename="../../core/grub.py" line="102"/>
         <source>Kullanilabilir</source>
         <translation>利用可能</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="98"/>
+        <location filename="../../core/grub.py" line="103"/>
         <source>Kullanilamaz</source>
         <translation>利用不可</translation>
     </message>
@@ -6287,12 +6290,12 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>メニューのタイムアウト:</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="104"/>
+        <location filename="../../core/grub.py" line="109"/>
         <source>Menu girisi</source>
         <translation>メニューエントリ</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="427"/>
+        <location filename="../../core/grub.py" line="450"/>
         <source>Menu uretilemedi.</source>
         <translation>メニューを生成できませんでした。</translation>
     </message>
@@ -6317,7 +6320,7 @@ Daha fazla bolum icin genisletilmis bolum icinde mantiksal bolum olusturun.</sou
         <translation>テキストドキュメント</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="488"/>
+        <location filename="../../core/grub.py" line="539"/>
         <source>Mevcut ayarlar yedekleniyor...</source>
         <translation>現在の設定をバックアップしています...</translation>
     </message>
@@ -6593,12 +6596,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>16 進ビューアー</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="410"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="416"/>
         <source>Onarilacak disk yok</source>
         <translation>修復するディスクがありません</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="431"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="448"/>
         <source>Onariliyor</source>
         <translation>修復しています</translation>
     </message>
@@ -6608,22 +6611,22 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>修復</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="433"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="450"/>
         <source>Onarim basarisiz</source>
         <translation>修復に失敗しました</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="444"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="461"/>
         <source>Onarim eksik kaldi</source>
         <translation>修復が完了していません</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="490"/>
+        <location filename="../../core/grub.py" line="541"/>
         <source>Onarim oncesi kendiliginden</source>
         <translation>自動（修復前）</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="440"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="457"/>
         <source>Onarim tamamlandi</source>
         <translation>修復が完了しました</translation>
     </message>
@@ -6710,13 +6713,13 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>ブートフラグを設定</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="88"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="89"/>
         <source>Onyukleme durumu</source>
         <translation>ブートの状態</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="179"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="480"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="175"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="497"/>
         <source>Onyukleme durumu inceleniyor</source>
         <translation>ブートの状態を調べています</translation>
     </message>
@@ -6759,50 +6762,50 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>ブートエントリ</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="231"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="232"/>
         <source>Onyukleme kodu:</source>
         <translation>ブートコード:</translation>
     </message>
     <message>
         <location filename="../../core/operations.py" line="90"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="275"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="287"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="276"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="288"/>
         <source>Onyukleme kodunu kaldir</source>
         <translation>ブートコードの削除</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="96"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="97"/>
         <source>Onyukleme kodunu kaldir...</source>
         <translation>ブートコードの削除...</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="426"/>
+        <location filename="../../core/grub.py" line="449"/>
         <source>Onyukleme menusu guncellendi.</source>
         <translation>ブートメニューを更新しました。</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="512"/>
+        <location filename="../../core/grub.py" line="566"/>
         <source>Onyukleme menusu uretildi</source>
         <translation>ブートメニューを生成しました</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="338"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="339"/>
         <source>Onyukleme menusu uretiliyor</source>
         <translation>ブートメニューを生成しています</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="441"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="458"/>
         <source>Onyukleme menusu yeniden uretildi.</source>
         <translation>ブートメニューを再生成しました。</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="411"/>
-        <location filename="../../core/grub.py" line="510"/>
+        <location filename="../../core/grub.py" line="434"/>
+        <location filename="../../core/grub.py" line="564"/>
         <source>Onyukleme menusu yeniden uretiliyor...</source>
         <translation>ブートメニューを再生成しています...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="109"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="110"/>
         <source>Onyukleme menusunu yeniden uret</source>
         <translation>ブートメニューの再生成</translation>
     </message>
@@ -6859,7 +6862,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>ブート可能としてマーク</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="49"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="50"/>
         <source>Onyukleyici Yoneticisi</source>
         <translation>ブートローダーマネージャー</translation>
     </message>
@@ -6919,12 +6922,12 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>PNG 画像</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="449"/>
+        <location filename="../../core/grub.py" line="472"/>
         <source>Paket guncellemesi basarisiz.</source>
         <translation>パッケージの更新に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="439"/>
+        <location filename="../../core/grub.py" line="462"/>
         <source>Paket guncellemesi yalnizca apt tabanli dagitimlarda yapilabilir.</source>
         <translation>パッケージの更新は apt ベースのディストリビューションでのみ可能です。</translation>
     </message>
@@ -7391,9 +7394,14 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>順序内の {} 個のエントリに対応するエントリがありません: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="417"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="432"/>
         <source>Sirasiyla su adimlar uygulanacak:&lt;br&gt;1. Mevcut ayarlar yedeklenir&lt;br&gt;2. Diger sistemlerin taranmasi acilir&lt;br&gt;3. GRUB &lt;b&gt;{}&lt;/b&gt; diskine yeniden kurulur&lt;br&gt;4. Onyukleme menusu yeniden uretilir&lt;br&gt;&lt;br&gt;Baska hicbir diske dokunulmaz. Devam edilsin mi?</source>
         <translation>次の手順が順番に適用されます:&lt;br&gt;1. 現在の設定をバックアップ&lt;br&gt;2. 他のシステムの検索を有効化&lt;br&gt;3. ディスク &lt;b&gt;{}&lt;/b&gt; に GRUB を再インストール&lt;br&gt;4. ブートメニューを再生成&lt;br&gt;&lt;br&gt;他のディスクには一切触れません。続行しますか？</translation>
+    </message>
+    <message>
+        <location filename="../../ui/dialogs/bootloader.py" line="424"/>
+        <source>Sirasiyla su adimlar uygulanacak:&lt;br&gt;1. Mevcut ayarlar yedeklenir&lt;br&gt;2. Diger sistemlerin taranmasi acilir&lt;br&gt;3. GRUB bu makinenin &lt;b&gt;EFI Sistem Bolumune&lt;/b&gt; yeniden kurulur (diskin ilk sektoru degismez)&lt;br&gt;4. Onyukleme menusu yeniden uretilir&lt;br&gt;&lt;br&gt;Baska hicbir diske dokunulmaz. Devam edilsin mi?</source>
+        <translation>次の手順が順番に適用されます:&lt;br&gt;1. 現在の設定をバックアップ&lt;br&gt;2. 他のシステムの検索を有効化&lt;br&gt;3. このマシンの &lt;b&gt;EFI システムパーティション&lt;/b&gt; に GRUB を再インストール（ディスクの最初のセクターは変更されません）&lt;br&gt;4. ブートメニューを再生成&lt;br&gt;&lt;br&gt;他のディスクには一切触れません。続行しますか？</translation>
     </message>
     <message>
         <location filename="../../core/filesystem.py" line="556"/>
@@ -7536,7 +7544,7 @@ Yeni boyut (orn. 4 GB, 512 MB):</source>
         <translation>現在実行中</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="388"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="394"/>
         <source>Su anki GRUB yapilandirmasi &lt;b&gt;{}&lt;/b&gt; yedegiyle degistirilecek.&lt;br&gt;&lt;br&gt;Mevcut ayarlar kaybolur.</source>
         <translation>現在の GRUB 構成はバックアップ &lt;b&gt;{}&lt;/b&gt; で置き換えられます。&lt;br&gt;&lt;br&gt;現在の設定は失われます。</translation>
     </message>
@@ -7595,7 +7603,7 @@ Devam edilsin mi?</source>
         <translation>ドラッグしてサイズを変更します。離すと保留中の操作に追加されます</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="102"/>
+        <location filename="../../core/grub.py" line="107"/>
         <source>Surum</source>
         <translation>バージョン</translation>
     </message>
@@ -7658,7 +7666,7 @@ Devam edilsin mi?</source>
         <location filename="../../core/ext.py" line="441"/>
         <location filename="../../core/formatter.py" line="254"/>
         <location filename="../../core/formatter.py" line="285"/>
-        <location filename="../../core/grub.py" line="517"/>
+        <location filename="../../core/grub.py" line="571"/>
         <location filename="../../core/hfsformat.py" line="294"/>
         <location filename="../../core/ntfs.py" line="896"/>
         <location filename="../../core/ntfsfix.py" line="608"/>
@@ -7679,7 +7687,7 @@ Devam edilsin mi?</source>
         <translation>完了</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="467"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="484"/>
         <source>Tamamlandi.</source>
         <translation>完了しました。</translation>
     </message>
@@ -7857,12 +7865,12 @@ Devam edilsin mi?</source>
         <translation>すべて保存</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="416"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="440"/>
         <source>Tumunu onar</source>
         <translation>すべて修復</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="113"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="114"/>
         <source>Tumunu onar...</source>
         <translation>すべて修復...</translation>
     </message>
@@ -8012,7 +8020,7 @@ Devam edilsin mi?</source>
     </message>
     <message>
         <location filename="../../core/efistore.py" line="132"/>
-        <location filename="../../core/grub.py" line="99"/>
+        <location filename="../../core/grub.py" line="104"/>
         <source>UEFI</source>
         <translation>UEFI</translation>
     </message>
@@ -8531,12 +8539,12 @@ Devam edilsin mi?</source>
         <translation>構造に不整合あり — 読み取り可、書き込み不可。先に fsck.fat / chkdsk で修復してください</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="103"/>
+        <location filename="../../core/grub.py" line="108"/>
         <source>Yapilandirma</source>
         <translation>構成</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="354"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="360"/>
         <source>Yapilandirma yedekleniyor...</source>
         <translation>構成をバックアップしています...</translation>
     </message>
@@ -8654,12 +8662,12 @@ Devam edilsin mi?</source>
         <translation>バックアップをディスクに書き込む...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="380"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="386"/>
         <source>Yedegi geri yukle</source>
         <translation>バックアップの復元</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="124"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="125"/>
         <source>Yedegi geri yukle...</source>
         <translation>バックアップの復元...</translation>
     </message>
@@ -8699,13 +8707,13 @@ Devam edilsin mi?</source>
         <translation>バックアップ</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="367"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="373"/>
         <location filename="../../ui/dialogs/efiboot.py" line="405"/>
         <source>Yedek alindi</source>
         <translation>バックアップを作成しました</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="362"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="368"/>
         <source>Yedek alindi: {}</source>
         <translation>バックアップを作成しました: {}</translation>
     </message>
@@ -8720,7 +8728,7 @@ Devam edilsin mi?</source>
         <translation>バックアップが作成されなかったため、何も書き込まれていません。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="115"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="116"/>
         <source>Yedek alir, diger sistemlerin taranmasini acar, GRUB&apos;u zaten bulundugu diske yeniden kurar ve menuyu uretir.</source>
         <translation>バックアップを作成し、他のシステムの検索を有効にし、GRUB が既にあるディスクに GRUB を再インストールして、メニューを生成します。</translation>
     </message>
@@ -8740,7 +8748,7 @@ Devam edilsin mi?</source>
         <translation>バックアップのサイズ:</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="304"/>
+        <location filename="../../core/grub.py" line="321"/>
         <source>Yedek bulunamadi: {}</source>
         <translation>バックアップが見つかりません: {}</translation>
     </message>
@@ -8818,12 +8826,12 @@ Devam edilsin mi?</source>
         <translation>バックアップファイルを開く...</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="338"/>
+        <location filename="../../core/grub.py" line="355"/>
         <source>Yedek geri yuklendi: {}</source>
         <translation>バックアップを復元しました: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="395"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="401"/>
         <source>Yedek geri yukleniyor...</source>
         <translation>バックアップを復元しています...</translation>
     </message>
@@ -8858,7 +8866,7 @@ Devam edilsin mi?</source>
         <translation>サポートされていないバックアップのバージョンです: {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="375"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="381"/>
         <source>Yedek yok</source>
         <translation>バックアップなし</translation>
     </message>
@@ -8897,12 +8905,12 @@ Bir goruntu acin ya da Disk &gt; Fiziksel diskleri yenile.</source>
         <translation>バックアップするイメージ、パーティション、または物理ディスクを選択してください。</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="359"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="365"/>
         <source>Yedeklenemedi</source>
         <translation>バックアップに失敗しました</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="357"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="363"/>
         <source>Yedekleniyor</source>
         <translation>バックアップしています</translation>
     </message>
@@ -9163,7 +9171,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>再試行</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="149"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="150"/>
         <location filename="../../ui/main_window.py" line="640"/>
         <location filename="../../ui/widgets/file_browser.py" line="113"/>
         <location filename="../../ui/widgets/file_browser.py" line="51"/>
@@ -9398,7 +9406,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>`diskutil` が見つかりません。</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="398"/>
+        <location filename="../../core/grub.py" line="421"/>
         <source>`grub-install` basarisiz oldu.</source>
         <translation>`grub-install` が失敗しました。</translation>
     </message>
@@ -9418,7 +9426,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>`osascript` が見つかりません。</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="420"/>
+        <location filename="../../core/grub.py" line="443"/>
         <source>`update-grub` ya da `grub-mkconfig` bulunamadi.</source>
         <translation>`update-grub` も `grub-mkconfig` も見つかりません。</translation>
     </message>
@@ -9428,7 +9436,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>`{}` がマウントされていません。`efivarfs` カーネルモジュールが読み込まれていない可能性があります。</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="196"/>
+        <location filename="../../core/grub.py" line="201"/>
         <source>`{}` okunamadi.</source>
         <translation>`{}` を読み取れませんでした。</translation>
     </message>
@@ -9552,9 +9560,9 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>このファイルシステム</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="103"/>
-        <location filename="../../core/grub.py" line="243"/>
-        <location filename="../../core/grub.py" line="91"/>
+        <location filename="../../core/grub.py" line="108"/>
+        <location filename="../../core/grub.py" line="248"/>
+        <location filename="../../core/grub.py" line="96"/>
         <source>bulunamadi</source>
         <translation>見つかりません</translation>
     </message>
@@ -9669,7 +9677,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>ext レイアウトを計算しています...</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="245"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="246"/>
         <source>fiziksel disk</source>
         <translation>物理ディスク</translation>
     </message>
@@ -9685,7 +9693,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>隠し</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="244"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="245"/>
         <source>goruntu dosyasi</source>
         <translation>イメージファイル</translation>
     </message>
@@ -9785,7 +9793,7 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>macOS では休止状態を直接開始できません</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="93"/>
+        <location filename="../../core/grub.py" line="98"/>
         <source>okunamadi (yetki yok)</source>
         <translation>読み取れませんでした（権限なし）</translation>
     </message>
@@ -9795,18 +9803,18 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
         <translation>読み取り中...</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="105"/>
+        <location filename="../../core/grub.py" line="110"/>
         <source>os-prober</source>
         <translation>os-prober</translation>
     </message>
     <message>
-        <location filename="../../core/grub.py" line="500"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="344"/>
+        <location filename="../../core/grub.py" line="551"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="350"/>
         <source>os-prober acildi</source>
         <translation>os-prober を有効にしました</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="345"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="351"/>
         <source>os-prober kapatildi</source>
         <translation>os-prober は無効です</translation>
     </message>
@@ -9883,12 +9891,12 @@ Bekleyen adimlar da yer tutar; listeyi bosaltmak alani geri verir.</source>
     </message>
     <message>
         <location filename="../../core/clone.py" line="126"/>
-        <location filename="../../core/grub.py" line="106"/>
+        <location filename="../../core/grub.py" line="111"/>
         <location filename="../../core/physical.py" line="136"/>
         <location filename="../../core/platform.py" line="1356"/>
         <location filename="../../ui/dialogs/backup.py" line="832"/>
         <location filename="../../ui/dialogs/backup.py" line="859"/>
-        <location filename="../../ui/dialogs/bootloader.py" line="235"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="236"/>
         <location filename="../../ui/dialogs/partition.py" line="205"/>
         <location filename="../../ui/main_window.py" line="3353"/>
         <location filename="../../ui/widgets/disk_map.py" line="475"/>
@@ -10444,7 +10452,7 @@ Devam etmek icin disk adini yazin: {}</source>
         </translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="368"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="374"/>
         <source>{} oge yedeklendi.
 
 Konum: {}</source>
@@ -10549,6 +10557,7 @@ Konum: {}</source>
     </message>
     <message>
         <location filename="../../core/efistore.py" line="474"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="347"/>
         <source>{} yaziliyor...</source>
         <translation>{} を書き込んでいます...</translation>
     </message>
@@ -10603,7 +10612,7 @@ Konum: {}</source>
         <translation>{} — パーティション {}</translation>
     </message>
     <message>
-        <location filename="../../ui/dialogs/bootloader.py" line="288"/>
+        <location filename="../../ui/dialogs/bootloader.py" line="289"/>
         <source>{} — ilk 440 bayt sifirlanir</source>
         <translation>{} — 先頭の 440 バイトをゼロで埋めます</translation>
     </message>

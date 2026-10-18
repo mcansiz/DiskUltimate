@@ -6277,3 +6277,67 @@ güncellendi. `APP_VERSION`, README rozetleri, proje özeti.
   CI 38769130756 başarılı (6d1a30f'nin gezinti koşusu yenisiyle iptal oldu,
   hata değil). Notlara İngilizce/Türkçe "yenilikler" eklendi. `SHA256SUMS`
   3/3 OK. Canlı denetim: 0.8.1-beta için v0.8.2-beta bulundu, 0.8.2-beta güncel.
+
+## 2026-10-17 — draw.io mimari akış şeması
+
+Kullanıcı: "drawio için projenin mimari flowchart diyagramını çıkart, fonksiyon
+içeriklerini de istiyorum, detaylı olsun". Çıktı:
+`.claude/docs/diskultimate-mimari.drawio` — 16 sayfa, 173 işlev kutusu (her
+kutu `dosya:satır` taşır, iç akışı karar/döngü/hata dallarıyla), 248 tıklanabilir
+sayfa bağlantısı. Sayfalar: katmanlı modül haritası, uçtan uca kulvar şeması
+(açılış→disk açma, planla→Uygula→salt okunura dönüş), açılış/yetki, ana pencere,
+kuyruk+Uygula, DiskSession, blok aygıtlar (güvenlik kapıları), bölüm tabloları +
+dönüşüm, plan/düzenleme, FS katmanı (+destek matrisi), FS sürücüleri,
+yedek/geri yükleme/klon (+`.dub` düzeni), silme/kurtarma/boyutlandırma,
+tanılama/i18n/ayarlar, önyükleme/UEFI/güncelleme, sınıf ilişkileri.
+İçerik altı alt ajanın koddan çıkardığı akışlardan; XML denetlendi (kopuk
+kimlik/bağlantı yok), sayfalar Qt ile önizlenip taşan kutu kalmadı. draw.io
+masaüstünde açılarak bakılmadı (makinede kurulu değil).
+
+Şemayı çıkarırken bulunan, **düzeltilmemiş** noktalar:
+- **`i18n.initialize()` hiçbir yerde çağrılmıyor** — ölçüldü:
+  `DISKULTIMATE_LANG=en` ile `main.start()` sonrası dil `tr`, Uygula düğmesi
+  "Uygula". Kayıtlı dil de açılışta uygulanmıyor; dil yalnızca menüden değişiyor.
+- Ajan bulguları (doğrulanmadı): `grub.restore_config` grub.cfg'yi geri
+  yazmıyor (docstring aksini ima ediyor); `BootloaderDialog._repair_targets`
+  `has_grub`'a bakmıyor; `toggle_os_prober` ve `grub.status()` arayüz iş
+  parçacığında pkexec / 20 sn'lik araç çağrısı yapabiliyor (ADR 0020'ye aykırı).
+
+## 2026-10-18 — Şemada bulunan dört hata düzeltildi
+
+Kullanıcı: "bulunan hataları düzeltelim". Dördü de önce koddan doğrulandı.
+
+1. **Açılış dili hiç uygulanmıyordu.** `i18n.initialize()` hiçbir sürümde
+   çağrılmamıştı (git geçmişi tarandı); `DISKULTIMATE_LANG`, kayıtlı dil ve
+   sistem dili yok sayılıyor, uygulama hep Türkçe açılıyordu. `main.start()`
+   artık `diagnostics.configure()`dan hemen sonra, Qt çevirisinden ve yetki
+   penceresinden önce çağırır. Davranış değişikliği: kayıtlı dil yoksa sistem
+   diliyle açılır (tasarım buydu). `tests.long.explore` `DISKULTIMATE_LANG=tr`
+   ile koşar (CI makinesinin dili gezintiyi değiştirmesin). ADR 0027 ek.
+   Test: `ui_smoke` → `acilis_dili_denetimi` (ayrı süreçte gerçek açılış:
+   en → "Apply", kayıtlı de → "Anwenden", ortam değişkeni önce gelir);
+   düzeltme geri alınınca `('tr', 'Uygula')` ile kalıyor — ölçüldü.
+2. **GRUB geri yükleme menüye yansımıyordu.** Belge "grub.cfg yedekten gelir"
+   diyordu, kod yazmıyordu. Yeni davranış: varsayılanlar + grub.d geri konur,
+   menü `update_config()` ile **yeniden üretilir**; eski `grub.cfg` geri
+   yazılmaz (silinmiş çekirdeği gösterip makineyi açılmaz bırakabilir), yazma
+   hatasında menü üretilmez. ADR 0028 ek.
+3. **"Tümünü onar" GRUB'u olmayan diske yazabiliyordu.** `_repair_targets`ın
+   iki dalı da açık diski döndürüyordu. Karar çekirdekte
+   (`grub.repair_targets`), bellenime göre: BIOS'ta yalnızca MBR'sinde GRUB
+   olan disk; UEFI'de hedef ESP, yalnızca sistem GRUB ile yapılandırılmışsa
+   (`GrubStatus.configured`). UEFI onay metni artık ESP'yi söylüyor (1 yeni
+   metin, 9 dil). `install("")` BIOS'ta çalışmaz.
+4. **Arayüz iş parçacığında süresi öngörülemeyen iş (ADR 0020):**
+   `grub.status()` (`grub-install --version`, 20 sn'ye kadar) ve
+   `set_os_prober` (pkexec) artık `run_task` içinde. `adopt()` durumu
+   parametre olarak ister. `ui_smoke` iki çağrının iş parçacığını denetler;
+   eski kodda ikisi de arayüz iş parçacığındaydı — ölçüldü.
+
+Yerelde koşulanlar: t106 (yeni; hedef kararı, ESP kurulumu, geri yüklemede
+menü üretimi/eski grub.cfg'nin yazılmaması, hata yolu — araç ve yetki sahte),
+`ui_smoke`un iki yeni denetimi ayrı ayrı, `i18n_check` BAŞARILI (2000 metin,
+9 dil), `platform_check` 0 bulgu, `diag_check` 13/13. Tam `run_all`, tam
+`ui_smoke` ve gezinti yerelde koşulmadı (ağır testler GitHub'da). Gerçek
+`grub-install`/`update-grub` bu değişiklikle çalıştırılmadı (Linux VM yok;
+ana makinede önyükleyiciye yazılmaz). Mimari şeması da güncellendi.

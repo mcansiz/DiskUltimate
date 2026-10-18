@@ -54,6 +54,9 @@ from .data import MIB
 WORKDIR = os.path.join(ROOT, ".tmp", "uzun", "gezinti")
 os.environ.setdefault("DISKULTIMATE_NO_ELEVATION_PROMPT", "1")
 os.environ.setdefault("DISKULTIMATE_UPDATE_CHECK", "0")
+# main.start() acilis dilini uygular (sistem dili dahil); CI makinelerinin
+# dili gezintinin ekran goruntulerini ve gunlugunu degistirmesin.
+os.environ.setdefault("DISKULTIMATE_LANG", "tr")
 # Dil/tema/ikon secimleri kalici ayara yazilir: test kullanicinin gercek
 # ayarlarina dokunmasin (APPDATA yalnizca bu surec ve cocuklari icin).
 _CONFIG = os.path.join(WORKDIR, "ayar")

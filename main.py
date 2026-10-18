@@ -32,6 +32,7 @@ if _qpa_platform:
 from PyQt5.QtCore import Qt  # noqa: E402
 from PyQt5.QtWidgets import QApplication  # noqa: E402
 
+from diskultimate import i18n  # noqa: E402
 from diskultimate.core import diagnostics  # noqa: E402
 from diskultimate.core.platform import (is_elevated,  # noqa: E402
                                         set_app_user_model_id,
@@ -54,6 +55,11 @@ def start(argv=None):
     # Tanilama pencereden once acilir: acilista yetki istegi de gunluge girsin
     # (iki kez cagrilmasi zararsizdir, ayni yolu dondurur).
     diagnostics.configure()
+    # Arayuz dili: DISKULTIMATE_LANG > menuden kaydedilen > sistem dili >
+    # Turkce (ADR 0027). Qt cevirisinden ve yetki penceresinden ONCE: ikisi
+    # de etkin dili okur. Bu cagri hicbir surumde yoktu; ortam degiskeni ve
+    # kayitli dil acilista yok sayiliyordu (2026-10-18).
+    diagnostics.info(f"arayuz dili: {i18n.initialize()}")
     # Windows gorev cubugu ikonu: kimlik PENCERE YARATILMADAN once atanmali,
     # sonra atamak ise yaramaz (Windows disinda no-op).
     set_app_user_model_id("DiskUltimate.DiskUltimate")

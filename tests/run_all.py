@@ -7929,6 +7929,133 @@ def _dis_denetim(fs_key: str, yol: str) -> None:
     assert r.returncode == 0, (fs_key, (r.stdout + r.stderr)[-400:])
 
 
+# --------------------------------------------------------------------------
+@test
+def t106_grub_onarim_hedefi_ve_geri_yukleme():
+    """GRUB: onarim yalnizca GRUB'un oldugu yere; geri yukleme menuyu yeniden uretir
+
+    (1) BIOS'ta GRUB'u olmayan diske onarim GRUB YAZMAZ; UEFI'de hedef ESP'dir
+    ve yalnizca sistem GRUB ile yapilandirilmissa. Eskiden arayuzdeki denetimin
+    iki dali da acik diski donduruyordu. (2) Geri yukleme varsayilanlari ve
+    grub.d'yi geri koyar, eski grub.cfg'yi YAZMAZ ve menuyu yeniden uretir;
+    eskiden menu hic uretilmiyordu. Dosya yazilamazsa menu uretilmez.
+    Gercek arac ve yetki yerine sahteleri kullanilir (2026-10-18).
+    """
+    from diskultimate.core import grub
+    pf = grub.platform
+    adlar = ("firmware_type", "grub_management_available", "find_boot_tool",
+             "run_privileged", "write_system_file", "GRUB_DEFAULTS_PATH",
+             "GRUB_SCRIPT_DIR", "GRUB_CONFIG_PATHS")
+    eski = {ad: getattr(pf, ad) for ad in adlar}
+    eski_kok = grub.backup_root
+    kok = img_path("t106")
+    shutil.rmtree(kok, ignore_errors=True)
+    varsayilan = os.path.join(kok, "etc", "default", "grub")
+    betikler = os.path.join(kok, "etc", "grub.d")
+    cfg = os.path.join(kok, "boot", "grub", "grub.cfg")
+    yedekler = os.path.join(kok, "yedekler")
+    for klasor in (os.path.dirname(varsayilan), betikler, os.path.dirname(cfg),
+                   yedekler):
+        os.makedirs(klasor, exist_ok=True)
+
+    def yaz(yol, metin):
+        with open(yol, "w", encoding="utf-8") as fh:
+            fh.write(metin)
+
+    def oku(yol):
+        with open(yol, encoding="utf-8") as fh:
+            return fh.read()
+
+    cagrilar = []
+
+    def sahte_yetkili(komut, timeout=900):
+        cagrilar.append(list(komut))
+        return 0, "", ""
+
+    yazilan = {}
+
+    def sahte_sistem_dosyasi(yol, metin):
+        yazilan[yol] = metin
+        yaz(yol, metin)
+        return True, ""
+
+    try:
+        pf.GRUB_DEFAULTS_PATH, pf.GRUB_SCRIPT_DIR = varsayilan, betikler
+        pf.GRUB_CONFIG_PATHS = [cfg]
+        grub.backup_root = lambda: yedekler
+        pf.grub_management_available = lambda: (True, "")
+        pf.find_boot_tool = (lambda ad: "/usr/sbin/" + ad
+                             if ad in ("grub-install", "update-grub") else None)
+        pf.run_privileged = sahte_yetkili
+        pf.write_system_file = sahte_sistem_dosyasi
+
+        # (1) onarim hedefi
+        pf.firmware_type = lambda: "bios"
+        assert grub.repair_targets("/dev/sdb", disk_has_grub=False,
+                                   system_uses_grub=True) == [], \
+            "GRUB'u olmayan diske GRUB yazilacakti"
+        assert grub.repair_targets("/dev/sdb", True, False) == ["/dev/sdb"]
+        assert grub.repair_targets("", True, True) == []
+        pf.firmware_type = lambda: ""                # kip bilinmiyor: BIOS gibi
+        assert grub.repair_targets("/dev/sdb", False, True) == []
+        pf.firmware_type = lambda: "uefi"
+        assert grub.repair_targets("/dev/sdb", False, True) == [grub.ESP_TARGET]
+        assert grub.repair_targets("", False, True) == [grub.ESP_TARGET], \
+            "UEFI'de hedef ESP; acik disk gerekmez"
+        assert grub.repair_targets("/dev/sdb", True, False) == [], \
+            "GRUB ile yapilandirilmamis sisteme (systemd-boot) GRUB yazilacakti"
+        assert grub.GrubStatus(config_path=cfg).configured
+        assert grub.GrubStatus(defaults_readable=True).configured
+        assert not grub.GrubStatus().configured
+
+        # UEFI onarimi: grub-install AYGITSIZ cagrilir, menu en son uretilir
+        yaz(varsayilan, "GRUB_TIMEOUT=5\nGRUB_DISABLE_OS_PROBER=true\n")
+        yaz(os.path.join(betikler, "40_custom"), "#!/bin/sh\n")
+        yaz(cfg, "menuentry 'eski' {}\n")
+        basarili, adimlar = grub.repair([grub.ESP_TARGET])
+        assert basarili, [(a.title, a.ok, a.detail) for a in adimlar]
+        kurulum = [c for c in cagrilar if c[0].endswith("grub-install")]
+        assert kurulum == [["/usr/sbin/grub-install"]], kurulum
+        assert cagrilar[-1] == ["/usr/sbin/update-grub"], cagrilar
+        assert "GRUB_DISABLE_OS_PROBER=false" in oku(varsayilan)
+        # BIOS'ta bos aygitla grub-install calistirilmaz
+        pf.firmware_type = lambda: "bios"
+        cagrilar.clear()
+        ok, _ = grub.install("")
+        assert not ok and not cagrilar, cagrilar
+
+        # (2) geri yukleme
+        yaz(varsayilan, "GRUB_TIMEOUT=5\n")
+        yaz(cfg, "menuentry 'yedekteki' {}\n")
+        damga = grub.backup_config(note="t106")["stamp"]
+        yaz(varsayilan, "GRUB_TIMEOUT=0\n")          # yedekten sonra degisti
+        yaz(cfg, "menuentry 'bugunku' {}\n")
+        cagrilar.clear()
+        yazilan.clear()
+        ok, mesaj = grub.restore_config(damga)
+        assert ok, mesaj
+        assert yazilan == {varsayilan: "GRUB_TIMEOUT=5\n"}, yazilan
+        kopyalar = [c for c in cagrilar if c[0] == "cp"]
+        assert kopyalar and all(c[2].startswith(betikler) for c in kopyalar), \
+            kopyalar
+        assert cagrilar[-1] == ["/usr/sbin/update-grub"], \
+            f"menu yeniden uretilmedi: {cagrilar}"
+        assert oku(cfg) == "menuentry 'bugunku' {}\n", \
+            "eski grub.cfg geri yazildi (silinmis cekirdegi gosterebilir)"
+        assert not any(cfg in arg for c in cagrilar for arg in c), cagrilar
+
+        # dosya yazilamazsa menu URETILMEZ
+        pf.write_system_file = lambda yol, metin: (False, "yazilamadi")
+        cagrilar.clear()
+        ok, mesaj = grub.restore_config(damga)
+        assert not ok and "yazilamadi" in mesaj, mesaj
+        assert not any(c[0].endswith("update-grub") for c in cagrilar), cagrilar
+    finally:
+        for ad, deger in eski.items():
+            setattr(pf, ad, deger)
+        grub.backup_root = eski_kok
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

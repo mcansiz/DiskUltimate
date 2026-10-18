@@ -1,5 +1,8 @@
 # Mimari
 
+Görsel şema (draw.io, 16 sayfa, işlev içi akışlarla):
+`.claude/docs/diskultimate-mimari.drawio`
+
 ```
 main.py                       Giris noktasi (QApplication + MainWindow)
 └── src/diskultimate/

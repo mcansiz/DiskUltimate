@@ -332,6 +332,60 @@ def tahmin_denetimi() -> None:
     print("  (ilerleme penceresi: gecen/kalan sure dogru)")
 
 
+def acilis_dili_denetimi() -> None:
+    """Acilis dili: main.start() ortam degiskenini ve kayitli secimi uygular.
+
+    `i18n.initialize()` hicbir surumde cagrilmamisti: DISKULTIMATE_LANG ve
+    menuden kaydedilen dil acilista yok sayiliyor, uygulama hep Turkce
+    aciliyordu (2026-10-18). Denetim ayri bir surecte **gercek acilis
+    yolundan** (main.start) gecer; kayitli ayar gecici bir klasordedir.
+    """
+    import json
+    import subprocess
+
+    kok = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ayar = scratch("acilis-dili")
+    kod = ("import json, main\n"
+           "from diskultimate import i18n\n"
+           "app, w = main.start(['main.py'])\n"
+           "print('SONUC ' + json.dumps([i18n.current_language(),"
+           " w.act_apply.text()]))\n"
+           "w.close()\n")
+
+    def ac(dil: str, kayitli: str):
+        for alt in ("diskultimate", "DiskUltimate"):       # Linux / Windows
+            os.makedirs(os.path.join(ayar, alt), exist_ok=True)
+            with open(os.path.join(ayar, alt, "settings.json"), "w",
+                      encoding="utf-8") as fh:
+                json.dump({"language": kayitli} if kayitli else {}, fh)
+        env = dict(os.environ, QT_QPA_PLATFORM="offscreen",
+                   DISKULTIMATE_AUTO_ROOT="0", DISKULTIMATE_DIAG="0",
+                   DISKULTIMATE_NO_ELEVATION_PROMPT="1",
+                   DISKULTIMATE_UPDATE_CHECK="0",
+                   XDG_CONFIG_HOME=ayar, APPDATA=ayar)
+        env.pop("DISKULTIMATE_LANG", None)
+        if dil:
+            env["DISKULTIMATE_LANG"] = dil
+        r = subprocess.run([sys.executable, "-c", kod], cwd=kok, env=env,
+                           capture_output=True, text=True, timeout=120)
+        satir = [s for s in r.stdout.splitlines() if s.startswith("SONUC ")]
+        assert r.returncode == 0 and satir, (r.returncode, r.stderr[-800:])
+        return json.loads(satir[-1][len("SONUC "):])
+
+    dil, uygula = ac("en", "")
+    assert (dil, uygula) == ("en", "Apply"), (dil, uygula)
+    if sys.platform == "darwin":
+        # macOS ayar klasoru (~/Library/...) gecici klasore yonlendirilemez;
+        # kullanicinin gercek ayarina dokunulmaz.
+        print("  (acilis dili: DISKULTIMATE_LANG uygulandi; kayitli dil macOS'ta atlandi)")
+        return
+    dil, uygula = ac("", "de")
+    assert (dil, uygula) == ("de", "Anwenden"), ("kayitli dil", dil, uygula)
+    dil, _ = ac("fr", "de")
+    assert dil == "fr", ("ortam degiskeni kayitli dilden once gelmeli", dil)
+    print("  (acilis dili: ortam degiskeni > kayitli secim, main.start uyguluyor)")
+
+
 def klon_hedefi_denetimi() -> None:
     """Tek klon formu: uygunsuz hedef secilemez, onaylar zorunlu, acik dosya hedef olamaz."""
     from types import SimpleNamespace
@@ -513,6 +567,7 @@ def main() -> int:
     klon_hedefi_denetimi()
     guc_secenekleri_denetimi()
     baglama_tazeleme_denetimi()
+    acilis_dili_denetimi()
 
     pencere = MainWindow()
     pencere.resize(1400, 860)
@@ -790,11 +845,12 @@ def main() -> int:
     # Inceleme pencereden ONCE calisir; pencere hazir sonucu alir. Boylece
     # yapici icinde modal ilerleme penceresi acilmaz.
     from diskultimate.core import bootloader as bl
+    from diskultimate.core import grub as grub_mod
     from diskultimate.ui.dialogs.bootloader import BootloaderDialog
 
     rapor = bl.survey_session(pencere.session)
     d10 = BootloaderDialog(pencere, pencere.session, pencere.enqueue)
-    d10.adopt(rapor)
+    d10.adopt(rapor, grub_mod.status())
     d10.show()
     kaydet(d10, "25-onyukleyici-yonetici.png")
     assert d10.os_tree.topLevelItemCount() == len(rapor.systems), \
@@ -805,6 +861,31 @@ def main() -> int:
         assert not d10.btn_install.isEnabled(), \
             "kurulamayacak platformda kurma dugmesi etkin"
         assert d10.btn_install.toolTip(), "neden kullanilamadigi yazilmadi"
+    # GRUB durumu (`grub-install --version`, 20 sn'ye kadar) ve os-prober
+    # yazimi (pkexec parola sorabilir) arayuz is parcaciginda CALISMAMALI
+    # (ADR 0020). Ikisi de eskiden arayuz is parcacigindaydi (2026-10-18).
+    import threading
+    ana = threading.current_thread()
+    gorulen = {}
+    eski_durum, eski_prober = grub_mod.status, grub_mod.set_os_prober
+
+    def sahte_durum():
+        gorulen["durum"] = threading.current_thread() is ana
+        return eski_durum()
+
+    def sahte_prober(acik):
+        gorulen["prober"] = threading.current_thread() is ana
+        return True, "deneme: yazilmadi"
+
+    grub_mod.status, grub_mod.set_os_prober = sahte_durum, sahte_prober
+    try:
+        d10.refresh()
+        d10.chk_prober.setChecked(not d10.chk_prober.isChecked())
+        d10.toggle_os_prober()
+    finally:
+        grub_mod.status, grub_mod.set_os_prober = eski_durum, eski_prober
+    assert gorulen == {"durum": False, "prober": False}, \
+        f"arayuz is parcaciginda calisti: {gorulen}"
     d10.close()
     print(f"  (onyukleyici: {len(rapor.systems)} bolum, onyukleme kodu "
           f"'{rapor.boot_code.kind}')")

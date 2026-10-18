@@ -71,6 +71,11 @@ class GrubStatus:
     menu_entries: int = 0
     version: str = ""
 
+    @property
+    def configured(self) -> bool:
+        """Calisan sistem GRUB ile mi yapilandirilmis (`grub.cfg` ya da varsayilanlar)?"""
+        return bool(self.config_path or self.defaults_readable)
+
     def summary(self) -> Dict[str, str]:
         missing = [name for name, path in self.tools.items()
                    if not path and name.startswith("grub")]
@@ -291,13 +296,25 @@ def list_backups() -> List[Dict]:
     return found
 
 
-def restore_config(stamp: str) -> Tuple[bool, str]:
-    """Bir yedegi geri yukler.
+def restore_config(stamp: str, progress=None) -> Tuple[bool, str]:
+    """Bir yedegi geri yukler ve onyukleme menusunu yeniden uretir.
 
-    Yalnizca yedekte **bulunan** dosyalar geri konur; eksik olanlar sistemde
-    oldugu gibi birakilir. Geri yukleme yapilandirmayi yeniden **uretmez** —
-    `grub.cfg` dosyasi da yedekten geldigi icin buna gerek yoktur, ama
-    varsayilanlar degistiyse kullanici ayrica `update_config()` calistirmalidir.
+    Geri konanlar menunun **kaynaklaridir**: varsayilanlar dosyasi
+    (`platform.GRUB_DEFAULTS_PATH`) ve betik klasoru
+    (`platform.GRUB_SCRIPT_DIR`). Yalnizca yedekte bulunan dosyalar geri konur;
+    eksik olanlar sistemde oldugu gibi birakilir.
+
+    Yedekteki `grub.cfg` **geri yazilmaz**: o dosya yedek anindaki cekirdek
+    ve initrd dosyalarini gosterir; o gunden beri silinmis bir cekirdegi
+    gosteren menu makineyi acilmaz birakabilir. Menu bunun yerine geri konan
+    ayarlarla, bugunku cekirdeklerden yeniden uretilir (`update_config`);
+    eski `grub.cfg` inceleme icin yedek klasorunde durur.
+
+    Eskiden belge "grub.cfg yedekten geldigi icin menu uretmeye gerek yok"
+    diyordu ama kod `grub.cfg`yi geri yazmiyordu: geri yuklenen ayarlar
+    menuye hic yansimiyordu (2026-10-18). Dosyalardan biri yazilamazsa menu
+    **uretilmez**: yarim geri konmus ayarlarla menu uretmek, calisan menuyu
+    bozmak olurdu.
     """
     source = os.path.join(backup_root(), stamp)
     if not os.path.isdir(source):
@@ -335,7 +352,9 @@ def restore_config(stamp: str) -> Tuple[bool, str]:
 
         if errors:
             return False, "; ".join(errors[:3])
-        return True, tr("Yedek geri yuklendi: {}", stamp)
+    restored = tr("Yedek geri yuklendi: {}", stamp)
+    ok, message = update_config(progress=progress)
+    return ok, f"{restored}\n{message}" if message else restored
 
 
 # ==========================================================================
@@ -373,6 +392,10 @@ def install(device: str, progress=None) -> Tuple[bool, str]:
         return False, reason
     tool = platform.find_boot_tool("grub-install")
     target = install_target()
+    if target != "esp" and not device:
+        # Bos aygitla `grub-install` calistirilmaz: arac neyi hedef alacagini
+        # kendi tahmin ederdi.
+        return False, tr("Hedef disk yok")
 
     if target == "esp":
         command = [tool]
@@ -452,6 +475,34 @@ def upgrade_packages(progress=None) -> Tuple[bool, str]:
 # ==========================================================================
 # Tumunu onar
 # ==========================================================================
+# UEFI'de onarim hedefi bir disk degil, bu makinenin EFI Sistem Bolumudur.
+ESP_TARGET = "esp"
+
+
+def repair_targets(device: str, disk_has_grub: bool,
+                   system_uses_grub: bool) -> List[str]:
+    """"Tumunu onar"in GRUB'u yeniden kuracagi hedefler.
+
+    Kural: GRUB yalnizca **zaten bulundugu** yere yeniden kurulur.
+
+    - BIOS (ve kip bilinmiyorsa): hedef acik disktir ve ilk sektoru yazilir;
+      yalnizca o sektorde GRUB varsa (`DiskBoot.has_grub`).
+    - UEFI: `grub-install` aygiti yok sayar ve bu makinenin ESP'sine kurar
+      (`install_target`). Acik diskin ilk sektoru olcut olamaz, UEFI'de GRUB
+      orada durmaz; olcut calisan sistemin GRUB ile yapilandirilmis olmasidir
+      (`GrubStatus.configured`). Boylece systemd-boot ile acilan bir sisteme
+      GRUB yazilip bellenim sirasi degistirilmez.
+
+    Eskiden arayuzdeki denetimin iki dali da acik diski donduruyordu: BIOS'ta
+    GRUB'u olmayan bir diskin (ornegin Windows diskinin) ilk sektoruna GRUB
+    yaziliyordu; UEFI'de onay metni "GRUB X diskine kurulur" diyordu, oysa
+    kurulum ESP'ye yapiliyordu (2026-10-18).
+    """
+    if install_target() == "esp":
+        return [ESP_TARGET] if system_uses_grub else []
+    return [device] if device and disk_has_grub else []
+
+
 @dataclass
 class RepairStep:
     """Onarimda atilan tek bir adim ve sonucu."""
@@ -468,8 +519,8 @@ def repair(targets: List[str], progress=None,
     `targets` GRUB'un **zaten bulundugu** diskler olmalidir. Makinedeki her
     diske GRUB yazmak onarim degildir; calisan diskleri degistirmektir. Baska
     bir makineye takilan bir yedek disk, birden bu sistemi acmaya calisirdi.
-    Hedefi cagiran belirler (`ui/dialogs/bootloader.py`), burasi yalnizca
-    verileni uygular.
+    Hedefler `repair_targets()` ile belirlenir (UEFI'de `ESP_TARGET`);
+    burasi yalnizca verileni uygular.
     """
     steps: List[RepairStep] = []
     if not targets:
@@ -501,10 +552,13 @@ def repair(targets: List[str], progress=None,
         done += 1
 
         for device in targets:
-            report(tr("GRUB {} diskine kuruluyor...", device))
-            ok, message = install(device)
-            steps.append(RepairStep(tr("GRUB kuruldu: {}", device), ok,
-                                    message[:400]))
+            esp = device == ESP_TARGET
+            report(tr("GRUB, EFI Sistem Bolumune kuruluyor...") if esp
+                   else tr("GRUB {} diskine kuruluyor...", device))
+            ok, message = install("" if esp else device)
+            steps.append(RepairStep(
+                tr("GRUB kuruldu: {}", tr("EFI Sistem Bolumu") if esp else device),
+                ok, message[:400]))
             done += 1
 
         report(tr("Onyukleme menusu yeniden uretiliyor..."))
