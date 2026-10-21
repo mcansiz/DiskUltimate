@@ -10931,6 +10931,154 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <source>{} bu sürümde desteklenmiyor.</source>
         <translation>此版本不支持 {}。</translation>
     </message>
+    <message>
+        <source>Bir işlem seçilmedi.</source>
+        <translation>未选择任何操作。</translation>
+    </message>
+    <message>
+        <source>Bu birime yazılamıyor: {}</source>
+        <translation>无法写入此卷：{}</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı: {}</source>
+        <translation>未找到用户：{}</translation>
+    </message>
+    <message>
+        <source>birim salt okunur açık</source>
+        <translation>卷以只读方式打开</translation>
+    </message>
+    <message>
+        <source>parola var</source>
+        <translation>有密码</translation>
+    </message>
+    <message>
+        <source>parola yok</source>
+        <translation>无密码</translation>
+    </message>
+    <message>
+        <source>{} okunamadı: {}</source>
+        <translation>无法读取 {}：{}</translation>
+    </message>
+    <message>
+        <source>Bilinmeyen alt anahtar listesi: {}</source>
+        <translation>未知的子键列表：{}</translation>
+    </message>
+    <message>
+        <source>F değeri bulunamadı.</source>
+        <translation>未找到 F 值。</translation>
+    </message>
+    <message>
+        <source>Geçerli bir registry kütüğü değil (regf yok).</source>
+        <translation>不是有效的注册表配置单元（无 regf）。</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı (RID {}).</source>
+        <translation>未找到用户（RID {}）。</translation>
+    </message>
+    <message>
+        <source>Kütük sınırı dışında hücre.</source>
+        <translation>单元格超出配置单元范围。</translation>
+    </message>
+    <message>
+        <source>Kütük tutarsız (işlem günlüğü uygulanmamış).</source>
+        <translation>配置单元不一致（未应用事务日志）。</translation>
+    </message>
+    <message>
+        <source>SAM kütüğünde kullanıcı listesi bulunamadı.</source>
+        <translation>在 SAM 配置单元中未找到用户列表。</translation>
+    </message>
+    <message>
+        <source>V değeri bulunamadı.</source>
+        <translation>未找到 V 值。</translation>
+    </message>
+    <message>
+        <source>V yapısı beklenenden kısa.</source>
+        <translation>V 结构比预期的短。</translation>
+    </message>
+    <message>
+        <source>nk kaydı bekleniyordu.</source>
+        <translation>应为 nk 记录。</translation>
+    </message>
+    <message>
+        <source>vk kaydı bekleniyordu.</source>
+        <translation>应为 vk 记录。</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;{}&lt;/b&gt; kullanicisi uzerinde su islem uygulanacak:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Islemden once hedef dosyanin yedegi ayni birime (.dubak) alinir. Kaynak yazma kipine alinacak. Devam edilsin mi?</source>
+        <translation>将对用户 &lt;b&gt;{}&lt;/b&gt; 执行以下操作：&lt;br&gt;{}&lt;br&gt;&lt;br&gt;更改前，目标文件的备份会保存到同一卷（.dubak）。源将切换到写入模式。是否继续？</translation>
+    </message>
+    <message>
+        <source>Bu birimde Windows ya da Linux kullanici hesabi bulunamadi. BitLocker ile sifreliyse once kilidini acin.</source>
+        <translation>在此卷上未找到 Windows 或 Linux 用户账户。如果使用 BitLocker 加密，请先解锁。</translation>
+    </message>
+    <message>
+        <source>Bu bolumde okunabilir bir dosya sistemi yok.</source>
+        <translation>此分区没有可读的文件系统。</translation>
+    </message>
+    <message>
+        <source>Hesabi kilitle</source>
+        <translation>锁定账户</translation>
+    </message>
+    <message>
+        <source>Islem uygulandi. Eski dosyanin yedegi ayni birimde .dubak olarak duruyor.</source>
+        <translation>更改已应用。旧文件的备份以 .dubak 形式保留在同一卷上。</translation>
+    </message>
+    <message>
+        <source>Kilidi ac</source>
+        <translation>解锁</translation>
+    </message>
+    <message>
+        <source>Kullanici:</source>
+        <translation>用户：</translation>
+    </message>
+    <message>
+        <source>OS parola sifirla...</source>
+        <translation>重置操作系统密码...</translation>
+    </message>
+    <message>
+        <source>OS parola sifirlama</source>
+        <translation>重置操作系统密码</translation>
+    </message>
+    <message>
+        <source>OS parolasi guncellendi: {} ({})</source>
+        <translation>操作系统密码已更新：{}（{}）</translation>
+    </message>
+    <message>
+        <source>Onay</source>
+        <translation>确认</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir (parolasiz)</source>
+        <translation>删除密码（无密码）</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir ve hesabi etkinlestir</source>
+        <translation>删除密码并启用账户</translation>
+    </message>
+    <message>
+        <source>Sifirlama basarisiz</source>
+        <translation>重置失败</translation>
+    </message>
+    <message>
+        <source>Yalnizca hesabi etkinlestir</source>
+        <translation>仅启用账户</translation>
+    </message>
+    <message>
+        <source>Yalnizca parolayi kaldir</source>
+        <translation>仅删除密码</translation>
+    </message>
+    <message>
+        <source>Yeni parola</source>
+        <translation>新密码</translation>
+    </message>
+    <message>
+        <source>Yeni parola belirle</source>
+        <translation>设置新密码</translation>
+    </message>
+    <message>
+        <source>{} icin yeni parola:</source>
+        <translation>{} 的新密码：</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>

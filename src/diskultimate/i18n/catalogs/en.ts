@@ -11442,6 +11442,154 @@ If both disks stay attached to the same computer, the operating system may take 
         <source>{} bu sürümde desteklenmiyor.</source>
         <translation>{} is not supported in this version.</translation>
     </message>
+    <message>
+        <source>Bir işlem seçilmedi.</source>
+        <translation>No action selected.</translation>
+    </message>
+    <message>
+        <source>Bu birime yazılamıyor: {}</source>
+        <translation>Cannot write to this volume: {}</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı: {}</source>
+        <translation>User not found: {}</translation>
+    </message>
+    <message>
+        <source>birim salt okunur açık</source>
+        <translation>volume opened read-only</translation>
+    </message>
+    <message>
+        <source>parola var</source>
+        <translation>has password</translation>
+    </message>
+    <message>
+        <source>parola yok</source>
+        <translation>no password</translation>
+    </message>
+    <message>
+        <source>{} okunamadı: {}</source>
+        <translation>{} could not be read: {}</translation>
+    </message>
+    <message>
+        <source>Bilinmeyen alt anahtar listesi: {}</source>
+        <translation>Unknown subkey list: {}</translation>
+    </message>
+    <message>
+        <source>F değeri bulunamadı.</source>
+        <translation>F value not found.</translation>
+    </message>
+    <message>
+        <source>Geçerli bir registry kütüğü değil (regf yok).</source>
+        <translation>Not a valid registry hive (no regf).</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı (RID {}).</source>
+        <translation>User not found (RID {}).</translation>
+    </message>
+    <message>
+        <source>Kütük sınırı dışında hücre.</source>
+        <translation>Cell outside hive bounds.</translation>
+    </message>
+    <message>
+        <source>Kütük tutarsız (işlem günlüğü uygulanmamış).</source>
+        <translation>Hive is inconsistent (transaction log not applied).</translation>
+    </message>
+    <message>
+        <source>SAM kütüğünde kullanıcı listesi bulunamadı.</source>
+        <translation>User list not found in the SAM hive.</translation>
+    </message>
+    <message>
+        <source>V değeri bulunamadı.</source>
+        <translation>V value not found.</translation>
+    </message>
+    <message>
+        <source>V yapısı beklenenden kısa.</source>
+        <translation>The V structure is shorter than expected.</translation>
+    </message>
+    <message>
+        <source>nk kaydı bekleniyordu.</source>
+        <translation>Expected an nk record.</translation>
+    </message>
+    <message>
+        <source>vk kaydı bekleniyordu.</source>
+        <translation>Expected a vk record.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;{}&lt;/b&gt; kullanicisi uzerinde su islem uygulanacak:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Islemden once hedef dosyanin yedegi ayni birime (.dubak) alinir. Kaynak yazma kipine alinacak. Devam edilsin mi?</source>
+        <translation>The following action will be applied to user &lt;b&gt;{}&lt;/b&gt;:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Before the change, a backup of the target file is saved to the same volume (.dubak). The source will be switched to write mode. Continue?</translation>
+    </message>
+    <message>
+        <source>Bu birimde Windows ya da Linux kullanici hesabi bulunamadi. BitLocker ile sifreliyse once kilidini acin.</source>
+        <translation>No Windows or Linux user account was found on this volume. If it is encrypted with BitLocker, unlock it first.</translation>
+    </message>
+    <message>
+        <source>Bu bolumde okunabilir bir dosya sistemi yok.</source>
+        <translation>This partition has no readable filesystem.</translation>
+    </message>
+    <message>
+        <source>Hesabi kilitle</source>
+        <translation>Lock account</translation>
+    </message>
+    <message>
+        <source>Islem uygulandi. Eski dosyanin yedegi ayni birimde .dubak olarak duruyor.</source>
+        <translation>The change was applied. A backup of the old file is kept on the same volume as .dubak.</translation>
+    </message>
+    <message>
+        <source>Kilidi ac</source>
+        <translation>Unlock</translation>
+    </message>
+    <message>
+        <source>Kullanici:</source>
+        <translation>User:</translation>
+    </message>
+    <message>
+        <source>OS parola sifirla...</source>
+        <translation>Reset OS password...</translation>
+    </message>
+    <message>
+        <source>OS parola sifirlama</source>
+        <translation>OS password reset</translation>
+    </message>
+    <message>
+        <source>OS parolasi guncellendi: {} ({})</source>
+        <translation>OS password updated: {} ({})</translation>
+    </message>
+    <message>
+        <source>Onay</source>
+        <translation>Confirm</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir (parolasiz)</source>
+        <translation>Remove password (no password)</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir ve hesabi etkinlestir</source>
+        <translation>Remove password and enable account</translation>
+    </message>
+    <message>
+        <source>Sifirlama basarisiz</source>
+        <translation>Reset failed</translation>
+    </message>
+    <message>
+        <source>Yalnizca hesabi etkinlestir</source>
+        <translation>Only enable account</translation>
+    </message>
+    <message>
+        <source>Yalnizca parolayi kaldir</source>
+        <translation>Only remove password</translation>
+    </message>
+    <message>
+        <source>Yeni parola</source>
+        <translation>New password</translation>
+    </message>
+    <message>
+        <source>Yeni parola belirle</source>
+        <translation>Set new password</translation>
+    </message>
+    <message>
+        <source>{} icin yeni parola:</source>
+        <translation>New password for {}:</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>

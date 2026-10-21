@@ -10931,6 +10931,154 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <source>{} bu sürümde desteklenmiyor.</source>
         <translation>{}은(는) 이 버전에서 지원되지 않습니다.</translation>
     </message>
+    <message>
+        <source>Bir işlem seçilmedi.</source>
+        <translation>선택된 작업이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Bu birime yazılamıyor: {}</source>
+        <translation>이 볼륨에 쓸 수 없습니다: {}</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı: {}</source>
+        <translation>사용자를 찾을 수 없습니다: {}</translation>
+    </message>
+    <message>
+        <source>birim salt okunur açık</source>
+        <translation>볼륨이 읽기 전용으로 열림</translation>
+    </message>
+    <message>
+        <source>parola var</source>
+        <translation>암호 있음</translation>
+    </message>
+    <message>
+        <source>parola yok</source>
+        <translation>암호 없음</translation>
+    </message>
+    <message>
+        <source>{} okunamadı: {}</source>
+        <translation>{}을(를) 읽을 수 없습니다: {}</translation>
+    </message>
+    <message>
+        <source>Bilinmeyen alt anahtar listesi: {}</source>
+        <translation>알 수 없는 하위 키 목록: {}</translation>
+    </message>
+    <message>
+        <source>F değeri bulunamadı.</source>
+        <translation>F 값을 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Geçerli bir registry kütüğü değil (regf yok).</source>
+        <translation>유효한 레지스트리 하이브가 아닙니다 (regf 없음).</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı (RID {}).</source>
+        <translation>사용자를 찾을 수 없습니다 (RID {}).</translation>
+    </message>
+    <message>
+        <source>Kütük sınırı dışında hücre.</source>
+        <translation>셀이 하이브 범위를 벗어났습니다.</translation>
+    </message>
+    <message>
+        <source>Kütük tutarsız (işlem günlüğü uygulanmamış).</source>
+        <translation>하이브가 일관되지 않습니다 (트랜잭션 로그가 적용되지 않음).</translation>
+    </message>
+    <message>
+        <source>SAM kütüğünde kullanıcı listesi bulunamadı.</source>
+        <translation>SAM 하이브에서 사용자 목록을 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>V değeri bulunamadı.</source>
+        <translation>V 값을 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>V yapısı beklenenden kısa.</source>
+        <translation>V 구조가 예상보다 짧습니다.</translation>
+    </message>
+    <message>
+        <source>nk kaydı bekleniyordu.</source>
+        <translation>nk 레코드가 필요합니다.</translation>
+    </message>
+    <message>
+        <source>vk kaydı bekleniyordu.</source>
+        <translation>vk 레코드가 필요합니다.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;{}&lt;/b&gt; kullanicisi uzerinde su islem uygulanacak:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Islemden once hedef dosyanin yedegi ayni birime (.dubak) alinir. Kaynak yazma kipine alinacak. Devam edilsin mi?</source>
+        <translation>사용자 &lt;b&gt;{}&lt;/b&gt;에 대해 다음 작업이 적용됩니다:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;변경 전에 대상 파일의 백업이 동일 볼륨에 저장됩니다(.dubak). 원본이 쓰기 모드로 전환됩니다. 계속하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Bu birimde Windows ya da Linux kullanici hesabi bulunamadi. BitLocker ile sifreliyse once kilidini acin.</source>
+        <translation>이 볼륨에서 Windows 또는 Linux 사용자 계정을 찾을 수 없습니다. BitLocker로 암호화된 경우 먼저 잠금을 해제하세요.</translation>
+    </message>
+    <message>
+        <source>Bu bolumde okunabilir bir dosya sistemi yok.</source>
+        <translation>이 파티션에는 읽을 수 있는 파일 시스템이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Hesabi kilitle</source>
+        <translation>계정 잠그기</translation>
+    </message>
+    <message>
+        <source>Islem uygulandi. Eski dosyanin yedegi ayni birimde .dubak olarak duruyor.</source>
+        <translation>변경 사항이 적용되었습니다. 이전 파일의 백업이 동일 볼륨에 .dubak로 보관됩니다.</translation>
+    </message>
+    <message>
+        <source>Kilidi ac</source>
+        <translation>잠금 해제</translation>
+    </message>
+    <message>
+        <source>Kullanici:</source>
+        <translation>사용자:</translation>
+    </message>
+    <message>
+        <source>OS parola sifirla...</source>
+        <translation>OS 암호 재설정...</translation>
+    </message>
+    <message>
+        <source>OS parola sifirlama</source>
+        <translation>OS 암호 재설정</translation>
+    </message>
+    <message>
+        <source>OS parolasi guncellendi: {} ({})</source>
+        <translation>OS 암호가 업데이트됨: {} ({})</translation>
+    </message>
+    <message>
+        <source>Onay</source>
+        <translation>확인</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir (parolasiz)</source>
+        <translation>암호 제거(암호 없음)</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir ve hesabi etkinlestir</source>
+        <translation>암호 제거 및 계정 활성화</translation>
+    </message>
+    <message>
+        <source>Sifirlama basarisiz</source>
+        <translation>재설정 실패</translation>
+    </message>
+    <message>
+        <source>Yalnizca hesabi etkinlestir</source>
+        <translation>계정만 활성화</translation>
+    </message>
+    <message>
+        <source>Yalnizca parolayi kaldir</source>
+        <translation>암호만 제거</translation>
+    </message>
+    <message>
+        <source>Yeni parola</source>
+        <translation>새 암호</translation>
+    </message>
+    <message>
+        <source>Yeni parola belirle</source>
+        <translation>새 암호 설정</translation>
+    </message>
+    <message>
+        <source>{} icin yeni parola:</source>
+        <translation>{}의 새 암호:</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>

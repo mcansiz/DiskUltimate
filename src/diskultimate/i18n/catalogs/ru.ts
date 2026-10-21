@@ -10941,6 +10941,154 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
         <source>{} bu sürümde desteklenmiyor.</source>
         <translation>{} не поддерживается в этой версии.</translation>
     </message>
+    <message>
+        <source>Bir işlem seçilmedi.</source>
+        <translation>Действие не выбрано.</translation>
+    </message>
+    <message>
+        <source>Bu birime yazılamıyor: {}</source>
+        <translation>Не удалось записать на этот том: {}</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı: {}</source>
+        <translation>Пользователь не найден: {}</translation>
+    </message>
+    <message>
+        <source>birim salt okunur açık</source>
+        <translation>том открыт только для чтения</translation>
+    </message>
+    <message>
+        <source>parola var</source>
+        <translation>пароль задан</translation>
+    </message>
+    <message>
+        <source>parola yok</source>
+        <translation>нет пароля</translation>
+    </message>
+    <message>
+        <source>{} okunamadı: {}</source>
+        <translation>Не удалось прочитать {}: {}</translation>
+    </message>
+    <message>
+        <source>Bilinmeyen alt anahtar listesi: {}</source>
+        <translation>Неизвестный список подразделов: {}</translation>
+    </message>
+    <message>
+        <source>F değeri bulunamadı.</source>
+        <translation>Значение F не найдено.</translation>
+    </message>
+    <message>
+        <source>Geçerli bir registry kütüğü değil (regf yok).</source>
+        <translation>Недействительный куст реестра (нет regf).</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı (RID {}).</source>
+        <translation>Пользователь не найден (RID {}).</translation>
+    </message>
+    <message>
+        <source>Kütük sınırı dışında hücre.</source>
+        <translation>Ячейка за пределами куста.</translation>
+    </message>
+    <message>
+        <source>Kütük tutarsız (işlem günlüğü uygulanmamış).</source>
+        <translation>Куст несогласован (журнал транзакций не применён).</translation>
+    </message>
+    <message>
+        <source>SAM kütüğünde kullanıcı listesi bulunamadı.</source>
+        <translation>Список пользователей не найден в кусте SAM.</translation>
+    </message>
+    <message>
+        <source>V değeri bulunamadı.</source>
+        <translation>Значение V не найдено.</translation>
+    </message>
+    <message>
+        <source>V yapısı beklenenden kısa.</source>
+        <translation>Структура V короче ожидаемой.</translation>
+    </message>
+    <message>
+        <source>nk kaydı bekleniyordu.</source>
+        <translation>Ожидалась запись nk.</translation>
+    </message>
+    <message>
+        <source>vk kaydı bekleniyordu.</source>
+        <translation>Ожидалась запись vk.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;{}&lt;/b&gt; kullanicisi uzerinde su islem uygulanacak:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Islemden once hedef dosyanin yedegi ayni birime (.dubak) alinir. Kaynak yazma kipine alinacak. Devam edilsin mi?</source>
+        <translation>К пользователю &lt;b&gt;{}&lt;/b&gt; будет применено следующее действие:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Перед изменением на том же томе сохраняется резервная копия целевого файла (.dubak). Источник будет переключён в режим записи. Продолжить?</translation>
+    </message>
+    <message>
+        <source>Bu birimde Windows ya da Linux kullanici hesabi bulunamadi. BitLocker ile sifreliyse once kilidini acin.</source>
+        <translation>На этом томе не найдено ни одной учётной записи Windows или Linux. Если он зашифрован BitLocker, сначала разблокируйте его.</translation>
+    </message>
+    <message>
+        <source>Bu bolumde okunabilir bir dosya sistemi yok.</source>
+        <translation>На этом разделе нет читаемой файловой системы.</translation>
+    </message>
+    <message>
+        <source>Hesabi kilitle</source>
+        <translation>Заблокировать учётную запись</translation>
+    </message>
+    <message>
+        <source>Islem uygulandi. Eski dosyanin yedegi ayni birimde .dubak olarak duruyor.</source>
+        <translation>Изменение применено. Резервная копия старого файла сохранена на том же томе как .dubak.</translation>
+    </message>
+    <message>
+        <source>Kilidi ac</source>
+        <translation>Разблокировать</translation>
+    </message>
+    <message>
+        <source>Kullanici:</source>
+        <translation>Пользователь:</translation>
+    </message>
+    <message>
+        <source>OS parola sifirla...</source>
+        <translation>Сбросить пароль ОС...</translation>
+    </message>
+    <message>
+        <source>OS parola sifirlama</source>
+        <translation>Сброс пароля ОС</translation>
+    </message>
+    <message>
+        <source>OS parolasi guncellendi: {} ({})</source>
+        <translation>Пароль ОС обновлён: {} ({})</translation>
+    </message>
+    <message>
+        <source>Onay</source>
+        <translation>Подтверждение</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir (parolasiz)</source>
+        <translation>Удалить пароль (без пароля)</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir ve hesabi etkinlestir</source>
+        <translation>Удалить пароль и включить учётную запись</translation>
+    </message>
+    <message>
+        <source>Sifirlama basarisiz</source>
+        <translation>Сброс не удался</translation>
+    </message>
+    <message>
+        <source>Yalnizca hesabi etkinlestir</source>
+        <translation>Только включить учётную запись</translation>
+    </message>
+    <message>
+        <source>Yalnizca parolayi kaldir</source>
+        <translation>Только удалить пароль</translation>
+    </message>
+    <message>
+        <source>Yeni parola</source>
+        <translation>Новый пароль</translation>
+    </message>
+    <message>
+        <source>Yeni parola belirle</source>
+        <translation>Задать новый пароль</translation>
+    </message>
+    <message>
+        <source>{} icin yeni parola:</source>
+        <translation>Новый пароль для {}:</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>

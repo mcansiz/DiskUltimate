@@ -6395,3 +6395,70 @@ root yok, çekirdek bağlanmaz). Planı ADR 0099'da: Windows misafirinde
 Bu yapılana kadar "gerçek BitLocker diskinde test edildi" **denmez**. Tam
 `run_all`, `ui_smoke` ve gözlemci gezinti ağır olduğu için yerelde koşulmadı
 (GitHub).
+
+## 2026-10-21 (2) — OS parola sıfırlama: Linux dilimi (ADR 0100)
+
+Kullanıcı: "OS şifresi unutulursa ne yapabiliriz?" Kapsam: Windows + Linux.
+Unutulmuş parola geri getirilmez (hash'li); yapılan iş **sıfırlama** (chntpw
+mantığı), kendi diskinde kurtarma. Bu dilim **Linux**.
+
+Yeni `core/ospass.py` (saf Python, çapraz platform — `crypt` import etmez):
+- `sha512crypt` ($6$) saf Python — glibc ile birebir.
+- `linux_users(fs)` /etc/passwd + /etc/shadow'dan kullanıcı listesi (parola
+  var/yok/kilitli, sistem hesabı).
+- `linux_set_password(fs, user, new=/blank=/lock=/unlock=)` — shadow 2. alanı;
+  yeni parola sha512crypt ile; dosya ExtWriter ile yeniden yazılır.
+
+Bir `FileSystemAccess` üzerinde çalışır (BitLocker/LUKS birimi önce açılır).
+`/etc/shadow` gibi yollar **misafir disk** yollarıdır, ana makine değil;
+`platform_check`'e bu kurala muafiyet eklendi (gerekçeli, `MISAFIR_FS`).
+
+Doğrulama (ana makine): `tests/ospass_check` **TAMAM** — `sha512crypt` KAT
+(stdlib `crypt` yoksa `openssl passwd -6` oracle'ına düşer; 3 durum birebir),
+uçtan uca ext4 imajında (passwd/shadow yaz, belirle/boşalt/kilitle/aç, geri
+oku, **e2fsck -fn temiz**). `run_all` t108 izole **TAMAM**. `i18n_check`
+**BAŞARILI** (7 yeni metin × 9 dil, yine doğrudan eklendi — merge kullanılmadı).
+`platform_check` 0.
+
+Not: `pyenv` 3.12.13'te stdlib `crypt` C eklentisi yok; KAT için `openssl
+passwd -6` kullanıldı — `sha512crypt` byte-birebir doğrulandı.
+
+**Bekleyen:** (1) Windows SAM dilimi — `core/winreg.py` (regf çözümleyici) +
+`V`/`F` düzenleme; gerçek SAM hive ile Windows misafirinde doğrulanacak (kötü
+SAM yazması girişi açılmaz bırakır). (2) GUI — tek "OS parola sıfırla" diyaloğu
+(Windows/Linux birimini tanır); iki platform çekirdeği de bitince tek geçişte
+bağlanacak. Henüz commit edilmedi.
+
+## 2026-10-21 (3) — OS parola sıfırlama: Windows SAM dilimi (ADR 0100)
+
+Linux'tan sonra Windows yerel hesap tarafı. Yeni `core/winreg.py` — saf-Python
+regf (Windows NT Registry) hive **salt-okur çözümleyici**: base blok → kök nk →
+alt anahtarlar (lf/lh/li/ri) → değerler (vk); yerinde bayt yaması (`patch`).
+
+`core/ospass.py` Windows işlevleri:
+- `windows_users(sam)` — `SAM\Domains\Account\Users` altındaki hesaplar: ad
+  (V+0x0C/0x10, UTF-16LE), RID, parola var/yok (NT uzunluğu V+0xB0), kilitli
+  (F+0x38 ACB_DISABLED). Offsetler chntpw/creddump ile aynı.
+- `windows_blank_password(sam, rid)` — V'deki LM (0xA0) ve NT (0xB0) hash
+  uzunluklarını 0 yapar → parola kalkar (chntpw yöntemi; bootkey gerekmez,
+  hive boyutu değişmez).
+- `windows_enable_account(sam, rid)` — F+0x38'deki ACB_DISABLED bitini temizler.
+- `windows_reset_fs(fs, rid)` — `/Windows/System32/config/SAM` okunur, boşalt +
+  etkinleştir, yazılır. Şifreli birimde önce BitLocker açılır.
+
+Doğrulama (ana makine): `tests/ospass_check` Windows bölümü + `run_all` t109 —
+**sentetik ama yapısal gerçek bir regf SAM** kurulur (SAM\Domains\Account\Users\
+000001F4 + V/F), çözümleme/listeleme/boşaltma (NT uzunluğu 0, boyut değişmiyor)/
+etkinleştirme/olmayan-RID reddi doğrulanır. Hepsi **TAMAM**. `i18n_check`
+BAŞARILI (11 yeni metin × 9 dil, doğrudan eklendi), `platform_check` 0.
+`/Windows/System32/config/SAM` misafir yoludur (POSIX deseni değil, muafiyet
+gerekmedi).
+
+**Henüz GERÇEK SAM ile doğrulanmadı:** kötü SAM yazması girişi açılmaz bırakır
+(CLAUDE.md). Önce regf çözümleyici gerçek bir Windows SAM'ında, sonra boşaltma
+izole bir test hesabında Windows misafirinde denenecek; o zamana dek "gerçek
+Windows'ta test edildi" denmez.
+
+**Bekleyen:** GUI — iki platform çekirdeği de hazır; tek "OS parola sıfırla"
+diyaloğu (birimdeki /etc/shadow ya da SAM'e göre Windows/Linux tanır) sonraki
+adımda. Henüz commit edilmedi.

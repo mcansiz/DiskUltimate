@@ -10936,6 +10936,154 @@ Si ambos discos permanecen conectados al mismo equipo, el sistema operativo pued
         <source>{} bu sürümde desteklenmiyor.</source>
         <translation>{} no es compatible en esta versión.</translation>
     </message>
+    <message>
+        <source>Bir işlem seçilmedi.</source>
+        <translation>No se seleccionó ninguna acción.</translation>
+    </message>
+    <message>
+        <source>Bu birime yazılamıyor: {}</source>
+        <translation>No se puede escribir en este volumen: {}</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı: {}</source>
+        <translation>Usuario no encontrado: {}</translation>
+    </message>
+    <message>
+        <source>birim salt okunur açık</source>
+        <translation>volumen abierto en solo lectura</translation>
+    </message>
+    <message>
+        <source>parola var</source>
+        <translation>con contraseña</translation>
+    </message>
+    <message>
+        <source>parola yok</source>
+        <translation>sin contraseña</translation>
+    </message>
+    <message>
+        <source>{} okunamadı: {}</source>
+        <translation>No se pudo leer {}: {}</translation>
+    </message>
+    <message>
+        <source>Bilinmeyen alt anahtar listesi: {}</source>
+        <translation>Lista de subclaves desconocida: {}</translation>
+    </message>
+    <message>
+        <source>F değeri bulunamadı.</source>
+        <translation>No se encontró el valor F.</translation>
+    </message>
+    <message>
+        <source>Geçerli bir registry kütüğü değil (regf yok).</source>
+        <translation>Subárbol del Registro no válido (sin regf).</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı (RID {}).</source>
+        <translation>Usuario no encontrado (RID {}).</translation>
+    </message>
+    <message>
+        <source>Kütük sınırı dışında hücre.</source>
+        <translation>Celda fuera de los límites del subárbol.</translation>
+    </message>
+    <message>
+        <source>Kütük tutarsız (işlem günlüğü uygulanmamış).</source>
+        <translation>Subárbol incoherente (registro de transacciones no aplicado).</translation>
+    </message>
+    <message>
+        <source>SAM kütüğünde kullanıcı listesi bulunamadı.</source>
+        <translation>No se encontró la lista de usuarios en el subárbol SAM.</translation>
+    </message>
+    <message>
+        <source>V değeri bulunamadı.</source>
+        <translation>No se encontró el valor V.</translation>
+    </message>
+    <message>
+        <source>V yapısı beklenenden kısa.</source>
+        <translation>La estructura V es más corta de lo esperado.</translation>
+    </message>
+    <message>
+        <source>nk kaydı bekleniyordu.</source>
+        <translation>Se esperaba un registro nk.</translation>
+    </message>
+    <message>
+        <source>vk kaydı bekleniyordu.</source>
+        <translation>Se esperaba un registro vk.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;{}&lt;/b&gt; kullanicisi uzerinde su islem uygulanacak:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Islemden once hedef dosyanin yedegi ayni birime (.dubak) alinir. Kaynak yazma kipine alinacak. Devam edilsin mi?</source>
+        <translation>Se aplicará la siguiente acción al usuario &lt;b&gt;{}&lt;/b&gt;:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Antes del cambio, se guarda una copia de seguridad del archivo de destino en el mismo volumen (.dubak). El origen se cambiará al modo de escritura. ¿Continuar?</translation>
+    </message>
+    <message>
+        <source>Bu birimde Windows ya da Linux kullanici hesabi bulunamadi. BitLocker ile sifreliyse once kilidini acin.</source>
+        <translation>No se encontró ninguna cuenta de usuario de Windows o Linux en este volumen. Si está cifrado con BitLocker, desbloquéelo primero.</translation>
+    </message>
+    <message>
+        <source>Bu bolumde okunabilir bir dosya sistemi yok.</source>
+        <translation>Esta partición no tiene un sistema de archivos legible.</translation>
+    </message>
+    <message>
+        <source>Hesabi kilitle</source>
+        <translation>Bloquear cuenta</translation>
+    </message>
+    <message>
+        <source>Islem uygulandi. Eski dosyanin yedegi ayni birimde .dubak olarak duruyor.</source>
+        <translation>El cambio se aplicó. Se conserva una copia de seguridad del archivo anterior en el mismo volumen como .dubak.</translation>
+    </message>
+    <message>
+        <source>Kilidi ac</source>
+        <translation>Desbloquear</translation>
+    </message>
+    <message>
+        <source>Kullanici:</source>
+        <translation>Usuario:</translation>
+    </message>
+    <message>
+        <source>OS parola sifirla...</source>
+        <translation>Restablecer la contraseña del SO...</translation>
+    </message>
+    <message>
+        <source>OS parola sifirlama</source>
+        <translation>Restablecer la contraseña del SO</translation>
+    </message>
+    <message>
+        <source>OS parolasi guncellendi: {} ({})</source>
+        <translation>Contraseña del SO actualizada: {} ({})</translation>
+    </message>
+    <message>
+        <source>Onay</source>
+        <translation>Confirmar</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir (parolasiz)</source>
+        <translation>Quitar la contraseña (sin contraseña)</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir ve hesabi etkinlestir</source>
+        <translation>Quitar la contraseña y habilitar la cuenta</translation>
+    </message>
+    <message>
+        <source>Sifirlama basarisiz</source>
+        <translation>Error al restablecer</translation>
+    </message>
+    <message>
+        <source>Yalnizca hesabi etkinlestir</source>
+        <translation>Solo habilitar la cuenta</translation>
+    </message>
+    <message>
+        <source>Yalnizca parolayi kaldir</source>
+        <translation>Solo quitar la contraseña</translation>
+    </message>
+    <message>
+        <source>Yeni parola</source>
+        <translation>Nueva contraseña</translation>
+    </message>
+    <message>
+        <source>Yeni parola belirle</source>
+        <translation>Establecer nueva contraseña</translation>
+    </message>
+    <message>
+        <source>{} icin yeni parola:</source>
+        <translation>Nueva contraseña para {}:</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>

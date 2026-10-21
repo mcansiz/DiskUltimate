@@ -18,11 +18,17 @@ KAYNAK = os.path.join(KOK, "src")
 # kurallari bu dosyalarda da gecerlidir.
 PLATFORM_KATMANI = {"platform.py", "physical.py"}
 
+# ospass.py'deki '/etc/shadow' ve '/etc/passwd' ANA MAKINE yolu degildir:
+# incelenen MISAFIR Linux biriminin icindeki yollardir (format sabiti gibi,
+# ADR 0100). Bu yuzden yalnizca POSIX-sistem-yolu kuralindan muaftir;
+# tempfile/subprocess/endian kurallari burada da gecerlidir.
+MISAFIR_FS = {"ospass.py"}
+
 # (desen, aciklama, izinli dosyalar)
 KURALLAR = [
     (r"/tmp/|/var/tmp", "Sabit POSIX gecici dizin yolu", set()),
     (r"/usr/|/etc/|/dev/sd|/dev/nvme",
-     "Sabit POSIX sistem yolu", PLATFORM_KATMANI),
+     "Sabit POSIX sistem yolu", PLATFORM_KATMANI | MISAFIR_FS),
     (r"\bos\.fork\b|\bos\.getuid\b|\bos\.geteuid\b|\bpwd\b|\bgrp\b",
      "POSIX'e ozgu islev", PLATFORM_KATMANI),
     # Kelime siniri sart: `last_blocks` gibi adlar `st_blocks` alt dizesini

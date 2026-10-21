@@ -8089,6 +8089,83 @@ def t107_bitlocker_kilit_acma():
         pass
 
 
+@test
+def t108_os_parola_sifirlama():
+    """Linux: /etc/shadow'da parola belirle/bosalt/kilitle (ext4, e2fsck)."""
+    from diskultimate.core import ospass
+    from diskultimate.core.ext import format_ext as _fmt
+    p = img_path("t108.img")
+    d = DiskImage.create(p, 48 * MIB, overwrite=True)
+    view = PartitionView(d, 2048, d.sector_count - 2048)
+    _fmt(view, "ext4", label="OSP")
+    view = PartitionView(d, 2048, d.sector_count - 2048)
+    fs = open_filesystem(view, detect(view))
+    assert fs.writable, fs.write_reason
+    fs.mkdir("/etc")
+    fs.write_file("/etc/passwd", b"root:x:0:0:root:/root:/bin/bash\n"
+                  b"ali:x:1000:1000:Ali:/home/ali:/bin/bash\n")
+    fs.write_file("/etc/shadow", b"root:$6$a$oldhash:1::::::\nali:!x:1::::::\n")
+    fs.flush()
+
+    users = {u.name: u for u in ospass.linux_users(fs)}
+    assert set(users) == {"root", "ali"}, users
+    assert users["ali"].disabled, "ali kilitli gorunmeli"
+
+    ospass.linux_set_password(fs, "ali", new_password="Yeni!42")
+    field = _shadow_field(fs, "ali")
+    assert field.startswith("$6$"), field
+    # Dogru hash'leniyor mu (sha512crypt kendi uygulamamiz).
+    salt = field.split("$")[2]
+    assert ospass.sha512crypt(b"Yeni!42", salt) == field
+
+    ospass.linux_set_password(fs, "root", blank=True)
+    assert _shadow_field(fs, "root") == "", "root bosaltilmaliydi"
+    ospass.linux_set_password(fs, "ali", lock=True)
+    assert _shadow_field(fs, "ali").startswith("!")
+    try:
+        ospass.linux_set_password(fs, "yok", blank=True)
+        assert False, "olmayan kullanici kabul edildi"
+    except ospass.OsPassError:
+        pass
+    fs.flush()
+    d.close()
+    _fsck_ext(p, 2048, "ext4")
+
+
+def _shadow_field(fs, user):
+    for line in fs.read("/etc/shadow").decode().splitlines():
+        if line.split(":")[0] == user:
+            return line.split(":")[1]
+    raise AssertionError("satir yok: " + user)
+
+
+@test
+def t109_windows_sam_parola():
+    """Windows: sentetik SAM kutugunu coz, parola bosalt, hesap etkinlestir."""
+    from diskultimate.core import ospass
+    from tests.ospass_check import _build_sam, _nt_len
+    sam = _build_sam(username="Administrator", rid=0x1F4, nt_present=True,
+                     disabled=True)
+    users = {u.name: u for u in ospass.windows_users(sam)}
+    assert "Administrator" in users, users
+    assert users["Administrator"].uid == 0x1F4
+    assert users["Administrator"].disabled, "hesap kilitli gorunmeli"
+
+    sam2 = ospass.windows_blank_password(sam, 0x1F4)
+    assert len(sam2) == len(sam), "hive boyutu degisti (yerinde olmaliydi)"
+    assert _nt_len(sam2, 0x1F4) == 0, "NT hash uzunlugu sifirlanmadi"
+
+    sam3 = ospass.windows_enable_account(sam2, 0x1F4)
+    u = {x.name: x for x in ospass.windows_users(sam3)}["Administrator"]
+    assert not u.disabled and u.note == "parola yok", (u.disabled, u.note)
+
+    try:
+        ospass.windows_blank_password(sam, 0x270F)
+        assert False, "olmayan RID kabul edildi"
+    except ospass.OsPassError:
+        pass
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

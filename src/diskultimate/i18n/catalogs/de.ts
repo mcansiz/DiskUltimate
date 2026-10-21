@@ -11442,6 +11442,154 @@ Bleiben beide Datenträger am selben Computer angeschlossen, kann das Betriebssy
         <source>{} bu sürümde desteklenmiyor.</source>
         <translation>{} wird in dieser Version nicht unterstützt.</translation>
     </message>
+    <message>
+        <source>Bir işlem seçilmedi.</source>
+        <translation>Keine Aktion ausgewählt.</translation>
+    </message>
+    <message>
+        <source>Bu birime yazılamıyor: {}</source>
+        <translation>Auf dieses Volume kann nicht geschrieben werden: {}</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı: {}</source>
+        <translation>Benutzer nicht gefunden: {}</translation>
+    </message>
+    <message>
+        <source>birim salt okunur açık</source>
+        <translation>Volume schreibgeschützt geöffnet</translation>
+    </message>
+    <message>
+        <source>parola var</source>
+        <translation>Kennwort vorhanden</translation>
+    </message>
+    <message>
+        <source>parola yok</source>
+        <translation>kein Kennwort</translation>
+    </message>
+    <message>
+        <source>{} okunamadı: {}</source>
+        <translation>{} konnte nicht gelesen werden: {}</translation>
+    </message>
+    <message>
+        <source>Bilinmeyen alt anahtar listesi: {}</source>
+        <translation>Unbekannte Unterschlüsselliste: {}</translation>
+    </message>
+    <message>
+        <source>F değeri bulunamadı.</source>
+        <translation>F-Wert nicht gefunden.</translation>
+    </message>
+    <message>
+        <source>Geçerli bir registry kütüğü değil (regf yok).</source>
+        <translation>Keine gültige Registry-Hive (kein regf).</translation>
+    </message>
+    <message>
+        <source>Kullanıcı bulunamadı (RID {}).</source>
+        <translation>Benutzer nicht gefunden (RID {}).</translation>
+    </message>
+    <message>
+        <source>Kütük sınırı dışında hücre.</source>
+        <translation>Zelle außerhalb der Hive-Grenzen.</translation>
+    </message>
+    <message>
+        <source>Kütük tutarsız (işlem günlüğü uygulanmamış).</source>
+        <translation>Hive ist inkonsistent (Transaktionsprotokoll nicht angewendet).</translation>
+    </message>
+    <message>
+        <source>SAM kütüğünde kullanıcı listesi bulunamadı.</source>
+        <translation>Benutzerliste in der SAM-Hive nicht gefunden.</translation>
+    </message>
+    <message>
+        <source>V değeri bulunamadı.</source>
+        <translation>V-Wert nicht gefunden.</translation>
+    </message>
+    <message>
+        <source>V yapısı beklenenden kısa.</source>
+        <translation>Die V-Struktur ist kürzer als erwartet.</translation>
+    </message>
+    <message>
+        <source>nk kaydı bekleniyordu.</source>
+        <translation>nk-Datensatz erwartet.</translation>
+    </message>
+    <message>
+        <source>vk kaydı bekleniyordu.</source>
+        <translation>vk-Datensatz erwartet.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;{}&lt;/b&gt; kullanicisi uzerinde su islem uygulanacak:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Islemden once hedef dosyanin yedegi ayni birime (.dubak) alinir. Kaynak yazma kipine alinacak. Devam edilsin mi?</source>
+        <translation>Für Benutzer &lt;b&gt;{}&lt;/b&gt; wird folgende Aktion ausgeführt:&lt;br&gt;{}&lt;br&gt;&lt;br&gt;Vor der Änderung wird eine Sicherung der Zieldatei auf demselben Volume gespeichert (.dubak). Die Quelle wird in den Schreibmodus gewechselt. Fortfahren?</translation>
+    </message>
+    <message>
+        <source>Bu birimde Windows ya da Linux kullanici hesabi bulunamadi. BitLocker ile sifreliyse once kilidini acin.</source>
+        <translation>Auf diesem Volume wurde kein Windows- oder Linux-Benutzerkonto gefunden. Wenn es mit BitLocker verschlüsselt ist, entsperren Sie es zuerst.</translation>
+    </message>
+    <message>
+        <source>Bu bolumde okunabilir bir dosya sistemi yok.</source>
+        <translation>Diese Partition hat kein lesbares Dateisystem.</translation>
+    </message>
+    <message>
+        <source>Hesabi kilitle</source>
+        <translation>Konto sperren</translation>
+    </message>
+    <message>
+        <source>Islem uygulandi. Eski dosyanin yedegi ayni birimde .dubak olarak duruyor.</source>
+        <translation>Die Änderung wurde angewendet. Eine Sicherung der alten Datei bleibt als .dubak auf demselben Volume.</translation>
+    </message>
+    <message>
+        <source>Kilidi ac</source>
+        <translation>Entsperren</translation>
+    </message>
+    <message>
+        <source>Kullanici:</source>
+        <translation>Benutzer:</translation>
+    </message>
+    <message>
+        <source>OS parola sifirla...</source>
+        <translation>OS-Kennwort zurücksetzen...</translation>
+    </message>
+    <message>
+        <source>OS parola sifirlama</source>
+        <translation>OS-Kennwort zurücksetzen</translation>
+    </message>
+    <message>
+        <source>OS parolasi guncellendi: {} ({})</source>
+        <translation>OS-Kennwort aktualisiert: {} ({})</translation>
+    </message>
+    <message>
+        <source>Onay</source>
+        <translation>Bestätigen</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir (parolasiz)</source>
+        <translation>Kennwort entfernen (kein Kennwort)</translation>
+    </message>
+    <message>
+        <source>Parolayi kaldir ve hesabi etkinlestir</source>
+        <translation>Kennwort entfernen und Konto aktivieren</translation>
+    </message>
+    <message>
+        <source>Sifirlama basarisiz</source>
+        <translation>Zurücksetzen fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Yalnizca hesabi etkinlestir</source>
+        <translation>Nur Konto aktivieren</translation>
+    </message>
+    <message>
+        <source>Yalnizca parolayi kaldir</source>
+        <translation>Nur Kennwort entfernen</translation>
+    </message>
+    <message>
+        <source>Yeni parola</source>
+        <translation>Neues Kennwort</translation>
+    </message>
+    <message>
+        <source>Yeni parola belirle</source>
+        <translation>Neues Kennwort festlegen</translation>
+    </message>
+    <message>
+        <source>{} icin yeni parola:</source>
+        <translation>Neues Kennwort für {}:</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>

@@ -424,6 +424,8 @@ class MainWindow(QMainWindow):
         self.act_carve.triggered.connect(self.carve_files)
         self.act_bl_unlock = QAction(app_icon("shield"), "", self)
         self.act_bl_unlock.triggered.connect(self.unlock_bitlocker)
+        self.act_os_pass = QAction(app_icon("shield"), "", self)
+        self.act_os_pass.triggered.connect(self.reset_os_password)
 
         # --- Fiziksel diskler ---
         self.act_refresh_disks = QAction(app_icon("refresh"), "", self)
@@ -558,6 +560,7 @@ class MainWindow(QMainWindow):
         m_arac.addAction(self.act_scan_lost)
         m_arac.addAction(self.act_carve)
         m_arac.addAction(self.act_bl_unlock)
+        m_arac.addAction(self.act_os_pass)
         m_arac.addSeparator()
         m_arac.addAction(self.act_backup_info)
         m_arac.addAction(self.act_sysinfo)
@@ -684,6 +687,7 @@ class MainWindow(QMainWindow):
         self.act_scan_lost.setText(tr("Kayip bolumleri tara..."))
         self.act_carve.setText(tr("Imza tabanli dosya kurtarma..."))
         self.act_bl_unlock.setText(tr("BitLocker kilidini ac..."))
+        self.act_os_pass.setText(tr("OS parola sifirla..."))
         self.act_refresh_disks.setText(tr("Fiziksel diskleri yenile"))
         self.act_elevate.setText(tr("{} olarak yeniden baslat...", elevation_name()))
         self.act_elevate.setToolTip(
@@ -2096,6 +2100,113 @@ class MainWindow(QMainWindow):
             result, tr("Bolum {} (BitLocker - kilidi acildi)", index))
         self.log(tr("BitLocker birimi kilidi acildi: Bolum {}", index))
         self._update_actions()
+
+    def _detect_os_users(self, fs):
+        """(sistem, kullanicilar): 'windows'/'linux' ya da (None, [])."""
+        from ..core import ospass
+        try:
+            return "windows", ospass.windows_users_fs(fs)
+        except Exception:                              # noqa: BLE001
+            pass
+        try:
+            return "linux", ospass.linux_users(fs)
+        except Exception:                              # noqa: BLE001
+            return None, []
+
+    @staticmethod
+    def _os_user_label(u) -> str:
+        return f"{u.name} ({u.note})" if u.note else u.name
+
+    def reset_os_password(self) -> None:
+        if self.session is None or self.selected_partition is None:
+            return
+        from ..core import ospass
+        index = self.selected_partition
+        try:
+            fs = self.session.filesystem(index)
+        except Exception as exc:                       # noqa: BLE001
+            self.error(tr("Dosya sistemi acilamadi"), str(exc))
+            return
+        if fs is None:
+            QMessageBox.information(self, tr("OS parola sifirlama"),
+                tr("Bu bolumde okunabilir bir dosya sistemi yok."))
+            return
+        system, users = self._detect_os_users(fs)
+        if not users:
+            QMessageBox.information(self, tr("OS parola sifirlama"),
+                tr("Bu birimde Windows ya da Linux kullanici hesabi "
+                   "bulunamadi. BitLocker ile sifreliyse once kilidini acin."))
+            return
+
+        labels = [self._os_user_label(u) for u in users]
+        label, ok = QInputDialog.getItem(self, tr("OS parola sifirlama"),
+                                         tr("Kullanici:"), labels, 0, False)
+        if not ok:
+            return
+        user = users[labels.index(label)]
+
+        if system == "windows":
+            actions = [tr("Parolayi kaldir ve hesabi etkinlestir"),
+                       tr("Yalnizca parolayi kaldir"),
+                       tr("Yalnizca hesabi etkinlestir")]
+        else:
+            actions = [tr("Yeni parola belirle"),
+                       tr("Parolayi kaldir (parolasiz)"),
+                       tr("Hesabi kilitle"), tr("Kilidi ac")]
+        act, ok = QInputDialog.getItem(self, tr("OS parola sifirlama"),
+                                       tr("Islem:"), actions, 0, False)
+        if not ok:
+            return
+        ai = actions.index(act)
+        new_pw = None
+        if system == "linux" and ai == 0:
+            new_pw, ok = QInputDialog.getText(
+                self, tr("Yeni parola"), tr("{} icin yeni parola:", user.name),
+                QLineEdit.Password)
+            if not ok or not new_pw:
+                return
+
+        if QMessageBox.question(
+                self, tr("Onay"),
+                tr("<b>{}</b> kullanicisi uzerinde su islem uygulanacak:<br>{}"
+                   "<br><br>Islemden once hedef dosyanin yedegi ayni birime "
+                   "(.dubak) alinir. Kaynak yazma kipine alinacak. Devam "
+                   "edilsin mi?", user.name, act),
+                QMessageBox.Yes | QMessageBox.No) != QMessageBox.Yes:
+            return
+
+        wfs = self._browser_write_access()
+        if wfs is None:
+            return
+        if not getattr(wfs, "writable", False):
+            self.error(tr("Yazilamiyor"), wfs.write_reason)
+            return
+
+        def work(progress):
+            progress(tr("Uygulaniyor..."), -1)
+            ospass.backup_target(wfs, system)          # once yedek (.dubak)
+            if system == "windows":
+                ospass.windows_reset_fs(wfs, user.uid, blank=ai in (0, 1),
+                                        enable=ai in (0, 2))
+            elif ai == 0:
+                ospass.linux_set_password(wfs, user.name, new_password=new_pw)
+            elif ai == 1:
+                ospass.linux_set_password(wfs, user.name, blank=True)
+            elif ai == 2:
+                ospass.linux_set_password(wfs, user.name, lock=True)
+            else:
+                ospass.linux_set_password(wfs, user.name, unlock=True)
+            return True
+
+        ok2, res = run_task(self, tr("OS parola sifirlama"), work,
+                            power=POWER_SLEEP)
+        if not ok2:
+            self.error(tr("Sifirlama basarisiz"), str(res))
+            return
+        self.log(tr("OS parolasi guncellendi: {} ({})", user.name, act))
+        QMessageBox.information(self, tr("Tamam"),
+            tr("Islem uygulandi. Eski dosyanin yedegi ayni birimde .dubak "
+               "olarak duruyor."))
 
     def carve_files(self) -> None:
         if self.session is None:
@@ -4268,6 +4379,9 @@ class MainWindow(QMainWindow):
         self.act_carve.setEnabled(acik)
         self.act_bl_unlock.setEnabled(acik and part_selected
                                       and self._selected_fs_type() == "BitLocker")
+        _ft = self._selected_fs_type()
+        self.act_os_pass.setEnabled(acik and part_selected
+                                    and (_ft == "NTFS" or _ft.startswith("ext")))
 
     def about(self) -> None:
         # Baglantilar Qt'ye birakilmaz: Linux'ta uygulama root calisir ve
