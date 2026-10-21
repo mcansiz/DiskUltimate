@@ -636,14 +636,19 @@ class DiskSession:
         self._fs_info[part.index] = info
         return info
 
-    def filesystem(self, index: int) -> Optional[FileSystemAccess]:
-        """Bolumun dosya sistemi erisimini dondurur (onbellekli)."""
+    def filesystem(self, index: int, unlock=None) -> Optional[FileSystemAccess]:
+        """Bolumun dosya sistemi erisimini dondurur (onbellekli).
+
+        `unlock` (bitlocker.UnlockKey) BitLocker bolumu icin parola/kurtarma
+        anahtari tasir; verilince onbellek atlanir (yeni sir denenebilsin) ve
+        yanlis sir BitLockerError yukseltir.
+        """
         self._require_table()
-        if index in self._fs_cache:
+        if index in self._fs_cache and not unlock:
             return self._fs_cache[index]
         part = self.table.get(index)
         with diagnostics.span("session.open_filesystem", part=index):
-            fs = open_filesystem(self.view(part), self.detect_fs(part))
+            fs = open_filesystem(self.view(part), self.detect_fs(part), unlock)
         if fs is not None:
             self._fs_cache[index] = fs
         return fs

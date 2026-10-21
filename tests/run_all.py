@@ -8056,6 +8056,39 @@ def t106_grub_onarim_hedefi_ve_geri_yukleme():
         grub.backup_root = eski_kok
 
 
+@test
+def t107_bitlocker_kilit_acma():
+    """BitLocker: sentetik birimi parola ve kurtarma anahtariyla ac, oku."""
+    from diskultimate.core import bitlocker as bl
+    from diskultimate.core.filesystem import open_filesystem, UnsupportedAccess
+    from tests.bitlocker_check import build_volume
+
+    dev, fvek, vmk, salt, plain, lba, hdr = build_volume(password="Gizli!42")
+    info = bl.inspect(dev)
+    assert info.cipher_name == "AES-XTS 128", info.cipher_name
+    assert info.unlockable and any(p.kind == 0x2000 for p in info.protectors)
+
+    # Anahtarsiz: sifreli olarak gorunur, acilmaz.
+    from diskultimate.core.fsdetect import detect
+    fsinfo = detect(dev)
+    assert fsinfo.fs_type == "BitLocker" and fsinfo.encrypted
+    acc = open_filesystem(dev, fsinfo)
+    assert isinstance(acc, UnsupportedAccess)
+
+    # Dogru parola: birim acilir, sifreli sektor cozulur.
+    vol = bl.unlock(dev, password="Gizli!42")
+    assert vol.read(lba * 512, 512) == plain
+    assert vol.read(0x10000, 512) == bytes(512)      # metaveri bolgesi ZERO
+    assert vol.read(0, 512) == hdr                    # yeri degismis baslik
+
+    # Yanlis parola CCM dogrulamasinda anlasilir (sessiz bozulma yok).
+    try:
+        bl.unlock(dev, password="yanlis")
+        assert False, "yanlis parola kabul edildi"
+    except bl.BitLockerError:
+        pass
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

@@ -81,7 +81,7 @@ APP_NAME = "DiskUltimate"
 APP_AUTHOR = "Mikail Cansız"
 # Surumun tek kaynagi burasidir. Degistirildiginde README.md'deki surum rozeti
 # ve .claude/docs/project-overview.md "Durum" satiri da guncellenir.
-APP_VERSION = "0.8.2-beta"
+APP_VERSION = "0.9.0-beta"
 
 # Sekme sirasi tek yerden tanimlanir; `tabs.setCurrentIndex` cagrilari ciplak
 # sayi kullanmaz, boylece sekme sirasi degisince sessizce yanlis sekme acilmaz.
@@ -422,6 +422,8 @@ class MainWindow(QMainWindow):
         self.act_scan_lost.triggered.connect(self.scan_lost)
         self.act_carve = QAction(app_icon("recover"), "", self)
         self.act_carve.triggered.connect(self.carve_files)
+        self.act_bl_unlock = QAction(app_icon("shield"), "", self)
+        self.act_bl_unlock.triggered.connect(self.unlock_bitlocker)
 
         # --- Fiziksel diskler ---
         self.act_refresh_disks = QAction(app_icon("refresh"), "", self)
@@ -555,6 +557,7 @@ class MainWindow(QMainWindow):
         m_arac.addAction(self.act_scan_deleted)
         m_arac.addAction(self.act_scan_lost)
         m_arac.addAction(self.act_carve)
+        m_arac.addAction(self.act_bl_unlock)
         m_arac.addSeparator()
         m_arac.addAction(self.act_backup_info)
         m_arac.addAction(self.act_sysinfo)
@@ -680,6 +683,7 @@ class MainWindow(QMainWindow):
         self.act_scan_deleted.setText(tr("Silinmis dosyalari tara..."))
         self.act_scan_lost.setText(tr("Kayip bolumleri tara..."))
         self.act_carve.setText(tr("Imza tabanli dosya kurtarma..."))
+        self.act_bl_unlock.setText(tr("BitLocker kilidini ac..."))
         self.act_refresh_disks.setText(tr("Fiziksel diskleri yenile"))
         self.act_elevate.setText(tr("{} olarak yeniden baslat...", elevation_name()))
         self.act_elevate.setToolTip(
@@ -2032,6 +2036,66 @@ class MainWindow(QMainWindow):
             selected.start_lba, selected.sector_count,
             self.session.image.sector_size, name=selected.label or "",
             keep_data=True, found_fs=selected.fs_type))
+
+    def _selected_fs_type(self) -> str:
+        """Secili bolumun dosya sistemi anahtari ('BitLocker' vb.) ya da ''."""
+        if self.session is None or self.selected_partition is None:
+            return ""
+        try:
+            return self.session.table.get(self.selected_partition).fs_type or ""
+        except Exception:
+            return ""
+
+    def _ask_bitlocker_key(self):
+        """Parola / 48 haneli kurtarma anahtari sorar; UnlockKey ya da None."""
+        from ..core.bitlocker import UnlockKey
+        dlg = QDialog(self)
+        dlg.setWindowTitle(tr("BitLocker kilidini ac"))
+        form = QFormLayout(dlg)
+        info = QLabel(tr("Parolayi ya da 48 haneli kurtarma anahtarini girin. "
+                         "Unutulmus bir parola kurtarilamaz; biri gereklidir."))
+        info.setWordWrap(True)
+        form.addRow(info)
+        pw = QLineEdit(); pw.setEchoMode(QLineEdit.Password)
+        rec = QLineEdit()
+        rec.setPlaceholderText(tr("000000-000000-... (8 grup)"))
+        form.addRow(tr("Parola:"), pw)
+        form.addRow(tr("Kurtarma anahtari:"), rec)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(dlg.accept)
+        box.rejected.connect(dlg.reject)
+        form.addRow(box)
+        if exec_dialog(dlg) != QDialog.Accepted:
+            return None
+        password = pw.text() or None
+        recovery = rec.text().strip() or None
+        if not password and not recovery:
+            return None
+        return UnlockKey(password=password, recovery=recovery)
+
+    def unlock_bitlocker(self) -> None:
+        if self.session is None or self.selected_partition is None:
+            return
+        if self._selected_fs_type() != "BitLocker":
+            return
+        key = self._ask_bitlocker_key()
+        if key is None:
+            return
+        index = self.selected_partition
+        # Parola germe (~0x100000 SHA-256) uzun surer: arayuzu dondurmemek icin
+        # run_task icinde (CLAUDE.md donma kurali).
+        ok, result = run_task(
+            self, tr("BitLocker kilidi aciliyor"),
+            lambda progress: (progress(tr("Anahtar turetiliyor..."), -1),
+                              self.session.filesystem(index, unlock=key))[1],
+            power=POWER_SLEEP)
+        if not ok:
+            self.error(tr("Kilit acilamadi"), str(result))
+            return
+        self.browser.set_filesystem(
+            result, tr("Bolum {} (BitLocker - kilidi acildi)", index))
+        self.log(tr("BitLocker birimi kilidi acildi: Bolum {}", index))
+        self._update_actions()
 
     def carve_files(self) -> None:
         if self.session is None:
@@ -4202,6 +4266,8 @@ class MainWindow(QMainWindow):
         self.act_scan_deleted.setEnabled(acik and part_selected)
         self.act_scan_lost.setEnabled(acik)
         self.act_carve.setEnabled(acik)
+        self.act_bl_unlock.setEnabled(acik and part_selected
+                                      and self._selected_fs_type() == "BitLocker")
 
     def about(self) -> None:
         # Baglantilar Qt'ye birakilmaz: Linux'ta uygulama root calisir ve

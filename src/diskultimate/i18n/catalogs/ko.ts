@@ -10803,6 +10803,134 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
 
 두 디스크가 같은 컴퓨터에 계속 연결되어 있으면, 디스크 ID가 같기 때문에 운영 체제가 그중 하나를 오프라인으로 전환할 수 있습니다.</translation>
     </message>
+    <message>
+        <source>000000-000000-... (8 grup)</source>
+        <translation>000000-000000-...(8개 그룹)</translation>
+    </message>
+    <message>
+        <source>Akıllı kart</source>
+        <translation>스마트 카드</translation>
+    </message>
+    <message>
+        <source>Anahtar turetiliyor...</source>
+        <translation>키 생성 중...</translation>
+    </message>
+    <message>
+        <source>Açılış anahtarı (USB)</source>
+        <translation>시작 키 (USB)</translation>
+    </message>
+    <message>
+        <source>Birim beklenenden kısa.</source>
+        <translation>볼륨이 예상보다 짧습니다.</translation>
+    </message>
+    <message>
+        <source>BitLocker birimi kilidi acildi: Bolum {}</source>
+        <translation>BitLocker 볼륨 잠금 해제됨: 파티션 {}</translation>
+    </message>
+    <message>
+        <source>BitLocker ile sifreli. Icerigi gormek icin parolayi ya da 48 haneli kurtarma anahtarini girin.</source>
+        <translation>BitLocker로 암호화됨. 내용을 보려면 암호 또는 48자리 복구 키를 입력하세요.</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidi aciliyor</source>
+        <translation>BitLocker 잠금 해제 중</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidini ac</source>
+        <translation>BitLocker 잠금 해제</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidini ac...</source>
+        <translation>BitLocker 잠금 해제...</translation>
+    </message>
+    <message>
+        <source>BitLocker metaverisi okunamadı.</source>
+        <translation>BitLocker 메타데이터를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Bolum {} (BitLocker - kilidi acildi)</source>
+        <translation>파티션 {} (BitLocker - 잠금 해제됨)</translation>
+    </message>
+    <message>
+        <source>Bu birimde BitLocker imzası yok.</source>
+        <translation>이 볼륨에는 BitLocker 서명이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Bu birimde parola koruyucusu yok; kurtarma anahtarı gerekir.</source>
+        <translation>이 볼륨에는 암호 보호기가 없습니다. 복구 키가 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Desteklenmeyen AES anahtar boyu: {} bayt</source>
+        <translation>지원되지 않는 AES 키 크기: {}바이트</translation>
+    </message>
+    <message>
+        <source>FVEK girdisi bulunamadı.</source>
+        <translation>FVEK 항목을 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Geçersiz okuma.</source>
+        <translation>잘못된 읽기입니다.</translation>
+    </message>
+    <message>
+        <source>Kilit acilamadi</source>
+        <translation>잠금을 해제할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtari:</source>
+        <translation>복구 키:</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtarı 48 rakamdan oluşmalıdır (6&apos;şarlı 8 grup).</source>
+        <translation>복구 키는 48자리여야 합니다 (6자리 8개 그룹).</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtarı geçersiz (grup 11&apos;e bölünmüyor).</source>
+        <translation>복구 키가 잘못되었습니다 (그룹이 11로 나누어지지 않음).</translation>
+    </message>
+    <message>
+        <source>Kurtarma parolası</source>
+        <translation>복구 암호</translation>
+    </message>
+    <message>
+        <source>Parola</source>
+        <translation>암호</translation>
+    </message>
+    <message>
+        <source>Parola ya da kurtarma anahtarı gerekli.</source>
+        <translation>암호 또는 복구 키가 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Parola ya da kurtarma anahtarı yanlış (doğrulama başarısız).</source>
+        <translation>암호 또는 복구 키가 잘못되었습니다 (확인 실패).</translation>
+    </message>
+    <message>
+        <source>Parola:</source>
+        <translation>암호:</translation>
+    </message>
+    <message>
+        <source>Parolayi ya da 48 haneli kurtarma anahtarini girin. Unutulmus bir parola kurtarilamaz; biri gereklidir.</source>
+        <translation>암호 또는 48자리 복구 키를 입력하세요. 잊어버린 암호는 복구할 수 없으며, 둘 중 하나가 필요합니다.</translation>
+    </message>
+    <message>
+        <source>TPM</source>
+        <translation>TPM</translation>
+    </message>
+    <message>
+        <source>TPM + PIN</source>
+        <translation>TPM + PIN</translation>
+    </message>
+    <message>
+        <source>Temiz anahtar</source>
+        <translation>일반 텍스트 키</translation>
+    </message>
+    <message>
+        <source>{} bu sürümde desteklenmiyor (yalnızca AES-XTS ve AES-CBC).</source>
+        <translation>{}은(는) 이 버전에서 지원되지 않습니다 (AES-XTS 및 AES-CBC만).</translation>
+    </message>
+    <message>
+        <source>{} bu sürümde desteklenmiyor.</source>
+        <translation>{}은(는) 이 버전에서 지원되지 않습니다.</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>

@@ -10803,6 +10803,134 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
 
 両方のディスクが同じコンピューターに接続されたままの場合、同じディスク ID を持つため、オペレーティングシステムがどちらかをオフラインにすることがあります。</translation>
     </message>
+    <message>
+        <source>000000-000000-... (8 grup)</source>
+        <translation>000000-000000-...（8 グループ）</translation>
+    </message>
+    <message>
+        <source>Akıllı kart</source>
+        <translation>スマートカード</translation>
+    </message>
+    <message>
+        <source>Anahtar turetiliyor...</source>
+        <translation>キーを導出しています...</translation>
+    </message>
+    <message>
+        <source>Açılış anahtarı (USB)</source>
+        <translation>スタートアップ キー (USB)</translation>
+    </message>
+    <message>
+        <source>Birim beklenenden kısa.</source>
+        <translation>ボリュームが想定より短いです。</translation>
+    </message>
+    <message>
+        <source>BitLocker birimi kilidi acildi: Bolum {}</source>
+        <translation>BitLocker ボリュームのロックを解除しました: パーティション {}</translation>
+    </message>
+    <message>
+        <source>BitLocker ile sifreli. Icerigi gormek icin parolayi ya da 48 haneli kurtarma anahtarini girin.</source>
+        <translation>BitLocker で暗号化されています。内容を表示するには、パスワードまたは 48 桁の回復キーを入力してください。</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidi aciliyor</source>
+        <translation>BitLocker のロックを解除しています</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidini ac</source>
+        <translation>BitLocker のロックを解除</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidini ac...</source>
+        <translation>BitLocker のロックを解除...</translation>
+    </message>
+    <message>
+        <source>BitLocker metaverisi okunamadı.</source>
+        <translation>BitLocker のメタデータを読み取れませんでした。</translation>
+    </message>
+    <message>
+        <source>Bolum {} (BitLocker - kilidi acildi)</source>
+        <translation>パーティション {} (BitLocker - ロック解除済み)</translation>
+    </message>
+    <message>
+        <source>Bu birimde BitLocker imzası yok.</source>
+        <translation>このボリュームには BitLocker の署名がありません。</translation>
+    </message>
+    <message>
+        <source>Bu birimde parola koruyucusu yok; kurtarma anahtarı gerekir.</source>
+        <translation>このボリュームにはパスワード保護機能がありません。回復キーが必要です。</translation>
+    </message>
+    <message>
+        <source>Desteklenmeyen AES anahtar boyu: {} bayt</source>
+        <translation>サポートされていない AES キー サイズ: {} バイト</translation>
+    </message>
+    <message>
+        <source>FVEK girdisi bulunamadı.</source>
+        <translation>FVEK エントリが見つかりません。</translation>
+    </message>
+    <message>
+        <source>Geçersiz okuma.</source>
+        <translation>無効な読み取りです。</translation>
+    </message>
+    <message>
+        <source>Kilit acilamadi</source>
+        <translation>ロックを解除できませんでした</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtari:</source>
+        <translation>回復キー:</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtarı 48 rakamdan oluşmalıdır (6&apos;şarlı 8 grup).</source>
+        <translation>回復キーは 48 桁である必要があります (6 桁 8 グループ)。</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtarı geçersiz (grup 11&apos;e bölünmüyor).</source>
+        <translation>回復キーが無効です (グループが 11 で割り切れません)。</translation>
+    </message>
+    <message>
+        <source>Kurtarma parolası</source>
+        <translation>回復パスワード</translation>
+    </message>
+    <message>
+        <source>Parola</source>
+        <translation>パスワード</translation>
+    </message>
+    <message>
+        <source>Parola ya da kurtarma anahtarı gerekli.</source>
+        <translation>パスワードまたは回復キーが必要です。</translation>
+    </message>
+    <message>
+        <source>Parola ya da kurtarma anahtarı yanlış (doğrulama başarısız).</source>
+        <translation>パスワードまたは回復キーが間違っています (検証に失敗しました)。</translation>
+    </message>
+    <message>
+        <source>Parola:</source>
+        <translation>パスワード:</translation>
+    </message>
+    <message>
+        <source>Parolayi ya da 48 haneli kurtarma anahtarini girin. Unutulmus bir parola kurtarilamaz; biri gereklidir.</source>
+        <translation>パスワードまたは 48 桁の回復キーを入力してください。忘れたパスワードは回復できません。いずれかが必要です。</translation>
+    </message>
+    <message>
+        <source>TPM</source>
+        <translation>TPM</translation>
+    </message>
+    <message>
+        <source>TPM + PIN</source>
+        <translation>TPM + PIN</translation>
+    </message>
+    <message>
+        <source>Temiz anahtar</source>
+        <translation>クリア キー</translation>
+    </message>
+    <message>
+        <source>{} bu sürümde desteklenmiyor (yalnızca AES-XTS ve AES-CBC).</source>
+        <translation>{} はこのバージョンではサポートされていません (AES-XTS と AES-CBC のみ)。</translation>
+    </message>
+    <message>
+        <source>{} bu sürümde desteklenmiyor.</source>
+        <translation>{} はこのバージョンではサポートされていません。</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>

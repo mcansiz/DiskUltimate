@@ -6346,3 +6346,52 @@ ana makinede önyükleyiciye yazılmaz). Mimari şeması da güncellendi.
   (açılış dili + iş parçacığı denetimi geçti). Arayüz gezintisi 39122300677
   10/10 iş başarılı (Windows + Linux, aygıt ve görüntü kipleri). Push CI'ı
   yalnızca Linux'ta koşar; Windows/macOS `run_all`/`ui_smoke` sürüm koşusunda.
+
+## 2026-10-21 — BitLocker birimini kilit açma (parola / kurtarma anahtarı) — ADR 0099
+
+Kullanıcı: "Windows için BitLocker şifresi unutulursa bunu düzeltebilir miyiz?"
+Netleştirildi: unutulmuş parola **kırılamaz** (bir kırıcı yazılmaz); yapılan iş
+DiskGenius'un yaptığı gibi kullanıcı parolayı ya da 48 haneli kurtarma
+anahtarını verirse birimi açıp içeriğini (NTFS/FAT) okumak — *kilit açma*.
+
+Yeni modül `core/bitlocker.py` (saf Python, çalışma zamanı bağımlılığı yok):
+1. **Kripto temelleri** — AES (128/256, T-tabloları), AES-XTS (plain64),
+   AES-CBC+EBOIV, AES-CCM (RFC 3610, MAC doğrulamalı). SHA-256 `hashlib`.
+2. **FVE metaveri çözümleme + anahtar türetme** — `inspect()` koruyucuları
+   (parola, kurtarma, TPM, TPM+PIN, açılış anahtarı, akıllı kart, temiz
+   anahtar) **gizli veri sızdırmadan** listeler. Parola germe
+   `SHA256(SHA256(utf16le(parola)))` + 0x100000 turluk zincir; kurtarma: 48
+   hane → 16 bayt → SHA256 → aynı zincir. VMK ve FVEK AES-256-CCM; yanlış sır
+   MAC doğrulamasında anlaşılır (sessiz bozulma yok).
+3. **`BitLockerVolume(BlockDevice)`** — kaynağın üstüne biner, okurken düz
+   metin üretir. Eşleme cryptsetup `_activate` ile birebir: 1:1 XTS, ilk
+   `volume_header_size` bayt fiziksel `volume_header_offset`'ten (tweak orijinal
+   sektör), orijinal konum + 3 FVE metaveri bloğu ZERO.
+
+Bağlama: `open_filesystem(view, info, unlock=)` BitLocker'ı görüp anahtar
+verilmişse birimi açıp içteki dosya sistemini döndürür; anahtarsız eskisi gibi
+`UnsupportedAccess` (artık "parola/kurtarma anahtarı girin" der).
+`session.filesystem(index, unlock=)` anahtarı taşır. GUI: Araçlar >
+"BitLocker kilidini aç…" (yalnızca seçili BitLocker bölümünde etkin), parola/
+kurtarma soran küçük diyalog; parola germe `run_task` içinde (donma kuralı).
+
+**Kapsam:** AES-XTS (Win10/11 varsayılanı) ve AES-CBC+EBOIV tam; AES-CBC+
+Elephant (Vista/7) **henüz yok** — anlamlı hata, çöp veri yok. Yalnızca okuma
+(kaynak salt okunur, ADR 0025).
+
+Yerelde koşulanlar (ana makine, görüntü/sentetik): `bitlocker_check` (AES
+FIPS-197 KAT, XTS/CBC/CCM round-trip + tweak duyarlılığı + kötü-MAC reddi,
+kurtarma çözümü) **TAMAM**; `run_all` yeni t107 (sentetik birimi parola ile
+aç/oku, ZERO bölge, yer değişmiş başlık, yanlış parola reddi) izole **TAMAM**;
+`i18n_check` **BAŞARILI** (32 yeni metin × 9 dil elle eklendi; **not:**
+`--write`/`po.merge` bu ortamda mevcut 110 çeviriyi fuzzy yapıp bozuyor, bu
+yüzden girdiler `ts.py` API'siyle doğrudan eklendi, kalan 2000 çeviriye
+dokunulmadı); `platform_check` 0; `diag_check` 13/13.
+
+**Uçtan uca GERÇEK imaj doğrulaması henüz yapılmadı** (CLAUDE.md: ana makinede
+root yok, çekirdek bağlanmaz). Planı ADR 0099'da: Windows misafirinde
+`manage-bde` ile bilinen parolalı küçük bir imaj üretilir; CI'da (VM)
+`cryptsetup bitlkDump`/`bitlkOpen` ile metaveri ve düz metin çapraz doğrulanır.
+Bu yapılana kadar "gerçek BitLocker diskinde test edildi" **denmez**. Tam
+`run_all`, `ui_smoke` ve gözlemci gezinti ağır olduğu için yerelde koşulmadı
+(GitHub).

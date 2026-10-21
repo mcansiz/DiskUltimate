@@ -975,6 +975,10 @@ class UnsupportedAccess(FileSystemAccess):
 
     def listdir(self, path: str = "/") -> List[FileNode]:
         if self.info.encrypted:
+            if self.fs_type == "BitLocker":
+                raise FatError(tr("BitLocker ile sifreli. Icerigi gormek icin "
+                                  "parolayi ya da 48 haneli kurtarma anahtarini "
+                                  "girin."))
             raise FatError(tr("{} sifreli bir birimdir; icerigi anahtar "
                               "olmadan okunamaz.", self.fs_type))
         if self.info.container:
@@ -1001,23 +1005,46 @@ def _has_iso(view: BlockDevice) -> bool:
         return False
 
 
+def _open_bitlocker(view: BlockDevice, info: FSInfo,
+                    unlock) -> FileSystemAccess:
+    """BitLocker birimi: anahtar verilmisse acip ic dosya sistemini dondurur,
+    yoksa (sifreli) UnsupportedAccess. Yanlis sir BitLockerError yukseltir."""
+    if not unlock:
+        return UnsupportedAccess(info)
+    from . import bitlocker
+    volume = bitlocker.unlock(view, password=unlock.password,
+                              recovery=unlock.recovery)
+    inner = _open_filesystem(volume, None, None)
+    if inner is None:
+        inner = UnsupportedAccess(info)
+    inner.device = volume            # aygit duzeyi okuma da cozulsun
+    inner.bitlocker_unlocked = True  # kaynak BitLocker ile sifreliydi
+    return inner
+
+
 def open_filesystem(view: BlockDevice,
-                    info: Optional[FSInfo] = None) -> Optional[FileSystemAccess]:
+                    info: Optional[FSInfo] = None,
+                    unlock=None) -> Optional[FileSystemAccess]:
     """Bolum uzerindeki dosya sistemi icin erisim nesnesi dondurur.
 
-    Bicimlendirilmemis bolumlerde None doner.
+    Bicimlendirilmemis bolumlerde None doner. `unlock` (bitlocker.UnlockKey)
+    verilirse BitLocker birimi parola/kurtarma anahtariyla acilir; yanlis
+    sir BitLockerError yukseltir (cagiran kullaniciya gosterir).
     """
-    access = _open_filesystem(view, info)
-    if access is not None:
+    access = _open_filesystem(view, info, unlock)
+    if access is not None and getattr(access, "device", None) is None:
         access.device = view
     return access
 
 
 def _open_filesystem(view: BlockDevice,
-                     info: Optional[FSInfo]) -> Optional[FileSystemAccess]:
+                     info: Optional[FSInfo],
+                     unlock=None) -> Optional[FileSystemAccess]:
     info = info or detect(view)
     if not info.fs_type:
         return None
+    if info.fs_type == "BitLocker":
+        return _open_bitlocker(view, info, unlock)
     if info.fs_type.startswith("FAT"):
         try:
             return FatAccess(view)

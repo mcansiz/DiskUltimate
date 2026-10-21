@@ -10803,6 +10803,134 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
 
 如果两个磁盘都连接在同一台计算机上，由于它们的磁盘 ID 相同，操作系统可能会将其中一个设为脱机。</translation>
     </message>
+    <message>
+        <source>000000-000000-... (8 grup)</source>
+        <translation>000000-000000-...（8 组）</translation>
+    </message>
+    <message>
+        <source>Akıllı kart</source>
+        <translation>智能卡</translation>
+    </message>
+    <message>
+        <source>Anahtar turetiliyor...</source>
+        <translation>正在推导密钥...</translation>
+    </message>
+    <message>
+        <source>Açılış anahtarı (USB)</source>
+        <translation>启动密钥 (USB)</translation>
+    </message>
+    <message>
+        <source>Birim beklenenden kısa.</source>
+        <translation>卷比预期的短。</translation>
+    </message>
+    <message>
+        <source>BitLocker birimi kilidi acildi: Bolum {}</source>
+        <translation>BitLocker 卷已解锁：分区 {}</translation>
+    </message>
+    <message>
+        <source>BitLocker ile sifreli. Icerigi gormek icin parolayi ya da 48 haneli kurtarma anahtarini girin.</source>
+        <translation>已用 BitLocker 加密。输入密码或 48 位恢复密钥以查看内容。</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidi aciliyor</source>
+        <translation>正在解锁 BitLocker</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidini ac</source>
+        <translation>解锁 BitLocker</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidini ac...</source>
+        <translation>解锁 BitLocker...</translation>
+    </message>
+    <message>
+        <source>BitLocker metaverisi okunamadı.</source>
+        <translation>无法读取 BitLocker 元数据。</translation>
+    </message>
+    <message>
+        <source>Bolum {} (BitLocker - kilidi acildi)</source>
+        <translation>分区 {}（BitLocker - 已解锁）</translation>
+    </message>
+    <message>
+        <source>Bu birimde BitLocker imzası yok.</source>
+        <translation>此卷没有 BitLocker 签名。</translation>
+    </message>
+    <message>
+        <source>Bu birimde parola koruyucusu yok; kurtarma anahtarı gerekir.</source>
+        <translation>此卷没有密码保护程序；需要恢复密钥。</translation>
+    </message>
+    <message>
+        <source>Desteklenmeyen AES anahtar boyu: {} bayt</source>
+        <translation>不支持的 AES 密钥大小：{} 字节</translation>
+    </message>
+    <message>
+        <source>FVEK girdisi bulunamadı.</source>
+        <translation>未找到 FVEK 条目。</translation>
+    </message>
+    <message>
+        <source>Geçersiz okuma.</source>
+        <translation>无效的读取。</translation>
+    </message>
+    <message>
+        <source>Kilit acilamadi</source>
+        <translation>无法解锁</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtari:</source>
+        <translation>恢复密钥：</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtarı 48 rakamdan oluşmalıdır (6&apos;şarlı 8 grup).</source>
+        <translation>恢复密钥必须为 48 位数字（8 组，每组 6 位）。</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtarı geçersiz (grup 11&apos;e bölünmüyor).</source>
+        <translation>恢复密钥无效（某一组不能被 11 整除）。</translation>
+    </message>
+    <message>
+        <source>Kurtarma parolası</source>
+        <translation>恢复密码</translation>
+    </message>
+    <message>
+        <source>Parola</source>
+        <translation>密码</translation>
+    </message>
+    <message>
+        <source>Parola ya da kurtarma anahtarı gerekli.</source>
+        <translation>需要密码或恢复密钥。</translation>
+    </message>
+    <message>
+        <source>Parola ya da kurtarma anahtarı yanlış (doğrulama başarısız).</source>
+        <translation>密码或恢复密钥错误（验证失败）。</translation>
+    </message>
+    <message>
+        <source>Parola:</source>
+        <translation>密码：</translation>
+    </message>
+    <message>
+        <source>Parolayi ya da 48 haneli kurtarma anahtarini girin. Unutulmus bir parola kurtarilamaz; biri gereklidir.</source>
+        <translation>输入密码或 48 位恢复密钥。忘记的密码无法恢复；二者需其一。</translation>
+    </message>
+    <message>
+        <source>TPM</source>
+        <translation>TPM</translation>
+    </message>
+    <message>
+        <source>TPM + PIN</source>
+        <translation>TPM + PIN</translation>
+    </message>
+    <message>
+        <source>Temiz anahtar</source>
+        <translation>明文密钥</translation>
+    </message>
+    <message>
+        <source>{} bu sürümde desteklenmiyor (yalnızca AES-XTS ve AES-CBC).</source>
+        <translation>此版本不支持 {}（仅支持 AES-XTS 和 AES-CBC）。</translation>
+    </message>
+    <message>
+        <source>{} bu sürümde desteklenmiyor.</source>
+        <translation>此版本不支持 {}。</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>

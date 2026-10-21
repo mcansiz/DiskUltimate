@@ -10813,6 +10813,134 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
 
 Если оба диска останутся подключёнными к одному компьютеру, операционная система может перевести один из них в автономный режим, так как у них одинаковый идентификатор диска.</translation>
     </message>
+    <message>
+        <source>000000-000000-... (8 grup)</source>
+        <translation>000000-000000-... (8 групп)</translation>
+    </message>
+    <message>
+        <source>Akıllı kart</source>
+        <translation>Смарт-карта</translation>
+    </message>
+    <message>
+        <source>Anahtar turetiliyor...</source>
+        <translation>Вычисление ключа...</translation>
+    </message>
+    <message>
+        <source>Açılış anahtarı (USB)</source>
+        <translation>Ключ запуска (USB)</translation>
+    </message>
+    <message>
+        <source>Birim beklenenden kısa.</source>
+        <translation>Том короче ожидаемого.</translation>
+    </message>
+    <message>
+        <source>BitLocker birimi kilidi acildi: Bolum {}</source>
+        <translation>Том BitLocker разблокирован: раздел {}</translation>
+    </message>
+    <message>
+        <source>BitLocker ile sifreli. Icerigi gormek icin parolayi ya da 48 haneli kurtarma anahtarini girin.</source>
+        <translation>Зашифровано с помощью BitLocker. Введите пароль или 48-значный ключ восстановления, чтобы просмотреть содержимое.</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidi aciliyor</source>
+        <translation>Разблокировка BitLocker</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidini ac</source>
+        <translation>Разблокировать BitLocker</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidini ac...</source>
+        <translation>Разблокировать BitLocker...</translation>
+    </message>
+    <message>
+        <source>BitLocker metaverisi okunamadı.</source>
+        <translation>Не удалось прочитать метаданные BitLocker.</translation>
+    </message>
+    <message>
+        <source>Bolum {} (BitLocker - kilidi acildi)</source>
+        <translation>Раздел {} (BitLocker — разблокирован)</translation>
+    </message>
+    <message>
+        <source>Bu birimde BitLocker imzası yok.</source>
+        <translation>На этом томе нет сигнатуры BitLocker.</translation>
+    </message>
+    <message>
+        <source>Bu birimde parola koruyucusu yok; kurtarma anahtarı gerekir.</source>
+        <translation>На этом томе нет защиты паролем; требуется ключ восстановления.</translation>
+    </message>
+    <message>
+        <source>Desteklenmeyen AES anahtar boyu: {} bayt</source>
+        <translation>Неподдерживаемый размер ключа AES: {} байт</translation>
+    </message>
+    <message>
+        <source>FVEK girdisi bulunamadı.</source>
+        <translation>Запись FVEK не найдена.</translation>
+    </message>
+    <message>
+        <source>Geçersiz okuma.</source>
+        <translation>Недопустимое чтение.</translation>
+    </message>
+    <message>
+        <source>Kilit acilamadi</source>
+        <translation>Не удалось разблокировать</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtari:</source>
+        <translation>Ключ восстановления:</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtarı 48 rakamdan oluşmalıdır (6&apos;şarlı 8 grup).</source>
+        <translation>Ключ восстановления должен состоять из 48 цифр (8 групп по 6).</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtarı geçersiz (grup 11&apos;e bölünmüyor).</source>
+        <translation>Ключ восстановления недействителен (группа не делится на 11).</translation>
+    </message>
+    <message>
+        <source>Kurtarma parolası</source>
+        <translation>Пароль восстановления</translation>
+    </message>
+    <message>
+        <source>Parola</source>
+        <translation>Пароль</translation>
+    </message>
+    <message>
+        <source>Parola ya da kurtarma anahtarı gerekli.</source>
+        <translation>Требуется пароль или ключ восстановления.</translation>
+    </message>
+    <message>
+        <source>Parola ya da kurtarma anahtarı yanlış (doğrulama başarısız).</source>
+        <translation>Неверный пароль или ключ восстановления (проверка не пройдена).</translation>
+    </message>
+    <message>
+        <source>Parola:</source>
+        <translation>Пароль:</translation>
+    </message>
+    <message>
+        <source>Parolayi ya da 48 haneli kurtarma anahtarini girin. Unutulmus bir parola kurtarilamaz; biri gereklidir.</source>
+        <translation>Введите пароль или 48-значный ключ восстановления. Забытый пароль восстановить нельзя; требуется одно из двух.</translation>
+    </message>
+    <message>
+        <source>TPM</source>
+        <translation>TPM</translation>
+    </message>
+    <message>
+        <source>TPM + PIN</source>
+        <translation>TPM + PIN</translation>
+    </message>
+    <message>
+        <source>Temiz anahtar</source>
+        <translation>Открытый ключ</translation>
+    </message>
+    <message>
+        <source>{} bu sürümde desteklenmiyor (yalnızca AES-XTS ve AES-CBC).</source>
+        <translation>{} не поддерживается в этой версии (только AES-XTS и AES-CBC).</translation>
+    </message>
+    <message>
+        <source>{} bu sürümde desteklenmiyor.</source>
+        <translation>{} не поддерживается в этой версии.</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>

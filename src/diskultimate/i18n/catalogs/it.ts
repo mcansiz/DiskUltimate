@@ -10808,6 +10808,134 @@ Iki disk ayni bilgisayarda takili kalirsa ayni disk kimligini tasidiklari icin i
 
 Se entrambi i dischi restano collegati allo stesso computer, il sistema operativo potrebbe metterne offline uno perché hanno lo stesso ID disco.</translation>
     </message>
+    <message>
+        <source>000000-000000-... (8 grup)</source>
+        <translation>000000-000000-... (8 gruppi)</translation>
+    </message>
+    <message>
+        <source>Akıllı kart</source>
+        <translation>Smart card</translation>
+    </message>
+    <message>
+        <source>Anahtar turetiliyor...</source>
+        <translation>Derivazione della chiave...</translation>
+    </message>
+    <message>
+        <source>Açılış anahtarı (USB)</source>
+        <translation>Chiave di avvio (USB)</translation>
+    </message>
+    <message>
+        <source>Birim beklenenden kısa.</source>
+        <translation>Il volume è più corto del previsto.</translation>
+    </message>
+    <message>
+        <source>BitLocker birimi kilidi acildi: Bolum {}</source>
+        <translation>Volume BitLocker sbloccato: partizione {}</translation>
+    </message>
+    <message>
+        <source>BitLocker ile sifreli. Icerigi gormek icin parolayi ya da 48 haneli kurtarma anahtarini girin.</source>
+        <translation>Crittografato con BitLocker. Immettere la password o la chiave di ripristino di 48 cifre per visualizzare il contenuto.</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidi aciliyor</source>
+        <translation>Sblocco di BitLocker</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidini ac</source>
+        <translation>Sblocca BitLocker</translation>
+    </message>
+    <message>
+        <source>BitLocker kilidini ac...</source>
+        <translation>Sblocca BitLocker...</translation>
+    </message>
+    <message>
+        <source>BitLocker metaverisi okunamadı.</source>
+        <translation>Impossibile leggere i metadati di BitLocker.</translation>
+    </message>
+    <message>
+        <source>Bolum {} (BitLocker - kilidi acildi)</source>
+        <translation>Partizione {} (BitLocker - sbloccato)</translation>
+    </message>
+    <message>
+        <source>Bu birimde BitLocker imzası yok.</source>
+        <translation>Questo volume non ha una firma BitLocker.</translation>
+    </message>
+    <message>
+        <source>Bu birimde parola koruyucusu yok; kurtarma anahtarı gerekir.</source>
+        <translation>Questo volume non ha una protezione con password; è necessaria una chiave di ripristino.</translation>
+    </message>
+    <message>
+        <source>Desteklenmeyen AES anahtar boyu: {} bayt</source>
+        <translation>Dimensione della chiave AES non supportata: {} byte</translation>
+    </message>
+    <message>
+        <source>FVEK girdisi bulunamadı.</source>
+        <translation>Voce FVEK non trovata.</translation>
+    </message>
+    <message>
+        <source>Geçersiz okuma.</source>
+        <translation>Lettura non valida.</translation>
+    </message>
+    <message>
+        <source>Kilit acilamadi</source>
+        <translation>Sblocco non riuscito</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtari:</source>
+        <translation>Chiave di ripristino:</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtarı 48 rakamdan oluşmalıdır (6&apos;şarlı 8 grup).</source>
+        <translation>La chiave di ripristino deve essere di 48 cifre (8 gruppi da 6).</translation>
+    </message>
+    <message>
+        <source>Kurtarma anahtarı geçersiz (grup 11&apos;e bölünmüyor).</source>
+        <translation>La chiave di ripristino non è valida (un gruppo non è divisibile per 11).</translation>
+    </message>
+    <message>
+        <source>Kurtarma parolası</source>
+        <translation>Password di ripristino</translation>
+    </message>
+    <message>
+        <source>Parola</source>
+        <translation>Password</translation>
+    </message>
+    <message>
+        <source>Parola ya da kurtarma anahtarı gerekli.</source>
+        <translation>È necessaria una password o una chiave di ripristino.</translation>
+    </message>
+    <message>
+        <source>Parola ya da kurtarma anahtarı yanlış (doğrulama başarısız).</source>
+        <translation>La password o la chiave di ripristino è errata (verifica non riuscita).</translation>
+    </message>
+    <message>
+        <source>Parola:</source>
+        <translation>Password:</translation>
+    </message>
+    <message>
+        <source>Parolayi ya da 48 haneli kurtarma anahtarini girin. Unutulmus bir parola kurtarilamaz; biri gereklidir.</source>
+        <translation>Immettere la password o la chiave di ripristino di 48 cifre. Una password dimenticata non può essere recuperata; è necessaria una delle due.</translation>
+    </message>
+    <message>
+        <source>TPM</source>
+        <translation>TPM</translation>
+    </message>
+    <message>
+        <source>TPM + PIN</source>
+        <translation>TPM + PIN</translation>
+    </message>
+    <message>
+        <source>Temiz anahtar</source>
+        <translation>Chiave in chiaro</translation>
+    </message>
+    <message>
+        <source>{} bu sürümde desteklenmiyor (yalnızca AES-XTS ve AES-CBC).</source>
+        <translation>{} non è supportato in questa versione (solo AES-XTS e AES-CBC).</translation>
+    </message>
+    <message>
+        <source>{} bu sürümde desteklenmiyor.</source>
+        <translation>{} non è supportato in questa versione.</translation>
+    </message>
 </context>
 <context>
     <name>tema</name>
