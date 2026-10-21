@@ -56,6 +56,13 @@ jobs:
         run: python -m tests.diag_check
       - name: Cekirdek testleri
         run: python -m tests.run_all
+      # Kripto vektorleri ve parola zincirleri (ADR 0099/0100): AES/XTS/CCM
+      # KAT, sha512crypt (openssl'e karsi), BitLocker + OS parola tam zincir.
+      - name: Kripto ve parola denetimleri
+        shell: bash
+        run: |
+          python -m tests.bitlocker_check
+          python -m tests.ospass_check
       # Yabanci girdi regresyonlari (ADR 0094): gercek mkfs/sfdisk ciktisina
       # karsi; arac olmayan platformda ATLANDI yazar, gecmis sayilmaz.
       - name: Uyumluluk regresyonlari
