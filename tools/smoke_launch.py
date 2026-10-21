@@ -60,7 +60,12 @@ def main() -> int:
     version, command = sys.argv[1], sys.argv[2:]
     # "minimal": pakette her zaman bulunan ekransiz Qt eklentisi. "offscreen"
     # boyut icin PyInstaller paketinden atiliyor (DiskUltimate.spec).
+    # Dil `tr`'ye sabitlenir: aranan "<surum> baslatildi" kaynak (Turkce)
+    # metnidir; CI kosucusunun yerel ayari (ornegin en) uygulanirsa gunluge
+    # cevrilmis "started" yazilir ve denetim bosa duser (acilis dili artik
+    # gercekten uygulaniyor — commit 72fbc9d). Env override belgelenen yoldur.
     env = dict(os.environ, QT_QPA_PLATFORM="minimal",
+               DISKULTIMATE_LANG="tr",
                DISKULTIMATE_NO_ELEVATION_PROMPT="1",
                DISKULTIMATE_UPDATE_CHECK="0")
     start = time.time()
