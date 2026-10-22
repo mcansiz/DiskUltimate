@@ -2138,6 +2138,12 @@ class MainWindow(QMainWindow):
                    "bulunamadi. BitLocker ile sifreliyse once kilidini acin."))
             return
 
+        # Linux'ta onlarca servis/sistem hesabi listeyi bogar; varsayilan
+        # yalnizca giris yapilabilen hesaplar (root + gercek kullanicilar).
+        if system == "linux":
+            logins = [u for u in users if not getattr(u, "is_system", False)]
+            if logins:
+                users = logins
         labels = [self._os_user_label(u) for u in users]
         label, ok = QInputDialog.getItem(self, tr("OS parola sifirlama"),
                                          tr("Kullanici:"), labels, 0, False)

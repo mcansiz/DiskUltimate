@@ -107,6 +107,13 @@ class OsUser:
     status: str = ""            # '', 'yok', 'kilitli', 'sistem'
     disabled: bool = False
     note: str = ""              # görünen ipucu (ör. "parola yok")
+    is_system: bool = False     # servis/sistem hesabı (arayüzde varsayılan gizli)
+
+
+# Giriş kabuğu olmayan hesaplar (sistem/servis). Düşük/yüksek UID ile birlikte
+# "insan giriş hesabı değil" ayrımında kullanılır.
+_NOLOGIN = ("nologin", "/false", "/bin/false", "/bin/sync", "/dev/null")
+_UID_MIN, _UID_MAX = 1000, 60000    # Ubuntu/Debian normal kullanıcı aralığı
 
 
 # Misafir birim içindeki yollar (ana makine değil — ADR 0100).
@@ -128,7 +135,7 @@ def _read_text(fs, path: str) -> str:
         raise OsPassError(tr("{} okunamadı: {}", path, exc))
 
 
-def linux_users(fs, system_uid_max: int = 999) -> List[OsUser]:
+def linux_users(fs) -> List[OsUser]:
     """`/etc/passwd` + `/etc/shadow`'dan kullanıcıları listeler."""
     passwd = _read_text(fs, "/etc/passwd")
     shadow = _read_text(fs, "/etc/shadow")
@@ -147,9 +154,15 @@ def linux_users(fs, system_uid_max: int = 999) -> List[OsUser]:
             uidn = int(uid)
         except ValueError:
             continue
+        shell = parts[6].strip()
         pw = sh.get(name, parts[1])
         u = OsUser(system="linux", name=name, uid=uidn)
-        if uidn != 0 and uidn <= system_uid_max:
+        # Sistem/servis hesabı: root dışında, normal kullanıcı UID aralığının
+        # dışında ya da giriş kabuğu olmayan. (Arayüz bunları varsayılan gizler;
+        # root ve gerçek kullanıcılar kalır.)
+        nologin = (not shell) or any(shell.endswith(s) for s in _NOLOGIN)
+        if uidn != 0 and (uidn < _UID_MIN or uidn > _UID_MAX or nologin):
+            u.is_system = True
             u.status = "sistem"
         if pw == "" :
             u.note = tr("parola yok")
