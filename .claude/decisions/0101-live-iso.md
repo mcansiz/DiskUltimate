@@ -1,8 +1,9 @@
 # 0101 — Live ISO: Debian tabanı + AppImage katmanı
 
 Tarih: 2026-10-24
-Durum: **uygulanıyor** — derleme ve QEMU açılış denemesi GitHub Actions'ta;
-ilk koşunun sonucu bekleniyor. Gerçek donanımda **henüz denenmedi**.
+Durum: **uygulandı (CI'da doğrulandı)** — ISO GitHub Actions'ta kuruluyor ve
+QEMU'da BIOS / UEFI / UEFI + Secure Boot kiplerinin üçünde de açılıyor
+(2026-10-24, run 40088635281). Gerçek donanımda **henüz denenmedi**.
 İlgili: [0050](0050-linux-dagitimi-appimage-ve-musl.md) (AppImage), [0079](0079-github-actions-ci-ve-surum.md),
 [0080](0080-uzun-testler-plani.md) (CI makineleri VM sayılır),
 [0014](0014-fiziksel-disk-destegi.md) (güvenlik katmanları).
@@ -116,9 +117,25 @@ olmayan sistem, bilinmeyen aygıt).
 - **AppImage'ı katman yerine ISO kök dizinine koymak:** `toram` ile açılışta
   ortam serbest kalır, dosya kaybolurdu; katmanı live-boot RAM'e kopyalar.
 
+## Ölçülen sonuçlar (2026-10-24)
+
+| Koşu | ISO | BIOS | UEFI | UEFI + SB | Not |
+|---|---|---|---|---|---|
+| 40087316881 | 474 MB | 29 sn | 31 sn | 31 sn (`sb=1`) | apt dizinleri, /boot kopyası, kırpılmamış ilk aşama dosyaları, cpp |
+| 40088635281 | **360 MB** | 31 sn | 35 sn | 33 sn (`sb=1`) | düzeltmelerden sonra; taban 322 MB + AppImage katmanı 38 MB |
+
+Süre: taban kurulumu dahil tüm iş ~6 dk; taban önbellekteyken katman +
+üç açılış denemesi ~3 dk. Açılış süreleri GRUB'un 10 sn beklemesini içerir.
+
+Live ekran görüntüsü uygulamada iki kusur gösterdi (düzeltildi): disk
+satırında çevrilmemiş "bilinmeyen" ve durum çubuğundaki 🔑 için glif yok
+(`fonts-symbola` eklendi). Uygulama tam ekran açıldığı için masaüstü
+simgeleri ekran görüntüsünde görünmüyor; gözle **doğrulanmadı**.
+
 ## Açık işler
 
-- İlk CI koşusunun sonucu (taban kuruluyor mu, üç kip açılıyor mu, boyut).
+- Secure Boot denemesi iki koşuda geçti → `continue-on-error` kaldırılabilir.
+- Masaüstü simgeleri ve jwm menüsü gözle (uygulama küçültülmüşken) denenmeli.
 - Gerçek donanımda en az iki makinede deneme; o zamana dek "deneysel".
 - `fonts-wqy-microhei`'nin Japonca/Korece glif kapsamı gözle doğrulanmalı.
 - Lisans: `*.packages.txt` manifesti release'e girer; kaynak için

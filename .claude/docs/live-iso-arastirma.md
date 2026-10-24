@@ -151,6 +151,12 @@ seçeneğinde ilk paketi seçer (apt farklı seçebilir); kurulum betiklerinin
 `libmatchbox1` (<1 MB) indirilmedi. Gerçek sayı Faz 0'daki CI derlemesinde
 çıkacak — beklenen sapma ±%10.
 
+**Gerçek derleme (CI, 2026-10-24):** ilk ISO 474 MB çıktı — ölçümün dışında
+kalan live-build varsayılanları (apt dizinleri 150 MB, `/boot` kopyası,
+ilk aşama paketlerinin kırpılmamış dosyaları) ve `x11-xserver-utils` → `cpp`.
+Düzeltmelerden sonra **360 MB** (taban 322 MB + AppImage katmanı 38 MB;
+masaüstü jwm + pcmanfm dahil). Ayrıntı: ADR 0101.
+
 **Kararı etkileyen iki bulgu:**
 1. **Pencere yöneticisi boyutu belirliyor:** openbox ghostscript zincirini
    çekiyor (~25 MB squashfs). matchbox tek uygulamalı (kiosk) kullanıma da

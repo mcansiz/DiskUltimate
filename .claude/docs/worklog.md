@@ -6540,3 +6540,10 @@ ISO boyutu — ilk CI koşusu bekleniyor.
 - Ekran görüntüsünde iki uygulama kusuru: disk satırında çevrilmemiş
   "bilinmeyen" (`main_window.py`, iki yerde `tr()` eksikti — düzeltildi);
   durum çubuğundaki 🔑 glifi yok → `fonts-symbola` (1,3 MB) eklendi.
+
+## 2026-10-24 (5) — Live ISO ikinci koşu: 360 MB, üç kip geçti
+
+Run 40088635281: ISO **360 MB** (474'ten), BIOS 31 sn / UEFI 35 sn / UEFI+SB
+33 sn (`sb=1`), uygulama penceresi üçünde de geldi. Ekran görüntüsünde
+"unknown" ve 🔑 glifi doğru görünüyor. CI (tam test) ve arayüz gezintisi
+yeşil. ADR 0101 sonuç tablosu güncellendi.
