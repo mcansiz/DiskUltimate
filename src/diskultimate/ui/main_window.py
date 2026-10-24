@@ -3491,7 +3491,7 @@ class MainWindow(QMainWindow):
             for path in sorted(now - before):
                 d = by_path[path]
                 self.log(tr("Aygit takildi: {} — {} ({})",
-                            d.name, d.model or 'bilinmeyen',
+                            d.name, d.model or tr("bilinmeyen"),
                             human_size(d.size)))
             for path in sorted(before - now):
                 self.log(tr("Aygit cikarildi: {}", old_names.get(path, path)))
@@ -3676,7 +3676,8 @@ class MainWindow(QMainWindow):
         f = root.font(0); f.setBold(True); root.setFont(0, f)
 
         for d in diskler:
-            metin = f"{d.name} — {d.model or 'bilinmeyen'} ({human_size(d.size)})"
+            model = d.model or tr("bilinmeyen")
+            metin = f"{d.name} — {model} ({human_size(d.size)})"
             item = QTreeWidgetItem(root, [metin])
             item.setData(0, Qt.UserRole, ("phys", d.path))
             if d.risk_level == "sistem":

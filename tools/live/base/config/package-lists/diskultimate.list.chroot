@@ -12,12 +12,13 @@ locales
 keyboard-configuration
 
 # Grafik: en kucuk X + jwm (gorev cubugu, menu) + pcmanfm (masaustu simgeleri)
+# x11-xserver-utils YOK: xrdb'si icin cpp'yi (cc1, 33 MB) ceker; ekran
+# kararmasi xorg.conf.d ile kapatilir.
 xserver-xorg-core
 xserver-xorg-video-fbdev
 xserver-xorg-video-vesa
 xserver-xorg-input-libinput
 xinit
-x11-xserver-utils
 x11-xkb-utils
 x11-utils
 jwm
@@ -25,6 +26,8 @@ pcmanfm
 xterm
 fonts-dejavu-core
 fonts-wqy-microhei
+# Arayuzdeki simge karakterleri (🔑 🔒 ⏳); DejaVu'da yok, 1,3 MB
+fonts-symbola
 
 # AppImage'in sistemden bekledigi kitapliklar (release.yml deneme acilisiyla ayni)
 # + FUSE (AppImage baglamasi; yoksa baslatici cikartarak calistirir)

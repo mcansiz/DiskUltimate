@@ -7,3 +7,16 @@ chmod 755 /root/Desktop/*.desktop
 mkdir -p /opt/diskultimate
 # Masaustu yoneticisi yok: grafik oturumu tty1 otomatik girisi baslatir.
 systemctl set-default multi-user.target
+
+# Ilk asamada (debootstrap, live-build hazirligi) kurulan paketler dpkg kirpma
+# kuralindan (includes.chroot_before_packages) ONCE geldi; onlarin belge, man
+# ve dil dosyalari burada silinir. Ilk derlemede ~48 MB dil dosyasi kalmisti.
+find /usr/share/doc -mindepth 2 ! -type d ! -name copyright -delete
+find /usr/share/doc -mindepth 1 -type d -empty -delete
+rm -rf /usr/share/man/* /usr/share/info/* /usr/share/lintian/*
+for d in /usr/share/locale/*/; do
+  case "$(basename "$d")" in
+    tr|en|en_*|de|fr|it|es|ru|zh_CN|ja|ko) ;;
+    *) rm -rf "$d" ;;
+  esac
+done

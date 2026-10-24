@@ -6524,3 +6524,19 @@ simgesi olsun.
 
 Henüz ölçülmeyen: tabanın gerçekten kurulduğu, üç kipin açıldığı, gerçek
 ISO boyutu — ilk CI koşusu bekleniyor.
+
+## 2026-10-24 (4) — Live ISO ilk CI koşusu: üç kip geçti, boyut küçültme
+
+İlk koşu (run 40087316881, 5 dk 17 sn; taban kurulumu dahil):
+- **BIOS** 29 sn, **UEFI** 31 sn, **UEFI + Secure Boot** 31 sn — üçünde de
+  uygulama penceresi geldi; SB kipinde misafir `sb=1` bildirdi (ölçüldü).
+- ISO **474 MB** (tahmin ~340). Squashfs dökümüyle bulunan fazlalıklar:
+  `/var/lib/apt` 150 MB (live-build `--apt-indices` varsayılanı), ilk aşama
+  paketlerinin dil/belge dosyaları ~60 MB (dpkg kırpma kuralı onlardan sonra
+  geliyor), `/boot`'ta çekirdek + initrd kopyası 52 MB, `x11-xserver-utils` →
+  `cpp` (cc1) 33 MB. Python 3.13'ü `xfsprogs` çekiyor (gerekli, kaldı).
+- Düzeltmeler: `--apt-indices false`; `config/rootfs/excludes` (/boot);
+  kancada artık dosya kırpma; `xset` yerine `xorg.conf.d` (ekran kararmasın).
+- Ekran görüntüsünde iki uygulama kusuru: disk satırında çevrilmemiş
+  "bilinmeyen" (`main_window.py`, iki yerde `tr()` eksikti — düzeltildi);
+  durum çubuğundaki 🔑 glifi yok → `fonts-symbola` (1,3 MB) eklendi.

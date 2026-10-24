@@ -1,0 +1,3 @@
+boot/vmlinuz-*
+boot/initrd.img-*
+boot/System.map-*

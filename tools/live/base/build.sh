@@ -37,6 +37,7 @@ lb config \
   --archive-areas "main non-free-firmware" \
   --security true --updates true \
   --apt-recommends false \
+  --apt-indices false \
   --cache-packages false \
   --firmware-binary false --firmware-chroot false \
   --debian-installer none \

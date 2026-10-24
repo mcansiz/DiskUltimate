@@ -17,9 +17,6 @@ if [ -d /sys/firmware/efi ]; then
 fi
 du_mark "SESSION-START fw=$FW sb=$SB"
 
-# Uzun islemler sirasinda ekran kararmasin.
-xset s off s noblank -dpms 2>/dev/null
-
 # Klavye: live-config `keyboard-layouts=` ile /etc/default/keyboard'u yazar.
 if [ -r /etc/default/keyboard ]; then
   . /etc/default/keyboard
