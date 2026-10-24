@@ -94,12 +94,11 @@ def main():
     line = _shadow_line(fs, "mikail")
     field = line.split(":")[1]
     check("yeni parola $6$ ile yazildi", field.startswith("$6$"))
-    try:
-        import crypt
-        check("yeni parola dogru hash'leniyor",
-              crypt.crypt("YeniParola!42", field) == field)
-    except ImportError:
-        pass
+    # Alanin dogru hash'lendigini KENDI sha512crypt'imizle dogrula (platformdan
+    # bagimsiz; macOS stdlib crypt'i $6$ desteklemez).
+    salt = field.split("$")[2]
+    check("yeni parola dogru hash'leniyor",
+          ospass.sha512crypt(b"YeniParola!42", salt) == field)
 
     # bosalt
     ospass.linux_set_password(fs, "root", blank=True)
