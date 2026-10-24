@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Terminal
+Name[tr]=Uçbirim
+Name[it]=Terminale
+Name[ru]=Терминал
+Name[zh_CN]=终端
+Name[ja]=端末
+Name[ko]=터미널
+Exec=xterm
+Icon=/usr/share/diskultimate-live/icons/terminal.png
+Terminal=false

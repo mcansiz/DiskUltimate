@@ -1,0 +1,17 @@
+#!/bin/sh
+# DiskUltimate live baslaticisi: uygulama katmanindaki AppImage'i calistirir.
+# AppImage ISO'ya ayri bir squashfs katmaniyla eklenir (tools/live/remaster.py);
+# taban guncellenmeden yalnizca o katman degisir (ADR 0101).
+. /usr/local/lib/diskultimate/env.sh
+APP=/opt/diskultimate/DiskUltimate.AppImage
+if [ ! -x "$APP" ]; then
+  du_mark "APP-MISSING"
+  xmessage -center "DiskUltimate AppImage not found: $APP" 2>/dev/null
+  exit 1
+fi
+[ -n "$DU_LANG" ] && export DISKULTIMATE_LANG="$DU_LANG"
+# Agsiz ortam: guncelleme denetimi bosuna beklemesin (ADR 0090).
+export DISKULTIMATE_UPDATE_CHECK=0
+# FUSE yoksa AppImage kendini /tmp'ye cikartip calisir (RAM'de, kapaninca silinir).
+[ -c /dev/fuse ] || export APPIMAGE_EXTRACT_AND_RUN=1
+exec "$APP" "$@"

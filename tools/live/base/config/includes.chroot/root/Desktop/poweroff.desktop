@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Shut down
+Name[tr]=Kapat
+Name[de]=Herunterfahren
+Name[fr]=Éteindre
+Name[it]=Spegni
+Name[es]=Apagar
+Name[ru]=Выключить
+Name[zh_CN]=关机
+Name[ja]=シャットダウン
+Name[ko]=시스템 종료
+Exec=systemctl poweroff
+Icon=/usr/share/diskultimate-live/icons/power.png
+Terminal=false

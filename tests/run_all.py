@@ -8166,6 +8166,62 @@ def t109_windows_sam_parola():
         pass
 
 
+@test
+def t110_live_acilis_bellegi_sistem_diski():
+    """Live sistem: acilis bellegi (dd / Ventoy / findiso) sistem diski sayilir."""
+    # Live sistemde `/` overlay'dir; acilis bellegi baglama noktasindan bulunur
+    # (ADR 0101). Gercek /sys'e DOKUNULMAZ: sahte bir /sys/class/block kurulur.
+    from diskultimate.core import physical
+    kok = img_path("t110_sys")
+    shutil.rmtree(kok, ignore_errors=True)
+    aygitlar = os.path.join(kok, "devices")
+    sinif = os.path.join(kok, "class")
+    os.makedirs(sinif)
+
+    def disk(ad, bolumler=()):
+        os.makedirs(os.path.join(aygitlar, ad))
+        _baglanti(os.path.join(aygitlar, ad), os.path.join(sinif, ad))
+        for b in bolumler:
+            yol = os.path.join(aygitlar, ad, b)
+            os.makedirs(yol)
+            open(os.path.join(yol, "partition"), "w").close()
+            _baglanti(yol, os.path.join(sinif, b))
+
+    def _baglanti(hedef, ad):
+        try:
+            os.symlink(hedef, ad)
+        except (OSError, NotImplementedError) as exc:
+            raise Atlandi(f"sembolik baglanti kurulamiyor: {exc}")
+
+    disk("sda", ("sda1", "sda2"))          # ic disk (Windows)
+    disk("sdb", ("sdb1",))                 # USB bellek
+    disk("sdc", ("sdc1",))                 # ISO dosyasini tasiyan USB
+    # Ventoy: dm-0 -> sdb ; findiso: loop0 -> /run/live/findiso/x.iso
+    os.makedirs(os.path.join(sinif, "dm-0", "slaves", "sdb"))
+    os.makedirs(os.path.join(sinif, "loop0", "loop"))
+    with open(os.path.join(sinif, "loop0", "loop", "backing_file"), "w") as fh:
+        fh.write("/run/live/findiso/iso/diskultimate.iso\n")
+
+    def bul(mounts_text):
+        girdiler = physical._linux_mount_entries(mounts_text)
+        return physical._linux_boot_medium_disks(girdiler, sys_class=sinif)
+
+    overlay = "overlay / overlay rw 0 0\n"
+    # 1) Hibrit ISO dd ile yazildi: tum disk iso9660 olarak baglanir.
+    assert bul(overlay + "/dev/sdb /run/live/medium iso9660 ro 0 0\n") == {"sdb"}
+    # 2) Bolumden acilis.
+    assert bul(overlay + "/dev/sdb1 /run/live/medium vfat ro 0 0\n") == {"sdb"}
+    # 3) Ventoy (device-mapper).
+    assert bul(overlay + "/dev/dm-0 /run/live/medium iso9660 ro 0 0\n") == {"sdb"}
+    # 4) findiso: ISO dosyasi sdc1'de, ortam loop0 uzerinden.
+    assert bul(overlay + "/dev/sdc1 /run/live/findiso exfat rw 0 0\n"
+               "/dev/loop0 /run/live/medium iso9660 ro 0 0\n") == {"sdc"}
+    # 5) Live olmayan sistem: ic diskin bolumu baglidir ama acilis ortami yok.
+    assert bul("/dev/sda2 / ext4 rw 0 0\n/dev/sda1 /boot/efi vfat rw 0 0\n") == set()
+    # 6) Bilinmeyen aygit sessizce atlanir (hata degil).
+    assert bul(overlay + "/dev/nvme9n9 /run/live/medium iso9660 ro 0 0\n") == set()
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Restart
+Name[tr]=Yeniden başlat
+Name[de]=Neu starten
+Name[fr]=Redémarrer
+Name[it]=Riavvia
+Name[es]=Reiniciar
+Name[ru]=Перезагрузить
+Name[zh_CN]=重新启动
+Name[ja]=再起動
+Name[ko]=다시 시작
+Exec=systemctl reboot
+Icon=/usr/share/diskultimate-live/icons/reboot.png
+Terminal=false

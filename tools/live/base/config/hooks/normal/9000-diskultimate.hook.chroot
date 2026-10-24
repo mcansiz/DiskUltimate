@@ -1,0 +1,9 @@
+#!/bin/sh
+# DiskUltimate live tabani: chroot icinde son ayarlar (ADR 0101).
+set -e
+chmod 755 /usr/local/bin/diskultimate /usr/local/lib/diskultimate/session
+chmod 755 /root/Desktop/*.desktop
+# Uygulama katmani buraya baglanir (zz-diskultimate.squashfs); taban bos tutar.
+mkdir -p /opt/diskultimate
+# Masaustu yoneticisi yok: grafik oturumu tty1 otomatik girisi baslatir.
+systemctl set-default multi-user.target

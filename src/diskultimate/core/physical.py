@@ -22,7 +22,7 @@ import re
 import struct
 import threading
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from contextlib import contextmanager
 
@@ -418,13 +418,78 @@ def _read_text(path: str, default: str = "") -> str:
         return default
 
 
-def _linux_mounts() -> Dict[str, str]:
-    """{aygit yolu: baglama noktasi}"""
-    result: Dict[str, str] = {}
-    for satir in _read_text("/proc/mounts").splitlines():
+def _linux_mount_entries(text: Optional[str] = None) -> List[Tuple[str, str]]:
+    """`/proc/mounts` icindeki (aygit yolu, baglama noktasi) ciftleri."""
+    if text is None:
+        text = _read_text("/proc/mounts")
+    result: List[Tuple[str, str]] = []
+    for satir in text.splitlines():
         parcalar = satir.split()
         if len(parcalar) >= 2 and parcalar[0].startswith("/dev/"):
-            result[decode_mount_field(parcalar[0])] = decode_mount_field(parcalar[1])
+            result.append((decode_mount_field(parcalar[0]),
+                           decode_mount_field(parcalar[1])))
+    return result
+
+
+def _linux_mounts() -> Dict[str, str]:
+    """{aygit yolu: baglama noktasi}"""
+    return dict(_linux_mount_entries())
+
+
+# Live sistemin acildigi ortamin baglandigi yerler: live-boot (Debian; `findiso`
+# ISO dosyasini tasiyan bolumdur), archiso, dracut, casper (Ubuntu). Live
+# sistemde `/` bir overlay'dir, aygit degildir; acilis bellegi ancak buradan
+# bulunur. Bulunmazsa uygulamanin uzerinde calistigi USB bellek "sistem diski"
+# korumasini (katman 3) almazdi (ADR 0101).
+_LIVE_MEDIUM_POINTS = ("/run/live/medium", "/run/live/findiso",
+                       "/run/archiso/bootmnt", "/run/initramfs/live",
+                       "/cdrom", "/isodevice")
+
+
+def _linux_disks_under(device: str, mounts: List[Tuple[str, str]],
+                       sys_class: str = "/sys/class/block",
+                       depth: int = 0) -> Set[str]:
+    """Bir aygitin (bolum, tum disk, device-mapper, loop) oturdugu disk adlari.
+
+    dm (Ventoy, LVM, LUKS): `slaves/` izlenir. loop (findiso): arka dosyanin
+    durdugu dosya sisteminin aygiti izlenir. Bolum: ust disk.
+    """
+    if depth > 8:
+        return set()
+    name = os.path.basename(os.path.realpath(device) if device.startswith("/dev/")
+                            else device)
+    base = os.path.join(sys_class, name)
+    if not os.path.isdir(base):
+        return set()
+    slaves = os.path.join(base, "slaves")
+    children = sorted(os.listdir(slaves)) if os.path.isdir(slaves) else []
+    if children:
+        result: Set[str] = set()
+        for s in children:
+            result |= _linux_disks_under(s, mounts, sys_class, depth + 1)
+        return result
+    backing = _read_text(os.path.join(base, "loop", "backing_file"))
+    if backing:
+        # En uzun eslesen baglama noktasi arka dosyayi tasiyan dosya sistemidir.
+        best = ("", "")
+        for dev, point in mounts:
+            p = point.rstrip("/") + "/"
+            if backing.startswith(p) and len(point) > len(best[1]):
+                best = (dev, point)
+        return (_linux_disks_under(best[0], mounts, sys_class, depth + 1)
+                if best[0] else set())
+    if os.path.exists(os.path.join(base, "partition")):
+        return {os.path.basename(os.path.dirname(os.path.realpath(base)))}
+    return {name}
+
+
+def _linux_boot_medium_disks(mounts: List[Tuple[str, str]],
+                             sys_class: str = "/sys/class/block") -> Set[str]:
+    """Live sistemin acildigi disk(ler)in adlari (`sdb` gibi); live degilse bos."""
+    result: Set[str] = set()
+    for dev, point in mounts:
+        if point in _LIVE_MEDIUM_POINTS:
+            result |= _linux_disks_under(dev, mounts, sys_class)
     return result
 
 
@@ -432,7 +497,9 @@ def _list_linux() -> List[DiskInfo]:
     root = "/sys/block"
     if not os.path.isdir(root):
         return []
-    baglantilar = _linux_mounts()
+    entries = _linux_mount_entries()
+    baglantilar = dict(entries)
+    boot_medium_disks = _linux_boot_medium_disks(entries)
     system_device = ""
     for aygit, nokta in baglantilar.items():
         if nokta == "/":
@@ -481,6 +548,8 @@ def _list_linux() -> List[DiskInfo]:
                 if system_device and part == system_device:
                     info.is_system = True
         if system_device and system_device.startswith(f"/dev/{name}"):
+            info.is_system = True
+        if name in boot_medium_disks:
             info.is_system = True
         diskler.append(info)
     return diskler

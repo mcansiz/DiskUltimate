@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=DiskUltimate
+GenericName=Disk Manager
+GenericName[tr]=Disk Yöneticisi
+GenericName[de]=Datenträgerverwaltung
+GenericName[fr]=Gestionnaire de disques
+GenericName[it]=Gestione dischi
+GenericName[es]=Administrador de discos
+GenericName[ru]=Управление дисками
+GenericName[zh_CN]=磁盘管理器
+GenericName[ja]=ディスク管理
+GenericName[ko]=디스크 관리자
+Exec=/usr/local/bin/diskultimate
+Icon=/usr/share/diskultimate-live/icons/diskultimate.png
+Terminal=false

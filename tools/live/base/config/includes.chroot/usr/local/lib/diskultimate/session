@@ -1,0 +1,86 @@
+#!/bin/sh
+# DiskUltimate live X oturumu (startx istemcisi, ADR 0101).
+#
+# jwm: gorev cubugu + menu (uygulama, ucbirim, yeniden baslat, kapat).
+# pcmanfm --desktop: ~/Desktop'taki simgeler. DiskUltimate acilista kendiliginden
+# baslar; kapatilirsa masaustu simgesinden ya da menuden yeniden acilir.
+. /usr/local/lib/diskultimate/env.sh
+
+# Acilis bellenimi ve Secure Boot durumu: CI acilis denemesi kipi bununla
+# dogrular ("Secure Boot ile acildi" olcumsuz yazilmaz, CLAUDE.md).
+FW=bios
+SB=0
+if [ -d /sys/firmware/efi ]; then
+  FW=uefi
+  f="$(ls /sys/firmware/efi/efivars/SecureBoot-* 2>/dev/null | head -n1)"
+  [ -n "$f" ] && SB="$(od -An -tu1 -j4 -N1 "$f" | tr -d ' ')"
+fi
+du_mark "SESSION-START fw=$FW sb=$SB"
+
+# Uzun islemler sirasinda ekran kararmasin.
+xset s off s noblank -dpms 2>/dev/null
+
+# Klavye: live-config `keyboard-layouts=` ile /etc/default/keyboard'u yazar.
+if [ -r /etc/default/keyboard ]; then
+  . /etc/default/keyboard
+  [ -n "${XKBLAYOUT:-}" ] && setxkbmap -layout "$XKBLAYOUT" \
+    ${XKBVARIANT:+-variant "$XKBVARIANT"} ${XKBOPTIONS:+-option "$XKBOPTIONS"}
+fi
+
+# Menu metinleri (arayuz metni: dilin dogru yazimi, CLAUDE.md).
+case "$DU_LANG" in
+  tr) T_TERM="Uçbirim";    T_REBOOT="Yeniden başlat"; T_OFF="Kapat" ;;
+  de) T_TERM="Terminal";   T_REBOOT="Neu starten";    T_OFF="Herunterfahren" ;;
+  fr) T_TERM="Terminal";   T_REBOOT="Redémarrer";     T_OFF="Éteindre" ;;
+  it) T_TERM="Terminale";  T_REBOOT="Riavvia";        T_OFF="Spegni" ;;
+  es) T_TERM="Terminal";   T_REBOOT="Reiniciar";      T_OFF="Apagar" ;;
+  ru) T_TERM="Терминал";   T_REBOOT="Перезагрузить";  T_OFF="Выключить" ;;
+  zh) T_TERM="终端";       T_REBOOT="重新启动";       T_OFF="关机" ;;
+  ja) T_TERM="端末";       T_REBOOT="再起動";         T_OFF="シャットダウン" ;;
+  ko) T_TERM="터미널";     T_REBOOT="다시 시작";      T_OFF="시스템 종료" ;;
+  *)  T_TERM="Terminal";   T_REBOOT="Restart";        T_OFF="Shut down" ;;
+esac
+I=/usr/share/diskultimate-live/icons
+
+cat > "$HOME/.jwmrc" <<JWM
+<?xml version="1.0"?>
+<JWM>
+  <RootMenu onroot="3" height="0">
+    <Program icon="$I/diskultimate.png" label="DiskUltimate">/usr/local/bin/diskultimate</Program>
+    <Program icon="$I/terminal.png" label="$T_TERM">xterm</Program>
+    <Separator/>
+    <Program icon="$I/reboot.png" label="$T_REBOOT">systemctl reboot</Program>
+    <Program icon="$I/power.png" label="$T_OFF">systemctl poweroff</Program>
+  </RootMenu>
+  <Tray x="0" y="-1" height="34" autohide="off">
+    <TrayButton icon="$I/diskultimate.png">root:3</TrayButton>
+    <Spacer width="4"/>
+    <TaskList maxwidth="280"/>
+    <Clock format="%H:%M"/>
+  </Tray>
+  <Desktops width="1" height="1"/>
+  <FocusModel>click</FocusModel>
+  <Key mask="A" key="Tab">next</Key>
+  <Key mask="A" key="F4">close</Key>
+  <Key mask="CA" key="t">exec:xterm</Key>
+  <StartupCommand>pcmanfm --desktop</StartupCommand>
+  <StartupCommand>/usr/local/bin/diskultimate</StartupCommand>
+</JWM>
+JWM
+
+# Test isareti: uygulama penceresi gorunur olunca (WM_CLASS "DiskUltimate").
+(
+  n=0
+  while [ "$n" -lt 180 ]; do
+    if xwininfo -root -tree 2>/dev/null | grep -q '"DiskUltimate")'; then
+      sleep 5
+      du_mark "APP-WINDOW $(cat /opt/diskultimate/VERSION 2>/dev/null)"
+      exit 0
+    fi
+    n=$((n + 1))
+    sleep 1
+  done
+  du_mark "APP-TIMEOUT"
+) &
+
+exec jwm

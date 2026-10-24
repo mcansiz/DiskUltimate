@@ -723,3 +723,18 @@ Markdown ve `goruntuler/` (her adım + her karşılanan pencere). CI:
 - 2 TiB uzeri MBR bolumleri desteklenmez (bicim sinirlamasi); GPT kullanilmalidir.
 - Uygulama Wayland oturumlarinda XWayland (`xcb`) uzerinde acilir; yerel Wayland
   eklentisinde modal pencereler bos cizilir (bkz. ADR 0005).
+
+## Live ISO açılış denemesi (ADR 0101)
+
+Yalnızca GitHub Actions'ta koşar (`.github/workflows/live-iso.yml`; QEMU +
+KVM, geçici makine — ADR 0080). Ana makinede koşturulmaz.
+
+```bash
+python3 tools/live/remaster.py base.iso DiskUltimate-<s>-x86_64.AppImage <s> out.iso
+python3 tools/live/boot_check.py out.iso --mode bios|uefi|uefi-sb
+```
+
+Başarı: seri portta `DU-LIVE: APP-WINDOW <sürüm>` ve bellenim kipe uygun
+(`fw=bios|uefi`, Secure Boot'ta `sb=1`). Ekran görüntüleri: kosunun
+`live-check` artifact'i. Çekirdek tarafı: `run_all` t110 (açılış belleği
+sistem diski sayılır; sahte `/sys`).

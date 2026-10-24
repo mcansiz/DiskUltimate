@@ -6462,3 +6462,65 @@ Windows'ta test edildi" denmez.
 **Bekleyen:** GUI — iki platform çekirdeği de hazır; tek "OS parola sıfırla"
 diyaloğu (birimdeki /etc/shadow ya da SAM'e göre Windows/Linux tanır) sonraki
 adımda. Henüz commit edilmedi.
+
+## 2026-10-24 — Live ISO araştırması (rapor, karar yok)
+
+Soru: uygulamayı kendi başına açılan küçük bir Linux ile `.iso` olarak
+yayınlayabilir miyiz? Rapor: `.claude/docs/live-iso-arastirma.md`.
+
+Sonuç: evet. Önerilen yol Debian 13 + `live-build` (GParted/Clonezilla'nın
+yolu; imzalı shim ile Secure Boot), root otomatik giriş → X + openbox →
+DiskUltimate. Derleme ve QEMU açılış testi GitHub Actions'ta (ana makinede
+root ve `lb`/`debootstrap`/`qemu` yok).
+
+Depoda bulunan, yayından önce düzeltilmesi gerekenler:
+- `physical._list_linux` sistem diskini `/`'un aygıtından buluyor; live
+  sistemde `/` overlay olduğu için **açılış belleği sistem diski
+  işaretlenmiyor** (katman 3 devre dışı kalır).
+- `paths.IS_PACKAGED` `/opt` altından kaynakla çalışan kopyayı tanımıyor;
+  günlükler kurulum dizinine yazılır.
+- Debian 13'te Python 3.13; CI yalnızca 3.12 koşuyor (kaldırılan modüller
+  `src/` içinde kullanılmıyor — grep ile bakıldı).
+
+Kod değişmedi; ADR Faz 0 (CI'da kavram kanıtı) sonucuna göre yazılacak.
+
+## 2026-10-24 (2) — Live ISO boyutu ölçüldü
+
+Root gerektirmeden ölçüm: Debian 13 paket dizininden bağımlılık kapanışı,
+`.deb`'ler `dpkg-deb -x` ile açıldı, `mksquashfs -comp xz` ile sıkıştırıldı
+(ayrıntı: `live-iso-arastirma.md` bölüm 3.1).
+
+- squashfs: openbox ayarsız 282 MB; matchbox + kırpılmış 228 MB.
+- Önerilen ISO **~300 MB**; agresif ~250; tam (noto-cjk + non-free
+  bellenim) ~460. İlk tahmin (450–600) en küçük yapı için yüksekti.
+- openbox → imlib2 → libspectre → ghostscript zinciri ~83 MB kurulu; matchbox
+  ile düşüyor. Qt5 → libgl1 → Mesa/LLVM 192 MB kurulu (çıkarılması sınanmadı).
+- initrd ve önyükleyici kurulmadı, tahmin edildi; gerçek sayı CI derlemesinde.
+
+## 2026-10-24 (3) — Live ISO: iki katmanlı derleme, AppImage, masaüstü (ADR 0101)
+
+Kullanıcı istekleri: derleme her sürümde uzun sürmesin; uygulama doğrudan
+yayınlanan AppImage olsun, açılışta kendiliğinden açılsın, masaüstünde
+simgesi olsun.
+
+- `tools/live/base/` — live-build ayarı (Debian 13, jwm + pcmanfm, tty1 root
+  otomatik giriş, 10 dilli GRUB menüsü, Secure Boot zorunlu, belge/man/dil
+  kırpma). `build.sh` `debian:trixie` kapsayıcısında koşar.
+- `tools/live/remaster.py` — AppImage'ı `zz-diskultimate.squashfs` katmanı
+  olarak tabana ekler (`xorriso ... -boot_image any replay`), root gerekmez.
+  Yerelde sahte BIOS hibrit ISO ile denendi: açılış düzeni korunuyor,
+  `sha256sum.txt` doğru.
+- `tools/live/boot_check.py` — QEMU'da BIOS / UEFI / UEFI+SB açılışı, seri
+  port işaretleri, ekran görüntüsü.
+- `tools/live/render_icons.py` — masaüstü simgeleri (QPainter → PNG).
+- `.github/workflows/live-iso.yml` — taban `actions/cache`'te (tools/live/base
+  özeti + hafta); haftalık tazeleme; release'te `workflow_call`.
+- `release.yml` — `build-live` işi (deneysel, düşerse release yine çıkar);
+  release notlarına ISO satırı.
+- **Güvenlik düzeltmesi** (`physical.py`): live sistemde açılış belleği sistem
+  diski işaretlenir (dd / Ventoy / findiso). Test `t110` TAMAM,
+  `platform_check` 0 bulgu. Tam `run_all` CI'da.
+- Masaüstü seçimi ölçüldü (ADR 0101 tablosu): jwm + pcmanfm +27 MB `.deb`.
+
+Henüz ölçülmeyen: tabanın gerçekten kurulduğu, üç kipin açıldığı, gerçek
+ISO boyutu — ilk CI koşusu bekleniyor.

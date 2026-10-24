@@ -1,0 +1,61 @@
+# DiskUltimate live tabani (ADR 0101). Recommends kurulmaz (--apt-recommends false).
+# Boyut olcumu: .claude/docs/live-iso-arastirma.md bolum 3.1
+
+# Acilis ve live sistem
+linux-image-amd64
+live-boot
+live-config
+live-config-systemd
+systemd-sysv
+dbus
+locales
+keyboard-configuration
+
+# Grafik: en kucuk X + jwm (gorev cubugu, menu) + pcmanfm (masaustu simgeleri)
+xserver-xorg-core
+xserver-xorg-video-fbdev
+xserver-xorg-video-vesa
+xserver-xorg-input-libinput
+xinit
+x11-xserver-utils
+x11-xkb-utils
+x11-utils
+jwm
+pcmanfm
+xterm
+fonts-dejavu-core
+fonts-wqy-microhei
+
+# AppImage'in sistemden bekledigi kitapliklar (release.yml deneme acilisiyla ayni)
+# + FUSE (AppImage baglamasi; yoksa baslatici cikartarak calistirir)
+libegl1
+libgl1
+libxkbcommon0
+libxkbcommon-x11-0
+libfontconfig1
+libdbus-1-3
+libxcb-icccm4
+libxcb-image0
+libxcb-keysyms1
+libxcb-randr0
+libxcb-render-util0
+libxcb-shape0
+libxcb-xinerama0
+libxcb-xkb1
+fuse3
+
+# Uygulamanin kullandigi harici araclar (platform.EXTERNAL_TOOLS, BOOT_TOOLS)
+ntfs-3g
+e2fsprogs
+dosfstools
+exfatprogs
+xfsprogs
+btrfs-progs
+grub-pc-bin
+grub-efi-amd64-bin
+efibootmgr
+
+# Ileri kullanici / hata bildirimi
+pciutils
+usbutils
+smartmontools

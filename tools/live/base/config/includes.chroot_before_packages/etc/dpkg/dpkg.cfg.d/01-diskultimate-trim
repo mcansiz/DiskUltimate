@@ -1,0 +1,19 @@
+# Belge, man ve kullanilmayan dil dosyalari kurulmaz (~75 MB, olcum: bolum 3.1).
+# copyright dosyalari KALIR: GPL dagitim yukumlulugu (rapor bolum 6).
+path-exclude=/usr/share/doc/*
+path-include=/usr/share/doc/*/copyright
+path-exclude=/usr/share/man/*
+path-exclude=/usr/share/info/*
+path-exclude=/usr/share/lintian/*
+path-exclude=/usr/share/locale/*
+path-include=/usr/share/locale/locale.alias
+path-include=/usr/share/locale/tr/*
+path-include=/usr/share/locale/en*
+path-include=/usr/share/locale/de/*
+path-include=/usr/share/locale/fr/*
+path-include=/usr/share/locale/it/*
+path-include=/usr/share/locale/es/*
+path-include=/usr/share/locale/ru/*
+path-include=/usr/share/locale/zh_CN/*
+path-include=/usr/share/locale/ja/*
+path-include=/usr/share/locale/ko/*
