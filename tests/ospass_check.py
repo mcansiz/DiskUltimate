@@ -39,19 +39,28 @@ def main():
     print("=== OS parola sifirlama denetimi (Linux) ===\n")
 
     print("sha512crypt KAT:")
-    cases = [(b"Parola123!", "abcdefgh"),
-             (b"uzun bir parola 12345", "QWERTYui"),
-             (b"x", "0123456789abcdef")]
-    oracle = _oracle()
-    if oracle is None:
-        print("  ATLANDI (stdlib crypt ve openssl yok)")
-    else:
-        for pw, salt in cases:
-            ours = ospass.sha512crypt(pw, salt)
-            check(f"$6${salt}: {pw!r}", ours == oracle(pw, salt))
-    # Bos parola: oracle CLI'si bosu gecemeyebilir; yapisal denetim yeter.
+    # Sabit bilinen-cevap vektorleri (openssl `passwd -6` ile uretilip
+    # dogrulandi). Oracle'a BAGLI DEGIL: her platformda kosar (macOS'un
+    # stdlib crypt'i ve LibreSSL openssl'i $6$ desteklemez; oraya guvenilmez).
+    KAT = [
+        (b"Parola123!", "abcdefgh",
+         "$6$abcdefgh$uzhEz.DiIAXjMSVzrtd.y3hMZV5c4yA8ij0g7zD6erejPG6R3RMGQ"
+         "36j8jL3uyKgAdeWt4hX0fVVVZebhfQJB."),
+        (b"x", "0123456789abcdef",
+         "$6$0123456789abcdef$8YztVyzwDEH96nI5J4SMvvvaVH43cm6MjQyfl3gZsAa8rZ"
+         "MsHQVTiLQraFpug5a6xlaOJbzt.7jq8UBJs4F7M1"),
+    ]
+    for pw, salt, expected in KAT:
+        check(f"$6${salt}: {pw!r}", ospass.sha512crypt(pw, salt) == expected)
     check("bos parola $6$ uretir",
           ospass.sha512crypt(b"", "saltsalt").startswith("$6$saltsalt$"))
+    # Bonus: gercek bir $6$ oracle'i varsa (Linux), rastgele bir durum da
+    # ona karsi dogrulanir. Oracle $6$ desteklemiyorsa (macOS) sessizce atlanir.
+    oracle = _oracle()
+    if oracle and oracle(KAT[0][0], KAT[0][1]) == KAT[0][2]:
+        check("oracle: uzun parola",
+              ospass.sha512crypt(b"uzun bir parola 12345", "QWERTYui")
+              == oracle(b"uzun bir parola 12345", "QWERTYui"))
 
     print("\nUctan uca (ext4 imaji):")
     p = os.path.join(scratch(), "ospass_t.img")
