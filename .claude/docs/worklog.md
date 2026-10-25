@@ -6594,3 +6594,9 @@ notlarında Live satırı sabit (macOS satırının üstünde, boş `{MACOS_ROW}
 tabloyu bölmesin). `live-iso.yml`: Secure Boot açılış denemesi şart.
 README + README.tr: "Live USB / DVD" bölümü (paket manifesti +
 snapshot.debian.org kaynak yönlendirmesi).
+
+## 2026-10-25 (5) — Sürüm 0.10.1-beta: Live ISO ilk kez release'te
+
+Kullanıcı onayıyla. İçerik (0.10.0-beta'dan beri): Live USB/DVD ISO (ADR 0101),
+live sistemde açılış belleği sistem diski sayılır (`physical.py`, t110),
+disk satırında çevrilmemiş "bilinmeyen" düzeltmesi.
