@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Root Folder
+Name[tr]=Ana Klasör
+Name[de]=Stammverzeichnis
+Name[fr]=Dossier racine
+Name[it]=Cartella radice
+Name[es]=Carpeta raíz
+Name[ru]=Корневая папка
+Name[zh_CN]=根目录
+Name[ja]=ルートフォルダー
+Name[ko]=루트 폴더
+Exec=pcmanfm /
+Icon=/usr/share/diskultimate-live/icons/folder.png
+Terminal=false

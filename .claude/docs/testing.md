@@ -734,7 +734,10 @@ python3 tools/live/remaster.py base.iso DiskUltimate-<s>-x86_64.AppImage <s> out
 python3 tools/live/boot_check.py out.iso --mode bios|uefi|uefi-sb
 ```
 
-Başarı: seri portta `DU-LIVE: APP-WINDOW <sürüm>` ve bellenim kipe uygun
-(`fw=bios|uefi`, Secure Boot'ta `sb=1`). Ekran görüntüleri: kosunun
-`live-check` artifact'i. Çekirdek tarafı: `run_all` t110 (açılış belleği
+Başarı: seri portta `DU-LIVE: APP-WINDOW <sürüm>`, bellenim kipe uygun
+(`fw=bios|uefi`, Secure Boot'ta `sb=1`) ve ağ çalışıyor
+(`DU-LIVE: NET ip=<adres> dns=ok`; QEMU kullanıcı ağı DHCP + DNS verir).
+Ekran görüntüleri (`<kip>.png` oturum, `<kip>-grub.png` GRUB menüsü):
+koşunun `live-check` artifact'i. Sağ tık menüsü / masaüstü tıklanarak
+sınanmaz; gözle denenir. Çekirdek tarafı: `run_all` t110 (açılış belleği
 sistem diski sayılır; sahte `/sys`).

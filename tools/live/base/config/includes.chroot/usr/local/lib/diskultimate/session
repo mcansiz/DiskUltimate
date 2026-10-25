@@ -1,8 +1,8 @@
 #!/bin/sh
 # DiskUltimate live X oturumu (startx istemcisi, ADR 0101).
 #
-# jwm: gorev cubugu + menu (uygulama, ucbirim, yeniden baslat, kapat).
-# pcmanfm --desktop: ~/Desktop'taki simgeler. DiskUltimate acilista kendiliginden
+# jwm: gorev cubugu (ag durumu + saat) + menu (uygulama, ana klasor,
+# ucbirim, yeniden baslat, kapat). pcmanfm --desktop: ~/Desktop'taki simgeler. DiskUltimate acilista kendiliginden
 # baslar; kapatilirsa masaustu simgesinden ya da menuden yeniden acilir.
 . /usr/local/lib/diskultimate/env.sh
 
@@ -26,16 +26,16 @@ fi
 
 # Menu metinleri (arayuz metni: dilin dogru yazimi, CLAUDE.md).
 case "$DU_LANG" in
-  tr) T_TERM="Uçbirim";    T_REBOOT="Yeniden başlat"; T_OFF="Kapat" ;;
-  de) T_TERM="Terminal";   T_REBOOT="Neu starten";    T_OFF="Herunterfahren" ;;
-  fr) T_TERM="Terminal";   T_REBOOT="Redémarrer";     T_OFF="Éteindre" ;;
-  it) T_TERM="Terminale";  T_REBOOT="Riavvia";        T_OFF="Spegni" ;;
-  es) T_TERM="Terminal";   T_REBOOT="Reiniciar";      T_OFF="Apagar" ;;
-  ru) T_TERM="Терминал";   T_REBOOT="Перезагрузить";  T_OFF="Выключить" ;;
-  zh) T_TERM="终端";       T_REBOOT="重新启动";       T_OFF="关机" ;;
-  ja) T_TERM="端末";       T_REBOOT="再起動";         T_OFF="シャットダウン" ;;
-  ko) T_TERM="터미널";     T_REBOOT="다시 시작";      T_OFF="시스템 종료" ;;
-  *)  T_TERM="Terminal";   T_REBOOT="Restart";        T_OFF="Shut down" ;;
+  tr) T_TERM="Uçbirim";    T_FILES="Ana Klasör";      T_REBOOT="Yeniden başlat"; T_OFF="Kapat" ;;
+  de) T_TERM="Terminal";   T_FILES="Stammverzeichnis"; T_REBOOT="Neu starten";   T_OFF="Herunterfahren" ;;
+  fr) T_TERM="Terminal";   T_FILES="Dossier racine";  T_REBOOT="Redémarrer";     T_OFF="Éteindre" ;;
+  it) T_TERM="Terminale";  T_FILES="Cartella radice"; T_REBOOT="Riavvia";        T_OFF="Spegni" ;;
+  es) T_TERM="Terminal";   T_FILES="Carpeta raíz";    T_REBOOT="Reiniciar";      T_OFF="Apagar" ;;
+  ru) T_TERM="Терминал";   T_FILES="Корневая папка";  T_REBOOT="Перезагрузить";  T_OFF="Выключить" ;;
+  zh) T_TERM="终端";       T_FILES="根目录";          T_REBOOT="重新启动";       T_OFF="关机" ;;
+  ja) T_TERM="端末";       T_FILES="ルートフォルダー"; T_REBOOT="再起動";        T_OFF="シャットダウン" ;;
+  ko) T_TERM="터미널";     T_FILES="루트 폴더";       T_REBOOT="다시 시작";      T_OFF="시스템 종료" ;;
+  *)  T_TERM="Terminal";   T_FILES="Root Folder";     T_REBOOT="Restart";        T_OFF="Shut down" ;;
 esac
 I=/usr/share/diskultimate-live/icons
 
@@ -44,6 +44,7 @@ cat > "$HOME/.jwmrc" <<JWM
 <JWM>
   <RootMenu onroot="3" height="0">
     <Program icon="$I/diskultimate.png" label="DiskUltimate">/usr/local/bin/diskultimate</Program>
+    <Program icon="$I/folder.png" label="$T_FILES">pcmanfm /</Program>
     <Program icon="$I/terminal.png" label="$T_TERM">xterm</Program>
     <Separator/>
     <Program icon="$I/reboot.png" label="$T_REBOOT">systemctl reboot</Program>
@@ -53,8 +54,23 @@ cat > "$HOME/.jwmrc" <<JWM
     <TrayButton icon="$I/diskultimate.png">root:3</TrayButton>
     <Spacer width="4"/>
     <TaskList maxwidth="280"/>
+    <Swallow name="dunet" width="220">xterm -name dunet -fa "DejaVu Sans Mono" -fs 10 -bg "#2b3440" -fg "#e8edf2" -b 6 -bw 0 +sb -geometry 26x1 -e /usr/local/lib/diskultimate/netstatus</Swallow>
     <Clock format="%H:%M"/>
   </Tray>
+  <TrayStyle>
+    <Font>DejaVu Sans-10</Font>
+    <Background>#2b3440</Background>
+    <Foreground>#e8edf2</Foreground>
+  </TrayStyle>
+  <TaskListStyle>
+    <Font>DejaVu Sans-10</Font>
+    <Background>#2b3440</Background>
+    <Foreground>#e8edf2</Foreground>
+    <Active>
+      <Background>#3d4a5c</Background>
+      <Foreground>#ffffff</Foreground>
+    </Active>
+  </TaskListStyle>
   <Desktops width="1" height="1"/>
   <FocusModel>click</FocusModel>
   <Key mask="A" key="Tab">next</Key>
@@ -72,6 +88,18 @@ JWM
     if xwininfo -root -tree 2>/dev/null | grep -q '"DiskUltimate")'; then
       sleep 5
       du_mark "APP-WINDOW $(cat /opt/diskultimate/VERSION 2>/dev/null)"
+      # Ag: kablolu arabirimde IPv4 + DNS (apt bunlarsiz calismaz). Gercek
+      # makinede kablo yoksa yalnizca bekleyip "ip=none" yazar.
+      ip=""
+      k=0
+      while [ "$k" -lt 60 ]; do
+        ip="$(/usr/local/lib/diskultimate/netstatus --ip)" && break
+        k=$((k + 1))
+        sleep 1
+      done
+      dns=fail
+      [ -n "$ip" ] && getent hosts deb.debian.org >/dev/null 2>&1 && dns=ok
+      du_mark "NET ip=${ip:-none} dns=$dns"
       exit 0
     fi
     n=$((n + 1))

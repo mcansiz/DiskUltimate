@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=Run
+Name[tr]=Çalıştır
+Name[de]=Ausführen
+Name[fr]=Exécuter
+Name[it]=Esegui
+Name[es]=Ejecutar
+Name[ru]=Запустить
+Name[zh_CN]=运行
+Name[ja]=実行
+Name[ko]=실행
+Exec=/usr/local/lib/diskultimate/run-launcher %F
+MimeType=application/x-desktop;
+NoDisplay=true
+Terminal=false

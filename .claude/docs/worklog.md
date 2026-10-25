@@ -6547,3 +6547,19 @@ Run 40088635281: ISO **360 MB** (474'ten), BIOS 31 sn / UEFI 35 sn / UEFI+SB
 33 sn (`sb=1`), uygulama penceresi üçünde de geldi. Ekran görüntüsünde
 "unknown" ve 🔑 glifi doğru görünüyor. CI (tam test) ve arayüz gezintisi
 yeşil. ADR 0101 sonuç tablosu güncellendi.
+
+## 2026-10-25 — Live ISO: kullanıcı denemesinden düzeltmeler
+
+Kullanıcı ISO'yu açıp ekran görüntüsü gönderdi. Nedenler ISO'nun kendisinden
+(squashfs, efi.img, `unicode.pf2` glif dizini) ve libfm 1.4.0 / jwm 2.4.6
+kaynağından okundu; ayrıntı ADR 0101 "Kullanıcı denemesi" tablosu.
+- GRUB menüsü Türkçe/Kiril/CJK kutu → `loadfont $prefix/unicode.pf2`.
+- Sağ tıkta "Aç/Çalıştır" yok → `.desktop` türüne kayıtlı `run-launcher`.
+- Masaüstüne "Ana Klasör" (`pcmanfm /`, 10 dil, yeni klasör simgesi);
+  `librsvg2-common` (Adwaita SVG simgeleri PCManFM penceresinde).
+- Görev çubuğunda Ethernet durumu (`netstatus`, jwm `<Swallow>` + xterm).
+- **Ağ hiç çalışmıyordu** (apt indiremiyordu): dhcpcd kurulu ama servis yok,
+  `resolv.conf` boş → `diskultimate-dhcpcd.service`; `apt-daily*` maskelendi.
+- xterm Türkçe harf kutu → `/root/.Xdefaults` (DejaVu Sans Mono).
+- `boot_check.py`: ağ (`NET ... dns=ok`) artık şart; GRUB ekran görüntüsü.
+Doğrulama CI koşusunda (taban yeniden kurulur).

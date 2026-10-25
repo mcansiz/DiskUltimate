@@ -26,6 +26,9 @@ pcmanfm
 xterm
 fonts-dejavu-core
 fonts-wqy-microhei
+# Adwaita SVG simgeleri icin gdk-pixbuf yukleyicisi (PCManFM penceresinde
+# klasor/dosya simgeleri; yoksa yalnizca 16 px PNG'ler bulunur). 0,4 MB
+librsvg2-common
 # Arayuzdeki simge karakterleri (🔑 🔒 ⏳); DejaVu'da yok, 1,3 MB
 fonts-symbola
 
@@ -57,6 +60,12 @@ btrfs-progs
 grub-pc-bin
 grub-efi-amd64-bin
 efibootmgr
+
+# Ag: dhcpcd-base + iproute2 zaten "important" onceliginde gelir; acikca
+# yazilir cunku diskultimate-dhcpcd.service ve netstatus onlara dayanir.
+dhcpcd-base
+iproute2
+iputils-ping
 
 # Ileri kullanici / hata bildirimi
 pciutils

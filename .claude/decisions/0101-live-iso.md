@@ -132,6 +132,27 @@ satırında çevrilmemiş "bilinmeyen" ve durum çubuğundaki 🔑 için glif yo
 (`fonts-symbola` eklendi). Uygulama tam ekran açıldığı için masaüstü
 simgeleri ekran görüntüsünde görünmüyor; gözle **doğrulanmadı**.
 
+## Kullanıcı denemesi ve düzeltmeler (2026-10-25)
+
+Kullanıcı 360 MB'lık ISO'yu (taban 2026-10-24 11:07 UTC) sanal makinede açtı;
+dört kusur ve bir istek çıktı:
+
+| Gözlem | Neden (ISO'dan okunarak) | Düzeltme |
+|---|---|---|
+| GRUB menüsünde "Türkçe", "—", Kiril/CJK kutu | live-build `config.cfg` GRUB 2.12'de `loadfont unicode` dalına girer → `$prefix/fonts/unicode.pf2` arar; dosya `/boot/grub/unicode.pf2`'de. Yükleme düşer, GRUB yerleşik ASCII'ye kalır. `unicode.pf2` tam (57 248 glif, 10 dilin hepsi var). | `loadfont $prefix/unicode.pf2 \|\| loadfont unicode` |
+| Masaüstü simgesine sağ tık: "Aç/Çalıştır" yok, yalnızca "Birlikte Aç…" | libfm 1.4.0 `fm-file-menu.c`: "Aç" ancak dosya türüne (`application/x-desktop`) kayıtlı uygulama varsa görünür; yoktu. | `diskultimate-run-launcher.desktop` (`NoDisplay`, türe kayıtlı, adı "Çalıştır") + `run-launcher` betiği → menüde "Aç" ve "Çalıştır" |
+| İstek: masaüstünde "Ana Klasör" | — | `Desktop/files.desktop` → `pcmanfm /` (10 dil), jwm menüsünde de; klasör simgesi `render_icons.py` ile (Adwaita'da 48 px klasör PNG'si yok); PCManFM penceresindeki Adwaita SVG'leri için `librsvg2-common` (0,4 MB) |
+| İstek: görev çubuğunda Ethernet durumu | jwm'de değişen metin gösteren tepsi öğesi yok; nm-applet NetworkManager ister (onlarca MB). | `netstatus`: jwm `<Swallow>` içine gömülü tek satırlık xterm; ● yeşil = adres var, sarı = adres alınıyor, kırmızı = kablo yok |
+| `apt update` → "deb.debian.org çözümlenirken geçici sorun", `apt install` paket bulamıyor | ifupdown + dhcpcd-base kurulu ama **hiçbiri çalışmıyor**: `/etc/network/interfaces` yalnızca `interfaces.d`'yi okur (live-boot arabirimi yalnızca ağ açılışında yazar), dhcpcd-base servis getirmez; `/etc/resolv.conf` boş dosya. Paket bulunamaması `--apt-indices false`'tan değil, `apt update`'in inememesinden. | `diskultimate-dhcpcd.service` (dhcpcd ana kip: tüm arabirimler, sonradan takılan kablo, `resolv.conf`'u kendisi yazar); `apt-daily*.timer` maskelendi (kilit tutmasın) |
+| xterm'de Türkçe harfler kutu | xterm'in varsayılan bitmap yazı tipi; `xfonts-base` yok | `/root/.Xdefaults`: DejaVu Sans Mono (+ CJK için WenQuanYi). `xrdb` yok; Xt dosyayı kendisi okur |
+
+Doğrulama: `boot_check.py` artık ağı da sınar — misafir oturumu
+`NET ip=<adres> dns=<ok|fail>` yazar (`getent hosts deb.debian.org`), QEMU'ya
+`-nic user,model=virtio-net-pci` verilir, `dns=ok` şarttır. GRUB menüsünün
+ekran görüntüsü de alınır (`<kip>-grub.png`, 8. saniye).
+Sağ tık menüsü ve masaüstü CI'da tıklanarak sınanmıyor; libfm kaynağı
+okunarak kuruldu, gözle doğrulanacak.
+
 ## Açık işler
 
 - Secure Boot denemesi iki koşuda geçti → `continue-on-error` kaldırılabilir.

@@ -4,11 +4,11 @@
 
 Cikti: tools/live/base/config/includes.chroot/usr/share/diskultimate-live/icons/
   diskultimate.png  uygulamanin marka ikonu (ui/resources/app-icon-256.png)
-  terminal.png, reboot.png, power.png
+  terminal.png, reboot.png, power.png, folder.png
 
 Debian 13'un Adwaita temasinda (48.x) ucbirim / yeniden baslat / kapat icin
-renkli simge yok (yalnizca `-symbolic`), SVG yukleyicisi de Recommends ile
-geldigi icin tabanda yok. Bu yuzden simgeler uygulamanin kendi ikonlariyla
+renkli simge yok (yalnizca `-symbolic`); klasorun de PNG'si yalnizca 16 px
+(48 px'lik masaustunde bulanik). Bu yuzden simgeler uygulamanin kendi ikonlariyla
 ayni yontemle, QPainter ile cizilir (ADR 0025) ve PNG olarak depoya girer;
 taban yalnizca bu dosyalar degisince yeniden kurulur.
 """
@@ -99,6 +99,22 @@ def draw_power(p: QPainter) -> None:
     p.drawLine(QPointF(c, SIZE * 0.22), QPointF(c, SIZE * 0.50))
 
 
+def draw_folder(p: QPainter) -> None:
+    _tile(p, "#c98a1b")
+    _white_pen(p, SIZE * 0.06)
+    s = SIZE
+    path = QPainterPath()
+    path.moveTo(s * 0.24, s * 0.70)
+    path.lineTo(s * 0.24, s * 0.30)
+    path.lineTo(s * 0.42, s * 0.30)
+    path.lineTo(s * 0.48, s * 0.37)
+    path.lineTo(s * 0.76, s * 0.37)
+    path.lineTo(s * 0.76, s * 0.70)
+    path.closeSubpath()
+    p.drawPath(path)
+    p.drawLine(QPointF(s * 0.24, s * 0.46), QPointF(s * 0.76, s * 0.46))
+
+
 def render(name: str, painter_fn) -> str:
     img = QImage(SIZE, SIZE, QImage.Format_ARGB32_Premultiplied)
     img.fill(Qt.transparent)
@@ -117,7 +133,7 @@ def main() -> int:
     os.makedirs(OUT, exist_ok=True)
     shutil.copy2(APP_ICON, os.path.join(OUT, "diskultimate.png"))
     for name, fn in (("terminal.png", draw_terminal), ("reboot.png", draw_reboot),
-                     ("power.png", draw_power)):
+                     ("power.png", draw_power), ("folder.png", draw_folder)):
         print(render(name, fn))
     return 0
 

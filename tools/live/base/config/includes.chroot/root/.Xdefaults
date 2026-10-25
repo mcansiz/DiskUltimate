@@ -1,0 +1,14 @@
+! DiskUltimate live: xterm yazi tipi (ADR 0101).
+! Varsayilan bitmap yazi tipinde Turkce/Kiril harfler yok (kutu cikar).
+! xrdb kurulu degil (cpp ceker); Xt, RESOURCE_MANAGER yokken bu dosyayi
+! kendisi okur.
+XTerm*faceName: DejaVu Sans Mono
+XTerm*faceNameDoublesize: WenQuanYi Micro Hei Mono
+XTerm*faceSize: 11
+XTerm*locale: true
+XTerm*background: #1d2733
+XTerm*foreground: #e8edf2
+XTerm*cursorColor: #e8edf2
+XTerm*scrollBar: false
+XTerm*saveLines: 5000
+XTerm*selectToClipboard: true

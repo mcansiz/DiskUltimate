@@ -1,0 +1,14 @@
+#!/bin/sh
+# Masaustu baslaticisini (.desktop) calistirir (ADR 0101).
+#
+# PCManFM (libfm) sag tik menusunde "Ac" ogesini yalnizca dosya turune
+# kayitli bir uygulama varsa gosterir; .desktop icin kayitli uygulama yoktu,
+# menude yalnizca "Birlikte Ac..." cikiyordu. Bu betik
+# /usr/share/applications/diskultimate-run-launcher.desktop ile o tur icin
+# kaydolur: menude "Ac" ve "Calistir" gorunur.
+for f in "$@"; do
+  cmd="$(sed -n '/^\[Desktop Entry\]/,/^\[/{s/^Exec=//p}' "$f" | head -n1 \
+         | sed 's/ *%[fFuUdDnNickvm]//g')"
+  [ -n "$cmd" ] && sh -c "$cmd" &
+done
+wait

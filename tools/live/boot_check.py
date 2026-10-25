@@ -12,9 +12,12 @@ Isaretler misafirin oturum betiginden seri porta yazilir
     DU-LIVE: SESSION-START fw=<bios|uefi> sb=<0|1>   X oturumu basladi
     DU-LIVE: APP-WINDOW <surum>                       uygulama penceresi gorundu
     DU-LIVE: APP-TIMEOUT | APP-MISSING                basarisiz
+    DU-LIVE: NET ip=<adres|none> dns=<ok|fail>        kablolu ag + DNS
 
-Basari: APP-WINDOW geldi ve bellenim kipe uyuyor (uefi-sb icin sb=1).
-Her durumda ekran goruntusu (<out>/<kip>.png) ve seri gunluk birakilir.
+Basari: APP-WINDOW geldi, bellenim kipe uyuyor (uefi-sb icin sb=1) ve ag
+calisiyor (NET dns=ok; QEMU kullanici agi DHCP + DNS verir).
+Her durumda ekran goruntusu (<out>/<kip>.png), GRUB menusu
+(<out>/<kip>-grub.png) ve seri gunluk birakilir.
 Cikis: 0 = basarili, 1 = basarisiz, 2 = kullanim / arac yok.
 """
 from __future__ import annotations
@@ -38,6 +41,9 @@ OVMF = {
                 "/usr/share/OVMF/OVMF_VARS_4M.ms.fd"),
 }
 MARK = re.compile(r"DU-LIVE: (\S+)(.*)")
+# GRUB menusu ~10 sn ekranda kalir (config.cfg timeout); BIOS'ta ~2 sn,
+# OVMF'de ~5 sn sonra gelir.
+GRUB_SHOT_AT = 8
 
 
 def qmp(sock_path: str, *commands: dict) -> None:
@@ -77,9 +83,10 @@ def main() -> int:
     os.makedirs(a.out, exist_ok=True)
     serial = os.path.join(a.out, f"{a.mode}-serial.log")
     shot = os.path.join(a.out, f"{a.mode}.png")
+    grub_shot = os.path.join(a.out, f"{a.mode}-grub.png")
     sock = os.path.join(a.out, f"{a.mode}.qmp")
     disk = os.path.join(a.out, f"{a.mode}-blank.img")
-    for p in (serial, shot, sock):
+    for p in (serial, shot, grub_shot, sock):
         if os.path.exists(p):
             os.remove(p)
     with open(disk, "wb") as fh:            # bos 8 GB seyrek ikinci disk
@@ -91,6 +98,7 @@ def main() -> int:
            "-m", "2048", "-smp", "2",
            "-cdrom", a.iso, "-boot", "d",
            "-drive", f"file={disk},format=raw,if=virtio",
+           "-nic", "user,model=virtio-net-pci",
            "-vga", "std", "-display", "none",
            "-serial", f"file:{serial}",
            "-qmp", f"unix:{sock},server,nowait",
@@ -115,9 +123,14 @@ def main() -> int:
     start = time.time()
     marks: dict = {}
     seen = 0
+    grub_taken = False
     try:
         while time.time() - start < a.timeout and proc.poll() is None:
             time.sleep(2)
+            if not grub_taken and time.time() - start >= GRUB_SHOT_AT:
+                qmp(sock, {"execute": "screendump",
+                           "arguments": {"filename": grub_shot, "format": "png"}})
+                grub_taken = True
             if not os.path.exists(serial):
                 continue
             with open(serial, "rb") as fh:
@@ -129,7 +142,7 @@ def main() -> int:
                     print(f"[{a.mode}] {time.time() - start:5.0f} s  {line.strip()}",
                           flush=True)
             seen = len(text.splitlines())
-            if {"APP-WINDOW", "APP-TIMEOUT", "APP-MISSING"} & marks.keys():
+            if {"NET", "APP-TIMEOUT", "APP-MISSING"} & marks.keys():
                 break
         qmp(sock, {"execute": "screendump",
                    "arguments": {"filename": shot, "format": "png"}})
@@ -152,6 +165,11 @@ def main() -> int:
         ok = False
     if ok and a.mode == "uefi-sb" and "sb=1" not in session:
         print(f"[{a.mode}] HATA: Secure Boot acik degil: '{session}'")
+        ok = False
+    net = marks.get("NET")
+    if ok and (net is None or "dns=ok" not in net):
+        print(f"[{a.mode}] HATA: ag calismiyor: '{net}' "
+              "(dhcpcd / resolv.conf; apt paket indiremez)")
         ok = False
     if not marks:
         print(f"[{a.mode}] HATA: seri portta hic isaret yok "

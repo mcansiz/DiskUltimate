@@ -1,8 +1,17 @@
 #!/bin/sh
 # DiskUltimate live tabani: chroot icinde son ayarlar (ADR 0101).
 set -e
-chmod 755 /usr/local/bin/diskultimate /usr/local/lib/diskultimate/session
+chmod 755 /usr/local/bin/diskultimate /usr/local/lib/diskultimate/session \
+  /usr/local/lib/diskultimate/netstatus /usr/local/lib/diskultimate/run-launcher
 chmod 755 /root/Desktop/*.desktop
+# Kablolu ag: dhcpcd ana kipte (servis dosyasinin basindaki not).
+systemctl enable diskultimate-dhcpcd.service
+# Gunluk apt isleri live oturumda yalnizca kilit tutar: kullanicinin
+# `apt update`'i "Could not get lock" ile duserdi.
+systemctl mask apt-daily.timer apt-daily-upgrade.timer
+# .desktop -> "Calistir" kaydi (run-launcher). GIO dosyalari kendisi de
+# tarar; desktop-file-utils kuruluysa onbellek de yazilir.
+update-desktop-database -q /usr/share/applications 2>/dev/null || true
 # Uygulama katmani buraya baglanir (zz-diskultimate.squashfs); taban bos tutar.
 mkdir -p /opt/diskultimate
 # Masaustu yoneticisi yok: grafik oturumu tty1 otomatik girisi baslatir.
