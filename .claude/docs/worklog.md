@@ -6563,3 +6563,13 @@ kaynağından okundu; ayrıntı ADR 0101 "Kullanıcı denemesi" tablosu.
 - xterm Türkçe harf kutu → `/root/.Xdefaults` (DejaVu Sans Mono).
 - `boot_check.py`: ağ (`NET ... dns=ok`) artık şart; GRUB ekran görüntüsü.
 Doğrulama CI koşusunda (taban yeniden kurulur).
+
+## 2026-10-25 (2) — CI koşusu 40200882691 + GRUB yazı tipi ikinci düzeltme
+
+- CI: üç kip geçti, **ağ üçünde de çalışıyor** (`NET ip=10.0.2.15 dns=ok`),
+  ISO 359,7 MB. Görev çubuğunda "● Ethernet 10.0.2.15" görünüyor.
+- GRUB menüsü hâlâ kutuluydu. VirtualBox'ta geçici VM (diski yok) ile GRUB
+  konsolu: `lsfonts` boş, elle `loadfont` başarılı → `if a || b` GRUB'da
+  sözdizimi hatası, blok atlanıyor. `||` kaldırıldı; BIOS'ta metin kipine
+  düşme için `insmod all_video`. ISO'nun yalnızca `config.cfg`'si xorriso ile
+  değiştirilip VirtualBox BIOS + EFI'de doğrulandı (10 dil doğru).
