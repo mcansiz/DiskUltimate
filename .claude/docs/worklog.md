@@ -6583,3 +6583,5 @@ CI ISO'su VirtualBox'ta Secure Boot açıkken (`modifynvram enrollmssignatures
 yüklemiyor; gömülü yazı tipi çıplak adla (`loadfont unicode`) geliyor.
 `config.cfg` iki yolu sırayla dener; değiştirilmiş ISO VirtualBox BIOS, EFI
 ve EFI + SB'de doğrulandı (10 dil doğru).
+CI 40204302811: üç kip + ağ geçti; GRUB menüsü BIOS, UEFI ve **UEFI + SB**
+ekran görüntülerinin üçünde de 10 dil doğru (kutu yok).
