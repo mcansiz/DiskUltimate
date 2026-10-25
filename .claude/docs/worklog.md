@@ -6600,3 +6600,7 @@ snapshot.debian.org kaynak yönlendirmesi).
 Kullanıcı onayıyla. İçerik (0.10.0-beta'dan beri): Live USB/DVD ISO (ADR 0101),
 live sistemde açılış belleği sistem diski sayılır (`physical.py`, t110),
 disk satırında çevrilmemiş "bilinmeyen" düzeltmesi.
+Yayınlandı: https://github.com/mcansiz/DiskUltimate/releases/tag/v0.10.1-beta
+(ön sürüm; release koşusu 40208249982, tüm işler yeşil). Dosyalar: exe,
+AppImage, live ISO + paket listesi, macOS zip, SHA256SUMS. Notlara elle
+"What's new / yenilikleri" eklendi (gerçek donanımda denenmediği yazıldı).
