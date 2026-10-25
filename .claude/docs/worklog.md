@@ -6573,3 +6573,13 @@ Doğrulama CI koşusunda (taban yeniden kurulur).
   sözdizimi hatası, blok atlanıyor. `||` kaldırıldı; BIOS'ta metin kipine
   düşme için `insmod all_video`. ISO'nun yalnızca `config.cfg`'si xorriso ile
   değiştirilip VirtualBox BIOS + EFI'de doğrulandı (10 dil doğru).
+
+## 2026-10-25 (3) — GRUB yazı tipi: Secure Boot kilit kipi
+
+CI 40202751596'da BIOS ve UEFI menüleri doğru, **UEFI + SB** hâlâ kutulu.
+CI ISO'su VirtualBox'ta Secure Boot açıkken (`modifynvram enrollmssignatures
+/ enrollorclpk / secureboot --enable`) aynı kusuru gösterdi; GRUB konsolunda
+`lockdown=y shim_lock=y`. İmzalı GRUB kilit kipinde dosyadan yazı tipi
+yüklemiyor; gömülü yazı tipi çıplak adla (`loadfont unicode`) geliyor.
+`config.cfg` iki yolu sırayla dener; değiştirilmiş ISO VirtualBox BIOS, EFI
+ve EFI + SB'de doğrulandı (10 dil doğru).
