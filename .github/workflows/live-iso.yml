@@ -159,16 +159,9 @@ jobs:
         run: python3 tools/live/boot_check.py dist/DiskUltimate-*-live-amd64.iso --mode bios
       - name: Acilis denemesi (UEFI)
         run: python3 tools/live/boot_check.py dist/DiskUltimate-*-live-amd64.iso --mode uefi
-      # Secure Boot zinciri ilk kosularda olculecek; gecene dek kosuyu dusurmez
-      # (ADR 0101). Sonuc ozet sayfasina yazilir.
+      # Secure Boot ilk bes kosuda gecti (ADR 0101); artik sarttir.
       - name: Acilis denemesi (UEFI + Secure Boot)
-        id: sb
-        continue-on-error: true
         run: python3 tools/live/boot_check.py dist/DiskUltimate-*-live-amd64.iso --mode uefi-sb
-      - name: Secure Boot sonucu
-        if: always()
-        run: |
-          echo "### Secure Boot acilisi: ${{ steps.sb.outcome }}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Ekran goruntuleri ve gunlukler
         if: always()

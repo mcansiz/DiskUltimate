@@ -6585,3 +6585,12 @@ yüklemiyor; gömülü yazı tipi çıplak adla (`loadfont unicode`) geliyor.
 ve EFI + SB'de doğrulandı (10 dil doğru).
 CI 40204302811: üç kip + ağ geçti; GRUB menüsü BIOS, UEFI ve **UEFI + SB**
 ekran görüntülerinin üçünde de 10 dil doğru (kutu yok).
+
+## 2026-10-25 (4) — Live ISO release'e düzenli dosya olarak
+
+Kullanıcı kararı ("bu hali ile uygun"): `release.yml` ISO'yu şart sayar
+(build-live düşerse release yok), "deneysel" etiketi kalktı; release
+notlarında Live satırı sabit (macOS satırının üstünde, boş `{MACOS_ROW}`
+tabloyu bölmesin). `live-iso.yml`: Secure Boot açılış denemesi şart.
+README + README.tr: "Live USB / DVD" bölümü (paket manifesti +
+snapshot.debian.org kaynak yönlendirmesi).

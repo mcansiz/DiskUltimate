@@ -140,10 +140,10 @@ jobs:
           path: dist/DiskUltimate-${{ needs.version.outputs.version }}-macos-arm64.zip
           if-no-files-found: error
 
-  # Live ISO (ADR 0101): Linux AppImage'i onbellekteki Debian tabanina ekler.
-  # Deneyseldir: duserse release yine olusur, yalnizca ISO eklenmez.
+  # Live ISO (ADR 0101): Linux AppImage'i onbellekteki Debian tabanina ekler
+  # ve BIOS / UEFI / UEFI + Secure Boot acilisini sinar. Sarttir.
   build-live:
-    name: Derleme (Live ISO, deneysel)
+    name: Derleme (Live ISO)
     needs: [version, build-linux]
     uses: ./.github/workflows/live-iso.yml
     with:
@@ -152,13 +152,14 @@ jobs:
 
   release:
     name: Taslak release
-    # macOS ve live ISO deneyseldir: testi ya da derlemesi duserse release yine
-    # olusur, yalnizca o dosya eklenmez. Windows ve Linux sarttir.
+    # macOS deneyseldir: testi ya da derlemesi duserse release yine olusur,
+    # yalnizca o dosya eklenmez. Windows, Linux ve live ISO sarttir.
     needs: [version, build-linux, build-windows, build-macos, build-live]
     if: >-
       always() && github.ref_type == 'tag'
       && needs.build-linux.result == 'success'
       && needs.build-windows.result == 'success'
+      && needs.build-live.result == 'success'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -176,7 +177,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VER: ${{ needs.version.outputs.version }}
           MACOS: ${{ needs.build-macos.result }}
-          LIVE: ${{ needs.build-live.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         shell: bash
         run: |
@@ -189,19 +189,12 @@ jobs:
           else
             row=""; tr=""
           fi
-          if [ "$LIVE" = "success" ]; then
-            lrow="| **Live USB/DVD (64-bit), experimental** | \`DiskUltimate-$VER-live-amd64.iso\` | Boots any PC (BIOS or UEFI) into DiskUltimate without installing anything: write it to a USB stick (Rufus, balenaEtcher, Ventoy or \`dd\`) and boot from it. Debian 13 based; package list: \`DiskUltimate-$VER-live-amd64.packages.txt\`. |"
-            ltr="- **Live USB/DVD (deneysel):** \`DiskUltimate-$VER-live-amd64.iso\` — kurulum gerektirmeden açılır (BIOS ve UEFI); Rufus, balenaEtcher, Ventoy ya da \`dd\` ile USB belleğe yazıp ondan açın. Debian 13 tabanlı."
-          else
-            lrow=""; ltr=""
-          fi
-          python3 - "$VER" "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY" "$RUN_URL" "$row" "$tr" "$lrow" "$ltr" <<'PY'
+          python3 - "$VER" "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY" "$RUN_URL" "$row" "$tr" <<'PY'
           import sys
-          ver, tag, repo, run, row, tr, lrow, ltr = sys.argv[1:9]
+          ver, tag, repo, run, row, tr = sys.argv[1:7]
           text = open("../.github/release-notes.md", encoding="utf-8").read()
           for key, value in (("{VERSION}", ver), ("{TAG}", tag), ("{REPO}", repo),
-                             ("{RUN_URL}", run), ("{MACOS_ROW}", row), ("{MACOS_TR}", tr),
-                             ("{LIVE_ROW}", lrow), ("{LIVE_TR}", ltr)):
+                             ("{RUN_URL}", run), ("{MACOS_ROW}", row), ("{MACOS_TR}", tr)):
               text = text.replace(key, value)
           open("notes.md", "w", encoding="utf-8").write(text)
           PY

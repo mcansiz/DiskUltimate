@@ -4,6 +4,9 @@ Tarih: 2026-10-24
 Durum: **uygulandı (CI'da doğrulandı)** — ISO GitHub Actions'ta kuruluyor ve
 QEMU'da BIOS / UEFI / UEFI + Secure Boot kiplerinin üçünde de açılıyor
 (2026-10-24, run 40088635281). Gerçek donanımda **henüz denenmedi**.
+**2026-10-25: kullanıcı kararıyla release'e düzenli dosya olarak girer**
+("deneysel" etiketi kalktı; ISO derlemesi ya da açılış denemesi düşerse
+release oluşmaz; Secure Boot denemesi şart).
 İlgili: [0050](0050-linux-dagitimi-appimage-ve-musl.md) (AppImage), [0079](0079-github-actions-ci-ve-surum.md),
 [0080](0080-uzun-testler-plani.md) (CI makineleri VM sayılır),
 [0014](0014-fiziksel-disk-destegi.md) (güvenlik katmanları).
@@ -155,9 +158,10 @@ okunarak kuruldu, gözle doğrulanacak.
 
 ## Açık işler
 
-- Secure Boot denemesi iki koşuda geçti → `continue-on-error` kaldırılabilir.
+- ~~Secure Boot denemesi zorunlu~~ — yapıldı (2026-10-25, beş koşuda geçmişti).
 - Masaüstü simgeleri ve jwm menüsü gözle (uygulama küçültülmüşken) denenmeli.
-- Gerçek donanımda en az iki makinede deneme; o zamana dek "deneysel".
+- Gerçek donanımda en az iki makinede deneme (kullanıcı sanal makinede
+  denedi; "deneysel" etiketi kullanıcı kararıyla kalktı).
 - `fonts-wqy-microhei`'nin Japonca/Korece glif kapsamı gözle doğrulanmalı.
-- Lisans: `*.packages.txt` manifesti release'e girer; kaynak için
-  snapshot.debian.org yazılı teklifi README'ye eklenecek.
+- ~~Lisans: kaynak yönlendirmesi~~ — README/README.tr "Live USB / DVD"
+  bölümünde: paket manifesti + snapshot.debian.org.

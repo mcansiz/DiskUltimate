@@ -69,6 +69,26 @@ chmod +x DiskUltimate-*-x86_64.AppImage
 - Without FUSE: `./DiskUltimate-*-x86_64.AppImage --appimage-extract-and-run`.
 - Root is requested through `pkexec` at start-up, as below.
 
+### Live USB / DVD (no installation)
+
+Download **`DiskUltimate-<version>-live-amd64.iso`** (about 360 MB) from the
+[Releases](../../releases) page and write it to a USB stick with Rufus (DD
+mode), balenaEtcher, Ventoy or `dd`. Boot any 64-bit PC from it — BIOS or
+UEFI, Secure Boot included — and DiskUltimate starts by itself.
+
+- Pick the language in the boot menu (10 languages); the keyboard layout
+  follows it.
+- The desktop has icons for DiskUltimate, the root folder, a terminal,
+  restart and shut down; the taskbar shows the wired network status.
+- Wired network is configured automatically (DHCP), so `apt install` works
+  in the terminal. Wi-Fi is not supported.
+- Everything runs in RAM; nothing is written to the PC's disks unless you
+  apply an operation in DiskUltimate. The USB stick it booted from is
+  treated as the system disk and protected accordingly.
+- Based on Debian 13. The exact package versions are listed in
+  `DiskUltimate-<version>-live-amd64.packages.txt`; their source code is
+  available from [snapshot.debian.org](https://snapshot.debian.org/).
+
 ### Linux (run from source)
 
 Running from source takes a minute and only needs Python 3.8+ and PyQt5:

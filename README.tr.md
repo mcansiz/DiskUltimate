@@ -67,6 +67,26 @@ chmod +x DiskUltimate-*-x86_64.AppImage
 - FUSE yoksa: `./DiskUltimate-*-x86_64.AppImage --appimage-extract-and-run`.
 - Root yetkisi açılışta `pkexec` ile istenir (aşağıdaki gibi).
 
+### Live USB / DVD (kurulumsuz)
+
+[Releases](../../releases) sayfasından
+**`DiskUltimate-<sürüm>-live-amd64.iso`** dosyasını (yaklaşık 360 MB) indirip
+Rufus (DD kipi), balenaEtcher, Ventoy ya da `dd` ile bir USB belleğe yazın.
+Herhangi bir 64 bit bilgisayarı ondan açın — BIOS ya da UEFI, Secure Boot
+dahil — DiskUltimate kendiliğinden başlar.
+
+- Dili açılış menüsünden seçin (10 dil); klavye düzeni de ona göre ayarlanır.
+- Masaüstünde DiskUltimate, Ana Klasör, Uçbirim, Yeniden başlat ve Kapat
+  simgeleri vardır; görev çubuğu kablolu ağ durumunu gösterir.
+- Kablolu ağ kendiliğinden yapılandırılır (DHCP); uçbirimde `apt install`
+  çalışır. Kablosuz ağ desteklenmez.
+- Her şey RAM'de çalışır; DiskUltimate'te bir işlem uygulanmadıkça
+  bilgisayarın disklerine hiçbir şey yazılmaz. Açılış yapılan USB bellek
+  sistem diski sayılır ve ona göre korunur.
+- Debian 13 tabanlıdır. Paket sürümleri
+  `DiskUltimate-<sürüm>-live-amd64.packages.txt` dosyasındadır; kaynak kodları
+  [snapshot.debian.org](https://snapshot.debian.org/) adresinden alınabilir.
+
 ### Linux (kaynaktan çalıştırma)
 
 Kaynaktan çalıştırmak bir dakika sürer ve yalnızca Python 3.8+ ile PyQt5
