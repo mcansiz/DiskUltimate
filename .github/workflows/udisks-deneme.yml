@@ -1,0 +1,92 @@
+# Flatpak on calismasi: UDisks2 `Block.OpenDevice` ile fd uzerinden disk
+# erisimi. Bir loop aygiti hem dogrudan makinede hem gercek bir Flatpak
+# korumali ortaminda (--device=all + --system-talk-name) denenir.
+# GitHub makineleri VM sayilir (ADR 0080): losetup / polkit kurali serbesttir.
+name: UDisks2 denemesi
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONIOENCODING: utf-8
+  DISKULTIMATE_NO_ELEVATION_PROMPT: "1"
+  DISKULTIMATE_UPDATE_CHECK: "0"
+  ISARET: DU-UDISKS-DENEME
+  RUNTIME: org.freedesktop.Platform//24.08
+
+jobs:
+  deneme:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Paketler (udisks2, flatpak, jeepney)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq udisks2 flatpak
+          sudo systemctl start udisks2
+          # Ubuntu 24.04 ayricaliksiz kullanici ad alanini kisitlar; bwrap ister.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          python3 -m pip install --quiet --target "$GITHUB_WORKSPACE/.tmp/vendor" jeepney
+          python3 -c "import sys; sys.path.insert(0, '.tmp/vendor'); import jeepney; print('jeepney', jeepney.__version__)"
+          udisksctl status | head -5 || true
+          pkcheck --version || true
+
+      - name: Loop aygiti (sektor 0'da isaret + 55AA)
+        run: |
+          mkdir -p .tmp
+          truncate -s 64M .tmp/disk.img
+          printf '%s' "$ISARET" | dd of=.tmp/disk.img conv=notrunc status=none
+          printf '\x55\xaa' | dd of=.tmp/disk.img bs=1 seek=510 conv=notrunc status=none
+          LOOP=$(sudo losetup -f --show .tmp/disk.img)
+          echo "LOOP=$LOOP" >> "$GITHUB_ENV"
+          ls -l "$LOOP"; id
+
+      - name: "1) Makine, polkit kurali yok: OpenDevice reddedilmeli"
+        env:
+          PYTHONPATH: ${{ github.workspace }}/.tmp/vendor
+        run: python3 tools/flatpak/udisks_deneme.py "$LOOP" --isaret "$ISARET" --bekle izin-yok
+
+      - name: Polkit kurali (yalnizca bu kullanici, yalnizca udisks2)
+        run: |
+          sudo tee /etc/polkit-1/rules.d/49-du-deneme.rules > /dev/null <<EOF
+          polkit.addRule(function(action, subject) {
+            if (action.id.indexOf("org.freedesktop.udisks2.") == 0 &&
+                subject.user == "$(id -un)") return polkit.Result.YES;
+          });
+          EOF
+          sudo systemctl restart polkit
+
+      - name: "2) Makine, kural var: r + rw fd"
+        env:
+          PYTHONPATH: ${{ github.workspace }}/.tmp/vendor
+        run: python3 tools/flatpak/udisks_deneme.py "$LOOP" --isaret "$ISARET" --yaz
+
+      - name: Flatpak calisma ortami
+        run: |
+          flatpak --version
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub "$RUNTIME"
+          flatpak run --user --command=sh "$RUNTIME" -c 'command -v python3 && python3 --version'
+
+      - name: "3) Flatpak icinde: r + rw fd"
+        run: |
+          # Sektor 1'i sifirla ki ikinci yazma gercekten olculsun.
+          sudo dd if=/dev/zero of="$LOOP" bs=512 seek=1 count=1 conv=notrunc status=none
+          flatpak run --user \
+            --device=all \
+            --system-talk-name=org.freedesktop.UDisks2 \
+            --filesystem="$GITHUB_WORKSPACE" \
+            --env=PYTHONPATH="$GITHUB_WORKSPACE/.tmp/vendor" \
+            --command=python3 "$RUNTIME" \
+            "$GITHUB_WORKSPACE/tools/flatpak/udisks_deneme.py" "$LOOP" --isaret "$ISARET" --yaz
+
+      - name: Disardan dogrulama (sektor 1)
+        run: |
+          sudo dd if="$LOOP" bs=512 skip=1 count=1 status=none | head -c 32 | od -c | head -3
+          sudo dd if="$LOOP" bs=512 skip=1 count=1 status=none | grep -a -q "$ISARET-YAZILDI"
+          echo "sektor 1 Flatpak icinden yazilmis: TAMAM"
