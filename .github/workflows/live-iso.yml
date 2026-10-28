@@ -137,7 +137,7 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q --no-install-recommends \
-            xorriso squashfs-tools qemu-system-x86 ovmf
+            xorriso squashfs-tools qemu-system-x86 ovmf initramfs-tools-core
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
@@ -154,6 +154,24 @@ jobs:
           cp .tmp/live/base/base.packages "dist/DiskUltimate-$ver-live-amd64.packages.txt"
           ls -l dist
           echo "### ISO: $(du -m "$iso" | cut -f1) MB" >> "$GITHUB_STEP_SUMMARY"
+
+      # Boyut nereden geliyor: ISO'daki buyuk dosyalar ve initrd'ye giren
+      # bellenim (initramfs-tools surucu bellenimini de kopyalar).
+      - name: ISO icerigi (boyut)
+        continue-on-error: true
+        shell: bash
+        run: |
+          iso=$(ls dist/DiskUltimate-*-live-amd64.iso)
+          xorriso -indev "$iso" -find / -type f -size +1m -exec lsdl 2>/dev/null \
+            | awk '{printf "%8.1f MB  %s\n", $5/1048576, $NF}' | sort -rn | head -15
+          mkdir -p .tmp/live/initrd
+          xorriso -osirrox on -indev "$iso" -extract /live .tmp/live/initrd/live >/dev/null 2>&1
+          rd=$(ls .tmp/live/initrd/live/initrd.img-* | head -n1)
+          unmkinitramfs "$rd" .tmp/live/initrd/x
+          echo "initrd: $(du -m "$rd" | cut -f1) MB (sikistirilmis), acik: $(du -sm .tmp/live/initrd/x | cut -f1) MB"
+          du -sm .tmp/live/initrd/x/*/usr/lib/firmware/* .tmp/live/initrd/x/usr/lib/firmware/* 2>/dev/null | sort -rn | head -15
+          du -sm .tmp/live/initrd/x/*/usr/lib/modules/*/kernel/drivers/* 2>/dev/null | sort -rn | head -8
+          rm -rf .tmp/live/initrd
 
       - name: Acilis denemesi (BIOS)
         run: python3 tools/live/boot_check.py dist/DiskUltimate-*-live-amd64.iso --mode bios
@@ -175,15 +193,16 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      # Deneme kosusunda acilis denemesi dusse de ISO yuklenir (teshis icin).
       - name: ISO (deneme kosusu)
-        if: inputs.version == ''
+        if: ${{ !cancelled() && inputs.version == '' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: live-iso
           path: |
             dist/DiskUltimate-*-live-amd64.iso
             dist/DiskUltimate-*-live-amd64.packages.txt
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
           compression-level: 0
       - name: ISO (release)

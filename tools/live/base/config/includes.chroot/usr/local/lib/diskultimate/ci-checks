@@ -75,8 +75,23 @@ wifi_check() {
     wifi_cleanup
     return
   fi
-  # "unavailable" = wpa_supplicant yok ya da kart kullanilamaz.
-  st="$(nmcli -t -f DEVICE,STATE device | awk -F: -v d="$cl" '$1 == d {print $2}')"
+  # Kart yeni gorundugunde NM'de "unavailable"dir; wpa_supplicant karta
+  # baglaninca "disconnected" olur. Ilk CI kosusunda hemen okundugu icin
+  # erisim noktasi kurulamamisti. Iki kart da hazir olana dek beklenir.
+  k=0
+  while [ "$k" -lt 30 ]; do
+    st="$(nmcli -t -f DEVICE,STATE device | awk -F: -v d="$cl" '$1 == d {print $2}')"
+    st_ap="$(nmcli -t -f DEVICE,STATE device | awk -F: -v d="$ap" '$1 == d {print $2}')"
+    [ "$st" = disconnected ] && [ "$st_ap" = disconnected ] && break
+    k=$((k + 1))
+    sleep 1
+  done
+  if [ "$st" != disconnected ] || [ "$st_ap" != disconnected ]; then
+    rf="$(cat /sys/class/rfkill/*/soft 2>/dev/null | tr '\n' ',')"
+    du_mark "WIFI fail state=$st/$st_ap after=${k}s wpa=$(systemctl is-active wpa_supplicant) rfkill-soft=$rf"
+    wifi_cleanup
+    return
+  fi
   nmcli connection add type wifi ifname "$ap" con-name du-ci-ap ssid DU-CI \
     802-11-wireless.mode ap 802-11-wireless.band bg \
     wifi-sec.key-mgmt wpa-psk wifi-sec.psk diskultimate-ci \
