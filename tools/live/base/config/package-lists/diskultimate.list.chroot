@@ -12,8 +12,9 @@ locales
 keyboard-configuration
 
 # Grafik: en kucuk X + jwm (gorev cubugu, menu) + pcmanfm (masaustu simgeleri)
-# x11-xserver-utils YOK: xrdb'si icin cpp'yi (cc1, 33 MB) ceker; ekran
-# kararmasi xorg.conf.d ile kapatilir.
+# Ekran kararmasi xorg.conf.d ile kapatilir. Cozunurluk: X cekirdek KMS
+# suruculeri uzerinden `modesetting` ile calisir (xserver-xorg-core icinde);
+# fbdev/vesa yalnizca yedek.
 xserver-xorg-core
 xserver-xorg-video-fbdev
 xserver-xorg-video-vesa
@@ -21,6 +22,11 @@ xserver-xorg-input-libinput
 xinit
 x11-xkb-utils
 x11-utils
+# Ekran Ayarlari: lxrandr (cozunurluk + yenileme hizi, 15 sn'de geri alma)
+# xrandr'a dayanir. x11-xserver-utils xrdb icin cpp'ye bagimli; cpp'nin
+# 33 MB'lik cc1'i dpkg kuraliyla kurulmaz (01-diskultimate-trim).
+x11-xserver-utils
+lxrandr
 jwm
 pcmanfm
 xterm
@@ -61,11 +67,27 @@ grub-pc-bin
 grub-efi-amd64-bin
 efibootmgr
 
-# Ag: dhcpcd-base + iproute2 zaten "important" onceliginde gelir; acikca
-# yazilir cunku diskultimate-dhcpcd.service ve netstatus onlara dayanir.
-dhcpcd-base
+# Ag: NetworkManager kablolu agi kendiliginden baglar; kablosuz ag gorev
+# cubugundaki nm-applet simgesinden secilir. wpasupplicant kablosuz icin
+# sart (NM'de yalnizca Recommends). nm-applet bir polkit yetki aracisi
+# ister; secilmezse apt buyuk bir masaustu bileseni secebilir -> lxpolkit.
+network-manager
+network-manager-gnome
+wpasupplicant
+wireless-regdb
+lxpolkit
 iproute2
 iputils-ping
+
+# Bellenim (non-free-firmware): kablosuz kartlarin cogu bellenim olmadan
+# calismaz; Realtek kablolu kartlarin bir kismi da ister. AMD ekran kartinda
+# bellenim yoksa cekirdek surucusu yuklenmez, cozunurluk degistirilemez.
+firmware-iwlwifi
+firmware-realtek
+firmware-atheros
+firmware-brcm80211
+firmware-misc-nonfree
+firmware-amd-graphics
 
 # Ileri kullanici / hata bildirimi
 pciutils

@@ -13,9 +13,17 @@ Isaretler misafirin oturum betiginden seri porta yazilir
     DU-LIVE: APP-WINDOW <surum>                       uygulama penceresi gorundu
     DU-LIVE: APP-TIMEOUT | APP-MISSING                basarisiz
     DU-LIVE: NET ip=<adres|none> dns=<ok|fail>        kablolu ag + DNS
+    DU-LIVE: RANDR ok|fail ...                        ekran kipi degisti, geri alindi
+    DU-LIVE: WIFI state=.. scan=.. assoc=ok|fail      sanal kablosuz kartla WPA2
+    DU-LIVE: CI-DONE applet=yes|no                    CI denemeleri bitti
 
-Basari: APP-WINDOW geldi, bellenim kipe uyuyor (uefi-sb icin sb=1) ve ag
-calisiyor (NET dns=ok; QEMU kullanici agi DHCP + DNS verir).
+CI denemeleri (RANDR, WIFI) misafirde yalnizca QEMU'nun verdigi fw_cfg
+isaretiyle (`opt/org.diskultimate/ci`) calisir; gercek makinede calismaz.
+
+Basari: APP-WINDOW geldi, bellenim kipe uyuyor (uefi-sb icin sb=1), ag
+calisiyor (NET dns=ok; QEMU kullanici agi DHCP + DNS verir), cozunurluk
+degisebiliyor (RANDR ok), kablosuz ag baglaniyor (WIFI scan=yes assoc=ok)
+ve nm-applet calisiyor (CI-DONE applet=yes).
 Her durumda ekran goruntusu (<out>/<kip>.png), GRUB menusu
 (<out>/<kip>-grub.png) ve seri gunluk birakilir.
 Cikis: 0 = basarili, 1 = basarisiz, 2 = kullanim / arac yok.
@@ -99,6 +107,7 @@ def main() -> int:
            "-cdrom", a.iso, "-boot", "d",
            "-drive", f"file={disk},format=raw,if=virtio",
            "-nic", "user,model=virtio-net-pci",
+           "-fw_cfg", "name=opt/org.diskultimate/ci,string=1",
            "-vga", "std", "-display", "none",
            "-serial", f"file:{serial}",
            "-qmp", f"unix:{sock},server,nowait",
@@ -142,7 +151,7 @@ def main() -> int:
                     print(f"[{a.mode}] {time.time() - start:5.0f} s  {line.strip()}",
                           flush=True)
             seen = len(text.splitlines())
-            if {"NET", "APP-TIMEOUT", "APP-MISSING"} & marks.keys():
+            if {"CI-DONE", "CI-SKIP", "APP-TIMEOUT", "APP-MISSING"} & marks.keys():
                 break
         qmp(sock, {"execute": "screendump",
                    "arguments": {"filename": shot, "format": "png"}})
@@ -169,7 +178,22 @@ def main() -> int:
     net = marks.get("NET")
     if ok and (net is None or "dns=ok" not in net):
         print(f"[{a.mode}] HATA: ag calismiyor: '{net}' "
-              "(dhcpcd / resolv.conf; apt paket indiremez)")
+              "(NetworkManager / resolv.conf; apt paket indiremez)")
+        ok = False
+    if ok and "CI-DONE" not in marks:
+        print(f"[{a.mode}] HATA: CI denemeleri calismadi "
+              f"({'CI-SKIP: fw_cfg isareti misafirde okunamadi' if 'CI-SKIP' in marks else 'zaman asimi'})")
+        ok = False
+    randr = marks.get("RANDR", "")
+    if ok and not randr.startswith("ok"):
+        print(f"[{a.mode}] HATA: ekran cozunurlugu degistirilemedi: '{randr}'")
+        ok = False
+    wifi = marks.get("WIFI", "")
+    if ok and not ("scan=yes" in wifi and "assoc=ok" in wifi):
+        print(f"[{a.mode}] HATA: kablosuz ag baglanmadi: '{wifi}'")
+        ok = False
+    if ok and "applet=yes" not in marks.get("CI-DONE", ""):
+        print(f"[{a.mode}] HATA: nm-applet calismiyor: '{marks.get('CI-DONE')}'")
         ok = False
     if not marks:
         print(f"[{a.mode}] HATA: seri portta hic isaret yok "

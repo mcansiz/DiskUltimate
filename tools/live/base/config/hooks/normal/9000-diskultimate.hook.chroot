@@ -2,10 +2,13 @@
 # DiskUltimate live tabani: chroot icinde son ayarlar (ADR 0101).
 set -e
 chmod 755 /usr/local/bin/diskultimate /usr/local/lib/diskultimate/session \
-  /usr/local/lib/diskultimate/netstatus /usr/local/lib/diskultimate/run-launcher
+  /usr/local/lib/diskultimate/netstatus /usr/local/lib/diskultimate/run-launcher \
+  /usr/local/lib/diskultimate/ci-checks
 chmod 755 /root/Desktop/*.desktop
-# Kablolu ag: dhcpcd ana kipte (servis dosyasinin basindaki not).
-systemctl enable diskultimate-dhcpcd.service
+# Ag: NetworkManager (kablolu + kablosuz). Acilisi beklemesin: ag bekleyen
+# bir servis yok, kablo takili degilse wait-online 90 sn bosuna oyalar.
+systemctl enable NetworkManager.service
+systemctl disable NetworkManager-wait-online.service 2>/dev/null || true
 # Gunluk apt isleri live oturumda yalnizca kilit tutar: kullanicinin
 # `apt update`'i "Could not get lock" ile duserdi.
 systemctl mask apt-daily.timer apt-daily-upgrade.timer

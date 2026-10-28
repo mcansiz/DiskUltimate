@@ -15,3 +15,13 @@ du_mark() {
   [ -c /dev/ttyS0 ] && timeout 2 sh -c "echo \"DU-LIVE: $*\" > /dev/ttyS0" 2>/dev/null
   return 0
 }
+
+# CI denemesi mi? tools/live/boot_check.py QEMU'ya
+#   -fw_cfg name=opt/org.diskultimate/ci,string=1
+# verir. Yalnizca o zaman ekran cozunurlugu degistirilir ve sanal kablosuz
+# kart (mac80211_hwsim) kurulur; gercek makinede bu dosya yoktur.
+DU_CI_FLAG=/sys/firmware/qemu_fw_cfg/by_name/opt/org.diskultimate/ci/raw
+du_ci() {
+  [ -r "$DU_CI_FLAG" ] || modprobe -q qemu_fw_cfg 2>/dev/null
+  [ "$(cat "$DU_CI_FLAG" 2>/dev/null)" = 1 ]
+}

@@ -71,7 +71,7 @@ chmod +x DiskUltimate-*-x86_64.AppImage
 
 ### Live USB / DVD (no installation)
 
-Download **`DiskUltimate-<version>-live-amd64.iso`** (about 360 MB) from the
+Download **`DiskUltimate-<version>-live-amd64.iso`** (about 450 MB) from the
 [Releases](../../releases) page and write it to a USB stick with Rufus (DD
 mode), balenaEtcher, Ventoy or `dd`. Boot any 64-bit PC from it — BIOS or
 UEFI, Secure Boot included — and DiskUltimate starts by itself.
@@ -79,9 +79,13 @@ UEFI, Secure Boot included — and DiskUltimate starts by itself.
 - Pick the language in the boot menu (10 languages); the keyboard layout
   follows it.
 - The desktop has icons for DiskUltimate, the root folder, a terminal,
-  restart and shut down; the taskbar shows the wired network status.
-- Wired network is configured automatically (DHCP), so `apt install` works
-  in the terminal. Wi-Fi is not supported.
+  display settings, restart and shut down.
+- Wired network connects automatically (DHCP). For Wi-Fi, click the network
+  icon in the taskbar, pick the network and enter its password. Firmware for
+  common Intel, Realtek, Qualcomm/Atheros, Broadcom and MediaTek cards is
+  included. `apt install` works in the terminal once connected.
+- **Display Settings** changes the screen resolution and refresh rate; a new
+  mode is reverted after 15 seconds unless you confirm it.
 - Everything runs in RAM; nothing is written to the PC's disks unless you
   apply an operation in DiskUltimate. The USB stick it booted from is
   treated as the system disk and protected accordingly.

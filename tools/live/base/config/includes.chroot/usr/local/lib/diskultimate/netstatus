@@ -3,17 +3,19 @@
 #
 # jwm'in <Swallow name="dunet"> ogesine gomulen tek satirlik xterm'de calisir;
 # durum degisince satiri yeniden yazar. jwm'de degisen metin gosteren bir
-# tepsi ogesi yok; NetworkManager + nm-applet ise tabana onlarca MB ekler.
+# tepsi ogesi yok. Ag secimi (kablosuz) yanindaki nm-applet simgesindendir;
+# bu satir yalnizca o anki baglantiyi yazi olarak gosterir.
 #
 #   netstatus        gorev cubugu dongusu
-#   netstatus --ip   kablolu arabirimin IPv4 adresi (oturum denemesi, CI)
+#   netstatus --ip   fiziksel bir arabirimin IPv4 adresi (oturum denemesi, CI)
 . /usr/local/lib/diskultimate/env.sh
 
-# Fiziksel kablolu arabirimler: lo ve sanal arabirimlerin `device`
-# baglantisi yok, kablosuzlarin `wireless` dizini var.
-wired() {
+# Fiziksel arabirimler: "eth <ad>" ya da "wifi <ad>". lo ve sanal
+# arabirimlerin `device` baglantisi yok; kablosuzlarin `wireless` dizini var.
+devices() {
   for d in /sys/class/net/*; do
-    [ -e "$d/device" ] && [ ! -d "$d/wireless" ] && echo "${d##*/}"
+    [ -e "$d/device" ] || continue
+    if [ -d "$d/wireless" ]; then echo "wifi ${d##*/}"; else echo "eth ${d##*/}"; fi
   done
 }
 
@@ -22,8 +24,15 @@ ipv4() {
     | sed -n 's/.* inet \([0-9.]*\).*/\1/p' | head -n1
 }
 
+# Kablosuz baglantinin adi (NM baglanti adi = ag adi, SSID). Uzun ad
+# kesilmez: xterm satiri 26 sutunda kendisi kirpar (cut baytla keser,
+# UTF-8 harfi bolerdi). Ters bolu printf %b'ye kacis olarak gitmesin.
+ssid() {
+  nmcli -g GENERAL.CONNECTION device show "$1" 2>/dev/null | head -n1 | tr -d '\\'
+}
+
 if [ "${1:-}" = "--ip" ]; then
-  for n in $(wired); do
+  for n in $(devices | cut -d' ' -f2); do
     a="$(ipv4 "$n")"
     [ -n "$a" ] && { echo "$a"; exit 0; }
   done
@@ -31,29 +40,35 @@ if [ "${1:-}" = "--ip" ]; then
 fi
 
 case "$DU_LANG" in
-  tr) T_NONE="Ethernet kartı yok"; T_CABLE="Kablo takılı değil";    T_WAIT="Adres alınıyor…" ;;
-  de) T_NONE="Kein Ethernet-Adapter"; T_CABLE="Kein Kabel";            T_WAIT="Adresse wird bezogen…" ;;
-  fr) T_NONE="Pas de carte Ethernet"; T_CABLE="Câble débranché";      T_WAIT="Obtention d'adresse…" ;;
-  it) T_NONE="Nessuna scheda Ethernet"; T_CABLE="Cavo scollegato";   T_WAIT="Richiesta indirizzo…" ;;
-  es) T_NONE="Sin tarjeta Ethernet"; T_CABLE="Cable desconectado";    T_WAIT="Obteniendo dirección…" ;;
-  ru) T_NONE="Нет Ethernet-адаптера"; T_CABLE="Кабель не подключён";   T_WAIT="Получение адреса…" ;;
-  zh) T_NONE="无以太网卡";          T_CABLE="网线未连接";            T_WAIT="正在获取地址…" ;;
-  ja) T_NONE="イーサネットなし";   T_CABLE="ケーブル未接続";        T_WAIT="アドレス取得中…" ;;
-  ko) T_NONE="이더넷 어댑터 없음"; T_CABLE="케이블 연결 안 됨";     T_WAIT="주소 받는 중…" ;;
-  *)  T_NONE="No Ethernet adapter"; T_CABLE="Cable unplugged";       T_WAIT="Getting address…" ;;
+  tr) T_NONE="Ağ kartı yok";          T_CABLE="Kablo takılı değil";  T_WAIT="Bağlanıyor…";      T_DISC="Bağlı değil" ;;
+  de) T_NONE="Kein Netzwerkadapter";  T_CABLE="Kein Kabel";          T_WAIT="Verbinde…";        T_DISC="Nicht verbunden" ;;
+  fr) T_NONE="Aucune carte réseau";   T_CABLE="Câble débranché";     T_WAIT="Connexion…";       T_DISC="Non connecté" ;;
+  it) T_NONE="Nessuna scheda di rete"; T_CABLE="Cavo scollegato";    T_WAIT="Connessione…";     T_DISC="Non connesso" ;;
+  es) T_NONE="Sin tarjeta de red";    T_CABLE="Cable desconectado";  T_WAIT="Conectando…";      T_DISC="Sin conexión" ;;
+  ru) T_NONE="Нет сетевой карты";     T_CABLE="Кабель не подключён"; T_WAIT="Подключение…";     T_DISC="Не подключено" ;;
+  zh) T_NONE="无网卡";                T_CABLE="网线未连接";          T_WAIT="正在连接…";        T_DISC="未连接" ;;
+  ja) T_NONE="アダプターなし";        T_CABLE="ケーブル未接続";      T_WAIT="接続中…";          T_DISC="未接続" ;;
+  ko) T_NONE="네트워크 카드 없음";    T_CABLE="케이블 연결 안 됨";   T_WAIT="연결 중…";         T_DISC="연결 안 됨" ;;
+  *)  T_NONE="No network adapter";    T_CABLE="Cable unplugged";     T_WAIT="Connecting…";      T_DISC="Not connected" ;;
 esac
 
-# up <ip> | wait (kablo var, adres yok) | cable (kablo yok) | none (kart yok)
+# eth <ip> | wifi <ag adi> | wait (baglanti var, adres yok) |
+# disc (kablosuz kart var, bagli degil) | cable (yalnizca kablolu, kablo yok) |
+# none (kart yok)
 state() {
   st=none
-  for n in $(wired); do
+  set -- $(devices)
+  while [ $# -ge 2 ]; do
+    kind=$1; n=$2; shift 2
     a="$(ipv4 "$n")"
     if [ -n "$a" ]; then
-      echo "up $a"
+      if [ "$kind" = wifi ]; then echo "wifi $(ssid "$n")"; else echo "eth $a"; fi
       return
     fi
     if [ "$(cat "/sys/class/net/$n/carrier" 2>/dev/null)" = 1 ]; then
       st=wait
+    elif [ "$kind" = wifi ] && [ "$st" != wait ]; then
+      st=disc
     elif [ "$st" = none ]; then
       st=cable
     fi
@@ -68,8 +83,10 @@ while :; do
   if [ "$s" != "$last" ]; then
     last="$s"
     case "$s" in
-      up*)   line="\033[32m●\033[0m Ethernet ${s#up }" ;;
+      eth*)  line="\033[32m●\033[0m Ethernet ${s#eth }" ;;
+      wifi*) line="\033[32m●\033[0m Wi-Fi ${s#wifi }" ;;
       wait)  line="\033[33m●\033[0m $T_WAIT" ;;
+      disc)  line="\033[90m●\033[0m $T_DISC" ;;
       cable) line="\033[31m●\033[0m $T_CABLE" ;;
       *)     line="\033[90m●\033[0m $T_NONE" ;;
     esac

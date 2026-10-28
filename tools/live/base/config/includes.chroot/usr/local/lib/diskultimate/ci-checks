@@ -1,0 +1,113 @@
+#!/bin/sh
+# Yalnizca CI'da calisan oturum denemeleri (ADR 0101).
+#
+# Oturum betigi bunu `du_ci` dogruysa (QEMU fw_cfg isareti) cagirir; gercek
+# makinede hic calismaz. Sonuclar seri porta yazilir, boot_check.py bekler:
+#   RANDR ok|fail ...            ekran kipi degisti ve geri alindi
+#   WIFI  state=.. scan=.. assoc=..  sanal kablosuz kartla WPA2 baglantisi
+#   CI-DONE applet=yes|no        nm-applet calisiyor mu
+. /usr/local/lib/diskultimate/env.sh
+
+# Bagli ekranin kip listesi / gecerli kipi (xrandr --query ciktisindan).
+modes_of() {
+  xrandr --query | awk -v o="$1" '$1 == o {f = 1; next} f && /^[^ ]/ {f = 0} f {print $1}'
+}
+current_of() {
+  xrandr --query | awk -v o="$1" '$1 == o {f = 1; next} f && /^[^ ]/ {f = 0} f && /\*/ {print $1}'
+}
+
+randr_check() {
+  out="$(xrandr --query 2>/dev/null | awk '/ connected/ {print $1; exit}')"
+  if [ -z "$out" ]; then
+    du_mark "RANDR fail no-output"
+    return
+  fi
+  modes="$(modes_of "$out")"
+  cur="$(current_of "$out")"
+  n="$(echo "$modes" | grep -c .)"
+  want=""
+  for m in 1024x768 800x600 1280x720 1280x1024; do
+    if [ "$m" != "$cur" ] && echo "$modes" | grep -qx "$m"; then
+      want="$m"
+      break
+    fi
+  done
+  if [ -z "$want" ]; then
+    du_mark "RANDR fail output=$out modes=$n cur=$cur"
+    return
+  fi
+  xrandr --output "$out" --mode "$want"
+  sleep 2
+  now="$(current_of "$out")"
+  xrandr --output "$out" --mode "$cur"
+  sleep 2
+  back="$(current_of "$out")"
+  r=fail
+  [ "$now" = "$want" ] && [ "$back" = "$cur" ] && r=ok
+  du_mark "RANDR $r output=$out modes=$n $cur->$now->$back"
+}
+
+wifi_cleanup() {
+  nmcli connection delete du-ci-ap du-ci-cl >/dev/null 2>&1
+  modprobe -r mac80211_hwsim 2>/dev/null
+}
+
+# mac80211_hwsim iki sanal kablosuz kart kurar: biri NM ile WPA2 erisim
+# noktasi (wpa_supplicant AP kipi), oteki istemci. Istemcinin agi taramada
+# gormesi ve WPA2 el sikismasini tamamlamasi (NM "activated") olculur.
+# Gercek kart bellenimini sinamaz; NM + wpa_supplicant + cekirdek zincirini sinar.
+wifi_check() {
+  if ! modprobe mac80211_hwsim radios=2 2>/dev/null; then
+    du_mark "WIFI fail no-hwsim"
+    return
+  fi
+  k=0
+  while [ "$k" -lt 30 ]; do
+    [ "$(nmcli -t -f TYPE device 2>/dev/null | grep -c '^wifi$')" -ge 2 ] && break
+    k=$((k + 1))
+    sleep 1
+  done
+  set -- $(nmcli -t -f DEVICE,TYPE device | awk -F: '$2 == "wifi" {print $1}')
+  ap="${1:-}"
+  cl="${2:-}"
+  if [ -z "$cl" ]; then
+    du_mark "WIFI fail devices=$(nmcli -t -f DEVICE,TYPE,STATE device | tr '\n' ' ')"
+    wifi_cleanup
+    return
+  fi
+  # "unavailable" = wpa_supplicant yok ya da kart kullanilamaz.
+  st="$(nmcli -t -f DEVICE,STATE device | awk -F: -v d="$cl" '$1 == d {print $2}')"
+  nmcli connection add type wifi ifname "$ap" con-name du-ci-ap ssid DU-CI \
+    802-11-wireless.mode ap 802-11-wireless.band bg \
+    wifi-sec.key-mgmt wpa-psk wifi-sec.psk diskultimate-ci \
+    ipv4.method manual ipv4.addresses 10.99.0.1/24 ipv6.method disabled >/dev/null
+  if ! nmcli --wait 30 connection up du-ci-ap >/dev/null 2>&1; then
+    du_mark "WIFI fail ap state=$st"
+    wifi_cleanup
+    return
+  fi
+  seen=no
+  k=0
+  while [ "$k" -lt 10 ]; do
+    nmcli device wifi rescan ifname "$cl" >/dev/null 2>&1
+    sleep 2
+    if nmcli -t -f SSID device wifi list ifname "$cl" 2>/dev/null | grep -qx DU-CI; then
+      seen=yes
+      break
+    fi
+    k=$((k + 1))
+  done
+  nmcli connection add type wifi ifname "$cl" con-name du-ci-cl ssid DU-CI \
+    wifi-sec.key-mgmt wpa-psk wifi-sec.psk diskultimate-ci \
+    ipv4.method manual ipv4.addresses 10.99.0.2/24 ipv6.method disabled >/dev/null
+  assoc=fail
+  nmcli --wait 30 connection up du-ci-cl >/dev/null 2>&1 && assoc=ok
+  du_mark "WIFI state=$st scan=$seen assoc=$assoc ap=$ap client=$cl"
+  wifi_cleanup
+}
+
+randr_check
+wifi_check
+applet=no
+grep -qx nm-applet /proc/[0-9]*/comm 2>/dev/null && applet=yes
+du_mark "CI-DONE applet=$applet"

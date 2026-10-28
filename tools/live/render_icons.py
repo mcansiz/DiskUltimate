@@ -4,7 +4,7 @@
 
 Cikti: tools/live/base/config/includes.chroot/usr/share/diskultimate-live/icons/
   diskultimate.png  uygulamanin marka ikonu (ui/resources/app-icon-256.png)
-  terminal.png, reboot.png, power.png, folder.png
+  terminal.png, reboot.png, power.png, folder.png, display.png
 
 Debian 13'un Adwaita temasinda (48.x) ucbirim / yeniden baslat / kapat icin
 renkli simge yok (yalnizca `-symbolic`); klasorun de PNG'si yalnizca 16 px
@@ -115,6 +115,15 @@ def draw_folder(p: QPainter) -> None:
     p.drawLine(QPointF(s * 0.24, s * 0.46), QPointF(s * 0.76, s * 0.46))
 
 
+def draw_display(p: QPainter) -> None:
+    _tile(p, "#2e8b57")
+    _white_pen(p, SIZE * 0.06)
+    s = SIZE
+    p.drawRoundedRect(QRectF(s * 0.22, s * 0.27, s * 0.56, s * 0.36), s * 0.04, s * 0.04)
+    p.drawLine(QPointF(s * 0.50, s * 0.63), QPointF(s * 0.50, s * 0.72))
+    p.drawLine(QPointF(s * 0.38, s * 0.73), QPointF(s * 0.62, s * 0.73))
+
+
 def render(name: str, painter_fn) -> str:
     img = QImage(SIZE, SIZE, QImage.Format_ARGB32_Premultiplied)
     img.fill(Qt.transparent)
@@ -133,7 +142,8 @@ def main() -> int:
     os.makedirs(OUT, exist_ok=True)
     shutil.copy2(APP_ICON, os.path.join(OUT, "diskultimate.png"))
     for name, fn in (("terminal.png", draw_terminal), ("reboot.png", draw_reboot),
-                     ("power.png", draw_power), ("folder.png", draw_folder)):
+                     ("power.png", draw_power), ("folder.png", draw_folder),
+                     ("display.png", draw_display)):
         print(render(name, fn))
     return 0
 

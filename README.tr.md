@@ -70,16 +70,20 @@ chmod +x DiskUltimate-*-x86_64.AppImage
 ### Live USB / DVD (kurulumsuz)
 
 [Releases](../../releases) sayfasından
-**`DiskUltimate-<sürüm>-live-amd64.iso`** dosyasını (yaklaşık 360 MB) indirip
+**`DiskUltimate-<sürüm>-live-amd64.iso`** dosyasını (yaklaşık 450 MB) indirip
 Rufus (DD kipi), balenaEtcher, Ventoy ya da `dd` ile bir USB belleğe yazın.
 Herhangi bir 64 bit bilgisayarı ondan açın — BIOS ya da UEFI, Secure Boot
 dahil — DiskUltimate kendiliğinden başlar.
 
 - Dili açılış menüsünden seçin (10 dil); klavye düzeni de ona göre ayarlanır.
-- Masaüstünde DiskUltimate, Ana Klasör, Uçbirim, Yeniden başlat ve Kapat
-  simgeleri vardır; görev çubuğu kablolu ağ durumunu gösterir.
-- Kablolu ağ kendiliğinden yapılandırılır (DHCP); uçbirimde `apt install`
-  çalışır. Kablosuz ağ desteklenmez.
+- Masaüstünde DiskUltimate, Ana Klasör, Uçbirim, Ekran Ayarları, Yeniden
+  başlat ve Kapat simgeleri vardır.
+- Kablolu ağ kendiliğinden bağlanır (DHCP). Kablosuz ağ için görev
+  çubuğundaki ağ simgesine tıklayın, ağı seçip parolasını girin. Yaygın
+  Intel, Realtek, Qualcomm/Atheros, Broadcom ve MediaTek kartlarının
+  bellenimi ISO'dadır. Bağlandıktan sonra uçbirimde `apt install` çalışır.
+- **Ekran Ayarları** çözünürlüğü ve yenileme hızını değiştirir; yeni kip
+  onaylanmazsa 15 saniye sonra eskisine döner.
 - Her şey RAM'de çalışır; DiskUltimate'te bir işlem uygulanmadıkça
   bilgisayarın disklerine hiçbir şey yazılmaz. Açılış yapılan USB bellek
   sistem diski sayılır ve ona göre korunur.

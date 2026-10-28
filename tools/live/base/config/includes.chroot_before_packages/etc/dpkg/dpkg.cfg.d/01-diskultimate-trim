@@ -17,3 +17,6 @@ path-include=/usr/share/locale/ru/*
 path-include=/usr/share/locale/zh_CN/*
 path-include=/usr/share/locale/ja/*
 path-include=/usr/share/locale/ko/*
+# cpp yalnizca x11-xserver-utils (xrdb) bagimliligi olarak gelir; xrdb
+# kullanilmaz. Derleyici cekirdegi cc1 (33 MB) kurulmaz.
+path-exclude=/usr/libexec/gcc/*/*/cc1

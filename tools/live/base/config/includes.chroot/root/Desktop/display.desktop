@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Display Settings
+Name[tr]=Ekran Ayarları
+Name[de]=Anzeigeeinstellungen
+Name[fr]=Paramètres d'affichage
+Name[it]=Impostazioni schermo
+Name[es]=Configuración de pantalla
+Name[ru]=Настройки экрана
+Name[zh_CN]=显示设置
+Name[ja]=ディスプレイ設定
+Name[ko]=디스플레이 설정
+Exec=lxrandr
+Icon=/usr/share/diskultimate-live/icons/display.png
+Terminal=false

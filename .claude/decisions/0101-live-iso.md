@@ -156,6 +156,45 @@ ekran görüntüsü de alınır (`<kip>-grub.png`, 8. saniye).
 Sağ tık menüsü ve masaüstü CI'da tıklanarak sınanmıyor; libfm kaynağı
 okunarak kuruldu, gözle doğrulanacak.
 
+## Kablosuz ağ ve ekran çözünürlüğü (2026-10-28)
+
+Kullanıcı isteği: "livecd'de ekran çözünürlüğünü ayarlayabilmeliyim;
+kablolu ve kablosuz internete bağlanabilmeli."
+
+Ölçüm (Debian 13 paket kapanışı, 0.10.1-beta tabanına göre, `.deb`):
+
+| Bileşen | Ek |
+|---|---|
+| NetworkManager + nm-applet + nm-connection-editor + wpasupplicant + wireless-regdb + lxpolkit | +8,4 MB |
+| Kablosuz bellenim: iwlwifi 16,7 · realtek 2,9 · atheros 29,5 · brcm80211 5,4 · misc-nonfree (MediaTek vb.) 4,3 | +58,8 MB |
+| AMD ekran kartı bellenimi (yoksa amdgpu yüklenmez → çözünürlük değişmez) | +15,1 MB |
+| lxrandr + x11-xserver-utils (`xrandr`) | +12,7 MB, `cc1` dpkg ile dışarıda → ~+2 MB |
+
+Beklenen ISO ~445 MB (360'tan).
+
+Seçimler:
+- **NetworkManager** (dhcpcd servisi kaldırıldı): kablolu kendiliğinden,
+  kablosuz nm-applet'ten. Alternatifler: connman + cmst (sistem Qt6, +14,8 MB),
+  iwd + iwgtk (GTK4). nm-applet'in `polkit-1-auth-agent` bağımlılığı apt'ye
+  bırakılırsa büyük bir masaüstü bileşeni seçilebilir → `lxpolkit` açıkça.
+  root olarak çalışıldığı için yetki penceresi çıkmaz.
+- nm-applet jwm tepsisinde XEmbed (`<Dock/>`); `netstatus` satırı Wi-Fi'yi de
+  gösterir (`● Wi-Fi <ağ adı>`).
+- **lxrandr**: çözünürlük + yenileme hızı, onaylanmazsa geri alır. arandr
+  daha karmaşık (sürükle-bırak yerleşim) ve python3-gi çeker.
+- `x11-xserver-utils` (xrandr) `cpp`'ye bağımlı; xrdb kullanılmadığı için
+  `cc1` (33 MB) dpkg `path-exclude` ile kurulmaz.
+- X zaten çekirdek KMS sürücüsü üzerinden `modesetting` ile çalışır
+  (xserver-xorg-core içinde); çözünürlük değiştirmek bunu gerektirir.
+
+Doğrulama (CI, `boot_check.py`): QEMU `-fw_cfg opt/org.diskultimate/ci`
+işareti verir; misafir yalnızca o zaman `ci-checks` çalıştırır:
+- **RANDR:** bağlı ekranın başka bir kipine geçer, okur, geri alır.
+- **WIFI:** `mac80211_hwsim` iki sanal kart; biri NM ile WPA2 erişim
+  noktası, öteki istemci. Taramada ağı görmesi ve WPA2 el sıkışmasının
+  tamamlanması (NM "activated") şart. Gerçek kart bellenimini **sınamaz**.
+- **nm-applet** süreci çalışıyor olmalı.
+
 ## Açık işler
 
 - ~~Secure Boot denemesi zorunlu~~ — yapıldı (2026-10-25, beş koşuda geçmişti).

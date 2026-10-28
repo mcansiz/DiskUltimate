@@ -1,8 +1,9 @@
 #!/bin/sh
 # DiskUltimate live X oturumu (startx istemcisi, ADR 0101).
 #
-# jwm: gorev cubugu (ag durumu + saat) + menu (uygulama, ana klasor,
-# ucbirim, yeniden baslat, kapat). pcmanfm --desktop: ~/Desktop'taki simgeler. DiskUltimate acilista kendiliginden
+# jwm: gorev cubugu (ag durumu, nm-applet, saat) + menu (uygulama, ana
+# klasor, ucbirim, ekran ayarlari, ag baglantilari, yeniden baslat, kapat).
+# pcmanfm --desktop: ~/Desktop'taki simgeler. DiskUltimate acilista kendiliginden
 # baslar; kapatilirsa masaustu simgesinden ya da menuden yeniden acilir.
 . /usr/local/lib/diskultimate/env.sh
 
@@ -26,16 +27,16 @@ fi
 
 # Menu metinleri (arayuz metni: dilin dogru yazimi, CLAUDE.md).
 case "$DU_LANG" in
-  tr) T_TERM="Uçbirim";    T_FILES="Ana Klasör";      T_REBOOT="Yeniden başlat"; T_OFF="Kapat" ;;
-  de) T_TERM="Terminal";   T_FILES="Stammverzeichnis"; T_REBOOT="Neu starten";   T_OFF="Herunterfahren" ;;
-  fr) T_TERM="Terminal";   T_FILES="Dossier racine";  T_REBOOT="Redémarrer";     T_OFF="Éteindre" ;;
-  it) T_TERM="Terminale";  T_FILES="Cartella radice"; T_REBOOT="Riavvia";        T_OFF="Spegni" ;;
-  es) T_TERM="Terminal";   T_FILES="Carpeta raíz";    T_REBOOT="Reiniciar";      T_OFF="Apagar" ;;
-  ru) T_TERM="Терминал";   T_FILES="Корневая папка";  T_REBOOT="Перезагрузить";  T_OFF="Выключить" ;;
-  zh) T_TERM="终端";       T_FILES="根目录";          T_REBOOT="重新启动";       T_OFF="关机" ;;
-  ja) T_TERM="端末";       T_FILES="ルートフォルダー"; T_REBOOT="再起動";        T_OFF="シャットダウン" ;;
-  ko) T_TERM="터미널";     T_FILES="루트 폴더";       T_REBOOT="다시 시작";      T_OFF="시스템 종료" ;;
-  *)  T_TERM="Terminal";   T_FILES="Root Folder";     T_REBOOT="Restart";        T_OFF="Shut down" ;;
+  tr) T_TERM="Uçbirim";   T_FILES="Ana Klasör";       T_DISP="Ekran Ayarları";           T_NET="Ağ bağlantıları";       T_REBOOT="Yeniden başlat"; T_OFF="Kapat" ;;
+  de) T_TERM="Terminal";  T_FILES="Stammverzeichnis"; T_DISP="Anzeigeeinstellungen";     T_NET="Netzwerkverbindungen";  T_REBOOT="Neu starten";    T_OFF="Herunterfahren" ;;
+  fr) T_TERM="Terminal";  T_FILES="Dossier racine";   T_DISP="Paramètres d'affichage";   T_NET="Connexions réseau";     T_REBOOT="Redémarrer";     T_OFF="Éteindre" ;;
+  it) T_TERM="Terminale"; T_FILES="Cartella radice";  T_DISP="Impostazioni schermo";     T_NET="Connessioni di rete";   T_REBOOT="Riavvia";        T_OFF="Spegni" ;;
+  es) T_TERM="Terminal";  T_FILES="Carpeta raíz";     T_DISP="Configuración de pantalla"; T_NET="Conexiones de red";    T_REBOOT="Reiniciar";      T_OFF="Apagar" ;;
+  ru) T_TERM="Терминал";  T_FILES="Корневая папка";   T_DISP="Настройки экрана";         T_NET="Сетевые подключения";   T_REBOOT="Перезагрузить";  T_OFF="Выключить" ;;
+  zh) T_TERM="终端";      T_FILES="根目录";           T_DISP="显示设置";                 T_NET="网络连接";              T_REBOOT="重新启动";       T_OFF="关机" ;;
+  ja) T_TERM="端末";      T_FILES="ルートフォルダー"; T_DISP="ディスプレイ設定";         T_NET="ネットワーク接続";      T_REBOOT="再起動";         T_OFF="シャットダウン" ;;
+  ko) T_TERM="터미널";    T_FILES="루트 폴더";        T_DISP="디스플레이 설정";          T_NET="네트워크 연결";         T_REBOOT="다시 시작";      T_OFF="시스템 종료" ;;
+  *)  T_TERM="Terminal";  T_FILES="Root Folder";      T_DISP="Display Settings";         T_NET="Network Connections";   T_REBOOT="Restart";        T_OFF="Shut down" ;;
 esac
 I=/usr/share/diskultimate-live/icons
 
@@ -47,6 +48,9 @@ cat > "$HOME/.jwmrc" <<JWM
     <Program icon="$I/folder.png" label="$T_FILES">pcmanfm /</Program>
     <Program icon="$I/terminal.png" label="$T_TERM">xterm</Program>
     <Separator/>
+    <Program icon="$I/display.png" label="$T_DISP">lxrandr</Program>
+    <Program label="$T_NET">nm-connection-editor</Program>
+    <Separator/>
     <Program icon="$I/reboot.png" label="$T_REBOOT">systemctl reboot</Program>
     <Program icon="$I/power.png" label="$T_OFF">systemctl poweroff</Program>
   </RootMenu>
@@ -54,6 +58,7 @@ cat > "$HOME/.jwmrc" <<JWM
     <TrayButton icon="$I/diskultimate.png">root:3</TrayButton>
     <Spacer width="4"/>
     <TaskList maxwidth="280"/>
+    <Dock/>
     <Swallow name="dunet" width="220">xterm -name dunet -fa "DejaVu Sans Mono" -fs 10 -bg "#2b3440" -fg "#e8edf2" -b 6 -bw 0 +sb -geometry 26x1 -e /usr/local/lib/diskultimate/netstatus</Swallow>
     <Clock format="%H:%M"/>
   </Tray>
@@ -78,6 +83,7 @@ cat > "$HOME/.jwmrc" <<JWM
   <Key mask="CA" key="t">exec:xterm</Key>
   <StartupCommand>pcmanfm --desktop</StartupCommand>
   <StartupCommand>/usr/local/bin/diskultimate</StartupCommand>
+  <StartupCommand>nm-applet</StartupCommand>
 </JWM>
 JWM
 
@@ -100,6 +106,12 @@ JWM
       dns=fail
       [ -n "$ip" ] && getent hosts deb.debian.org >/dev/null 2>&1 && dns=ok
       du_mark "NET ip=${ip:-none} dns=$dns"
+      # CI'da: cozunurluk degistirme ve sanal kablosuz kartla baglanti.
+      if du_ci; then
+        /usr/local/lib/diskultimate/ci-checks
+      else
+        du_mark "CI-SKIP"
+      fi
       exit 0
     fi
     n=$((n + 1))

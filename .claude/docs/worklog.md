@@ -6604,3 +6604,12 @@ Yayınlandı: https://github.com/mcansiz/DiskUltimate/releases/tag/v0.10.1-beta
 (ön sürüm; release koşusu 40208249982, tüm işler yeşil). Dosyalar: exe,
 AppImage, live ISO + paket listesi, macOS zip, SHA256SUMS. Notlara elle
 "What's new / yenilikleri" eklendi (gerçek donanımda denenmediği yazıldı).
+
+## 2026-10-28 — Live ISO: kablosuz ağ + ekran çözünürlüğü
+
+Kullanıcı isteği. NetworkManager + nm-applet (dhcpcd servisi kaldırıldı),
+kablosuz/AMD bellenimleri, lxrandr ("Ekran Ayarları": masaüstü + menü),
+jwm tepsisinde `<Dock/>`, `netstatus` Wi-Fi'yi de gösterir. CI: QEMU fw_cfg
+işaretiyle yalnızca CI'da çalışan `ci-checks` — xrandr kip değişimi ve
+mac80211_hwsim ile WPA2 erişim noktasına bağlanma; `boot_check.py` bunları
+şart koşar. Ölçüm ve seçimler: ADR 0101 "Kablosuz ağ ve ekran çözünürlüğü".
