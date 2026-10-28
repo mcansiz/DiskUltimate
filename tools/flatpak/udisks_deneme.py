@@ -158,7 +158,9 @@ def main():
         fd = fd_ac(conn, nesne, "r")
     except DBusErrorResponse as exc:
         print("REDDEDILDI       :", exc.name, exc.data)
-        if exc.name == "org.freedesktop.UDisks2.Error.NotAuthorized":
+        # NotAuthorized / NotAuthorizedCanObtain (ajan olsa sorulabilirdi) /
+        # NotAuthorizedDismissed (kullanici pencereyi kapatti)
+        if exc.name.startswith("org.freedesktop.UDisks2.Error.NotAuthorized"):
             return 0 if args.bekle == "izin-yok" else 2
         return 1
     if args.bekle == "izin-yok":
