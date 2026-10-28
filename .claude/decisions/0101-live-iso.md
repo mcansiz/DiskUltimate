@@ -195,6 +195,19 @@ işareti verir; misafir yalnızca o zaman `ci-checks` çalıştırır:
   tamamlanması (NM "activated") şart. Gerçek kart bellenimini **sınamaz**.
 - **nm-applet** süreci çalışıyor olmalı.
 
+Sonuç (CI 40639364210, üç kip): NET, RANDR (13 kip), WIFI (tarama + WPA2,
+kartlar 18 sn'de hazır), nm-applet — hepsi geçti. İlk koşuda Wi-Fi denemesi
+kartlar "unavailable" ara durumundayken başladığı için düşmüştü.
+
+**Boyut tahmini yanlıştı: ISO 499 MB** (beklenen ~445). `.deb` boyutu
+büyük pencereli xz ile sıkıştırılmıştır ve bellenim dosyaları arasındaki
+tekrarlardan (aynı kartın birçok sürümü) yararlanır; squashfs 128 KB
+bloklarla sıkıştırır. Squashfs içi (açık): bellenim 342 MB (amdgpu 85,
+ath11k 63, ath10k 19, intel 16, rtw89 15, brcm 11). Bellenim klasörü tek
+başına: 128 KB blok 127 MB, 1 MB blok 114 MB → `MKSQUASHFS_OPTIONS="-b 1M
+-Xbcj x86"`. Daha fazlası yalnızca donanım desteğinden vazgeçerek kazanılır
+(ör. amdgpu: AMD'de çözünürlük değişmez; ath11k: yeni Qualcomm Wi-Fi).
+
 ## Açık işler
 
 - ~~Secure Boot denemesi zorunlu~~ — yapıldı (2026-10-25, beş koşuda geçmişti).

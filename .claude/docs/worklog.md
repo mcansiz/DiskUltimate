@@ -6613,3 +6613,6 @@ jwm tepsisinde `<Dock/>`, `netstatus` Wi-Fi'yi de gösterir. CI: QEMU fw_cfg
 işaretiyle yalnızca CI'da çalışan `ci-checks` — xrandr kip değişimi ve
 mac80211_hwsim ile WPA2 erişim noktasına bağlanma; `boot_check.py` bunları
 şart koşar. Ölçüm ve seçimler: ADR 0101 "Kablosuz ağ ve ekran çözünürlüğü".
+CI 40639364210: üç kipte NET + RANDR + WIFI (hwsim WPA2) + nm-applet geçti.
+ISO 499 MB (tahmin 445): squashfs 128 KB blok bellenimdeki tekrarı
+değerlendiremiyor. `-b 1M -Xbcj x86` eklendi (bellenimde −13 MB ölçüldü).

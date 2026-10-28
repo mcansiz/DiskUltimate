@@ -55,6 +55,12 @@ lb config \
 
 cp -a "$CFG/config/." config/
 
+# Sikistirma: 1 MB blok + x86 suzgeci (live-build MKSQUASHFS_OPTIONS'u
+# komut satirina ekler). Bellenim klasorunde olculdu (2026-10-28):
+# 128 KB blok 127 MB, 1 MB blok 114 MB. Suzgec yalnizca kucultugu blokta
+# kullanilir (programlar: LLVM, gallium).
+export MKSQUASHFS_OPTIONS="-b 1M -Xbcj x86"
+
 lb build 2>&1 | tee "$OUT/build.log"
 
 iso="$(ls diskultimate-base-*.iso | head -n1)"
