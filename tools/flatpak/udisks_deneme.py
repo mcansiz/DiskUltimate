@@ -22,7 +22,8 @@ import os
 import struct
 import sys
 
-from jeepney import DBusAddress, DBusErrorResponse, new_method_call, unwrap_msg
+from jeepney import DBusAddress, DBusErrorResponse, new_method_call
+from jeepney.wrappers import unwrap_msg
 from jeepney.io.blocking import open_dbus_connection
 from jeepney.low_level import MessageFlag
 
