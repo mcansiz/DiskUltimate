@@ -6634,3 +6634,36 @@ Dosyalar: exe, AppImage, live ISO (464 MB) + paket listesi, macOS zip,
 SHA256SUMS (beşi de içinde). Notlara elle EN/TR "What's new" eklendi.
 Ayrıca: "Arayuz gezintisi" iş akışı 2026-10-25'ten beri kırmızı
 (son koşuda `linux-aygit-kurtarma`); release'i engellemez, ayrıca bakılacak.
+
+## 2026-10-28 (3) — Flathub ön çalışması: UDisks2 ile fd üzerinden disk erişimi
+
+Kullanıcı sorusu: "Flathub'da yayınlayabilir miyiz?" ADR 0050 Flatpak'i
+"ham disk erişimi yok" diye elemişti; doğru yol UDisks2 `Block.OpenDevice`
+(polkit onayı → servis aygıtı açar, fd döner). Önce ölçüm istendi.
+`tools/flatpak/udisks_deneme.py` (jeepney, saf Python D-Bus) +
+`.github/workflows/udisks-deneme.yml` (elle başlatılır). CI 40657448460 yeşil:
+
+- Doğrudan `os.open(/dev/loop0)` makinede ve Flatpak içinde EACCES.
+- Polkit kuralı yokken OpenDevice → `NotAuthorizedCanObtain` (ajan olsa
+  sorulurdu). Kural varken `r` fd: BLKGETSIZE64/BLKSSZGET/lseek doğru,
+  sektör 0 okundu, r fd'ye yazma EBADF. `rw` fd ile sektör 1 yazıldı.
+- **Flatpak içinde** (`--device=all --system-talk-name=org.freedesktop.UDisks2`,
+  org.freedesktop.Platform 24.08) aynı sonuçlar; yazılanı dışarıdan `dd` doğruladı.
+- **Flatpak içinde `/proc/mounts` korumalı ortamınki** (`tmpfs /`):
+  `list_disks()` bağlı bölümleri boş, `is_system=False` görüyor → katman 3 ve
+  5 kör. UDisks2 `Filesystem.MountPoints` gerçek bağlamaları veriyor
+  (`/`, `/boot`); Flatpak'te bağlama/sistem diski oradan okunmalı.
+  `HintSystem` her çıkarılamaz diskte True (loop dahil) — "sistem diski"
+  anlamına gelmez, kullanılamaz.
+- **Yan bulgu (Flatpak'ten bağımsız, mevcut sürümde):** GitHub makinesinde
+  kök `/dev/root` takma adıyla bağlı; `_list_linux` kökün diskini ad
+  ön ekiyle aradığı için `nvme0n1` `is_system=False` çıktı. Kök LVM/LUKS
+  (`/dev/mapper/...`) üzerindeyse de aynı ön ek karşılaştırması tutmaz;
+  `_linux_disks_under` (slaves izleyen) yalnızca live ortam için kullanılıyor.
+  Henüz düzeltilmedi — kullanıcıya soruldu.
+- org.freedesktop.Platform 24.08 artık EOL; PyQt5'in Flathub'daki KDE 5.15
+  çalışma ortamı da 24.08 tabanlı → Flathub için PyQt6'ya geçiş gerekebilir
+  (doğrulanacak).
+
+Sınanmayan: gerçek polkit parola penceresi (masaüstü ajanı gerekir, VM),
+UDisks2 ile bağlama.
