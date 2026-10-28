@@ -6624,5 +6624,13 @@ nm-applet simgesi görev çubuğunda. README boyutları güncellendi.
 Kullanıcı isteği ("release olarak yayınlayalım"). İçerik (0.10.1-beta'dan
 beri yalnızca Live ISO): NetworkManager + nm-applet ile kablolu/kablosuz ağ,
 kablosuz ve AMD ekran kartı bellenimleri, lxrandr "Ekran Ayarları",
-squashfs 1 MB blok (ISO 464,8 MB). Etiket `v0.10.2-beta` push edildi;
-release.yml taslak oluşturur.
+squashfs 1 MB blok (ISO 464,8 MB). Etiket `v0.10.2-beta` push edildi.
+Release koşusu 40654447292: ilk denemede macOS `tests.ui_smoke` Qt içinde
+`Abort trap: 6` ile düştü (çıktı yok; uygulama kodu 0.10.1'den beri yalnızca
+APP_VERSION değişti, 0.10.1'de aynı test geçmişti). Düşen iş yeniden
+çalıştırılınca geçti — aralıklı çöküş, nedeni bulunmadı (izlenecek).
+Yayınlandı (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.10.2-beta
+Dosyalar: exe, AppImage, live ISO (464 MB) + paket listesi, macOS zip,
+SHA256SUMS (beşi de içinde). Notlara elle EN/TR "What's new" eklendi.
+Ayrıca: "Arayuz gezintisi" iş akışı 2026-10-25'ten beri kırmızı
+(son koşuda `linux-aygit-kurtarma`); release'i engellemez, ayrıca bakılacak.
