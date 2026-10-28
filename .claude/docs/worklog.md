@@ -6618,3 +6618,11 @@ ISO 499 MB (tahmin 445): squashfs 128 KB blok bellenimdeki tekrarı
 değerlendiremiyor. `-b 1M -Xbcj x86` eklendi (bellenimde −13 MB ölçüldü).
 CI 40642288634: `-b 1M -Xbcj x86` ile ISO 464,8 MB (499'dan); üç kip yeşil,
 nm-applet simgesi görev çubuğunda. README boyutları güncellendi.
+
+## 2026-10-28 (2) — Sürüm 0.10.2-beta: Live ISO kablosuz ağ + ekran çözünürlüğü
+
+Kullanıcı isteği ("release olarak yayınlayalım"). İçerik (0.10.1-beta'dan
+beri yalnızca Live ISO): NetworkManager + nm-applet ile kablolu/kablosuz ağ,
+kablosuz ve AMD ekran kartı bellenimleri, lxrandr "Ekran Ayarları",
+squashfs 1 MB blok (ISO 464,8 MB). Etiket `v0.10.2-beta` push edildi;
+release.yml taslak oluşturur.
