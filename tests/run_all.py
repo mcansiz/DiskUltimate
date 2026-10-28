@@ -8222,6 +8222,77 @@ def t110_live_acilis_bellegi_sistem_diski():
     assert bul(overlay + "/dev/nvme9n9 /run/live/medium iso9660 ro 0 0\n") == set()
 
 
+@test
+def t111_kok_diski_sistem_diski():
+    """Kok `/dev/root` veya LVM/LUKS uzerindeyken disk yine sistem diski sayilir."""
+    # GitHub makinesinde (2026-10-28) kok `/dev/root` adiyla bagliydi ve
+    # sistem diski `is_system=False` cikti. Gercek /sys'e DOKUNULMAZ.
+    from diskultimate.core import physical
+    kok = img_path("t111_sys")
+    shutil.rmtree(kok, ignore_errors=True)
+    aygitlar = os.path.join(kok, "devices")
+    sinif = os.path.join(kok, "class")
+    numara = os.path.join(kok, "dev")
+    os.makedirs(sinif)
+    os.makedirs(numara)
+
+    def _baglanti(hedef, ad):
+        try:
+            os.symlink(hedef, ad)
+        except (OSError, NotImplementedError) as exc:
+            raise Atlandi(f"sembolik baglanti kurulamiyor: {exc}")
+
+    def disk(ad, bolumler=()):
+        os.makedirs(os.path.join(aygitlar, ad))
+        _baglanti(os.path.join(aygitlar, ad), os.path.join(sinif, ad))
+        for b in bolumler:
+            yol = os.path.join(aygitlar, ad, b)
+            os.makedirs(yol)
+            open(os.path.join(yol, "partition"), "w").close()
+            _baglanti(yol, os.path.join(sinif, b))
+
+    def katman(ad, *alt):
+        os.makedirs(os.path.join(sinif, ad, "slaves"))
+        for a in alt:
+            os.makedirs(os.path.join(sinif, ad, "slaves", a))
+
+    disk("sda", ("sda1", "sda2", "sda3"))
+    disk("sdb", ("sdb1",))
+    disk("sdc", ("sdc1",))
+    katman("dm-0", "sda3")                 # LUKS: sda3 -> dm-0
+    katman("dm-1", "dm-0")                 # LVM : dm-0 -> dm-1 (vg-root)
+    katman("md0", "sdb1", "sdc1")          # RAID1 kok
+    _baglanti(os.path.join(aygitlar, "sda", "sda2"), os.path.join(numara, "8:2"))
+    _baglanti(os.path.join(sinif, "dm-1"), os.path.join(numara, "253:1"))
+
+    def bul(mounts_text, root_dev=(0, 0)):
+        girdiler = physical._linux_mount_entries(mounts_text)
+        return physical._linux_root_disks(girdiler, sys_class=sinif,
+                                          sys_dev=numara, root_dev=root_dev)
+
+    # 1) Olagan: bolum adiyla bagli.
+    assert bul("/dev/sda2 / ext4 rw 0 0\n") == {"sda"}
+    # 2) `/dev/root` /sys'te yok; aygit numarasindan bulunur.
+    assert bul("/dev/root / ext4 rw 0 0\n", (8, 2)) == {"sda"}
+    # 3) LVM-on-LUKS: dm adi dogrudan ya da (cozulemeyen) mapper adi.
+    assert bul("/dev/dm-1 / ext4 rw 0 0\n") == {"sda"}
+    assert bul("/dev/mapper/vg-root / ext4 rw 0 0\n", (253, 1)) == {"sda"}
+    # 4) RAID1 kok iki diski birden korur.
+    assert bul("/dev/md0 / ext4 rw 0 0\n") == {"sdb", "sdc"}
+    # 5) Bulunamayan (btrfs anonim aygiti, overlay): bos, hata degil.
+    assert bul("/dev/root / btrfs rw 0 0\n", (0, 30)) == set()
+    assert bul("overlay / overlay rw 0 0\n", (0, 31)) == set()
+
+    # Gercek sistem: listeleme zararsizdir (katman 1). `/` bir blok aygitta
+    # duruyorsa (CI'da `/dev/root`) en az bir disk sistem diski olmali.
+    if sys.platform.startswith("linux"):
+        st = os.stat("/")
+        if os.path.exists(f"/sys/dev/block/{os.major(st.st_dev)}:{os.minor(st.st_dev)}"):
+            diskler = physical.list_disks()
+            assert any(d.is_system for d in diskler), \
+                [(d.path, d.is_system) for d in diskler]
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

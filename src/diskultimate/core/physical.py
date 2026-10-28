@@ -493,6 +493,37 @@ def _linux_boot_medium_disks(mounts: List[Tuple[str, str]],
     return result
 
 
+def _linux_root_disks(mounts: List[Tuple[str, str]],
+                      sys_class: str = "/sys/class/block",
+                      sys_dev: str = "/sys/dev/block",
+                      root_dev: Optional[Tuple[int, int]] = None) -> Set[str]:
+    """Kok dosya sisteminin (`/`) oturdugu disk(ler)in adlari.
+
+    `/proc/mounts` koku her zaman diskin adiyla gostermez: `/dev/root`
+    (Azure, Raspberry Pi, bazi initramfs'ler) /sys'te yoktur; LVM/LUKS
+    `/dev/mapper/...` adi diskin on ekini tasimaz. Ad cozulemezse `/`un
+    aygit numarasi `/sys/dev/block/MAJ:MIN` uzerinden izlenir. Bulunamazsa
+    bos doner (btrfs alt birimi, overlay) — cagiran eski kontrolu de korur.
+    """
+    result: Set[str] = set()
+    for dev, point in mounts:
+        if point == "/":
+            result |= _linux_disks_under(dev, mounts, sys_class)
+    if result:
+        return result
+    if root_dev is None:
+        try:
+            st = os.stat("/")
+        except OSError:
+            return result
+        root_dev = (os.major(st.st_dev), os.minor(st.st_dev))
+    link = os.path.join(sys_dev, f"{root_dev[0]}:{root_dev[1]}")
+    if os.path.exists(link):
+        result |= _linux_disks_under(os.path.basename(os.path.realpath(link)),
+                                     mounts, sys_class)
+    return result
+
+
 def _list_linux() -> List[DiskInfo]:
     root = "/sys/block"
     if not os.path.isdir(root):
@@ -500,6 +531,7 @@ def _list_linux() -> List[DiskInfo]:
     entries = _linux_mount_entries()
     baglantilar = dict(entries)
     boot_medium_disks = _linux_boot_medium_disks(entries)
+    root_disks = _linux_root_disks(entries)
     system_device = ""
     for aygit, nokta in baglantilar.items():
         if nokta == "/":
@@ -549,7 +581,7 @@ def _list_linux() -> List[DiskInfo]:
                     info.is_system = True
         if system_device and system_device.startswith(f"/dev/{name}"):
             info.is_system = True
-        if name in boot_medium_disks:
+        if name in boot_medium_disks or name in root_disks:
             info.is_system = True
         diskler.append(info)
     return diskler
