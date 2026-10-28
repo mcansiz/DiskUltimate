@@ -6660,10 +6660,28 @@ Kullanıcı sorusu: "Flathub'da yayınlayabilir miyiz?" ADR 0050 Flatpak'i
   ön ekiyle aradığı için `nvme0n1` `is_system=False` çıktı. Kök LVM/LUKS
   (`/dev/mapper/...`) üzerindeyse de aynı ön ek karşılaştırması tutmaz;
   `_linux_disks_under` (slaves izleyen) yalnızca live ortam için kullanılıyor.
-  Henüz düzeltilmedi — kullanıcıya soruldu.
+  Kullanıcı onayıyla aynı gün düzeltildi (aşağıda).
 - org.freedesktop.Platform 24.08 artık EOL; PyQt5'in Flathub'daki KDE 5.15
   çalışma ortamı da 24.08 tabanlı → Flathub için PyQt6'ya geçiş gerekebilir
   (doğrulanacak).
 
 Sınanmayan: gerçek polkit parola penceresi (masaüstü ajanı gerekir, VM),
 UDisks2 ile bağlama.
+
+## 2026-10-28 (4) — Sistem diski: kök `/dev/root` / LVM / LUKS / RAID
+
+Kullanıcı onayı ("yapalım"). `physical._linux_root_disks`: kökün aygıtı önce
+`/proc/mounts` adından `_linux_disks_under` ile (slaves/ zinciri: LUKS, LVM,
+md), çözülemezse `/` dosya sisteminin aygıt numarasından
+(`/sys/dev/block/MAJ:MIN`) izlenir. `_list_linux` eski ön ek kontrolünü
+korur, yeni küme yalnızca korumayı genişletir. `t111` (sahte /sys):
+`/dev/root`, LVM-on-LUKS (dm adı ve çözülemeyen mapper adı), RAID1 iki disk,
+btrfs anonim aygıt / overlay → boş; gerçek sistemde en az bir sistem diski.
+Yerel: t110 + t111 TAMAM, platform_check 0, `nvme0n1` sistem diski.
+CI 40658644020 yeşil; GitHub makinesinde (kök `/dev/root`) t111 TAMAM —
+düzeltmeden önce aynı makine `is_system=False` vermişti.
+
+PyQt6 geçiş raporu yazıldı: `.claude/docs/pyqt6-gecis-raporu.md` (38 dosya,
+~530 enum yeri, 37 `exec_`; alt sınırlar Python 3.10 / macOS 12 / glibc
+2.28; tahmin 5–8 oturum). KDE 5.15-24.08 çalışma ortamı EOL → Flathub için
+Qt6 şart. Karar bekliyor.
