@@ -70,7 +70,7 @@ chmod +x DiskUltimate-*-x86_64.AppImage
 ### Live USB / DVD (kurulumsuz)
 
 [Releases](../../releases) sayfasından
-**`DiskUltimate-<sürüm>-live-amd64.iso`** dosyasını (yaklaşık 450 MB) indirip
+**`DiskUltimate-<sürüm>-live-amd64.iso`** dosyasını (yaklaşık 465 MB) indirip
 Rufus (DD kipi), balenaEtcher, Ventoy ya da `dd` ile bir USB belleğe yazın.
 Herhangi bir 64 bit bilgisayarı ondan açın — BIOS ya da UEFI, Secure Boot
 dahil — DiskUltimate kendiliğinden başlar.

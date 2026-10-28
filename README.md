@@ -71,7 +71,7 @@ chmod +x DiskUltimate-*-x86_64.AppImage
 
 ### Live USB / DVD (no installation)
 
-Download **`DiskUltimate-<version>-live-amd64.iso`** (about 450 MB) from the
+Download **`DiskUltimate-<version>-live-amd64.iso`** (about 465 MB) from the
 [Releases](../../releases) page and write it to a USB stick with Rufus (DD
 mode), balenaEtcher, Ventoy or `dd`. Boot any 64-bit PC from it — BIOS or
 UEFI, Secure Boot included — and DiskUltimate starts by itself.

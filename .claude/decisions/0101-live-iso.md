@@ -207,6 +207,9 @@ ath11k 63, ath10k 19, intel 16, rtw89 15, brcm 11). Bellenim klasörü tek
 başına: 128 KB blok 127 MB, 1 MB blok 114 MB → `MKSQUASHFS_OPTIONS="-b 1M
 -Xbcj x86"`. Daha fazlası yalnızca donanım desteğinden vazgeçerek kazanılır
 (ör. amdgpu: AMD'de çözünürlük değişmez; ath11k: yeni Qualcomm Wi-Fi).
+Sonuç (CI 40642288634): squashfs 387,6 → 353,3 MB, **ISO 499 → 464,8 MB**;
+üç kipte bütün denemeler yine geçti. Görev çubuğunda nm-applet simgesi
+ekran görüntüsünde görünüyor.
 
 ## Açık işler
 

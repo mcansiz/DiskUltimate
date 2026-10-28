@@ -6616,3 +6616,5 @@ mac80211_hwsim ile WPA2 erişim noktasına bağlanma; `boot_check.py` bunları
 CI 40639364210: üç kipte NET + RANDR + WIFI (hwsim WPA2) + nm-applet geçti.
 ISO 499 MB (tahmin 445): squashfs 128 KB blok bellenimdeki tekrarı
 değerlendiremiyor. `-b 1M -Xbcj x86` eklendi (bellenimde −13 MB ölçüldü).
+CI 40642288634: `-b 1M -Xbcj x86` ile ISO 464,8 MB (499'dan); üç kip yeşil,
+nm-applet simgesi görev çubuğunda. README boyutları güncellendi.
