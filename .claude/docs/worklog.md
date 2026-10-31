@@ -6752,3 +6752,21 @@ PyQt6 işi. Ayrıntı ADR 0102 "D. Görsel doğrulama".
   kenar payları daha sıkı. Gezinti PyQt6 Linux+Windows yeşil.
 - macOS aralıklı `Abort trap: 6` (PyQt5'te de vardı): `tests.yml` duman
   testine `PYTHONFAULTHANDLER=1`, `PYTHONUNBUFFERED=1`.
+
+## 2026-10-31 (4) — PyQt6 E aşaması: paketleme
+
+Hedef "devam edelim" (kullanıcı). Ayrıntı ve tablo: ADR 0102 "E. Paketleme".
+Paketleme `DISKULTIMATE_QT` ile iki bağlamada; `release.yml` elle başlatmada
+`qt` girdisi, **etiket sürümleri PyQt5 kalır**.
+- Deneme 1 (41201979315): PyQt6 ile üç OS tam test yeşil; exe 29,7 MB,
+  macOS zip 26,3 MB; macOS Qt ikilileri minos **14.4** (spec 14.0 → 14.4).
+  AppImage düştü: tireli `libQt6FFmpegStub-*` silinmedi (desen `\w`).
+- Deneme 2 (41202388509): hepsi yeşil ama AppImage glibc 2.38 —
+  derleme makinesinden gömülen libxcb-cursor `__isoc23_strtol@GLIBC_2.38`.
+- Deneme 3 (41203127471): libxcb-cursor Debian 12 .deb'inden (sabit
+  SHA-256, Packages dizinine karşı doğrulandı) → glibc **2.34**; AppImage
+  45,0 MB, live ISO 491,7 MB ve üç açılış kipinde APP-WINDOW (gerçek xcb).
+- Hakkında metni "PyQt" (9 sözlük), `licenses.components()`, açılışta
+  `qt baglamasi:` günlük satırı, `smoke_launch --qt`.
+Sırada F: etiket sürümlerini PyQt6'ya çevirmek — alt sınırlar yükselir
+(glibc 2.17→2.34, macOS 11→14.4, Python 3.8→3.10), kullanıcı kararı.

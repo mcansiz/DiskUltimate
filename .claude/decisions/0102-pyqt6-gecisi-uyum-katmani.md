@@ -1,8 +1,9 @@
 # 0102 — PyQt6 geçişi: uyum katmanı (`ui/qt`) ve tam nitelikli enum'lar
 
 Tarih: 2026-10-31
-Durum: **A–D uygulandı** (kod iki bağlamada çalışır, varsayılan PyQt5;
-görsel doğrulama CI'da yapıldı). E (paketleme), F (PyQt5'i bırakma) bekliyor.
+Durum: **A–E uygulandı** (kod ve paketleme iki bağlamada çalışır; etiket
+sürümleri hâlâ PyQt5). F (varsayılanı PyQt6'ya çevirme, PyQt5'i bırakma)
+kullanıcı kararı bekliyor — alt sistem sürümleri yükselir.
 İlgili: `.claude/docs/pyqt6-gecis-raporu.md` (iş yükü ve riskler),
 ADR 0050 (Flatpak elenmişti), worklog 2026-10-28 (3)–(4).
 
@@ -86,10 +87,50 @@ Gezintiye `linux-goruntu-hepsi-qt6` ve `windows-goruntu-arayuz-qt6` eklendi.
   `PYTHONFAULTHANDLER` eklendi); PyQt5 gerçek Windows eklentisinde test
   bitince 127 ile çıkar (kapanış; offscreen CI etkilenmez).
 
+## E. Paketleme (2026-10-31)
+
+Tek ayar: `DISKULTIMATE_QT` (pyqt5 | pyqt6). `release.yml` elle
+başlatılınca `qt` girdisi seçilir; **etiket sürümleri PyQt5** (girdi boş).
+Deneme: `gh workflow run release.yml -f qt=pyqt6` (release oluşturmaz).
+
+- `tools/appimage.py`: bağlamaya göre paket/klasör/`libQtN` önekleri;
+  PyQt6 sürümleri `.github/requirements-ci-qt6.txt`ten (CI'da sınanan =
+  paketlenen). Qt-dışı kullanılmayan kitaplıklar (FFmpeg `libav*`) ve tireli
+  Qt adları (`libQt6FFmpegStub-crypto`) temizlenir.
+- **`libxcb-cursor.so.0` gömülür** (Qt6 xcb eklentisi ister, Qt5 istemezdi).
+  Derleme makinesinden alınmaz: Ubuntu 24.04'ünkü `__isoc23_strtol@GLIBC_2.38`
+  ister ve alt sınırı 2.34 → 2.38 çıkarıyordu. Debian 12 paketi (SHA-256
+  Debian `Packages` dizinine karşı doğrulandı) yalnızca GLIBC_2.8 ister;
+  `.deb` saf Python ile açılır.
+- `DiskUltimate.spec`: excludes/drop desenleri ve çeviri yolu bağlamaya göre;
+  macOS `LSMinimumSystemVersion` PyQt6'da **14.4** (ölçülen minos; tekerlek
+  etiketi 11.0 yanıltıcı). `release.yml` her derlemede minos'u yazdırır.
+- `smoke_launch.py --qt`: paket `DISKULTIMATE_QT`'siz başlatılır, günlükteki
+  `qt baglamasi:` satırı denetlenir (paketin kendi seçimi).
+- Lisanslar: `licenses.components(pyqt)`, `qt_source_url(sürüm)`; Hakkında
+  metninde "PyQt" (9 sözlük güncellendi). Live ISO: `libxcb-cursor0`,
+  `libxcb-util1`.
+
+Deneme derlemesi 41203127471 (PyQt6 6.12.0 / Qt 6.12.0) — hepsi yeşil:
+
+| | PyQt5 (0.10.2) | PyQt6 | Alt sınır (PyQt6, ölçülen) |
+|---|---|---|---|
+| Testler | — | Linux/Windows/macOS tam takım | — |
+| AppImage | 40 MB | 45,0 MB | glibc **2.34** (PyQt5: 2.17) |
+| Windows exe | 28 MB | 29,7 MB | Windows 10 1809+ (Qt 6) |
+| macOS zip | 28 MB | 26,3 MB | macOS **14.4** (PyQt5: 11) |
+| Live ISO | 487 MB | 491,7 MB | BIOS/UEFI/SB'de `APP-WINDOW` (gerçek xcb) |
+
+Python alt sınırı 3.10 (PyQt6 6.11+). Daha geniş destek gerekirse PyQt6
+6.9.x (manylinux_2_28 → glibc 2.28; Python 3.9) sabitlenebilir — Qt 6.9
+güncelleme almaz; karar F'de.
+
 ## Sonraki aşamalar
 
 - **E. Paketleme:** AppImage (`tools/appimage.py`), PyInstaller spec, macOS,
   live ISO; `libxcb-cursor0`; boyut ölçümü; lisans metinleri (PyQt6-sip).
   Hakkında penceresindeki "PyQt5" metni ve `licenses` anahtarları o zaman.
-- **F. PyQt5'i bırakma:** varsayılanı PyQt6'ya çevir, sonra PyQt5 dalını
-  kaldır; alt sınırlar Python 3.10 / macOS 12 / glibc 2.28 (rapor).
+- **F. PyQt5'i bırakma:** etiket sürümlerini PyQt6'ya çevir (release.yml
+  varsayılanı), `ui/qt` sırasını PyQt6 önce yap, README/CLAUDE.md alt
+  sınırları (yukarıdaki ölçülen tablo), sonra PyQt5 dalını kaldır.
+  Raporun tahmini (macOS 12 / glibc 2.28) ölçümle yükseldi.
