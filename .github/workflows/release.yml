@@ -209,8 +209,8 @@ jobs:
           sha256sum DiskUltimate-* > SHA256SUMS
           cat SHA256SUMS
           if [ "$MACOS" = "success" ]; then
-            row="| **macOS 11+ (Apple Silicon), experimental** | \`DiskUltimate-$VER-macos-arm64.zip\` | Not tested beyond automated tests; macOS is not officially supported. Unsigned: right-click the app → **Open** the first time. |"
-            tr="- **macOS (deneysel):** \`DiskUltimate-$VER-macos-arm64.zip\` — yalnızca otomatik testlerden geçti, resmi olarak desteklenmiyor. İmzasız: ilk açılışta sağ tık → **Aç**."
+            row="| **macOS 14.4+ (Apple Silicon), experimental** | \`DiskUltimate-$VER-macos-arm64.zip\` | Not tested beyond automated tests; macOS is not officially supported. Unsigned: right-click the app → **Open** the first time. |"
+            tr="- **macOS 14.4+ (deneysel):** \`DiskUltimate-$VER-macos-arm64.zip\` — yalnızca otomatik testlerden geçti, resmi olarak desteklenmiyor. İmzasız: ilk açılışta sağ tık → **Aç**."
           else
             row=""; tr=""
           fi
