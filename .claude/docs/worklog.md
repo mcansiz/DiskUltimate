@@ -6791,3 +6791,10 @@ vermedi → yerel Qt kapanışı; 0.10.2'deki aralıklı hata). `ui_smoke` artı
 hükümden sonra `os._exit` ile çıkar. Varsayılan (girdisiz = etiket yolu)
 deneme derlemesi 41205604075: üç OS testi, üç paket, live ISO — hepsi yeşil,
 paketler PyQt6.
+
+## 2026-10-31 (6) — Kullanıcı kararları: PyQt6 6.12, PyQt5 yolu kalır
+
+"6.12 ile devam edelim", "pyqt yolu kalsın kaldırma". ADR 0102 "Kullanıcı
+kararları" bölümü ve CLAUDE.md güncellendi; F2 (PyQt5'i kaldırma) iptal.
+Kod değişikliği yok: mevcut durum (varsayılan PyQt6 6.12, PyQt5 destekli)
+zaten bu kararlarla uyumlu.

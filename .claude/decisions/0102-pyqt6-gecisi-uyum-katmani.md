@@ -1,10 +1,9 @@
 # 0102 — PyQt6 geçişi: uyum katmanı (`ui/qt`) ve tam nitelikli enum'lar
 
 Tarih: 2026-10-31
-Durum: **A–F1 uygulandı** — varsayılan PyQt6: paketler, CI ana işleri,
-`ui/qt` seçim sırası. PyQt5 kaynaktan çalıştırma için destekli kalır (F2:
-PyQt5 kod yolunu kaldırma — ertelendi). Yeni alt sınırlar bir sonraki
-etiketle yayına girer.
+Durum: **tamamlandı** — varsayılan PyQt6 6.12 (paketler, CI ana işleri,
+`ui/qt` seçim sırası); PyQt5 kod yolu **kalıcı olarak korunur** (kullanıcı
+kararı, 2026-10-31). Yeni alt sınırlar bir sonraki etiketle yayına girer.
 İlgili: `.claude/docs/pyqt6-gecis-raporu.md` (iş yükü ve riskler),
 ADR 0050 (Flatpak elenmişti), worklog 2026-10-28 (3)–(4).
 
@@ -143,12 +142,27 @@ Kullanıcı hedefi "devam edelim" (plan: geçiş sürümü sonra PyQt6). Hiçbir
 - PyQt5'te kalanlar (bilerek): `long-tests.yml`, `yabanci.yml`, VirtualBox
   win10 misafiri — katman PyQt6 yoksa PyQt5'e düşer.
 
+## Kullanıcı kararları (2026-10-31)
+
+1. **PyQt6 6.12 sabit kalır** ("6.12 ile devam edelim"). Alternatif 6.9.x
+   (glibc 2.28, Python 3.9; Qt 6.9 güncelleme almaz) seçilmedi. Paket alt
+   sınırları: glibc 2.34, macOS 14.4, Windows 10 1809+, paket içi Python 3.12.
+   Sürüm yükseltilirken `.github/requirements-ci-qt6.txt` tek kaynaktır
+   (CI + AppImage + exe/macOS); macOS minos'u `release.yml` ölçüm adımından
+   okunup spec'teki `LSMinimumSystemVersion` güncellenir.
+2. **PyQt5 kod yolu kaldırılmaz** ("pyqt yolu kalsın kaldırma"). `ui/qt`
+   iki bağlamayı da destekler; `tests.qt6_check` iki bağlamada çalışan
+   yazımı, `ci.yml` → `linux-qt5` ve gezintideki iki `-qt5` işi PyQt5
+   uyumluluğunu korur. Kaynaktan çalıştırma: Python 3.8/3.9, Alpine
+   `py3-qt5` gibi PyQt6 bulunmayan sistemler.
+
 ## Sonraki aşamalar
 
 - **E. Paketleme:** AppImage (`tools/appimage.py`), PyInstaller spec, macOS,
   live ISO; `libxcb-cursor0`; boyut ölçümü; lisans metinleri (PyQt6-sip).
   Hakkında penceresindeki "PyQt5" metni ve `licenses` anahtarları o zaman.
-- **F2. PyQt5'i bırakma (ertelendi):** etiket sürümlerini PyQt6'ya çevir (release.yml
+- ~~**F2. PyQt5'i bırakma:**~~ yapılmayacak (kullanıcı kararı 2, yukarıda).
+  Eski not: etiket sürümlerini PyQt6'ya çevir (release.yml
   varsayılanı), `ui/qt` sırasını PyQt6 önce yap, README/CLAUDE.md alt
   sınırları (yukarıdaki ölçülen tablo), sonra PyQt5 dalını kaldır.
   Raporun tahmini (macOS 12 / glibc 2.28) ölçümle yükseldi.

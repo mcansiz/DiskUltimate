@@ -22,8 +22,9 @@ DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
 
 ## Teknoloji
 - Python 3.8+ (geliştirme: 3.12)
-- GUI: **PyQt6** (ADR 0102); paketler PyQt6 taşır. Kod PyQt5 ile de çalışır
-  (kaynaktan çalıştırılan eski sistemler: Python 3.8/3.9, Alpine `py3-qt5`);
+- GUI: **PyQt6 6.12** (ADR 0102, sürüm kullanıcı kararı); paketler PyQt6
+  taşır. **PyQt5 kod yolu korunur, kaldırılmaz** (kullanıcı kararı): kaynaktan
+  çalıştırılan eski sistemler (Python 3.8/3.9, Alpine `py3-qt5`);
   `DISKULTIMATE_QT=pyqt5` ile zorlanır. Paket alt sınırları (ölçülen):
   glibc 2.34, macOS 14.4, Windows 10 1809+.
 - **Çalışma zamanı bağımlılığı yok** (çekirdek saf Python; kullanıcı yalnızca
