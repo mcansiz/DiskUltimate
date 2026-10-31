@@ -6732,3 +6732,6 @@ kitaplıkları da kurulmuyordu. 2026-10-25'ten beri süren kırmızının da
 büyük olasılıkla sebebi. `gezinti.yml` ve `long-tests.yml`: modül paketi
 ayrı komutta. (scsi_debug gerektiren `aygit` işleri o paket olmadan yine
 düşebilir — gerçek sınır, ayrıca bakılacak.)
+Sonuç: CI 41196566572 yeşil — PyQt5 tam takım + `linux-qt6` (qt6_check 0,
+ui_smoke PyQt6 ile tamam). Arayüz gezintisi 41196566486: **10/10 yeşil**
+(Linux aygıt işleri dahil; 2026-10-25'ten beri ilk). Live ISO 41196065863 yeşil.
