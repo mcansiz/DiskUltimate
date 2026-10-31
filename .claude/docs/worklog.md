@@ -6798,3 +6798,24 @@ paketler PyQt6.
 kararları" bölümü ve CLAUDE.md güncellendi; F2 (PyQt5'i kaldırma) iptal.
 Kod değişikliği yok: mevcut durum (varsayılan PyQt6 6.12, PyQt5 destekli)
 zaten bu kararlarla uyumlu.
+
+## 2026-10-31 (7) — Sürüm 0.11.0-beta: Qt 6 (PyQt6 6.12)
+
+Kullanıcı isteği ("şimdi release olarak yayınla"). APP_VERSION 0.11.0-beta
+(Qt 6 + yükselen alt sınırlar → yama değil). Sürüm notu şablonu: glibc 2.34+,
+macOS 14.4+, Windows 10 1809+.
+- İlk etiket koşusu 41212527333: test-macos dört denemede makine atanmadan
+  iptal — GitHub **macos-14 imajı 2026-11-02'de kalkıyor**, planlı kesinti
+  (actions/runner-images#13518; iş notunda yazıyordu, günlük yoktu). Bütün
+  iş akışları `macos-15`'e taşındı; yayınlanmamış taslak silindi, etiket
+  yeni commit'e (c98b90c) taşındı.
+- Koşu 41213627901: üç OS testi (macOS 15 ilk kez), beş paket, live ISO
+  yeşil. AppImage glibc 2.34 / 44 MB, exe 29 MB, macOS zip 26 MB (minos 14.4,
+  macOS 15'te derlenince de), ISO 491 MB; paketler PyQt6 6.12 ile açıldı.
+- Şablon hatası: macOS satırından sonra boş satır yoktu → "Running from
+  source" cümlesi tablonun satırı oluyordu (önceki sürümlerde macOS satırı
+  boş kaldığı için görünmedi). `.github/release-notes.md` düzeltildi.
+- Notların başına EN/TR "What's new" eklendi (Qt 6, %125/%150 keskinlik,
+  Linux sistem diski tanıma, sürüm bilgisi; yükselen gereksinimler ve eski
+  sistemler için 0.10.2-beta / kaynaktan PyQt5).
+Yayınlandı (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.11.0-beta

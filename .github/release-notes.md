@@ -9,6 +9,7 @@
 | **Linux (64-bit)** | `DiskUltimate-{VERSION}-x86_64.AppImage` | `chmod +x` and run; Python and Qt 6 are inside. Needs glibc 2.34+ (Ubuntu 22.04, Debian 12, Fedora 35, RHEL 9 or newer). Asks for root through `pkexec`. Without FUSE: `--appimage-extract-and-run`. |
 | **Live USB/DVD (64-bit)** | `DiskUltimate-{VERSION}-live-amd64.iso` | Boots any 64-bit PC (BIOS or UEFI, Secure Boot supported) straight into DiskUltimate without installing anything: write it to a USB stick (Rufus in DD mode, balenaEtcher, Ventoy or `dd`) and boot from it. Choose the language in the boot menu; wired network connects automatically, Wi-Fi is picked from the taskbar, and the screen resolution can be changed (Display Settings). Debian 13 based; package list: `DiskUltimate-{VERSION}-live-amd64.packages.txt`. |
 {MACOS_ROW}
+
 Running from source works everywhere: see the [README](https://github.com/{REPO}#download-and-install). Checksums: `SHA256SUMS`.
 
 Built and tested automatically by GitHub Actions from tag `{TAG}` ([run]({RUN_URL})).
