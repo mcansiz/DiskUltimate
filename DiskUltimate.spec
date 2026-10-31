@@ -14,10 +14,10 @@ import sys
 
 IS_LINUX = sys.platform.startswith('linux')
 
-# Qt bağlaması (ADR 0102): DISKULTIMATE_QT=pyqt6 ile PyQt6 paketlenir.
+# Qt bağlaması (ADR 0102): varsayılan PyQt6; DISKULTIMATE_QT=pyqt5 ile PyQt5.
 # Uygulama `ui/qt` üzerinden ikisini de import edebilir; pakete yalnızca
 # seçilen girer (diğeri excludes ile dışarıda kalır).
-QT_BINDING = os.environ.get('DISKULTIMATE_QT', 'pyqt5').strip().lower() or 'pyqt5'
+QT_BINDING = os.environ.get('DISKULTIMATE_QT', 'pyqt6').strip().lower() or 'pyqt6'
 if QT_BINDING not in ('pyqt5', 'pyqt6'):
     raise SystemExit('DiskUltimate.spec: DISKULTIMATE_QT=%r (pyqt5 | pyqt6)' % QT_BINDING)
 PYQT = 'PyQt6' if QT_BINDING == 'pyqt6' else 'PyQt5'

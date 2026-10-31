@@ -42,15 +42,16 @@ jobs:
           - { ad: linux-aygit-yedek, os: ubuntu-24.04, kip: "--aygit", senaryo: yedek }
           - { ad: linux-aygit-kurtarma, os: ubuntu-24.04, kip: "--aygit", senaryo: kurtarma }
           - { ad: linux-goruntu-hepsi, os: ubuntu-24.04, kip: "", senaryo: hepsi }
-          # PyQt6 gecisi (ADR 0102): goruntu senaryolari PyQt6 ile de.
-          - { ad: windows-goruntu-arayuz-qt6, os: windows-2022, kip: "", senaryo: arayuz, qt: pyqt6 }
-          - { ad: linux-goruntu-hepsi-qt6, os: ubuntu-24.04, kip: "", senaryo: hepsi, qt: pyqt6 }
+          # Paketler PyQt6 tasir (ADR 0102); PyQt5 uyumlulugu goruntu
+          # senaryolariyla korunur.
+          - { ad: windows-goruntu-arayuz-qt5, os: windows-2022, kip: "", senaryo: arayuz, qt: pyqt5 }
+          - { ad: linux-goruntu-hepsi-qt5, os: ubuntu-24.04, kip: "", senaryo: hepsi, qt: pyqt5 }
     env:
       PYTHONIOENCODING: utf-8
       DISKULTIMATE_NO_ELEVATION_PROMPT: "1"
       DISKULTIMATE_UPDATE_CHECK: "0"
       BOSTA: ${{ inputs.bosta || '12' }}
-      DISKULTIMATE_QT: ${{ matrix.qt || 'pyqt5' }}
+      DISKULTIMATE_QT: ${{ matrix.qt || 'pyqt6' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -77,9 +78,10 @@ jobs:
           sudo apt-get install -y -q --no-install-recommends \
             "linux-modules-extra-$(uname -r)" || true
       - name: PyQt5
+        if: matrix.qt == 'pyqt5'
         run: python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
       - name: PyQt6
-        if: matrix.qt == 'pyqt6'
+        if: matrix.qt != 'pyqt5'
         run: python -m pip install --disable-pip-version-check -r .github/requirements-ci-qt6.txt
 
       - name: Ortam

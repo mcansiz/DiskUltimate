@@ -1,5 +1,7 @@
 # DiskUltimate calisma gereksinimleri
-PyQt5>=5.15
+# PyQt6 (dagitilan paketlerdeki). PyQt5>=5.15 de calisir (ADR 0102): Python
+# 3.8/3.9 ya da PyQt6 bulunmayan sistemlerde `pip install PyQt5` yeterli.
+PyQt6>=6.5
 # Cekirdek (bolum tablolari + FAT) yalnizca standart kutuphane kullanir.
 # Opsiyonel sistem araclari (varsa ek dosya sistemleri bicimlendirilebilir):
 #   dosfstools (fsck.vfat)  exfatprogs (mkfs.exfat)

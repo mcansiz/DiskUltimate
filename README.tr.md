@@ -5,8 +5,9 @@
 DiskGenius benzeri görsel disk yönetim aracı. Disk görüntüleri, sanal diskler
 ve **bilgisayarınızdaki gerçek diskler** üzerinde çalışır: bölümleme,
 biçimlendirme, dosya erişimi, yedekleme, klonlama, önyükleme yönetimi ve veri
-kurtarma. Python 3 + PyQt5 ile yazılmıştır; bütün bölüm tabloları ve dosya
-sistemleri **sıfırdan, saf Python ile** yazıldığı için harici araç gerekmez.
+kurtarma. Python 3 + PyQt6 ile yazılmıştır (PyQt5 ile de çalışır); bütün
+bölüm tabloları ve dosya sistemleri **sıfırdan, saf Python ile** yazıldığı için
+harici araç gerekmez.
 
 ![sürüm](https://img.shields.io/badge/s%C3%BCr%C3%BCm-0.8.2--beta-orange)
 ![python](https://img.shields.io/badge/python-3.8%2B-green)
@@ -58,9 +59,10 @@ chmod +x DiskUltimate-*-x86_64.AppImage
 ./DiskUltimate-*-x86_64.AppImage
 ```
 
-- glibc 2.17 ve sonrası olan 64 bit dağıtımlarda çalışır (2014'ten beri
-  neredeyse bütün masaüstü dağıtımları). musl sistemlerde (Alpine, Void-musl)
-  kaynaktan çalıştırın.
+- glibc 2.34 ve sonrası olan 64 bit dağıtımlarda çalışır (Ubuntu 22.04,
+  Debian 12, Fedora 35, RHEL 9 ve sonrası). 0.10.2'ye kadarki sürümler
+  PyQt5 kullanır ve daha eski sistemlerde de (glibc 2.17+) çalışır. musl
+  sistemlerde (Alpine, Void-musl) kaynaktan çalıştırın.
 - Her masaüstünde bulunan X11/xcb kütüphanelerini kullanır. En küçük
   kurulumlarda açılmazsa: `sudo apt install libxcb-xinerama0 libxcb-icccm4
   libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxkbcommon-x11-0`.
@@ -93,18 +95,19 @@ dahil — DiskUltimate kendiliğinden başlar.
 
 ### Linux (kaynaktan çalıştırma)
 
-Kaynaktan çalıştırmak bir dakika sürer ve yalnızca Python 3.8+ ile PyQt5
-gerekir:
+Kaynaktan çalıştırmak bir dakika sürer ve yalnızca Python 3.8+ ile PyQt6
+gerekir (eski sistemler için PyQt5 de olur):
 
 ```bash
 git clone https://github.com/mcansiz/DiskUltimate.git
 cd DiskUltimate
 
-# PyQt5 kurulumu — dağıtımınıza uygun satırı seçin
-sudo apt install python3-pyqt5        # Debian / Ubuntu / Mint
-sudo dnf install python3-qt5          # Fedora
-sudo pacman -S python-pyqt5           # Arch / Manjaro
+# PyQt6 kurulumu — dağıtımınıza uygun satırı seçin
+sudo apt install python3-pyqt6        # Debian 12+ / Ubuntu 22.04+ / Mint 21+
+sudo dnf install python3-pyqt6        # Fedora
+sudo pacman -S python-pyqt6           # Arch / Manjaro
 # veya: python3 -m pip install -r requirements.txt
+# eski sistemler: python3-pyqt5 / python3-qt5 / python-pyqt5 de çalışır
 
 python3 main.py
 ```
@@ -123,7 +126,8 @@ sudo apt install dosfstools exfatprogs ntfs-3g e2fsprogs xfsprogs   # isteğe ba
 ### macOS (deneysel)
 
 Sürümlerde imzasız bir `DiskUltimate-<sürüm>-macos-arm64.zip` bulunur (Apple
-Silicon, macOS 11+). Otomatik testler GitHub Actions'ta macOS 14 üzerinde
+Silicon, macOS 14.4+; 0.10.2'ye kadarki sürümler: macOS 11+). Otomatik
+testler GitHub Actions'ta macOS 14 üzerinde
 geçiyor; ancak uygulama bir Mac'te **elle denenmedi** ve macOS'ta fiziksel disk
 erişimi sınanmadı, bu yüzden resmi olarak desteklenmiyor. İlk açılış: uygulamaya
 sağ tık → **Aç**.
@@ -368,9 +372,11 @@ build_exe.bat        :: Windows → dist\DiskUltimate.exe
 ./build_appimage.sh  # Linux → dist/DiskUltimate-<sürüm>-x86_64.AppImage
 ```
 
-AppImage taşınabilir bir Python (manylinux2014, glibc 2.17) ve PyPI'deki PyQt5
+AppImage taşınabilir bir Python (manylinux2014) ve PyPI'deki PyQt6
 paketleriyle kurulur; sonuç derleme makinesinin glibc sürümüne bağlı değildir,
-araç paketin gerektirdiği en yüksek glibc sürümünü yazar. `./build_linux.sh`
+araç paketin gerektirdiği en yüksek glibc sürümünü yazar (2.34, PyQt6
+paketlerinden gelir). `DISKULTIMATE_QT=pyqt5 ./build_appimage.sh` PyQt5 ile
+derler. `./build_linux.sh`
 hâlâ tek dosyalık PyInstaller ikilisi üretir; ancak o, yalnızca derlendiği
 makineninkiyle aynı veya daha yeni glibc'ye sahip sistemlerde çalışır.
 
@@ -407,7 +413,7 @@ README ekran görüntüleri `python3 tools/readme_screenshots.py` ile yeniden
 
 [GNU Genel Kamu Lisansı v3.0](LICENSE) — bu yazılımı kullanabilir, değiştirebilir
 ve dağıtabilirsiniz; türetilen çalışmalar da aynı lisansla açık kaynak kalmak
-zorundadır. İndirilebilir sürümler Qt (LGPL-3.0), PyQt5 (GPL-3.0), PyQt5-sip
+zorundadır. İndirilebilir sürümler Qt (LGPL-3.0), PyQt6 (GPL-3.0), PyQt6-sip
 (BSD-2-Clause), Python (PSF) ve gömülü ikon setlerini içerir; lisansları ve
 bildirimleri *Yardım → Üçüncü taraf lisansları* altında listelenir
 (`src/diskultimate/licenses/`).

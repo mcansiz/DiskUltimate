@@ -5,8 +5,9 @@
 A visual disk management tool in the spirit of DiskGenius. It works on disk
 images, virtual disks and **the real disks in your computer**: partitioning,
 formatting, file access, backup, cloning, boot management and data recovery.
-Written in Python 3 + PyQt5; every partition table and file system is
-implemented **from scratch in pure Python**, so it needs no external tools.
+Written in Python 3 + PyQt6 (PyQt5 also works); every partition table and
+file system is implemented **from scratch in pure Python**, so it needs no
+external tools.
 
 ![version](https://img.shields.io/badge/version-0.8.2--beta-orange)
 ![python](https://img.shields.io/badge/python-3.8%2B-green)
@@ -59,9 +60,10 @@ chmod +x DiskUltimate-*-x86_64.AppImage
 ./DiskUltimate-*-x86_64.AppImage
 ```
 
-- Works on 64-bit distributions with glibc 2.17 or newer (practically every
-  desktop distribution since 2014). On musl systems (Alpine, Void-musl) run
-  from source instead.
+- Works on 64-bit distributions with glibc 2.34 or newer (Ubuntu 22.04,
+  Debian 12, Fedora 35, RHEL 9 and later). Releases up to 0.10.2 use PyQt5
+  and also run on older systems (glibc 2.17+). On musl systems (Alpine,
+  Void-musl) run from source instead.
 - It uses the X11/xcb libraries every desktop already has. On a minimal
   install, if it does not start: `sudo apt install libxcb-xinerama0
   libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0
@@ -95,17 +97,19 @@ UEFI, Secure Boot included — and DiskUltimate starts by itself.
 
 ### Linux (run from source)
 
-Running from source takes a minute and only needs Python 3.8+ and PyQt5:
+Running from source takes a minute and only needs Python 3.8+ and PyQt6
+(PyQt5 works too, for older systems):
 
 ```bash
 git clone https://github.com/mcansiz/DiskUltimate.git
 cd DiskUltimate
 
-# install PyQt5 — pick the line for your distribution
-sudo apt install python3-pyqt5        # Debian / Ubuntu / Mint
-sudo dnf install python3-qt5          # Fedora
-sudo pacman -S python-pyqt5           # Arch / Manjaro
+# install PyQt6 — pick the line for your distribution
+sudo apt install python3-pyqt6        # Debian 12+ / Ubuntu 22.04+ / Mint 21+
+sudo dnf install python3-pyqt6        # Fedora
+sudo pacman -S python-pyqt6           # Arch / Manjaro
 # or: python3 -m pip install -r requirements.txt
+# older systems: python3-pyqt5 / python3-qt5 / python-pyqt5 work as well
 
 python3 main.py
 ```
@@ -124,7 +128,8 @@ sudo apt install dosfstools exfatprogs ntfs-3g e2fsprogs xfsprogs   # optional
 ### macOS (experimental)
 
 Releases include an unsigned `DiskUltimate-<version>-macos-arm64.zip`
-(Apple Silicon, macOS 11+). The automated tests pass on macOS 14 in GitHub
+(Apple Silicon, macOS 14.4+; releases up to 0.10.2: macOS 11+). The
+automated tests pass on macOS 14 in GitHub
 Actions, but the app has **not been tried by hand on a Mac** and physical-disk
 access on macOS is untested, so macOS is not officially supported. First
 start: right-click the app → **Open**.
@@ -363,9 +368,10 @@ build_exe.bat        :: Windows → dist\DiskUltimate.exe
 ./build_appimage.sh  # Linux → dist/DiskUltimate-<version>-x86_64.AppImage
 ```
 
-The AppImage is built from a portable Python (manylinux2014, glibc 2.17) and
-the PyPI PyQt5 wheels, so the result does not depend on the build machine's
-glibc; the tool prints the highest glibc version the package needs.
+The AppImage is built from a portable Python (manylinux2014) and the PyPI
+PyQt6 wheels, so the result does not depend on the build machine's glibc;
+the tool prints the highest glibc version the package needs (2.34, set by the
+PyQt6 wheels). `DISKULTIMATE_QT=pyqt5 ./build_appimage.sh` builds with PyQt5.
 `./build_linux.sh` still builds a single-file PyInstaller binary, but that one
 only runs on systems with the same or a newer glibc than the build machine.
 
@@ -400,8 +406,8 @@ The README screenshots are regenerated with `python3 tools/readme_screenshots.py
 
 [GNU General Public License v3.0](LICENSE) — you may use, modify and
 distribute this software; derived works must stay open source under the same
-license. The downloadable builds include Qt (LGPL-3.0), PyQt5 (GPL-3.0),
-PyQt5-sip (BSD-2-Clause), Python (PSF) and several icon sets; their licenses
+license. The downloadable builds include Qt (LGPL-3.0), PyQt6 (GPL-3.0),
+PyQt6-sip (BSD-2-Clause), Python (PSF) and several icon sets; their licenses
 and notices are listed under *Help → Third-party licenses*
 (`src/diskultimate/licenses/`).
 

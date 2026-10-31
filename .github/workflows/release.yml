@@ -2,8 +2,8 @@
 # release. Taslagi bir insan inceleyip yayinlar (ADR 0079).
 # Elle calistirma (workflow_dispatch) = deneme: her sey derlenir, dosyalar
 # calistirmanin "artifacts" bolumune konur, release olusturulmaz.
-# `qt` girdisi (ADR 0102): deneme derlemesi PyQt6 ile yapilabilir. Etiketle
-# yapilan surumler PyQt5 kalir (girdi bos -> pyqt5) — F asamasina kadar.
+# `qt` girdisi (ADR 0102): etiket surumleri PyQt6 (girdi bos -> pyqt6);
+# elle calistirmada PyQt5 ile deneme derlemesi secilebilir.
 name: Release
 
 on:
@@ -14,8 +14,8 @@ on:
       qt:
         description: Qt baglamasi (deneme derlemesi)
         type: choice
-        options: [pyqt5, pyqt6]
-        default: pyqt5
+        options: [pyqt6, pyqt5]
+        default: pyqt6
 
 permissions:
   contents: read
@@ -26,7 +26,7 @@ concurrency:
 
 env:
   PYTHONIOENCODING: utf-8
-  DISKULTIMATE_QT: ${{ inputs.qt || 'pyqt5' }}
+  DISKULTIMATE_QT: ${{ inputs.qt || 'pyqt6' }}
 
 jobs:
   version:
@@ -53,15 +53,15 @@ jobs:
   test-linux:
     needs: version
     uses: ./.github/workflows/tests.yml
-    with: { os: ubuntu-24.04, qt: "${{ inputs.qt || 'pyqt5' }}" }
+    with: { os: ubuntu-24.04, qt: "${{ inputs.qt || 'pyqt6' }}" }
   test-windows:
     needs: version
     uses: ./.github/workflows/tests.yml
-    with: { os: windows-2022, qt: "${{ inputs.qt || 'pyqt5' }}" }
+    with: { os: windows-2022, qt: "${{ inputs.qt || 'pyqt6' }}" }
   test-macos:
     needs: version
     uses: ./.github/workflows/tests.yml
-    with: { os: macos-14, qt: "${{ inputs.qt || 'pyqt5' }}" }
+    with: { os: macos-14, qt: "${{ inputs.qt || 'pyqt6' }}" }
 
   build-linux:
     name: Derleme (Linux AppImage)

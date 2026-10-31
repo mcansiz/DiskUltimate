@@ -23,10 +23,12 @@ jobs:
     with:
       os: ubuntu-24.04
 
-  # PyQt6 gecisi (ADR 0102): ayni arayuz kodu PyQt6 ile. PyQt5 de kurulur ki
-  # qt6_check her tam nitelikli enum'u iki baglamada dogrulayabilsin.
-  linux-qt6:
-    name: PyQt6 (ubuntu-24.04)
+  # Ana is PyQt6 ile kosar (tests.yml varsayilani, ADR 0102). Bu is PyQt5
+  # uyumlulugunu korur: kaynaktan calistirilan eski sistemler (Python 3.8,
+  # Alpine py3-qt5). Iki baglama da kurulur ki qt6_check her tam nitelikli
+  # enum'u ikisinde de dogrulayabilsin.
+  linux-qt5:
+    name: PyQt5 uyumlulugu (ubuntu-24.04)
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -55,16 +57,16 @@ jobs:
           python -m pip install --disable-pip-version-check -r .github/requirements-ci-qt6.txt
       - name: PyQt5/PyQt6 ortak yazim denetimi
         run: python -m tests.qt6_check
-      - name: Arayuz duman testi (PyQt6)
+      - name: Arayuz duman testi (PyQt5)
         env:
           QT_QPA_PLATFORM: offscreen
-          DISKULTIMATE_QT: pyqt6
+          DISKULTIMATE_QT: pyqt5
         run: python -m tests.ui_smoke
       - name: Hata durumunda ekran goruntuleri ve gunlukler
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: test-ciktilari-qt6
+          name: test-ciktilari-qt5
           path: |
             .tmp/screenshots/
             .claude/logs/

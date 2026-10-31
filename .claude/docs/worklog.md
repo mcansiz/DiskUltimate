@@ -6770,3 +6770,13 @@ Paketleme `DISKULTIMATE_QT` ile iki bağlamada; `release.yml` elle başlatmada
   `qt baglamasi:` günlük satırı, `smoke_launch --qt`.
 Sırada F: etiket sürümlerini PyQt6'ya çevirmek — alt sınırlar yükselir
 (glibc 2.17→2.34, macOS 11→14.4, Python 3.8→3.10), kullanıcı kararı.
+
+## 2026-10-31 (5) — PyQt6 F1: varsayılan PyQt6
+
+Ayrıntı: ADR 0102 "F1". `ui/qt` sırası PyQt6 önce; paketleme ve
+`release.yml` varsayılanı pyqt6 (etiket sürümleri PyQt6 ile çıkacak —
+yayın yapılmadı); CI ana işleri PyQt6, PyQt5 uyumluluğu `linux-qt5` ve iki
+gezinti işiyle korunur; `requirements.txt` PyQt6; README en/tr ve CLAUDE.md
+alt sınırları (0.10.2'ye kadar PyQt5 / sonrası PyQt6). Yerel: qt6_check 0,
+platform_check 0, i18n BAŞARILI; ortam değişkensiz pencere PyQt6, `pyqt5`
+ile PyQt5 açıldı. PyQt5 kod yolunu kaldırma (F2) ertelendi.

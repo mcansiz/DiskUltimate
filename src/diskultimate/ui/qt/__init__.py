@@ -6,8 +6,9 @@ yazar. Bu paket hangi baglamanin kullanilacagina bir kez karar verir:
     DISKULTIMATE_QT=pyqt6 python3 main.py     # zorla
     DISKULTIMATE_QT=pyqt5 python3 main.py
 
-Ortam degiskeni yoksa once PyQt5, sonra PyQt6 denenir (gecis donemi:
-dagitilan paketler henuz PyQt5 tasir). Iki baglamada da calisan yazim:
+Ortam degiskeni yoksa once PyQt6, sonra PyQt5 denenir: dagitilan paketler
+PyQt6 tasir; PyQt5 kaynaktan calistirilan eski sistemler (Python 3.8,
+Alpine `py3-qt5`) icin desteklenir. Iki baglamada da calisan yazim:
 
 - enum'lar tam nitelikli: `Qt.AlignmentFlag.AlignLeft`, `QMessageBox.StandardButton.Yes`
   (`tests.qt6_check` denetler, `--write` duzeltir)
@@ -21,7 +22,7 @@ from __future__ import annotations
 import importlib
 import os
 
-_CHOICES = ("pyqt5", "pyqt6")
+_CHOICES = ("pyqt6", "pyqt5")
 
 
 def _select() -> str:
@@ -34,7 +35,7 @@ def _select() -> str:
             return name
         except ImportError as exc:
             error = exc
-    raise ImportError(f"PyQt5 ya da PyQt6 gerekli ({error})")
+    raise ImportError(f"PyQt6 ya da PyQt5 gerekli ({error})")
 
 
 API = _select()

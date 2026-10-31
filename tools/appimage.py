@@ -2,7 +2,7 @@
 
     python3 tools/appimage.py            # dist/DiskUltimate-<surum>-x86_64.AppImage
     python3 tools/appimage.py --keep     # AppDir'i incelemek icin silme
-    DISKULTIMATE_QT=pyqt6 python3 tools/appimage.py   # PyQt6 ile (ADR 0102)
+    DISKULTIMATE_QT=pyqt5 python3 tools/appimage.py   # PyQt5 ile (ADR 0102)
 
 Kullanici bu araca ihtiyac duymaz; uretilen AppImage tek basina calisir.
 
@@ -19,7 +19,7 @@ Cikan pakette gereken en yuksek glibc surumu **olculur** ve basilir.
 
 1. Sabitlenmis Python AppImage'i ve `appimagetool` indirilir (SHA-256
    denetlenir) -> `.tmp/appimage/araclar/`.
-2. Python acilir, PyQt (varsayilan PyQt5; `DISKULTIMATE_QT=pyqt6`) sabit
+2. Python acilir, PyQt (varsayilan PyQt6; `DISKULTIMATE_QT=pyqt5`) sabit
    surumlerle kurulur. PyQt6 surumleri `.github/requirements-ci-qt6.txt`ten
    okunur — CI'da sinanan surumle paketlenen ayni kalir.
 3. Kullanilmayan Qt kutuphaneleri, eklentileri ve Python modulleri silinir;
@@ -85,7 +85,7 @@ BINDINGS = {
                           "./usr/lib/x86_64-linux-gnu/libxcb-cursor.so.0.0.0",
                           "libxcb-cursor.so.0"),)},
 }
-BINDING = os.environ.get("DISKULTIMATE_QT", "pyqt5").strip().lower() or "pyqt5"
+BINDING = os.environ.get("DISKULTIMATE_QT", "pyqt6").strip().lower() or "pyqt6"
 if BINDING not in BINDINGS:
     raise SystemExit(f"HATA: DISKULTIMATE_QT={BINDING!r} (pyqt5 | pyqt6)")
 CFG = BINDINGS[BINDING]
@@ -133,7 +133,7 @@ export APPDIR
 if [ ! -e /lib64/ld-linux-x86-64.so.2 ] && [ ! -e /lib/ld-linux-x86-64.so.2 ] \
    && [ ! -e /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ]; then
   echo "DiskUltimate: this package needs glibc. On musl systems run it from source:" >&2
-  echo "  apk add python3 py3-qt5 && python3 main.py" >&2
+  echo "  apk add python3 py3-pyqt6 && python3 main.py" >&2
   exit 1
 fi
 

@@ -22,10 +22,12 @@ DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
 
 ## Teknoloji
 - Python 3.8+ (geliştirme: 3.12)
-- GUI: **PyQt5 → PyQt6 geçişi sürüyor** (ADR 0102). Kod iki bağlamada da
-  çalışır; varsayılan PyQt5, `DISKULTIMATE_QT=pyqt6` ile PyQt6.
+- GUI: **PyQt6** (ADR 0102); paketler PyQt6 taşır. Kod PyQt5 ile de çalışır
+  (kaynaktan çalıştırılan eski sistemler: Python 3.8/3.9, Alpine `py3-qt5`);
+  `DISKULTIMATE_QT=pyqt5` ile zorlanır. Paket alt sınırları (ölçülen):
+  glibc 2.34, macOS 14.4, Windows 10 1809+.
 - **Çalışma zamanı bağımlılığı yok** (çekirdek saf Python; kullanıcı yalnızca
-  PyQt5 kurar). `mkfs.*` araçları varsa opsiyonel kullanılır.
+  PyQt6 ya da PyQt5 kurar). `mkfs.*` araçları varsa opsiyonel kullanılır.
   **Geliştirme/çeviri araçları bu kuralın dışındadır** — kullanıcı onlara
   ihtiyaç duymaz. Bu ayrım yazılı değildi ve bir kez yanlış okundu: çeviri için
   `.po` biçimi "msgfmt kurulu değil" diye elendi, oysa msgfmt bir geliştirici
@@ -249,7 +251,7 @@ python3 -m tests.run_all     # çekirdek testleri
 python3 -m tests.diag_check  # tanılama / donma yakalayıcı
 python3 -m tests.i18n_check  # ceviri sozlukleri
 python3 -m tests.qt6_check   # PyQt5/PyQt6 ortak yazim (PyQt6 kurulu olmali)
-DISKULTIMATE_QT=pyqt6 python3 main.py  # arayuzu PyQt6 ile ac
+DISKULTIMATE_QT=pyqt5 python3 main.py  # arayuzu PyQt5 ile ac (varsayilan PyQt6)
 QT_QPA_PLATFORM=offscreen python3 -m tests.long.explore  # gozlemci arayuz gezintisi (ADR 0097)
 DISKULTIMATE_LANG=en python3 main.py   # arayuzu baska dilde ac
 ```
