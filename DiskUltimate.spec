@@ -14,6 +14,17 @@ import sys
 
 IS_LINUX = sys.platform.startswith('linux')
 
+# Qt bağlaması (ADR 0102): DISKULTIMATE_QT=pyqt6 ile PyQt6 paketlenir.
+# Uygulama `ui/qt` üzerinden ikisini de import edebilir; pakete yalnızca
+# seçilen girer (diğeri excludes ile dışarıda kalır).
+QT_BINDING = os.environ.get('DISKULTIMATE_QT', 'pyqt5').strip().lower() or 'pyqt5'
+if QT_BINDING not in ('pyqt5', 'pyqt6'):
+    raise SystemExit('DiskUltimate.spec: DISKULTIMATE_QT=%r (pyqt5 | pyqt6)' % QT_BINDING)
+PYQT = 'PyQt6' if QT_BINDING == 'pyqt6' else 'PyQt5'
+OTHER_PYQT = 'PyQt5' if PYQT == 'PyQt6' else 'PyQt6'
+QV = 'Qt6' if PYQT == 'PyQt6' else 'Qt5'      # kitaplik/klasor oneki
+print('DiskUltimate.spec: Qt baglamasi %s' % PYQT)
+
 # SPECPATH: PyInstaller'ın spec'e verdiği, bu dosyanın bulunduğu dizin.
 # Depo başka bir yola klonlanınca da çalışsın diye sabit yol yazılmaz.
 ROOT = os.path.abspath(SPECPATH)          # noqa: F821 (PyInstaller tanımlar)
@@ -102,13 +113,14 @@ a = Analysis(
     # gereksiz yere pakete sürüklenmesinler; temiz ortamda bu liste no-op'tur.
     excludes=[
         # Rakip Qt bağlamaları — ikisi birden yüklenirse çalışma anında çakışır.
-        'PyQt6', 'PySide2', 'PySide6',
-        # Kullanılmayan PyQt5 modülleri (QML/Quick yığını ~20 MB).
-        'PyQt5.QtQml', 'PyQt5.QtQuick', 'PyQt5.QtQuickWidgets',
-        'PyQt5.QtWebEngineWidgets', 'PyQt5.QtWebEngineCore', 'PyQt5.QtWebSockets',
-        'PyQt5.QtMultimedia', 'PyQt5.QtMultimediaWidgets', 'PyQt5.QtBluetooth',
-        'PyQt5.QtNetworkAuth', 'PyQt5.QtPositioning', 'PyQt5.QtSerialPort',
-        'PyQt5.QtSql', 'PyQt5.QtTest', 'PyQt5.QtOpenGL', 'PyQt5.Qt3DCore',
+        OTHER_PYQT, 'PySide2', 'PySide6',
+        # Kullanılmayan PyQt modülleri (QML/Quick yığını ~20 MB).
+    ] + [PYQT + '.' + m for m in (
+        'QtQml', 'QtQuick', 'QtQuickWidgets', 'QtWebEngineWidgets',
+        'QtWebEngineCore', 'QtWebSockets', 'QtMultimedia', 'QtMultimediaWidgets',
+        'QtBluetooth', 'QtNetworkAuth', 'QtPositioning', 'QtSerialPort', 'QtSql',
+        'QtTest', 'QtOpenGL', 'QtOpenGLWidgets', 'Qt3DCore', 'QtPdf', 'QtSpatialAudio')
+    ] + [
         # Bilimsel/çizim yığını — bu uygulama hiçbirini kullanmaz.
         'numpy', 'scipy', 'matplotlib', 'pandas', 'numba', 'llvmlite',
         'PIL', 'lxml', 'IPython',
@@ -143,10 +155,10 @@ a = Analysis(
 #   uygulama sistemin Qt temasını kullanır (ADR 0013).
 # ---------------------------------------------------------------------------
 _DROP_COMMON = (
-    r'qwebgl|Qt5Qml|Qt5QmlModels|Qt5Quick|Qt5WebSockets|opengl32sw|d3dcompiler_47'
-)
+    r'qwebgl|{qv}Qml|{qv}QmlModels|{qv}Quick|{qv}WebSockets|opengl32sw|d3dcompiler_47'
+).format(qv=QV)
 _DROP_LINUX = (
-    r'|Qt5WaylandClient|Qt5EglFSDeviceIntegration'
+    r'|{qv}WaylandClient|{qv}EglFSDeviceIntegration'.format(qv=QV) +
     r'|plugins[/\\]wayland-'
     r'|plugins[/\\]generic[/\\]'
     r'|plugins[/\\]platforms[/\\]libq(vnc|linuxfb|eglfs|minimalegl|offscreen|wayland)'
@@ -162,9 +174,9 @@ a.binaries = [b for b in a.binaries if not _DROP.search(b[0])]
 # sağ tık menüsü) `qtbase_<dil>.qm` ister (`ui/qt_i18n.py`). Yalnızca
 # uygulamanın dilleri tutulur (~300 KB); geri kalanı atılır. `uic`
 # widget-plugin stub'ları da gerekmez: projede hiç `.ui` dosyası yok.
-_DROP_DATA = re.compile(r'(Qt5[/\\]translations[/\\]|uic[/\\]widget-plugins[/\\])', re.I)
-_KEEP_QT = re.compile(r'Qt5[/\\]translations[/\\]qtbase_(%s)\.qm$'
-                      % '|'.join(QT_LANGS), re.I)
+_DROP_DATA = re.compile(r'(%s[/\\]translations[/\\]|uic[/\\]widget-plugins[/\\])' % QV, re.I)
+_KEEP_QT = re.compile(r'%s[/\\]translations[/\\]qtbase_(%s)\.qm$'
+                      % (QV, '|'.join(QT_LANGS)), re.I)
 a.datas = [d for d in a.datas
            if _KEEP_QT.search(d[0]) or not _DROP_DATA.search(d[0])]
 _kept = [d[0] for d in a.datas if _KEEP_QT.search(d[0])]
@@ -216,7 +228,9 @@ if IS_MACOS:
             'CFBundleDisplayName': 'DiskUltimate',
             'CFBundleShortVersionString': _ver,
             'NSHighResolutionCapable': True,
-            'LSMinimumSystemVersion': '11.0',
+            # PyQt6 6.12 tekerlegi macosx_14_0 (olculdu 2026-10-31, ADR 0102);
+            # gercek alt sinir derlenen ikilinin minos degeriyle dogrulanir.
+            'LSMinimumSystemVersion': '14.0' if PYQT == 'PyQt6' else '11.0',
         },
     )
 else:

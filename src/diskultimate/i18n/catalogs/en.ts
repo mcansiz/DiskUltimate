@@ -527,8 +527,8 @@
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="4215"/>
-        <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt5, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
-        <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;A tool for partitioning, formatting, backing up and recovering disk images, virtual disks and &lt;b&gt;real disks on this system&lt;/b&gt;.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Technology:&lt;/b&gt; Python 3 + PyQt5, no external dependencies&lt;br&gt;&lt;b&gt;Partition tables:&lt;/b&gt; MBR (including logical partitions), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT conversion&lt;br&gt;&lt;b&gt;Formatting:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 and NTFS — all eight in pure Python, on three platforms&lt;br&gt;&lt;b&gt;File access:&lt;/b&gt; full read/write for FAT and exFAT&lt;/p&gt;&lt;p&gt;Image files do not require administrator privileges. Physical disk access requires administrator/root and is &lt;b&gt;read-only by default&lt;/b&gt;; writing asks for separate confirmation.&lt;/p&gt;</translation>
+        <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
+        <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;A tool for partitioning, formatting, backing up and recovering disk images, virtual disks and &lt;b&gt;real disks on this system&lt;/b&gt;.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Technology:&lt;/b&gt; Python 3 + PyQt, no external dependencies&lt;br&gt;&lt;b&gt;Partition tables:&lt;/b&gt; MBR (including logical partitions), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT conversion&lt;br&gt;&lt;b&gt;Formatting:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 and NTFS — all eight in pure Python, on three platforms&lt;br&gt;&lt;b&gt;File access:&lt;/b&gt; full read/write for FAT and exFAT&lt;/p&gt;&lt;p&gt;Image files do not require administrator privileges. Physical disk access requires administrator/root and is &lt;b&gt;read-only by default&lt;/b&gt;; writing asks for separate confirmation.&lt;/p&gt;</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="846"/>
@@ -6133,8 +6133,8 @@ Location: {}</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="4229"/>
-        <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt5 ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
-        <translation>License: GNU GPL version 3. Licenses of the bundled Qt, PyQt5 and Python: Help &gt; Third-party licenses.</translation>
+        <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
+        <translation>License: GNU GPL version 3. Licenses of the bundled Qt, PyQt and Python: Help &gt; Third-party licenses.</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/new_image.py" line="73"/>

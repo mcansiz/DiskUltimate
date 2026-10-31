@@ -54,6 +54,10 @@ libxcb-render-util0
 libxcb-shape0
 libxcb-xinerama0
 libxcb-xkb1
+# Qt6 xcb eklentisi (PyQt6 AppImage, ADR 0102): Qt5 istemezdi. AppImage
+# libxcb-cursor'u kendisi de tasir; bunlar kucuk (<100 KB).
+libxcb-cursor0
+libxcb-util1
 fuse3
 
 # Uygulamanin kullandigi harici araclar (platform.EXTERNAL_TOOLS, BOOT_TOOLS)

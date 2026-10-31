@@ -10,19 +10,25 @@ on:
         description: Runner (ubuntu-24.04, windows-2022, macos-14)
         required: true
         type: string
+      qt:
+        description: Qt baglamasi (pyqt5 | pyqt6, ADR 0102)
+        required: false
+        type: string
+        default: pyqt5
 
 permissions:
   contents: read
 
 jobs:
   test:
-    name: Testler (${{ inputs.os }})
+    name: Testler (${{ inputs.os }}${{ inputs.qt == 'pyqt6' && ', PyQt6' || '' }})
     runs-on: ${{ inputs.os }}
     timeout-minutes: 90
     env:
       PYTHONIOENCODING: utf-8
       DISKULTIMATE_NO_ELEVATION_PROMPT: "1"
       DISKULTIMATE_UPDATE_CHECK: "0"
+      DISKULTIMATE_QT: ${{ inputs.qt }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -47,6 +53,9 @@ jobs:
 
       - name: PyQt5
         run: python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
+      - name: PyQt6
+        if: inputs.qt == 'pyqt6'
+        run: python -m pip install --disable-pip-version-check -r .github/requirements-ci-qt6.txt
 
       - name: Capraz platform denetimi
         run: python -m tests.platform_check

@@ -7092,7 +7092,7 @@ def t90_guncelleme_denetimi_ve_lisanslar():
     assert not pf.open_url("http://example.com"), "yalnizca https acilmali"
 
     beklenen = {"qt": "GNU LESSER GENERAL PUBLIC LICENSE",
-                "pyqt5": "GNU GENERAL PUBLIC LICENSE",
+                "pyqt": "GNU GENERAL PUBLIC LICENSE",
                 "sip": "Redistribution and use in source and binary forms",
                 "python": "PYTHON SOFTWARE FOUNDATION LICENSE"}
     for bilesen in lic.COMPONENTS:
@@ -7100,6 +7100,13 @@ def t90_guncelleme_denetimi_ve_lisanslar():
         assert beklenen[bilesen["key"]] in metin, bilesen["name"]
     qt = [b for b in lic.COMPONENTS if b["key"] == "qt"][0]
     assert "{}" in qt["note"], "Qt notu kaynak arsivi baglantisini tasimali"
+    # Baglamaya gore adlar ve Qt kaynak arsivi (ADR 0102).
+    adlar = {b["key"]: b["name"] for b in lic.components("PyQt6")}
+    assert adlar["pyqt"] == "PyQt6" and adlar["sip"] == "PyQt6-sip", adlar
+    assert [b["name"] for b in lic.components()] == [b["name"] for b in lic.COMPONENTS]
+    assert lic.qt_source_url("6.12.0") == "https://download.qt.io/archive/qt/6.12/"
+    assert lic.qt_source_url("5.15.14") == "https://download.qt.io/archive/qt/5.15/"
+    assert lic.qt_source_url("") == lic.QT_SOURCE_URL
 
 
 @test

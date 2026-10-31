@@ -1,6 +1,6 @@
 """Paketlenmis uygulamayi kisa sure acip gunlugunu denetler (GELISTIRME ARACI).
 
-    python3 tools/smoke_launch.py <surum> <komut> [arguman...]
+    python3 tools/smoke_launch.py [--qt pyqt5|pyqt6] <surum> <komut> [arguman...]
 
 CI (`.github/workflows/release.yml`) her paketi bununla sinar: uygulama
 ekransiz (`minimal`) kipte, yetki sormadan (`--no-root`) baslatilir,
@@ -8,7 +8,11 @@ birkac saniye sonra kapatilir; kullanicinin veri dizinindeki **en yeni**
 oturum gunlugunde "<surum> baslatildi" satiri ve Python hata izi aranir.
 Gunluk kullanicinin veri dizinindedir (paketlenmis kopya, ADR 0040/0050).
 
-Cikis: 0 = acildi, 1 = gunluk yok / surum yok / hata izi var.
+`--qt` verilirse gunlukteki "qt baglamasi: <ad>" satiri da denetlenir: paket
+`DISKULTIMATE_QT` olmadan baslatilir, yani paketin KENDI secimi olculur
+(ADR 0102).
+
+Cikis: 0 = acildi, 1 = gunluk yok / surum yok / hata izi / yanlis baglama.
 """
 from __future__ import annotations
 
@@ -54,10 +58,14 @@ def stop_tree(process: subprocess.Popen) -> None:
 
 
 def main() -> int:
-    if len(sys.argv) < 3:
+    args = sys.argv[1:]
+    expect_qt = ""
+    if args[:1] == ["--qt"] and len(args) >= 2:
+        expect_qt, args = args[1], args[2:]
+    if len(args) < 2:
         print(__doc__)
         return 2
-    version, command = sys.argv[1], sys.argv[2:]
+    version, command = args[0], args[1:]
     # "minimal": pakette her zaman bulunan ekransiz Qt eklentisi. "offscreen"
     # boyut icin PyInstaller paketinden atiliyor (DiskUltimate.spec).
     # Dil `tr`'ye sabitlenir: aranan "<surum> baslatildi" kaynak (Turkce)
@@ -68,6 +76,7 @@ def main() -> int:
                DISKULTIMATE_LANG="tr",
                DISKULTIMATE_NO_ELEVATION_PROMPT="1",
                DISKULTIMATE_UPDATE_CHECK="0")
+    env.pop("DISKULTIMATE_QT", None)
     start = time.time()
     print(f"baslatiliyor: {' '.join(command)} --no-root")
     # Cikti boruya degil dosyaya: AppImage'in alt sureci boruyu acik tutar ve
@@ -102,6 +111,9 @@ def main() -> int:
     print(f"--- {log} ---\n" + content[-3000:])
     if f"{version} baslatildi" not in content:
         print(f"HATA: gunlukte '{version} baslatildi' yok")
+        return 1
+    if expect_qt and f"qt baglamasi: {expect_qt} " not in content:
+        print(f"HATA: paket {expect_qt} ile acilmadi")
         return 1
     if "Traceback" in content or "Traceback" in text:
         print("HATA: Python hata izi var")

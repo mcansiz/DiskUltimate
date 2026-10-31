@@ -527,8 +527,8 @@
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="4215"/>
-        <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt5, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
-        <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;ディスクイメージ、仮想ディスク、そして&lt;b&gt;このシステム上の実ディスク&lt;/b&gt;のパーティション作成、フォーマット、バックアップ、回復を行うツールです。&lt;/p&gt;&lt;p&gt;&lt;b&gt;技術:&lt;/b&gt; Python 3 + PyQt5、外部依存なし&lt;br&gt;&lt;b&gt;パーティションテーブル:&lt;/b&gt; MBR（論理パーティションを含む）、GPT、MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT 変換&lt;br&gt;&lt;b&gt;フォーマット:&lt;/b&gt; FAT12/16/32、exFAT、ext2/3/4、NTFS — 8 種類すべてを純粋な Python で、3 つのプラットフォームで&lt;br&gt;&lt;b&gt;ファイルアクセス:&lt;/b&gt; FAT と exFAT の完全な読み書き&lt;/p&gt;&lt;p&gt;イメージファイルには管理者権限は不要です。物理ディスクへのアクセスには管理者/root 権限が必要で、&lt;b&gt;既定では読み取り専用&lt;/b&gt;です。書き込みには別途確認が求められます。&lt;/p&gt;</translation>
+        <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
+        <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;ディスクイメージ、仮想ディスク、そして&lt;b&gt;このシステム上の実ディスク&lt;/b&gt;のパーティション作成、フォーマット、バックアップ、回復を行うツールです。&lt;/p&gt;&lt;p&gt;&lt;b&gt;技術:&lt;/b&gt; Python 3 + PyQt、外部依存なし&lt;br&gt;&lt;b&gt;パーティションテーブル:&lt;/b&gt; MBR（論理パーティションを含む）、GPT、MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT 変換&lt;br&gt;&lt;b&gt;フォーマット:&lt;/b&gt; FAT12/16/32、exFAT、ext2/3/4、NTFS — 8 種類すべてを純粋な Python で、3 つのプラットフォームで&lt;br&gt;&lt;b&gt;ファイルアクセス:&lt;/b&gt; FAT と exFAT の完全な読み書き&lt;/p&gt;&lt;p&gt;イメージファイルには管理者権限は不要です。物理ディスクへのアクセスには管理者/root 権限が必要で、&lt;b&gt;既定では読み取り専用&lt;/b&gt;です。書き込みには別途確認が求められます。&lt;/p&gt;</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="846"/>
@@ -6133,8 +6133,8 @@ Konum: {}</source>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="4229"/>
-        <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt5 ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
-        <translation>ライセンス: GNU GPL バージョン 3。同梱の Qt、PyQt5、Python のライセンス: ヘルプ &gt; サードパーティのライセンス。</translation>
+        <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
+        <translation>ライセンス: GNU GPL バージョン 3。同梱の Qt、PyQt、Python のライセンス: ヘルプ &gt; サードパーティのライセンス。</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/new_image.py" line="73"/>

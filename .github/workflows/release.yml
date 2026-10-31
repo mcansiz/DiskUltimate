@@ -2,12 +2,20 @@
 # release. Taslagi bir insan inceleyip yayinlar (ADR 0079).
 # Elle calistirma (workflow_dispatch) = deneme: her sey derlenir, dosyalar
 # calistirmanin "artifacts" bolumune konur, release olusturulmaz.
+# `qt` girdisi (ADR 0102): deneme derlemesi PyQt6 ile yapilabilir. Etiketle
+# yapilan surumler PyQt5 kalir (girdi bos -> pyqt5) — F asamasina kadar.
 name: Release
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      qt:
+        description: Qt baglamasi (deneme derlemesi)
+        type: choice
+        options: [pyqt5, pyqt6]
+        default: pyqt5
 
 permissions:
   contents: read
@@ -18,6 +26,7 @@ concurrency:
 
 env:
   PYTHONIOENCODING: utf-8
+  DISKULTIMATE_QT: ${{ inputs.qt || 'pyqt5' }}
 
 jobs:
   version:
@@ -44,15 +53,15 @@ jobs:
   test-linux:
     needs: version
     uses: ./.github/workflows/tests.yml
-    with: { os: ubuntu-24.04 }
+    with: { os: ubuntu-24.04, qt: "${{ inputs.qt || 'pyqt5' }}" }
   test-windows:
     needs: version
     uses: ./.github/workflows/tests.yml
-    with: { os: windows-2022 }
+    with: { os: windows-2022, qt: "${{ inputs.qt || 'pyqt5' }}" }
   test-macos:
     needs: version
     uses: ./.github/workflows/tests.yml
-    with: { os: macos-14 }
+    with: { os: macos-14, qt: "${{ inputs.qt || 'pyqt5' }}" }
 
   build-linux:
     name: Derleme (Linux AppImage)
@@ -72,11 +81,12 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q --no-install-recommends binutils \
-            libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+            libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 \
+            libxcb-cursor0
       - name: AppImage
         run: ./build_appimage.sh
       - name: Deneme acilisi
-        run: python tools/smoke_launch.py "${{ needs.version.outputs.version }}" "dist/DiskUltimate-${{ needs.version.outputs.version }}-x86_64.AppImage" --appimage-extract-and-run
+        run: python tools/smoke_launch.py --qt "${{ env.DISKULTIMATE_QT }}" "${{ needs.version.outputs.version }}" "dist/DiskUltimate-${{ needs.version.outputs.version }}-x86_64.AppImage" --appimage-extract-and-run
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dist-linux
@@ -97,15 +107,20 @@ jobs:
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with: { python-version: "3.12" }
-      - name: PyQt5 + PyInstaller
-        run: python -m pip install --disable-pip-version-check -r .github/requirements-build.txt
+      - name: PyQt + PyInstaller
+        shell: bash
+        run: |
+          req=.github/requirements-build.txt
+          [ "$DISKULTIMATE_QT" = pyqt6 ] && req=.github/requirements-build-qt6.txt
+          python -m pip install --disable-pip-version-check -r "$req"
       - name: Exe
         shell: bash
         run: |
           python -m PyInstaller DiskUltimate.spec --noconfirm --clean
           mv dist/DiskUltimate.exe "dist/DiskUltimate-${{ needs.version.outputs.version }}-windows-x64.exe"
+          ls -l dist/*.exe
       - name: Deneme acilisi
-        run: python tools/smoke_launch.py "${{ needs.version.outputs.version }}" "dist/DiskUltimate-${{ needs.version.outputs.version }}-windows-x64.exe"
+        run: python tools/smoke_launch.py --qt "${{ env.DISKULTIMATE_QT }}" "${{ needs.version.outputs.version }}" "dist/DiskUltimate-${{ needs.version.outputs.version }}-windows-x64.exe"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dist-windows
@@ -126,14 +141,25 @@ jobs:
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with: { python-version: "3.12" }
-      - name: PyQt5 + PyInstaller
-        run: python -m pip install --disable-pip-version-check -r .github/requirements-build.txt
+      - name: PyQt + PyInstaller
+        shell: bash
+        run: |
+          req=.github/requirements-build.txt
+          [ "$DISKULTIMATE_QT" = pyqt6 ] && req=.github/requirements-build-qt6.txt
+          python -m pip install --disable-pip-version-check -r "$req"
       - name: .app
         run: |
           python -m PyInstaller DiskUltimate.spec --noconfirm --clean
           ditto -c -k --keepParent dist/DiskUltimate.app "dist/DiskUltimate-${{ needs.version.outputs.version }}-macos-arm64.zip"
+      # Gercek alt surum: ikililerin LC_BUILD_VERSION minos degeri (ADR 0102).
+      - name: macOS alt surum olcumu
+        run: |
+          ls -l dist/*.zip
+          find dist/DiskUltimate.app -type f \( -name 'QtCore' -o -name 'QtCore.abi3.so' -o -name 'QtWidgets' -o -name 'DiskUltimate' \) | while read f; do
+            printf '%s: ' "${f#dist/}"; otool -l "$f" | awk '/LC_BUILD_VERSION/{b=1} b&&/minos/{print $2; b=0; exit}'
+          done
       - name: Deneme acilisi
-        run: python tools/smoke_launch.py "${{ needs.version.outputs.version }}" dist/DiskUltimate.app/Contents/MacOS/DiskUltimate
+        run: python tools/smoke_launch.py --qt "${{ env.DISKULTIMATE_QT }}" "${{ needs.version.outputs.version }}" dist/DiskUltimate.app/Contents/MacOS/DiskUltimate
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dist-macos

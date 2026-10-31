@@ -1,0 +1,4 @@
+# Release derlemesi, PyQt6 ile (ADR 0102): PyQt6 + PyInstaller. PyQt5
+# kurulmaz; spec ayrica diger baglamayi excludes ile disarida tutar.
+-r requirements-ci-qt6.txt
+pyinstaller==6.22.3

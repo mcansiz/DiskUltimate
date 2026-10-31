@@ -527,8 +527,8 @@
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="4215"/>
-        <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt5, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
-        <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;用于对磁盘镜像、虚拟磁盘和&lt;b&gt;本系统中的真实磁盘&lt;/b&gt;进行分区、格式化、备份和恢复的工具。&lt;/p&gt;&lt;p&gt;&lt;b&gt;技术：&lt;/b&gt;Python 3 + PyQt5，无外部依赖&lt;br&gt;&lt;b&gt;分区表：&lt;/b&gt;MBR（含逻辑分区）、GPT、MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT 转换&lt;br&gt;&lt;b&gt;格式化：&lt;/b&gt;FAT12/16/32、exFAT、ext2/3/4 和 NTFS — 全部八种均以纯 Python 实现，支持三个平台&lt;br&gt;&lt;b&gt;文件访问：&lt;/b&gt;FAT 和 exFAT 完整读写&lt;/p&gt;&lt;p&gt;镜像文件不需要管理员权限。访问物理磁盘需要管理员/root 权限，且&lt;b&gt;默认只读&lt;/b&gt;；写入需另行确认。&lt;/p&gt;</translation>
+        <source>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;Disk goruntusu, sanal disk ve &lt;b&gt;sistemdeki gercek diskler&lt;/b&gt; uzerinde bolumleme, bicimlendirme, yedekleme ve kurtarma araci.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Teknoloji:&lt;/b&gt; Python 3 + PyQt, harici bagimlilik yok&lt;br&gt;&lt;b&gt;Bolum tablolari:&lt;/b&gt; MBR (mantiksal bolumler dahil), GPT, MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT donusumu&lt;br&gt;&lt;b&gt;Bicimlendirme:&lt;/b&gt; FAT12/16/32, exFAT, ext2/3/4 ve NTFS — sekizi de saf Python, uc platformda&lt;br&gt;&lt;b&gt;Dosya erisimi:&lt;/b&gt; FAT ve exFAT tam okuma/yazma&lt;/p&gt;&lt;p&gt;Goruntu dosyalari yonetici yetkisi gerektirmez. Fiziksel disk erisimi yonetici/root ister ve &lt;b&gt;varsayilan olarak salt okunurdur&lt;/b&gt;; yazma ayrica onay ister.&lt;/p&gt;</source>
+        <translation>&lt;h3&gt;{} {}&lt;/h3&gt;&lt;p&gt;用于对磁盘镜像、虚拟磁盘和&lt;b&gt;本系统中的真实磁盘&lt;/b&gt;进行分区、格式化、备份和恢复的工具。&lt;/p&gt;&lt;p&gt;&lt;b&gt;技术：&lt;/b&gt;Python 3 + PyQt，无外部依赖&lt;br&gt;&lt;b&gt;分区表：&lt;/b&gt;MBR（含逻辑分区）、GPT、MBR&amp;nbsp;&amp;harr;&amp;nbsp;GPT 转换&lt;br&gt;&lt;b&gt;格式化：&lt;/b&gt;FAT12/16/32、exFAT、ext2/3/4 和 NTFS — 全部八种均以纯 Python 实现，支持三个平台&lt;br&gt;&lt;b&gt;文件访问：&lt;/b&gt;FAT 和 exFAT 完整读写&lt;/p&gt;&lt;p&gt;镜像文件不需要管理员权限。访问物理磁盘需要管理员/root 权限，且&lt;b&gt;默认只读&lt;/b&gt;；写入需另行确认。&lt;/p&gt;</translation>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="846"/>
@@ -6133,8 +6133,8 @@ Konum: {}</source>
     </message>
     <message>
         <location filename="../../ui/main_window.py" line="4229"/>
-        <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt5 ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
-        <translation>许可证：GNU GPL 第 3 版。随附的 Qt、PyQt5 和 Python 的许可证：帮助 &gt; 第三方许可证。</translation>
+        <source>Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt ve Python&apos;un lisanslari: Yardim &gt; Ucuncu taraf lisanslari.</source>
+        <translation>许可证：GNU GPL 第 3 版。随附的 Qt、PyQt 和 Python 的许可证：帮助 &gt; 第三方许可证。</translation>
     </message>
     <message>
         <location filename="../../ui/dialogs/new_image.py" line="73"/>

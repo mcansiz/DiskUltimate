@@ -829,16 +829,17 @@ class MainWindow(QMainWindow):
         import platform as _py_platform
         from . import qt
         from .. import licenses as lic
-        surumler = {"qt": qt.QT_VERSION_STR, "pyqt5": qt.PYQT_VERSION_STR,
+        surumler = {"qt": qt.QT_VERSION_STR, "pyqt": qt.PYQT_VERSION_STR,
                     "sip": qt.SIP_VERSION_STR, "python": _py_platform.python_version()}
         parts = [tr("<p>Bu uygulamanin indirilebilir surumleri (Windows exe, "
                     "Linux AppImage, macOS) asagidaki bilesenleri icinde "
                     "tasir. Uygulamanin kendisi GNU GPL surum 3 ile "
                     "lisanslidir; kaynak kodu: {}</p>",
                     f"<a href='{PROJECT_URL}'>{PROJECT_URL}</a>")]
-        for item in lic.COMPONENTS:
-            not_metni = (tr(item["note"], f"<a href='{lic.QT_SOURCE_URL}'>"
-                            f"{lic.QT_SOURCE_URL}</a>") if item["note"] else "")
+        kaynak = lic.qt_source_url(qt.QT_VERSION_STR)
+        for item in lic.components(qt.PACKAGE):
+            not_metni = (tr(item["note"], f"<a href='{kaynak}'>{kaynak}</a>")
+                         if item["note"] else "")
             parts.append(
                 f"<h4>{item['name']} {surumler.get(item['key'], '')} — "
                 f"{item['license']}</h4>"
@@ -4406,7 +4407,7 @@ class MainWindow(QMainWindow):
             tr("<h3>{} {}</h3><p>Disk goruntusu, sanal disk ve <b>sistemdeki "
                "gercek diskler</b> uzerinde bolumleme, bicimlendirme, "
                "yedekleme ve kurtarma araci.</p><p><b>Teknoloji:</b> Python 3 "
-               "+ PyQt5, harici bagimlilik yok<br><b>Bolum tablolari:</b> MBR "
+               "+ PyQt, harici bagimlilik yok<br><b>Bolum tablolari:</b> MBR "
                "(mantiksal bolumler dahil), GPT, MBR&nbsp;&harr;&nbsp;GPT "
                "donusumu<br><b>Bicimlendirme:</b> FAT12/16/32, exFAT, "
                "ext2/3/4 ve NTFS — sekizi de saf Python, uc "
@@ -4417,7 +4418,7 @@ class MainWindow(QMainWindow):
                "ister.</p>", APP_NAME, APP_VERSION)
             + "<p>" + tr("Gelistirici: {}", APP_AUTHOR) + "<br>"
             + tr("Proje sayfasi: {}", f"<a href='{PROJECT_URL}'>{PROJECT_URL}</a>")
-            + "<br>" + tr("Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt5 "
+            + "<br>" + tr("Lisans: GNU GPL surum 3. Uygulamayla gelen Qt, PyQt "
                           "ve Python'un lisanslari: Yardim > Ucuncu taraf "
                           "lisanslari.") + "</p>")
         label = box.findChild(QLabel, "qt_msgbox_label")

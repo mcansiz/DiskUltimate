@@ -37,7 +37,7 @@ from diskultimate.core import diagnostics  # noqa: E402
 from diskultimate.core.platform import (is_elevated,  # noqa: E402
                                         set_app_user_model_id,
                                         signal_elevated_ready)
-from diskultimate.ui import qt_i18n  # noqa: E402
+from diskultimate.ui import qt, qt_i18n  # noqa: E402
 from diskultimate.ui.appicon import apply_app_icon  # noqa: E402
 from diskultimate.ui.main_window import (APP_NAME, APP_VERSION,  # noqa: E402
                                          MainWindow)
@@ -60,6 +60,9 @@ def start(argv=None):
     # de etkin dili okur. Bu cagri hicbir surumde yoktu; ortam degiskeni ve
     # kayitli dil acilista yok sayiliyordu (2026-10-18).
     diagnostics.info(f"arayuz dili: {i18n.initialize()}")
+    # Paketin gercekte hangi baglamayla acildigi (ADR 0102); smoke_launch
+    # --qt bu satiri denetler.
+    diagnostics.info(f"qt baglamasi: {qt.API} {qt.PYQT_VERSION_STR} / Qt {qt.QT_VERSION_STR}")
     # Windows gorev cubugu ikonu: kimlik PENCERE YARATILMADAN once atanmali,
     # sonra atamak ise yaramaz (Windows disinda no-op).
     set_app_user_model_id("DiskUltimate.DiskUltimate")

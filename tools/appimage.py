@@ -2,6 +2,7 @@
 
     python3 tools/appimage.py            # dist/DiskUltimate-<surum>-x86_64.AppImage
     python3 tools/appimage.py --keep     # AppDir'i incelemek icin silme
+    DISKULTIMATE_QT=pyqt6 python3 tools/appimage.py   # PyQt6 ile (ADR 0102)
 
 Kullanici bu araca ihtiyac duymaz; uretilen AppImage tek basina calisir.
 
@@ -18,7 +19,9 @@ Cikan pakette gereken en yuksek glibc surumu **olculur** ve basilir.
 
 1. Sabitlenmis Python AppImage'i ve `appimagetool` indirilir (SHA-256
    denetlenir) -> `.tmp/appimage/araclar/`.
-2. Python acilir, PyQt5 sabit surumlerle kurulur.
+2. Python acilir, PyQt (varsayilan PyQt5; `DISKULTIMATE_QT=pyqt6`) sabit
+   surumlerle kurulur. PyQt6 surumleri `.github/requirements-ci-qt6.txt`ten
+   okunur — CI'da sinanan surumle paketlenen ayni kalir.
 3. Kullanilmayan Qt kutuphaneleri, eklentileri ve Python modulleri silinir;
    kalan her ELF dosyasinin `NEEDED` bagimliliklari pakette ya da sistemde
    bulunmali (yoksa durulur).
@@ -52,8 +55,29 @@ PYTHON = ("python3.12.15-cp312-cp312-manylinux2014_x86_64.AppImage",
 APPIMAGETOOL = ("appimagetool-x86_64.AppImage",
                 "https://github.com/AppImage/appimagetool/releases/download/1.9.1/",
                 "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0")
-PIP_PACKAGES = ("PyQt5==5.15.11", "PyQt5-Qt5==5.15.19", "PyQt5-sip==12.19.0")
 PY = "python3.12"
+
+
+def _pins(path: str):
+    with open(os.path.join(ROOT, path), encoding="utf-8") as f:
+        return tuple(s.strip() for s in f if s.strip() and not s.startswith("#"))
+
+
+# Baglama (ADR 0102). Qt6 xcb eklentisi `libxcb-cursor.so.0` ister; bircok
+# kurulumda yoktur (Qt5 istemezdi) -> derleme makinesinden pakete gomulur.
+BINDINGS = {
+    "pyqt5": {"package": "PyQt5", "qt": "Qt5", "pins": lambda: (
+                  "PyQt5==5.15.11", "PyQt5-Qt5==5.15.19", "PyQt5-sip==12.19.0"),
+              "bundle_system": ()},
+    "pyqt6": {"package": "PyQt6", "qt": "Qt6",
+              "pins": lambda: _pins(".github/requirements-ci-qt6.txt"),
+              "bundle_system": ("libxcb-cursor.so.0",)},
+}
+BINDING = os.environ.get("DISKULTIMATE_QT", "pyqt5").strip().lower() or "pyqt5"
+if BINDING not in BINDINGS:
+    raise SystemExit(f"HATA: DISKULTIMATE_QT={BINDING!r} (pyqt5 | pyqt6)")
+CFG = BINDINGS[BINDING]
+QTLIB = "lib" + CFG["qt"]                    # libQt5 / libQt6 dosya oneki
 
 # Uygulamanin kullandigi Qt modulleri: QtCore, QtGui, QtWidgets. Platform
 # eklentileri (xcb, wayland) bunlarin disinda su kutuphaneleri ister.
@@ -155,10 +179,10 @@ def run(cmd, **kw) -> None:
 def trim(appdir: str) -> None:
     """Kullanilmayan Qt ve Python parcalarini siler."""
     site = os.path.join(appdir, "opt", PY, "lib", PY, "site-packages")
-    pyqt = os.path.join(site, "PyQt5")
-    qt = os.path.join(pyqt, "Qt5")
+    pyqt = os.path.join(site, CFG["package"])
+    qt = os.path.join(pyqt, CFG["qt"])
     for name in os.listdir(os.path.join(qt, "lib")):
-        m = re.match(r"libQt5(\w+?)\.so", name)
+        m = re.match(QTLIB + r"(\w+?)\.so", name)
         if m and m.group(1) not in QT_LIBS_KEEP:
             os.remove(os.path.join(qt, "lib", name))
     plugins = os.path.join(qt, "plugins")
@@ -194,7 +218,7 @@ def trim(appdir: str) -> None:
             full = os.path.join(dirpath, name)
             out = subprocess.run(["readelf", "-dW", full], capture_output=True,
                                  text=True).stdout
-            needs = re.findall(r"\(NEEDED\)\s+Shared library: \[(libQt5[^\]]+)\]", out)
+            needs = re.findall(r"\(NEEDED\)\s+Shared library: \[(%s[^\]]+)\]" % QTLIB, out)
             gone = [n for n in needs if n not in kept]
             if gone:
                 log(f"  eklenti siliniyor: {os.path.relpath(full, qt)} ({', '.join(gone)})")
@@ -204,7 +228,7 @@ def trim(appdir: str) -> None:
         mod = name.split(".")[0]
         if (name.endswith(".so") or name.endswith(".pyi")) and mod not in PYQT_KEEP:
             os.remove(full)
-    for name in ("bindings", "uic", "pyrcc_main.py", "pylupdate_main.py",
+    for name in ("bindings", "uic", "lupdate", "pyrcc_main.py", "pylupdate_main.py",
                  "pyrcc.abi3.so", "pylupdate.abi3.so"):
         full = os.path.join(pyqt, name)
         if os.path.isdir(full):
@@ -225,6 +249,48 @@ def trim(appdir: str) -> None:
             if d == "__pycache__":
                 shutil.rmtree(os.path.join(dirpath, d))
                 dirnames.remove(d)
+
+
+def _needed(path: str):
+    out = subprocess.run(["readelf", "-dW", path], capture_output=True,
+                         text=True).stdout
+    return re.findall(r"\(NEEDED\)\s+Shared library: \[([^\]]+)\]", out)
+
+
+def prune_unreferenced(libdir: str, appdir: str) -> None:
+    """Qt'nin lib klasorunde hicbir paket ELF'inin istemedigi Qt-disi
+    kitapliklari siler (PyQt6 tekerlegi FFmpeg `libav*`/`libsw*` getirir;
+    yalnizca QtMultimedia ister, o da silindi). Zincir icin tekrarlanir."""
+    while True:
+        needed = set()
+        for path in elf_files(appdir):
+            needed.update(_needed(path))
+        gone = [n for n in os.listdir(libdir)
+                if not n.startswith(QTLIB) and n not in needed
+                and not os.path.islink(os.path.join(libdir, n))]
+        if not gone:
+            return
+        for n in gone:
+            log(f"  kullanilmayan kitaplik siliniyor: {n}")
+            os.remove(os.path.join(libdir, n))
+
+
+def bundle_system_libs(appdir: str) -> None:
+    """Sistemde cogu zaman bulunmayan kitapliklari Qt lib klasorune koyar
+    (eklentilerin RUNPATH'i oraya bakar)."""
+    if not CFG["bundle_system"]:
+        return
+    site = os.path.join(appdir, "opt", PY, "lib", PY, "site-packages")
+    libdir = os.path.join(site, CFG["package"], CFG["qt"], "lib")
+    out = subprocess.run(["ldconfig", "-p"], capture_output=True, text=True).stdout
+    for name in CFG["bundle_system"]:
+        m = re.search(r"^\s*%s \(libc6,x86-64\) => (\S+)$" % re.escape(name),
+                      out, re.M)
+        if not m:
+            raise SystemExit(f"HATA: derleme makinesinde {name} yok "
+                             "(Ubuntu: apt install libxcb-cursor0)")
+        shutil.copy2(os.path.realpath(m.group(1)), os.path.join(libdir, name))
+        log(f"  gomuldu: {name} <- {m.group(1)}")
 
 
 def elf_files(appdir: str):
@@ -249,7 +315,7 @@ def check_dependencies(appdir: str) -> str:
         out = subprocess.run(["readelf", "-dW", path], capture_output=True,
                              text=True).stdout
         for need in re.findall(r"\(NEEDED\)\s+Shared library: \[([^\]]+)\]", out):
-            if need.startswith("libQt5") or need.startswith("libicu"):
+            if need.startswith(QTLIB) or need.startswith("libicu"):
                 if need not in bundled:
                     missing.setdefault(need, []).append(os.path.relpath(path, appdir))
         sym = subprocess.run(["readelf", "-VW", path], capture_output=True,
@@ -281,13 +347,17 @@ def build(keep: bool = False) -> str:
     for sub in ("applications", "icons", "metainfo"):
         shutil.rmtree(os.path.join(appdir, "usr", "share", sub), ignore_errors=True)
 
-    log("PyQt5 kuruluyor: " + " ".join(PIP_PACKAGES))
+    pins = CFG["pins"]()
+    log(f"{CFG['package']} kuruluyor: " + " ".join(pins))
     py = os.path.join(appdir, "opt", PY, "bin", PY)
     run([py, "-s", "-m", "pip", "install", "--no-cache-dir", "--quiet",
-         "--no-warn-script-location", *PIP_PACKAGES])
+         "--no-warn-script-location", *pins])
 
     log("Kullanilmayan parcalar siliniyor...")
     trim(appdir)
+    site = os.path.join(appdir, "opt", PY, "lib", PY, "site-packages")
+    prune_unreferenced(os.path.join(site, CFG["package"], CFG["qt"], "lib"), appdir)
+    bundle_system_libs(appdir)
 
     log("Uygulama kopyalaniyor...")
     share = os.path.join(appdir, "usr", "share", "diskultimate")

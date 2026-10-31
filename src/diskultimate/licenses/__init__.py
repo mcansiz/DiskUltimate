@@ -1,7 +1,8 @@
 """Dagitimla birlikte gelen ucuncu taraf bilesenlerin lisanslari (ADR 0090).
 
-Windows exe'si ve Linux AppImage'i Python'u, Qt'yi ve PyQt5'i **icinde**
-tasir; bu bir yeniden dagitimdir ve lisanslar sunlari ister:
+Windows exe'si ve Linux AppImage'i Python'u, Qt'yi ve PyQt'yi (PyQt5 ya da
+PyQt6, ADR 0102) **icinde** tasir; bu bir yeniden dagitimdir ve lisanslar
+sunlari ister:
 
 * **Qt** (LGPLv3): kullaniciya lisans metni ve Qt kullanildigina dair
   belirgin bir bildirim; Qt'nin kaynak kodu ya da onu edinmek icin yazili
@@ -9,9 +10,12 @@ tasir; bu bir yeniden dagitimdir ve lisanslar sunlari ister:
   Uygulamanin tamami GPLv3 acik kaynaktir ve derleme betikleri depodadir:
   kullanici farkli bir Qt ile kaynaktan calistirabilir ya da yeniden
   paketleyebilir.
-* **PyQt5** (GPLv3): uygulama da GPLv3 — uyumlu; kaynak GitHub'da.
-* **PyQt5-sip** (BSD-2-Clause) ve **Python** (PSF): telif bildirimi ve
-  lisans metni dagitimla birlikte verilir.
+* **PyQt5/PyQt6** (GPLv3): uygulama da GPLv3 — uyumlu; kaynak GitHub'da.
+* **PyQt5-sip/PyQt6-sip** (BSD-2-Clause; iki paketin metni ayni, olculdu)
+  ve **Python** (PSF): telif bildirimi ve lisans metni dagitimla verilir.
+
+Bilesen adlari ve Qt kaynak arsivi baglamaya gore `components()` ile
+uretilir; `COMPONENTS` PyQt5 icin varsayilan listedir.
 
 Metinler bu klasorde duz metin olarak durur, kurulu paketlerin kendi lisans
 dosyalarindan alinmistir; "Ucuncu taraf lisanslari" penceresi gosterir.
@@ -19,7 +23,7 @@ dosyalarindan alinmistir; "Ucuncu taraf lisanslari" penceresi gosterir.
 from __future__ import annotations
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from ..i18n import mark
 
@@ -29,6 +33,14 @@ LICENSE_DIR = os.path.dirname(os.path.abspath(__file__))
 # arsiv de ayni surumu tasir. (Qt'nin kendi SSS'si yalnizca baglantiyi yeterli
 # saymaz — bu yuzden yazili teklif.)
 QT_SOURCE_URL = "https://download.qt.io/archive/qt/5.15/"
+
+
+def qt_source_url(qt_version: Optional[str] = None) -> str:
+    """Kullanilan Qt surumunun resmi kaynak arsivi (`6.12.0` -> `.../qt/6.12/`)."""
+    parts = (qt_version or "").split(".")
+    if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+        return f"https://download.qt.io/archive/qt/{parts[0]}.{parts[1]}/"
+    return QT_SOURCE_URL
 
 COMPONENTS: List[Dict[str, str]] = [
     {"key": "qt", "name": "Qt", "license": "LGPL-3.0", "file": "LGPL-3.0.txt",
@@ -41,7 +53,7 @@ COMPONENTS: List[Dict[str, str]] = [
                   "Qt surumunun kaynak kodunu en az uc yil boyunca istek "
                   "uzerine saglariz (proje sayfasinda bir istek acin); resmi "
                   "arsiv: {}")},
-    {"key": "pyqt5", "name": "PyQt5", "license": "GPL-3.0", "file": "GPL-3.0.txt",
+    {"key": "pyqt", "name": "PyQt5", "license": "GPL-3.0", "file": "GPL-3.0.txt",
      "url": "https://www.riverbankcomputing.com/software/pyqt/",
      "copyright": "Copyright (c) Riverbank Computing Limited", "note": ""},
     {"key": "sip", "name": "PyQt5-sip", "license": "BSD-2-Clause",
@@ -53,6 +65,20 @@ COMPONENTS: List[Dict[str, str]] = [
      "copyright": "Copyright (c) 2001 Python Software Foundation; All Rights Reserved",
      "note": ""},
 ]
+
+
+def components(pyqt: str = "PyQt5") -> List[Dict[str, str]]:
+    """Pakette gelen baglamaya gore bilesen listesi ("PyQt5" / "PyQt6")."""
+    out = []
+    for item in COMPONENTS:
+        item = dict(item)
+        if item["key"] == "pyqt":
+            item["name"] = pyqt
+        elif item["key"] == "sip":
+            item["name"] = f"{pyqt}-sip"
+            item["url"] = f"https://pypi.org/project/{pyqt}-sip/"
+        out.append(item)
+    return out
 
 
 def text(component: Dict[str, str]) -> str:
