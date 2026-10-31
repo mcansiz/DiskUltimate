@@ -31,12 +31,14 @@ Cikan pakette gereken en yuksek glibc surumu **olculur** ve basilir.
 from __future__ import annotations
 
 import hashlib
+import io
 import os
 import re
 import shutil
 import stat
 import subprocess
 import sys
+import tarfile
 import urllib.error
 import urllib.request
 
@@ -64,14 +66,24 @@ def _pins(path: str):
 
 
 # Baglama (ADR 0102). Qt6 xcb eklentisi `libxcb-cursor.so.0` ister; bircok
-# kurulumda yoktur (Qt5 istemezdi) -> derleme makinesinden pakete gomulur.
+# kurulumda yoktur (Qt5 istemezdi) -> pakete gomulur. Derleme makinesinden
+# DEGIL: Ubuntu 24.04'unki `__isoc23_strtol@GLIBC_2.38` ister ve AppImage'in
+# alt sinirini 2.34'ten 2.38'e cikarirdi (olculdu 2026-10-31). Debian 12
+# paketi yalnizca GLIBC_2.8 ister; SHA-256 Debian'in Packages dizinindeki
+# degerle ayni (dogrulandi).
+XCB_CURSOR_DEB = ("libxcb-cursor0_0.1.4-1_amd64.deb",
+                  "https://deb.debian.org/debian/pool/main/x/xcb-util-cursor/",
+                  "a4b3c32dc008275ffcacccc1c77c030f01aad38e232e05d5ad116b76656c607c")
 BINDINGS = {
     "pyqt5": {"package": "PyQt5", "qt": "Qt5", "pins": lambda: (
                   "PyQt5==5.15.11", "PyQt5-Qt5==5.15.19", "PyQt5-sip==12.19.0"),
-              "bundle_system": ()},
+              "bundle": ()},
     "pyqt6": {"package": "PyQt6", "qt": "Qt6",
               "pins": lambda: _pins(".github/requirements-ci-qt6.txt"),
-              "bundle_system": ("libxcb-cursor.so.0",)},
+              # (.deb, paketteki dosya, gomulecek ad)
+              "bundle": ((XCB_CURSOR_DEB,
+                          "./usr/lib/x86_64-linux-gnu/libxcb-cursor.so.0.0.0",
+                          "libxcb-cursor.so.0"),)},
 }
 BINDING = os.environ.get("DISKULTIMATE_QT", "pyqt5").strip().lower() or "pyqt5"
 if BINDING not in BINDINGS:
@@ -276,22 +288,35 @@ def prune_unreferenced(libdir: str, appdir: str) -> None:
             os.remove(os.path.join(libdir, n))
 
 
-def bundle_system_libs(appdir: str) -> None:
+def deb_member(deb: str, member: str) -> bytes:
+    """Bir .deb'in data.tar.* arsivinden tek dosya (saf Python: ar + tarfile)."""
+    with open(deb, "rb") as f:
+        data = f.read()
+    if not data.startswith(b"!<arch>\n"):
+        raise SystemExit(f"HATA: {deb} bir ar arsivi degil")
+    pos = 8
+    while pos + 60 <= len(data):
+        name = data[pos:pos + 16].decode().strip().rstrip("/")
+        size = int(data[pos + 48:pos + 58].decode().strip())
+        body = data[pos + 60:pos + 60 + size]
+        if name.startswith("data.tar"):
+            with tarfile.open(fileobj=io.BytesIO(body), mode="r:*") as tar:
+                return tar.extractfile(tar.getmember(member)).read()
+        pos += 60 + size + (size & 1)
+    raise SystemExit(f"HATA: {deb} icinde data.tar yok")
+
+
+def bundle_libs(appdir: str) -> None:
     """Sistemde cogu zaman bulunmayan kitapliklari Qt lib klasorune koyar
-    (eklentilerin RUNPATH'i oraya bakar)."""
-    if not CFG["bundle_system"]:
-        return
+    (eklentilerin RUNPATH'i `$ORIGIN/../../lib` oraya bakar)."""
     site = os.path.join(appdir, "opt", PY, "lib", PY, "site-packages")
     libdir = os.path.join(site, CFG["package"], CFG["qt"], "lib")
-    out = subprocess.run(["ldconfig", "-p"], capture_output=True, text=True).stdout
-    for name in CFG["bundle_system"]:
-        m = re.search(r"^\s*%s \(libc6,x86-64\) => (\S+)$" % re.escape(name),
-                      out, re.M)
-        if not m:
-            raise SystemExit(f"HATA: derleme makinesinde {name} yok "
-                             "(Ubuntu: apt install libxcb-cursor0)")
-        shutil.copy2(os.path.realpath(m.group(1)), os.path.join(libdir, name))
-        log(f"  gomuldu: {name} <- {m.group(1)}")
+    for item, member, name in CFG["bundle"]:
+        deb = fetch(item)
+        with open(os.path.join(libdir, name), "wb") as f:
+            f.write(deb_member(deb, member))
+        os.chmod(os.path.join(libdir, name), 0o755)
+        log(f"  gomuldu: {name} <- {item[0]}")
 
 
 def elf_files(appdir: str):
@@ -358,7 +383,7 @@ def build(keep: bool = False) -> str:
     trim(appdir)
     site = os.path.join(appdir, "opt", PY, "lib", PY, "site-packages")
     prune_unreferenced(os.path.join(site, CFG["package"], CFG["qt"], "lib"), appdir)
-    bundle_system_libs(appdir)
+    bundle_libs(appdir)
 
     log("Uygulama kopyalaniyor...")
     share = os.path.join(appdir, "usr", "share", "diskultimate")
