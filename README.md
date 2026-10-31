@@ -129,7 +129,7 @@ sudo apt install dosfstools exfatprogs ntfs-3g e2fsprogs xfsprogs   # optional
 
 Releases include an unsigned `DiskUltimate-<version>-macos-arm64.zip`
 (Apple Silicon, macOS 14.4+; releases up to 0.10.2: macOS 11+). The
-automated tests pass on macOS 14 in GitHub
+automated tests pass on macOS 15 in GitHub
 Actions, but the app has **not been tried by hand on a Mac** and physical-disk
 access on macOS is untested, so macOS is not officially supported. First
 start: right-click the app → **Open**.

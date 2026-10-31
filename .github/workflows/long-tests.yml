@@ -81,7 +81,7 @@ jobs:
           aygit_fs = {"linux": ["fat32","exfat","ntfs","ext4","hfsplus","udf"],
                       "windows": ["fat32","exfat","ntfs","udf"],
                       "macos": ["fat32","exfat","hfsplus"]}
-          runner = {"linux": "ubuntu-24.04", "windows": "windows-2022", "macos": "macos-14"}
+          runner = {"linux": "ubuntu-24.04", "windows": "windows-2022", "macos": "macos-15"}
           aygit = [{"os": runner[k], "plat": k, "fs": f, "tablo": t}
                    for k in pl if k in aygit_fs for f in aygit_fs[k]
                    if os.environ["FS"] == "all" or f in fs
@@ -180,7 +180,7 @@ jobs:
     name: macOS ${{ matrix.fs }}-${{ matrix.tablo }}
     needs: plan
     if: needs.plan.outputs.macos != '[]'
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 360
     strategy:
       fail-fast: false

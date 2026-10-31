@@ -127,7 +127,7 @@ sudo apt install dosfstools exfatprogs ntfs-3g e2fsprogs xfsprogs   # isteğe ba
 
 Sürümlerde imzasız bir `DiskUltimate-<sürüm>-macos-arm64.zip` bulunur (Apple
 Silicon, macOS 14.4+; 0.10.2'ye kadarki sürümler: macOS 11+). Otomatik
-testler GitHub Actions'ta macOS 14 üzerinde
+testler GitHub Actions'ta macOS 15 üzerinde
 geçiyor; ancak uygulama bir Mac'te **elle denenmedi** ve macOS'ta fiziksel disk
 erişimi sınanmadı, bu yüzden resmi olarak desteklenmiyor. İlk açılış: uygulamaya
 sağ tık → **Aç**.
