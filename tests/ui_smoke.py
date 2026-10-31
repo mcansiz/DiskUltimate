@@ -684,14 +684,14 @@ def main() -> int:
     d4b = NtfsFixDialog(pencere, "Bolum 3 (Windows Veri)", kirli)
     d4b.show()
     kaydet(d4b, "09b-ntfs-onar.png")
-    assert d4b.buttons.button(d4b.buttons.Ok).isEnabled()
+    assert d4b.buttons.button(d4b.buttons.StandardButton.Ok).isEnabled()
     assert d4b.values() == {"clear_dirty": True, "schedule_chkdsk": False,
                             "remove_hibernation": False}, d4b.values()
     d4b.close()
     # Hazirda bekletmede: kutu secilmeden "kuyruga ekle" pasif ve nedeni yazar
     uyuyan = nf.NtfsHealth(logfile=nf.LOG_UNCLEAN, hibernated=True, version="3.1")
     d4c = NtfsFixDialog(pencere, "Bolum 3", uyuyan)
-    tamam = d4c.buttons.button(d4c.buttons.Ok)
+    tamam = d4c.buttons.button(d4c.buttons.StandardButton.Ok)
     assert not tamam.isEnabled() and tamam.toolTip(), "hazirda bekletmede onarim acik"
     d4c.hiber_check.setChecked(True)
     assert tamam.isEnabled() and d4c.values()["remove_hibernation"]
@@ -997,7 +997,7 @@ def main() -> int:
     # --- ana haritada tutamaklar: surukle -> kuyruga boyutlandirma adimi ---
     # Harita geri yukleme seridiyle AYNI denetleyiciyi ve ortak modeli
     # kullanir (ADR 0049). Diske hicbir sey yazilmaz; birakinca kuyruga girer.
-    from diskultimate.ui.qt.QtCore import QEvent, QPoint
+    from diskultimate.ui.qt.QtCore import QEvent, QPointF
     from diskultimate.ui.qt.QtGui import QMouseEvent
     import time
     harita = pencere.disk_map
@@ -1036,7 +1036,7 @@ def main() -> int:
         for tur, x in ((QEvent.Type.MouseButtonPress, x0), (QEvent.Type.MouseMove, x1),
                        (QEvent.Type.MouseButtonRelease, x1)):
             app.sendEvent(harita, QMouseEvent(
-                tur, QPoint(x, y), Qt.MouseButton.LeftButton,
+                tur, QPointF(x, y), Qt.MouseButton.LeftButton,
                 Qt.MouseButton.NoButton if tur == QEvent.Type.MouseButtonRelease
                 else Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier))
         app.processEvents()
@@ -1717,7 +1717,7 @@ def main() -> int:
     assert d11.plan is not None, "geri yukleme yerlesimi kurulmadi"
     # Harita yerine tutamakli serit; kenar surukleme plani degistirir
     assert d11.layout_bar.isVisible() and not d11.map.isVisible()
-    from diskultimate.ui.qt.QtCore import QPoint
+    from diskultimate.ui.qt.QtCore import QPointF
     from diskultimate.ui.qt.QtGui import QMouseEvent
     from diskultimate.ui.qt.QtCore import QEvent
     serit = d11.layout_bar
@@ -1727,7 +1727,7 @@ def main() -> int:
     once_plan = [(p.new_start, p.new_count) for p in d11.plan.parts]
     for tur, x in ((QEvent.Type.MouseButtonPress, x0), (QEvent.Type.MouseMove, x0 - 60),
                    (QEvent.Type.MouseButtonRelease, x0 - 60)):
-        olay = QMouseEvent(tur, QPoint(x, y0), Qt.MouseButton.LeftButton,
+        olay = QMouseEvent(tur, QPointF(x, y0), Qt.MouseButton.LeftButton,
                            Qt.MouseButton.LeftButton if tur != QEvent.Type.MouseButtonRelease
                            else Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier)
         app.sendEvent(serit, olay)

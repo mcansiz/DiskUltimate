@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Tuple
 
-from ..qt.QtCore import QRect, QSize, Qt, pyqtSignal
+from ..qt.QtCore import QPointF, QRect, QSize, Qt, pyqtSignal
 from ..qt.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
                         QPen, QPixmap)
 from ..qt.QtWidgets import QSizePolicy, QWidget
@@ -205,7 +205,7 @@ class DiskMapWidget(QWidget):
         # boyamak, uzerindeki cubukla yarisiyor ve yaziyi bogar.
         panel = palette_color(self, "base")
         vurgu = palette_color(self, "highlight")
-        zemin = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+        zemin = QLinearGradient(QPointF(rect.topLeft()), QPointF(rect.bottomLeft()))
         if selected:
             zemin.setColorAt(0.0, blend(panel, vurgu, 0.10))
             zemin.setColorAt(1.0, blend(panel, vurgu, 0.20))

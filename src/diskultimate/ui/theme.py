@@ -149,7 +149,7 @@ def draw_usage_bar(painter: QPainter, rect, ratio: float, base: QColor,
     if known and filled > 0.5:
         painter.save()
         painter.setClipPath(path)
-        gradient = QLinearGradient(area.topLeft(), area.bottomLeft())
+        gradient = QLinearGradient(QPointF(area.topLeft()), QPointF(area.bottomLeft()))
         gradient.setColorAt(0.0, lighten(fill, 124))
         gradient.setColorAt(0.55, fill)
         gradient.setColorAt(1.0, darken(fill, 108))

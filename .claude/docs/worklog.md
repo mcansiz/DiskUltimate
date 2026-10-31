@@ -6714,3 +6714,21 @@ ADR 0102. Kod artık PyQt5 ve PyQt6'da çalışır; varsayılan PyQt5
 - Yerel (hafif): iki bağlamayla tüm `ui` modülleri import + ana pencere
   ekransız açılıp kapandı; qt6_check 0, platform_check 0, i18n_check
   BAŞARILI, diag_check 13/13. Ağır testler CI'da.
+
+## 2026-10-31 (2) — PyQt6 duman testi geçti; gezinti apt hatası
+
+CI 41196065781: PyQt5 tam takım yeşil; `linux-qt6` düştü:
+`QLinearGradient(QPoint, QPoint)` — PyQt6 QPoint'i QPointF'ye kendiliğinden
+çevirmez (4 yer, `QPointF(...)` ile sarıldı), ardından segfault. Yerelde
+PyQt6 ile `ui_smoke` (tek başına, 600 sn sınırlı) iki tur daha buldu:
+`d4b.buttons.Ok` (örnek zinciri üzerinden enum — `qt6_check` önünde nokta
+olan adı atlar) ve testteki `QMouseEvent(tur, QPoint(...))`. Üçüncü turda
+**PyQt6 ile duman testi tamamlandı** (Qt 6.12.0, fusion).
+
+Arayüz gezintisi: Linux işlerinin hepsi `xcb` yüklenemedi diye düşüyordu.
+Sebep kod değil: GitHub çekirdeği `7.0.0-1017-azure`, `linux-modules-extra`
+paketi yok; aynı `apt-get install ... || true` komutundaki Qt/xcb
+kitaplıkları da kurulmuyordu. 2026-10-25'ten beri süren kırmızının da
+büyük olasılıkla sebebi. `gezinti.yml` ve `long-tests.yml`: modül paketi
+ayrı komutta. (scsi_debug gerektiren `aygit` işleri o paket olmadan yine
+düşebilir — gerçek sınır, ayrıca bakılacak.)

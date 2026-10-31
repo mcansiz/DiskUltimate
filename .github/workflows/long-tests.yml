@@ -236,7 +236,10 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q --no-install-recommends dosfstools exfatprogs \
-            ntfs-3g e2fsprogs xfsprogs hfsprogs udftools "linux-modules-extra-$(uname -r)" || true
+            ntfs-3g e2fsprogs xfsprogs hfsprogs udftools
+          # Ayri: cekirdege uygun paket yoksa araclar yine kurulsun (gezinti.yml).
+          sudo apt-get install -y -q --no-install-recommends \
+            "linux-modules-extra-$(uname -r)" || true
           for m in hfsplus udf exfat ntfs3; do sudo modprobe $m || true; done
       - name: Senaryo (Linux/macOS, root)
         if: runner.os != 'Windows'

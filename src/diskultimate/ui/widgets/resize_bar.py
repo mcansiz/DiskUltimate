@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Optional, Tuple
 
-from ..qt.QtCore import QRect, QSize, Qt, pyqtSignal
+from ..qt.QtCore import QPointF, QRect, QSize, Qt, pyqtSignal
 from ..qt.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPen
 from ..qt.QtWidgets import QSizePolicy, QWidget
 
@@ -124,7 +124,7 @@ class ResizeBar(QWidget):
         block = QRect(sol, s.top(), max(2, sag - sol), s.height())
 
         renk = fs_color(self.fs_type)
-        gecis = QLinearGradient(block.topLeft(), block.bottomLeft())
+        gecis = QLinearGradient(QPointF(block.topLeft()), QPointF(block.bottomLeft()))
         gecis.setColorAt(0.0, lighten(renk, 135))
         gecis.setColorAt(1.0, darken(renk, 112))
         p.fillRect(block, QBrush(gecis))

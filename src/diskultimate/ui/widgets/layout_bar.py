@@ -11,7 +11,7 @@ birakir: en az/en cok boyut, komsular, hizalama ve tasinabilirlik tek yerde.
 """
 from __future__ import annotations
 
-from ..qt.QtCore import QRect, QSize, Qt, pyqtSignal
+from ..qt.QtCore import QPointF, QRect, QSize, Qt, pyqtSignal
 from ..qt.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPen
 from ..qt.QtWidgets import QSizePolicy, QWidget
 
@@ -103,7 +103,7 @@ class PartitionEditBar(QWidget):
             if not enabled or part.locked:
                 color = QColor(color.lightness(), color.lightness(),
                                color.lightness())
-            gradient = QLinearGradient(block.topLeft(), block.bottomLeft())
+            gradient = QLinearGradient(QPointF(block.topLeft()), QPointF(block.bottomLeft()))
             gradient.setColorAt(0.0, lighten(color, 135))
             gradient.setColorAt(1.0, darken(color, 112))
             painter.fillRect(block, QBrush(gradient))
