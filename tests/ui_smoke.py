@@ -1302,9 +1302,15 @@ def main() -> int:
     assert not bos_olanlar, f"cizilemeyen ikon: {bos_olanlar}"
     # Cok boyutlu olmali: arac cubugu 24 isterken 18'lik goruntu olceklenip
     # bulaniklasmamali.
+    # Qt6 kesirli olcekte (QT_SCALE_FACTOR=1.5) 16'lik istek icin 24 fiziksel
+    # piksel + devicePixelRatio 1.5 dondurur (keskin cizim); olculen mantiksal
+    # boyuttur, fiziksel boyut da olcekle uyumlu olmali.
     for boyut in (16, 24, 32):
         pix = icons.icon("apply").pixmap(boyut, boyut)
-        assert pix.width() == boyut, f"{boyut} px istendi, {pix.width()} geldi"
+        oran = pix.devicePixelRatio()
+        assert round(pix.width() / oran) == boyut, \
+            f"{boyut} px istendi, {pix.width()} px (oran {oran}) geldi"
+        assert pix.width() == round(boyut * oran), (boyut, pix.width(), oran)
     # "Her platformda ayni" olcusu: cizimlerin PIKSEL ozeti. Windows ve
     # Linux'ta ayni deger cikmalidir (olculdu, ADR 0025).
     print(f"  ({len(icons.names())} ikon cizildi — "
