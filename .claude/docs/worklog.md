@@ -6735,3 +6735,20 @@ düşebilir — gerçek sınır, ayrıca bakılacak.)
 Sonuç: CI 41196566572 yeşil — PyQt5 tam takım + `linux-qt6` (qt6_check 0,
 ui_smoke PyQt6 ile tamam). Arayüz gezintisi 41196566486: **10/10 yeşil**
 (Linux aygıt işleri dahil; 2026-10-25'ten beri ilk). Live ISO 41196065863 yeşil.
+
+## 2026-10-31 (3) — PyQt6 D aşaması: görsel doğrulama
+
+Kullanıcı onayı ("evet"). `qt6-gorsel.yml` (elle): ui_smoke PyQt5/PyQt6 ×
+ölçek 1/1.25/1.5 × Linux/Windows/macOS, ekran görüntüleri; gezintiye iki
+PyQt6 işi. Ayrıntı ADR 0102 "D. Görsel doğrulama".
+- İlk koşu: PyQt6 kesirli ölçekte her yerde düştü — test `pixmap(16)`
+  genişliğini 16 bekliyordu, Qt6 ×1.5'te 24 fiziksel px + DPR verir (doğru,
+  daha keskin). Test mantıksal boyuta çevrildi.
+- Ekransız karşılaştırma yanıltıcıydı (PyQt5 12pt/100DPI, PyQt6 9pt/96DPI;
+  Windows'ta yazı tipi yok). Gerçek xcb'de iki bağlama aynı yazı tipi (ölçüldü)
+  → iş akışı xvfb+xcb / windows eklentisiyle koşar.
+- Son koşu 41200374563: PyQt6 11 işin hepsi yeşil (Linux ×1/1.25/1.5,
+  Windows ×1/1.5, macOS ×1/1.5); görüntülerde çizim hatası yok, Qt6 Fusion
+  kenar payları daha sıkı. Gezinti PyQt6 Linux+Windows yeşil.
+- macOS aralıklı `Abort trap: 6` (PyQt5'te de vardı): `tests.yml` duman
+  testine `PYTHONFAULTHANDLER=1`, `PYTHONUNBUFFERED=1`.

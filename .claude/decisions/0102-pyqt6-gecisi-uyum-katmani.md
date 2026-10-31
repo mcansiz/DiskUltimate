@@ -1,8 +1,8 @@
 # 0102 — PyQt6 geçişi: uyum katmanı (`ui/qt`) ve tam nitelikli enum'lar
 
 Tarih: 2026-10-31
-Durum: **A–C aşamaları uygulandı** (kod iki bağlamada çalışır, varsayılan
-PyQt5). D (görsel doğrulama), E (paketleme), F (PyQt5'i bırakma) bekliyor.
+Durum: **A–D uygulandı** (kod iki bağlamada çalışır, varsayılan PyQt5;
+görsel doğrulama CI'da yapıldı). E (paketleme), F (PyQt5'i bırakma) bekliyor.
 İlgili: `.claude/docs/pyqt6-gecis-raporu.md` (iş yükü ve riskler),
 ADR 0050 (Flatpak elenmişti), worklog 2026-10-28 (3)–(4).
 
@@ -59,10 +59,35 @@ olarak geçiş başlasın; geçiş döneminde iki bağlama birden desteklensin.
 | `QLibraryInfo.location()` yok | `qt_i18n` | `translations_path()` |
 | `DialogCode`, `StandardButton`, `Key`, `ItemDataRole`, `AlignmentFlag` | — | IntEnum/IntFlag: `int` ile kıyas ve `UserRole + 1` çalışır |
 
+## D. Görsel doğrulama (2026-10-31)
+
+Araç: `.github/workflows/qt6-gorsel.yml` (elle) — `ui_smoke` PyQt5/PyQt6 ×
+`QT_SCALE_FACTOR` 1/1.25/1.5, 46 ekran görüntüsü (açık/koyu tema dahil).
+Gezintiye `linux-goruntu-hepsi-qt6` ve `windows-goruntu-arayuz-qt6` eklendi.
+
+- **İşlev:** PyQt6 ile `ui_smoke` Linux (xvfb+xcb ×1/1.25/1.5), Windows
+  (gerçek `windows` eklentisi ×1/1.5), macOS (×1/1.5) geçti (koşu 41200374563).
+  PyQt6 gezintisi Linux ve Windows'ta yeşil (41199413821).
+- **Ekransız kip karşılaştırmaya uygun değil:** PyQt5 offscreen 12 pt Noto /
+  100 DPI, PyQt6 9 pt / 96 DPI seçer; Windows'ta ikisi de yazı tipi bulamaz
+  (PyQt5 metin çizmez, PyQt6 kutu çizer). Gerçek xcb'de ikisi aynı:
+  Sans Serif 9 pt, 17 px, 96 DPI (ölçüldü). Görsel iş akışı bu yüzden
+  gerçek eklentilerle koşar.
+- **Görünüm:** çizim hatası yok (disk haritası, şerit, tutamaklar, tema,
+  onaltılık, ikonlar; ×1.5 dahil). Qt6 Fusion kenar payları daha sıkı:
+  Linux'ta diyaloglar ~%5–8 küçük; Windows'ta Qt6 stili biraz daha geniş.
+- **Kesirli ölçekte ikonlar Qt6'da daha keskin:** `QIcon.pixmap(16)` ×1.5'te
+  24 fiziksel piksel + DPR 1.5 döner (ikon motoru tam boyutta çizer);
+  PyQt5 16 px verip büyütür (bulanık). `ui_smoke` artık mantıksal boyutu ölçer.
+- **Sınanamayan:** Windows 11'de Qt 6.7+ varsayılan `windows11` stili
+  (GitHub makinesi Server 2022); gerçek HiDPI monitörde göz kontrolü.
+- **PyQt6'ya özgü olmayan iki bulgu:** macOS `ui_smoke` aralıklı
+  `Abort trap: 6` (0.10.2'de PyQt5 ile de görüldü; `tests.yml`'e
+  `PYTHONFAULTHANDLER` eklendi); PyQt5 gerçek Windows eklentisinde test
+  bitince 127 ile çıkar (kapanış; offscreen CI etkilenmez).
+
 ## Sonraki aşamalar
 
-- **D. Görsel doğrulama:** %100/%125/%150 ölçek, Açık/Koyu/Sistem tema,
-  Windows (VM) ve macOS (CI) PyQt6 ile; `tests.long.explore` PyQt6 ile.
 - **E. Paketleme:** AppImage (`tools/appimage.py`), PyInstaller spec, macOS,
   live ISO; `libxcb-cursor0`; boyut ölçümü; lisans metinleri (PyQt6-sip).
   Hakkında penceresindeki "PyQt5" metni ve `licenses` anahtarları o zaman.
