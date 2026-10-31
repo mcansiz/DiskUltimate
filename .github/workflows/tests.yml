@@ -78,6 +78,10 @@ jobs:
       - name: Arayuz duman testi
         env:
           QT_QPA_PLATFORM: offscreen
+          # macOS'ta aralikli "Abort trap: 6" (cikti yok): cokme aninda
+          # Python yigini yazilsin (0.10.2 release, 2026-10-31 PyQt6).
+          PYTHONFAULTHANDLER: "1"
+          PYTHONUNBUFFERED: "1"
         run: python -m tests.ui_smoke
 
       - name: Hata durumunda ekran goruntuleri ve gunlukler

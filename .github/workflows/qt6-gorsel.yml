@@ -1,6 +1,10 @@
 # PyQt6 gecisi D asamasi (ADR 0102): ayni duman testi PyQt5 ve PyQt6 ile,
 # farkli olceklerde (QT_SCALE_FACTOR) calisir; ekran goruntuleri (acik/koyu
 # tema dahil) karsilastirma icin yuklenir. Elle baslatilir.
+# Gercek platform eklentisi: ekransiz kipte (offscreen) PyQt5 12 pt / 100 DPI,
+# PyQt6 9 pt / 96 DPI secer ve Windows'ta yazi tipi bulunmaz; karsilastirma
+# anlamsizlasir (olculdu 2026-10-31). Linux xvfb + xcb, Windows windows,
+# macOS offscreen (yazi tipleri orada dogru).
 name: PyQt6 gorsel karsilastirma
 
 on:
@@ -34,8 +38,10 @@ jobs:
       DISKULTIMATE_NO_ELEVATION_PROMPT: "1"
       DISKULTIMATE_UPDATE_CHECK: "0"
       DISKULTIMATE_QT: ${{ matrix.qt }}
-      QT_QPA_PLATFORM: offscreen
+      QT_QPA_PLATFORM: ${{ startsWith(matrix.os, 'ubuntu') && 'xcb' || startsWith(matrix.os, 'windows') && 'windows' || 'offscreen' }}
       QT_SCALE_FACTOR: ${{ matrix.olcek }}
+      PYTHONUNBUFFERED: "1"
+      PYTHONFAULTHANDLER: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -50,9 +56,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q --no-install-recommends \
-            libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 \
-            fonts-dejavu-core dosfstools exfatprogs ntfs-3g e2fsprogs mtools gdisk
+          sudo apt-get install -y -q --no-install-recommends xvfb \
+            libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 \
+            libdbus-1-3 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 \
+            libxcb-xkb1 libxcb-cursor0 fonts-dejavu-core \
+            dosfstools exfatprogs ntfs-3g e2fsprogs mtools gdisk
       - name: PyQt
         shell: bash
         run: |
@@ -62,7 +71,12 @@ jobs:
           fi
       - name: Duman testi
         shell: bash
-        run: python -m tests.ui_smoke 2>&1 | tee smoke.log
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            xvfb-run -a -s "-screen 0 1600x1000x24" python -m tests.ui_smoke 2>&1 | tee smoke.log
+          else
+            python -m tests.ui_smoke 2>&1 | tee smoke.log
+          fi
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
