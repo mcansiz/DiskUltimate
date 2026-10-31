@@ -2024,4 +2024,13 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    kod = main()
+    # Hukum verildi; yorumlayicinin Qt nesnelerini rastgele sirayla yok etmesi
+    # beklenmez. macOS'ta PyQt5 ile "Duman testi tamamlandi"dan SONRA aralikli
+    # "Abort trap: 6" (faulthandler Python yigini vermedi -> yerel kapanis;
+    # 0.10.2 release ve 2026-10-31 deneme derlemesi), Windows'ta gercek
+    # eklentiyle cikis 127 olculdu. Uygulamanin kendi kapanis yolu (main.py)
+    # bundan ayridir ve bu testle sinanmis olmaz.
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(kod)
