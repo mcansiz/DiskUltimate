@@ -20,10 +20,10 @@ from __future__ import annotations
 
 from typing import Callable, Optional
 
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDialog, QHBoxLayout,
-                             QLabel, QMessageBox, QPushButton, QVBoxLayout,
-                             QWidget)
+from ..qt.QtCore import Qt, QTimer
+from ..qt.QtWidgets import (QCheckBox, QComboBox, QDialog, QHBoxLayout,
+                            QLabel, QMessageBox, QPushButton, QVBoxLayout,
+                            QWidget)
 
 from ...core import settings
 from ...core.platform import (POWER_ACTIONS, SleepInhibitor, power_action,
@@ -193,10 +193,10 @@ class CountdownDialog(QDialog):
             return
         self._update_text()
 
-    def exec_(self) -> int:
+    def exec(self) -> int:
         self._timer.start()
         try:
-            return super().exec_()
+            return super().exec()
         finally:
             self._timer.stop()
 
@@ -214,7 +214,7 @@ def run_power_action(parent, kind: Optional[str],
         return False
     dlg = CountdownDialog(parent, kind, seconds)
     try:
-        if dlg.exec_() != QDialog.Accepted:
+        if dlg.exec() != QDialog.DialogCode.Accepted:
             return False
     finally:
         dlg.deleteLater()

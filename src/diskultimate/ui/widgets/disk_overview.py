@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple
 
-from PyQt5.QtCore import QRect, Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QFont, QPainter, QPen
-from PyQt5.QtWidgets import QSizePolicy, QWidget
+from ..qt.QtCore import QRect, Qt, pyqtSignal
+from ..qt.QtGui import QColor, QFont, QPainter, QPen
+from ..qt.QtWidgets import QSizePolicy, QWidget
 
 from ...core.fsregistry import fs_display
 from ...core.ptable import human_size, usage_total
@@ -37,7 +37,7 @@ class DiskOverviewWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMouseTracking(True)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self._disks: List[object] = []
         self._surveys: Dict[str, object] = {}
         self._blocks: List[Tuple[QRect, str, int]] = []   # (alan, yol, index)
@@ -99,14 +99,14 @@ class DiskOverviewWidget(QWidget):
     # -- cizim -------------------------------------------------------------
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         if not self._blocks and not self._rows:
             self._layout()
         text_color = palette_color(self, "text")
         dim = palette_color(self, "dim")
         if not self._disks:
             painter.setPen(dim)
-            painter.drawText(self.rect(), Qt.AlignCenter,
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter,
                              tr("Fiziksel disk bulunamadi"))
             painter.end()
             return
@@ -126,39 +126,41 @@ class DiskOverviewWidget(QWidget):
             painter.drawRoundedRect(rect, 4, 4)
             painter.setPen(text_color)
             painter.setFont(bold)
-            painter.drawText(rect.adjusted(8, 6, -6, 0), Qt.AlignLeft | Qt.AlignTop,
+            painter.drawText(rect.adjusted(8, 6, -6, 0), Qt.AlignmentFlag.AlignLeft
+                             | Qt.AlignmentFlag.AlignTop,
                              info.name)
             painter.setFont(small)
             painter.setPen(dim)
             scheme = getattr(survey, "scheme_name", "") or tr("okunuyor...")
             painter.drawText(rect.adjusted(8, 24, -6, 0),
-                             Qt.AlignLeft | Qt.AlignTop, scheme)
+                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop, scheme)
             size_text = human_size(info.size)
             usage = usage_total(getattr(survey, "partitions", []) or [])
             if survey is not None and not survey.error and usage.known:
                 candidate = f"{size_text} · " + tr("{} kullanilan",
                                                   human_size(usage.used))
-                if painter.fontMetrics().width(candidate) <= rect.width() - 14:
+                if painter.fontMetrics().horizontalAdvance(candidate) <= rect.width() - 14:
                     size_text = candidate
             painter.drawText(rect.adjusted(8, 40, -6, 0),
-                             Qt.AlignLeft | Qt.AlignTop, size_text)
+                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop, size_text)
             if info.is_system:
                 painter.setPen(QColor("#c0392b"))
                 painter.drawText(rect.adjusted(8, 54, -6, 0),
-                                 Qt.AlignLeft | Qt.AlignTop, tr("SISTEM DISKI"))
+                                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop,
+                                 tr("SISTEM DISKI"))
 
             # bolumu olmayan disk: serit yerine aciklama
             if not any(p == path for _r, p, _i in self._blocks):
                 strip = QRect(rect.right() + 8, rect.y(),
                               self.width() - rect.right() - 8 - MARGIN,
                               ROW_HEIGHT)
-                painter.setPen(QPen(dim, 1, Qt.DashLine))
+                painter.setPen(QPen(dim, 1, Qt.PenStyle.DashLine))
                 painter.setBrush(QColor(FREE_COLOR))
                 painter.drawRoundedRect(strip, 4, 4)
                 painter.setPen(dim)
                 painter.setFont(small)
                 note = getattr(survey, "error", "") if survey else ""
-                painter.drawText(strip, Qt.AlignCenter,
+                painter.drawText(strip, Qt.AlignmentFlag.AlignCenter,
                                  tr("(bolumler okunamadi: {})", note) if note
                                  else (tr("(bolum yok)") if survey
                                        else tr("(okunuyor...)")))
@@ -183,20 +185,20 @@ class DiskOverviewWidget(QWidget):
             painter.setFont(bold)
             label = part.fs_label or part.name or tr("Bolum {}", part.index)
             painter.drawText(rect.adjusted(6, 6, -4, 0),
-                             Qt.AlignLeft | Qt.AlignTop,
+                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop,
                              _elide(painter, label, rect.width() - 10))
             painter.setFont(small)
             painter.drawText(rect.adjusted(6, 24, -4, 0),
-                             Qt.AlignLeft | Qt.AlignTop,
+                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop,
                              _elide(painter, fs_display(part.fs_type) or tr("ham"),
                                     rect.width() - 10))
             bottom = human_size(part.size)
             if part.fs_used >= 0 and part.fs_total > 0:
                 short = f"{human_size(part.fs_used)} / {bottom}"
-                if painter.fontMetrics().width(short) <= rect.width() - 10:
+                if painter.fontMetrics().horizontalAdvance(short) <= rect.width() - 10:
                     bottom = short
             painter.drawText(rect.adjusted(6, 40, -4, 0),
-                             Qt.AlignLeft | Qt.AlignTop,
+                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop,
                              _elide(painter, bottom, rect.width() - 10))
         painter.end()
 
@@ -259,4 +261,4 @@ def _elide(painter: QPainter, text: str, width: int) -> str:
     metrics = painter.fontMetrics()
     if metrics.horizontalAdvance(text) <= width:
         return text
-    return metrics.elidedText(text, Qt.ElideRight, max(10, width))
+    return metrics.elidedText(text, Qt.TextElideMode.ElideRight, max(10, width))

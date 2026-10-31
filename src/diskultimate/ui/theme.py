@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PyQt5.QtCore import QPointF, QRectF, Qt
-from PyQt5.QtGui import (QBrush, QColor, QIcon, QLinearGradient, QPainter,
-                         QPainterPath, QPen, QPixmap, QPolygonF)
-from PyQt5.QtWidgets import QApplication
+from .qt.QtCore import QPointF, QRectF, Qt
+from .qt.QtGui import (QBrush, QColor, QIcon, QLinearGradient, QPainter,
+                       QPainterPath, QPen, QPixmap, QPolygonF)
+from .qt.QtWidgets import QApplication
 
 from ..core import fsregistry
 from ..i18n import mark, tr, trc
@@ -124,7 +124,7 @@ def draw_usage_bar(painter: QPainter, rect, ratio: float, base: QColor,
     if rect.width() < 6 or rect.height() < 5:
         return
     painter.save()
-    painter.setRenderHint(QPainter.Antialiasing, True)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
     area = QRectF(rect).adjusted(0.5, 0.5, -0.5, -0.5)
     path = QPainterPath()
     path.addRoundedRect(area, 2.5, 2.5)
@@ -160,20 +160,20 @@ def draw_usage_bar(painter: QPainter, rect, ratio: float, base: QColor,
     edge = darken(base, 145)
     edge.setAlpha(200)
     painter.setPen(QPen(edge, 1))
-    painter.setBrush(Qt.NoBrush)
+    painter.setBrush(Qt.BrushStyle.NoBrush)
     painter.drawPath(path)
 
     if label and known:
         # Etiket iki kez cizilir: once oluk, sonra dolu kisim kirpilarak.
         # Boylece cubugun her iki yarisinda da okunur kalir.
         painter.setPen(QColor("#1b2430"))
-        painter.drawText(rect, Qt.AlignCenter, label)
+        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, label)
         if filled > 1:
             painter.save()
             painter.setClipRect(QRectF(area.left(), area.top(), filled,
                                        area.height()))
             painter.setPen(readable_text(fill))
-            painter.drawText(rect, Qt.AlignCenter, label)
+            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, label)
             painter.restore()
     painter.restore()
 
@@ -248,25 +248,25 @@ def theme_label(key: str) -> str:
 
 def build_palette(name: str):
     """Tema adindan QPalette uretir ("light" / "dark")."""
-    from PyQt5.QtGui import QPalette
+    from .qt.QtGui import QPalette
 
     roles = _PALETTES[name]
     palette = QPalette()
     for role_name, (active, disabled) in roles.items():
-        role = getattr(QPalette, role_name)
+        role = getattr(QPalette.ColorRole, role_name)
         color = QColor(active)
-        palette.setColor(QPalette.Active, role, color)
-        palette.setColor(QPalette.Inactive, role, color)
-        palette.setColor(QPalette.Disabled, role, QColor(disabled or active))
+        palette.setColor(QPalette.ColorGroup.Active, role, color)
+        palette.setColor(QPalette.ColorGroup.Inactive, role, color)
+        palette.setColor(QPalette.ColorGroup.Disabled, role, QColor(disabled or active))
     return palette
 
 
 def theme_stylesheet(palette) -> str:
     """Paletin kapsamadigi ayrintilar icin kucuk QSS (renkler paletten)."""
-    from PyQt5.QtGui import QPalette
+    from .qt.QtGui import QPalette
 
-    kenar = palette.color(QPalette.Mid).name()
-    vurgu = palette.color(QPalette.Highlight).name()
+    kenar = palette.color(QPalette.ColorRole.Mid).name()
+    vurgu = palette.color(QPalette.ColorRole.Highlight).name()
     return (f"QToolTip {{ border: 1px solid {kenar}; padding: 3px 5px; }}\n"
             f"QLineEdit:focus, QSpinBox:focus, QComboBox:focus, "
             f"QPlainTextEdit:focus {{ border: 1px solid {vurgu}; }}\n")
@@ -298,7 +298,7 @@ def apply_theme(app, name: str = DEFAULT_THEME, remember: bool = False) -> str:
     'light' / 'dark': Fusion + tema paleti + kucuk QSS. Bilinmeyen ad
     'system' sayilir. `remember=True` secimi ayar dosyasina yazar.
     """
-    from PyQt5.QtWidgets import QStyleFactory
+    from .qt.QtWidgets import QStyleFactory
 
     global _system_style, _system_palette, _current
     if _system_style is None:
@@ -330,20 +330,20 @@ def palette_color(widget, role: str = "text"):
     Sabit renk yazmak yerine bu kullanilir; boylece koyu/acik sistem temasinin
     ikisinde de metin okunabilir kalir.
     """
-    from PyQt5.QtGui import QPalette
+    from .qt.QtGui import QPalette
 
     roller = {
-        "text": QPalette.WindowText,
-        "dim": QPalette.PlaceholderText,
-        "base": QPalette.Base,
-        "window": QPalette.Window,
-        "highlight": QPalette.Highlight,
-        "highlight_text": QPalette.HighlightedText,
+        "text": QPalette.ColorRole.WindowText,
+        "dim": QPalette.ColorRole.PlaceholderText,
+        "base": QPalette.ColorRole.Base,
+        "window": QPalette.ColorRole.Window,
+        "highlight": QPalette.ColorRole.Highlight,
+        "highlight_text": QPalette.ColorRole.HighlightedText,
     }
     palet = widget.palette()
-    renk = palet.color(roller.get(role, QPalette.WindowText))
+    renk = palet.color(roller.get(role, QPalette.ColorRole.WindowText))
     if role == "dim" and not renk.isValid():
-        renk = palet.color(QPalette.WindowText)
+        renk = palet.color(QPalette.ColorRole.WindowText)
         renk.setAlpha(150)
     return renk
 
@@ -372,9 +372,9 @@ OS_LOGOS = ("windows", "linux", "macos")
 def os_icon(os_name: str, size: int = 16) -> QIcon:
     """Isletim sistemi amblemi dondurur ('windows' | 'linux' | 'macos')."""
     pix = QPixmap(size, size)
-    pix.fill(Qt.transparent)
+    pix.fill(Qt.GlobalColor.transparent)
     p = QPainter(pix)
-    p.setRenderHint(QPainter.Antialiasing, True)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
     try:
         if os_name == "windows":
             _draw_windows(p, size)
@@ -406,7 +406,7 @@ def _draw_simple_icon(p: QPainter, os_name: str, size: int) -> bool:
     if os_name not in OS_INK:
         return False
     app = QApplication.instance()
-    dark = bool(app and app.palette().color(app.palette().Window).lightness() < 128)
+    dark = bool(app and app.palette().window().color().lightness() < 128)
     color = QColor("#e6e8eb") if dark else QColor(OS_INK[os_name])
     return iconpacks.draw(p, "simpleicons", os_name, size, color)
 
@@ -431,7 +431,7 @@ def _draw_linux(p: QPainter, size: int) -> None:
     gaga = QColor(OS_COLORS["linux"])
     kenar = size / 16.0
 
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(govde)
     p.drawEllipse(QRectF(3 * kenar, 1.5 * kenar, 10 * kenar, 13 * kenar))
     p.setBrush(karin)
@@ -459,7 +459,7 @@ def _draw_macos(p: QPainter, size: int) -> None:
     """Yuvarlak kose amblem (marka logosu kullanilmaz)."""
     renk = QColor(OS_COLORS["macos"])
     kenar = size / 16.0
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(renk)
     p.drawRoundedRect(QRectF(2 * kenar, 2 * kenar, 12 * kenar, 12 * kenar),
                       3 * kenar, 3 * kenar)

@@ -15,10 +15,10 @@ genislet, diske orantili yay. Pencere hicbir sey yazmaz; duzenlenmis
 """
 from __future__ import annotations
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QHBoxLayout,
-                             QHeaderView, QLabel, QPushButton, QTreeWidget,
-                             QTreeWidgetItem, QVBoxLayout)
+from ..qt.QtCore import Qt
+from ..qt.QtWidgets import (QDialog, QDialogButtonBox, QHBoxLayout,
+                            QHeaderView, QLabel, QPushButton, QTreeWidget,
+                            QTreeWidgetItem, QVBoxLayout)
 
 from ...core.fsregistry import fs_display
 from ...core.ptable import human_size
@@ -76,7 +76,7 @@ class PartitionLayoutDialog(QDialog):
                                    tr("Yeni boyut"),
                                    tr("Baslangic"), tr("Sinirlar"),
                                    tr("Degisiklik")])
-        self.tree.header().setSectionResizeMode(6, QHeaderView.Stretch)
+        self.tree.header().setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
         for col, width in ((0, 110), (1, 90), (2, 90), (3, 90), (4, 100),
                            (5, 170)):
             self.tree.setColumnWidth(col, width)
@@ -111,10 +111,11 @@ class PartitionLayoutDialog(QDialog):
         self.message.setWordWrap(True)
         root.addWidget(self.message)
 
-        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                               | QDialogButtonBox.StandardButton.Cancel)
         box.accepted.connect(self.accept)
         box.rejected.connect(self.reject)
-        self.btn_ok = box.button(QDialogButtonBox.Ok)
+        self.btn_ok = box.button(QDialogButtonBox.StandardButton.Ok)
         root.addWidget(box)
 
         self._refresh()
@@ -127,7 +128,7 @@ class PartitionLayoutDialog(QDialog):
 
     def _current_index(self) -> int:
         item = self.tree.currentItem()
-        return -1 if item is None else item.data(0, Qt.UserRole)
+        return -1 if item is None else item.data(0, Qt.ItemDataRole.UserRole)
 
     def _refresh(self, keep: int = -1) -> None:
         plan = self.plan
@@ -167,7 +168,7 @@ class PartitionLayoutDialog(QDialog):
                 f"{part.new_start:,}", ", ".join(limits),
                 ", ".join(changes) or tr("degismiyor")])
             item.setIcon(0, color_chip(fs_color(part.fs_type), 12))
-            item.setData(0, Qt.UserRole, part.index)
+            item.setData(0, Qt.ItemDataRole.UserRole, part.index)
             if part.index == keep:
                 select = item
         self.tree.blockSignals(False)
@@ -197,7 +198,7 @@ class PartitionLayoutDialog(QDialog):
     def _select_row(self, index: int) -> None:
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            if item.data(0, Qt.UserRole) == index:
+            if item.data(0, Qt.ItemDataRole.UserRole) == index:
                 self.tree.setCurrentItem(item)
                 return
 
@@ -237,7 +238,7 @@ class PartitionLayoutDialog(QDialog):
             align_sectors=self.plan.align,
             used_bytes=getattr(part.part, "fs_used", -1),
             parent=self, accept_text=tr("Tamam"))
-        if dialog.exec_() != QDialog.Accepted:
+        if dialog.exec() != QDialog.DialogCode.Accepted:
             return
         values = dialog.values()
         part.new_start = values["start_lba"]

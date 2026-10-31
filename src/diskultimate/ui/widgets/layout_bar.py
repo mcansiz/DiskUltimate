@@ -11,9 +11,9 @@ birakir: en az/en cok boyut, komsular, hizalama ve tasinabilirlik tek yerde.
 """
 from __future__ import annotations
 
-from PyQt5.QtCore import QRect, QSize, Qt, pyqtSignal
-from PyQt5.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPen
-from PyQt5.QtWidgets import QSizePolicy, QWidget
+from ..qt.QtCore import QRect, QSize, Qt, pyqtSignal
+from ..qt.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPen
+from ..qt.QtWidgets import QSizePolicy, QWidget
 
 from ...core.fsregistry import fs_display
 from ...core.ptable import human_size
@@ -38,7 +38,7 @@ class PartitionEditBar(QWidget):
         super().__init__(parent)
         self.setMinimumHeight(BAR_H + 34)
         self.setMaximumHeight(BAR_H + 34)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMouseTracking(True)
         self.plan = None
         self.title = ""
@@ -86,7 +86,7 @@ class PartitionEditBar(QWidget):
         dim = palette_color(self, "dim")
         painter.setPen(dim)
         painter.drawText(QRect(MARGIN, 0, track.width(), 18),
-                         Qt.AlignLeft | Qt.AlignVCenter, self.title)
+                         Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, self.title)
         painter.fillRect(track, QColor(FREE_COLOR))
         painter.setPen(QPen(darken(QColor(FREE_COLOR), 130), 1))
         painter.drawRect(track.adjusted(0, 0, -1, -1))
@@ -127,21 +127,21 @@ class PartitionEditBar(QWidget):
                 font.setBold(True)
                 painter.setFont(font)
                 text = block.adjusted(4, 20, -4, 0)
-                painter.drawText(text, Qt.AlignHCenter | Qt.AlignTop,
+                painter.drawText(text, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop,
                                  tr("Bolum {}", part.index))
                 painter.setFont(self.font())
                 painter.drawText(text.adjusted(0, 16, 0, 0),
-                                 Qt.AlignHCenter | Qt.AlignTop,
+                                 Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop,
                                  fs_display(part.fs_type) or "-")
                 painter.drawText(text.adjusted(0, 31, 0, 0),
-                                 Qt.AlignHCenter | Qt.AlignTop,
+                                 Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop,
                                  human_size(part.new_count * ss))
         if enabled:
             self.edit.paint(painter)
         painter.setPen(dim)
         free = sum(r.size for r in self.plan.free_regions())
         painter.drawText(QRect(MARGIN, track.bottom() + 2, track.width(), 14),
-                         Qt.AlignRight | Qt.AlignVCenter,
+                         Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
                          tr("bos alan {}", human_size(free)) if free else "")
 
     # -- fare ---------------------------------------------------------------
@@ -158,15 +158,15 @@ class PartitionEditBar(QWidget):
         if self.edit.move(event.pos()):
             return
         if not self.edit.hover(event.pos()):
-            self.setCursor(Qt.ArrowCursor)
+            self.setCursor(Qt.CursorShape.ArrowCursor)
             self.setToolTip("")
 
     def mousePressEvent(self, event) -> None:
-        if event.button() != Qt.LeftButton or self.plan is None:
+        if event.button() != Qt.MouseButton.LeftButton or self.plan is None:
             return
         if self.edit.press(event.pos()):
             return
-        index = self._part_at(event.x())
+        index = self._part_at(event.pos().x())
         if index >= 0:
             self.select(index)
             self.partitionSelected.emit(index)
@@ -175,7 +175,7 @@ class PartitionEditBar(QWidget):
         self.edit.release(event.pos())
 
     def mouseDoubleClickEvent(self, event) -> None:
-        index = self._part_at(event.x())
+        index = self._part_at(event.pos().x())
         if index >= 0:
             self.partitionActivated.emit(index)
 

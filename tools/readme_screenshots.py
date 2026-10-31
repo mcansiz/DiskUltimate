@@ -23,7 +23,7 @@ os.environ.setdefault("QT_QPA_PLATFORM",
 os.environ["DISKULTIMATE_NO_ELEVATION_PROMPT"] = "1"
 os.environ["DISKULTIMATE_DIAG"] = "0"
 
-from PyQt5.QtWidgets import QApplication  # noqa: E402
+from diskultimate.ui.qt.QtWidgets import QApplication  # noqa: E402
 
 from diskultimate import i18n  # noqa: E402
 from diskultimate.core.session import DiskSession  # noqa: E402

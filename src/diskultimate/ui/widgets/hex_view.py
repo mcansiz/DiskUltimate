@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QFontDatabase
-from PyQt5.QtWidgets import (QHBoxLayout, QLabel, QPlainTextEdit, QPushButton,
-                             QSpinBox, QVBoxLayout, QWidget)
+from ..qt.QtCore import Qt
+from ..qt.QtGui import QFont, QFontDatabase
+from ..qt.QtWidgets import (QHBoxLayout, QLabel, QPlainTextEdit, QPushButton,
+                            QSpinBox, QVBoxLayout, QWidget)
 
 from ...core.image import BlockDevice
 from ...i18n import tr
@@ -60,10 +60,10 @@ class HexViewer(QWidget):
 
         self.view = QPlainTextEdit()
         self.view.setReadOnly(True)
-        font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         font.setPointSize(9)
         self.view.setFont(font)
-        self.view.setLineWrapMode(QPlainTextEdit.NoWrap)
+        self.view.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         layout.addWidget(self.view, 1)
 
     def retranslate(self) -> None:

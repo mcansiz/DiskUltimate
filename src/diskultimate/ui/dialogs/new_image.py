@@ -4,11 +4,11 @@ from __future__ import annotations
 import os
 from typing import Optional, Tuple
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox,
-                             QDoubleSpinBox, QFileDialog, QFormLayout,
-                             QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-                             QMessageBox, QPushButton, QVBoxLayout)
+from ..qt.QtCore import Qt
+from ..qt.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+                            QDoubleSpinBox, QFileDialog, QFormLayout,
+                            QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+                            QMessageBox, QPushButton, QVBoxLayout)
 
 from ...core import platform
 from ...core.formatter import all_kinds
@@ -97,10 +97,11 @@ class NewImageDialog(QDialog):
         self.info_label.setEnabled(False)   # paletten soluk ton
         layout.addWidget(self.info_label)
 
-        butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText(tr("Olustur"))
-        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
-        butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
+        butonlar = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                    | QDialogButtonBox.StandardButton.Cancel)
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Olustur"))
+        butonlar.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Iptal"))
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setProperty("primary", True)
         butonlar.accepted.connect(self._validate)
         butonlar.rejected.connect(self.reject)
         layout.addWidget(butonlar)
@@ -148,16 +149,18 @@ class NewImageDialog(QDialog):
             cevap = QMessageBox.question(
                 self, tr("Konum uyarisi"),
                 tr("{}\n\nYine de bu konumda olusturulsun mu?", warning),
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if cevap != QMessageBox.Yes:
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+            if cevap != QMessageBox.StandardButton.Yes:
                 return
         if os.path.exists(path):
             cevap = QMessageBox.question(
                 self, tr("Dosya var"),
                 tr("{}\n\nDosya zaten var. Uzerine yazilsin mi?\nMevcut "
                    "icerik tamamen kaybolur.", path),
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if cevap != QMessageBox.Yes:
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+            if cevap != QMessageBox.StandardButton.Yes:
                 return
         if self.size_bytes() < 64 * 1024:
             QMessageBox.warning(self, tr("Gecersiz boyut"), tr("En az 64 KB "

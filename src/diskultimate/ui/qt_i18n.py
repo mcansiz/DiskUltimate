@@ -27,7 +27,8 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
-from PyQt5.QtCore import QCoreApplication, QLibraryInfo, QTranslator
+from . import qt
+from .qt.QtCore import QCoreApplication, QTranslator
 
 from .. import i18n
 from ..core import diagnostics
@@ -80,10 +81,9 @@ class _ButtonTranslator(QTranslator):
 
 
 def _qt_translation_dirs() -> List[str]:
-    dirs = [QLibraryInfo.location(QLibraryInfo.TranslationsPath)]
+    dirs = [qt.translations_path()]
     try:
-        import PyQt5
-        dirs.append(os.path.join(os.path.dirname(PyQt5.__file__), "Qt5",
+        dirs.append(os.path.join(qt.package_dir(), "Qt6" if qt.QT6 else "Qt5",
                                  "translations"))
     except Exception:                  # noqa: BLE001
         pass

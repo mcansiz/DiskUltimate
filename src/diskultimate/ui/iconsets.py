@@ -24,8 +24,8 @@ from __future__ import annotations
 import math
 from typing import Callable, Dict, List
 
-from PyQt5.QtCore import QPointF, QRectF, Qt
-from PyQt5.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QPolygonF
+from .qt.QtCore import QPointF, QRectF, Qt
+from .qt.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QPolygonF
 
 from . import iconpacks
 from ..core import settings
@@ -102,7 +102,7 @@ def draw(painter: QPainter, name: str, size: float, dark: bool,
         return False
     color, symbol = entry
     painter.save()
-    painter.setRenderHint(QPainter.Antialiasing, True)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
     try:
         if key == "tile":
             _draw_tile(painter, u, dark, color, symbol)
@@ -120,7 +120,7 @@ def _draw_tile(p: QPainter, u: float, dark: bool, color: str, symbol) -> None:
     base = QColor(color)
     if dark:
         base = base.lighter(115)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(base)
     p.drawRoundedRect(QRectF(0.5 * u, 0.5 * u, 15 * u, 15 * u), 3.4 * u, 3.4 * u)
     p.translate(2.4 * u, 2.4 * u)
@@ -139,13 +139,13 @@ class Pen:
 
     def stroke(self, color=None, w=1.5):
         pen = QPen(QColor(color) if color else self.ink, max(1.0, w * self.u))
-        pen.setCapStyle(Qt.RoundCap)
-        pen.setJoinStyle(Qt.RoundJoin)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
         self.p.setPen(pen)
-        self.p.setBrush(Qt.NoBrush)
+        self.p.setBrush(Qt.BrushStyle.NoBrush)
 
     def fill(self, color=None):
-        self.p.setPen(Qt.NoPen)
+        self.p.setPen(Qt.PenStyle.NoPen)
         self.p.setBrush(QColor(color) if color else self.ink)
 
     def rect(self, x, y, w, h, r=1.0, color=None, filled=False, width=1.5):
@@ -191,7 +191,8 @@ class Pen:
         f.setBold(bold)
         self.p.setFont(f)
         self.p.setPen(QColor(color) if color else self.ink)
-        self.p.drawText(QRectF(x * self.u, y * self.u, w * self.u, h * self.u), Qt.AlignCenter, s)
+        self.p.drawText(QRectF(x * self.u, y * self.u, w * self.u, h * self.u),
+                        Qt.AlignmentFlag.AlignCenter, s)
 
 
 # -- paylasilan parcalar ---------------------------------------------------
@@ -327,7 +328,8 @@ def s_wipe(g):
     g.poly([(9.6, 4.8), (13.6, 8.8), (11.6, 10.8), (7.6, 6.8)], g.acc)
 
 def s_wipe_free(g):
-    pen = QPen(g.ink, 1.2 * g.u, Qt.DashLine); g.p.setPen(pen); g.p.setBrush(Qt.NoBrush)
+    pen = QPen(g.ink, 1.2 * g.u,
+               Qt.PenStyle.DashLine); g.p.setPen(pen); g.p.setBrush(Qt.BrushStyle.NoBrush)
     g.p.drawRoundedRect(QRectF(1.5 * g.u, 3 * g.u, 13 * g.u, 6 * g.u), 1.2 * g.u, 1.2 * g.u)
     g.line([(7, 14.5), (15, 14.5)], width=1.1)
     g.poly([(8, 12.8), (11.5, 9.3), (14, 11.8), (11.5, 14.3), (9.5, 14.3)], g.acc)

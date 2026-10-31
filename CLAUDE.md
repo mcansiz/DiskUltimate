@@ -22,7 +22,8 @@ DiskGenius özellik karşılaştırması: `.claude/docs/diskgenius-parity.md`
 
 ## Teknoloji
 - Python 3.8+ (geliştirme: 3.12)
-- GUI: **PyQt5**
+- GUI: **PyQt5 → PyQt6 geçişi sürüyor** (ADR 0102). Kod iki bağlamada da
+  çalışır; varsayılan PyQt5, `DISKULTIMATE_QT=pyqt6` ile PyQt6.
 - **Çalışma zamanı bağımlılığı yok** (çekirdek saf Python; kullanıcı yalnızca
   PyQt5 kurar). `mkfs.*` araçları varsa opsiyonel kullanılır.
   **Geliştirme/çeviri araçları bu kuralın dışındadır** — kullanıcı onlara
@@ -233,6 +234,12 @@ Denetim: `python3 -m tests.diag_check` (beklenen: 13/13).
   `QStyle` standart ikonları platforma göre değişir ve çoğu işlemin karşılığı
   yoktur; SVG ise `PyQt5.QtSvg` her dağıtımda kurulu olmadığı için kullanılamaz.
   Yeni ikon `DRAWERS` sözlüğüne eklenir; duman testi hepsini tek tek çizer.
+- **PyQt doğrudan import edilmez** (ADR 0102): `from ..qt.QtWidgets import ...`
+  (`ui/qt` bağlamayı seçer). Enum'lar **tam nitelikli** yazılır
+  (`Qt.AlignmentFlag.AlignLeft`, `QMessageBox.StandardButton.Yes`); `exec()`
+  (`exec_` değil); enum'dan sayı gerekirse `qt.enum_value()`.
+  Denetim: `python3 -m tests.qt6_check` (PyQt6 ister; beklenen: 0 bulgu,
+  `--write` düzeltir).
 - Yeni özellik eklerken önce `core/` tarafında yaz + `tests/` ile doğrula, sonra GUI'ye bağla.
 
 ## Çalıştırma
@@ -241,6 +248,8 @@ python3 main.py              # GUI
 python3 -m tests.run_all     # çekirdek testleri
 python3 -m tests.diag_check  # tanılama / donma yakalayıcı
 python3 -m tests.i18n_check  # ceviri sozlukleri
+python3 -m tests.qt6_check   # PyQt5/PyQt6 ortak yazim (PyQt6 kurulu olmali)
+DISKULTIMATE_QT=pyqt6 python3 main.py  # arayuzu PyQt6 ile ac
 QT_QPA_PLATFORM=offscreen python3 -m tests.long.explore  # gozlemci arayuz gezintisi (ADR 0097)
 DISKULTIMATE_LANG=en python3 main.py   # arayuzu baska dilde ac
 ```

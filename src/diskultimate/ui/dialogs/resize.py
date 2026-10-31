@@ -11,11 +11,11 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QDoubleSpinBox,
-                             QFormLayout, QGroupBox, QHBoxLayout, QLabel,
-                             QLayout, QMessageBox, QPushButton, QSpinBox,
-                             QVBoxLayout, QWidget)
+from ..qt.QtCore import Qt
+from ..qt.QtWidgets import (QDialog, QDialogButtonBox, QDoubleSpinBox,
+                            QFormLayout, QGroupBox, QHBoxLayout, QLabel,
+                            QLayout, QMessageBox, QPushButton, QSpinBox,
+                            QVBoxLayout, QWidget)
 
 from ...core.fsregistry import fs_display
 from ...core.ptable import Partition, human_size
@@ -55,7 +55,7 @@ class ResizePartitionDialog(QDialog):
         duzen = QVBoxLayout(self)
         duzen.setSpacing(10)
         # pencere kucultuldugunde kutular ezilmesin
-        duzen.setSizeConstraint(QLayout.SetMinimumSize)
+        duzen.setSizeConstraint(QLayout.SizeConstraint.SetMinimumSize)
 
         title = QLabel(
             tr("<b>{}</b> &nbsp; {} &nbsp; {} &nbsp; {} &nbsp;—&nbsp; "
@@ -114,23 +114,23 @@ class ResizePartitionDialog(QDialog):
 
         self.sinir = QLabel()
         self.sinir.setWordWrap(True)
-        self.sinir.setTextFormat(Qt.RichText)
+        self.sinir.setTextFormat(Qt.TextFormat.RichText)
         duzen.addWidget(self.sinir)
 
         self.ozet = QLabel()
         self.ozet.setWordWrap(True)
-        self.ozet.setTextFormat(Qt.RichText)
+        self.ozet.setTextFormat(Qt.TextFormat.RichText)
         duzen.addWidget(self.ozet)
 
         dugmeler = QDialogButtonBox()
         self.basla = dugmeler.addButton(self.accept_text,
-                                        QDialogButtonBox.AcceptRole)
-        dugmeler.addButton(tr("Iptal"), QDialogButtonBox.RejectRole)
+                                        QDialogButtonBox.ButtonRole.AcceptRole)
+        dugmeler.addButton(tr("Iptal"), QDialogButtonBox.ButtonRole.RejectRole)
         sifirla = QPushButton(tr("Eski haline dondur"))
         sifirla.clicked.connect(
             lambda: self._from_bar(self.part.start_lba, self.part.sector_count,
                                    update_bar=True))
-        dugmeler.addButton(sifirla, QDialogButtonBox.ResetRole)
+        dugmeler.addButton(sifirla, QDialogButtonBox.ButtonRole.ResetRole)
         dugmeler.accepted.connect(self.accept)
         dugmeler.rejected.connect(self.reject)
         duzen.addWidget(dugmeler)

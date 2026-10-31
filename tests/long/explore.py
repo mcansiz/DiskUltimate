@@ -93,7 +93,7 @@ class StepFail(Exception):
 # --------------------------------------------------------------------------
 def wait(seconds: float, until: Optional[Callable[[], bool]] = None) -> bool:
     """Gercek olay dongusunu `seconds` boyunca (ya da kosul tutana kadar) doner."""
-    from PyQt5.QtCore import QEventLoop, QTimer
+    from diskultimate.ui.qt.QtCore import QEventLoop, QTimer
 
     end = time.monotonic() + seconds
     loop = QEventLoop()
@@ -106,7 +106,7 @@ def wait(seconds: float, until: Optional[Callable[[], bool]] = None) -> bool:
 
     timer.timeout.connect(tick)
     timer.start()
-    loop.exec_()
+    loop.exec()
     timer.stop()
     return bool(until is not None and until())
 
@@ -139,18 +139,20 @@ def off_ui(fn, *args, timeout: float = 600):
 
 def click_item(tree, item, double: bool = False) -> None:
     """Agac ogesine fareyle tiklar (kullanicinin yaptigi gibi)."""
-    from PyQt5.QtCore import Qt
-    from PyQt5.QtTest import QTest
+    from diskultimate.ui.qt.QtCore import Qt
+    from diskultimate.ui.qt.QtTest import QTest
 
     tree.scrollToItem(item)
     wait(0.1)
     pos = tree.visualItemRect(item).center()
-    QTest.mouseClick(tree.viewport(), Qt.LeftButton, Qt.NoModifier, pos)
+    QTest.mouseClick(tree.viewport(), Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier,
+                     pos)
     if double:
         # Gercek cift tiklama bas-birak-cift tik-birak dizisidir. Qt5'te
         # `mouseDClick` yalnizca cift tik olayini gonderir; once basilan oge
         # olmadigi icin oge gorunumu sinyali yutuyordu (win10, 2026-10-14).
-        QTest.mouseDClick(tree.viewport(), Qt.LeftButton, Qt.NoModifier, pos)
+        QTest.mouseDClick(tree.viewport(), Qt.MouseButton.LeftButton,
+                          Qt.KeyboardModifier.NoModifier, pos)
     wait(0.3)
 
 
@@ -180,41 +182,41 @@ def cls(name: str) -> Callable:
 
 
 def is_question(widget) -> bool:
-    from PyQt5.QtWidgets import QMessageBox
+    from diskultimate.ui.qt.QtWidgets import QMessageBox
 
     return (isinstance(widget, QMessageBox)
-            and widget.button(QMessageBox.Yes) is not None)
+            and widget.button(QMessageBox.StandardButton.Yes) is not None)
 
 
 def is_info(widget) -> bool:
-    from PyQt5.QtWidgets import QMessageBox
+    from diskultimate.ui.qt.QtWidgets import QMessageBox
 
     return (isinstance(widget, QMessageBox)
-            and widget.button(QMessageBox.Yes) is None)
+            and widget.button(QMessageBox.StandardButton.Yes) is None)
 
 
 def is_input(widget) -> bool:
-    from PyQt5.QtWidgets import QInputDialog
+    from diskultimate.ui.qt.QtWidgets import QInputDialog
 
     return isinstance(widget, QInputDialog)
 
 
 def answer_yes(widget) -> None:
-    from PyQt5.QtWidgets import QMessageBox
+    from diskultimate.ui.qt.QtWidgets import QMessageBox
 
-    widget.button(QMessageBox.Yes).click()
+    widget.button(QMessageBox.StandardButton.Yes).click()
 
 
 def answer_no(widget) -> None:
-    from PyQt5.QtWidgets import QMessageBox
+    from diskultimate.ui.qt.QtWidgets import QMessageBox
 
-    widget.button(QMessageBox.No).click()
+    widget.button(QMessageBox.StandardButton.No).click()
 
 
 def answer_ok(widget) -> None:
-    from PyQt5.QtWidgets import QMessageBox
+    from diskultimate.ui.qt.QtWidgets import QMessageBox
 
-    button = widget.button(QMessageBox.Ok) or widget.defaultButton() \
+    button = widget.button(QMessageBox.StandardButton.Ok) or widget.defaultButton() \
         or widget.escapeButton()
     button.click()
 
@@ -232,14 +234,14 @@ def answer_role(role) -> Callable:
 def answer_mounted(widget) -> None:
     """Bagli bolum uyarisi: Windows birimi kendisi kilitler (Evet); Linux'ta
     uyarinin onerdigi gibi "Baglantilari kes"."""
-    from PyQt5.QtWidgets import QMessageBox
+    from diskultimate.ui.qt.QtWidgets import QMessageBox
 
     if not IS_WINDOWS:
         for button in widget.buttons():
-            if widget.buttonRole(button) == QMessageBox.ActionRole:
+            if widget.buttonRole(button) == QMessageBox.ButtonRole.ActionRole:
                 button.click()
                 return
-    widget.button(QMessageBox.Yes).click()
+    widget.button(QMessageBox.StandardButton.Yes).click()
 
 
 def type_text(value: str) -> Callable:
@@ -262,10 +264,10 @@ def pick_item(predicate: Callable[[str], bool]) -> Callable:
 
 
 def press_ok(dlg) -> None:
-    from PyQt5.QtWidgets import QDialogButtonBox
+    from diskultimate.ui.qt.QtWidgets import QDialogButtonBox
 
     for box in dlg.findChildren(QDialogButtonBox):
-        ok = box.button(QDialogButtonBox.Ok)
+        ok = box.button(QDialogButtonBox.StandardButton.Ok)
         if ok is not None:
             if not ok.isEnabled():
                 raise StepFail(f"{type(dlg).__name__}: Tamam dugmesi kapali")
@@ -275,7 +277,7 @@ def press_ok(dlg) -> None:
 
 
 def close_dialog(dlg) -> None:
-    from PyQt5.QtWidgets import QMessageBox
+    from diskultimate.ui.qt.QtWidgets import QMessageBox
 
     if isinstance(dlg, QMessageBox):
         answer_ok(dlg)
@@ -313,7 +315,7 @@ class ModalDriver:
     IGNORE = ("TaskDialog",)
 
     def __init__(self, shots):
-        from PyQt5.QtCore import QTimer
+        from diskultimate.ui.qt.QtCore import QTimer
 
         self.shots = shots
         self.handlers: List[Handler] = []
@@ -331,7 +333,7 @@ class ModalDriver:
 
     @staticmethod
     def describe(widget) -> str:
-        from PyQt5.QtWidgets import QMessageBox
+        from diskultimate.ui.qt.QtWidgets import QMessageBox
 
         text = widget.windowTitle()
         if isinstance(widget, QMessageBox):
@@ -350,8 +352,8 @@ class ModalDriver:
                 pass
 
     def _tick(self) -> None:
-        from PyQt5.QtCore import QTimer
-        from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
+        from diskultimate.ui.qt.QtCore import QTimer
+        from diskultimate.ui.qt.QtWidgets import QApplication, QDialog, QMessageBox
 
         widget = QApplication.activeModalWidget()
         # Isaret pencerenin kendisinde durur: `id()` ile tutulunca kapanan
@@ -390,7 +392,7 @@ class FileDialogs:
              "getOpenFileNames": "ac-coklu", "getExistingDirectory": "klasor"}
 
     def __init__(self):
-        from PyQt5.QtWidgets import QFileDialog
+        from diskultimate.ui.qt.QtWidgets import QFileDialog
 
         self.answers: List[Tuple[str, object]] = []
         self.unexpected: List[str] = []
@@ -485,12 +487,12 @@ class Observer:
         sys.excepthook = hook
 
     def _hook_qt_messages(self) -> None:
-        from PyQt5.QtCore import QtCriticalMsg, QtFatalMsg, qInstallMessageHandler
+        from diskultimate.ui.qt.QtCore import QtMsgType, qInstallMessageHandler
 
         holder = {}
 
         def handler(kind, context, message):
-            if kind in (QtCriticalMsg, QtFatalMsg):
+            if kind in (QtMsgType.QtCriticalMsg, QtMsgType.QtFatalMsg):
                 self.events.append((time.monotonic(), "qt-hata", message))
             else:
                 self.qt_messages.append(message)
@@ -503,7 +505,7 @@ class Observer:
     def _start_windows_watch(self) -> None:
         import ctypes
         import ctypes.wintypes as wt
-        from PyQt5.QtCore import QAbstractNativeEventFilter, QTimer
+        from diskultimate.ui.qt.QtCore import QAbstractNativeEventFilter, QTimer
 
         k32 = ctypes.windll.kernel32
         self._mask = int(k32.GetLogicalDrives())
@@ -1067,13 +1069,13 @@ class Explore:
         return len(self.window.queue)
 
     def browse(self, path: str, min_items: int = 0) -> None:
-        from PyQt5.QtCore import Qt
-        from PyQt5.QtTest import QTest
+        from diskultimate.ui.qt.QtCore import Qt
+        from diskultimate.ui.qt.QtTest import QTest
 
         browser = self.window.browser
         browser.path_edit.selectAll()
         QTest.keyClicks(browser.path_edit, path)
-        QTest.keyClick(browser.path_edit, Qt.Key_Return)
+        QTest.keyClick(browser.path_edit, Qt.Key.Key_Return)
         if not wait(20, lambda: browser.current_path.rstrip("/").lower()
                     == path.rstrip("/").lower()
                     and browser.list.topLevelItemCount() >= min_items):
@@ -1111,10 +1113,10 @@ class Explore:
         self.last_apply = None
 
         def run(dlg):
-            from PyQt5.QtCore import Qt
-            from PyQt5.QtTest import QTest
+            from diskultimate.ui.qt.QtCore import Qt
+            from diskultimate.ui.qt.QtTest import QTest
 
-            QTest.mouseClick(dlg.btn_run, Qt.LeftButton)
+            QTest.mouseClick(dlg.btn_run, Qt.MouseButton.LeftButton)
             done = wait(900, lambda: not dlg.isVisible() or (
                 dlg.started and dlg._worker is not None
                 and not dlg._worker.isRunning()))
@@ -1284,7 +1286,7 @@ class Explore:
                 f"secili {middle.text(0)}")
 
     def s_queue_format(self) -> str:
-        from PyQt5.QtTest import QTest
+        from diskultimate.ui.qt.QtTest import QTest
 
         part = self.select_partition(TARGET_LABEL)
 
@@ -1707,11 +1709,11 @@ class Explore:
             picker.btn_ok.click()
 
         def act(dlg):
-            from PyQt5.QtCore import Qt
-            from PyQt5.QtTest import QTest
+            from diskultimate.ui.qt.QtCore import Qt
+            from diskultimate.ui.qt.QtTest import QTest
 
             self.driver.expect("hedef-secici", cls("_DiskPicker"), pick_new)
-            QTest.mouseClick(dlg.btn_target, Qt.LeftButton)
+            QTest.mouseClick(dlg.btn_target, Qt.MouseButton.LeftButton)
             if not wait(10, lambda: dlg.target == "new"):
                 raise StepFail("klon hedefi secilemedi")
             dlg.path_edit.setText(target)
@@ -1739,11 +1741,11 @@ class Explore:
         return off_ui(self.verify_copy, target)
 
     def s_open_dub(self) -> str:
-        from PyQt5.QtWidgets import QMessageBox
+        from diskultimate.ui.qt.QtWidgets import QMessageBox
 
         path = os.path.join(self.workdir, "hedef.dub")
         with self.expecting(("dub-notu", lambda w: isinstance(w, QMessageBox),
-                             answer_role(QMessageBox.RejectRole), True)):
+                             answer_role(QMessageBox.ButtonRole.RejectRole), True)):
             self.window.open_path(path)
             wait(10, lambda: self.window.session is not None
                  and self.window.session.is_backup)
@@ -2040,7 +2042,7 @@ class Explore:
         return f"ikon setleri: {keys}"
 
     def s_info_windows(self) -> str:
-        from PyQt5.QtWidgets import QDialog, QMessageBox
+        from diskultimate.ui.qt.QtWidgets import QDialog, QMessageBox
 
         w = self.window
         seen = []
@@ -2143,7 +2145,7 @@ class Explore:
 
     def s_boot_windows(self) -> str:
         """Onyukleyici ve EFI pencereleri acilir, hicbir dugmeye basilmaz."""
-        from PyQt5.QtWidgets import QMessageBox
+        from diskultimate.ui.qt.QtWidgets import QMessageBox
 
         self.activate_test_disk()
         notes = []

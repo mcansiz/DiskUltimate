@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QBrush, QPalette
-from PyQt5.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox,
-                             QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout,
-                             QLabel, QLineEdit, QMessageBox, QSlider,
-                             QVBoxLayout)
+from ..qt.QtCore import Qt
+from ..qt.QtGui import QBrush, QPalette
+from ..qt.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+                            QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout,
+                            QLabel, QLineEdit, QMessageBox, QSlider,
+                            QVBoxLayout)
 
 from ...core.fsregistry import fs_display
 from ...core.formatter import FS_BY_KEY, all_kinds
@@ -34,7 +34,7 @@ def _fill_fs_combo(combo: QComboBox, size_bytes: int = 0) -> None:
             oge = model.item(satir) if hasattr(model, "item") else None
             if oge is not None:
                 oge.setEnabled(False)
-                combo.setItemData(satir, reason, Qt.ToolTipRole)
+                combo.setItemData(satir, reason, Qt.ItemDataRole.ToolTipRole)
 
 
 class CreatePartitionDialog(QDialog):
@@ -77,7 +77,7 @@ class CreatePartitionDialog(QDialog):
         self.size_spin.setFixedWidth(140)
         self.size_spin.valueChanged.connect(self._size_changed)
         size_line.addWidget(self.size_spin)
-        self.size_slider = QSlider(Qt.Horizontal)
+        self.size_slider = QSlider(Qt.Orientation.Horizontal)
         self.size_slider.setRange(1, max(1, int(self.region.size / MIB)))
         self.size_slider.setValue(self.size_slider.maximum())
         self.size_slider.valueChanged.connect(self._slider_changed)
@@ -126,10 +126,11 @@ class CreatePartitionDialog(QDialog):
         self.summary.setEnabled(False)   # paletten soluk ton
         layout.addWidget(self.summary)
 
-        butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText(tr("Olustur"))
-        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
-        butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
+        butonlar = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                    | QDialogButtonBox.StandardButton.Cancel)
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Olustur"))
+        butonlar.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Iptal"))
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setProperty("primary", True)
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         layout.addWidget(butonlar)
@@ -229,10 +230,11 @@ class FormatDialog(QDialog):
                             "veriler silinir.</span>"))
         layout.addWidget(warning)
 
-        butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText(tr("Bicimlendir"))
-        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
-        butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
+        butonlar = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                    | QDialogButtonBox.StandardButton.Cancel)
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Bicimlendir"))
+        butonlar.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Iptal"))
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setProperty("primary", True)
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         layout.addWidget(butonlar)

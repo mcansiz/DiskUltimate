@@ -6685,3 +6685,32 @@ PyQt6 geçiş raporu yazıldı: `.claude/docs/pyqt6-gecis-raporu.md` (38 dosya,
 ~530 enum yeri, 37 `exec_`; alt sınırlar Python 3.10 / macOS 12 / glibc
 2.28; tahmin 5–8 oturum). KDE 5.15-24.08 çalışma ortamı EOL → Flathub için
 Qt6 şart. Karar bekliyor.
+
+## 2026-10-31 — PyQt6 geçişi A–C: `ui/qt` uyum katmanı, tam nitelikli enum'lar
+
+Kullanıcı kararı ("önerini uygulayalım", rapor `.claude/docs/pyqt6-gecis-raporu.md`).
+ADR 0102. Kod artık PyQt5 ve PyQt6'da çalışır; varsayılan PyQt5
+(`DISKULTIMATE_QT=pyqt6` ile PyQt6). Paketleme değişmedi.
+
+- `src/diskultimate/ui/qt/`: bağlama seçimi + `QtCore/QtGui/QtWidgets/QtTest`;
+  142 import satırı buraya çevrildi (ui göreli, main/tests/tools mutlak).
+  `assets/branding/uret_ikon.py` (src'yi yola eklemiyor) ve `.claude/logs`
+  betikleri PyQt5'te bırakıldı.
+- `tests/qt6_check.py` (yeni denetim, `--write`): ~600 kısa enum, 39 `exec_`,
+  kendi alt sınıflarımız üzerinden enum (`NewImageDialog.Accepted`, 11),
+  küçük harfli üyeler (`Qt.transparent`), PyQt6'da olmayan import adları.
+- Elle: `QtMsgType` (diag, explore), `palette().Window` (2),
+  `getattr(QPalette.ColorRole, ...)`, `event.pos().x()` (6),
+  `horizontalAdvance` (7), HiDPI öznitelikleri, `enum_value(mode)` ikon
+  önbelleği, Qt çeviri klasörü, Hakkında sürüm bilgisi.
+- **Yakalanan gizli hata:** 5 diyalog `exec_`'i eziyordu (TaskDialog işçiyi
+  orada başlatır). Çağrılar `exec()` olunca ezmeler sessizce devre dışı
+  kalırdı — PyQt5'te bile bütün uzun işlem pencereleri asılı kalırdı.
+  `def exec` olarak yeniden adlandırıldı; `qt6_check` artık `def exec_`'i
+  bulgu sayar.
+- 48 uzayan satır parantez hizasıyla sarıldı (yeni satır >100 yok).
+- CI: `ci.yml` → `linux-qt6` (PyQt5 + PyQt6: `qt6_check` + `ui_smoke`
+  PyQt6 ile); sürümler `.github/requirements-ci-qt6.txt`.
+- Yerel (hafif): iki bağlamayla tüm `ui` modülleri import + ana pencere
+  ekransız açılıp kapandı; qt6_check 0, platform_check 0, i18n_check
+  BAŞARILI, diag_check 13/13. Ağır testler CI'da.

@@ -21,12 +21,12 @@ import os
 import time
 from typing import Callable, List, Optional
 
-from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
-from PyQt5.QtWidgets import (QCheckBox, QDialog, QDialogButtonBox,
-                             QFileDialog, QGridLayout, QGroupBox, QHBoxLayout,
-                             QLabel, QLineEdit, QMessageBox, QProgressBar,
-                             QPushButton, QTreeWidget, QTreeWidgetItem,
-                             QVBoxLayout)
+from ..qt.QtCore import Qt, QThread, QTimer, pyqtSignal
+from ..qt.QtWidgets import (QCheckBox, QDialog, QDialogButtonBox,
+                            QFileDialog, QGridLayout, QGroupBox, QHBoxLayout,
+                            QLabel, QLineEdit, QMessageBox, QProgressBar,
+                            QPushButton, QTreeWidget, QTreeWidgetItem,
+                            QVBoxLayout)
 
 from ...core import clone as clone_mod
 from ...core.disksource import DiskSource, clone_target_problem
@@ -89,12 +89,13 @@ class _DiskPicker(QDialog):
         self.tree.setColumnWidth(0, 330)
         self.tree.setColumnWidth(1, 100)
         layout.addWidget(self.tree, 1)
-        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        box.button(QDialogButtonBox.Ok).setText(tr("Sec"))
-        box.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
+        box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                               | QDialogButtonBox.StandardButton.Cancel)
+        box.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Sec"))
+        box.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Iptal"))
         box.accepted.connect(self.accept)
         box.rejected.connect(self.reject)
-        self.btn_ok = box.button(QDialogButtonBox.Ok)
+        self.btn_ok = box.button(QDialogButtonBox.StandardButton.Ok)
         layout.addWidget(box)
         self.tree.currentItemChanged.connect(lambda *_: self._update_ok())
         self.tree.itemDoubleClicked.connect(
@@ -107,7 +108,7 @@ class _DiskPicker(QDialog):
         if not rows:
             return
         group = QTreeWidgetItem(self.tree, [title])
-        group.setFlags(group.flags() & ~Qt.ItemIsSelectable)
+        group.setFlags(group.flags() & ~Qt.ItemFlag.ItemIsSelectable)
         font = group.font(0)
         font.setBold(True)
         group.setFont(0, font)
@@ -115,23 +116,23 @@ class _DiskPicker(QDialog):
             item = QTreeWidgetItem(group, [name, size, problem or state])
             item.setIcon(0, app_icon(icon))
             if problem:
-                item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
                 item.setToolTip(0, problem)
             else:
-                item.setData(0, Qt.UserRole, value)
+                item.setData(0, Qt.ItemDataRole.UserRole, value)
         group.setExpanded(True)
 
     def select(self, value) -> None:
         for i in range(self.tree.topLevelItemCount()):
             group = self.tree.topLevelItem(i)
             for j in range(group.childCount()):
-                if group.child(j).data(0, Qt.UserRole) == value:
+                if group.child(j).data(0, Qt.ItemDataRole.UserRole) == value:
                     self.tree.setCurrentItem(group.child(j))
                     return
 
     @staticmethod
     def _value(item):
-        return item.data(0, Qt.UserRole) if item is not None else None
+        return item.data(0, Qt.ItemDataRole.UserRole) if item is not None else None
 
     def _update_ok(self) -> None:
         self.btn_ok.setEnabled(self._value(self.tree.currentItem()) is not None)
@@ -177,7 +178,7 @@ class CloneDialog(QDialog):
         self.btn_source = QPushButton(app_icon("disk"), tr("Kaynak disk sec..."))
         self.btn_source.clicked.connect(self._pick_source)
         self.source_label = QLabel("")
-        self.source_label.setTextFormat(Qt.RichText)
+        self.source_label.setTextFormat(Qt.TextFormat.RichText)
         row.addWidget(self.btn_source)
         row.addWidget(self.source_label, 1)
         src_layout.addLayout(row)
@@ -192,7 +193,7 @@ class CloneDialog(QDialog):
         self.btn_target = QPushButton(app_icon("disk"), tr("Hedef sec..."))
         self.btn_target.clicked.connect(self._pick_target)
         self.target_label = QLabel(tr("Hedef secilmedi"))
-        self.target_label.setTextFormat(Qt.RichText)
+        self.target_label.setTextFormat(Qt.TextFormat.RichText)
         row.addWidget(self.btn_target)
         row.addWidget(self.target_label, 1)
         dst_layout.addLayout(row)
@@ -225,12 +226,12 @@ class CloneDialog(QDialog):
         root.addWidget(self.pending_note)
         self.warn = QLabel("")
         self.warn.setWordWrap(True)
-        self.warn.setTextFormat(Qt.RichText)
+        self.warn.setTextFormat(Qt.TextFormat.RichText)
         root.addWidget(self.warn)
         confirm_grid = QGridLayout()
         self.name_label = QLabel("")
         self.name_label.setWordWrap(True)
-        self.name_label.setTextFormat(Qt.RichText)
+        self.name_label.setTextFormat(Qt.TextFormat.RichText)
         self.name_edit = QLineEdit()
         self.name_edit.textChanged.connect(lambda *_: self._update())
         confirm_grid.addWidget(self.name_label, 0, 0)
@@ -250,11 +251,11 @@ class CloneDialog(QDialog):
         self.bar = QProgressBar()
         self.bar.setRange(0, 100)
         self.bar.setValue(0)
-        self.bar.setAlignment(Qt.AlignCenter)
+        self.bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.bar.setMinimumHeight(24)
         root.addWidget(self.bar)
         self.time_label = QLabel("")
-        self.time_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.time_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         root.addWidget(self.time_label)
         self._clock = QTimer(self)
         self._clock.setInterval(1000)
@@ -342,7 +343,7 @@ class CloneDialog(QDialog):
                 for src in group])
         if self.source is not None:
             picker.select(self.source)
-        if picker.exec_() == QDialog.Accepted and picker.value() is not None:
+        if picker.exec() == QDialog.DialogCode.Accepted and picker.value() is not None:
             self.source = picker.value()
             if isinstance(self.target, DiskSource) and self.target_problem(self.target):
                 self.target = None          # yeni kaynakla uyumsuz hedef duser
@@ -366,7 +367,7 @@ class CloneDialog(QDialog):
             for dst in self.images])
         if self.target is not None:
             picker.select(self.target)
-        if picker.exec_() == QDialog.Accepted and picker.value() is not None:
+        if picker.exec() == QDialog.DialogCode.Accepted and picker.value() is not None:
             self.target = picker.value()
             self.confirm.setChecked(False)          # onay hedefe ozgu
             self.name_edit.clear()
@@ -592,8 +593,9 @@ class CloneDialog(QDialog):
                 tr("Klon yarida kesilirse hedef disk tutarsiz kalir ve yeniden "
                    "klonlanana ya da bicimlendirilene kadar kullanilamaz. Yine "
                    "de durdurulsun mu?"),
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if answer != QMessageBox.Yes or not worker.isRunning():
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+            if answer != QMessageBox.StandardButton.Yes or not worker.isRunning():
                 return
         worker.stop_requested = True
         self.btn_start.setText(tr("Durduruluyor..."))
@@ -686,8 +688,8 @@ class CloneDialog(QDialog):
             return
         super().reject()
 
-    def exec_(self) -> int:
-        outcome = super().exec_()
+    def exec(self) -> int:
+        outcome = super().exec()
         if self._worker is not None:
             self._worker.wait()
         return outcome

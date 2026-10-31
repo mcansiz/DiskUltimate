@@ -36,10 +36,11 @@ from __future__ import annotations
 import math
 from typing import Dict, Optional
 
-from PyQt5.QtCore import QPointF, QRectF, QSize, Qt
-from PyQt5.QtGui import (QBrush, QColor, QIcon, QIconEngine, QImage, QPainter,
-                         QPainterPath, QPen, QPixmap, QPolygonF)
-from PyQt5.QtWidgets import QApplication, QStyleOption
+from .qt import enum_value
+from .qt.QtCore import QPointF, QRectF, QSize, Qt
+from .qt.QtGui import (QBrush, QColor, QIcon, QIconEngine, QImage, QPainter,
+                       QPainterPath, QPen, QPixmap, QPolygonF)
+from .qt.QtWidgets import QApplication, QStyleOption
 
 # Anlamsal renkler (acik tema degerleri; koyu temada acilirlar)
 GREEN = "#2e9e4f"       # ekleme, onay
@@ -60,7 +61,7 @@ def _is_dark() -> bool:
     app = QApplication.instance()
     if app is None:
         return False
-    color = app.palette().color(app.palette().Window)
+    color = app.palette().window().color()
     return color.lightness() < 128
 
 
@@ -77,8 +78,8 @@ def _ink(dark: bool) -> QColor:
 
 def _pen(p: QPainter, color: QColor, u: float, width: float = 1.4) -> None:
     pen = QPen(color, max(1.0, u * width))
-    pen.setJoinStyle(Qt.RoundJoin)
-    pen.setCapStyle(Qt.RoundCap)
+    pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+    pen.setCapStyle(Qt.PenCapStyle.RoundCap)
     p.setPen(pen)
 
 
@@ -92,14 +93,14 @@ def _volume(p: QPainter, u: float, dark: bool, color: QColor = None,
     if color is not None and fill > 0:
         inner = QRectF(body.x() + 0.9 * u, body.y() + 0.9 * u,
                        (body.width() - 1.8 * u) * fill, body.height() - 1.8 * u)
-        p.setPen(Qt.NoPen)
+        p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(color)
         p.drawRoundedRect(inner, 0.6 * u, 0.6 * u)
 
 
 def _disk_body(p: QPainter, u: float, dark: bool, color: QColor) -> None:
     """Silindir: fiziksel disk / goruntu tabani."""
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawRoundedRect(QRectF(2.0 * u, 4.5 * u, 12.0 * u, 7.0 * u),
                       1.4 * u, 1.4 * u)
@@ -117,7 +118,7 @@ def _badge(p: QPainter, u: float, glyph: str, color: QColor,
     ucuz ve en okunakli yoludur; 16 pikselde bile secilir.
     """
     box = QRectF(8.6 * u, 8.6 * u, 6.8 * u, 6.8 * u)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(QColor("#1b1f24") if dark else QColor("#ffffff"))
     p.drawEllipse(box.adjusted(-0.5 * u, -0.5 * u, 0.5 * u, 0.5 * u))
     p.setBrush(color)
@@ -176,7 +177,7 @@ def _badge(p: QPainter, u: float, glyph: str, color: QColor,
 def _draw_arrow(p: QPainter, u: float, color: QColor, back: bool) -> None:
     """Geri al / yinele oku."""
     _pen(p, color, u, 1.8)
-    p.setBrush(Qt.NoBrush)
+    p.setBrush(Qt.BrushStyle.NoBrush)
     path = QPainterPath()
     if back:
         path.moveTo(4.0 * u, 10.5 * u)
@@ -186,7 +187,7 @@ def _draw_arrow(p: QPainter, u: float, color: QColor, back: bool) -> None:
         path.arcTo(QRectF(3.0 * u, 4.0 * u, 9.0 * u, 9.0 * u), 10, 150)
     p.drawPath(path)
     p.setBrush(color)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     tip_x = 4.0 * u if back else 12.0 * u
     p.drawPolygon(QPolygonF([
         QPointF(tip_x, 11.8 * u),
@@ -205,7 +206,7 @@ def _apply(p, u, dark):
     cell = flag.width() / 4.0
     light = QColor("#f2f4f7") if not dark else QColor("#cfd4da")
     dark_cell = _tone(GREEN, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     for row in range(2):
         for col in range(4):
             box = QRectF(flag.x() + col * cell, flag.y() + row * (flag.height() / 2),
@@ -213,13 +214,13 @@ def _apply(p, u, dark):
             p.setBrush(dark_cell if (row + col) % 2 == 0 else light)
             p.drawRect(box)
     _pen(p, _ink(dark), u, 1.0)
-    p.setBrush(Qt.NoBrush)
+    p.setBrush(Qt.BrushStyle.NoBrush)
     p.drawRect(flag)
 
 
 def _stop(p, u, dark):
     """Durdur: kirmizi kare (oynaticilardaki durdurma dugmesi)."""
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(_tone(RED, dark))
     p.drawRoundedRect(QRectF(3.5 * u, 3.5 * u, 9.0 * u, 9.0 * u), 1.6 * u, 1.6 * u)
 
@@ -231,7 +232,7 @@ def _pending(p, u, dark):
         y = (4.0 + i * 3.0) * u
         p.drawLine(QPointF(2.0 * u, y), QPointF(9.5 * u, y))
     accent = _tone(ORANGE, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(accent)
     p.drawEllipse(QRectF(9.0 * u, 8.4 * u, 6.4 * u, 6.4 * u))
     _pen(p, QColor("#ffffff"), u, 1.3)
@@ -242,7 +243,7 @@ def _pending(p, u, dark):
 
 def _discard(p, u, dark):
     accent = _tone(RED, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(accent)
     p.drawEllipse(QRectF(2.0 * u, 2.0 * u, 12.0 * u, 12.0 * u))
     _pen(p, QColor("#ffffff"), u, 1.8)
@@ -270,14 +271,14 @@ def _refresh(p, u, dark):
     color = _tone(BLUE, dark)
     cx, cy, r = 8.0 * u, 8.0 * u, 5.2 * u
     box = QRectF(cx - r, cy - r, 2 * r, 2 * r)
-    p.setBrush(Qt.NoBrush)
+    p.setBrush(Qt.BrushStyle.NoBrush)
     _pen(p, color, u, 1.8)
     path = QPainterPath()
     path.arcMoveTo(box, 70.0)
     path.arcTo(box, 70.0, 290.0)          # sag ustte bosluk birakir
     p.drawPath(path)
     _arc_arrowhead(p, u, color, cx, cy, r, 360.0)
-    p.setBrush(Qt.NoBrush)
+    p.setBrush(Qt.BrushStyle.NoBrush)
 
 
 def _arc_arrowhead(p, u, color, cx, cy, r, angle_deg) -> None:
@@ -291,7 +292,7 @@ def _arc_arrowhead(p, u, color, cx, cy, r, angle_deg) -> None:
     tip = QPointF(px + dx * 2.2 * u, py + dy * 2.2 * u)
     outer = QPointF(px + nx * 2.1 * u, py + ny * 2.1 * u)
     inner = QPointF(px - nx * 2.1 * u, py - ny * 2.1 * u)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawPolygon(QPolygonF([tip, outer, inner]))
 
@@ -299,11 +300,11 @@ def _arc_arrowhead(p, u, color, cx, cy, r, angle_deg) -> None:
 def _table(p, u, dark):
     """Bolum tablosu: uc kutucuklu serit."""
     _pen(p, _ink(dark), u, 1.2)
-    p.setBrush(Qt.NoBrush)
+    p.setBrush(Qt.BrushStyle.NoBrush)
     body = QRectF(1.6 * u, 4.4 * u, 12.8 * u, 7.2 * u)
     p.drawRoundedRect(body, 1.0 * u, 1.0 * u)
     for i, name in enumerate((BLUE, GREEN, PURPLE)):
-        p.setPen(Qt.NoPen)
+        p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(_tone(name, dark))
         p.drawRect(QRectF(body.x() + 0.8 * u + i * 3.9 * u, body.y() + 0.9 * u,
                           3.2 * u, body.height() - 1.8 * u))
@@ -320,7 +321,7 @@ def _convert(p, u, dark):
     _pen(p, color, u, 1.7)
     p.drawLine(QPointF(3.4 * u, 6.0 * u), QPointF(12.0 * u, 6.0 * u))
     p.drawLine(QPointF(12.6 * u, 10.2 * u), QPointF(4.0 * u, 10.2 * u))
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawPolygon(QPolygonF([QPointF(14.0 * u, 6.0 * u),
                              QPointF(11.2 * u, 4.2 * u),
@@ -358,7 +359,7 @@ def _resize(p, u, dark):
 def _label(p, u, dark):
     """Etiket: kose kesik kart."""
     color = _tone(TEAL, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawPolygon(QPolygonF([
         QPointF(2.0 * u, 4.0 * u), QPointF(10.5 * u, 4.0 * u),
@@ -388,7 +389,7 @@ def _boot(p, u, dark):
     color = _tone(GREEN, dark)
     _pen(p, _ink(dark), u, 1.4)
     p.drawLine(QPointF(4.0 * u, 2.2 * u), QPointF(4.0 * u, 14.2 * u))
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawPolygon(QPolygonF([
         QPointF(4.0 * u, 2.8 * u), QPointF(13.4 * u, 5.2 * u),
@@ -445,7 +446,7 @@ def _image(p, u, dark):
         QPointF(3.0 * u, 1.8 * u), QPointF(10.0 * u, 1.8 * u),
         QPointF(13.0 * u, 4.8 * u), QPointF(13.0 * u, 14.2 * u),
         QPointF(3.0 * u, 14.2 * u)]))
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(_tone(BLUE, dark))
     p.drawRoundedRect(QRectF(4.6 * u, 8.0 * u, 6.8 * u, 4.4 * u),
                       0.8 * u, 0.8 * u)
@@ -463,7 +464,7 @@ def _partition(p, u, dark):
 def _search(p, u, dark):
     color = _tone(TEAL, dark)
     _pen(p, color, u, 1.7)
-    p.setBrush(Qt.NoBrush)
+    p.setBrush(Qt.BrushStyle.NoBrush)
     p.drawEllipse(QRectF(2.6 * u, 2.6 * u, 8.4 * u, 8.4 * u))
     p.drawLine(QPointF(10.4 * u, 10.4 * u), QPointF(14.0 * u, 14.0 * u))
 
@@ -475,7 +476,7 @@ def _recover(p, u, dark):
 
 def _clone(p, u, dark):
     _disk_body(p, u, dark, _tone(GREY, dark))
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(_tone(BLUE, dark))
     p.drawRoundedRect(QRectF(7.6 * u, 7.6 * u, 7.4 * u, 7.4 * u),
                       1.0 * u, 1.0 * u)
@@ -485,7 +486,7 @@ def _clone(p, u, dark):
 
 def _info(p, u, dark):
     color = _tone(BLUE, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawEllipse(QRectF(2.0 * u, 2.0 * u, 12.0 * u, 12.0 * u))
     p.setBrush(QColor("#ffffff"))
@@ -496,7 +497,7 @@ def _info(p, u, dark):
 
 def _warning(p, u, dark):
     color = _tone(ORANGE, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     path = QPainterPath()
     path.moveTo(8.0 * u, 1.8 * u)
@@ -513,7 +514,7 @@ def _warning(p, u, dark):
 def _shield(p, u, dark):
     """Yetki: kalkan."""
     color = _tone(ORANGE, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     path = QPainterPath()
     path.moveTo(8.0 * u, 1.6 * u)
@@ -532,7 +533,7 @@ def _shield(p, u, dark):
 
 def _save(p, u, dark):
     color = _tone(BLUE, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawRoundedRect(QRectF(2.0 * u, 2.0 * u, 12.0 * u, 12.0 * u),
                       1.2 * u, 1.2 * u)
@@ -550,7 +551,7 @@ def _open(p, u, dark):
     ayirir (biri "klasor", oteki "ac").
     """
     color = _tone(ORANGE, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color.darker(115))
     p.drawRoundedRect(QRectF(1.6 * u, 3.0 * u, 7.0 * u, 3.0 * u),
                       0.6 * u, 0.6 * u)
@@ -558,7 +559,7 @@ def _open(p, u, dark):
     _pen(p, _ink(dark), u, 1.1)
     p.setBrush(QColor("#ffffff") if not dark else QColor("#e6e9ed"))
     p.drawRect(QRectF(5.6 * u, 1.6 * u, 6.0 * u, 6.4 * u))
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawRoundedRect(QRectF(1.6 * u, 6.4 * u, 12.8 * u, 7.2 * u),
                       1.0 * u, 1.0 * u)
@@ -567,7 +568,7 @@ def _open(p, u, dark):
 # -- dosya gezgini ------------------------------------------------------
 def _folder(p, u, dark):
     color = _tone(ORANGE, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color.darker(115))
     p.drawRoundedRect(QRectF(1.6 * u, 3.2 * u, 6.6 * u, 3.0 * u),
                       0.6 * u, 0.6 * u)
@@ -608,7 +609,7 @@ def _up(p, u, dark):
     color = _tone(BLUE, dark)
     _pen(p, color, u, 1.9)
     p.drawLine(QPointF(8.0 * u, 13.4 * u), QPointF(8.0 * u, 5.2 * u))
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawPolygon(QPolygonF([QPointF(8.0 * u, 2.2 * u),
                              QPointF(3.4 * u, 7.2 * u),
@@ -619,14 +620,14 @@ def _export(p, u, dark):
     """Disa aktar: aygittan disari cikan ok."""
     color = _tone(GREEN, dark)
     _pen(p, _ink(dark), u, 1.3)
-    p.setBrush(Qt.NoBrush)
+    p.setBrush(Qt.BrushStyle.NoBrush)
     p.drawPolyline(QPolygonF([
         QPointF(4.4 * u, 3.0 * u), QPointF(2.0 * u, 3.0 * u),
         QPointF(2.0 * u, 14.0 * u), QPointF(14.0 * u, 14.0 * u),
         QPointF(14.0 * u, 3.0 * u), QPointF(11.6 * u, 3.0 * u)]))
     _pen(p, color, u, 1.9)
     p.drawLine(QPointF(8.0 * u, 2.0 * u), QPointF(8.0 * u, 9.6 * u))
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawPolygon(QPolygonF([QPointF(8.0 * u, 12.0 * u),
                              QPointF(4.6 * u, 8.0 * u),
@@ -637,14 +638,14 @@ def _import(p, u, dark):
     """Ice aktar: aygita giren ok."""
     color = _tone(BLUE, dark)
     _pen(p, _ink(dark), u, 1.3)
-    p.setBrush(Qt.NoBrush)
+    p.setBrush(Qt.BrushStyle.NoBrush)
     p.drawPolyline(QPolygonF([
         QPointF(4.4 * u, 14.0 * u), QPointF(2.0 * u, 14.0 * u),
         QPointF(2.0 * u, 3.0 * u), QPointF(14.0 * u, 3.0 * u),
         QPointF(14.0 * u, 14.0 * u), QPointF(11.6 * u, 14.0 * u)]))
     _pen(p, color, u, 1.9)
     p.drawLine(QPointF(8.0 * u, 15.0 * u), QPointF(8.0 * u, 7.4 * u))
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawPolygon(QPolygonF([QPointF(8.0 * u, 5.0 * u),
                              QPointF(4.6 * u, 9.0 * u),
@@ -654,7 +655,7 @@ def _import(p, u, dark):
 def _trash(p, u, dark):
     """Cop kutusu."""
     color = _tone(RED, dark)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawRoundedRect(QRectF(3.0 * u, 2.6 * u, 10.0 * u, 1.8 * u),
                       0.8 * u, 0.8 * u)
@@ -678,7 +679,7 @@ def _bootloader(p, u, dark):
     p.setBrush(QColor(255, 255, 255, 28) if dark else QColor("#ffffff"))
     p.drawRoundedRect(QRectF(1.6 * u, 2.2 * u, 12.8 * u, 11.6 * u),
                       1.4 * u, 1.4 * u)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawEllipse(QRectF(4.2 * u, 4.8 * u, 7.6 * u, 7.6 * u))
     _pen(p, QColor("#ffffff"), u, 1.5)
@@ -694,7 +695,7 @@ def _efi(p, u, dark):
         y = (5.0 + i * 3.0) * u
         p.drawLine(QPointF(0.8 * u, y), QPointF(3.4 * u, y))
         p.drawLine(QPointF(12.6 * u, y), QPointF(15.2 * u, y))
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(color)
     p.drawRoundedRect(QRectF(3.4 * u, 3.4 * u, 9.2 * u, 9.2 * u),
                       1.2 * u, 1.2 * u)
@@ -711,7 +712,7 @@ def _boot_order(p, u, dark):
         p.drawLine(QPointF(5.6 * u, y), QPointF(14.4 * u, y))
     _pen(p, accent, u, 1.5)
     p.drawLine(QPointF(2.6 * u, 3.0 * u), QPointF(2.6 * u, 12.4 * u))
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(accent)
     p.drawPolygon(QPolygonF([
         QPointF(2.6 * u, 14.2 * u), QPointF(0.7 * u, 11.2 * u),
@@ -776,9 +777,9 @@ def draw(name: str, size: int, dark: bool = None,
         dark = _is_dark()
     key = icon_set or iconsets.current()
     pix = QPixmap(size, size)
-    pix.fill(Qt.transparent)
+    pix.fill(Qt.GlobalColor.transparent)
     p = QPainter(pix)
-    p.setRenderHint(QPainter.Antialiasing, True)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
     try:
         done = key != "classic" and iconsets.draw(p, name, size, dark, key)
         if not done:
@@ -809,15 +810,15 @@ class _LiveIconEngine(QIconEngine):
 
         edge = max(1, min(size.width(), size.height()))
         dark = _is_dark()
-        key = (iconsets.current(), self.name, edge, dark, int(mode))
+        key = (iconsets.current(), self.name, edge, dark, enum_value(mode))
         hit = _pixmaps.get(key)
         if hit is not None:
             return hit
         pix = draw(self.name, edge, dark)
-        if mode == QIcon.Disabled:
+        if mode == QIcon.Mode.Disabled:
             app = QApplication.instance()
             if app is not None:
-                pix = app.style().generatedIconPixmap(QIcon.Disabled, pix,
+                pix = app.style().generatedIconPixmap(QIcon.Mode.Disabled, pix,
                                                       QStyleOption())
         _pixmaps[key] = pix
         return pix
@@ -829,7 +830,7 @@ class _LiveIconEngine(QIconEngine):
         edge = min(size.width(), size.height())
         return QSize(edge, edge)
 
-    def availableSizes(self, mode=QIcon.Normal, state=QIcon.Off):
+    def availableSizes(self, mode=QIcon.Mode.Normal, state=QIcon.State.Off):
         return [QSize(s, s) for s in SIZES]
 
     def clone(self):
@@ -879,7 +880,7 @@ def digest(sizes=(16, 24, 32, 48), icon_set: str = "classic") -> str:
         for size in sizes:
             image = draw(name, size, dark=False,
                          icon_set=icon_set).toImage().convertToFormat(
-                QImage.Format_ARGB32)
+                QImage.Format.Format_ARGB32)
             total.update(image.constBits().asstring(
                 image.sizeInBytes() if hasattr(image, "sizeInBytes")
                 else image.byteCount()))

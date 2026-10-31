@@ -17,14 +17,14 @@ from __future__ import annotations
 import copy
 from typing import Optional
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFontDatabase
-from PyQt5.QtWidgets import (QAbstractItemView, QComboBox, QDialog,
-                             QDialogButtonBox, QFileDialog, QFormLayout,
-                             QGroupBox, QHBoxLayout, QHeaderView, QLabel,
-                             QLineEdit, QMessageBox, QPlainTextEdit,
-                             QPushButton, QSpinBox, QTreeWidget,
-                             QTreeWidgetItem, QVBoxLayout, QWidget)
+from ..qt.QtCore import Qt
+from ..qt.QtGui import QFontDatabase
+from ..qt.QtWidgets import (QAbstractItemView, QComboBox, QDialog,
+                            QDialogButtonBox, QFileDialog, QFormLayout,
+                            QGroupBox, QHBoxLayout, QHeaderView, QLabel,
+                            QLineEdit, QMessageBox, QPlainTextEdit,
+                            QPushButton, QSpinBox, QTreeWidget,
+                            QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from ...core import efistore
 from ...i18n import tr
@@ -69,10 +69,10 @@ class EfiBootDialog(QDialog):
         self.tree.setHeaderLabels([tr("Sira"), tr("Giris"), tr("Aciklama"),
                                    tr("Aygit yolu")])
         self.tree.setRootIsDecorated(False)
-        self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.tree.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.tree.header().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.tree.header().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.tree.itemChanged.connect(self._entry_toggled)
         self.tree.currentItemChanged.connect(self._selection_changed)
         entries_layout.addWidget(self.tree)
@@ -119,7 +119,7 @@ class EfiBootDialog(QDialog):
         detail_layout = QVBoxLayout(detail_box)
         self.detail = QPlainTextEdit()
         self.detail.setReadOnly(True)
-        self.detail.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+        self.detail.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
         detail_layout.addWidget(self.detail)
         side_layout.addWidget(detail_box, 1)
 
@@ -138,13 +138,13 @@ class EfiBootDialog(QDialog):
 
         buttons = QDialogButtonBox()
         self.btn_apply = buttons.addButton(tr("Bellenime yaz..."),
-                                           QDialogButtonBox.ApplyRole)
+                                           QDialogButtonBox.ButtonRole.ApplyRole)
         self.btn_apply.setIcon(app_icon("efi"))
         self.btn_apply.clicked.connect(self.apply_changes)
         self.btn_revert = buttons.addButton(tr("Degisiklikleri geri al"),
-                                            QDialogButtonBox.ResetRole)
+                                            QDialogButtonBox.ButtonRole.ResetRole)
         self.btn_revert.clicked.connect(self.reload)
-        close = buttons.addButton(QDialogButtonBox.Close)
+        close = buttons.addButton(QDialogButtonBox.StandardButton.Close)
         close.setText(tr("Kapat"))
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -185,9 +185,10 @@ class EfiBootDialog(QDialog):
             item.setText(1, option.name)
             item.setText(2, option.description or tr("(adsiz)"))
             item.setText(3, option.path_text)
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            item.setCheckState(0, Qt.Checked if option.active else Qt.Unchecked)
-            item.setData(0, Qt.UserRole, option.number)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(0,
+                               Qt.CheckState.Checked if option.active else Qt.CheckState.Unchecked)
+            item.setData(0, Qt.ItemDataRole.UserRole, option.number)
             if option.number == state.boot_current:
                 item.setIcon(1, app_icon("boot"))
                 item.setToolTip(1, tr("Bu makine su an bu giristen acildi"))
@@ -255,7 +256,7 @@ class EfiBootDialog(QDialog):
     # ------------------------------------------------------------------
     def _current_number(self) -> Optional[int]:
         item = self.tree.currentItem()
-        return None if item is None else item.data(0, Qt.UserRole)
+        return None if item is None else item.data(0, Qt.ItemDataRole.UserRole)
 
     def _selection_changed(self, *args) -> None:
         number = self._current_number()
@@ -298,13 +299,14 @@ class EfiBootDialog(QDialog):
         """Isaret kutusu girisin **etkin** bayragini degistirir."""
         if column != 0 or self.state is None:
             return
-        number = item.data(0, Qt.UserRole)
+        number = item.data(0, Qt.ItemDataRole.UserRole)
         option = self.state.boot_entries.get(number)
         if option is None:
             return
-        wanted = item.checkState(0) == Qt.Checked
+        wanted = item.checkState(0) == Qt.CheckState.Checked
         if not self.state.writable:
-            item.setCheckState(0, Qt.Checked if option.active else Qt.Unchecked)
+            item.setCheckState(0,
+                               Qt.CheckState.Checked if option.active else Qt.CheckState.Unchecked)
             return
         option.active = wanted
 
@@ -332,12 +334,12 @@ class EfiBootDialog(QDialog):
     def _select(self, number: int) -> None:
         for index in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(index)
-            if item.data(0, Qt.UserRole) == number:
+            if item.data(0, Qt.ItemDataRole.UserRole) == number:
                 self.tree.setCurrentItem(item)
                 return
 
     def _rename(self) -> None:
-        from PyQt5.QtWidgets import QInputDialog
+        from ..qt.QtWidgets import QInputDialog
 
         number = self._current_number()
         if number is None or self.state is None:
@@ -347,7 +349,7 @@ class EfiBootDialog(QDialog):
             return
         text, ok = QInputDialog.getText(self, tr("Giris adi"),
                                         tr("Menude gorunecek ad:"),
-                                        QLineEdit.Normal, option.description)
+                                        QLineEdit.EchoMode.Normal, option.description)
         if not ok:
             return
         option.description = text
@@ -367,8 +369,9 @@ class EfiBootDialog(QDialog):
                "sistem bellenim menusunde artik gorunmez. Diskteki dosyalar "
                "silinmez.<br><br>Degisiklik yazilana kadar uygulanmaz.",
                option.description or option.name, option.name),
-            QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-        if answer != QMessageBox.Ok:
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel)
+        if answer != QMessageBox.StandardButton.Ok:
             return
         self.state.boot_entries.pop(number, None)
         self.state.boot_order = [n for n in self.state.boot_order if n != number]
@@ -448,8 +451,9 @@ class EfiBootDialog(QDialog):
                "Yanlis bir onyukleme duzeni makineyi <b>acilmaz</b> hale "
                "getirebilir. Yazmadan once yedek dosyasi istenecek.",
                len(plan), rows),
-            QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-        if answer != QMessageBox.Ok:
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel)
+        if answer != QMessageBox.StandardButton.Ok:
             return
 
         if not self.export_backup():

@@ -8,12 +8,12 @@ bir yeniden cizim tetiklenir.
 """
 from __future__ import annotations
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QDialog
+from ..qt.QtCore import QTimer
+from ..qt.QtWidgets import QDialog
 
 
 def exec_dialog(dlg: QDialog) -> int:
     """Diyalogu modal olarak calistirir ve sonucunu dondurur."""
     dlg.adjustSize()
     QTimer.singleShot(0, dlg.update)
-    return dlg.exec_()
+    return dlg.exec()

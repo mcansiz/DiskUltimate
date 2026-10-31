@@ -29,8 +29,8 @@ _qpa_platform = selected_platform()
 if _qpa_platform:
     os.environ["QT_QPA_PLATFORM"] = _qpa_platform
 
-from PyQt5.QtCore import Qt  # noqa: E402
-from PyQt5.QtWidgets import QApplication  # noqa: E402
+from diskultimate.ui.qt.QtCore import Qt  # noqa: E402
+from diskultimate.ui.qt.QtWidgets import QApplication  # noqa: E402
 
 from diskultimate import i18n  # noqa: E402
 from diskultimate.core import diagnostics  # noqa: E402
@@ -63,8 +63,11 @@ def start(argv=None):
     # Windows gorev cubugu ikonu: kimlik PENCERE YARATILMADAN once atanmali,
     # sonra atamak ise yaramaz (Windows disinda no-op).
     set_app_user_model_id("DiskUltimate.DiskUltimate")
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    # Qt6'da yuksek DPI hep aciktir; bu iki oznitelik kaldirildi (ADR 0102).
+    for name in ("AA_EnableHighDpiScaling", "AA_UseHighDpiPixmaps"):
+        attribute = getattr(Qt.ApplicationAttribute, name, None)
+        if attribute is not None:
+            QApplication.setAttribute(attribute, True)
     app = QApplication(argv)
     app.setApplicationName(APP_NAME)
     app.setApplicationVersion(APP_VERSION)
@@ -112,7 +115,7 @@ def main() -> int:
     app, window = start()
     if window is None:
         return 0
-    return app.exec_()
+    return app.exec()
 
 
 if __name__ == "__main__":

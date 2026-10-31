@@ -1,7 +1,7 @@
 # PyQt5 → PyQt6 geçiş raporu
 
 Tarih: 2026-10-28. Tetikleyen: Flathub sorusu (worklog 2026-10-28 (3)).
-Durum: **rapor** — karar verilmedi, kod değişmedi.
+Durum: **A–C uygulandı** (2026-10-31, ADR 0102); D–F bekliyor.
 
 ## Neden gündemde
 

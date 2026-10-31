@@ -7,17 +7,17 @@ import html
 import os
 from typing import Dict, List, Optional, Tuple
 
-from PyQt5.QtCore import QSize, Qt, QTimer
-from PyQt5.QtGui import QColor, QFontDatabase, QIcon, QKeySequence
-from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QDialog,
-                             QDialogButtonBox, QFileDialog, QFormLayout,
-                             QHBoxLayout, QHeaderView,
-                             QInputDialog, QLabel, QMainWindow, QMenu,
-                             QMessageBox, QPlainTextEdit, QProgressDialog,
-                             QPushButton, QSplitter,
-                             QScrollArea, QStackedWidget, QTabWidget,
-                             QTextBrowser, QToolBar,
-                             QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
+from .qt.QtCore import QSize, Qt, QTimer
+from .qt.QtGui import QColor, QFontDatabase, QIcon, QKeySequence
+from .qt.QtWidgets import (QAction, QActionGroup, QApplication, QDialog,
+                           QDialogButtonBox, QFileDialog, QFormLayout,
+                           QHBoxLayout, QHeaderView,
+                           QInputDialog, QLabel, QMainWindow, QMenu,
+                           QMessageBox, QPlainTextEdit, QProgressDialog,
+                           QPushButton, QSplitter,
+                           QScrollArea, QStackedWidget, QTabWidget,
+                           QTextBrowser, QToolBar,
+                           QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from ..core.fsregistry import fs_display
 from ..core import diagnostics
@@ -178,7 +178,7 @@ class MainWindow(QMainWindow):
         duzen.setContentsMargins(0, 0, 0, 0)
         duzen.setSpacing(0)
 
-        ana_splitter = QSplitter(Qt.Horizontal)
+        ana_splitter = QSplitter(Qt.Orientation.Horizontal)
         duzen.addWidget(ana_splitter, 1)
 
         # --- sol: disk agaci ---
@@ -187,7 +187,7 @@ class MainWindow(QMainWindow):
         self.tree.setHeaderLabel(tr("Disk ve Bolumler"))
         self.tree.itemClicked.connect(self._tree_clicked)
         self.tree.itemDoubleClicked.connect(self._tree_double_clicked)
-        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self._tree_context)
 
         # Bekleyen islem listesi agacin altinda durur (Acronis/EaseUS duzeni):
@@ -198,12 +198,12 @@ class MainWindow(QMainWindow):
         self.pending_view.setRootIsDecorated(False)
         self.pending_view.setAlternatingRowColors(True)
         self.pending_view.setMinimumHeight(90)
-        self.pending_view.header().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.pending_view.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.pending_view.setColumnWidth(1, 90)
-        self.pending_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.pending_view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.pending_view.customContextMenuRequested.connect(self._pending_context)
 
-        sol_splitter = QSplitter(Qt.Vertical)
+        sol_splitter = QSplitter(Qt.Orientation.Vertical)
         sol_splitter.addWidget(self.tree)
         sol_splitter.addWidget(self.pending_view)
         sol_splitter.setSizes([520, 190])
@@ -240,7 +240,7 @@ class MainWindow(QMainWindow):
         self.overview_scroll = QScrollArea()
         self.overview_scroll.setWidget(self.disk_overview)
         self.overview_scroll.setWidgetResizable(True)
-        self.overview_scroll.setFrameShape(QScrollArea.NoFrame)
+        self.overview_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
         self.overview_scroll.setMaximumHeight(300)
 
         # Plan seridi: kuyruk doluyken haritanin **planlanan** yerlesimi
@@ -265,7 +265,7 @@ class MainWindow(QMainWindow):
         self.map_stack.setMaximumHeight(300)
         sag_duzen.addWidget(self.map_stack)
 
-        bottom_splitter = QSplitter(Qt.Vertical)
+        bottom_splitter = QSplitter(Qt.Orientation.Vertical)
         self.part_table = PartitionTableWidget()
         self.part_table.setMinimumHeight(120)
         self.part_table.partitionSelected.connect(self.select_partition)
@@ -284,7 +284,7 @@ class MainWindow(QMainWindow):
 
         self.info_view = QPlainTextEdit()
         self.info_view.setReadOnly(True)
-        mono = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        mono = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         mono.setPointSize(9)
         self.info_view.setFont(mono)
         self.tabs.addTab(self.info_view, tr("Bolum Bilgisi"))
@@ -329,15 +329,15 @@ class MainWindow(QMainWindow):
     def _build_actions(self) -> None:
         # --- Dosya ---
         self.act_new = QAction(app_icon("image"), "", self)
-        self.act_new.setShortcut(QKeySequence.New)
+        self.act_new.setShortcut(QKeySequence.StandardKey.New)
         self.act_new.triggered.connect(self.new_image)
         self.act_open = QAction(app_icon("open"), "", self)
-        self.act_open.setShortcut(QKeySequence.Open)
+        self.act_open.setShortcut(QKeySequence.StandardKey.Open)
         self.act_open.triggered.connect(self.open_image)
         self.act_close = QAction("", self)
         self.act_close.triggered.connect(self.close_image)
         self.act_quit = QAction("", self)
-        self.act_quit.setShortcut(QKeySequence.Quit)
+        self.act_quit.setShortcut(QKeySequence.StandardKey.Quit)
         self.act_quit.triggered.connect(self.close)
 
         # --- Disk ---
@@ -350,7 +350,7 @@ class MainWindow(QMainWindow):
         self.act_resize_img = QAction(app_icon("image-resize"), "", self)
         self.act_resize_img.triggered.connect(self.resize_image)
         self.act_refresh = QAction(app_icon("refresh"), "", self)
-        self.act_refresh.setShortcut(QKeySequence.Refresh)
+        self.act_refresh.setShortcut(QKeySequence.StandardKey.Refresh)
         self.act_refresh.triggered.connect(self.refresh)
 
         # --- Bolum ---
@@ -444,7 +444,7 @@ class MainWindow(QMainWindow):
         self.act_apply.setShortcut("Ctrl+Return")
         self.act_apply.triggered.connect(self.apply_steps)
         self.act_undo_step = QAction(app_icon("undo"), "", self)
-        self.act_undo_step.setShortcut(QKeySequence.Undo)
+        self.act_undo_step.setShortcut(QKeySequence.StandardKey.Undo)
         self.act_undo_step.triggered.connect(self.undo_step)
         self.act_discard = QAction(app_icon("discard"), "", self)
         self.act_discard.triggered.connect(self.discard_steps)
@@ -596,7 +596,7 @@ class MainWindow(QMainWindow):
         tb = QToolBar(tr("Islemler"))
         tb.setIconSize(QSize(32, 32))
         tb.setMovable(False)
-        tb.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        tb.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         tb.addAction(self.act_apply)
         tb.addAction(self.act_undo_step)
         tb.addAction(self.act_discard)
@@ -827,14 +827,10 @@ class MainWindow(QMainWindow):
         gosterilir.
         """
         import platform as _py_platform
-        from PyQt5.QtCore import PYQT_VERSION_STR, QT_VERSION_STR
+        from . import qt
         from .. import licenses as lic
-        try:
-            from PyQt5.sip import SIP_VERSION_STR
-        except Exception:                          # noqa: BLE001
-            SIP_VERSION_STR = ""
-        surumler = {"qt": QT_VERSION_STR, "pyqt5": PYQT_VERSION_STR,
-                    "sip": SIP_VERSION_STR, "python": _py_platform.python_version()}
+        surumler = {"qt": qt.QT_VERSION_STR, "pyqt5": qt.PYQT_VERSION_STR,
+                    "sip": qt.SIP_VERSION_STR, "python": _py_platform.python_version()}
         parts = [tr("<p>Bu uygulamanin indirilebilir surumleri (Windows exe, "
                     "Linux AppImage, macOS) asagidaki bilesenleri icinde "
                     "tasir. Uygulamanin kendisi GNU GPL surum 3 ile "
@@ -870,10 +866,10 @@ class MainWindow(QMainWindow):
         view.anchorClicked.connect(lambda url: platform.open_url(url.toString()))
         view.setHtml("".join(parts))
         layout.addWidget(view)
-        box = QDialogButtonBox(QDialogButtonBox.Close)
+        box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         box.rejected.connect(dialog.reject)
         layout.addWidget(box)
-        dialog.exec_()
+        dialog.exec()
 
     def change_language(self, code: str) -> None:
         """Arayuz dilini degistirir ve secimi saklar.
@@ -986,7 +982,7 @@ class MainWindow(QMainWindow):
     def new_image(self) -> None:
         default = self._image_dir()
         dlg = NewImageDialog(self, default)
-        if exec_dialog(dlg) != NewImageDialog.Accepted:
+        if exec_dialog(dlg) != NewImageDialog.DialogCode.Accepted:
             return
         v = dlg.values()
 
@@ -1067,7 +1063,7 @@ class MainWindow(QMainWindow):
         if getattr(self, "_backup_note_shown", False):
             return
         self._backup_note_shown = True
-        box = QMessageBox(QMessageBox.Information, tr("Yedek dosyasi acildi"),
+        box = QMessageBox(QMessageBox.Icon.Information, tr("Yedek dosyasi acildi"),
                            tr("<b>{}</b> bir DiskUltimate yedegidir. Icerigi "
                               "<b>salt okunur</b> olarak gezebilirsiniz: "
                               "bolumler, klasorler ve dosyalar gorunur, "
@@ -1081,10 +1077,10 @@ class MainWindow(QMainWindow):
                               human_size(info.total_bytes),
                               human_size(info.file_size),
                               info.created.strftime('%Y-%m-%d %H:%M') if info.created else '-'),
-                           QMessageBox.NoButton, self)
-        write_btn = box.addButton(tr("Diske yaz..."), QMessageBox.AcceptRole)
-        box.addButton(tr("Simdilik gez"), QMessageBox.RejectRole)
-        box.exec_()
+                           QMessageBox.StandardButton.NoButton, self)
+        write_btn = box.addButton(tr("Diske yaz..."), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(tr("Simdilik gez"), QMessageBox.ButtonRole.RejectRole)
+        box.exec()
         if box.clickedButton() is write_btn:
             self.write_backup_to_target()
 
@@ -1189,13 +1185,15 @@ class MainWindow(QMainWindow):
                        "diski kapliyor. GPT olusturmak bu dosya sistemini "
                        "siler. Devam edilsin mi?",
                        fs_display(self.session.partitions[0].fs_type) or "?"),
-                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No)
             else:
                 cevap = QMessageBox.question(
                     self, tr("Bolum tablosu yok"),
                     tr("Bu goruntude bolum tablosu yok. Simdi GPT olusturulsun mu?"),
-                    QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-            if cevap != QMessageBox.Yes:
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.Yes)
+            if cevap != QMessageBox.StandardButton.Yes:
                 return
             self.create_table("gpt")
             if not self.session.table:
@@ -1244,7 +1242,7 @@ class MainWindow(QMainWindow):
                                     can_primary=birincil_musait,
                                     has_extended=genisletilmis_var,
                                     inside_extended=ic_genisletilmis)
-        if exec_dialog(dlg) != CreatePartitionDialog.Accepted:
+        if exec_dialog(dlg) != CreatePartitionDialog.DialogCode.Accepted:
             return
         v = dlg.values()
 
@@ -1265,7 +1263,7 @@ class MainWindow(QMainWindow):
         if part is None:
             return
         dlg = FormatDialog(part, self)
-        if exec_dialog(dlg) != FormatDialog.Accepted:
+        if exec_dialog(dlg) != FormatDialog.DialogCode.Accepted:
             return
         v = dlg.values()
         # Hedef **LBA ile** de tasinir: onceki adimlar bolum numaralarini
@@ -1324,7 +1322,7 @@ class MainWindow(QMainWindow):
         dlg = ResizePartitionDialog(slot.as_partition(), window, info,
                                     align_sectors=self.session.table.align_sectors,
                                     used_bytes=kullanilan, parent=self)
-        if exec_dialog(dlg) != ResizePartitionDialog.Accepted:
+        if exec_dialog(dlg) != ResizePartitionDialog.DialogCode.Accepted:
             return
         v = dlg.values()
         slot.new_start, slot.new_count = v["start_lba"], v["sector_count"]
@@ -1352,7 +1350,7 @@ class MainWindow(QMainWindow):
             return
         before = {s.index: (s.new_start, s.new_count) for s in model.parts}
         dlg = PartitionLayoutDialog(model, self.session.name, self, mode="disk")
-        if exec_dialog(dlg) != PartitionLayoutDialog.Accepted:
+        if exec_dialog(dlg) != PartitionLayoutDialog.DialogCode.Accepted:
             return
         result = dlg.result_layout()
         changed = [s.index for s in result.parts
@@ -1714,8 +1712,9 @@ class MainWindow(QMainWindow):
                        "olabilir (Hizli baslatma, hazirda bekletme, elektrik "
                        "kesintisi). Birimi simdi denetlemek ister misiniz?",
                        detay or tr("Islem basarisiz.")),
-                    QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-                if cevap == QMessageBox.Yes:
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.Yes)
+                if cevap == QMessageBox.StandardButton.Yes:
                     self.ntfs_fix(part)
                 return
             QMessageBox.warning(self, title, detay or tr("Islem basarisiz."))
@@ -1765,7 +1764,7 @@ class MainWindow(QMainWindow):
                    note=(tr("Tum bolumler 4K sinirinda hizali.") if not hizasiz
                          else tr("{} bolum 4K sinirinda hizali degil; SSD ve "
                                  "ileri bicim disklerde basarim dusebilir.",
-                                 len(hizasiz)))).exec_()
+                                 len(hizasiz)))).exec()
 
     # ==================================================================
     # Yedekleme / geri yukleme / klonlama
@@ -1798,7 +1797,7 @@ class MainWindow(QMainWindow):
             session=self.session, partition_index=index,
             backup_path=backup_path, disk_path=self._selected_disk_path() or "")
         dlg.before_power = self._flush_for_power
-        dlg.exec_()
+        dlg.exec()
         # Geri yukleme hedef oturumu yazma kipine alir (ADR 0025).
         self._end_write_mode()
         if dlg.result_value is not None:
@@ -1901,7 +1900,7 @@ class MainWindow(QMainWindow):
             self.log(tr("Bolum {}: {}", index, sorun))
         dlg = NtfsFixDialog(self, tr("Bolum {} ({})", index, part.display_name),
                             health)
-        if exec_dialog(dlg) != QDialog.Accepted:
+        if exec_dialog(dlg) != QDialog.DialogCode.Accepted:
             return
         v = dlg.values()
         self.enqueue(ops.ntfs_fix_op(index, at_lba=part.start_lba, **v))
@@ -1936,7 +1935,7 @@ class MainWindow(QMainWindow):
             free_region = bool(fs is not None and fs.write_possible()[0])
 
         dlg = WipeDialog(self, target_name, size, allow_free_space=free_region)
-        if exec_dialog(dlg) != WipeDialog.Accepted:
+        if exec_dialog(dlg) != WipeDialog.DialogCode.Accepted:
             return
         v = dlg.values()
         if v["scope"] == "free":
@@ -1968,7 +1967,7 @@ class MainWindow(QMainWindow):
         self.log(tr("Bolum {}: {} silinmis giris bulundu", index, len(result)))
         dlg = DeletedFilesDialog(result, self, tr("Bolum {} — Silinmis "
                                                   "Dosyalar", index))
-        if exec_dialog(dlg) != DeletedFilesDialog.Accepted:
+        if exec_dialog(dlg) != DeletedFilesDialog.DialogCode.Accepted:
             return
         secilenler = dlg.selected()
         if not secilenler:
@@ -2010,7 +2009,8 @@ class MainWindow(QMainWindow):
             tr("Derin tarama (64 KB adim) yapilsin mi?\n\n"
             "Hayir: hizli tarama (1 MB adim) — cogu durumda yeterlidir.\n"
             "Evet: yavas ama hizasiz bolumleri de bulur."),
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No) == QMessageBox.Yes
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes
         ok, result = run_task(
             self, tr("Kayip bolumler taraniyor"),
             lambda progress: self.session.scan_lost_partitions(deep=derin, progress=progress),
@@ -2025,7 +2025,7 @@ class MainWindow(QMainWindow):
             return
         self.log(tr("Kayip bolum taramasi: {} aday bulundu", len(result)))
         dlg = LostPartitionsDialog(result, self)
-        if exec_dialog(dlg) != LostPartitionsDialog.Accepted:
+        if exec_dialog(dlg) != LostPartitionsDialog.DialogCode.Accepted:
             return
         selected = dlg.selected()
         if not selected:
@@ -2060,16 +2060,17 @@ class MainWindow(QMainWindow):
                          "Unutulmus bir parola kurtarilamaz; biri gereklidir."))
         info.setWordWrap(True)
         form.addRow(info)
-        pw = QLineEdit(); pw.setEchoMode(QLineEdit.Password)
+        pw = QLineEdit(); pw.setEchoMode(QLineEdit.EchoMode.Password)
         rec = QLineEdit()
         rec.setPlaceholderText(tr("000000-000000-... (8 grup)"))
         form.addRow(tr("Parola:"), pw)
         form.addRow(tr("Kurtarma anahtari:"), rec)
-        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                               | QDialogButtonBox.StandardButton.Cancel)
         box.accepted.connect(dlg.accept)
         box.rejected.connect(dlg.reject)
         form.addRow(box)
-        if exec_dialog(dlg) != QDialog.Accepted:
+        if exec_dialog(dlg) != QDialog.DialogCode.Accepted:
             return None
         password = pw.text() or None
         recovery = rec.text().strip() or None
@@ -2168,7 +2169,7 @@ class MainWindow(QMainWindow):
         if system == "linux" and ai == 0:
             new_pw, ok = QInputDialog.getText(
                 self, tr("Yeni parola"), tr("{} icin yeni parola:", user.name),
-                QLineEdit.Password)
+                QLineEdit.EchoMode.Password)
             if not ok or not new_pw:
                 return
 
@@ -2178,7 +2179,8 @@ class MainWindow(QMainWindow):
                    "<br><br>Islemden once hedef dosyanin yedegi ayni birime "
                    "(.dubak) alinir. Kaynak yazma kipine alinacak. Devam "
                    "edilsin mi?", user.name, act),
-                QMessageBox.Yes | QMessageBox.No) != QMessageBox.Yes:
+                QMessageBox.StandardButton.Yes
+                | QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
             return
 
         wfs = self._browser_write_access()
@@ -2222,7 +2224,7 @@ class MainWindow(QMainWindow):
         index = self.selected_partition if self.selected_partition is not None else -1
         kapsam = (tr("Bolum {}", index) if index > 0 else tr("Tum goruntu"))
         dlg = CarveOptionsDialog(self, kapsam)
-        if exec_dialog(dlg) != CarveOptionsDialog.Accepted:
+        if exec_dialog(dlg) != CarveOptionsDialog.DialogCode.Accepted:
             return
         anahtarlar = dlg.selected_keys()
         if not anahtarlar:
@@ -2243,7 +2245,7 @@ class MainWindow(QMainWindow):
             return
         self.log(tr("Imza taramasi ({}): {} dosya bulundu", kapsam, len(result)))
         result_dlg = CarvedFilesDialog(result, self)
-        if exec_dialog(result_dlg) != CarvedFilesDialog.Accepted:
+        if exec_dialog(result_dlg) != CarvedFilesDialog.DialogCode.Accepted:
             return
         secilenler = result_dlg.selected()
         if not secilenler:
@@ -2280,7 +2282,7 @@ class MainWindow(QMainWindow):
         dlg = NewImageDialog(self, default)
         dlg.setWindowTitle(tr("Yeni Sanal Disk (VHD)"))
         dlg.path_edit.setText(os.path.join(default, "yeni-disk.vhd"))
-        if exec_dialog(dlg) != NewImageDialog.Accepted:
+        if exec_dialog(dlg) != NewImageDialog.DialogCode.Accepted:
             return
         v = dlg.values()
         path = v["path"]
@@ -2350,7 +2352,7 @@ class MainWindow(QMainWindow):
         InfoDialog(tr("Sistem Bilgisi"), satirlar, self,
                    note=(tr("FAT12/16/32 ve exFAT saf Python ile desteklenir ve her "
                          "platformda calisir. NTFS ve ext2/3/4 bicimlendirmesi "
-                         "sistemdeki mkfs araclarini gerektirir."))).exec_()
+                         "sistemdeki mkfs araclarini gerektirir."))).exec()
 
     # ==================================================================
     # Yonetici / root yetkisi
@@ -2385,8 +2387,9 @@ class MainWindow(QMainWindow):
                "icin yetki gerekmez; yalnizca goruntu dosyalariyla "
                "calisacaksaniz <b>Hayir</b> diyebilirsiniz.</i>",
                len(blocked), names, elevation_name()),
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-        if answer == QMessageBox.Yes:
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes)
+        if answer == QMessageBox.StandardButton.Yes:
             self.restart_elevated(ask=False)
         else:
             self.log(tr("{} olarak yeniden baslatma reddedildi; fiziksel diskler "
@@ -2418,8 +2421,9 @@ class MainWindow(QMainWindow):
             self, tr("Yetki yetersiz"),
             tr("{}<br><br>Uygulama <b>{} yetkisiyle</b> yeniden "
                "baslatilsin mi?", message, elevation_name()),
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-        if answer == QMessageBox.Yes:
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes)
+        if answer == QMessageBox.StandardButton.Yes:
             self.restart_elevated(ask=False)
 
     def restart_elevated(self, ask: bool = True) -> None:
@@ -2437,8 +2441,8 @@ class MainWindow(QMainWindow):
                          + metin)
             if QMessageBox.question(
                     self, tr("{} olarak yeniden baslat", elevation_name()), metin,
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No) != QMessageBox.Yes:
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
                 return
         # Aygit tutamaclari once birakilir: yeni surec ayni diski acacak ve
         # iki kopya ayni aygita dokunmamalidir (ADR 0021).
@@ -2467,7 +2471,7 @@ class MainWindow(QMainWindow):
             tr("Yetki penceresi bekleniyor. Parola sorulursa girin."),
             tr("Vazgec"), 0, 0, self)
         box.setWindowTitle(tr("{} olarak yeniden baslat", elevation_name()))
-        box.setWindowModality(Qt.WindowModal)
+        box.setWindowModality(Qt.WindowModality.WindowModal)
         box.setMinimumDuration(0)
         box.setAutoClose(False)
         box.setAutoReset(False)
@@ -2715,8 +2719,8 @@ class MainWindow(QMainWindow):
             tr("<b>{} bekleyen adim</b> henuz uygulanmadi ve kaynak "
                "kapatilinca kaybolacak.<br><br>Diskte hicbir degisiklik "
                "yapilmadi.<br><br>Yine de kapatilsin mi?", len(self.queue)),
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No) == QMessageBox.Yes
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes
 
     def _pending_context(self, pos) -> None:
         item = self.pending_view.itemAt(pos)
@@ -2731,7 +2735,7 @@ class MainWindow(QMainWindow):
             menu.addSeparator()
         menu.addAction(self.act_apply)
         menu.addAction(self.act_discard)
-        menu.exec_(self.pending_view.viewport().mapToGlobal(pos))
+        menu.exec(self.pending_view.viewport().mapToGlobal(pos))
 
     def _drop_step(self, row: int) -> None:
         try:
@@ -2763,8 +2767,8 @@ class MainWindow(QMainWindow):
                 tr("{} bekleyen adim silinecek.<br><br>Diskte hicbir "
                    "degisiklik yapilmadigi icin bu islem "
                    "<b>zararsizdir</b>.<br><br>Devam edilsin mi?", len(self.queue)),
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes) != QMessageBox.Yes:
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes) != QMessageBox.StandardButton.Yes:
             return
         count = self.queue.clear()
         self.log(trn("{} bekleyen adim iptal edildi",
@@ -2886,18 +2890,18 @@ class MainWindow(QMainWindow):
                 # pencereye gonderip "once cikar" demek, ayni bilgiyle iki
                 # kez ugrasmasi demektir (ADR 0043).
                 box = QMessageBox(self)
-                box.setIcon(QMessageBox.Warning)
+                box.setIcon(QMessageBox.Icon.Warning)
                 box.setWindowTitle(tr("Bagli bolum uyarisi"))
                 box.setText(tr("Bu diskte bagli bolumler "
                                "var:<br><b>{}</b><br><br>{}<br><br>Devam "
                                "edilsin mi?", ', '.join(info.mounted), note))
-                evet = box.addButton(QMessageBox.Yes)
-                hayir = box.addButton(QMessageBox.No)
+                evet = box.addButton(QMessageBox.StandardButton.Yes)
+                hayir = box.addButton(QMessageBox.StandardButton.No)
                 kes = (box.addButton(tr("Baglantilari kes"),
-                                     QMessageBox.ActionRole)
+                                     QMessageBox.ButtonRole.ActionRole)
                        if mount_supported()[0] else None)
                 box.setDefaultButton(hayir)
-                box.exec_()
+                box.exec()
                 secilen = box.clickedButton()
                 if kes is not None and secilen is kes:
                     if not self._unmount_all(info):
@@ -2948,7 +2952,7 @@ class MainWindow(QMainWindow):
                    note=(tr("Arayuz bir saniyeden uzun yanit vermezse butun is "
                          "parcaciklarinin yigini kendiliginden rapor dosyasina "
                          "yazilir. Raporlar gunluk klasorundeki freeze/ "
-                         "altindadir."))).exec_()
+                         "altindadir."))).exec()
 
     def open_log_folder(self) -> None:
         """Gunluk klasorunu isletim sisteminin dosya yoneticisinde acar."""
@@ -2971,7 +2975,7 @@ class MainWindow(QMainWindow):
         TextViewDialog(
             tr("Donma raporu — {}", os.path.basename(path)), text, self,
             note=(tr("Arayuzun takildigi andaki yigin. En ustteki 'O an acik "
-                  "islem' satiri hangi islemin bekledigini soyler."))).exec_()
+                  "islem' satiri hangi islemin bekledigini soyler."))).exec()
 
     def dump_stacks(self) -> None:
         """Anlik yigin dokumu alir (uygulama takiliyken elle kanit toplamak icin)."""
@@ -3040,7 +3044,7 @@ class MainWindow(QMainWindow):
     def _selected_disk_path(self) -> Optional[str]:
         item = self.tree.currentItem()
         if item:
-            veri = item.data(0, Qt.UserRole)
+            veri = item.data(0, Qt.ItemDataRole.UserRole)
             if veri and veri[0] == "phys":
                 return veri[1]
         return None
@@ -3126,7 +3130,7 @@ class MainWindow(QMainWindow):
         item = self.tree.currentItem()
         if not item:
             return
-        veri = item.data(0, Qt.UserRole)
+        veri = item.data(0, Qt.ItemDataRole.UserRole)
         if not veri or veri[0] != "session":
             return
         target = self._session_by_id(veri[1])
@@ -3136,7 +3140,7 @@ class MainWindow(QMainWindow):
         self.close_image()
 
     def _tree_double_clicked(self, item: QTreeWidgetItem, _col: int) -> None:
-        veri = item.data(0, Qt.UserRole)
+        veri = item.data(0, Qt.ItemDataRole.UserRole)
         if veri and veri[0] == "phys":
             self.open_physical(write=False, path=veri[1])
 
@@ -3589,7 +3593,7 @@ class MainWindow(QMainWindow):
         root = QTreeWidgetItem(self.tree, [title])
         root.setIcon(0, app_icon("backup" if session.is_backup else
                                  ("disk" if session.is_physical else "image"), 16))
-        root.setData(0, Qt.UserRole, ("session", id(session)))
+        root.setData(0, Qt.ItemDataRole.UserRole, ("session", id(session)))
         root.setToolTip(0, f"{session.path or session.name}\n{session.format_name}")
         f = root.font(0)
         f.setBold(etkin)            # etkin oturum kalin gosterilir
@@ -3619,7 +3623,7 @@ class MainWindow(QMainWindow):
             item = QTreeWidgetItem(parent, [metin])
             item.setIcon(0, os_icon(p.os_kind, 16) if p.os_kind in OS_LOGOS
                          else color_chip(fs_color(p.fs_type), 12))
-            item.setData(0, Qt.UserRole, ("part", (id(session), p.index)))
+            item.setData(0, Qt.ItemDataRole.UserRole, ("part", (id(session), p.index)))
             tip = tr("{} — {}", fs_display(p.fs_type) or tr("Bicimlendirilmemis"),
                      human_size(p.size))
             if p.os_name:
@@ -3631,7 +3635,7 @@ class MainWindow(QMainWindow):
         for r in session.free_regions():
             item = QTreeWidgetItem(parent, [tr("Bos alan ({})", human_size(r.size))])
             item.setForeground(0, palette_color(self.tree, "dim"))
-            item.setData(0, Qt.UserRole, ("free", (id(session), r.start_lba)))
+            item.setData(0, Qt.ItemDataRole.UserRole, ("free", (id(session), r.start_lba)))
         parent.setExpanded(True)
 
     def _queue_marks(self, session) -> dict:
@@ -3672,14 +3676,14 @@ class MainWindow(QMainWindow):
         open_by_path = {src.path: src.session for src in sources}
         root = QTreeWidgetItem(self.tree, [tr("Fiziksel Diskler ({})", len(diskler))])
         root.setIcon(0, app_icon("disk"))
-        root.setData(0, Qt.UserRole, ("physroot", 0))
+        root.setData(0, Qt.ItemDataRole.UserRole, ("physroot", 0))
         f = root.font(0); f.setBold(True); root.setFont(0, f)
 
         for d in diskler:
             model = d.model or tr("bilinmeyen")
             metin = f"{d.name} — {model} ({human_size(d.size)})"
             item = QTreeWidgetItem(root, [metin])
-            item.setData(0, Qt.UserRole, ("phys", d.path))
+            item.setData(0, Qt.ItemDataRole.UserRole, ("phys", d.path))
             if d.risk_level == "sistem":
                 # Uyari bilgisi kaybolmasin: ikon isletim sistemi amblemi olur,
                 # "sistem diski" uyarisi metin ve renkle verilir.
@@ -3769,7 +3773,7 @@ class MainWindow(QMainWindow):
                       human_size(part.size))
             node = QTreeWidgetItem(parent, [text])
             node.setIcon(0, color_chip(fs_color(part.fs_type), 12))
-            node.setData(0, Qt.UserRole, ("physpart", (info.path, part.index)))
+            node.setData(0, Qt.ItemDataRole.UserRole, ("physpart", (info.path, part.index)))
             node.setToolTip(0, tr("{} — {}\nLBA {} - {}\nAcmak icin tiklayin "
                                   "(salt okunur)",
                                   fs_display(part.fs_type) or tr('Bicimlendirilmemis'),
@@ -3825,7 +3829,7 @@ class MainWindow(QMainWindow):
         else:
             nodes = [parent.child(i) for i in range(parent.childCount())]
         for node in nodes:
-            data = node.data(0, Qt.UserRole)
+            data = node.data(0, Qt.ItemDataRole.UserRole)
             if data and data[0] == kind:
                 return node
             hit = self._find_tree_item_by_kind(kind, node)
@@ -3841,7 +3845,7 @@ class MainWindow(QMainWindow):
         else:
             nodes = [parent.child(i) for i in range(parent.childCount())]
         for node in nodes:
-            if node.data(0, Qt.UserRole) == target:
+            if node.data(0, Qt.ItemDataRole.UserRole) == target:
                 return node
             hit = self._find_tree_item(target, node)
             if hit is not None:
@@ -3849,7 +3853,7 @@ class MainWindow(QMainWindow):
         return None
 
     def _tree_clicked(self, item: QTreeWidgetItem, _col: int) -> None:
-        veri = item.data(0, Qt.UserRole)
+        veri = item.data(0, Qt.ItemDataRole.UserRole)
         if not veri:
             return
         kind, value = veri
@@ -3983,10 +3987,10 @@ class MainWindow(QMainWindow):
         if target is None:
             menu = QMenu(self)
             menu.addAction(self.act_refresh)
-            menu.exec_(pos)
+            menu.exec(pos)
             return
         kind, obj = target
-        (self._partition_menu(obj) if kind == "part" else self._free_menu()).exec_(pos)
+        (self._partition_menu(obj) if kind == "part" else self._free_menu()).exec(pos)
 
     def _table_context(self, target, pos) -> None:
         self._map_context(target, pos)
@@ -3995,7 +3999,7 @@ class MainWindow(QMainWindow):
         item = self.tree.itemAt(pos)
         if not item:
             return
-        veri = item.data(0, Qt.UserRole)
+        veri = item.data(0, Qt.ItemDataRole.UserRole)
         if not veri:
             return
         kind, value = veri
@@ -4007,7 +4011,7 @@ class MainWindow(QMainWindow):
             self._open_physical_partition(*value)
             if self.session is not None and self.selected_partition is not None:
                 self._partition_menu(
-                    self.session.table.get(self.selected_partition)).exec_(kuresel)
+                    self.session.table.get(self.selected_partition)).exec(kuresel)
             return
         if kind == "part":
             session_id, index = value
@@ -4020,9 +4024,9 @@ class MainWindow(QMainWindow):
                 self.refresh()
             else:
                 self.select_partition(index)
-            self._partition_menu(self.session.table.get(index)).exec_(kuresel)
+            self._partition_menu(self.session.table.get(index)).exec(kuresel)
         elif kind == "free":
-            self._free_menu().exec_(kuresel)
+            self._free_menu().exec(kuresel)
         elif kind == "phys":
             # Disk islemleri **diskin kendi satirinda** durur. Eskiden bolum
             # tablosu olusturma "Fiziksel Diskler" baslik satirindaydi; orasi
@@ -4054,14 +4058,14 @@ class MainWindow(QMainWindow):
                                lambda: self._close_session(session))
             menu.addSeparator()
             menu.addAction(self.act_refresh_disks)
-            menu.exec_(kuresel)
+            menu.exec(kuresel)
         elif kind == "physroot":
             # Kategori basligi: yalnizca **butun listeye** ait isler.
             menu = QMenu(self)
             menu.addAction(self.act_refresh_disks)
             if not is_elevated():
                 menu.addAction(self.act_elevate)
-            menu.exec_(kuresel)
+            menu.exec(kuresel)
         elif kind == "session":
             target = self._session_by_id(value)
             if target is not None and target is not self.session:
@@ -4088,11 +4092,11 @@ class MainWindow(QMainWindow):
             menu.addAction(self.act_restore_disk)
             menu.addSeparator()
             menu.addAction(self.act_refresh)
-            menu.exec_(kuresel)
+            menu.exec(kuresel)
         else:
             menu = QMenu(self)
             menu.addAction(self.act_refresh_disks)
-            menu.exec_(kuresel)
+            menu.exec(kuresel)
 
     # ==================================================================
     # Bilgi panelleri
@@ -4270,11 +4274,11 @@ class MainWindow(QMainWindow):
             metin += tr("<br><br>Dosyayi kullanan diger programi (baska bir "
                         "disk araci, yedekleme yazilimi vb.) kapatip "
                         "<b>Yeniden dene</b>ye basin.")
-            box = QMessageBox(QMessageBox.Warning, tr("Salt okunur acildi"), metin,
-                               QMessageBox.NoButton, self)
-            yeniden = box.addButton(tr("Yeniden dene"), QMessageBox.AcceptRole)
-            box.addButton(tr("Salt okunur devam et"), QMessageBox.RejectRole)
-            box.exec_()
+            box = QMessageBox(QMessageBox.Icon.Warning, tr("Salt okunur acildi"), metin,
+                               QMessageBox.StandardButton.NoButton, self)
+            yeniden = box.addButton(tr("Yeniden dene"), QMessageBox.ButtonRole.AcceptRole)
+            box.addButton(tr("Salt okunur devam et"), QMessageBox.ButtonRole.RejectRole)
+            box.exec()
             if box.clickedButton() is yeniden:
                 self.close_image()
                 self.open_path(path)
@@ -4397,7 +4401,7 @@ class MainWindow(QMainWindow):
         box = QMessageBox(self)
         box.setIconPixmap(self.windowIcon().pixmap(64, 64))
         box.setWindowTitle(tr("{} hakkinda", APP_NAME))
-        box.setTextFormat(Qt.RichText)
+        box.setTextFormat(Qt.TextFormat.RichText)
         box.setText(
             tr("<h3>{} {}</h3><p>Disk goruntusu, sanal disk ve <b>sistemdeki "
                "gercek diskler</b> uzerinde bolumleme, bicimlendirme, "
@@ -4419,9 +4423,9 @@ class MainWindow(QMainWindow):
         label = box.findChild(QLabel, "qt_msgbox_label")
         if label is not None:
             label.setOpenExternalLinks(False)
-            label.setTextInteractionFlags(Qt.TextBrowserInteraction)
+            label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
             label.linkActivated.connect(platform.open_url)
-        box.exec_()
+        box.exec()
 
     # ==================================================================
     # Guncelleme denetimi (ADR 0090)

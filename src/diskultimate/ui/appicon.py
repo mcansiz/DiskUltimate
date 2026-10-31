@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import os
 
-from PyQt5.QtGui import QIcon
+from .qt.QtGui import QIcon
 
 RESOURCE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources")
 ICON_PATH = os.path.join(RESOURCE_DIR, "app-icon.ico")

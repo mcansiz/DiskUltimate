@@ -49,14 +49,14 @@ import os
 import time
 from typing import Callable, List, Optional
 
-from PyQt5.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, pyqtSignal
-from PyQt5.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog,
-                             QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFormLayout,
-                             QGroupBox, QHBoxLayout, QHeaderView,
-                             QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
-                             QProgressBar,
-                             QPushButton, QRadioButton, QSplitter, QTreeWidget,
-                             QTreeWidgetItem, QVBoxLayout, QWidget)
+from ..qt.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, pyqtSignal
+from ..qt.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog,
+                            QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFormLayout,
+                            QGroupBox, QHBoxLayout, QHeaderView,
+                            QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
+                            QProgressBar,
+                            QPushButton, QRadioButton, QSplitter, QTreeWidget,
+                            QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from ...core.fsregistry import fs_display
 from ...core import clone as clone_mod
@@ -181,16 +181,17 @@ class _TargetPicker(QDialog):
         self.hint.setWordWrap(True)
         layout.addWidget(self.hint)
         layout.addWidget(tree, 1)
-        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                               | QDialogButtonBox.StandardButton.Cancel)
         box.accepted.connect(self.accept)
         box.rejected.connect(self.reject)
-        self.btn_ok = box.button(QDialogButtonBox.Ok)
+        self.btn_ok = box.button(QDialogButtonBox.StandardButton.Ok)
         layout.addWidget(box)
         tree.currentItemChanged.connect(lambda *_: self._update_ok())
         tree.itemDoubleClicked.connect(self._on_double_click)
 
     def _selectable(self, item) -> bool:
-        return item is not None and item.data(0, Qt.UserRole) is not None \
+        return item is not None and item.data(0, Qt.ItemDataRole.UserRole) is not None \
             and not item.isHidden()
 
     def _update_ok(self) -> None:
@@ -207,7 +208,7 @@ class _TargetPicker(QDialog):
         previous = self.tree.currentItem()
         self._update_ok()
         self.tree.setFocus()
-        if self.exec_() == QDialog.Accepted:
+        if self.exec() == QDialog.DialogCode.Accepted:
             return True
         if previous is not None and previous is not self.tree.currentItem():
             self.tree.setCurrentItem(previous)
@@ -261,7 +262,7 @@ class BackupDialog(QDialog):
         root.setSpacing(8)
         root.addLayout(self._build_mode_row())
 
-        splitter = QSplitter(Qt.Vertical)
+        splitter = QSplitter(Qt.Orientation.Vertical)
         splitter.addWidget(self._build_file_group())
         splitter.addWidget(self._build_target_group())
         splitter.setStretchFactor(0, 3)
@@ -273,17 +274,17 @@ class BackupDialog(QDialog):
         self.status = QLabel("")
         self.status.setWordWrap(True)
         self.status.setMinimumHeight(34)     # metin bir satirdan ikiye cikinca
-        self.status.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.status.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         root.addWidget(self.status)
         self.bar = QProgressBar()
         self.bar.setRange(0, 100)
-        self.bar.setAlignment(Qt.AlignCenter)
+        self.bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.bar.setMinimumHeight(24)        # yuzde metni cubuga sigsin
         root.addWidget(self.bar)
         # Gecen / kalan sure: is surerken saniyede bir tazelenir (ilerleme
         # gelmese de saat ilerler; kullanici isin durmadigini gorur).
         self.time_label = QLabel("")
-        self.time_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.time_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         root.addWidget(self.time_label)
         self._clock = QTimer(self)
         self._clock.setInterval(1000)
@@ -339,10 +340,11 @@ class BackupDialog(QDialog):
         for key in ("size", "file", "created", "compress", "scope", "fs",
                     "remark"):
             value = QLabel("-")
-            value.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            value.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.info_labels[key] = value
         self.info_labels["remark"].setWordWrap(True)
-        self.info_labels["remark"].setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.info_labels["remark"].setAlignment(Qt.AlignmentFlag.AlignLeft
+                                                | Qt.AlignmentFlag.AlignTop)
         self.info_form.addRow(tr("Kaynak boyut:"), self.info_labels["size"])
         self.info_form.addRow(tr("Yedek boyut:"), self.info_labels["file"])
         self.info_form.addRow(tr("Olusturma:"), self.info_labels["created"])
@@ -362,7 +364,7 @@ class BackupDialog(QDialog):
         self.content.setHeaderLabels(
             [tr("Ad"), tr("Dosya Sistemi"), tr("Etiket"), tr("Boyut")])
         self.content.setRootIsDecorated(True)
-        self.content.header().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.content.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         for col, width in ((1, 100), (2, 120), (3, 90)):
             self.content.setColumnWidth(col, width)
         content_layout.addWidget(self.content, 1)
@@ -399,7 +401,7 @@ class BackupDialog(QDialog):
         self.target_caption = QLabel("")
         pick_row.addWidget(self.target_caption)
         self.target_label = QLabel("-")
-        self.target_label.setTextFormat(Qt.RichText)
+        self.target_label.setTextFormat(Qt.TextFormat.RichText)
         self.target_label.setWordWrap(True)
         pick_row.addWidget(self.target_label, 1)
         self.btn_pick_target = QPushButton(app_icon("disk"), tr("Disk sec..."))
@@ -456,7 +458,7 @@ class BackupDialog(QDialog):
         self.tree.setHeaderLabels([tr("Hedef"), tr("Boyut"), tr("Durum")])
         self.tree.setIconSize(QSize(18, 18))
         self.tree.setRootIsDecorated(True)
-        self.tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.tree.setColumnWidth(1, 110)
         self.tree.setColumnWidth(2, 220)
         self.tree.currentItemChanged.connect(lambda *_: self._on_target_changed())
@@ -515,7 +517,7 @@ class BackupDialog(QDialog):
 
         self.warn = QLabel("")
         self.warn.setWordWrap(True)
-        self.warn.setTextFormat(Qt.RichText)
+        self.warn.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(self.warn)
         return group
 
@@ -629,7 +631,7 @@ class BackupDialog(QDialog):
         if selected_item is None:
             selected_item = self.tree.topLevelItem(0)
             while selected_item is not None and \
-                    selected_item.data(0, Qt.UserRole) is None:
+                    selected_item.data(0, Qt.ItemDataRole.UserRole) is None:
                 selected_item = (self.tree.itemBelow(selected_item))
         # Yedek alirken kaynak onceden secilir; geri yuklemede hedef ASLA
         # kendiliginden secilmez (bkz. `_sync_target_state`).
@@ -645,7 +647,7 @@ class BackupDialog(QDialog):
                                [target.label,
                                 human_size(target.size) if target.size else "",
                                 extra])
-        node.setData(0, Qt.UserRole, index)
+        node.setData(0, Qt.ItemDataRole.UserRole, index)
         if icon is not None:
             node.setIcon(0, icon)
         return node
@@ -667,7 +669,7 @@ class BackupDialog(QDialog):
         item = self.tree.currentItem()
         if item is None:
             return None
-        index = item.data(0, Qt.UserRole)
+        index = item.data(0, Qt.ItemDataRole.UserRole)
         if index is None:
             return None
         return self.targets[index]
@@ -970,7 +972,7 @@ class BackupDialog(QDialog):
 
     def _select_first_target(self) -> None:
         item = self.tree.topLevelItem(0)
-        while item is not None and (item.data(0, Qt.UserRole) is None
+        while item is not None and (item.data(0, Qt.ItemDataRole.UserRole) is None
                                     or item.isHidden()):
             item = self.tree.itemBelow(item)
         if item is not None:
@@ -1086,7 +1088,7 @@ class BackupDialog(QDialog):
             return
         target = self.current_target()
         dialog = RestoreLayoutDialog(self.plan, target.label, self)
-        if dialog.exec_() != QDialog.Accepted:
+        if dialog.exec() != QDialog.DialogCode.Accepted:
             return
         self.plan = dialog.result_layout()
         self._on_target_changed()
@@ -1251,8 +1253,9 @@ class BackupDialog(QDialog):
                 tr("Geri yukleme yarida kesilirse hedef tutarsiz kalir ve "
                    "yeniden geri yuklenene ya da bicimlendirilene kadar "
                    "kullanilamaz. Yine de durdurulsun mu?"),
-                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if answer != QMessageBox.Yes or not worker.isRunning():
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+            if answer != QMessageBox.StandardButton.Yes or not worker.isRunning():
                 return
         worker.request_stop()
         self.btn_start.setText(tr("Durduruluyor..."))
@@ -1508,8 +1511,8 @@ class BackupDialog(QDialog):
             return
         super().reject()
 
-    def exec_(self) -> int:
-        result = super().exec_()
+    def exec(self) -> int:
+        result = super().exec()
         if self._worker is not None:
             self._worker.wait()
         return result

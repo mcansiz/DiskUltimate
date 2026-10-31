@@ -7,8 +7,8 @@ parcaciginda yapilmistir; burada yalnizca sonucu cizilir.
 """
 from __future__ import annotations
 
-from PyQt5.QtWidgets import (QCheckBox, QDialog, QDialogButtonBox, QLabel,
-                             QRadioButton, QVBoxLayout)
+from ..qt.QtWidgets import (QCheckBox, QDialog, QDialogButtonBox, QLabel,
+                            QRadioButton, QVBoxLayout)
 
 from ...core import ntfsfix
 from ...i18n import tr
@@ -85,11 +85,12 @@ class NtfsFixDialog(QDialog):
         warning.setWordWrap(True)
         duzen.addWidget(warning)
 
-        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        ok_button = self.buttons.button(QDialogButtonBox.Ok)
+        self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                        | QDialogButtonBox.StandardButton.Cancel)
+        ok_button = self.buttons.button(QDialogButtonBox.StandardButton.Ok)
         ok_button.setText(tr("Kuyruga ekle"))
         ok_button.setProperty("primary", True)
-        self.buttons.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
+        self.buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Iptal"))
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
         duzen.addWidget(self.buttons)
@@ -129,7 +130,7 @@ class NtfsFixDialog(QDialog):
     def _refresh(self) -> None:
         """Hazirda bekletme varken onay kutusu secilmeden onarim baslamaz."""
         h = self.health
-        ok_button = self.buttons.button(QDialogButtonBox.Ok)
+        ok_button = self.buttons.button(QDialogButtonBox.StandardButton.Ok)
         reason = ""
         if not h.repairable:
             reason = h.error or tr("NTFS onyukleme sektoru bulunamadi")

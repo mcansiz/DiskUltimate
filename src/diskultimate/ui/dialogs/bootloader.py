@@ -17,14 +17,14 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFontDatabase
-from PyQt5.QtWidgets import (QAbstractItemView, QCheckBox, QDialog,
-                             QDialogButtonBox, QFormLayout, QGroupBox,
-                             QHBoxLayout, QHeaderView, QInputDialog, QLabel,
-                             QMessageBox, QPlainTextEdit, QPushButton,
-                             QSplitter, QTreeWidget, QTreeWidgetItem,
-                             QVBoxLayout, QWidget)
+from ..qt.QtCore import Qt
+from ..qt.QtGui import QFontDatabase
+from ..qt.QtWidgets import (QAbstractItemView, QCheckBox, QDialog,
+                            QDialogButtonBox, QFormLayout, QGroupBox,
+                            QHBoxLayout, QHeaderView, QInputDialog, QLabel,
+                            QMessageBox, QPlainTextEdit, QPushButton,
+                            QSplitter, QTreeWidget, QTreeWidgetItem,
+                            QVBoxLayout, QWidget)
 
 from ...core.fsregistry import fs_display
 from ...core import bootloader as bl
@@ -66,7 +66,7 @@ class BootloaderDialog(QDialog):
         self.header.setWordWrap(True)
         layout.addWidget(self.header)
 
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
         layout.addWidget(splitter, 1)
 
         # -- sol: bulunan isletim sistemleri -----------------------------
@@ -76,8 +76,8 @@ class BootloaderDialog(QDialog):
         self.os_tree.setHeaderLabels([tr("Bolum"), tr("Isletim sistemi"),
                                       tr("Dosya sistemi"), tr("Boyut")])
         self.os_tree.setRootIsDecorated(False)
-        self.os_tree.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.os_tree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.os_tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.os_tree.header().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         left_layout.addWidget(self.os_tree)
         splitter.addWidget(left)
 
@@ -143,15 +143,15 @@ class BootloaderDialog(QDialog):
         self.log = QPlainTextEdit()
         self.log.setReadOnly(True)
         self.log.setMaximumHeight(120)
-        self.log.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+        self.log.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
         layout.addWidget(self.log)
 
         buttons = QDialogButtonBox()
         self.btn_refresh = buttons.addButton(tr("Yenile"),
-                                             QDialogButtonBox.ActionRole)
+                                             QDialogButtonBox.ButtonRole.ActionRole)
         self.btn_refresh.setIcon(app_icon("refresh"))
         self.btn_refresh.clicked.connect(self.refresh)
-        close = buttons.addButton(QDialogButtonBox.Close)
+        close = buttons.addButton(QDialogButtonBox.StandardButton.Close)
         close.setText(tr("Kapat"))
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -214,7 +214,7 @@ class BootloaderDialog(QDialog):
                 label += tr(" · EFI")
             item.setText(2, label)
             item.setText(3, human_size(entry.size) if entry.size else "-")
-            item.setData(0, Qt.UserRole, entry.index)
+            item.setData(0, Qt.ItemDataRole.UserRole, entry.index)
             for loader in entry.loaders:
                 child = QTreeWidgetItem(item)
                 child.setText(1, loader)
@@ -280,8 +280,9 @@ class BootloaderDialog(QDialog):
                "Islem hemen yapilmaz: bekleyen islemlere eklenir ve "
                "\"Uygula\" dediginizde calisir.",
                self.session.name, code.label),
-            QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-        if answer != QMessageBox.Ok:
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel)
+        if answer != QMessageBox.StandardButton.Ok:
             return
         operation = ops.Operation(
             kind="clear_boot_code",
@@ -321,9 +322,10 @@ class BootloaderDialog(QDialog):
             question = tr("GRUB <b>{}</b> diskine kurulacak.<br><br>Diskin "
                           "ilk sektoru degisir. Devam edilsin mi?", device)
         answer = QMessageBox.question(self, tr("GRUB kur"), question,
-                                      QMessageBox.Yes | QMessageBox.No,
-                                      QMessageBox.No)
-        if answer != QMessageBox.Yes:
+                                      QMessageBox.StandardButton.Yes
+                                      | QMessageBox.StandardButton.No,
+                                      QMessageBox.StandardButton.No)
+        if answer != QMessageBox.StandardButton.Yes:
             return
 
         def work(report):
@@ -393,8 +395,9 @@ class BootloaderDialog(QDialog):
             self, tr("Geri yukleme onayi"),
             tr("Su anki GRUB yapilandirmasi <b>{}</b> yedegiyle "
                "degistirilecek.<br><br>Mevcut ayarlar kaybolur.", stamp),
-            QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-        if answer != QMessageBox.Ok:
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel)
+        if answer != QMessageBox.StandardButton.Ok:
             return
 
         def work(report):
@@ -438,8 +441,9 @@ class BootloaderDialog(QDialog):
                           ", ".join(targets))
         answer = QMessageBox.question(
             self, tr("Tumunu onar"), question,
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if answer != QMessageBox.Yes:
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if answer != QMessageBox.StandardButton.Yes:
             return
 
         def work(report):

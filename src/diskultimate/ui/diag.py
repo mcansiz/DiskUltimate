@@ -16,8 +16,8 @@ from __future__ import annotations
 import sys
 from typing import Optional
 
-from PyQt5.QtCore import (QObject, QTimer, QtCriticalMsg, QtFatalMsg,
-                          QtWarningMsg, pyqtSignal, qInstallMessageHandler)
+from .qt.QtCore import (QObject, QtMsgType, QTimer, pyqtSignal,
+                        qInstallMessageHandler)
 
 from ..core import diagnostics
 
@@ -69,7 +69,8 @@ class UiDiagnostics(QObject):
 
 def _qt_message(mode, context, message: str) -> None:
     text = f"Qt: {message}"
-    if mode in (QtWarningMsg, QtCriticalMsg, QtFatalMsg):
+    if mode in (QtMsgType.QtWarningMsg, QtMsgType.QtCriticalMsg,
+                QtMsgType.QtFatalMsg):
         diagnostics.warn(text)
     else:
         diagnostics.debug(text)

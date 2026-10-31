@@ -33,8 +33,8 @@ os.environ["DISKULTIMATE_NO_ELEVATION_PROMPT"] = "1"
 # Duman testi aga cikmaz (acilistaki guncelleme denetimi, ADR 0090)
 os.environ["DISKULTIMATE_UPDATE_CHECK"] = "0"
 
-from PyQt5.QtCore import QRect, Qt  # noqa: E402
-from PyQt5.QtWidgets import QApplication  # noqa: E402
+from diskultimate.ui.qt.QtCore import QRect, Qt  # noqa: E402
+from diskultimate.ui.qt.QtWidgets import QApplication  # noqa: E402
 
 from diskultimate import i18n  # noqa: E402
 from diskultimate.core.formatter import available_kinds  # noqa: E402
@@ -152,8 +152,8 @@ def sozde_denetimi(app, hedef: str, kaynak=None) -> None:
         olmali. Olmayan varsa test **duser**.
       * **Bilgi listesi** — kalan metinler basilir; cogu veridir, gozle bakilir.
     """
-    from PyQt5.QtWidgets import (QAbstractButton, QGroupBox, QLabel, QMenu,
-                                 QTabWidget)
+    from diskultimate.ui.qt.QtWidgets import (QAbstractButton, QGroupBox, QLabel, QMenu,
+                                              QTabWidget)
 
     onceki = i18n.current_language()
     i18n.set_language(i18n.PSEUDO_LANGUAGE, remember=False)
@@ -243,14 +243,14 @@ def dil_denetimi(pencere, app, hedef: str) -> None:
     if not diller:
         print("  (ceviri dosyasi yok; dil denetimi atlandi)")
         return
-    from PyQt5.QtWidgets import QMessageBox
+    from diskultimate.ui.qt.QtWidgets import QMessageBox
 
     def dugmeler():
         """Standart onay kutusunun Evet/Hayir yazilari (& isareti atilir)."""
-        kutu = QMessageBox(QMessageBox.Question, "t", "t",
-                           QMessageBox.Yes | QMessageBox.No)
+        kutu = QMessageBox(QMessageBox.Icon.Question, "t", "t",
+                           QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         metin = [kutu.button(b).text().replace("&", "")
-                 for b in (QMessageBox.Yes, QMessageBox.No)]
+                 for b in (QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)]
         kutu.deleteLater()
         return metin
 
@@ -294,7 +294,7 @@ def qt_metin_denetimi(qt_i18n, durum: dict) -> None:
     (bos) ceviri sayip dosya penceresinin butun etiketlerini sildi ve her
     acilista "QString::arg: Argument missing" uyarisi basti (ADR 0073).
     """
-    from PyQt5.QtCore import QCoreApplication
+    from diskultimate.ui.qt.QtCore import QCoreApplication
     ornekler = (("QFileDialog", "File &name:"), ("QFileDialog", "%1 File"),
                 ("QFileDialog", "Look in:"), ("QFileSystemModel", "Name"))
     for ctx, kaynak in ornekler:
@@ -595,7 +595,7 @@ def main() -> int:
         while yigin:
             dugum = yigin.pop()
             yigin += [dugum.child(j) for j in range(dugum.childCount())]
-            if dugum.data(0, Qt.UserRole) == ("part", (id(pencere.session), 1)):
+            if dugum.data(0, Qt.ItemDataRole.UserRole) == ("part", (id(pencere.session), 1)):
                 bulunan.append(dugum.text(0))
     assert bulunan and esp.os_name in bulunan[0], (bulunan, esp.os_name)
     hucre = pencere.part_table.item(0, OS_COLUMN)
@@ -832,11 +832,11 @@ def main() -> int:
     # Gorev penceresi kapaninca saniyelik sayaci durur ve pencere silinir.
     # Eskiden ikisi de olmuyordu: her run_task arkada calisan bir sayac
     # birakiyordu, macOS'ta silinmis etikete yazip SIGSEGV veriyordu.
-    from PyQt5.QtCore import QCoreApplication, QEvent
+    from diskultimate.ui.qt.QtCore import QCoreApplication, QEvent
     from diskultimate.ui.dialogs.task import run_task
     ok, deger = run_task(pencere, "Sayac denemesi", lambda report: 7)
     assert ok and deger == 7, (ok, deger)
-    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
     app.processEvents()
     calisan = [d for d in pencere.findChildren(TaskDialog) if d._tick.isActive()]
     assert not calisan, f"{len(calisan)} gorev penceresinin sayaci calisiyor"
@@ -938,7 +938,7 @@ def main() -> int:
     # Ad bilerek `hedef` degil: disaridaki `hedef` ekran goruntusu dizinidir
     # ve golgelemek sonraki `kaydet()` cagrisini bozar.
     windows_satiri = [d11.tree.topLevelItem(i) for i in range(3)
-                      if d11.tree.topLevelItem(i).data(0, Qt.UserRole) == 0]
+                      if d11.tree.topLevelItem(i).data(0, Qt.ItemDataRole.UserRole) == 0]
     assert windows_satiri, "Boot0000 listede yok"
     d11.tree.setCurrentItem(windows_satiri[0])
     app.processEvents()
@@ -997,8 +997,8 @@ def main() -> int:
     # --- ana haritada tutamaklar: surukle -> kuyruga boyutlandirma adimi ---
     # Harita geri yukleme seridiyle AYNI denetleyiciyi ve ortak modeli
     # kullanir (ADR 0049). Diske hicbir sey yazilmaz; birakinca kuyruga girer.
-    from PyQt5.QtCore import QEvent, QPoint
-    from PyQt5.QtGui import QMouseEvent
+    from diskultimate.ui.qt.QtCore import QEvent, QPoint
+    from diskultimate.ui.qt.QtGui import QMouseEvent
     import time
     harita = pencere.disk_map
     fat_bolum = next(p for p in pencere.session.partitions
@@ -1033,12 +1033,12 @@ def main() -> int:
     genislik = max(12, blok.rect.width() // 3)
 
     def surukle(x0, x1):
-        for tur, x in ((QEvent.MouseButtonPress, x0), (QEvent.MouseMove, x1),
-                       (QEvent.MouseButtonRelease, x1)):
+        for tur, x in ((QEvent.Type.MouseButtonPress, x0), (QEvent.Type.MouseMove, x1),
+                       (QEvent.Type.MouseButtonRelease, x1)):
             app.sendEvent(harita, QMouseEvent(
-                tur, QPoint(x, y), Qt.LeftButton,
-                Qt.NoButton if tur == QEvent.MouseButtonRelease
-                else Qt.LeftButton, Qt.NoModifier))
+                tur, QPoint(x, y), Qt.MouseButton.LeftButton,
+                Qt.MouseButton.NoButton if tur == QEvent.Type.MouseButtonRelease
+                else Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier))
         app.processEvents()
 
     boyut_oncesi = os.path.getsize(goruntu)
@@ -1169,13 +1169,13 @@ def main() -> int:
     # --- sag tik menuleri: her islem AIT OLDUGU dugumde (ADR 0036) ---
     # "Fiziksel Diskler" bir kategori basligidir; bolum tablosu olusturma
     # orada durunca islem sag tiklanan diske degil, o sirada etkin olan
-    # kaynaga gidiyordu. Menuler exec_ yakalanarak okunur; hicbir pencere
+    # kaynaga gidiyordu. Menuler exec yakalanarak okunur; hicbir pencere
     # acilmaz ve hicbir aygita dokunulmaz.
-    from PyQt5.QtWidgets import QMenu
+    from diskultimate.ui.qt.QtWidgets import QMenu
 
     yakalanan = []
-    orijinal_exec = QMenu.exec_
-    QMenu.exec_ = lambda self, *a, **k: yakalanan.append(
+    orijinal_exec = QMenu.exec
+    QMenu.exec = lambda self, *a, **k: yakalanan.append(
         [act.text() for act in self.actions() if act.text()])
 
     def _menu_ac(hedef_tur):
@@ -1198,7 +1198,7 @@ def main() -> int:
         assert any("Goruntu boyutunu" in m for m in oturum_menu), oturum_menu
         assert any("yedekle" in m.lower() for m in oturum_menu), oturum_menu
     finally:
-        QMenu.exec_ = orijinal_exec
+        QMenu.exec = orijinal_exec
     print(f"  (sag tik: kategori basliginda {len(kok_menu)} giris, "
           f"goruntu dugumunde {len(oturum_menu)} giris)")
 
@@ -1542,7 +1542,7 @@ def main() -> int:
     # Cubuk iki yerde cizilir (harita blogu, boyutlandirma seridi) ve tek bir
     # yardimcidan gelir. Burada sinanan sey renk SECIMIDIR: dolu bir bolum
     # uyari renginde olmali ve yazi her zemin uzerinde okunur kalmali.
-    from PyQt5.QtGui import QColor, QPainter, QPixmap
+    from diskultimate.ui.qt.QtGui import QColor, QPainter, QPixmap
     from diskultimate.ui.theme import (USAGE_FULL, USAGE_FULL_AT, USAGE_WARN,
                                        USAGE_WARN_AT, draw_usage_bar,
                                        fs_color, readable_text, usage_fill)
@@ -1701,9 +1701,10 @@ def main() -> int:
     assert d11.target_group.isEnabled(), "yedek yuklendi ama hedef alani pasif"
     assert "Hedef diski" in d11._problem(), d11._problem()
     goruntu_dugumu = next(
-        it for it in d11.tree.findItems("*", Qt.MatchWildcard | Qt.MatchRecursive)
-        if it.data(0, Qt.UserRole) is not None
-        and d11.targets[it.data(0, Qt.UserRole)].kind == "image")
+        it for it in d11.tree.findItems("*", Qt.MatchFlag.MatchWildcard
+                                        | Qt.MatchFlag.MatchRecursive)
+        if it.data(0, Qt.ItemDataRole.UserRole) is not None
+        and d11.targets[it.data(0, Qt.ItemDataRole.UserRole)].kind == "image")
     d11.tree.setCurrentItem(goruntu_dugumu)
     app.processEvents()
     # Not yalnizca yedek ALINIRKEN yazilir; geri yuklemede salt okunur
@@ -1716,19 +1717,19 @@ def main() -> int:
     assert d11.plan is not None, "geri yukleme yerlesimi kurulmadi"
     # Harita yerine tutamakli serit; kenar surukleme plani degistirir
     assert d11.layout_bar.isVisible() and not d11.map.isVisible()
-    from PyQt5.QtCore import QPoint
-    from PyQt5.QtGui import QMouseEvent
-    from PyQt5.QtCore import QEvent
+    from diskultimate.ui.qt.QtCore import QPoint
+    from diskultimate.ui.qt.QtGui import QMouseEvent
+    from diskultimate.ui.qt.QtCore import QEvent
     serit = d11.layout_bar
     son_kenar = [k for k in serit.edit.edges() if k[1] == "end"][-1]
     x0 = serit._x(son_kenar[0])
     y0 = serit._track().center().y()
     once_plan = [(p.new_start, p.new_count) for p in d11.plan.parts]
-    for tur, x in ((QEvent.MouseButtonPress, x0), (QEvent.MouseMove, x0 - 60),
-                   (QEvent.MouseButtonRelease, x0 - 60)):
-        olay = QMouseEvent(tur, QPoint(x, y0), Qt.LeftButton,
-                           Qt.LeftButton if tur != QEvent.MouseButtonRelease
-                           else Qt.NoButton, Qt.NoModifier)
+    for tur, x in ((QEvent.Type.MouseButtonPress, x0), (QEvent.Type.MouseMove, x0 - 60),
+                   (QEvent.Type.MouseButtonRelease, x0 - 60)):
+        olay = QMouseEvent(tur, QPoint(x, y0), Qt.MouseButton.LeftButton,
+                           Qt.MouseButton.LeftButton if tur != QEvent.Type.MouseButtonRelease
+                           else Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier)
         app.sendEvent(serit, olay)
     app.processEvents()
     sonra_plan = [(p.new_start, p.new_count) for p in d11.plan.parts]
@@ -1949,7 +1950,7 @@ def main() -> int:
         disk_dugumu = hp.tree.topLevelItem(0).child(0)
         assert disk_dugumu.childCount() == 2,             f"diskin altinda bolumler gorunmedi: {disk_dugumu.childCount()}"
         assert "ONYUKLEME" in disk_dugumu.child(0).text(0),             disk_dugumu.child(0).text(0)
-        tur, deger = disk_dugumu.child(1).data(0, Qt.UserRole)
+        tur, deger = disk_dugumu.child(1).data(0, Qt.ItemDataRole.UserRole)
         assert tur == "physpart" and deger == ("/sahte/disk0", 2), (tur, deger)
         # Genel bakis seridi de ayni bolumleri cizmeli
         hp.disk_overview.resize(900, 200)
@@ -2002,9 +2003,12 @@ def main() -> int:
     sozde_denetimi(app, hedef, pencere)
 
     pencere.close_image()
-    from PyQt5.QtGui import QFontDatabase
-    aile_sayisi = len(QFontDatabase().families())
-    print(f"\nPlatform: {app.platformName()} | stil: {app.style().objectName()} "
+    from diskultimate.ui import qt
+    from diskultimate.ui.qt.QtGui import QFontDatabase
+    aile_sayisi = len(QFontDatabase.families() if qt.QT6
+                      else QFontDatabase().families())  # qt6_check: izin
+    print(f"\nPlatform: {app.platformName()} | Qt: {qt.API} {qt.QT_VERSION_STR} "
+          f"| stil: {app.style().objectName()} "
           f"| font ailesi: {aile_sayisi}")
     if aile_sayisi == 0:
         print("UYARI: Hicbir font yuklenemedi; goruntulerde metin GORUNMEZ.")

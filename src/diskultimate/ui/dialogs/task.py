@@ -4,9 +4,9 @@ from __future__ import annotations
 import time
 from typing import Callable, Optional
 
-from PyQt5.QtCore import QThread, Qt, QTimer, pyqtSignal
-from PyQt5.QtWidgets import (QApplication, QDialog, QLabel, QLayout,
-                             QProgressBar, QVBoxLayout)
+from ..qt.QtCore import QThread, Qt, QTimer, pyqtSignal
+from ..qt.QtWidgets import (QApplication, QDialog, QLabel, QLayout,
+                            QProgressBar, QVBoxLayout)
 from ...i18n import tr
 
 
@@ -101,14 +101,14 @@ class TaskDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint)
         self.result_value = None
         self.error: Optional[str] = None
         self.power_after: Optional[str] = None
 
         layout = QVBoxLayout(self)
         # Boyut icerikten: guc secenekleri satiri eklenince pencere uzar.
-        layout.setSizeConstraint(QLayout.SetFixedSize)
+        layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
         layout.setContentsMargins(18, 16, 18, 16)
         self.label = QLabel(tr("Hazirlaniyor..."))
         layout.addWidget(self.label)
@@ -172,14 +172,14 @@ class TaskDialog(QDialog):
             self.power.end(False)
         self.reject()
 
-    def exec_(self) -> int:
+    def exec(self) -> int:
         QTimer.singleShot(0, self.update)
         self._tick.start()
         if self.power is not None:
             self.power.begin()
         self.worker.start()
         try:
-            result = super().exec_()
+            result = super().exec()
         finally:
             # Pencere kapandiktan sonra sayac durur: eskiden hic durmuyordu,
             # her gorev penceresi saniyede bir calisan bir sayac birakiyordu;
@@ -203,7 +203,7 @@ def run_task(parent, title: str, func: Callable, power: str = "",
     """
     dlg = TaskDialog(parent, title, func, power=power)
     try:
-        ok = dlg.exec_() == QDialog.Accepted
+        ok = dlg.exec() == QDialog.DialogCode.Accepted
         kind = dlg.power_after
         result = (ok, (dlg.result_value if ok else dlg.error))
     finally:

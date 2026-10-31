@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Dict
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from .qt.QtCore import QThread, pyqtSignal
 
 from ..core import diagnostics
 from ..core.session import DiskSession

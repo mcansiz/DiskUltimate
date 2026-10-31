@@ -18,10 +18,10 @@ from __future__ import annotations
 
 from typing import List, Optional, Tuple
 
-from PyQt5.QtCore import QRect, QSize, Qt, pyqtSignal
-from PyQt5.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
-                         QPen, QPixmap)
-from PyQt5.QtWidgets import QSizePolicy, QWidget
+from ..qt.QtCore import QRect, QSize, Qt, pyqtSignal
+from ..qt.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
+                        QPen, QPixmap)
+from ..qt.QtWidgets import QSizePolicy, QWidget
 
 from ...core.fsregistry import fs_display
 from ...core.ptable import FreeRegion, Partition, human_size
@@ -61,9 +61,9 @@ class DiskMapWidget(QWidget):
         super().__init__(parent)
         self.setMinimumHeight(128)
         self.setMaximumHeight(152)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMouseTracking(True)
-        self.setContextMenuPolicy(Qt.DefaultContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.DefaultContextMenu)
         self._partitions: List[Partition] = []
         self._free: List[FreeRegion] = []
         self._blocks: List[Block] = []
@@ -161,7 +161,7 @@ class DiskMapWidget(QWidget):
     # -- cizim ---------------------------------------------------------------
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         painter.fillRect(self.rect(), palette_color(self, "base"))
 
         # ust bilgi seridi
@@ -169,11 +169,12 @@ class DiskMapWidget(QWidget):
             painter.setPen(palette_color(self, "dim"))
             f = painter.font(); f.setPointSize(8); painter.setFont(f)
             painter.drawText(QRect(BLOCK_MARGIN, 4, self.width() - 16, 18),
-                             Qt.AlignLeft | Qt.AlignVCenter, self._disk_name)
+                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                             self._disk_name)
 
         if not self._blocks:
             painter.setPen(palette_color(self, "dim"))
-            painter.drawText(self.rect(), Qt.AlignCenter,
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter,
                              tr("Disk goruntusu acik degil"))
             painter.end()
             return
@@ -234,7 +235,7 @@ class DiskMapWidget(QWidget):
             painter.setPen(QPen(vurgu, 2))
         else:
             painter.setPen(QPen(darken(palette_color(self, "window"), 130), 1))
-        painter.setBrush(Qt.NoBrush)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawRect(rect.adjusted(0, 0, -1, -1))
 
         # Doluluk cubugu blogun ustunde durur; yuzde cubugun ortasindadir.
@@ -258,18 +259,18 @@ class DiskMapWidget(QWidget):
         plan = plan_label(block.obj) if block.kind == "part" else ""
         rozet_genisligi = 0
         if plan:
-            painter.setPen(QPen(QColor(PLAN_COLOR), 2, Qt.DashLine))
-            painter.setBrush(Qt.NoBrush)
+            painter.setPen(QPen(QColor(PLAN_COLOR), 2, Qt.PenStyle.DashLine))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRect(rect.adjusted(2, 2, -3, -3))
             f = painter.font(); f.setPointSize(7); f.setBold(True)
             painter.setFont(f)
-            genislik = painter.fontMetrics().width(plan) + 10
+            genislik = painter.fontMetrics().horizontalAdvance(plan) + 10
             if rect.width() > genislik + 60:
                 rozet = QRect(rect.right() - genislik - 6, rect.top() + 31,
                               genislik, 15)
                 painter.fillRect(rozet, QColor(PLAN_COLOR))
                 painter.setPen(QColor("#ffffff"))
-                painter.drawText(rozet, Qt.AlignCenter, plan)
+                painter.drawText(rozet, Qt.AlignmentFlag.AlignCenter, plan)
                 rozet_genisligi = genislik + 8
 
         # Yazi paletten gelir: zemin artik acik panel, dosya sistemi rengi degil.
@@ -287,31 +288,32 @@ class DiskMapWidget(QWidget):
             amblem = 18
         metin_alani = QRect(sol + amblem, rect.top() + 33,
                             genislik_yazi - rozet_genisligi - amblem, 17)
-        painter.drawText(metin_alani, Qt.AlignLeft | Qt.AlignVCenter,
+        painter.drawText(metin_alani, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
                          self._elide(painter, title, metin_alani.width()))
 
         f.setBold(False); f.setPointSize(8); painter.setFont(f)
         painter.setPen(soluk_renk)
         fs_alani = QRect(sol, rect.top() + 52, genislik_yazi, 15)
-        painter.drawText(fs_alani, Qt.AlignLeft | Qt.AlignVCenter,
+        painter.drawText(fs_alani, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
                          self._elide(painter, tip, genislik_yazi))
         # Isletim sisteminin bu bolumu bagladigi yer (Windows'ta surucu
         # harfi). Dosya sistemi adinin sagina, arta kalan yere yazilir;
         # sigmiyorsa hic yazilmaz — kirpilmis bir yol yanlis okunur.
         nokta = getattr(block.obj, "mount_point", "") if block.kind == "part" else ""
         if nokta:
-            kalan = genislik_yazi - painter.fontMetrics().width(tip) - 12
+            kalan = genislik_yazi - painter.fontMetrics().horizontalAdvance(tip) - 12
             if kalan >= 34:
                 painter.setPen(palette_color(self, "highlight"))
                 fm = painter.fontMetrics()
-                yazi = (nokta if fm.width(nokta) <= kalan
-                        else fm.elidedText(nokta, Qt.ElideLeft, kalan))
-                painter.drawText(fs_alani, Qt.AlignRight | Qt.AlignVCenter, yazi)
+                yazi = (nokta if fm.horizontalAdvance(nokta) <= kalan
+                        else fm.elidedText(nokta, Qt.TextElideMode.ElideLeft, kalan))
+                painter.drawText(fs_alani, Qt.AlignmentFlag.AlignRight
+                                 | Qt.AlignmentFlag.AlignVCenter, yazi)
         painter.setPen(metin_rengi)
         if block.kind == "part":
             lower = self._size_line(painter, block.obj, genislik_yazi)
         painter.drawText(QRect(sol, rect.top() + 69, genislik_yazi, 15),
-                         Qt.AlignLeft | Qt.AlignVCenter,
+                         Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
                          self._elide(painter, lower, genislik_yazi))
 
     @staticmethod
@@ -325,14 +327,14 @@ class DiskMapWidget(QWidget):
         fm = painter.fontMetrics()
         for candidate in (f"{total} · " + tr("{} kullanilan", used),
                           f"{used} / {total}"):
-            if fm.width(candidate) <= width:
+            if fm.horizontalAdvance(candidate) <= width:
                 return candidate
         return total
 
     @staticmethod
     def _elide(painter: QPainter, text: str, width: int) -> str:
         fm = painter.fontMetrics()
-        return fm.elidedText(text, Qt.ElideRight, max(10, width))
+        return fm.elidedText(text, Qt.TextElideMode.ElideRight, max(10, width))
 
     def _is_selected(self, block: Block) -> bool:
         if not self._selected:
@@ -352,7 +354,7 @@ class DiskMapWidget(QWidget):
         return None
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton and self.edit.press(event.pos()):
+        if event.button() == Qt.MouseButton.LeftButton and self.edit.press(event.pos()):
             return
         block = self._block_at(event.pos())
         if block is None:
@@ -382,7 +384,8 @@ class DiskMapWidget(QWidget):
         block = self._block_at(event.pos())
         if block is not self._hover:
             self._hover = block
-            self.setCursor(Qt.PointingHandCursor if block else Qt.ArrowCursor)
+            self.setCursor(Qt.CursorShape.PointingHandCursor if block
+                           else Qt.CursorShape.ArrowCursor)
             self.setToolTip(self._tooltip(block) if block else "")
             self.update()
 

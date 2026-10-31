@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from PyQt5.QtCore import QObject, QThread, pyqtSignal
+from .qt.QtCore import QObject, QThread, pyqtSignal
 
 from ..core import diagnostics
 from ..core.resize import FsResizeInfo, fs_resize_info_for

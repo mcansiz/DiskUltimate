@@ -261,4 +261,5 @@ Uc kural:
 | Yeni dil | `i18n/catalogs/<kod>.json` + `i18n.LANGUAGE_NAMES` girisi (ADR 0027; ayrinti: `.claude/docs/i18n-raporu.md`) |
 | Yeni arayuz metni | `tr("...")` ile sarilir; modul duzeyindeyse `mark("...")` |
 | Yeni `QAction` | `_build_actions()` kurar, metni `_retranslate_actions()` yazar |
+| Yeni Qt importu | `ui/qt` uzerinden (`from ..qt.QtGui import ...`); enum tam nitelikli — `tests.qt6_check` (ADR 0102) |
 | Diskten acilmadan okunacak yeni bilgi | `DiskSession.survey_disk` (salt okunur, aygiti hemen birakir) |

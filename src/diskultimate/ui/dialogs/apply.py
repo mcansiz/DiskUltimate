@@ -32,12 +32,12 @@ from __future__ import annotations
 import html
 from typing import Callable, Optional
 
-from PyQt5.QtCore import QSize, Qt, QThread, QTimer, pyqtSignal
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
-                             QHeaderView, QLabel, QProgressBar, QPushButton,
-                             QTableWidget, QTableWidgetItem, QVBoxLayout,
-                             QWidget)
+from ..qt.QtCore import QSize, Qt, QThread, QTimer, pyqtSignal
+from ..qt.QtGui import QColor
+from ..qt.QtWidgets import (QAbstractItemView, QDialog, QHBoxLayout,
+                            QHeaderView, QLabel, QProgressBar, QPushButton,
+                            QTableWidget, QTableWidgetItem, QVBoxLayout,
+                            QWidget)
 
 from ...core import operations as ops
 from ..icons import icon as app_icon
@@ -115,26 +115,26 @@ class ApplyDialog(QDialog):
 
         self.header = QLabel(self._intro_text())
         self.header.setWordWrap(True)
-        self.header.setTextFormat(Qt.RichText)
+        self.header.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(self.header)
 
         self.table = QTableWidget(len(self._items), 4, self)
         self.table.setHorizontalHeaderLabels(
             [tr("Adim"), tr("Hedef"), tr("Durum"), tr("Ilerleme")])
         self.table.verticalHeader().setVisible(False)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.NoSelection)
-        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setShowGrid(False)
         self.table.setIconSize(QSize(20, 20))
         self.table.setAlternatingRowColors(True)
         # Odak cercevesi: tablo secilemez oldugu halde etkin hucrenin
         # etrafina noktali bir kutu ciziliyordu ve satiri sikisik
         # gosteriyordu.
-        self.table.setFocusPolicy(Qt.NoFocus)
+        self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.table.verticalHeader().setDefaultSectionSize(38)
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         header.setHighlightSections(False)
         self.table.setColumnWidth(1, 130)
         self.table.setColumnWidth(2, 140)
@@ -142,7 +142,7 @@ class ApplyDialog(QDialog):
         for column in (2, 3):
             head = self.table.horizontalHeaderItem(column)
             if head is not None:
-                head.setTextAlignment(int(Qt.AlignCenter))
+                head.setTextAlignment(int(Qt.AlignmentFlag.AlignCenter))
         self._bars = []
         for row, operation in enumerate(self._items):
             self._fill_row(row, operation)
@@ -152,13 +152,13 @@ class ApplyDialog(QDialog):
                                "dokunulmadi."))
         self.status.setWordWrap(True)
         self.status.setMinimumHeight(34)         # iki satirlik metin ziplamasin
-        self.status.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.status.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(self.status)
 
         self.overall_bar = QProgressBar()
         self.overall_bar.setRange(0, 100)
         self.overall_bar.setFormat(tr("Genel: %p%"))
-        self.overall_bar.setAlignment(Qt.AlignCenter)
+        self.overall_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.overall_bar.setMinimumHeight(24)    # yuzde metni cubuga sigsin
         layout.addWidget(self.overall_bar)
         layout.addSpacing(4)
@@ -206,7 +206,7 @@ class ApplyDialog(QDialog):
         self.table.setItem(row, 0, name_item)
         self.table.setItem(row, 1, QTableWidgetItem(operation.target))
         state_item = QTableWidgetItem(tr("Bekliyor"))
-        state_item.setTextAlignment(int(Qt.AlignCenter))
+        state_item.setTextAlignment(int(Qt.AlignmentFlag.AlignCenter))
         state_item.setForeground(palette_color(self, "dim"))
         self.table.setItem(row, 2, state_item)
         # Cubuk dogrudan hucreye konursa hucre kenarlarina yapisir ve
@@ -356,8 +356,8 @@ class ApplyDialog(QDialog):
             return
         super().reject()
 
-    def exec_(self) -> int:
-        outcome = super().exec_()
+    def exec(self) -> int:
+        outcome = super().exec()
         if self._worker is not None:
             self._worker.wait()
         return outcome
@@ -366,7 +366,7 @@ class ApplyDialog(QDialog):
 def run_apply(parent, session, queue, prepare=None, before_power=None):
     """Pencereyi acar; (calistirildi_mi, sonuc_veya_hata) dondurur."""
     dlg = ApplyDialog(parent, session, queue, prepare=prepare)
-    dlg.exec_()
+    dlg.exec()
     run_power_action(parent, dlg.power_after, prepare=before_power)
     if not dlg.started:
         return False, None

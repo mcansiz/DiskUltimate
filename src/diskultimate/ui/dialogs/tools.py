@@ -4,15 +4,15 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFontDatabase
-from PyQt5.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
-                             QDialogButtonBox, QFormLayout, QGroupBox,
-                             QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-                             QListWidget, QListWidgetItem, QPlainTextEdit,
-                             QPushButton,
-                             QRadioButton, QTreeWidget, QTreeWidgetItem,
-                             QVBoxLayout, QWidget)
+from ..qt.QtCore import Qt
+from ..qt.QtGui import QFontDatabase
+from ..qt.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
+                            QDialogButtonBox, QFormLayout, QGroupBox,
+                            QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+                            QListWidget, QListWidgetItem, QPlainTextEdit,
+                            QPushButton,
+                            QRadioButton, QTreeWidget, QTreeWidgetItem,
+                            QVBoxLayout, QWidget)
 
 from ...core.ptable import human_size
 from ...core.recovery import SIGNATURES
@@ -76,10 +76,11 @@ class WipeDialog(QDialog):
         warning.setWordWrap(True)
         duzen.addWidget(warning)
 
-        butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText(tr("Sil"))
-        butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
-        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
+        butonlar = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                    | QDialogButtonBox.StandardButton.Cancel)
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Sil"))
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setProperty("primary", True)
+        butonlar.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Iptal"))
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
@@ -121,11 +122,11 @@ class DeletedFilesDialog(QDialog):
 
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels([tr("Ad"), tr("Yol"), tr("Boyut"), tr("Durum"), tr("Kurtarilabilirlik")])
-        self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.tree.setAlternatingRowColors(True)
         self.tree.setRootIsDecorated(False)
         self.tree.setSortingEnabled(True)
-        self.tree.header().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         for oge in self.items:
             item = QTreeWidgetItem(self.tree)
             item.setText(0, oge.name)
@@ -133,9 +134,9 @@ class DeletedFilesDialog(QDialog):
             item.setText(2, human_size(oge.size))
             item.setText(3, oge.condition)
             item.setText(4, f"%{oge.confidence}")
-            item.setTextAlignment(2, Qt.AlignRight | Qt.AlignVCenter)
-            item.setTextAlignment(4, Qt.AlignRight | Qt.AlignVCenter)
-            item.setData(0, Qt.UserRole, oge)
+            item.setTextAlignment(2, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            item.setTextAlignment(4, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            item.setData(0, Qt.ItemDataRole.UserRole, oge)
             if oge.is_dir or oge.size == 0:
                 item.setDisabled(True)
         for i, w in enumerate((240, 0, 90, 170, 120)):
@@ -150,16 +151,17 @@ class DeletedFilesDialog(QDialog):
         lower.addStretch(1)
         duzen.addLayout(lower)
 
-        butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText(tr("Secilenleri kurtar..."))
-        butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
-        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Kapat"))
+        butonlar = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                    | QDialogButtonBox.StandardButton.Cancel)
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Secilenleri kurtar..."))
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setProperty("primary", True)
+        butonlar.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Kapat"))
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
 
     def selected(self) -> List:
-        return [i.data(0, Qt.UserRole) for i in self.tree.selectedItems()
+        return [i.data(0, Qt.ItemDataRole.UserRole) for i in self.tree.selectedItems()
                 if not i.isDisabled()]
 
 
@@ -183,14 +185,14 @@ class LostPartitionsDialog(QDialog):
                                                                      "sistemi"), tr("Etiket")])
         self.tree.setRootIsDecorated(False)
         self.tree.setAlternatingRowColors(True)
-        self.tree.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         for oge in self.items:
             item = QTreeWidgetItem(self.tree)
             item.setText(0, str(oge.start_lba))
             item.setText(1, human_size(oge.size))
             item.setText(2, oge.fs_type)
             item.setText(3, oge.label or "-")
-            item.setData(0, Qt.UserRole, oge)
+            item.setData(0, Qt.ItemDataRole.UserRole, oge)
         for i, w in enumerate((120, 110, 120, 200)):
             self.tree.setColumnWidth(i, w)
         duzen.addWidget(self.tree, 1)
@@ -201,17 +203,18 @@ class LostPartitionsDialog(QDialog):
         not_etiketi.setWordWrap(True)
         duzen.addWidget(not_etiketi)
 
-        butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText(tr("Tabloya ekle"))
-        butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
-        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Kapat"))
+        butonlar = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                    | QDialogButtonBox.StandardButton.Cancel)
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Tabloya ekle"))
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setProperty("primary", True)
+        butonlar.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Kapat"))
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
 
     def selected(self):
         selected = self.tree.selectedItems()
-        return selected[0].data(0, Qt.UserRole) if selected else None
+        return selected[0].data(0, Qt.ItemDataRole.UserRole) if selected else None
 
 
 class CarveOptionsDialog(QDialog):
@@ -230,31 +233,32 @@ class CarveOptionsDialog(QDialog):
                "imzalarindan kurtarma yapilir. Bicimlendirilmis alanlarda da "
                "calisir.", kapsam)))
         self.liste = QListWidget()
-        self.liste.setSelectionMode(QAbstractItemView.NoSelection)
+        self.liste.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         for imza in SIGNATURES:
             item = QListWidgetItem(
                 tr("{}  (.{})", tr(imza.label), imza.extension))
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            item.setCheckState(Qt.Checked if imza.key in
-                               ("jpg", "png", "pdf", "zip") else Qt.Unchecked)
-            item.setData(Qt.UserRole, imza.key)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Checked if imza.key in
+                               ("jpg", "png", "pdf", "zip") else Qt.CheckState.Unchecked)
+            item.setData(Qt.ItemDataRole.UserRole, imza.key)
             self.liste.addItem(item)
         duzen.addWidget(self.liste, 1)
 
         lower = QHBoxLayout()
         tumu = QPushButton(tr("Tumunu sec"))
-        tumu.clicked.connect(lambda: self._set_all(Qt.Checked))
+        tumu.clicked.connect(lambda: self._set_all(Qt.CheckState.Checked))
         hicbiri = QPushButton(tr("Temizle"))
-        hicbiri.clicked.connect(lambda: self._set_all(Qt.Unchecked))
+        hicbiri.clicked.connect(lambda: self._set_all(Qt.CheckState.Unchecked))
         lower.addWidget(tumu)
         lower.addWidget(hicbiri)
         lower.addStretch(1)
         duzen.addLayout(lower)
 
-        butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText(tr("Taramayi baslat"))
-        butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
-        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Iptal"))
+        butonlar = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                    | QDialogButtonBox.StandardButton.Cancel)
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Taramayi baslat"))
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setProperty("primary", True)
+        butonlar.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Iptal"))
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
@@ -264,9 +268,9 @@ class CarveOptionsDialog(QDialog):
             self.liste.item(i).setCheckState(state)
 
     def selected_keys(self) -> List[str]:
-        return [self.liste.item(i).data(Qt.UserRole)
+        return [self.liste.item(i).data(Qt.ItemDataRole.UserRole)
                 for i in range(self.liste.count())
-                if self.liste.item(i).checkState() == Qt.Checked]
+                if self.liste.item(i).checkState() == Qt.CheckState.Checked]
 
 
 class CarvedFilesDialog(QDialog):
@@ -284,17 +288,17 @@ class CarvedFilesDialog(QDialog):
                                                                         "ad")])
         self.tree.setRootIsDecorated(False)
         self.tree.setAlternatingRowColors(True)
-        self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.tree.setSortingEnabled(True)
-        self.tree.header().setSectionResizeMode(3, QHeaderView.Stretch)
+        self.tree.header().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         for oge in items:
             item = QTreeWidgetItem(self.tree)
             item.setText(0, tr(oge.label))
             item.setText(1, f"0x{oge.offset:X}")
             item.setText(2, human_size(oge.size))
             item.setText(3, oge.suggested_name)
-            item.setTextAlignment(2, Qt.AlignRight | Qt.AlignVCenter)
-            item.setData(0, Qt.UserRole, oge)
+            item.setTextAlignment(2, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            item.setData(0, Qt.ItemDataRole.UserRole, oge)
         for i, w in enumerate((190, 130, 100)):
             self.tree.setColumnWidth(i, w)
         duzen.addWidget(self.tree, 1)
@@ -304,16 +308,17 @@ class CarvedFilesDialog(QDialog):
         lower.addWidget(sec)
         lower.addStretch(1)
         duzen.addLayout(lower)
-        butonlar = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        butonlar.button(QDialogButtonBox.Ok).setText(tr("Secilenleri cikar..."))
-        butonlar.button(QDialogButtonBox.Ok).setProperty("primary", True)
-        butonlar.button(QDialogButtonBox.Cancel).setText(tr("Kapat"))
+        butonlar = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                    | QDialogButtonBox.StandardButton.Cancel)
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setText(tr("Secilenleri cikar..."))
+        butonlar.button(QDialogButtonBox.StandardButton.Ok).setProperty("primary", True)
+        butonlar.button(QDialogButtonBox.StandardButton.Cancel).setText(tr("Kapat"))
         butonlar.accepted.connect(self.accept)
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
 
     def selected(self) -> List:
-        return [i.data(0, Qt.UserRole) for i in self.tree.selectedItems()]
+        return [i.data(0, Qt.ItemDataRole.UserRole) for i in self.tree.selectedItems()]
 
 
 class InfoDialog(QDialog):
@@ -328,7 +333,7 @@ class InfoDialog(QDialog):
         form = QFormLayout(grup)
         for key, value in rows.items():
             etiket = QLabel(str(value))
-            etiket.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            etiket.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             form.addRow(f"{key}:", etiket)
         duzen.addWidget(grup)
         if note:
@@ -336,8 +341,8 @@ class InfoDialog(QDialog):
             n.setWordWrap(True)
             n.setEnabled(False)
             duzen.addWidget(n)
-        butonlar = QDialogButtonBox(QDialogButtonBox.Close)
-        butonlar.button(QDialogButtonBox.Close).setText(tr("Kapat"))
+        butonlar = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        butonlar.button(QDialogButtonBox.StandardButton.Close).setText(tr("Kapat"))
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)
 
@@ -357,12 +362,12 @@ class TextViewDialog(QDialog):
             duzen.addWidget(n)
         view = QPlainTextEdit(text)
         view.setReadOnly(True)
-        mono = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        mono = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         mono.setPointSize(9)
         view.setFont(mono)
-        view.setLineWrapMode(QPlainTextEdit.NoWrap)
+        view.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         duzen.addWidget(view, 1)
-        butonlar = QDialogButtonBox(QDialogButtonBox.Close)
-        butonlar.button(QDialogButtonBox.Close).setText(tr("Kapat"))
+        butonlar = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        butonlar.button(QDialogButtonBox.StandardButton.Close).setText(tr("Kapat"))
         butonlar.rejected.connect(self.reject)
         duzen.addWidget(butonlar)

@@ -12,8 +12,8 @@ from __future__ import annotations
 import importlib
 from typing import Dict, List, Optional, Tuple
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QPainter, QPainterPath, QPen
+from ..qt.QtCore import Qt
+from ..qt.QtGui import QColor, QPainter, QPainterPath, QPen
 
 from ..svgpath import parse
 
@@ -53,8 +53,8 @@ def _compiled(key: str, name: str) -> Optional[tuple]:
             for d, mode, width, rule in items:
                 path = parse(d)
                 # SVG varsayilani "nonzero"; QPainterPath'inki OddEven'dir.
-                path.setFillRule(Qt.OddEvenFill if rule == "e"
-                                 else Qt.WindingFill)
+                path.setFillRule(Qt.FillRule.OddEvenFill if rule == "e"
+                                 else Qt.FillRule.WindingFill)
                 parts.append((path, mode, width))
             _paths[cache_key] = (viewbox, parts)
     return _paths[cache_key]
@@ -70,7 +70,7 @@ def draw(painter: QPainter, key: str, name: str, size: float,
     vx, vy, vw, vh = viewbox[:4]
     scale = size / max(vw, vh, 1e-6)
     painter.save()
-    painter.setRenderHint(QPainter.Antialiasing, True)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
     painter.translate((size - vw * scale) / 2, (size - vh * scale) / 2)
     painter.scale(scale, scale)
     painter.translate(-vx, -vy)
@@ -79,8 +79,8 @@ def draw(painter: QPainter, key: str, name: str, size: float,
             painter.fillPath(path, color)
         if "s" in mode:
             pen = QPen(color, width)
-            pen.setCapStyle(Qt.RoundCap)
-            pen.setJoinStyle(Qt.RoundJoin)
+            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
             painter.strokePath(path, pen)
     painter.restore()
     return True

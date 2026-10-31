@@ -4,13 +4,13 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
-from PyQt5.QtCore import QSize, Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QIcon
-from PyQt5.QtWidgets import (QAbstractItemView, QAction, QFileDialog,
-                             QHBoxLayout, QHeaderView, QInputDialog, QLabel,
-                             QLineEdit, QMenu, QMessageBox, QSplitter,
-                             QToolBar, QTreeWidget, QTreeWidgetItem,
-                             QVBoxLayout, QWidget)
+from ..qt.QtCore import QSize, Qt, pyqtSignal
+from ..qt.QtGui import QColor, QIcon
+from ..qt.QtWidgets import (QAbstractItemView, QAction, QFileDialog,
+                            QHBoxLayout, QHeaderView, QInputDialog, QLabel,
+                            QLineEdit, QMenu, QMessageBox, QSplitter,
+                            QToolBar, QTreeWidget, QTreeWidgetItem,
+                            QVBoxLayout, QWidget)
 
 from ...core.fsregistry import fs_display
 from ...core.filesystem import FileNode, FileSystemAccess
@@ -79,7 +79,7 @@ class FileBrowser(QWidget):
         path_layout.addWidget(self.info_label)
         layout.addWidget(path)
 
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
         self.tree = QTreeWidget()
         self.tree.setIconSize(QSize(20, 20))
         self.tree.setHeaderLabel(tr("Klasorler"))
@@ -93,14 +93,14 @@ class FileBrowser(QWidget):
         self.list.setHeaderLabels([tr("Ad"), tr("Boyut"), tr("Tur"), tr("Degistirme"), tr("Oznitelik")])
         self.list.setRootIsDecorated(False)
         self.list.setAlternatingRowColors(True)
-        self.list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.list.setSortingEnabled(True)
-        self.list.sortByColumn(0, Qt.AscendingOrder)
+        self.list.sortByColumn(0, Qt.SortOrder.AscendingOrder)
         self.list.itemDoubleClicked.connect(self._list_double)
         self.list.itemSelectionChanged.connect(self._update_actions)
-        self.list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.list.customContextMenuRequested.connect(self._context_menu)
-        self.list.header().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.list.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         for col, width in ((1, 90), (2, 110), (3, 140), (4, 80)):
             self.list.setColumnWidth(col, width)
         splitter.addWidget(self.list)
@@ -162,7 +162,7 @@ class FileBrowser(QWidget):
             return
         root = QTreeWidgetItem(self.tree, [title or "/"])
         root.setIcon(0, app_icon("partition"))
-        root.setData(0, Qt.UserRole, "/")
+        root.setData(0, Qt.ItemDataRole.UserRole, "/")
         root.setExpanded(True)
         self.tree.setCurrentItem(root)
         self._populate_tree(root, "/")
@@ -177,16 +177,16 @@ class FileBrowser(QWidget):
         for node in entries:
             child = QTreeWidgetItem(item, [node.name])
             child.setIcon(0, app_icon("folder"))
-            child.setData(0, Qt.UserRole, node.path)
-            child.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+            child.setData(0, Qt.ItemDataRole.UserRole, node.path)
+            child.setChildIndicatorPolicy(QTreeWidgetItem.ChildIndicatorPolicy.ShowIndicator)
 
     def _expand_node(self, item: QTreeWidgetItem) -> None:
-        path = item.data(0, Qt.UserRole)
+        path = item.data(0, Qt.ItemDataRole.UserRole)
         if path and self.fs:
             self._populate_tree(item, path)
 
     def _tree_clicked(self, item: QTreeWidgetItem, _col: int) -> None:
-        path = item.data(0, Qt.UserRole)
+        path = item.data(0, Qt.ItemDataRole.UserRole)
         if path:
             self.navigate(path)
 
@@ -232,8 +232,8 @@ class FileBrowser(QWidget):
                 total += node.size
             item.setText(3, node.mtime.strftime("%Y-%m-%d %H:%M") if node.mtime else "")
             item.setText(4, node.attr_text)
-            item.setTextAlignment(1, Qt.AlignRight | Qt.AlignVCenter)
-            item.setData(0, Qt.UserRole, node)
+            item.setTextAlignment(1, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            item.setData(0, Qt.ItemDataRole.UserRole, node)
             if node.hidden:
                 item.setForeground(0, palette_color(self.list, "dim"))
         self.list.setSortingEnabled(True)
@@ -271,7 +271,7 @@ class FileBrowser(QWidget):
         self.navigate(self.path_edit.text().strip() or "/")
 
     def _list_double(self, item: QTreeWidgetItem, _col: int) -> None:
-        node: FileNode = item.data(0, Qt.UserRole)
+        node: FileNode = item.data(0, Qt.ItemDataRole.UserRole)
         if node and node.is_dir:
             self.navigate(node.path)
         elif node:
@@ -279,8 +279,8 @@ class FileBrowser(QWidget):
 
     # -- islemler ------------------------------------------------------------
     def selected_nodes(self) -> List[FileNode]:
-        return [i.data(0, Qt.UserRole) for i in self.list.selectedItems()
-                if i.data(0, Qt.UserRole)]
+        return [i.data(0, Qt.ItemDataRole.UserRole) for i in self.list.selectedItems()
+                if i.data(0, Qt.ItemDataRole.UserRole)]
 
     def export_selected(self) -> None:
         nodes = self.selected_nodes()
@@ -430,8 +430,9 @@ class FileBrowser(QWidget):
         cevap = QMessageBox.question(
             self, tr("Silme onayi"),
             tr("Su ogeler kalici olarak silinecek:\n\n{}\n\nDevam edilsin mi?", adlar),
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if cevap != QMessageBox.Yes:
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if cevap != QMessageBox.StandardButton.Yes:
             return
         # Basarisiz silmeler sayilir: eskiden hata kutusu gosterilse bile islem
         # gunlugune "N oge silindi" yaziliyordu ve kullanici hangi ogenin
@@ -549,4 +550,4 @@ class FileBrowser(QWidget):
                 menu.addAction(tr("Sil"), self.delete_selected)
         menu.addSeparator()
         menu.addAction(tr("Yenile"), self.refresh)
-        menu.exec_(self.list.viewport().mapToGlobal(pos))
+        menu.exec(self.list.viewport().mapToGlobal(pos))

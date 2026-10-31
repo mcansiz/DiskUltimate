@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from typing import List, Optional, Tuple
 
-from PyQt5.QtCore import QSize, Qt, pyqtSignal
-from PyQt5.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPixmap
-from PyQt5.QtWidgets import (QAbstractItemView, QHeaderView, QTableWidget,
-                             QTableWidgetItem)
+from ..qt.QtCore import QSize, Qt, pyqtSignal
+from ..qt.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPixmap
+from ..qt.QtWidgets import (QAbstractItemView, QHeaderView, QTableWidget,
+                            QTableWidgetItem)
 
 from ...core.fsregistry import fs_display
 from ...core.platform import mount_point_label
@@ -54,9 +54,9 @@ def part_label(p: Partition) -> str:
 
 def color_chip(color: QColor, size: int = 13) -> QIcon:
     pix = QPixmap(size + 3, size + 3)
-    pix.fill(Qt.transparent)
+    pix.fill(Qt.GlobalColor.transparent)
     p = QPainter(pix)
-    p.setRenderHint(QPainter.Antialiasing)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
     p.setBrush(color)
     p.setPen(QColor(color).darker(140))
     p.drawRoundedRect(1, 1, size, size, 2, 2)
@@ -75,18 +75,18 @@ class PartitionTableWidget(QTableWidget):
     def __init__(self, parent=None):
         super().__init__(0, len(COLUMNS), parent)
         self.setHorizontalHeaderLabels(columns())
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setAlternatingRowColors(True)
         self.verticalHeader().setVisible(False)
         self.verticalHeader().setDefaultSectionSize(26)
         self.setIconSize(QSize(18, 18))
         self.setShowGrid(False)
-        self.setContextMenuPolicy(Qt.DefaultContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.DefaultContextMenu)
         header = self.horizontalHeader()
         header.setStretchLastSection(True)
-        for i, mode in enumerate([QHeaderView.Interactive] * len(COLUMNS)):
+        for i, mode in enumerate([QHeaderView.ResizeMode.Interactive] * len(COLUMNS)):
             header.setSectionResizeMode(i, mode)
         self.setColumnWidth(NAME_COLUMN, 150)
         self.setColumnWidth(OS_COLUMN, 210)
@@ -172,10 +172,10 @@ class PartitionTableWidget(QTableWidget):
         self.blockSignals(False)
 
     def _set(self, row: int, col: int, text: str, *, dim: bool = False,
-             align=Qt.AlignLeft, icon: Optional[QIcon] = None,
+             align=Qt.AlignmentFlag.AlignLeft, icon: Optional[QIcon] = None,
              bold: bool = False) -> QTableWidgetItem:
         item = QTableWidgetItem(text)
-        item.setTextAlignment(int(align) | int(Qt.AlignVCenter))
+        item.setTextAlignment(int(align) | int(Qt.AlignmentFlag.AlignVCenter))
         if dim:
             item.setForeground(QBrush(palette_color(self, "dim")))
         if bold:
@@ -209,14 +209,14 @@ class PartitionTableWidget(QTableWidget):
         self._set(row, LABEL_COLUMN, p.name or p.fs_label or "-")
         self._set(row, MOUNT_COLUMN, p.mount_point or "-",
                   dim=not p.mount_point, bold=bool(p.mount_point))
-        self._set(row, SIZE_COLUMN, human_size(p.size), align=Qt.AlignRight)
+        self._set(row, SIZE_COLUMN, human_size(p.size), align=Qt.AlignmentFlag.AlignRight)
         self._set(row, USED_COLUMN, human_size(p.fs_used) if p.fs_used >= 0 else "-",
-                  align=Qt.AlignRight)
+                  align=Qt.AlignmentFlag.AlignRight)
         free = p.fs_total - p.fs_used if (p.fs_total >= 0 and p.fs_used >= 0) else -1
         self._set(row, FREE_COLUMN, human_size(free) if free >= 0 else "-",
-                  align=Qt.AlignRight)
-        self._set(row, START_COLUMN, str(p.start_lba), align=Qt.AlignRight)
-        self._set(row, END_COLUMN, str(p.end_lba), align=Qt.AlignRight)
+                  align=Qt.AlignmentFlag.AlignRight)
+        self._set(row, START_COLUMN, str(p.start_lba), align=Qt.AlignmentFlag.AlignRight)
+        self._set(row, END_COLUMN, str(p.end_lba), align=Qt.AlignmentFlag.AlignRight)
         self._set(row, TYPE_COLUMN, p.type_name)
         flags = []
         if p.bootable:
@@ -232,9 +232,9 @@ class PartitionTableWidget(QTableWidget):
         for col in (OS_COLUMN, PLAN_COLUMN, FS_COLUMN, LABEL_COLUMN,
                     MOUNT_COLUMN, USED_COLUMN, FREE_COLUMN):
             self._set(row, col, "-", dim=True)
-        self._set(row, SIZE_COLUMN, human_size(r.size), align=Qt.AlignRight, dim=True)
-        self._set(row, START_COLUMN, str(r.start_lba), align=Qt.AlignRight, dim=True)
-        self._set(row, END_COLUMN, str(r.end_lba), align=Qt.AlignRight, dim=True)
+        self._set(row, SIZE_COLUMN, human_size(r.size), align=Qt.AlignmentFlag.AlignRight, dim=True)
+        self._set(row, START_COLUMN, str(r.start_lba), align=Qt.AlignmentFlag.AlignRight, dim=True)
+        self._set(row, END_COLUMN, str(r.end_lba), align=Qt.AlignmentFlag.AlignRight, dim=True)
         self._set(row, TYPE_COLUMN, tr("Bolumlenmemis"), dim=True)
         self._set(row, FLAG_COLUMN, "-", dim=True)
 

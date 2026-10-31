@@ -22,9 +22,10 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from PyQt5.QtCore import QPointF, QRectF, Qt  # noqa: E402
-from PyQt5.QtGui import QColor, QFont, QImage, QPainter, QPainterPath, QPen  # noqa: E402
-from PyQt5.QtWidgets import QApplication  # noqa: E402
+from diskultimate.ui.qt.QtCore import QPointF, QRectF, Qt  # noqa: E402
+from diskultimate.ui.qt.QtGui import (QColor, QFont, QImage, QPainter,  # noqa: E402
+                                      QPainterPath, QPen)
+from diskultimate.ui.qt.QtWidgets import QApplication  # noqa: E402
 
 OUT = os.path.join(ROOT, "tools", "live", "base", "config", "includes.chroot",
                    "usr", "share", "diskultimate-live", "icons")
@@ -36,7 +37,7 @@ APP_ICON = os.path.join(ROOT, "src", "diskultimate", "ui", "resources",
 def _tile(p: QPainter, color: str) -> None:
     """Koyu masaustunde okunur kalsin diye yuvarlak koseli renkli zemin."""
     m = SIZE * 0.06
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(QColor(color))
     p.drawRoundedRect(QRectF(m, m, SIZE - 2 * m, SIZE - 2 * m),
                       SIZE * 0.18, SIZE * 0.18)
@@ -44,10 +45,10 @@ def _tile(p: QPainter, color: str) -> None:
 
 def _white_pen(p: QPainter, width: float) -> None:
     pen = QPen(QColor("#ffffff"), width)
-    pen.setCapStyle(Qt.RoundCap)
-    pen.setJoinStyle(Qt.RoundJoin)
+    pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+    pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
     p.setPen(pen)
-    p.setBrush(Qt.NoBrush)
+    p.setBrush(Qt.BrushStyle.NoBrush)
 
 
 def draw_terminal(p: QPainter) -> None:
@@ -74,7 +75,7 @@ def _arc_with_head(p: QPainter, cx: float, cy: float, r: float,
     normal = (math.cos(a), -math.sin(a))
     h = SIZE * 0.13
     back = QPointF(tip.x() - tangent[0] * h, tip.y() - tangent[1] * h)
-    p.setPen(Qt.NoPen)
+    p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(QColor("#ffffff"))
     p.drawPolygon(QPointF(tip.x() + tangent[0] * h * 0.6, tip.y() + tangent[1] * h * 0.6),
                   QPointF(back.x() + normal[0] * h * 0.7, back.y() + normal[1] * h * 0.7),
@@ -125,10 +126,10 @@ def draw_display(p: QPainter) -> None:
 
 
 def render(name: str, painter_fn) -> str:
-    img = QImage(SIZE, SIZE, QImage.Format_ARGB32_Premultiplied)
-    img.fill(Qt.transparent)
+    img = QImage(SIZE, SIZE, QImage.Format.Format_ARGB32_Premultiplied)
+    img.fill(Qt.GlobalColor.transparent)
     p = QPainter(img)
-    p.setRenderHint(QPainter.Antialiasing)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter_fn(p)
     p.end()
     path = os.path.join(OUT, name)

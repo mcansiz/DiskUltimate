@@ -18,8 +18,8 @@ from __future__ import annotations
 
 from typing import Callable, Dict, List, Optional, Tuple
 
-from PyQt5.QtCore import QObject, QPoint, QRect, Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QPainter, QPen
+from ..qt.QtCore import QObject, QPoint, QRect, Qt, pyqtSignal
+from ..qt.QtGui import QColor, QPainter, QPen
 
 from ...core.ptable import human_size
 from ..theme import darken, palette_color
@@ -39,7 +39,7 @@ def draw_handle(painter: QPainter, widget, x: int, cy: int,
         color = darken(color, 115)
     box = QRect(x - HANDLE_W // 2, cy - 11, HANDLE_W, 22)
     painter.save()
-    painter.setRenderHint(QPainter.Antialiasing, True)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
     painter.setBrush(color)
     painter.setPen(QPen(darken(color, 150), 1))
     painter.drawRoundedRect(box, 3, 3)
@@ -134,14 +134,14 @@ class EdgeDragController(QObject):
             self._hover = edge
             self.widget.update()
         if edge is not None:
-            self.widget.setCursor(Qt.SizeHorCursor)
+            self.widget.setCursor(Qt.CursorShape.SizeHorCursor)
             self.widget.setToolTip(tr("Surukleyerek boyutlandirin; birakinca "
                                       "bekleyen islemlere eklenir"))
             return True
         top, bottom = self.band()
         if self.busy and top <= pos.y() <= bottom and any(
                 abs(x - pos.x()) <= HANDLE_W for x in self.busy_edges()):
-            self.widget.setCursor(Qt.BusyCursor)
+            self.widget.setCursor(Qt.CursorShape.BusyCursor)
             self.widget.setToolTip(tr("Dosya sistemi sinirlari hesaplaniyor..."))
             return True
         return False
@@ -216,18 +216,18 @@ class EdgeDragController(QObject):
             fill = QColor(vurgu)
             fill.setAlpha(45)
             painter.fillRect(ghost, fill)
-            painter.setPen(QPen(vurgu, 2, Qt.DashLine))
-            painter.setBrush(Qt.NoBrush)
+            painter.setPen(QPen(vurgu, 2, Qt.PenStyle.DashLine))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRect(ghost.adjusted(0, 0, -1, -1))
             text = human_size(slot.new_count * ss)
             font = painter.font()
             font.setPointSize(9)
             font.setBold(True)
             painter.setFont(font)
-            width = painter.fontMetrics().width(text) + 12
+            width = painter.fontMetrics().horizontalAdvance(text) + 12
             badge = QRect(max(2, min(self.widget.width() - width - 2,
                                      (left + right) // 2 - width // 2)),
                           bottom - 22, width, 18)
             painter.fillRect(badge, vurgu)
             painter.setPen(QColor("#ffffff"))
-            painter.drawText(badge, Qt.AlignCenter, text)
+            painter.drawText(badge, Qt.AlignmentFlag.AlignCenter, text)

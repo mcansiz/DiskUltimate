@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import os
 
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWidgets import QMessageBox
+from .qt.QtCore import QThread, pyqtSignal
+from .qt.QtWidgets import QMessageBox
 
 from ..core import diagnostics, settings
 from ..core import updates
@@ -55,17 +55,17 @@ class UpdateWorker(QThread):
 def offer(parent, release, current: str, silent: bool) -> None:
     """Yeni surumu bildirir; kullanici isterse GitHub sayfasini acar."""
     box = QMessageBox(parent)
-    box.setIcon(QMessageBox.Information)
+    box.setIcon(QMessageBox.Icon.Information)
     box.setWindowTitle(tr("Yeni surum var"))
     box.setText(tr("<b>{}</b> yayinlandi (kullandiginiz surum: {}).<br><br>"
                    "Indirmek icin GitHub sayfasini acmak ister misiniz?",
                    release.version, current))
-    open_button = box.addButton(tr("GitHub sayfasini ac"), QMessageBox.AcceptRole)
-    skip_button = (box.addButton(tr("Bu surumu atla"), QMessageBox.RejectRole)
+    open_button = box.addButton(tr("GitHub sayfasini ac"), QMessageBox.ButtonRole.AcceptRole)
+    skip_button = (box.addButton(tr("Bu surumu atla"), QMessageBox.ButtonRole.RejectRole)
                    if silent else None)
-    box.addButton(tr("Daha sonra"), QMessageBox.RejectRole)
+    box.addButton(tr("Daha sonra"), QMessageBox.ButtonRole.RejectRole)
     box.setDefaultButton(open_button)
-    box.exec_()
+    box.exec()
     if box.clickedButton() is open_button:
         if not open_url(release.url):
             QMessageBox.information(parent, tr("Yeni surum var"),

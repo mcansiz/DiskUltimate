@@ -7,8 +7,8 @@ from __future__ import annotations
 import os
 import sys
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QProgressDialog
+from .qt.QtCore import QTimer
+from .qt.QtWidgets import QProgressDialog
 
 from ..core import diagnostics
 from ..core.platform import (elevation_available, elevation_name, is_elevated,
@@ -80,7 +80,7 @@ def elevate_at_startup(app_name: str = "DiskUltimate") -> bool:
     poll_timer.setInterval(250)
     poll_timer.timeout.connect(check_state)
     poll_timer.start()
-    dialog.exec_()
+    dialog.exec()
     poll_timer.stop()
     return outcome["started"]
 

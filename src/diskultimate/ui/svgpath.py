@@ -20,8 +20,8 @@ import math
 import re
 from typing import Iterator, List, Tuple
 
-from PyQt5.QtCore import QPointF
-from PyQt5.QtGui import QPainterPath
+from .qt.QtCore import QPointF
+from .qt.QtGui import QPainterPath
 
 _TOKEN = re.compile(r"[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
 _ARGS = {"M": 2, "L": 2, "H": 1, "V": 1, "C": 6, "S": 4, "Q": 4, "T": 2,

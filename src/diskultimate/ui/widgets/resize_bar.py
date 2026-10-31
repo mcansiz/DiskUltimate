@@ -14,9 +14,9 @@ from __future__ import annotations
 
 from typing import Optional, Tuple
 
-from PyQt5.QtCore import QRect, QSize, Qt, pyqtSignal
-from PyQt5.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPen
-from PyQt5.QtWidgets import QSizePolicy, QWidget
+from ..qt.QtCore import QRect, QSize, Qt, pyqtSignal
+from ..qt.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPen
+from ..qt.QtWidgets import QSizePolicy, QWidget
 
 from ...core.fsregistry import fs_display
 from ...core.ptable import human_size
@@ -38,9 +38,9 @@ class ResizeBar(QWidget):
         super().__init__(parent)
         self.setMinimumHeight(YUKSEKLIK + 26)
         self.setMaximumHeight(YUKSEKLIK + 26)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMouseTracking(True)
-        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         self.window_start = 0
         self.window_count = 1
@@ -109,7 +109,7 @@ class ResizeBar(QWidget):
     # -- cizim --------------------------------------------------------------
     def paintEvent(self, event) -> None:
         p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing, False)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         s = self._track()
         metin = palette_color(self, "text")
         sonuk = palette_color(self, "dim")
@@ -150,9 +150,11 @@ class ResizeBar(QWidget):
             p.setFont(yazi)
             title = self.label or (fs_display(self.fs_type) or tr("Bolum"))
             # Yazi doluluk cubugunun altindan baslar.
-            p.drawText(block.adjusted(7, 25, -7, 0), Qt.AlignLeft | Qt.AlignTop,
+            p.drawText(block.adjusted(7, 25, -7, 0), Qt.AlignmentFlag.AlignLeft
+                       | Qt.AlignmentFlag.AlignTop,
                        title)
-            p.drawText(block.adjusted(7, 42, -7, 0), Qt.AlignLeft | Qt.AlignTop,
+            p.drawText(block.adjusted(7, 42, -7, 0), Qt.AlignmentFlag.AlignLeft
+                       | Qt.AlignmentFlag.AlignTop,
                        human_size(self.count * self.sector_size))
 
         # tutamaklar
@@ -168,14 +170,14 @@ class ResizeBar(QWidget):
         arka = (self.window_end - self.start - self.count) * self.sector_size
         taban = QRect(s.left(), s.bottom() + 4, s.width(), 18)
         if on > 0:
-            p.drawText(taban, Qt.AlignLeft | Qt.AlignVCenter,
+            p.drawText(taban, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
                        tr("◀ onunde {}", human_size(on)))
         if arka > 0:
-            p.drawText(taban, Qt.AlignRight | Qt.AlignVCenter,
+            p.drawText(taban, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
                        tr("arkasinda {} ▶", human_size(arka)))
         if on <= 0 and arka <= 0:
             p.setPen(sonuk)
-            p.drawText(taban, Qt.AlignHCenter | Qt.AlignVCenter,
+            p.drawText(taban, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter,
                        tr("bolum kapsayici alanin tamamini kapliyor"))
 
     def _draw_handle(self, p: QPainter, x: int, s: QRect, highlight: bool) -> None:
@@ -205,27 +207,28 @@ class ResizeBar(QWidget):
 
     def mouseMoveEvent(self, event) -> None:
         if self._dragging is None:
-            self._hover = self._handle_at(event.x())
-            imlec = {"sol": Qt.SizeHorCursor, "sag": Qt.SizeHorCursor,
-                     "govde": Qt.OpenHandCursor}.get(self._hover, Qt.ArrowCursor)
+            self._hover = self._handle_at(event.pos().x())
+            imlec = {"sol": Qt.CursorShape.SizeHorCursor, "sag": Qt.CursorShape.SizeHorCursor,
+                     "govde": Qt.CursorShape.OpenHandCursor}.get(self._hover,
+                                                                 Qt.CursorShape.ArrowCursor)
             self.setCursor(imlec)
             self.update()
             return
-        self._drag(event.x())
+        self._drag(event.pos().x())
 
     def mousePressEvent(self, event) -> None:
-        if event.button() != Qt.LeftButton:
+        if event.button() != Qt.MouseButton.LeftButton:
             return
-        self._dragging = self._handle_at(event.x())
-        self._drag_x = event.x()
+        self._dragging = self._handle_at(event.pos().x())
+        self._drag_x = event.pos().x()
         self._drag_start = self.start
         self._drag_count = self.count
         if self._dragging == "govde":
-            self.setCursor(Qt.ClosedHandCursor)
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
 
     def mouseReleaseEvent(self, event) -> None:
         self._dragging = None
-        self.setCursor(Qt.ArrowCursor)
+        self.setCursor(Qt.CursorShape.ArrowCursor)
         self.update()
 
     def _drag(self, x: int) -> None:
@@ -265,17 +268,17 @@ class ResizeBar(QWidget):
     # -- klavye -------------------------------------------------------------
     def keyPressEvent(self, event) -> None:
         """Ok tuslariyla ince ayar: tek adim = bir hizalama birimi."""
-        step = self.align * (16 if event.modifiers() & Qt.ShiftModifier else 1)
-        if event.key() == Qt.Key_Left:
+        step = self.align * (16 if event.modifiers() & Qt.KeyboardModifier.ShiftModifier else 1)
+        if event.key() == Qt.Key.Key_Left:
             self._dragging = "sag"
             self._apply(self.start, self.count - step)
-        elif event.key() == Qt.Key_Right:
+        elif event.key() == Qt.Key.Key_Right:
             self._dragging = "sag"
             self._apply(self.start, self.count + step)
-        elif event.key() == Qt.Key_Home and self.can_move:
+        elif event.key() == Qt.Key.Key_Home and self.can_move:
             self._dragging = "govde"
             self._apply(self.start - step, self.count)
-        elif event.key() == Qt.Key_End and self.can_move:
+        elif event.key() == Qt.Key.Key_End and self.can_move:
             self._dragging = "govde"
             self._apply(self.start + step, self.count)
         else:
