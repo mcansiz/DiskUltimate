@@ -6780,3 +6780,14 @@ gezinti işiyle korunur; `requirements.txt` PyQt6; README en/tr ve CLAUDE.md
 alt sınırları (0.10.2'ye kadar PyQt5 / sonrası PyQt6). Yerel: qt6_check 0,
 platform_check 0, i18n BAŞARILI; ortam değişkensiz pencere PyQt6, `pyqt5`
 ile PyQt5 açıldı. PyQt5 kod yolunu kaldırma (F2) ertelendi.
+Doğrulama: CI 41204907950 (ana iş PyQt6 + `linux-qt5`) yeşil; gezinti
+41204907901 12/12 yeşil (aygıt senaryoları PyQt6 ile). Bir önceki koşuda
+`linux-aygit-yedek` bir kez düşmüştü: testin kendi doğrulama bağlaması
+(`sdb2 → /tmp/du-gezinti-*`) ayrılırken bekleme penceresine denk geldi —
+aralıklı, tekrarında geçti (izlenecek). PyQt5 deneme derlemesi 41204110824:
+AppImage glibc 2.17 / 40,6 MB (0.10.2 ile aynı), live ISO yeşil; macOS testi
+**test bittikten sonra** `Abort trap: 6` ile düştü (faulthandler yığın
+vermedi → yerel Qt kapanışı; 0.10.2'deki aralıklı hata). `ui_smoke` artık
+hükümden sonra `os._exit` ile çıkar. Varsayılan (girdisiz = etiket yolu)
+deneme derlemesi 41205604075: üç OS testi, üç paket, live ISO — hepsi yeşil,
+paketler PyQt6.
