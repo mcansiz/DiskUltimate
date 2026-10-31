@@ -182,7 +182,8 @@ def trim(appdir: str) -> None:
     pyqt = os.path.join(site, CFG["package"])
     qt = os.path.join(pyqt, CFG["qt"])
     for name in os.listdir(os.path.join(qt, "lib")):
-        m = re.match(QTLIB + r"(\w+?)\.so", name)
+        # Tire de olur: libQt6FFmpegStub-crypto.so.3 (QtMultimedia'ya baglidir)
+        m = re.match(QTLIB + r"([\w-]+?)\.so", name)
         if m and m.group(1) not in QT_LIBS_KEEP:
             os.remove(os.path.join(qt, "lib", name))
     plugins = os.path.join(qt, "plugins")

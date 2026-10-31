@@ -228,9 +228,11 @@ if IS_MACOS:
             'CFBundleDisplayName': 'DiskUltimate',
             'CFBundleShortVersionString': _ver,
             'NSHighResolutionCapable': True,
-            # PyQt6 6.12 tekerlegi macosx_14_0 (olculdu 2026-10-31, ADR 0102);
-            # gercek alt sinir derlenen ikilinin minos degeriyle dogrulanir.
-            'LSMinimumSystemVersion': '14.0' if PYQT == 'PyQt6' else '11.0',
+            # PyQt6 6.12 / Qt 6.12: QtCore, QtWidgets ve QtCore.abi3.so
+            # LC_BUILD_VERSION minos 14.4 (release deneme derlemesinde olculdu,
+            # 2026-10-31, ADR 0102). Tekerlek etiketi (macosx_11_0) yaniltici.
+            # PyQt6 surumu degisince release.yml'deki olcum adimina bakilir.
+            'LSMinimumSystemVersion': '14.4' if PYQT == 'PyQt6' else '11.0',
         },
     )
 else:
