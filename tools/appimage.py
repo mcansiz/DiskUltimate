@@ -26,7 +26,8 @@ Cikan pakette gereken en yuksek glibc surumu **olculur** ve basilir.
    kalan her ELF dosyasinin `NEEDED` bagimliliklari pakette ya da sistemde
    bulunmali (yoksa durulur).
 4. Uygulama (`main.py`, `src/diskultimate`), `AppRun`, `.desktop`, ikon.
-5. `appimagetool` ile paketlenir.
+5. `appimagetool` ile paketlenir; guncelleme bilgisi gomulur ve `zsyncmake`
+   varsa yanina `.zsync` yazilir (ADR 0103).
 """
 from __future__ import annotations
 
@@ -107,20 +108,20 @@ PYQT_KEEP = ("QtCore", "QtGui", "QtWidgets", "sip")
 STDLIB_DROP = ("test", "idlelib", "tkinter", "turtledemo", "ensurepip",
                "lib2to3", "pydoc_data", "unittest/test")
 
-DESKTOP = """[Desktop Entry]
-Type=Application
-Name=DiskUltimate
-GenericName=Disk Manager
-GenericName[tr]=Disk Yoneticisi
-GenericName[de]=Datentragerverwaltung
-Comment=Partition, format, back up, clone and recover disks and disk images
-Comment[tr]=Disk ve disk goruntulerini bolumleyin, bicimlendirin, yedekleyin, kurtarin
-Exec=DiskUltimate %F
-Icon=diskultimate
-Terminal=false
-Categories=System;Utility;Filesystem;
-Keywords=disk;partition;format;backup;clone;recovery;ntfs;gpt;
-"""
+# Masaustu girdisi dagitim paketleriyle ortaktir (ADR 0103); ad/ikon AppImage'a
+# ozgudur (appimagetool .desktop ve ikonun AppDir kokunde ayni adla durmasini ister).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from linux_packages import desktop_entry  # noqa: E402
+
+DESKTOP = desktop_entry("DiskUltimate", "diskultimate")
+
+# Guncelleme bilgisi (ADR 0103): AppImageUpdate ve Gear Lever bunu okuyup
+# yalnizca degisen bloklari indirir. `latest-all`: butun surumlerimiz on
+# surum (beta); duz `latest` GitHub'in /releases/latest ucunu kullanir ve
+# on surumleri gormez. Release'e AppImage'in yanina `.zsync` dosyasi konur
+# (appimagetool, `zsyncmake` kuruluysa uretir).
+UPDATE_INFO = ("gh-releases-zsync|mcansiz|DiskUltimate|latest-all|"
+               "DiskUltimate-*-x86_64.AppImage.zsync")
 
 APPRUN = r"""#!/bin/sh
 # DiskUltimate AppImage baslaticisi (ADR 0050).
@@ -415,12 +416,17 @@ def build(keep: bool = False) -> str:
     out = os.path.join(ROOT, "dist", f"DiskUltimate-{version}-x86_64.AppImage")
     log("Paketleniyor...")
     env = dict(os.environ, ARCH="x86_64", VERSION=version)
-    run([tool, "--appimage-extract-and-run", "--no-appstream", appdir, out],
-        env=env, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    if not shutil.which("zsyncmake"):
+        log("  UYARI: zsyncmake yok -> .zsync uretilmeyecek (apt install zsync)")
+    run([tool, "--appimage-extract-and-run", "--no-appstream", "-u", UPDATE_INFO,
+         appdir, out], env=env, cwd=os.path.dirname(out),
+        stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     if not keep:
         shutil.rmtree(appdir)
     log(f"Hazir: {out} ({os.path.getsize(out) / 1e6:.1f} MB)")
     log(f"SHA-256: {sha256(out)}")
+    if os.path.isfile(out + ".zsync"):
+        log(f"Guncelleme: {out}.zsync ({UPDATE_INFO})")
     return out
 
 

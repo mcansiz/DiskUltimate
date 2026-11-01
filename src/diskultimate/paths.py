@@ -43,8 +43,29 @@ def _inside_appimage() -> bool:
 
 
 IS_APPIMAGE = _inside_appimage()
-# Proje dizini olmayan, kullanicinin veri dizinine yazan kopya.
-IS_PACKAGED = IS_FROZEN or IS_APPIMAGE
+
+# Dagitim paketi (.deb / .rpm / AUR, ADR 0103): paketleyici kok dizine bu
+# isaret dosyasini koyar (`tools/linux_packages.py`). Satirlar `ad=deger`:
+# `format` (deb/rpm/arch) ve `helper` (pkexec'in calistirdigi yardimci).
+SYSTEM_MARKER = os.path.join(PROJECT_ROOT, "system-install")
+
+
+def read_system_install(path: str = SYSTEM_MARKER) -> dict:
+    """Isaret dosyasini okur; dosya yoksa (kaynak, AppImage, exe) bos sozluk."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            lines = [line.strip() for line in fh]
+    except OSError:
+        return {}
+    info = dict(line.split("=", 1) for line in lines if "=" in line)
+    return info if info.get("format") else {}
+
+
+SYSTEM_INSTALL = read_system_install()
+IS_SYSTEM_INSTALL = bool(SYSTEM_INSTALL)
+# Proje dizini olmayan, kullanicinin veri dizinine yazan kopya. Dagitim
+# paketinde kod /usr/share altindadir ve kullanici oraya yazamaz.
+IS_PACKAGED = IS_FROZEN or IS_APPIMAGE or IS_SYSTEM_INSTALL
 
 
 def data_root() -> str:

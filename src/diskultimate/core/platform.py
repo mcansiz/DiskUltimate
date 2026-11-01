@@ -427,6 +427,22 @@ def relaunch_elevated() -> Tuple[Optional["ElevatedLaunch"], str]:
         return None, str(exc)
 
 
+def linux_pkexec_command(command: List[str], env_args: List[str]) -> List[str]:
+    """pkexec'e verilecek komut satiri.
+
+    Dagitim paketinde (ADR 0103) pkexec paketin yardimcisini calistirir:
+    polkit tanimi o yola baglidir, parola penceresi "pkexec env ..." yerine
+    uygulamanin adini gosterir. Yardimci yalnizca ortam degiskenlerini ve
+    uygulama argumanlarini alir; hangi programi baslatacagi kendisinde
+    yazilidir. Paket disinda (kaynak, AppImage) eski yol: `pkexec env ...`.
+    """
+    from ..paths import SYSTEM_INSTALL
+    helper = SYSTEM_INSTALL.get("helper", "")
+    if helper and os.path.isfile(helper):
+        return ["pkexec", helper] + env_args + ["--"] + list(sys.argv[1:])
+    return ["pkexec", "env"] + env_args + command
+
+
 def _linux_relaunch(command: List[str]) -> "ElevatedLaunch":
     """pkexec ile yetkili kopyayi baslatir.
 
@@ -456,7 +472,7 @@ def _linux_relaunch(command: List[str]) -> "ElevatedLaunch":
 
     stream = open(log, "wb")
     try:
-        process = subprocess.Popen(["pkexec", "env"] + env_args + command,
+        process = subprocess.Popen(linux_pkexec_command(command, env_args),
                                    stdout=stream, stderr=stream)
     finally:
         stream.close()          # tutamac cocukta acik kalir

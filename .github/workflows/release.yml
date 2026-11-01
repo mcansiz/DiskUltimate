@@ -1,5 +1,6 @@
 # Surum: `v*` etiketi push edilince test + uc platform derlemesi + TASLAK
-# release. Taslagi bir insan inceleyip yayinlar (ADR 0079).
+# release. Taslagi bir insan inceleyip yayinlar (ADR 0079). Linux: AppImage
+# (+ .zsync), .deb, .rpm (ADR 0103).
 # Elle calistirma (workflow_dispatch) = deneme: her sey derlenir, dosyalar
 # calistirmanin "artifacts" bolumune konur, release olusturulmaz.
 # `qt` girdisi (ADR 0102): etiket surumleri PyQt6 (girdi bos -> pyqt6);
@@ -80,16 +81,22 @@ jobs:
       - name: Qt calisma kutuphaneleri (deneme acilisi icin)
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q --no-install-recommends binutils \
+          sudo apt-get install -y -q --no-install-recommends binutils zsync \
             libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
       - name: AppImage
-        run: ./build_appimage.sh
+        run: |
+          ./build_appimage.sh
+          # Guncelleme dosyasi (ADR 0103): yoksa AppImageUpdate/Gear Lever
+          # bu surumu goremez.
+          test -s "dist/DiskUltimate-${{ needs.version.outputs.version }}-x86_64.AppImage.zsync"
       - name: Deneme acilisi
         run: python tools/smoke_launch.py --qt "${{ env.DISKULTIMATE_QT }}" "${{ needs.version.outputs.version }}" "dist/DiskUltimate-${{ needs.version.outputs.version }}-x86_64.AppImage" --appimage-extract-and-run
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dist-linux
-          path: dist/DiskUltimate-${{ needs.version.outputs.version }}-x86_64.AppImage
+          path: |
+            dist/DiskUltimate-${{ needs.version.outputs.version }}-x86_64.AppImage
+            dist/DiskUltimate-${{ needs.version.outputs.version }}-x86_64.AppImage.zsync
           if-no-files-found: error
 
   build-windows:
@@ -175,14 +182,24 @@ jobs:
       version: ${{ needs.version.outputs.version }}
       appimage-artifact: dist-linux
 
+  # .deb / .rpm / AUR (ADR 0103): temiz dagitim kapsayicilarinda kurulur
+  # ve acilir. Sarttir.
+  build-linux-packages:
+    name: Derleme (Linux paketleri)
+    needs: [version, test-linux]
+    uses: ./.github/workflows/linux-packages.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+
   release:
     name: Taslak release
     # macOS deneyseldir: testi ya da derlemesi duserse release yine olusur,
     # yalnizca o dosya eklenmez. Windows, Linux ve live ISO sarttir.
-    needs: [version, build-linux, build-windows, build-macos, build-live]
+    needs: [version, build-linux, build-linux-packages, build-windows, build-macos, build-live]
     if: >-
       always() && github.ref_type == 'tag'
       && needs.build-linux.result == 'success'
+      && needs.build-linux-packages.result == 'success'
       && needs.build-windows.result == 'success'
       && needs.build-live.result == 'success'
     runs-on: ubuntu-24.04

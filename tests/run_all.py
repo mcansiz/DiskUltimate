@@ -8300,6 +8300,72 @@ def t111_kok_diski_sistem_diski():
                 [(d.path, d.is_system) for d in diskler]
 
 
+@test
+def t112_dagitim_paketi_duzeni():
+    """.deb/.rpm/AUR duzeni: isaret dosyasi, pkexec yardimcisi ve kabul ettigi argumanlar."""
+    # ADR 0103. Paket kurulmaz; `stage()` bir klasore kurar, uygulamanin
+    # o klasoru nasil okudugu denetlenir.
+    from diskultimate import paths as _paths
+    from diskultimate.core import platform as pf
+    sys.path.insert(0, os.path.join(_paths.PROJECT_ROOT, "tools"))
+    try:
+        import linux_packages as lp
+    finally:
+        sys.path.pop(0)
+    kok = img_path("t112_kok")
+    shutil.rmtree(kok, ignore_errors=True)
+    lp.stage(kok, "rpm")
+
+    def yer(yol):
+        return os.path.join(kok, yol.lstrip("/"))
+
+    bilgi = _paths.read_system_install(yer(lp.SHARE + "/system-install"))
+    assert bilgi == {"format": "rpm", "helper": lp.HELPER}, bilgi
+    assert _paths.read_system_install(yer("/yok")) == {}
+    for yol in (lp.LAUNCHER, lp.HELPER, lp.SHARE + "/main.py",
+                lp.SHARE + "/src/diskultimate/paths.py",
+                f"/usr/share/polkit-1/actions/{lp.APP_ID}.policy",
+                f"/usr/share/applications/{lp.APP_ID}.desktop",
+                f"/usr/share/metainfo/{lp.APP_ID}.metainfo.xml",
+                f"/usr/share/icons/hicolor/256x256/apps/{lp.APP_ID}.png"):
+        assert os.path.isfile(yer(yol)), yol
+    assert not any("__pycache__" in d for d, _, _ in os.walk(kok))
+    # Polkit tanimi yardimcinin yoluna bagli: pkexec baska bir programa
+    # bu eylemin metnini gostermez.
+    politika = open(yer(f"/usr/share/polkit-1/actions/{lp.APP_ID}.policy"),
+                    encoding="utf-8").read()
+    assert f'exec.path">{lp.HELPER}<' in politika
+    assert "auth_admin_keep" not in politika
+    assert lp.pkg_version("0.11.0-beta", "deb") == "0.11.0~beta"
+    assert lp.pkg_version("0.11.0-beta", "arch") == "0.11.0beta"
+
+    # pkexec komutu: yardimci varsa `pkexec <yardimci> AD=DEGER -- arg`,
+    # yoksa (kaynak, AppImage) eski `pkexec env ...` yolu.
+    eski = (dict(_paths.SYSTEM_INSTALL), list(sys.argv))
+    try:
+        sys.argv = [sys.argv[0], "disk.img"]
+        _paths.SYSTEM_INSTALL.clear()
+        _paths.SYSTEM_INSTALL.update(helper=yer(lp.HELPER), format="rpm")
+        komut = pf.linux_pkexec_command(["python3", "main.py", "disk.img"], ["A=1"])
+        assert komut == ["pkexec", yer(lp.HELPER), "A=1", "--", "disk.img"], komut
+        _paths.SYSTEM_INSTALL["helper"] = yer("/yok")
+        komut = pf.linux_pkexec_command(["python3", "main.py"], ["A=1"])
+        assert komut == ["pkexec", "env", "A=1", "python3", "main.py"], komut
+    finally:
+        _paths.SYSTEM_INSTALL.clear()
+        _paths.SYSTEM_INSTALL.update(eski[0])
+        sys.argv = eski[1]
+
+    # Yardimci yalnizca bilinen degiskenleri kabul eder; program secilemez.
+    # (Kabul edilen yol python'u exec eder; burada yalnizca ret yolu kosulur.)
+    if os.name == "nt" or not shutil.which("sh"):
+        raise Atlandi("sh yok (yardimci POSIX kabuk betigi)")
+    for kotu in (["PATH=/tmp"], ["/bin/sh"], ["LD_PRELOAD=x.so", "--"]):
+        sonuc = subprocess.run(["sh", yer(lp.HELPER)] + kotu, capture_output=True,
+                               text=True, timeout=30)
+        assert sonuc.returncode == 2 and "beklenmeyen" in sonuc.stderr, (kotu, sonuc)
+
+
 def main() -> int:
     print(f"Platform   : {PLATFORM_NAME}")
     if not check_environment():

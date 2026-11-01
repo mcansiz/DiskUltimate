@@ -1,0 +1,177 @@
+# Linux dagitim paketleri (ADR 0103): .deb, .rpm ve AUR PKGBUILD.
+#
+# Paketler mimariden bagimsizdir (Python kaynagi; Python ve PyQt dagitimdan).
+# Her paket TEMIZ bir dagitim kapsayicisinda kendi paket yoneticisiyle
+# kurulur (bagimliliklar oradan cozulur) ve acilir; kaldirilinca iz
+# kalmadigi denetlenir. Kapsayicilar kosudan sonra silinir; ana makineye
+# dokunulmaz.
+#
+# Release (workflow_call) .deb/.rpm'i `dist-linux-packages` artifact'ina
+# koyar; release isi bunlari diger dosyalarla birlikte yukler.
+name: Linux paketleri
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "tools/linux_packages.py"
+      - "src/diskultimate/paths.py"
+      - ".github/workflows/linux-packages.yml"
+  workflow_call:
+    inputs:
+      version:
+        description: Uygulama surumu (release.yml version isi)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  PYTHONIOENCODING: utf-8
+
+jobs:
+  build:
+    name: Derleme (.deb, .rpm, PKGBUILD)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: |
+            /*
+            !/.claude/sessions/
+          sparse-checkout-cone-mode: false
+      - id: v
+        run: |
+          ver="${{ inputs.version }}"
+          [ -n "$ver" ] || ver=$(sed -nE 's/^APP_VERSION = "([^"]+)"/\1/p' src/diskultimate/ui/main_window.py)
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+      - name: Araclar (rpmbuild)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends rpm
+      - name: .deb + .rpm
+        run: |
+          python3 tools/linux_packages.py deb rpm
+          dpkg-deb --info dist/*.deb
+          rpm -qip dist/*.rpm
+          rpm -qp --requires --recommends --suggests dist/*.rpm
+      # AUR: etiket arsivi henuz yok (ya da bu commit'i icermiyor); ayni
+      # bicimde yerel arsiv uretilir. Release'ten sonra gercek PKGBUILD
+      # `tools/linux_packages.py aur` ile etiket arsivinden uretilir.
+      - name: PKGBUILD (deneme arsiviyle)
+        run: |
+          ver="${{ steps.v.outputs.version }}"
+          mkdir -p .tmp/aur
+          git archive --worktree-attributes --prefix="DiskUltimate-$ver/" \
+            -o ".tmp/aur/diskultimate-${ver/-/}.tar.gz" HEAD
+          ls -l .tmp/aur
+          python3 tools/linux_packages.py aur --source ".tmp/aur/diskultimate-${ver/-/}.tar.gz"
+          cp dist/aur/PKGBUILD dist/aur/.SRCINFO .tmp/aur/
+          cp tools/smoke_launch.py .tmp/aur/
+          cat .tmp/aur/PKGBUILD
+      - name: Dogrulama (desktop, metainfo, polkit)
+        run: |
+          sudo apt-get install -y -q --no-install-recommends desktop-file-utils appstream libxml2-utils
+          mkdir -p .tmp/x && dpkg-deb -x dist/*.deb .tmp/x
+          desktop-file-validate .tmp/x/usr/share/applications/*.desktop
+          appstreamcli validate --no-net .tmp/x/usr/share/metainfo/*.xml
+          xmllint --noout .tmp/x/usr/share/polkit-1/actions/*.policy
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist-linux-packages
+          path: |
+            dist/DiskUltimate-*.deb
+            dist/DiskUltimate-*.rpm
+          if-no-files-found: error
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: paket-deneme
+          path: .tmp/aur/
+          include-hidden-files: true
+          if-no-files-found: error
+
+  install:
+    name: Kurulum + acilis (${{ matrix.image }})
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { image: "debian:12", kind: deb }
+          - { image: "debian:13", kind: deb }
+          - { image: "ubuntu:22.04", kind: deb }
+          - { image: "ubuntu:24.04", kind: deb }
+          - { image: "fedora:latest", kind: rpm }
+          - { image: "opensuse/tumbleweed", kind: rpm }
+          - { image: "archlinux:latest", kind: arch }
+    env:
+      VER: ${{ needs.build.outputs.version }}
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      # Depo cekilmez (kapsayicida git yok, oturum dokumleriyle arsiv buyuk):
+      # gereken tek arac smoke_launch.py; o da uygulamanin paketteki
+      # kopyasini kullanir (asagida `src` baglantisi).
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist-linux-packages
+          path: pkg
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: paket-deneme
+          path: pkg
+      - name: Kurulum (deb)
+        if: matrix.kind == 'deb'
+        run: |
+          apt-get update -q
+          apt-get install -y -q ./pkg/DiskUltimate-*.deb
+      - name: Kurulum (rpm)
+        if: matrix.kind == 'rpm'
+        run: |
+          if command -v zypper >/dev/null; then
+            zypper --non-interactive install --allow-unsigned-rpm ./pkg/DiskUltimate-*.rpm
+          else
+            dnf install -y ./pkg/DiskUltimate-*.rpm
+          fi
+      # makepkg root olarak calismaz; bagimliliklar once pacman ile kurulur
+      # (-s sudo isterdi), paket sonra `pacman -U` ile.
+      - name: Kurulum (AUR / makepkg)
+        if: matrix.kind == 'arch'
+        run: |
+          pacman -Syu --noconfirm --needed base-devel python python-pyqt6
+          useradd -m derleyici
+          cp -r pkg /home/derleyici/aur && chown -R derleyici /home/derleyici/aur
+          rm -f /home/derleyici/aur/DiskUltimate-*
+          su derleyici -c "cd ~/aur && makepkg --noconfirm"
+          pacman -U --noconfirm /home/derleyici/aur/diskultimate-*.pkg.tar.zst
+      - name: Kurulu dosyalar
+        run: |
+          ls -l /usr/bin/diskultimate /usr/lib/diskultimate/ /usr/share/diskultimate/
+          cat /usr/share/diskultimate/system-install
+          # Bayt kodu kurulumda derlendi (deb/rpm postinst; arch package())
+          find /usr/share/diskultimate -name '__pycache__' -type d | head -3 | grep -q .
+          # pkexec paketin yardimcisini cagirir (polkit tanimi ona bagli)
+          python3 -c "import sys; sys.path.insert(0, '/usr/share/diskultimate/src'); from diskultimate.core import platform as p; c = p.linux_pkexec_command(['x'], ['A=1']); print(c); assert c[1] == '/usr/lib/diskultimate/diskultimate-root', c"
+      - name: Acilis (dagitimin PyQt'siyle)
+        run: |
+          mkdir -p deneme/tools
+          cp pkg/smoke_launch.py deneme/tools/
+          ln -s /usr/share/diskultimate/src deneme/src
+          python3 deneme/tools/smoke_launch.py "$VER" /usr/bin/diskultimate
+      - name: Kaldirma
+        run: |
+          case "${{ matrix.kind }}" in
+            deb) apt-get remove -y -q diskultimate ;;
+            rpm) if command -v zypper >/dev/null; then zypper --non-interactive remove diskultimate; else dnf remove -y diskultimate; fi ;;
+            arch) pacman -R --noconfirm diskultimate ;;
+          esac
+          for p in /usr/share/diskultimate /usr/lib/diskultimate /usr/bin/diskultimate; do
+            if [ -e "$p" ]; then echo "::error::kaldirma sonrasi kaldi: $p"; find "$p" | head; exit 1; fi
+          done

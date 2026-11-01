@@ -9,3 +9,8 @@
 *.ico -text -diff
 *.icns -text -diff
 *.png -text -diff
+
+# Kaynak arsivi (GitHub "Source code" tar.gz/zip, `git archive`): proje
+# kayitlari ve oturum dokumleri arsive girmez. AUR paketi (ADR 0103) etiket
+# arsivini indirir; .claude/ ile 206 MB, onsuz 16 MB. Depoda durmaya devam eder.
+/.claude/ export-ignore
