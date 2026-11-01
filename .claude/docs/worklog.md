@@ -6819,3 +6819,40 @@ macOS 14.4+, Windows 10 1809+.
   Linux sistem diski tanıma, sürüm bilgisi; yükselen gereksinimler ve eski
   sistemler için 0.10.2-beta / kaynaktan PyQt5).
 Yayınlandı (ön sürüm): https://github.com/mcansiz/DiskUltimate/releases/tag/v0.11.0-beta
+
+## 2026-11-01 — Linux dağıtım paketleri (.deb, .rpm, AUR) ve AppImage güncellemesi
+
+Kullanıcı: "Flathub için neler yapabiliriz" → plan (UDisks2 arka ucu,
+5–7 oturum, izin incelemesi riski) → "flatpak bizim için uygun değil gibi,
+başka önerin var mı" → .deb/.rpm + AUR + AppImage güncellemesi önerildi →
+"önerini uygula". ADR 0103.
+
+- `tools/linux_packages.py`: ortak düzen (`stage`), .deb (`dpkg-deb`), .rpm
+  (`rpmbuild`), AUR `PKGBUILD` + `.SRCINFO`. Paket ~1 MB, mimariden
+  bağımsız; bağımlılık "PyQt6 ya da PyQt5"; bayt kodu kurulumda derlenir.
+- Polkit tanımı (10 dil) + `/usr/lib/diskultimate/diskultimate-root`:
+  parola penceresi uygulamanın adını gösterir; yardımcı yalnızca bilinen
+  ortam değişkenlerini kabul eder; eylem `auth_admin` (`_keep` değil:
+  `DISKULTIMATE_LOG_DIR` root olarak yazılır).
+- `paths.SYSTEM_INSTALL` (işaret dosyası) → `IS_PACKAGED`;
+  `platform.linux_pkexec_command` yardımcıyı kullanır, işaret yoksa eski yol.
+- AppImage: `gh-releases-zsync|…|latest-all|…` + `.zsync` (release'te
+  `zsync` kurulur, yoksa derleme düşer). `latest-all` çünkü bütün sürümler
+  ön sürüm. İlk etkili güncelleme 0.11.0-beta'dan sonraki iki sürüm arası.
+- Masaüstü girdisi ortak, 10 dilde ve doğru yazımla (AppImage'daki ASCII'ydi).
+- `.gitattributes`: `/.claude/ export-ignore` → kaynak arşivi 206 MB → ~7 MB.
+- CI `linux-packages.yml` (release'e bağlı, şart): Debian 12/13, Ubuntu
+  22.04/24.04, Fedora, openSUSE Tumbleweed, Arch (makepkg) kapsayıcılarında
+  kurulum + açılış + kaldırma. İlk koşu 41304252972: 6/7; openSUSE'de
+  kapsayıcıda `find` yoktu → kaldırma temizliği de `find` kullanıyordu,
+  Python'a taşındı. Koşu 41304523609: 7/7. Ubuntu 22.04 PyQt5 5.15.6 ile
+  açıldı (`python3-pyqt6` yok); Debian 12 PyQt6 6.4.2.
+- `t112` (düzen, işaret, pkexec komutu, yardımcının ret yolu); yerel
+  platform_check 0, diag_check 13/13; CI 41304523625 yeşil.
+- README (en/tr): ".deb / .rpm" bölümü, AppImage güncelleme notu. Sürüm notu
+  şablonuna .deb ve .rpm satırları; AUR satırı paket AUR'a gönderilince
+  eklenecek.
+
+Sınanmayan: gerçek polkit penceresi (masaüstü gerekir), RHEL/Alma, AppImage
+güncellemesinin uçtan uca çalışması (iki ardışık sürüm gerekir).
+Kullanıcıya kalan: AUR'a gönderim (kendi hesabıyla), ileride OBS deposu.

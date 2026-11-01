@@ -255,6 +255,7 @@ python3 -m tests.qt6_check   # PyQt5/PyQt6 ortak yazim (PyQt6 kurulu olmali)
 DISKULTIMATE_QT=pyqt5 python3 main.py  # arayuzu PyQt5 ile ac (varsayilan PyQt6)
 QT_QPA_PLATFORM=offscreen python3 -m tests.long.explore  # gozlemci arayuz gezintisi (ADR 0097)
 DISKULTIMATE_LANG=en python3 main.py   # arayuzu baska dilde ac
+python3 tools/linux_packages.py deb rpm  # Linux paketleri (ADR 0103; CI: linux-packages.yml)
 ```
 
 Gozlemci gezinti (`tests.long.explore`) uygulamayi kullanici gibi surer ve

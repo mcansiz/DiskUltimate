@@ -68,6 +68,26 @@ chmod +x DiskUltimate-*-x86_64.AppImage
   libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxkbcommon-x11-0`.
 - FUSE yoksa: `./DiskUltimate-*-x86_64.AppImage --appimage-extract-and-run`.
 - Root yetkisi açılışta `pkexec` ile istenir (aşağıdaki gibi).
+- Güncelleme: bir kez [Gear Lever](https://flathub.org/apps/it.mijorus.gearlever)
+  ya da AppImageUpdate ile açın; yalnızca değişen kısımları indirirler
+  (0.11.0-beta'dan sonraki sürümden itibaren).
+
+### Linux (.deb / .rpm paketi)
+
+İki paket de yaklaşık 1 MB'tır ve dağıtımın kendi Python ve PyQt'sini
+kullanır (PyQt6; PyQt6'nın paketlenmediği sürümlerde PyQt5), bu yüzden glibc
+sınırı yoktur. Menü girdisi, ikon ve parola penceresi ("DiskUltimate'in
+fiziksel diskleri okuyup yazabilmesi için…") birlikte kurulur.
+
+```bash
+sudo apt install ./DiskUltimate-*-all.deb       # Debian, Ubuntu, Mint
+sudo dnf install ./DiskUltimate-*-noarch.rpm    # Fedora
+sudo zypper install --allow-unsigned-rpm ./DiskUltimate-*-noarch.rpm   # openSUSE
+```
+
+Debian 12 ve 13, Ubuntu 22.04 ve 24.04, Fedora, openSUSE Tumbleweed ve Arch
+(`PKGBUILD`) üzerinde otomatik olarak sınanır. Kaldırmak için
+`sudo apt remove diskultimate` / `sudo dnf remove diskultimate`.
 
 ### Live USB / DVD (kurulumsuz)
 
@@ -376,7 +396,10 @@ AppImage taşınabilir bir Python (manylinux2014) ve PyPI'deki PyQt6
 paketleriyle kurulur; sonuç derleme makinesinin glibc sürümüne bağlı değildir,
 araç paketin gerektirdiği en yüksek glibc sürümünü yazar (2.34, PyQt6
 paketlerinden gelir). `DISKULTIMATE_QT=pyqt5 ./build_appimage.sh` PyQt5 ile
-derler. `./build_linux.sh`
+derler. `python3 tools/linux_packages.py deb rpm` .deb ve .rpm'i derler
+(`dpkg-deb`, `rpmbuild`); `python3 tools/linux_packages.py aur` yayınlanmış
+bir sürüm için AUR `PKGBUILD`'ini yazar.
+`./build_linux.sh`
 hâlâ tek dosyalık PyInstaller ikilisi üretir; ancak o, yalnızca derlendiği
 makineninkiyle aynı veya daha yeni glibc'ye sahip sistemlerde çalışır.
 

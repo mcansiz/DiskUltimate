@@ -70,6 +70,26 @@ chmod +x DiskUltimate-*-x86_64.AppImage
   libxkbcommon-x11-0`.
 - Without FUSE: `./DiskUltimate-*-x86_64.AppImage --appimage-extract-and-run`.
 - Root is requested through `pkexec` at start-up, as below.
+- Updates: open it once with [Gear Lever](https://flathub.org/apps/it.mijorus.gearlever)
+  or AppImageUpdate; they download only the parts that changed (from the
+  release after 0.11.0-beta on).
+
+### Linux (.deb / .rpm package)
+
+Both packages are about 1 MB and use the distribution's own Python and PyQt
+(PyQt6, or PyQt5 where PyQt6 is not packaged), so there is no glibc limit.
+The menu entry, icon and password prompt ("DiskUltimate needs administrator
+rights…") are installed with it.
+
+```bash
+sudo apt install ./DiskUltimate-*-all.deb       # Debian, Ubuntu, Mint
+sudo dnf install ./DiskUltimate-*-noarch.rpm    # Fedora
+sudo zypper install --allow-unsigned-rpm ./DiskUltimate-*-noarch.rpm   # openSUSE
+```
+
+Tested automatically on Debian 12 and 13, Ubuntu 22.04 and 24.04, Fedora,
+openSUSE Tumbleweed and Arch (`PKGBUILD`). Remove with
+`sudo apt remove diskultimate` / `sudo dnf remove diskultimate`.
 
 ### Live USB / DVD (no installation)
 
@@ -372,6 +392,9 @@ The AppImage is built from a portable Python (manylinux2014) and the PyPI
 PyQt6 wheels, so the result does not depend on the build machine's glibc;
 the tool prints the highest glibc version the package needs (2.34, set by the
 PyQt6 wheels). `DISKULTIMATE_QT=pyqt5 ./build_appimage.sh` builds with PyQt5.
+`python3 tools/linux_packages.py deb rpm` builds the .deb and .rpm
+(`dpkg-deb`, `rpmbuild`); `python3 tools/linux_packages.py aur` writes the AUR
+`PKGBUILD` for a published release.
 `./build_linux.sh` still builds a single-file PyInstaller binary, but that one
 only runs on systems with the same or a newer glibc than the build machine.
 
