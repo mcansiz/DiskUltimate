@@ -156,7 +156,7 @@ jobs:
           ls -l /usr/bin/diskultimate /usr/lib/diskultimate/ /usr/share/diskultimate/
           cat /usr/share/diskultimate/system-install
           # Bayt kodu kurulumda derlendi (deb/rpm postinst; arch package())
-          find /usr/share/diskultimate -name '__pycache__' -type d | head -3 | grep -q .
+          python3 -c "import pathlib, sys; sys.exit(not any(pathlib.Path('/usr/share/diskultimate').rglob('__pycache__')))"
           # pkexec paketin yardimcisini cagirir (polkit tanimi ona bagli)
           python3 -c "import sys; sys.path.insert(0, '/usr/share/diskultimate/src'); from diskultimate.core import platform as p; c = p.linux_pkexec_command(['x'], ['A=1']); print(c); assert c[1] == '/usr/lib/diskultimate/diskultimate-root', c"
       - name: Acilis (dagitimin PyQt'siyle)
@@ -173,5 +173,5 @@ jobs:
             arch) pacman -R --noconfirm diskultimate ;;
           esac
           for p in /usr/share/diskultimate /usr/lib/diskultimate /usr/bin/diskultimate; do
-            if [ -e "$p" ]; then echo "::error::kaldirma sonrasi kaldi: $p"; find "$p" | head; exit 1; fi
+            if [ -e "$p" ]; then echo "::error::kaldirma sonrasi kaldi: $p"; ls -laR "$p" | head -20; exit 1; fi
           done

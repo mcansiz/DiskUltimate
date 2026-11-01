@@ -363,8 +363,11 @@ def stage(dest: str, fmt: str) -> None:
 # Python surumune uyar ve kullanici /usr/share altina __pycache__ yazamadigi
 # icin aksi halde her acilista butun moduller yeniden derlenirdi.
 COMPILE_SH = f"python3 -m compileall -q {SHARE} >/dev/null 2>&1 || true"
-CLEAN_SH = (f"find {SHARE} -name __pycache__ -type d -prune "
-            f"-exec rm -rf {{}} + 2>/dev/null || true")
+# Temizlik de Python'la: `find` her sistemde yok (openSUSE kapsayicisi,
+# 2026-11-01) ve sessizce dusunce paket kaldirilinca klasor kalirdi.
+CLEAN_SH = ("python3 -c \"import pathlib, shutil; "
+            f"[shutil.rmtree(p) for p in list(pathlib.Path('{SHARE}').rglob('__pycache__'))]\" "
+            ">/dev/null 2>&1 || true")
 
 
 def _du_kib(path: str) -> int:
