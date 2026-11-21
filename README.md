@@ -273,6 +273,21 @@ start: right-click the app → **Open**.
 - Several icon sets (built-in, Tabler, Lucide, Material, Phosphor, Bootstrap)
 - **System, Light and Dark themes** (*Tools → Theme*); System follows your desktop's Qt theme
 
+### Live USB / DVD
+- A **bootable ISO** that starts DiskUltimate by itself — for a PC whose
+  installed system will not start, or whose system disk has to be worked on
+  while that system is not running
+- Boots on any 64-bit PC: BIOS or UEFI, Secure Boot included
+- Language picked in the boot menu (10 languages); the keyboard layout follows it
+- A small desktop with a terminal, the root folder and display settings;
+  wired and Wi-Fi networking, and `apt install` works once connected
+- Runs entirely in RAM; the USB stick it booted from is protected as the
+  system disk. Details: [Live USB / DVD](#live-usb--dvd-no-installation)
+
+![Live USB desktop](docs/screenshots/en/liveCD.png)
+*The live system in a virtual machine: DiskUltimate on a Windows 10 disk,
+`apt install` in the terminal and the Display Settings window.*
+
 ## Supported file systems
 
 | File system | Format | Read | Write | Notes |

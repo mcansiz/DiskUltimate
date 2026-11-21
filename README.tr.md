@@ -276,6 +276,21 @@ sağ tık → **Aç**.
 - Birden fazla ikon seti (yerleşik, Tabler, Lucide, Material, Phosphor, Bootstrap)
 - **Sistem, Açık ve Koyu tema** (*Araclar → Tema*); Sistem masaüstünün Qt temasını izler
 
+### Live USB / DVD
+- DiskUltimate'i kendiliğinden başlatan **açılabilir bir ISO** — kurulu
+  sistemi açılmayan bir bilgisayar için ya da sistem diski, o sistem
+  çalışmıyorken üzerinde çalışılması gerektiğinde
+- Her 64 bit bilgisayarda açılır: BIOS ya da UEFI, Secure Boot dahil
+- Dil açılış menüsünden seçilir (10 dil); klavye düzeni de ona uyar
+- Uçbirim, Ana Klasör ve Ekran Ayarları bulunan küçük bir masaüstü; kablolu
+  ve kablosuz ağ, bağlandıktan sonra `apt install` çalışır
+- Tamamen RAM'de çalışır; açılış yapılan USB bellek sistem diski sayılır ve
+  korunur. Ayrıntılar: [Live USB / DVD](#live-usb--dvd-kurulumsuz)
+
+![Live USB masaüstü](docs/screenshots/en/liveCD.png)
+*Sanal makinede açılmış canlı sistem: bir Windows 10 diskinde DiskUltimate,
+uçbirimde `apt install` ve Ekran Ayarları penceresi (arayüz İngilizce).*
+
 ## Desteklenen dosya sistemleri
 
 | Dosya sistemi | Biçimlendirme | Okuma | Yazma | Not |

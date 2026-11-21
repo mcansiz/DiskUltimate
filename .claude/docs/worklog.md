@@ -6856,3 +6856,16 @@ başka önerin var mı" → .deb/.rpm + AUR + AppImage güncellemesi önerildi �
 Sınanmayan: gerçek polkit penceresi (masaüstü gerekir), RHEL/Alma, AppImage
 güncellemesinin uçtan uca çalışması (iki ardışık sürüm gerekir).
 Kullanıcıya kalan: AUR'a gönderim (kendi hesabıyla), ileride OBS deposu.
+
+## 2026-11-21 — README: Live USB / DVD özelliği ve ekran görüntüsü
+
+- Kullanıcının eklediği `docs/screenshots/en/liveCD.png` (VirtualBox'ta açılmış
+  canlı sistem: Windows 10 diskinde DiskUltimate, uçbirimde `apt install`,
+  Ekran Ayarları) README.md ve README.tr.md'ye bağlandı.
+- İki README'de "Özellikler" altına "Live USB / DVD" alt bölümü: açılabilir
+  ISO, BIOS/UEFI + Secure Boot, açılış menüsünden dil, masaüstü/ağ/`apt`,
+  RAM'de çalışma ve açılış USB'sinin sistem diski sayılması; indirme
+  bölümüne bağlantı.
+- Görüntü yalnızca İngilizce arayüzde; Türkçe README de `en/` dosyasını
+  kullanır ve altyazıda "arayüz İngilizce" yazar. Türkçe görüntü gelirse
+  `docs/screenshots/tr/` altına konup yol değiştirilir.
